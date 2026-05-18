@@ -250,7 +250,7 @@ def main() -> None:
             task_id="T-002",
             finding_code="scope.off_scope",
             reason="reviewer approved README update for the new signup contract",
-            user_id="rohitg00",
+            user_id="stabuev",
             head_commit="b2c3d4e",
         )
         print(f"override recorded: signature={entry['signature']} verified={verify_signature(entry)}")

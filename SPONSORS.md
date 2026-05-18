@@ -1,7 +1,7 @@
 # Sponsorship
 
 `ai-engineering-from-scratch` is a free, MIT-licensed curriculum. 428 lessons across 20
-phases. The work is built and maintained by [Rohit Ghumare](https://github.com/rohitg00).
+phases. The work is built and maintained by [Rohit Ghumare](https://github.com/stabuev).
 
 Sponsorships fund the time it takes to ship lessons, keep the site running, and reply to the
 issue queue. Cash only. Credits-in-kind, equity, or "we'll write your content" arrangements
@@ -11,7 +11,7 @@ If you or your company want to support the curriculum, this page is the rate car
 
 ## How to sponsor
 
-- **GitHub Sponsors:** [github.com/sponsors/rohitg00](https://github.com/sponsors/rohitg00)
+- **GitHub Sponsors:** [github.com/sponsors/stabuev](https://github.com/sponsors/stabuev)
 - **Open Collective:** *coming soon, link will land here once the collective is approved*
 - **Wire / invoice** for Gold and Platinum tiers: email the maintainer through the address
   listed on the GitHub profile.
@@ -131,7 +131,7 @@ Listed in order of how the next dollar gets spent:
 ## Becoming a sponsor
 
 1. Pick a tier above.
-2. Subscribe via [GitHub Sponsors](https://github.com/sponsors/rohitg00).
+2. Subscribe via [GitHub Sponsors](https://github.com/sponsors/stabuev).
 3. For Silver and above, email the maintainer with: your logo (SVG preferred), the URL
    you want it linked to, and the term length you've committed to.
 4. The logo lands in the next site deploy, usually within 48 hours.

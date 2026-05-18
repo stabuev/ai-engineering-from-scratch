@@ -6,7 +6,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1a1a1a?style=flat-square&labelColor=fafaf5" alt="MIT License"></a>
   <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-428-3553ff?style=flat-square&labelColor=fafaf5" alt="428 lessons"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 phases"></a>
-  <a href="https://github.com/rohitg00/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/rohitg00/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="GitHub stars"></a>
+  <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="GitHub stars"></a>
   <a href="https://aiengineeringfromscratch.com"><img src="https://img.shields.io/badge/web-aiengineeringfromscratch.com-3553ff?style=flat-square&labelColor=fafaf5" alt="Website"></a>
 </p>
 
@@ -115,7 +115,7 @@ Three ways in. Pick one.
 **Option B — clone and run.**
 
 ```bash
-git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
+git clone https://github.com/stabuev/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
 python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
 ```
@@ -172,7 +172,7 @@ Other curricula end with *"congratulations, you learned X."* Each lesson here en
 </tr>
 </table>
 
-> Install the lot with [SkillKit](https://github.com/rohitg00/skillkit). Real tools, not
+> Install the lot with [SkillKit](https://github.com/stabuev/skillkit). Real tools, not
 > homework. By the end of the curriculum, you have a portfolio of 428 artifacts you actually
 > understand because you built them.
 
@@ -860,7 +860,7 @@ outputs/
 └── mcp-servers/  MCP servers built during the course
 ```
 
-Install them with [SkillKit](https://github.com/rohitg00/skillkit). Plug them into Claude, Cursor,
+Install them with [SkillKit](https://github.com/stabuev/skillkit). Plug them into Claude, Cursor,
 Codex, OpenClaw, Hermes, or any MCP-compatible agent. Real tools, not homework.
 
 ## Where to start
@@ -947,7 +947,7 @@ Twitter/X is the #1 acquisition channel.
 | Platinum | $5,000 | Hero logo above the fold + one dedicated integration lesson, max 1 partner |
 
 Full rate card, hard rules, pricing anchors, and reach data: [SPONSORS.md](SPONSORS.md).
-Sign up via [GitHub Sponsors](https://github.com/sponsors/rohitg00).
+Sign up via [GitHub Sponsors](https://github.com/sponsors/stabuev).
 
 ```
 ░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒
@@ -955,10 +955,10 @@ Sign up via [GitHub Sponsors](https://github.com/sponsors/rohitg00).
 
 ## Star history
 
-<a href="https://star-history.com/#rohitg00/ai-engineering-from-scratch&Date">
+<a href="https://star-history.com/#stabuev/ai-engineering-from-scratch&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=rohitg00/ai-engineering-from-scratch&type=Date&theme=dark">
-    <img alt="Star history" src="https://api.star-history.com/svg?repos=rohitg00/ai-engineering-from-scratch&type=Date" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=stabuev/ai-engineering-from-scratch&type=Date&theme=dark">
+    <img alt="Star history" src="https://api.star-history.com/svg?repos=stabuev/ai-engineering-from-scratch&type=Date" width="100%">
   </picture>
 </a>
 
@@ -969,10 +969,10 @@ If this manual helped you, star the repo. It keeps the project alive.
 MIT. Use it however you want — fork it, teach it, sell it, ship it. Attribution appreciated,
 not required.
 
-Maintained by [Rohit Ghumare](https://github.com/rohitg00) and the community.
+Maintained by [Rohit Ghumare](https://github.com/stabuev) and the community.
 
 <sub>
   <a href="https://x.com/ghumare64">@ghumare64</a> &nbsp;·&nbsp;
   <a href="https://aiengineeringfromscratch.com">aiengineeringfromscratch.com</a> &nbsp;·&nbsp;
-  <a href="https://github.com/rohitg00/ai-engineering-from-scratch/issues/new/choose">Report / Suggest</a>
+  <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose">Report / Suggest</a>
 </sub>

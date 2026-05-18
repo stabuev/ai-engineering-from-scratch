@@ -13,84 +13,84 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript, Rust",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/01-dev-environment/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/01-dev-environment/"
       },
       {
         "name": "Git & Collaboration",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/02-git-and-collaboration/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/02-git-and-collaboration/"
       },
       {
         "name": "GPU Setup & Cloud",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/03-gpu-setup-and-cloud/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/03-gpu-setup-and-cloud/"
       },
       {
         "name": "APIs & Keys",
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/04-apis-and-keys/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/04-apis-and-keys/"
       },
       {
         "name": "Jupyter Notebooks",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/05-jupyter-notebooks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/05-jupyter-notebooks/"
       },
       {
         "name": "Python Environments",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/06-python-environments/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/06-python-environments/"
       },
       {
         "name": "Docker for AI",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/07-docker-for-ai/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/07-docker-for-ai/"
       },
       {
         "name": "Editor Setup",
         "status": "complete",
         "type": "Build",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/08-editor-setup/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/08-editor-setup/"
       },
       {
         "name": "Data Management",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/09-data-management/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/09-data-management/"
       },
       {
         "name": "Terminal & Shell",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/10-terminal-and-shell/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/10-terminal-and-shell/"
       },
       {
         "name": "Linux for AI",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/11-linux-for-ai/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/11-linux-for-ai/"
       },
       {
         "name": "Debugging & Profiling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/12-debugging-and-profiling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/12-debugging-and-profiling/"
       }
     ]
   },
@@ -105,154 +105,154 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python, Julia",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/01-linear-algebra-intuition/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/01-linear-algebra-intuition/"
       },
       {
         "name": "Vectors, Matrices & Operations",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Julia",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/02-vectors-matrices-operations/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/02-vectors-matrices-operations/"
       },
       {
         "name": "Matrix Transformations & Eigenvalues",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Julia",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/03-matrix-transformations/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/03-matrix-transformations/"
       },
       {
         "name": "Calculus for ML: Derivatives & Gradients",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/04-calculus-for-ml/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/04-calculus-for-ml/"
       },
       {
         "name": "Chain Rule & Automatic Differentiation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/05-chain-rule-and-autodiff/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/05-chain-rule-and-autodiff/"
       },
       {
         "name": "Probability & Distributions",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/06-probability-and-distributions/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/06-probability-and-distributions/"
       },
       {
         "name": "Bayes' Theorem & Statistical Thinking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/07-bayes-theorem/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/07-bayes-theorem/"
       },
       {
         "name": "Optimization: Gradient Descent Family",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/08-optimization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/08-optimization/"
       },
       {
         "name": "Information Theory: Entropy, KL Divergence",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/09-information-theory/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/09-information-theory/"
       },
       {
         "name": "Dimensionality Reduction: PCA, t-SNE, UMAP",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/10-dimensionality-reduction/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/10-dimensionality-reduction/"
       },
       {
         "name": "Singular Value Decomposition",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Julia",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/11-singular-value-decomposition/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/11-singular-value-decomposition/"
       },
       {
         "name": "Tensor Operations",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/12-tensor-operations/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/12-tensor-operations/"
       },
       {
         "name": "Numerical Stability",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/13-numerical-stability/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/13-numerical-stability/"
       },
       {
         "name": "Norms & Distances",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/14-norms-and-distances/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/14-norms-and-distances/"
       },
       {
         "name": "Statistics for ML",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/15-statistics-for-ml/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/15-statistics-for-ml/"
       },
       {
         "name": "Sampling Methods",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/16-sampling-methods/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/16-sampling-methods/"
       },
       {
         "name": "Linear Systems",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/17-linear-systems/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/17-linear-systems/"
       },
       {
         "name": "Convex Optimization",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/18-convex-optimization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/18-convex-optimization/"
       },
       {
         "name": "Complex Numbers for AI",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/19-complex-numbers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/19-complex-numbers/"
       },
       {
         "name": "The Fourier Transform",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/20-fourier-transform/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/20-fourier-transform/"
       },
       {
         "name": "Graph Theory for ML",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/21-graph-theory/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/21-graph-theory/"
       },
       {
         "name": "Stochastic Processes",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/22-stochastic-processes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/22-stochastic-processes/"
       }
     ]
   },
@@ -267,126 +267,126 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/01-what-is-machine-learning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/01-what-is-machine-learning/"
       },
       {
         "name": "Linear Regression from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/02-linear-regression/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/02-linear-regression/"
       },
       {
         "name": "Logistic Regression & Classification",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/03-logistic-regression/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/03-logistic-regression/"
       },
       {
         "name": "Decision Trees & Random Forests",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/04-decision-trees/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/04-decision-trees/"
       },
       {
         "name": "Support Vector Machines",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/05-support-vector-machines/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/05-support-vector-machines/"
       },
       {
         "name": "KNN & Distance Metrics",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/06-knn-and-distances/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/06-knn-and-distances/"
       },
       {
         "name": "Unsupervised Learning: K-Means, DBSCAN",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/07-unsupervised-learning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/07-unsupervised-learning/"
       },
       {
         "name": "Feature Engineering & Selection",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/08-feature-engineering/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/08-feature-engineering/"
       },
       {
         "name": "Model Evaluation: Metrics, Cross-Validation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/09-model-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/09-model-evaluation/"
       },
       {
         "name": "Bias, Variance & the Learning Curve",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/10-bias-variance/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/10-bias-variance/"
       },
       {
         "name": "Ensemble Methods: Boosting, Bagging, Stacking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/11-ensemble-methods/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/11-ensemble-methods/"
       },
       {
         "name": "Hyperparameter Tuning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/12-hyperparameter-tuning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/12-hyperparameter-tuning/"
       },
       {
         "name": "ML Pipelines & Experiment Tracking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/13-ml-pipelines/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/13-ml-pipelines/"
       },
       {
         "name": "Naive Bayes",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/14-naive-bayes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/14-naive-bayes/"
       },
       {
         "name": "Time Series Fundamentals",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/15-time-series/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/15-time-series/"
       },
       {
         "name": "Anomaly Detection",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/16-anomaly-detection/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/16-anomaly-detection/"
       },
       {
         "name": "Handling Imbalanced Data",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/17-imbalanced-data/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/17-imbalanced-data/"
       },
       {
         "name": "Feature Selection",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/18-feature-selection/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/18-feature-selection/"
       }
     ]
   },
@@ -401,91 +401,91 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/01-the-perceptron/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/01-the-perceptron/"
       },
       {
         "name": "Multi-Layer Networks & Forward Pass",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/02-multi-layer-networks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/02-multi-layer-networks/"
       },
       {
         "name": "Backpropagation from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/03-backpropagation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/03-backpropagation/"
       },
       {
         "name": "Activation Functions: ReLU, Sigmoid, GELU & Why",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/04-activation-functions/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/04-activation-functions/"
       },
       {
         "name": "Loss Functions: MSE, Cross-Entropy, Contrastive",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/05-loss-functions/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/05-loss-functions/"
       },
       {
         "name": "Optimizers: SGD, Momentum, Adam, AdamW",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/06-optimizers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/06-optimizers/"
       },
       {
         "name": "Regularization: Dropout, Weight Decay, BatchNorm",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/07-regularization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/07-regularization/"
       },
       {
         "name": "Weight Initialization & Training Stability",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/08-weight-initialization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/08-weight-initialization/"
       },
       {
         "name": "Learning Rate Schedules & Warmup",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/09-learning-rate-schedules/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/09-learning-rate-schedules/"
       },
       {
         "name": "Build Your Own Mini Framework",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/10-mini-framework/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/10-mini-framework/"
       },
       {
         "name": "Introduction to PyTorch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/11-intro-to-pytorch/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/11-intro-to-pytorch/"
       },
       {
         "name": "Introduction to JAX",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/12-intro-to-jax/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/12-intro-to-jax/"
       },
       {
         "name": "Debugging Neural Networks",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/13-debugging-neural-networks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/13-debugging-neural-networks/"
       }
     ]
   },
@@ -500,196 +500,196 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/01-image-fundamentals/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/01-image-fundamentals/"
       },
       {
         "name": "Convolutions from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/02-convolutions-from-scratch/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/02-convolutions-from-scratch/"
       },
       {
         "name": "CNNs: LeNet to ResNet",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/03-cnns-lenet-to-resnet/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/03-cnns-lenet-to-resnet/"
       },
       {
         "name": "Image Classification",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/04-image-classification/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/04-image-classification/"
       },
       {
         "name": "Transfer Learning & Fine-Tuning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/05-transfer-learning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/05-transfer-learning/"
       },
       {
         "name": "Object Detection — YOLO from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/06-object-detection-yolo/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/06-object-detection-yolo/"
       },
       {
         "name": "Semantic Segmentation — U-Net",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/07-semantic-segmentation-unet/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/07-semantic-segmentation-unet/"
       },
       {
         "name": "Instance Segmentation — Mask R-CNN",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/08-instance-segmentation-mask-rcnn/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/08-instance-segmentation-mask-rcnn/"
       },
       {
         "name": "Image Generation — GANs",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/09-image-generation-gans/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/09-image-generation-gans/"
       },
       {
         "name": "Image Generation — Diffusion Models",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/10-image-generation-diffusion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/10-image-generation-diffusion/"
       },
       {
         "name": "Stable Diffusion — Architecture & Fine-Tuning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/11-stable-diffusion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/11-stable-diffusion/"
       },
       {
         "name": "Video Understanding — Temporal Modeling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/12-video-understanding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/12-video-understanding/"
       },
       {
         "name": "3D Vision: Point Clouds, NeRFs",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/13-3d-vision-nerf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/13-3d-vision-nerf/"
       },
       {
         "name": "Vision Transformers (ViT)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/14-vision-transformers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/14-vision-transformers/"
       },
       {
         "name": "Real-Time Vision: Edge Deployment",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Rust",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/15-real-time-edge/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/15-real-time-edge/"
       },
       {
         "name": "Build a Complete Vision Pipeline",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/16-vision-pipeline-capstone/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/16-vision-pipeline-capstone/"
       },
       {
         "name": "Self-Supervised Vision — SimCLR, DINO, MAE",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/17-self-supervised-vision/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/17-self-supervised-vision/"
       },
       {
         "name": "Open-Vocabulary Vision — CLIP",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/18-open-vocab-clip/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/18-open-vocab-clip/"
       },
       {
         "name": "OCR & Document Understanding",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/19-ocr-document-understanding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/19-ocr-document-understanding/"
       },
       {
         "name": "Image Retrieval & Metric Learning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/20-image-retrieval-metric/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/20-image-retrieval-metric/"
       },
       {
         "name": "Keypoint Detection & Pose Estimation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/21-keypoint-pose/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/21-keypoint-pose/"
       },
       {
         "name": "3D Gaussian Splatting from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/22-3d-gaussian-splatting/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/22-3d-gaussian-splatting/"
       },
       {
         "name": "Diffusion Transformers & Rectified Flow",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/23-diffusion-transformers-rectified-flow/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/23-diffusion-transformers-rectified-flow/"
       },
       {
         "name": "SAM 3 & Open-Vocabulary Segmentation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/24-sam3-open-vocab-segmentation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/24-sam3-open-vocab-segmentation/"
       },
       {
         "name": "Vision-Language Models (ViT-MLP-LLM)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/25-vision-language-models/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/25-vision-language-models/"
       },
       {
         "name": "Monocular Depth & Geometry Estimation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/26-monocular-depth/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/26-monocular-depth/"
       },
       {
         "name": "Multi-Object Tracking & Video Memory",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/27-multi-object-tracking/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/27-multi-object-tracking/"
       },
       {
         "name": "World Models & Video Diffusion",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/28-world-models-video-diffusion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/28-world-models-video-diffusion/"
       }
     ]
   },
@@ -704,203 +704,203 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/01-text-processing/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/01-text-processing/"
       },
       {
         "name": "Bag of Words, TF-IDF & Text Representation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/02-bag-of-words-tfidf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/02-bag-of-words-tfidf/"
       },
       {
         "name": "Word Embeddings: Word2Vec from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/03-word-embeddings-word2vec/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/03-word-embeddings-word2vec/"
       },
       {
         "name": "GloVe, FastText & Subword Embeddings",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/04-glove-fasttext-subword/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/04-glove-fasttext-subword/"
       },
       {
         "name": "Sentiment Analysis",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/05-sentiment-analysis/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/05-sentiment-analysis/"
       },
       {
         "name": "Named Entity Recognition (NER)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/06-named-entity-recognition/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/06-named-entity-recognition/"
       },
       {
         "name": "POS Tagging & Syntactic Parsing",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/07-pos-tagging-parsing/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/07-pos-tagging-parsing/"
       },
       {
         "name": "Text Classification — CNNs & RNNs for Text",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/08-cnns-rnns-for-text/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/08-cnns-rnns-for-text/"
       },
       {
         "name": "Sequence-to-Sequence Models",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/09-sequence-to-sequence/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/09-sequence-to-sequence/"
       },
       {
         "name": "Attention Mechanism — The Breakthrough",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/10-attention-mechanism/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/10-attention-mechanism/"
       },
       {
         "name": "Machine Translation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/11-machine-translation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/11-machine-translation/"
       },
       {
         "name": "Text Summarization",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/12-text-summarization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/12-text-summarization/"
       },
       {
         "name": "Question Answering Systems",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/13-question-answering/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/13-question-answering/"
       },
       {
         "name": "Information Retrieval & Search",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/14-information-retrieval-search/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/14-information-retrieval-search/"
       },
       {
         "name": "Topic Modeling: LDA, BERTopic",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/15-topic-modeling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/15-topic-modeling/"
       },
       {
         "name": "Text Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/16-text-generation-pre-transformer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/16-text-generation-pre-transformer/"
       },
       {
         "name": "Chatbots: Rule-Based to Neural",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/17-chatbots-rule-to-neural/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/17-chatbots-rule-to-neural/"
       },
       {
         "name": "Multilingual NLP",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/18-multilingual-nlp/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/18-multilingual-nlp/"
       },
       {
         "name": "Subword Tokenization: BPE, WordPiece, Unigram, SentencePiece",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/19-subword-tokenization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/19-subword-tokenization/"
       },
       {
         "name": "Structured Outputs & Constrained Decoding",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/20-structured-outputs-constrained-decoding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/20-structured-outputs-constrained-decoding/"
       },
       {
         "name": "NLI & Textual Entailment",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/21-nli-textual-entailment/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/21-nli-textual-entailment/"
       },
       {
         "name": "Embedding Models Deep Dive",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/22-embedding-models-deep-dive/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/22-embedding-models-deep-dive/"
       },
       {
         "name": "Chunking Strategies for RAG",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/23-chunking-strategies-rag/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/23-chunking-strategies-rag/"
       },
       {
         "name": "Coreference Resolution",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/24-coreference-resolution/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/24-coreference-resolution/"
       },
       {
         "name": "Entity Linking & Disambiguation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/25-entity-linking/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/25-entity-linking/"
       },
       {
         "name": "Relation Extraction & Knowledge Graph Construction",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/26-relation-extraction-kg/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/26-relation-extraction-kg/"
       },
       {
         "name": "LLM Evaluation: RAGAS, DeepEval, G-Eval",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/27-llm-evaluation-frameworks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/27-llm-evaluation-frameworks/"
       },
       {
         "name": "Long-Context Evaluation: NIAH, RULER, LongBench, MRCR",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/28-long-context-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/28-long-context-evaluation/"
       },
       {
         "name": "Dialogue State Tracking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/29-dialogue-state-tracking/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/29-dialogue-state-tracking/"
       }
     ]
   },
@@ -915,119 +915,119 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/01-audio-fundamentals"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/01-audio-fundamentals"
       },
       {
         "name": "Spectrograms, Mel Scale & Audio Features",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/02-spectrograms-mel-features"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/02-spectrograms-mel-features"
       },
       {
         "name": "Audio Classification",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/03-audio-classification"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/03-audio-classification"
       },
       {
         "name": "Speech Recognition (ASR)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/04-speech-recognition-asr"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/04-speech-recognition-asr"
       },
       {
         "name": "Whisper: Architecture & Fine-Tuning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/05-whisper-architecture-finetuning"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/05-whisper-architecture-finetuning"
       },
       {
         "name": "Speaker Recognition & Verification",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/06-speaker-recognition-verification"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/06-speaker-recognition-verification"
       },
       {
         "name": "Text-to-Speech (TTS)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/07-text-to-speech"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/07-text-to-speech"
       },
       {
         "name": "Voice Cloning & Voice Conversion",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/08-voice-cloning-conversion"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/08-voice-cloning-conversion"
       },
       {
         "name": "Music Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/09-music-generation"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/09-music-generation"
       },
       {
         "name": "Audio-Language Models",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/10-audio-language-models"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/10-audio-language-models"
       },
       {
         "name": "Real-Time Audio Processing",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Rust",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/11-real-time-audio-processing"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/11-real-time-audio-processing"
       },
       {
         "name": "Build a Voice Assistant Pipeline",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/12-voice-assistant-pipeline"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/12-voice-assistant-pipeline"
       },
       {
         "name": "Neural Audio Codecs — EnCodec, SNAC, Mimi, DAC",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/13-neural-audio-codecs"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/13-neural-audio-codecs"
       },
       {
         "name": "Voice Activity Detection & Turn-Taking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/14-voice-activity-detection-turn-taking"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/14-voice-activity-detection-turn-taking"
       },
       {
         "name": "Streaming Speech-to-Speech — Moshi, Hibiki",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki"
       },
       {
         "name": "Voice Anti-Spoofing & Audio Watermarking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking"
       },
       {
         "name": "Audio Evaluation — WER, MOS, MMAU, Leaderboards",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/17-audio-evaluation-metrics"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/17-audio-evaluation-metrics"
       }
     ]
   },
@@ -1042,98 +1042,98 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/01-why-transformers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/01-why-transformers/"
       },
       {
         "name": "Self-Attention from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/02-self-attention-from-scratch/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/02-self-attention-from-scratch/"
       },
       {
         "name": "Multi-Head Attention",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/03-multi-head-attention/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/03-multi-head-attention/"
       },
       {
         "name": "Positional Encoding: Sinusoidal, RoPE, ALiBi",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/04-positional-encoding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/04-positional-encoding/"
       },
       {
         "name": "The Full Transformer: Encoder + Decoder",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/05-full-transformer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/05-full-transformer/"
       },
       {
         "name": "BERT — Masked Language Modeling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/06-bert-masked-language-modeling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/06-bert-masked-language-modeling/"
       },
       {
         "name": "GPT — Causal Language Modeling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/07-gpt-causal-language-modeling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/07-gpt-causal-language-modeling/"
       },
       {
         "name": "T5, BART — Encoder-Decoder Models",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/08-t5-bart-encoder-decoder/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/08-t5-bart-encoder-decoder/"
       },
       {
         "name": "Vision Transformers (ViT)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/09-vision-transformers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/09-vision-transformers/"
       },
       {
         "name": "Audio Transformers — Whisper Architecture",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/10-audio-transformers-whisper/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/10-audio-transformers-whisper/"
       },
       {
         "name": "Mixture of Experts (MoE)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/11-mixture-of-experts/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/11-mixture-of-experts/"
       },
       {
         "name": "KV Cache, Flash Attention & Inference Optimization",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/12-kv-cache-flash-attention/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/12-kv-cache-flash-attention/"
       },
       {
         "name": "Scaling Laws",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/13-scaling-laws/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/13-scaling-laws/"
       },
       {
         "name": "Build a Transformer from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/14-build-a-transformer-capstone/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/14-build-a-transformer-capstone/"
       }
     ]
   },
@@ -1148,98 +1148,98 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/01-generative-models-taxonomy-history/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/01-generative-models-taxonomy-history/"
       },
       {
         "name": "Autoencoders & VAE",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/02-autoencoders-vae/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/02-autoencoders-vae/"
       },
       {
         "name": "GANs: Generator vs Discriminator",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/03-gans-generator-discriminator/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/03-gans-generator-discriminator/"
       },
       {
         "name": "Conditional GANs & Pix2Pix",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/04-conditional-gans-pix2pix/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/04-conditional-gans-pix2pix/"
       },
       {
         "name": "StyleGAN",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/05-stylegan/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/05-stylegan/"
       },
       {
         "name": "Diffusion Models — DDPM from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/06-diffusion-ddpm-from-scratch/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/06-diffusion-ddpm-from-scratch/"
       },
       {
         "name": "Latent Diffusion & Stable Diffusion",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/07-latent-diffusion-stable-diffusion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/07-latent-diffusion-stable-diffusion/"
       },
       {
         "name": "ControlNet, LoRA & Conditioning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/08-controlnet-lora-conditioning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/08-controlnet-lora-conditioning/"
       },
       {
         "name": "Inpainting, Outpainting & Editing",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/09-inpainting-outpainting-editing/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/09-inpainting-outpainting-editing/"
       },
       {
         "name": "Video Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/10-video-generation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/10-video-generation/"
       },
       {
         "name": "Audio Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/11-audio-generation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/11-audio-generation/"
       },
       {
         "name": "3D Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/12-3d-generation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/12-3d-generation/"
       },
       {
         "name": "Flow Matching & Rectified Flows",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/13-flow-matching-rectified-flows/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/13-flow-matching-rectified-flows/"
       },
       {
         "name": "Evaluation: FID, CLIP Score",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/14-evaluation-fid-clip-score/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/14-evaluation-fid-clip-score/"
       }
     ]
   },
@@ -1254,84 +1254,84 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/01-mdps-states-actions-rewards/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/01-mdps-states-actions-rewards/"
       },
       {
         "name": "Dynamic Programming",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/02-dynamic-programming/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/02-dynamic-programming/"
       },
       {
         "name": "Monte Carlo Methods",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/03-monte-carlo-methods/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/03-monte-carlo-methods/"
       },
       {
         "name": "Q-Learning, SARSA",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/04-q-learning-sarsa/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/04-q-learning-sarsa/"
       },
       {
         "name": "Deep Q-Networks (DQN)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/05-dqn/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/05-dqn/"
       },
       {
         "name": "Policy Gradients — REINFORCE",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/06-policy-gradients-reinforce/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/06-policy-gradients-reinforce/"
       },
       {
         "name": "Actor-Critic — A2C, A3C",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/07-actor-critic-a2c-a3c/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/07-actor-critic-a2c-a3c/"
       },
       {
         "name": "PPO",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/08-ppo/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/08-ppo/"
       },
       {
         "name": "Reward Modeling & RLHF",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/09-reward-modeling-rlhf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/09-reward-modeling-rlhf/"
       },
       {
         "name": "Multi-Agent RL",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/10-multi-agent-rl/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/10-multi-agent-rl/"
       },
       {
         "name": "Sim-to-Real Transfer",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/11-sim-to-real-transfer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/11-sim-to-real-transfer/"
       },
       {
         "name": "RL for Games",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/12-rl-for-games/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/12-rl-for-games/"
       }
     ]
   },
@@ -1346,154 +1346,154 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/01-tokenizers/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/01-tokenizers/"
       },
       {
         "name": "Building a Tokenizer from Scratch",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/02-building-a-tokenizer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/02-building-a-tokenizer/"
       },
       {
         "name": "Data Pipelines for Pre-Training",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/03-data-pipelines/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/03-data-pipelines/"
       },
       {
         "name": "Pre-Training a Mini GPT (124M)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/04-pre-training-mini-gpt/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/04-pre-training-mini-gpt/"
       },
       {
         "name": "Distributed Training, FSDP, DeepSpeed",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/05-scaling-distributed/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/05-scaling-distributed/"
       },
       {
         "name": "Instruction Tuning — SFT",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/06-instruction-tuning-sft/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/06-instruction-tuning-sft/"
       },
       {
         "name": "RLHF — Reward Model + PPO",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/07-rlhf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/07-rlhf/"
       },
       {
         "name": "DPO — Direct Preference Optimization",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/08-dpo/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/08-dpo/"
       },
       {
         "name": "Constitutional AI & Self-Improvement",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/09-constitutional-ai-self-improvement/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/09-constitutional-ai-self-improvement/"
       },
       {
         "name": "Evaluation — Benchmarks, Evals",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/10-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/10-evaluation/"
       },
       {
         "name": "Quantization: INT8, GPTQ, AWQ, GGUF",
         "status": "complete",
         "type": "Build",
         "lang": "Python, Rust",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/11-quantization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/11-quantization/"
       },
       {
         "name": "Inference Optimization",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/12-inference-optimization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/12-inference-optimization/"
       },
       {
         "name": "Building a Complete LLM Pipeline",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/13-building-complete-llm-pipeline/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/13-building-complete-llm-pipeline/"
       },
       {
         "name": "Open Models: Architecture Walkthroughs",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs/"
       },
       {
         "name": "Speculative Decoding and EAGLE-3",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/15-speculative-decoding-eagle3/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/15-speculative-decoding-eagle3/"
       },
       {
         "name": "Differential Attention (V2)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/16-differential-attention-v2/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/16-differential-attention-v2/"
       },
       {
         "name": "Native Sparse Attention (DeepSeek NSA)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/17-native-sparse-attention/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/17-native-sparse-attention/"
       },
       {
         "name": "Multi-Token Prediction (MTP)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/18-multi-token-prediction/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/18-multi-token-prediction/"
       },
       {
         "name": "DualPipe Parallelism",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/19-dualpipe-parallelism/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/19-dualpipe-parallelism/"
       },
       {
         "name": "DeepSeek-V3 Architecture Walkthrough",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/20-deepseek-v3-walkthrough/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/20-deepseek-v3-walkthrough/"
       },
       {
         "name": "Jamba — Hybrid SSM-Transformer",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer/"
       },
       {
         "name": "Async and Hogwild! Inference",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/22-async-hogwild-inference/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/22-async-hogwild-inference/"
       }
     ]
   },
@@ -1508,105 +1508,105 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/01-prompt-engineering/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/01-prompt-engineering/"
       },
       {
         "name": "Few-Shot, CoT, Tree-of-Thought",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/02-few-shot-cot/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/02-few-shot-cot/"
       },
       {
         "name": "Structured Outputs",
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/03-structured-outputs/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/03-structured-outputs/"
       },
       {
         "name": "Embeddings & Vector Representations",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/04-embeddings/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/04-embeddings/"
       },
       {
         "name": "Context Engineering",
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/05-context-engineering/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/05-context-engineering/"
       },
       {
         "name": "RAG: Retrieval-Augmented Generation",
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/06-rag/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/06-rag/"
       },
       {
         "name": "Advanced RAG: Chunking, Reranking",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/07-advanced-rag/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/07-advanced-rag/"
       },
       {
         "name": "Fine-Tuning with LoRA & QLoRA",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/08-fine-tuning-lora/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/08-fine-tuning-lora/"
       },
       {
         "name": "Function Calling & Tool Use",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/09-function-calling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/09-function-calling/"
       },
       {
         "name": "Evaluation & Testing",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/10-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/10-evaluation/"
       },
       {
         "name": "Caching, Rate Limiting & Cost",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/11-caching-cost/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/11-caching-cost/"
       },
       {
         "name": "Guardrails & Safety",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/12-guardrails/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/12-guardrails/"
       },
       {
         "name": "Building a Production LLM App",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/13-production-app/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/13-production-app/"
       },
       {
         "name": "Model Context Protocol (MCP)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/14-model-context-protocol/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/14-model-context-protocol/"
       },
       {
         "name": "Prompt Caching & Context Caching",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/15-prompt-caching/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/15-prompt-caching/"
       }
     ]
   },
@@ -1621,175 +1621,175 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/01-vision-transformer-patch-tokens/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/01-vision-transformer-patch-tokens/"
       },
       {
         "name": "CLIP and Contrastive Vision-Language Pretraining",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/02-clip-contrastive-pretraining/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/02-clip-contrastive-pretraining/"
       },
       {
         "name": "BLIP-2 Q-Former as Modality Bridge",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/03-blip2-qformer-bridge/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/03-blip2-qformer-bridge/"
       },
       {
         "name": "Flamingo and Gated Cross-Attention",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/04-flamingo-gated-cross-attention/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/04-flamingo-gated-cross-attention/"
       },
       {
         "name": "LLaVA and Visual Instruction Tuning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/05-llava-visual-instruction-tuning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/05-llava-visual-instruction-tuning/"
       },
       {
         "name": "Any-Resolution Vision — Patch-n'-Pack and NaFlex",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/06-any-resolution-patch-n-pack/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/06-any-resolution-patch-n-pack/"
       },
       {
         "name": "Open-Weight VLM Recipes: What Actually Matters",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/07-open-weight-vlm-recipes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/07-open-weight-vlm-recipes/"
       },
       {
         "name": "LLaVA-OneVision: Single, Multi, Video",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/08-llava-onevision-single-multi-video/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/08-llava-onevision-single-multi-video/"
       },
       {
         "name": "Qwen-VL Family and Dynamic-FPS Video",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/09-qwen-vl-family-dynamic-fps/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/09-qwen-vl-family-dynamic-fps/"
       },
       {
         "name": "InternVL3 Native Multimodal Pretraining",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/10-internvl3-native-multimodal/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/10-internvl3-native-multimodal/"
       },
       {
         "name": "Chameleon Early-Fusion Token-Only",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/11-chameleon-early-fusion-tokens/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/11-chameleon-early-fusion-tokens/"
       },
       {
         "name": "Emu3 Next-Token Prediction for Generation",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/12-emu3-next-token-for-generation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/12-emu3-next-token-for-generation/"
       },
       {
         "name": "Transfusion Autoregressive + Diffusion",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/13-transfusion-autoregressive-diffusion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/13-transfusion-autoregressive-diffusion/"
       },
       {
         "name": "Show-o Discrete-Diffusion Unified",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/14-show-o-discrete-diffusion-unified/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/14-show-o-discrete-diffusion-unified/"
       },
       {
         "name": "Janus-Pro Decoupled Encoders",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/15-janus-pro-decoupled-encoders/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/15-janus-pro-decoupled-encoders/"
       },
       {
         "name": "MIO Any-to-Any Streaming",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/16-mio-any-to-any-streaming/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/16-mio-any-to-any-streaming/"
       },
       {
         "name": "Video-Language Temporal Grounding",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/17-video-language-temporal-grounding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/17-video-language-temporal-grounding/"
       },
       {
         "name": "Long-Video at Million-Token Context",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/18-long-video-million-token/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/18-long-video-million-token/"
       },
       {
         "name": "Audio-Language Models: Whisper to AF3",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/19-audio-language-whisper-to-af3/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/19-audio-language-whisper-to-af3/"
       },
       {
         "name": "Omni Models: Thinker-Talker Streaming",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/20-omni-models-thinker-talker/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/20-omni-models-thinker-talker/"
       },
       {
         "name": "Embodied VLAs: RT-2, OpenVLA, π0, GR00T",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/21-embodied-vlas-openvla-pi0-groot/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/21-embodied-vlas-openvla-pi0-groot/"
       },
       {
         "name": "Document and Diagram Understanding",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/22-document-diagram-understanding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/22-document-diagram-understanding/"
       },
       {
         "name": "ColPali Vision-Native Document RAG",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/23-colpali-vision-native-rag/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/23-colpali-vision-native-rag/"
       },
       {
         "name": "Multimodal RAG and Cross-Modal Retrieval",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/24-multimodal-rag-cross-modal/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/24-multimodal-rag-cross-modal/"
       },
       {
         "name": "Multimodal Agents and Computer-Use (Capstone)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/25-multimodal-agents-computer-use/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/25-multimodal-agents-computer-use/"
       }
     ]
   },
@@ -1804,161 +1804,161 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/01-the-tool-interface/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/01-the-tool-interface/"
       },
       {
         "name": "Function Calling Deep Dive",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/02-function-calling-deep-dive/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/02-function-calling-deep-dive/"
       },
       {
         "name": "Parallel and Streaming Tool Calls",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls/"
       },
       {
         "name": "Structured Output",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/04-structured-output/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/04-structured-output/"
       },
       {
         "name": "Tool Schema Design",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/05-tool-schema-design/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/05-tool-schema-design/"
       },
       {
         "name": "MCP Fundamentals",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/06-mcp-fundamentals/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/06-mcp-fundamentals/"
       },
       {
         "name": "Building an MCP Server",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/07-building-an-mcp-server/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/07-building-an-mcp-server/"
       },
       {
         "name": "Building an MCP Client",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/08-building-an-mcp-client/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/08-building-an-mcp-client/"
       },
       {
         "name": "MCP Transports",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/09-mcp-transports/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/09-mcp-transports/"
       },
       {
         "name": "MCP Resources and Prompts",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/10-mcp-resources-and-prompts/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/10-mcp-resources-and-prompts/"
       },
       {
         "name": "MCP Sampling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/11-mcp-sampling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/11-mcp-sampling/"
       },
       {
         "name": "MCP Roots and Elicitation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/12-mcp-roots-and-elicitation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/12-mcp-roots-and-elicitation/"
       },
       {
         "name": "MCP Async Tasks",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/13-mcp-async-tasks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/13-mcp-async-tasks/"
       },
       {
         "name": "MCP Apps",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/14-mcp-apps/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/14-mcp-apps/"
       },
       {
         "name": "MCP Security I — Tool Poisoning",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/15-mcp-security-tool-poisoning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/15-mcp-security-tool-poisoning/"
       },
       {
         "name": "MCP Security II — OAuth 2.1",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/16-mcp-security-oauth-2-1/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/16-mcp-security-oauth-2-1/"
       },
       {
         "name": "MCP Gateways and Registries",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/17-mcp-gateways-and-registries/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/17-mcp-gateways-and-registries/"
       },
       {
         "name": "MCP Auth in Production — DCR + JWKS on iii",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/18-mcp-auth-production/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/18-mcp-auth-production/"
       },
       {
         "name": "A2A Protocol",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/19-a2a-protocol/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/19-a2a-protocol/"
       },
       {
         "name": "OpenTelemetry GenAI",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/20-opentelemetry-genai/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/20-opentelemetry-genai/"
       },
       {
         "name": "LLM Routing Layer",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/21-llm-routing-layer/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/21-llm-routing-layer/"
       },
       {
         "name": "Skills and Agent SDKs",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/22-skills-and-agent-sdks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/22-skills-and-agent-sdks/"
       },
       {
         "name": "Capstone — Tool Ecosystem",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/23-capstone-tool-ecosystem/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/23-capstone-tool-ecosystem/"
       }
     ]
   },
@@ -1973,294 +1973,294 @@ const PHASES = [
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/01-the-agent-loop/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/01-the-agent-loop/"
       },
       {
         "name": "ReWOO and Plan-and-Execute",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/02-rewoo-plan-and-execute/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/02-rewoo-plan-and-execute/"
       },
       {
         "name": "Reflexion and Verbal Reinforcement Learning",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/03-reflexion-verbal-rl/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/03-reflexion-verbal-rl/"
       },
       {
         "name": "Tree of Thoughts and LATS",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/04-tree-of-thoughts-lats/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/04-tree-of-thoughts-lats/"
       },
       {
         "name": "Self-Refine and CRITIC",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/05-self-refine-and-critic/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/05-self-refine-and-critic/"
       },
       {
         "name": "Tool Use and Function Calling",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/06-tool-use-and-function-calling/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/06-tool-use-and-function-calling/"
       },
       {
         "name": "Memory — Virtual Context and MemGPT",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/07-memory-virtual-context-memgpt/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/07-memory-virtual-context-memgpt/"
       },
       {
         "name": "Memory Blocks and Sleep-Time Compute",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/08-memory-blocks-sleep-time-compute/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/08-memory-blocks-sleep-time-compute/"
       },
       {
         "name": "Hybrid Memory — Mem0 Vector + Graph + KV",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/09-hybrid-memory-mem0/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/09-hybrid-memory-mem0/"
       },
       {
         "name": "Skill Libraries and Lifelong Learning — Voyager",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/10-skill-libraries-voyager/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/10-skill-libraries-voyager/"
       },
       {
         "name": "Planning with HTN and Evolutionary Search",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/11-planning-htn-and-evolutionary/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/11-planning-htn-and-evolutionary/"
       },
       {
         "name": "Anthropic's Workflow Patterns",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/12-anthropic-workflow-patterns/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/12-anthropic-workflow-patterns/"
       },
       {
         "name": "LangGraph — Stateful Graphs and Durable Execution",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/13-langgraph-stateful-graphs/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/13-langgraph-stateful-graphs/"
       },
       {
         "name": "AutoGen v0.4 — Actor Model",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/14-autogen-actor-model/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/14-autogen-actor-model/"
       },
       {
         "name": "CrewAI — Role-Based Crews and Flows",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/15-crewai-role-based-crews/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/15-crewai-role-based-crews/"
       },
       {
         "name": "OpenAI Agents SDK — Handoffs, Guardrails, Tracing",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/16-openai-agents-sdk/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/16-openai-agents-sdk/"
       },
       {
         "name": "Claude Agent SDK — Subagents and Session Store",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/17-claude-agent-sdk/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/17-claude-agent-sdk/"
       },
       {
         "name": "Agno and Mastra — Production Runtimes",
         "status": "complete",
         "type": "Learn",
         "lang": "Python, TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/18-agno-and-mastra-runtimes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/18-agno-and-mastra-runtimes/"
       },
       {
         "name": "Benchmarks — SWE-bench, GAIA, AgentBench",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/19-benchmarks-swebench-gaia/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/19-benchmarks-swebench-gaia/"
       },
       {
         "name": "Benchmarks — WebArena and OSWorld",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/20-benchmarks-webarena-osworld/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/20-benchmarks-webarena-osworld/"
       },
       {
         "name": "Computer Use — Claude, OpenAI CUA, Gemini",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/21-computer-use-agents/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/21-computer-use-agents/"
       },
       {
         "name": "Voice Agents — Pipecat and LiveKit",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/22-voice-agents-pipecat-livekit/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/22-voice-agents-pipecat-livekit/"
       },
       {
         "name": "OpenTelemetry GenAI Semantic Conventions",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/23-otel-genai-conventions/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/23-otel-genai-conventions/"
       },
       {
         "name": "Agent Observability — Langfuse, Phoenix, Opik",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/24-agent-observability-platforms/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/24-agent-observability-platforms/"
       },
       {
         "name": "Multi-Agent Debate and Collaboration",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/25-multi-agent-debate/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/25-multi-agent-debate/"
       },
       {
         "name": "Failure Modes — Why Agents Break",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/26-failure-modes-agentic/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/26-failure-modes-agentic/"
       },
       {
         "name": "Prompt Injection and the PVE Defense",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/27-prompt-injection-defense/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/27-prompt-injection-defense/"
       },
       {
         "name": "Orchestration Patterns — Supervisor, Swarm, Hierarchical",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/28-orchestration-patterns/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/28-orchestration-patterns/"
       },
       {
         "name": "Production Runtimes — Queue, Event, Cron",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/29-production-runtimes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/29-production-runtimes/"
       },
       {
         "name": "Eval-Driven Agent Development",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/30-eval-driven-agent-development/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/30-eval-driven-agent-development/"
       },
       {
         "name": "Agent Workbench: Why Capable Models Still Fail",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/31-agent-workbench-why-models-fail/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/31-agent-workbench-why-models-fail/"
       },
       {
         "name": "The Minimal Agent Workbench",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/32-minimal-agent-workbench/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/32-minimal-agent-workbench/"
       },
       {
         "name": "Agent Instructions as Executable Constraints",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/33-instructions-as-executable-constraints/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/33-instructions-as-executable-constraints/"
       },
       {
         "name": "Repo Memory and Durable State",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/34-repo-memory-and-state/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/34-repo-memory-and-state/"
       },
       {
         "name": "Initialization Scripts for Agents",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/35-initialization-scripts/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/35-initialization-scripts/"
       },
       {
         "name": "Scope Contracts and Task Boundaries",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/36-scope-contracts/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/36-scope-contracts/"
       },
       {
         "name": "Runtime Feedback Loops",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/37-runtime-feedback-loops/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/37-runtime-feedback-loops/"
       },
       {
         "name": "Verification Gates",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/38-verification-gates/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/38-verification-gates/"
       },
       {
         "name": "Reviewer Agent: Separate Builder from Marker",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/39-reviewer-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/39-reviewer-agent/"
       },
       {
         "name": "Multi-Session Handoff",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/40-multi-session-handoff/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/40-multi-session-handoff/"
       },
       {
         "name": "The Workbench on a Real Repo",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/41-workbench-for-real-repos/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/41-workbench-for-real-repos/"
       },
       {
         "name": "Capstone: Ship a Reusable Agent Workbench Pack",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/42-agent-workbench-capstone/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/42-agent-workbench-capstone/"
       }
     ]
   },
@@ -2275,154 +2275,154 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/01-long-horizon-agents/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/01-long-horizon-agents/"
       },
       {
         "name": "STaR, V-STaR, Quiet-STaR: Self-Taught Reasoning",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/02-star-family-reasoning/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/02-star-family-reasoning/"
       },
       {
         "name": "AlphaEvolve: Evolutionary Coding Agents",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/03-alphaevolve-evolutionary-coding/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/03-alphaevolve-evolutionary-coding/"
       },
       {
         "name": "Darwin Gödel Machine: Self-Modifying Agents",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/04-darwin-godel-machine/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/04-darwin-godel-machine/"
       },
       {
         "name": "AI Scientist v2: Workshop-Level Research",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/05-ai-scientist-v2/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/05-ai-scientist-v2/"
       },
       {
         "name": "Automated Alignment Research (Anthropic AAR)",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/06-automated-alignment-research/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/06-automated-alignment-research/"
       },
       {
         "name": "Recursive Self-Improvement: Capability vs Alignment",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/07-recursive-self-improvement/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/07-recursive-self-improvement/"
       },
       {
         "name": "Bounded Self-Improvement Designs",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/08-bounded-self-improvement/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/08-bounded-self-improvement/"
       },
       {
         "name": "Autonomous Coding Agent Landscape (SWE-bench, CodeAct)",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/09-coding-agent-landscape/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/09-coding-agent-landscape/"
       },
       {
         "name": "Claude Code Permission Modes and Auto Mode",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/10-claude-code-permission-modes/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/10-claude-code-permission-modes/"
       },
       {
         "name": "Browser Agents and Indirect Prompt Injection",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/11-browser-agents/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/11-browser-agents/"
       },
       {
         "name": "Durable Execution for Long-Running Agents",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/12-durable-execution/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/12-durable-execution/"
       },
       {
         "name": "Action Budgets, Iteration Caps, Cost Governors",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/13-cost-governors/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/13-cost-governors/"
       },
       {
         "name": "Kill Switches, Circuit Breakers, Canary Tokens",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/14-kill-switches-canaries/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/14-kill-switches-canaries/"
       },
       {
         "name": "HITL: Propose-Then-Commit",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/15-propose-then-commit/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/15-propose-then-commit/"
       },
       {
         "name": "Checkpoints and Rollback",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/16-checkpoints-rollback/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/16-checkpoints-rollback/"
       },
       {
         "name": "Constitutional AI and Rule Overrides",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/17-constitutional-ai/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/17-constitutional-ai/"
       },
       {
         "name": "Llama Guard and Input/Output Classification",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/18-llama-guard/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/18-llama-guard/"
       },
       {
         "name": "Anthropic Responsible Scaling Policy v3.0",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/19-anthropic-rsp/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/19-anthropic-rsp/"
       },
       {
         "name": "OpenAI Preparedness Framework and DeepMind FSF",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/20-openai-preparedness-deepmind-fsf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/20-openai-preparedness-deepmind-fsf/"
       },
       {
         "name": "METR Time Horizons and External Evaluation",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/21-metr-external-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/21-metr-external-evaluation/"
       },
       {
         "name": "CAIS, CAISI, and Societal-Scale Risk",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/22-cais-caisi-societal-risk/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/22-cais-caisi-societal-risk/"
       }
     ]
   },
@@ -2437,175 +2437,175 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/01-why-multi-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/01-why-multi-agent/"
       },
       {
         "name": "FIPA-ACL Heritage and Speech Acts",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/02-fipa-acl-heritage/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/02-fipa-acl-heritage/"
       },
       {
         "name": "Communication Protocols",
         "status": "complete",
         "type": "Build",
         "lang": "TypeScript",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/03-communication-protocols/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/03-communication-protocols/"
       },
       {
         "name": "The Multi-Agent Primitive Model",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/04-primitive-model/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/04-primitive-model/"
       },
       {
         "name": "Supervisor / Orchestrator-Worker Pattern",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern/"
       },
       {
         "name": "Hierarchical Architecture and Decomposition Drift",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/06-hierarchical-architecture/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/06-hierarchical-architecture/"
       },
       {
         "name": "Society of Mind and Multi-Agent Debate",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/07-society-of-mind-debate/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/07-society-of-mind-debate/"
       },
       {
         "name": "Role Specialization — Planner / Critic / Executor / Verifier",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/08-role-specialization/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/08-role-specialization/"
       },
       {
         "name": "Parallel Swarm and Networked Architectures",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/09-parallel-swarm-networks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/09-parallel-swarm-networks/"
       },
       {
         "name": "Group Chat and Speaker Selection",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection/"
       },
       {
         "name": "Handoffs and Routines (Stateless Orchestration)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/11-handoffs-and-routines/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/11-handoffs-and-routines/"
       },
       {
         "name": "A2A — The Agent-to-Agent Protocol",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/12-a2a-protocol/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/12-a2a-protocol/"
       },
       {
         "name": "Shared Memory and Blackboard Patterns",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/13-shared-memory-blackboard/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/13-shared-memory-blackboard/"
       },
       {
         "name": "Consensus and Byzantine Fault Tolerance",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/14-consensus-and-bft/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/14-consensus-and-bft/"
       },
       {
         "name": "Voting, Self-Consistency, and Debate Topology",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/15-voting-debate-topology/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/15-voting-debate-topology/"
       },
       {
         "name": "Negotiation and Bargaining",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/16-negotiation-bargaining/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/16-negotiation-bargaining/"
       },
       {
         "name": "Generative Agents and Emergent Simulation",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/17-generative-agents-simulation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/17-generative-agents-simulation/"
       },
       {
         "name": "Theory of Mind and Emergent Coordination",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination/"
       },
       {
         "name": "Swarm Optimization (PSO, ACO)",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco/"
       },
       {
         "name": "MARL — MADDPG, QMIX, MAPPO",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo/"
       },
       {
         "name": "Agent Economies, Token Incentives, Reputation",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/21-agent-economies/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/21-agent-economies/"
       },
       {
         "name": "Production Scaling — Queues, Checkpoints, Durability",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints/"
       },
       {
         "name": "Failure Modes — MAST, Groupthink, Monoculture",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink/"
       },
       {
         "name": "Evaluation and Coordination Benchmarks",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks/"
       },
       {
         "name": "Case Studies and 2026 State of the Art",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/25-case-studies-2026-sota/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/25-case-studies-2026-sota/"
       }
     ]
   },
@@ -2796,210 +2796,210 @@ const PHASES = [
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/01-instruction-following-alignment-signal/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/01-instruction-following-alignment-signal/"
       },
       {
         "name": "Reward Hacking & Goodhart's Law",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/02-reward-hacking-goodhart/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/02-reward-hacking-goodhart/"
       },
       {
         "name": "Direct Preference Optimization Family",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/03-direct-preference-optimization-family/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/03-direct-preference-optimization-family/"
       },
       {
         "name": "Sycophancy as RLHF Amplification",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/04-sycophancy-rlhf-amplification/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/04-sycophancy-rlhf-amplification/"
       },
       {
         "name": "Constitutional AI & RLAIF",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/05-constitutional-ai-rlaif/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/05-constitutional-ai-rlaif/"
       },
       {
         "name": "Mesa-Optimization & Deceptive Alignment",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/06-mesa-optimization-deceptive-alignment/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/06-mesa-optimization-deceptive-alignment/"
       },
       {
         "name": "Sleeper Agents — Persistent Deception",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/07-sleeper-agents-persistent-deception/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/07-sleeper-agents-persistent-deception/"
       },
       {
         "name": "In-Context Scheming in Frontier Models",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/08-in-context-scheming-frontier-models/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/08-in-context-scheming-frontier-models/"
       },
       {
         "name": "Alignment Faking",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/09-alignment-faking/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/09-alignment-faking/"
       },
       {
         "name": "AI Control — Safety Despite Subversion",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/10-ai-control-subversion/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/10-ai-control-subversion/"
       },
       {
         "name": "Scalable Oversight & Weak-to-Strong",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/11-scalable-oversight-weak-to-strong/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/11-scalable-oversight-weak-to-strong/"
       },
       {
         "name": "Red-Teaming: PAIR & Automated Attacks",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/12-red-teaming-pair-automated-attacks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/12-red-teaming-pair-automated-attacks/"
       },
       {
         "name": "Many-Shot Jailbreaking",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/13-many-shot-jailbreaking/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/13-many-shot-jailbreaking/"
       },
       {
         "name": "ASCII Art & Visual Jailbreaks",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/14-ascii-art-visual-jailbreaks/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/14-ascii-art-visual-jailbreaks/"
       },
       {
         "name": "Indirect Prompt Injection",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/15-indirect-prompt-injection/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/15-indirect-prompt-injection/"
       },
       {
         "name": "Red-Team Tooling: Garak, Llama Guard, PyRIT",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/16-red-team-tooling-garak-llamaguard-pyrit/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/16-red-team-tooling-garak-llamaguard-pyrit/"
       },
       {
         "name": "WMDP & Dual-Use Capability Evaluation",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/17-wmdp-dual-use-evaluation/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/17-wmdp-dual-use-evaluation/"
       },
       {
         "name": "Frontier Safety Frameworks — RSP, PF, FSF",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/18-frontier-safety-frameworks-rsp-pf-fsf/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/18-frontier-safety-frameworks-rsp-pf-fsf/"
       },
       {
         "name": "Model Welfare Research",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/19-model-welfare-research/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/19-model-welfare-research/"
       },
       {
         "name": "Bias & Representational Harm",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/20-bias-representational-harm/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/20-bias-representational-harm/"
       },
       {
         "name": "Fairness Criteria: Group, Individual, Counterfactual",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/21-fairness-criteria-group-individual-counterfactual/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/21-fairness-criteria-group-individual-counterfactual/"
       },
       {
         "name": "Differential Privacy for LLMs",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/22-differential-privacy-for-llms/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/22-differential-privacy-for-llms/"
       },
       {
         "name": "Watermarking: SynthID, Stable Signature, C2PA",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/23-watermarking-synthid-stable-signature-c2pa/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/23-watermarking-synthid-stable-signature-c2pa/"
       },
       {
         "name": "Regulatory Frameworks: EU, US, UK, Korea",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/24-regulatory-frameworks-eu-us-uk-korea/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/24-regulatory-frameworks-eu-us-uk-korea/"
       },
       {
         "name": "EchoLeak & CVEs for AI",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/25-echoleak-cves-for-ai/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/25-echoleak-cves-for-ai/"
       },
       {
         "name": "Model, System & Dataset Cards",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/26-model-system-dataset-cards/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/26-model-system-dataset-cards/"
       },
       {
         "name": "Data Provenance & Training-Data Governance",
         "status": "complete",
         "type": "Learn",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/27-data-provenance-training-governance/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/27-data-provenance-training-governance/"
       },
       {
         "name": "Alignment Research Ecosystem: MATS, Redwood, Apollo, METR",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/28-alignment-research-ecosystem/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/28-alignment-research-ecosystem/"
       },
       {
         "name": "Moderation Systems: OpenAI, Perspective, Llama Guard",
         "status": "complete",
         "type": "Build",
         "lang": "Python",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/29-moderation-systems-openai-perspective-llamaguard/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/29-moderation-systems-openai-perspective-llamaguard/"
       },
       {
         "name": "Dual-Use Risk: Cyber, Bio, Chem, Nuclear",
         "status": "complete",
         "type": "Learn",
         "lang": "—",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/30-dual-use-risk-cyber-bio-chem-nuclear/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/30-dual-use-risk-cyber-bio-chem-nuclear/"
       }
     ]
   },
@@ -3015,7 +3015,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "TypeScript, Python",
         "combines": "P0 P5 P7 P10 P11 P13 P14 P15 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/01-terminal-native-coding-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/01-terminal-native-coding-agent/"
       },
       {
         "name": "RAG over Codebase (Cross-Repo Semantic Search)",
@@ -3023,7 +3023,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P13 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/02-rag-over-codebase/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/02-rag-over-codebase/"
       },
       {
         "name": "Real-Time Voice Assistant (ASR → LLM → TTS)",
@@ -3031,7 +3031,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P6 P7 P11 P13 P14 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/03-realtime-voice-assistant/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/03-realtime-voice-assistant/"
       },
       {
         "name": "Multimodal Document QA (Vision-First)",
@@ -3039,7 +3039,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P4 P5 P7 P11 P12 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/04-multimodal-document-qa/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/04-multimodal-document-qa/"
       },
       {
         "name": "Autonomous Research Agent (AI-Scientist Class)",
@@ -3047,7 +3047,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P0 P2 P3 P7 P10 P14 P15 P16 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/05-autonomous-research-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/05-autonomous-research-agent/"
       },
       {
         "name": "DevOps Troubleshooting Agent for Kubernetes",
@@ -3055,7 +3055,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/06-devops-troubleshooting-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/06-devops-troubleshooting-agent/"
       },
       {
         "name": "End-to-End Fine-Tuning Pipeline",
@@ -3063,7 +3063,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P2 P3 P7 P10 P11 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/07-end-to-end-fine-tuning-pipeline/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/07-end-to-end-fine-tuning-pipeline/"
       },
       {
         "name": "Production RAG Chatbot (Regulated Vertical)",
@@ -3071,7 +3071,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P12 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/08-production-rag-chatbot/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/08-production-rag-chatbot/"
       },
       {
         "name": "Code Migration Agent (Repo-Level Upgrade)",
@@ -3079,7 +3079,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P13 P14 P15 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/09-code-migration-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/09-code-migration-agent/"
       },
       {
         "name": "Multi-Agent Software Engineering Team",
@@ -3087,7 +3087,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P16 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/10-multi-agent-software-team/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/10-multi-agent-software-team/"
       },
       {
         "name": "LLM Observability & Eval Dashboard",
@@ -3095,7 +3095,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "TypeScript, Python",
         "combines": "P11 P13 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/11-llm-observability-dashboard/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/11-llm-observability-dashboard/"
       },
       {
         "name": "Video Understanding Pipeline (Scene → QA)",
@@ -3103,7 +3103,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P4 P6 P7 P11 P12 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/12-video-understanding-pipeline/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/12-video-understanding-pipeline/"
       },
       {
         "name": "MCP Server with Registry and Governance",
@@ -3111,7 +3111,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/13-mcp-server-with-registry/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/13-mcp-server-with-registry/"
       },
       {
         "name": "Speculative-Decoding Inference Server",
@@ -3119,7 +3119,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P3 P7 P10 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/14-speculative-decoding-server/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/14-speculative-decoding-server/"
       },
       {
         "name": "Constitutional Safety Harness + Red-Team Range",
@@ -3127,7 +3127,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P10 P11 P13 P14 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/15-constitutional-safety-harness/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/15-constitutional-safety-harness/"
       },
       {
         "name": "GitHub Issue-to-PR Autonomous Agent",
@@ -3135,7 +3135,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P17",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/16-github-issue-to-pr-agent/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/16-github-issue-to-pr-agent/"
       },
       {
         "name": "Personal AI Tutor (Adaptive, Multimodal)",
@@ -3143,7 +3143,7 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P6 P11 P12 P14 P17 P18",
-        "url": "https://github.com/rohitg00/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/17-personal-ai-tutor/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/17-personal-ai-tutor/"
       }
     ]
   }
