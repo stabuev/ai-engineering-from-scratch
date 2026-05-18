@@ -2,55 +2,55 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why do AI projects need a separate virtual environment?",
+      "question": "Почему AI-проектам требуется отдельное виртуальное окружение?",
       "options": [
-        "Virtual environments make code run faster",
-        "They isolate dependencies so different projects don't conflict",
-        "Python requires virtual environments to import packages",
-        "Virtual environments provide GPU access"
+        "Виртуальные окружения ускоряют выполнение кода",
+        "Они изолируют зависимости, чтобы проекты не конфликтовали друг с другом",
+        "Python требует виртуальные окружения для импорта пакетов",
+        "Виртуальные окружения обеспечивают доступ к GPU"
       ],
       "correct": 1,
-      "explanation": "Virtual environments isolate package versions per project. Without them, upgrading PyTorch for one project can break another that depends on an older version."
+      "explanation": "Виртуальные окружения изолируют версии пакетов для каждого проекта. Без них обновление PyTorch в одном проекте может сломать другой проект, зависящий от более старой версии."
     },
     {
       "stage": "pre",
-      "question": "What does CUDA provide for AI workloads?",
+      "question": "Что CUDA предоставляет для AI-нагрузок?",
       "options": [
-        "A Python package manager for ML libraries",
-        "A web framework for deploying models",
-        "Parallel computing on NVIDIA GPUs for matrix operations",
-        "A container runtime for model serving"
+        "Менеджер пакетов Python для ML-библиотек",
+        "Веб-фреймворк для развёртывания моделей",
+        "Параллельные вычисления на NVIDIA GPU для матричных операций",
+        "Контейнерный runtime для обслуживания моделей"
       ],
       "correct": 2,
-      "explanation": "CUDA is NVIDIA's parallel computing platform that lets you run matrix operations on thousands of GPU cores simultaneously. PyTorch and TensorFlow use it under the hood."
+      "explanation": "CUDA — это платформа параллельных вычислений от NVIDIA, которая позволяет выполнять матричные операции одновременно на тысячах GPU-ядер. PyTorch и TensorFlow используют её «под капотом»."
     },
     {
       "stage": "post",
-      "question": "In the four-layer environment stack, which layer must be installed first?",
+      "question": "Какой уровень в четырёхуровневом стеке окружения нужно устанавливать первым?",
       "options": [
-        "AI/ML Libraries (PyTorch, JAX)",
-        "Package Managers (pip, npm, cargo)",
-        "Language Runtimes (Python, Node.js)",
-        "System Foundation (OS, shell, GPU drivers)"
+        "AI/ML-библиотеки (PyTorch, JAX)",
+        "Менеджеры пакетов (pip, npm, cargo)",
+        "Языковые рантаймы (Python, Node.js)",
+        "Системная основа (ОС, shell, GPU-драйверы)"
       ],
       "correct": 3,
-      "explanation": "You install bottom-up: system foundation first (OS, drivers), then package managers, then language runtimes, then AI libraries. Each layer depends on the one below."
+      "explanation": "Установка идёт снизу вверх: сначала системная основа (ОС, драйверы), затем менеджеры пакетов, потом языковые рантаймы и только после этого AI-библиотеки. Каждый уровень зависит от предыдущего."
     },
     {
       "stage": "post",
-      "question": "What is the purpose of uv in a Python AI project?",
+      "question": "Какова роль uv в Python AI-проекте?",
       "options": [
-        "A GPU monitoring tool",
-        "An ultra-fast Python package installer and resolver",
-        "A neural network visualization library",
-        "A CUDA compiler for custom kernels"
+        "Инструмент мониторинга GPU",
+        "Сверхбыстрый установщик и resolver Python-пакетов",
+        "Библиотека визуализации нейросетей",
+        "CUDA-компилятор для пользовательских kernel-функций"
       ],
       "correct": 1,
-      "explanation": "uv is a fast Python package installer written in Rust. It replaces pip with much faster dependency resolution and installation, often 10-100x faster."
+      "explanation": "uv — это быстрый установщик Python-пакетов, написанный на Rust. Он заменяет pip, обеспечивая гораздо более быстрое разрешение зависимостей и установку пакетов — часто в 10–100 раз быстрее."
     },
     {
       "stage": "post",
-      "question": "How do you verify that PyTorch can access your GPU?",
+      "question": "Как проверить, что PyTorch имеет доступ к GPU?",
       "options": [
         "import torch; print(torch.__version__)",
         "nvidia-smi --query",
@@ -58,7 +58,7 @@
         "python -c 'import gpu'"
       ],
       "correct": 2,
-      "explanation": "torch.cuda.is_available() returns True if PyTorch can access CUDA GPUs. On Apple Silicon, use torch.backends.mps.is_available() for Metal Performance Shaders."
+      "explanation": "torch.cuda.is_available() возвращает True, если PyTorch имеет доступ к CUDA GPU. На Apple Silicon используется torch.backends.mps.is_available() для Metal Performance Shaders."
     }
   ]
 }
