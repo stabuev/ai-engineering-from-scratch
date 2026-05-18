@@ -1,4 +1,4 @@
-# Dev Environment
+# Среда разработки
 
 > Your tools shape your thinking. Set them up once, set them up right.
 
