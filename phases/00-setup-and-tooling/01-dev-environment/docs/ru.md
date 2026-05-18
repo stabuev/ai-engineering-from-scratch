@@ -1,43 +1,43 @@
 # Среда разработки
 
-> Your tools shape your thinking. Set them up once, set them up right.
+> Ваши инструменты формируют ваше мышление. Настройте их один раз — и настройте правильно.
 
-**Type:** Build
-**Languages:** Python, Node.js, Rust
-**Prerequisites:** None
-**Time:** ~45 minutes
+**Тип:** Практика  
+**Языки:** Python, Node.js, Rust  
+**Предварительные требования:** Нет  
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Set up Python 3.11+, Node.js 20+, and Rust toolchains from scratch
-- Configure virtual environments and package managers for reproducible builds
-- Verify GPU access with CUDA/MPS and run a test tensor operation
-- Understand the four-layer stack: system, packages, runtimes, AI libraries
+- Установить Python 3.11+, Node.js 20+ и toolchain Rust с нуля
+- Настроить виртуальные окружения и менеджеры пакетов для воспроизводимых сборок
+- Проверить доступ к GPU через CUDA/MPS и выполнить тестовую тензорную операцию
+- Понять стек из четырёх уровней: система, пакеты, рантаймы, AI-библиотеки
 
-## The Problem
+## Проблема
 
-You're about to learn AI engineering across 200+ lessons using Python, TypeScript, Rust, and Julia. If your environment is broken, every single lesson becomes a fight against tooling instead of learning.
+Вам предстоит изучать AI-инженерию в рамках более чем 200 уроков, используя Python, TypeScript, Rust и Julia. Если ваше окружение сломано, каждый урок превращается в борьбу с инструментами вместо обучения.
 
-Most people skip environment setup. Then they spend hours debugging import errors, version conflicts, and missing CUDA drivers. We're going to do this once, properly.
+Большинство людей пропускают настройку среды. А потом тратят часы на отладку ошибок импорта, конфликтов версий и отсутствующих CUDA-драйверов. Мы сделаем это один раз — и сделаем правильно.
 
-## The Concept
+## Концепция
 
-An AI engineering environment has four layers:
+Среда AI-инженера состоит из четырёх уровней:
 
 ```mermaid
 graph TD
-    A["4. AI/ML Libraries\nPyTorch, JAX, transformers, etc."] --> B["3. Language Runtimes\nPython 3.11+, Node 20+, Rust, Julia"]
-    B --> C["2. Package Managers\nuv, pnpm, cargo, juliaup"]
-    C --> D["1. System Foundation\nOS, shell, git, editor, GPU drivers"]
+    A["4. AI/ML-библиотеки\nPyTorch, JAX, transformers и т.д."] --> B["3. Языковые рантаймы\nPython 3.11+, Node 20+, Rust, Julia"]
+    B --> C["2. Менеджеры пакетов\nuv, pnpm, cargo, juliaup"]
+    C --> D["1. Системная основа\nОС, shell, git, редактор, GPU-драйверы"]
 ```
 
-We install bottom-up. Each layer depends on the one below it.
+Мы устанавливаем всё снизу вверх. Каждый уровень зависит от предыдущего.
 
-## Build It
+## Практика
 
-### Step 1: System Foundation
+### Шаг 1: Системная основа
 
-Check your system and install the basics.
+Проверьте свою систему и установите базовые инструменты.
 
 ```bash
 # macOS
@@ -47,13 +47,13 @@ brew install git curl wget
 # Ubuntu/Debian
 sudo apt update && sudo apt install -y build-essential git curl wget
 
-# Windows (use WSL2)
+# Windows (используйте WSL2)
 wsl --install -d Ubuntu-24.04
 ```
 
-### Step 2: Python with uv
+### Шаг 2: Python с uv
 
-We use `uv` — it's 10-100x faster than pip and handles virtual environments automatically.
+Мы используем `uv` — он в 10–100 раз быстрее pip и автоматически управляет виртуальными окружениями.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -61,12 +61,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.12
 
 uv venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+source .venv/bin/activate  # или .venv\Scripts\activate в Windows
 
 uv pip install numpy matplotlib jupyter
 ```
 
-Verify:
+Проверка:
 
 ```python
 import sys
@@ -75,12 +75,12 @@ print(f"Python {sys.version}")
 import numpy as np
 print(f"NumPy {np.__version__}")
 a = np.array([1, 2, 3])
-print(f"Vector: {a}, dot product with itself: {np.dot(a, a)}")
+print(f"Вектор: {a}, скалярное произведение на самого себя: {np.dot(a, a)}")
 ```
 
-### Step 3: Node.js with pnpm
+### Шаг 3: Node.js с pnpm
 
-For TypeScript lessons (agents, MCP servers, web apps).
+Для уроков по TypeScript (агенты, MCP-серверы, веб-приложения).
 
 ```bash
 curl -fsSL https://fnm.vercel.app/install | bash
@@ -92,9 +92,9 @@ npm install -g pnpm
 node -e "console.log('Node', process.version)"
 ```
 
-### Step 4: Rust
+### Шаг 4: Rust
 
-For performance-critical lessons (inference, systems).
+Для уроков, критичных к производительности (инференс, системное программирование).
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -103,9 +103,9 @@ rustc --version
 cargo --version
 ```
 
-### Step 5: Julia (Optional)
+### Шаг 5: Julia (необязательно)
 
-For math-heavy lessons where Julia shines.
+Для математически насыщенных уроков, где Julia особенно сильна.
 
 ```bash
 curl -fsSL https://install.julialang.org | sh
@@ -113,52 +113,52 @@ curl -fsSL https://install.julialang.org | sh
 julia -e 'println("Julia ", VERSION)'
 ```
 
-### Step 6: GPU Setup (If You Have One)
+### Шаг 6: Настройка GPU (если он у вас есть)
 
 ```bash
 # NVIDIA
 nvidia-smi
 
-# Install PyTorch with CUDA
+# Установка PyTorch с CUDA
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 ```
 
 ```python
 import torch
-print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"CUDA доступна: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 ```
 
-No GPU? No problem. Most lessons work on CPU. For training-heavy lessons, use Google Colab or cloud GPUs.
+Нет GPU? Не проблема. Большинство уроков работают и на CPU. Для задач с тяжёлым обучением используйте Google Colab или облачные GPU.
 
-### Step 7: Verify Everything
+### Шаг 7: Проверка всего окружения
 
-Run the verification script:
+Запустите скрипт проверки:
 
 ```bash
 python phases/00-setup-and-tooling/01-dev-environment/code/verify.py
 ```
 
-## Use It
+## Использование
 
-Your environment is now ready for every lesson in this course. Here's what you'll use where:
+Теперь ваше окружение готово для всех уроков этого курса. Вот где что будет использоваться:
 
-| Language | Used In | Package Manager |
+| Язык | Где используется | Менеджер пакетов |
 |----------|---------|-----------------|
-| Python | Phases 1-12 (ML, DL, NLP, Vision, Audio, LLMs) | uv |
-| TypeScript | Phases 13-17 (Tools, Agents, Swarms, Infra) | pnpm |
-| Rust | Phases 12, 15-17 (Performance-critical systems) | cargo |
-| Julia | Phase 1 (Math foundations) | Pkg |
+| Python | Фазы 1–12 (ML, DL, NLP, Vision, Audio, LLMs) | uv |
+| TypeScript | Фазы 13–17 (инструменты, агенты, swarm-системы, инфраструктура) | pnpm |
+| Rust | Фазы 12, 15–17 (системы, критичные к производительности) | cargo |
+| Julia | Фаза 1 (математические основы) | Pkg |
 
-## Ship It
+## Результат
 
-This lesson produces a verification script that anyone can run to check their setup.
+В результате этого урока вы получите скрипт проверки, который любой человек сможет запустить для диагностики своей среды.
 
-See `outputs/prompt-env-check.md` for a prompt that helps AI assistants diagnose environment issues.
+См. `outputs/prompt-env-check.md` — там находится prompt, который помогает AI-ассистентам диагностировать проблемы с окружением.
 
-## Exercises
+## Упражнения
 
-1. Run the verification script and fix any failures
-2. Create a Python virtual environment for this course and install PyTorch
-3. Write a "hello world" in all four languages and run each one
+1. Запустите скрипт проверки и исправьте все ошибки
+2. Создайте виртуальное окружение Python для этого курса и установите PyTorch
+3. Напишите «hello world» на всех четырёх языках и запустите каждую программу
