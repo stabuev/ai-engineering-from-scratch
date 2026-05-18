@@ -206,7 +206,7 @@ Generate the table like this:
 ```markdown
 | Phase | Name | Status | Est. Hours |
 |-------|------|--------|------------|
-| 0 | Setup & Tooling | Skip | -- |
+| 0 | Настройка и инструменты | Skip | -- |
 | 1 | Math Foundations | Review | 30 |
 | 2 | ML Fundamentals | Skip | -- |
 | 3 | Deep Learning Core | Do | 20 |
@@ -217,7 +217,7 @@ Rules for the table:
 - "Skip" phases show `--` for hours (they do not count toward the total)
 - "Review" phases show full hours (the learner should skim them)
 - "Do" phases show full hours
-- Phase 0 (Setup & Tooling) is always "Skip" regardless of score (it is
+- Phase 0 (Настройка и инструменты) is always "Skip" regardless of score (it is
   tooling setup, not knowledge)
 - Sum the hours for "Review" and "Do" phases and show the total at the bottom
 

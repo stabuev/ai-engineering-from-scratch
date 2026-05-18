@@ -1,4 +1,4 @@
-# Phase 0: Setup & Tooling
+# Phase 0: Настройка и инструменты
 
 > Get your environment ready for everything that follows.
 

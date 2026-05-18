@@ -34,7 +34,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## 2026-Q1 and earlier
 
 ### Added
-- Phase 0 (Setup & Tooling): all 12 lessons.
+- Phase 0 (Настройка и инструменты): all 12 lessons.
 - Phase 1 (Math Foundations): all 22 lessons.
 - Phase 2 (ML Fundamentals): all 18 lessons.
 - Phase 3 (Deep Learning Core): core lessons through perceptron, backprop, optimizers.

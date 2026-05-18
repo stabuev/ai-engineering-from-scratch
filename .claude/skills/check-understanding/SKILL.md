@@ -28,7 +28,7 @@ Map the argument to the correct phase directory under `phases/`:
 
 | Input | Directory | Phase Name |
 |-------|-----------|------------|
-| 0, setup, tooling | `00-setup-and-tooling` | Setup & Tooling |
+| 0, setup, tooling | `00-setup-and-tooling` | Настройка и инструменты |
 | 1, math, math-foundations | `01-math-foundations` | Math Foundations |
 | 2, ml, ml-fundamentals | `02-ml-fundamentals` | ML Fundamentals |
 | 3, deep-learning, dl | `03-deep-learning-core` | Deep Learning Core |

@@ -239,12 +239,12 @@ the agent went wrong and explain why...
 Twenty phases. Click any phase to expand its lesson list.
 
 <a id="phase-0"></a>
-### Phase 0: Setup & Tooling `12 lessons`
+### Phase 0: Настройка и инструменты `12 lessons`
 > Get your environment ready for everything that follows.
 
 | # | Lesson | Type | Lang |
 |:---:|--------|:----:|------|
-| 01 | [Dev Environment](phases/00-setup-and-tooling/01-dev-environment/) | Build | Python, TypeScript, Rust |
+| 01 | [Среда разработки](phases/00-setup-and-tooling/01-dev-environment/) | Build | Python, TypeScript, Rust |
 | 02 | [Git & Collaboration](phases/00-setup-and-tooling/02-git-and-collaboration/) | Learn | — |
 | 03 | [GPU Setup & Cloud](phases/00-setup-and-tooling/03-gpu-setup-and-cloud/) | Build | Python |
 | 04 | [APIs & Keys](phases/00-setup-and-tooling/04-apis-and-keys/) | Build | Python, TypeScript |

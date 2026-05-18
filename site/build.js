@@ -21,12 +21,12 @@ const GITHUB_BASE = 'https://github.com/stabuev/ai-engineering-from-scratch/tree
 
 // ─── Parse ROADMAP.md for lesson statuses ────────────────────────────
 function parseRoadmap(content) {
-  const statuses = {}; // { "Phase 0": { phaseStatus, lessons: { "Dev Environment": "complete" } } }
+  const statuses = {}; // { "Phase 0": { phaseStatus, lessons: { "Среда разработки": "complete" } } }
   let currentPhase = null;
   let currentPhaseStatus = null;
 
   for (const line of content.split('\n')) {
-    // Match phase headers like: ## Phase 0: Setup & Tooling — ✅
+    // Match phase headers like: ## Phase 0: Настройка и инструменты — ✅
     const phaseMatch = line.match(/^##\s+Phase\s+(\d+).*?—\s*(✅|🚧|⬚)/);
     if (phaseMatch) {
       const phaseId = parseInt(phaseMatch[1]);
@@ -37,7 +37,7 @@ function parseRoadmap(content) {
       continue;
     }
 
-    // Match lesson rows like: | 01 | Dev Environment | ✅ |
+    // Match lesson rows like: | 01 | Среда разработки | ✅ |
     if (currentPhase) {
       const lessonMatch = line.match(/^\|\s*\d+\s*\|\s*(.+?)\s*\|\s*(✅|🚧|⬚)\s*\|/);
       if (lessonMatch) {
@@ -69,7 +69,7 @@ function parseReadme(content, roadmapStatuses) {
     const line = lines[i];
 
     // Match Phase header - multiple formats supported:
-    // Old: ### Phase 0: Setup & Tooling `12 lessons`
+    // Old: ### Phase 0: Настройка и инструменты `12 lessons`
     // Old: <summary><strong>Phase 1: Math Foundations</strong> <code>22 lessons</code> ... <em>Description</em></summary>
     // New: ### ![](https://img.shields.io/badge/Phase_0-Setup_&_Tooling-95A5A6?style=for-the-badge) `12 lessons`
     // New: <summary><b>🟣 Phase 1 — Math Foundations</b> &nbsp;<code>22 lessons</code>&nbsp; <em>Description</em></summary>
@@ -125,7 +125,7 @@ function parseReadme(content, roadmapStatuses) {
 
     // Parse lesson rows
     if (inLessonTable && currentPhase && line.startsWith('|')) {
-      // | 01 | [Dev Environment](phases/00-setup-and-tooling/01-dev-environment/) | Build | Python, Node, Rust |
+      // | 01 | [Среда разработки](phases/00-setup-and-tooling/01-dev-environment/) | Build | Python, Node, Rust |
       // | 02 | Multi-Layer Networks & Forward Pass | Build | Python |
       const cols = line.split('|').map(c => c.trim()).filter(c => c.length > 0);
       if (cols.length >= 4) {

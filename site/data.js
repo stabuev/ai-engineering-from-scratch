@@ -4,12 +4,12 @@
 const PHASES = [
   {
     "id": 0,
-    "name": "Setup & Tooling",
+    "name": "Настройка и инструменты",
     "status": "complete",
     "desc": "Get your environment ready for everything that follows.",
     "lessons": [
       {
-        "name": "Dev Environment",
+        "name": "Среда разработки",
         "status": "complete",
         "type": "Build",
         "lang": "Python, TypeScript, Rust",

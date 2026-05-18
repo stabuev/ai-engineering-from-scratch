@@ -8,11 +8,11 @@ Total estimated time: ~314 hours, at your own pace.
 
 **Legend:** ✅ Complete &nbsp;·&nbsp; 🚧 In Progress &nbsp;·&nbsp; ⬚ Planned
 
-## Phase 0: Setup & Tooling — ✅ (~14 hours)
+## Phase 0: Настройка и инструменты — ✅ (~14 hours)
 
 | # | Lesson | Status | Est. |
 |---|--------|--------|------|
-| 01 | Dev Environment | ✅ | ~75 min |
+| 01 | Среда разработки | ✅ | ~75 min |
 | 02 | Git & Collaboration | ✅ | ~45 min |
 | 03 | GPU Setup & Cloud | ✅ | ~75 min |
 | 04 | APIs & Keys | ✅ | ~75 min |
