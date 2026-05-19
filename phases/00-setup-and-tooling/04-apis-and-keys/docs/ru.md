@@ -1,58 +1,51 @@
-# APIs & Keys
+# API и ключи
 
-> Every AI API works the same way: send a request, get a response. The details change, the pattern doesn't.
+> Любой AI API работает одинаково: отправляете запрос — получаете ответ. Меняются детали, но не сам паттерн.
 
-**Type:** Build
-**Languages:** Python, TypeScript
-**Prerequisites:** Phase 0, Lesson 01
-**Time:** ~30 minutes
+**Тип:** Практика  
+**Языки:** Python, TypeScript  
+**Предварительные требования:** Фаза 0, Урок 01  
+**Время:** ~30 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Store API keys securely using environment variables and `.env` files
-- Make an LLM API call using both the Anthropic Python SDK and raw HTTP
-- Compare SDK-based and raw HTTP request/response formats for debugging
-- Identify and handle common API errors including authentication and rate limits
+- Безопасно хранить API-ключи с помощью переменных окружения и `.env` файлов
+- Выполнять запросы к LLM API через Python SDK Anthropic и через «сырой» HTTP
+- Сравнивать форматы запросов/ответов SDK и HTTP для отладки
+- Распознавать и обрабатывать типичные API-ошибки: аутентификацию и rate limits
 
-## The Problem
+## Проблема
 
-Starting from Phase 11, you'll call LLM APIs (Anthropic, OpenAI, Google). In Phase 13-16 you'll build agents that use these APIs in loops. You need to know how API keys work, how to store them safely, and how to make your first API call.
+Начиная с фазы 11 вы будете вызывать LLM API (Anthropic, OpenAI, Google). В фазах 13–16 вы будете строить агентов, использующих эти API в цикле. Вам нужно понимать, как работают API-ключи, как безопасно их хранить и как сделать свой первый API-запрос.
 
-## The Concept
+## Концепция
 
-```mermaid
-sequenceDiagram
-    participant C as Your Code
-    participant S as API Server
-    C->>S: HTTP Request (with API key)
-    S->>C: HTTP Response (JSON)
-```
+Каждый API-запрос включает:
 
-Every API call has:
-1. An endpoint (URL)
-2. An API key (authentication)
-3. A request body (what you want)
-4. A response body (what you get back)
+1. Endpoint (URL)
+2. API-ключ (аутентификация)
+3. Тело запроса (что вы хотите)
+4. Тело ответа (что вы получаете)
 
-## Build It
+## Практика
 
-### Step 1: Store API keys safely
+### Шаг 1: безопасное хранение API-ключей
 
-Never put API keys in code. Use environment variables.
+Никогда не храните API-ключи прямо в коде. Используйте переменные окружения.
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
 export OPENAI_API_KEY="sk-..."
 ```
 
-Or use a `.env` file (add it to `.gitignore`):
+Или используйте `.env` файл (добавьте его в `.gitignore`):
 
-```
+```text
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 ```
 
-### Step 2: First API call (Python)
+### Шаг 2: первый API-запрос (Python)
 
 ```python
 import anthropic
@@ -68,7 +61,7 @@ response = client.messages.create(
 print(response.content[0].text)
 ```
 
-### Step 3: First API call (TypeScript)
+### Шаг 3: первый API-запрос (TypeScript)
 
 ```typescript
 import Anthropic from "@anthropic-ai/sdk";
@@ -84,7 +77,7 @@ const response = await client.messages.create({
 console.log(response.content[0].text);
 ```
 
-### Step 4: Raw HTTP (no SDK)
+### Шаг 4: «Сырой» HTTP (без SDK)
 
 ```python
 import os
@@ -102,43 +95,29 @@ body = json.dumps({
     "max_tokens": 256,
     "messages": [{"role": "user", "content": "What is a neural network in one sentence?"}],
 }).encode()
-
-req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-with urllib.request.urlopen(req) as resp:
-    result = json.loads(resp.read())
-    print(result["content"][0]["text"])
 ```
 
-This is what the SDKs do under the hood. Understanding the raw HTTP call helps when debugging.
+Понимание HTTP-запросов помогает при отладке SDK.
 
-## Use It
+## Использование
 
-For this course:
+| API | Когда нужен | Бесплатный тариф |
+|-----|-------------|-----------------|
+| Anthropic (Claude) | Фазы 11–16 | $5 после регистрации |
+| OpenAI | Фаза 11 | $5 после регистрации |
+| Hugging Face | Фазы 4–10 | Бесплатно |
 
-| API | When you need it | Free tier |
-|-----|-----------------|-----------|
-| Anthropic (Claude) | Phases 11-16 (agents, tools) | $5 credit on signup |
-| OpenAI | Phase 11 (comparison) | $5 credit on signup |
-| Hugging Face | Phases 4-10 (models, datasets) | Free |
+## Упражнения
 
-You don't need all of them right now. Set them up when the lesson requires it.
+1. Получите API-ключ Anthropic и сделайте первый API-запрос
+2. Попробуйте вариант с HTTP и сравните формат ответа с SDK
+3. Намеренно используйте неверный API-ключ и изучите сообщение об ошибке
 
-## Ship It
+## Ключевые термины
 
-This lesson produces:
-- `outputs/prompt-api-troubleshooter.md` - diagnose common API errors
-
-## Exercises
-
-1. Get an Anthropic API key and make your first API call
-2. Try the raw HTTP version and compare the response format to the SDK version
-3. Intentionally use a wrong API key and read the error message
-
-## Key Terms
-
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это означает на самом деле |
 |------|----------------|----------------------|
-| API key | "Password for the API" | A unique string that identifies your account and authorizes requests |
-| Rate limit | "They're throttling me" | Maximum requests per minute/hour to prevent abuse and ensure fair usage |
-| Token | "A word" (in API context) | A billing unit: input and output tokens are counted and charged separately |
-| Streaming | "Real-time responses" | Getting the response word by word instead of waiting for the full response |
+| API key | «Пароль для API» | Уникальная строка, идентифицирующая ваш аккаунт и авторизующая запросы |
+| Rate limit | «Меня ограничивают» | Максимальное число запросов в минуту/час |
+| Token | «Слово» | Единица тарификации входных и выходных данных |
+| Streaming | «Ответ в реальном времени» | Получение ответа по частям, а не ожидание полного результата |

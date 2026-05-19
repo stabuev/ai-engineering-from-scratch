@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is an API key used for when calling an LLM service?",
-      "options": ["Encrypting the data sent to the server", "Authenticating your identity and authorizing requests", "Compressing requests to reduce bandwidth", "Selecting which programming language the server uses"],
+      "question": "Для чего используется API-ключ при обращении к LLM API?",
+      "options": [
+        "Для шифрования данных",
+        "Для аутентификации пользователя и авторизации запросов",
+        "Для сжатия запросов",
+        "Для выбора языка программирования сервера"
+      ],
       "correct": 1,
-      "explanation": "An API key is a unique string that identifies your account, authorizes your requests, and allows the provider to track usage and billing."
+      "explanation": "API-ключ идентифицирует ваш аккаунт, авторизует запросы и позволяет провайдеру учитывать использование API."
     },
     {
       "stage": "pre",
-      "question": "Why should API keys never be hardcoded directly in source code?",
-      "options": ["Hardcoded keys make the code run slower", "They can be accidentally committed to git and exposed publicly", "Python cannot read string literals longer than 50 characters", "API providers block keys that appear in source files"],
+      "question": "Почему нельзя хранить API-ключи прямо в исходном коде?",
+      "options": [
+        "Из-за этого код работает медленнее",
+        "Ключи могут случайно попасть в git и стать публичными",
+        "Python не поддерживает длинные строки",
+        "Провайдеры блокируют ключи в исходниках"
+      ],
       "correct": 1,
-      "explanation": "Hardcoded keys in source code risk being committed to version control and pushed to public repositories, where they can be scraped and abused by others."
+      "explanation": "API-ключи в коде могут случайно попасть в публичный репозиторий и быть использованы злоумышленниками."
     },
     {
       "stage": "post",
-      "question": "What is the recommended way to store API keys for local development?",
-      "options": ["In a Python variable at the top of your script", "In a .env file that is listed in .gitignore", "In the README.md for easy access", "In the requirements.txt alongside package versions"],
+      "question": "Как рекомендуется хранить API-ключи при локальной разработке?",
+      "options": [
+        "В Python-переменной в начале скрипта",
+        "В .env файле, добавленном в .gitignore",
+        "В README.md",
+        "В requirements.txt"
+      ],
       "correct": 1,
-      "explanation": "A .env file stores keys as environment variables and should be added to .gitignore so it is never committed to version control. SDKs read keys from environment variables automatically."
+      "explanation": ".env файл хранит ключи как переменные окружения и не должен попадать в git."
     },
     {
       "stage": "post",
-      "question": "In the raw HTTP API call to Anthropic, which header carries the API key?",
-      "options": ["Authorization: Bearer sk-ant-...", "x-api-key: sk-ant-...", "Content-Type: application/json", "anthropic-version: 2023-06-01"],
+      "question": "Какой заголовок HTTP-запроса используется для передачи API-ключа Anthropic?",
+      "options": [
+        "Authorization: Bearer sk-ant-...",
+        "x-api-key: sk-ant-...",
+        "Content-Type: application/json",
+        "anthropic-version: 2023-06-01"
+      ],
       "correct": 1,
-      "explanation": "Anthropic's API uses the 'x-api-key' header for authentication, not the more common 'Authorization: Bearer' pattern. This is specific to their API design."
+      "explanation": "Anthropic использует заголовок x-api-key для аутентификации."
     },
     {
       "stage": "post",
-      "question": "What happens when you exceed an API's rate limit?",
-      "options": ["Your API key is permanently revoked", "The server returns an error (typically HTTP 429) and you must wait before retrying", "Your request is queued and processed later automatically", "The API silently drops your request with no response"],
+      "question": "Что происходит при превышении rate limit API?",
+      "options": [
+        "API-ключ навсегда блокируется",
+        "Сервер возвращает ошибку (обычно HTTP 429)",
+        "Запрос автоматически ставится в очередь",
+        "API молча игнорирует запрос"
+      ],
       "correct": 1,
-      "explanation": "Rate limiting returns HTTP 429 (Too Many Requests). You need to wait and retry, typically with exponential backoff. Rate limits prevent abuse and ensure fair usage."
+      "explanation": "При превышении rate limit сервер обычно возвращает HTTP 429 (Too Many Requests)."
     }
   ]
 }

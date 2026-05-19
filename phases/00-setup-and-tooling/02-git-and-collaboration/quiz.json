@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does 'version control' primarily help you do?",
-      "options": ["Speed up code execution", "Track changes to files over time and collaborate with others", "Compress files to save disk space", "Automatically fix bugs in your code"],
+      "question": "Для чего в первую очередь нужна система контроля версий?",
+      "options": [
+        "Для ускорения выполнения кода",
+        "Для отслеживания изменений файлов во времени и совместной работы",
+        "Для сжатия файлов и экономии места на диске",
+        "Для автоматического исправления ошибок в коде"
+      ],
       "correct": 1,
-      "explanation": "Version control systems like git track every change made to files, allowing you to revert to previous states and collaborate with others on the same codebase."
+      "explanation": "Системы контроля версий, такие как git, отслеживают каждое изменение файлов, позволяя возвращаться к предыдущим версиям и совместно работать над одним кодом."
     },
     {
       "stage": "pre",
-      "question": "What is a 'repository' in the context of software development?",
-      "options": ["A cloud storage service like Google Drive", "A collection of files and their complete change history managed by version control", "A database for storing user data", "A package manager for installing libraries"],
+      "question": "Что такое «репозиторий» в контексте разработки программного обеспечения?",
+      "options": [
+        "Облачное хранилище вроде Google Drive",
+        "Набор файлов и полная история их изменений, управляемая системой контроля версий",
+        "База данных для хранения пользовательских данных",
+        "Менеджер пакетов для установки библиотек"
+      ],
       "correct": 1,
-      "explanation": "A repository (repo) is a directory tracked by git that contains all project files along with the full history of changes made to those files."
+      "explanation": "Репозиторий (repo) — это директория, отслеживаемая git, содержащая файлы проекта и полную историю изменений этих файлов."
     },
     {
       "stage": "post",
-      "question": "What is the correct sequence for saving and backing up your work in git?",
-      "options": ["git push, git add, git commit", "git commit, git add, git push", "git add, git commit, git push", "git clone, git add, git push"],
+      "question": "Какова правильная последовательность действий для сохранения и резервного копирования работы в git?",
+      "options": [
+        "git push, git add, git commit",
+        "git commit, git add, git push",
+        "git add, git commit, git push",
+        "git clone, git add, git push"
+      ],
       "correct": 2,
-      "explanation": "First you stage changes with 'git add', then save a snapshot with 'git commit', then upload to the remote with 'git push'. This is the daily workflow."
+      "explanation": "Сначала изменения добавляются в staging через 'git add', затем создаётся снимок проекта через 'git commit', после чего изменения отправляются в удалённый репозиторий с помощью 'git push'. Это базовый ежедневный workflow."
     },
     {
       "stage": "post",
-      "question": "What does 'git checkout -b experiment/new-optimizer' do?",
-      "options": ["Downloads a branch from GitHub called experiment/new-optimizer", "Creates a new branch named experiment/new-optimizer and switches to it", "Deletes the branch experiment/new-optimizer", "Reverts all files to match the experiment/new-optimizer branch"],
+      "question": "Что делает команда 'git checkout -b experiment/new-optimizer'?",
+      "options": [
+        "Скачивает с GitHub ветку experiment/new-optimizer",
+        "Создаёт новую ветку experiment/new-optimizer и переключается на неё",
+        "Удаляет ветку experiment/new-optimizer",
+        "Откатывает все файлы к состоянию ветки experiment/new-optimizer"
+      ],
       "correct": 1,
-      "explanation": "The '-b' flag creates a new branch with the given name and immediately switches to it, allowing you to experiment without affecting the main branch."
+      "explanation": "Флаг '-b' создаёт новую ветку с указанным именем и сразу переключает вас на неё, позволяя экспериментировать, не затрагивая основную ветку."
     },
     {
       "stage": "post",
-      "question": "Why should you add '.pt', '.pth', and '.safetensors' to your .gitignore?",
-      "options": ["They are Python test files that should not be committed", "They are model checkpoint files that are too large for git and can be re-generated", "They contain sensitive API keys", "Git cannot track binary files of any kind"],
+      "question": "Почему файлы '.pt', '.pth' и '.safetensors' стоит добавлять в .gitignore?",
+      "options": [
+        "Это тестовые Python-файлы, которые не нужно коммитить",
+        "Это файлы чекпоинтов моделей, которые слишком велики для git и могут быть пересозданы",
+        "Они содержат конфиденциальные API-ключи",
+        "Git не умеет отслеживать бинарные файлы"
+      ],
       "correct": 1,
-      "explanation": "Model checkpoint files (.pt, .pth, .safetensors) are often gigabytes in size. Git is not designed for large binary files, so these should be excluded and re-generated or stored separately."
+      "explanation": "Файлы чекпоинтов моделей (.pt, .pth, .safetensors) часто занимают гигабайты. Git плохо подходит для хранения крупных бинарных файлов, поэтому их обычно исключают из репозитория и хранят отдельно или пересоздают."
     }
   ]
 }

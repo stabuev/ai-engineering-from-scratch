@@ -1,26 +1,26 @@
-# Git & Collaboration
+# Git и совместная работа
 
-> Version control is not optional. Every experiment, every model, every lesson you build here gets tracked.
+> Контроль версий — не опция. Каждый эксперимент, каждая модель и каждый урок, который вы создаёте здесь, должны отслеживаться.
 
-**Type:** Learn
-**Languages:** --
-**Prerequisites:** Phase 0, Lesson 01
-**Time:** ~30 minutes
+**Тип:** Обучение  
+**Языки:** --  
+**Предварительные требования:** Фаза 0, Урок 01  
+**Время:** ~30 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Configure git identity and use the daily workflow of add, commit, and push
-- Create and merge branches for isolated experiments without breaking main
-- Write a `.gitignore` that excludes model checkpoints and large binary files
-- Navigate the commit history with `git log` to understand project evolution
+- Настроить git identity и использовать ежедневный workflow: add, commit и push
+- Создавать и объединять ветки для изолированных экспериментов, не ломая main
+- Написать `.gitignore`, исключающий чекпоинты моделей и крупные бинарные файлы
+- Перемещаться по истории коммитов с помощью `git log`, чтобы понимать эволюцию проекта
 
-## The Problem
+## Проблема
 
-You're about to write hundreds of code files across 20 phases. Without version control you will lose work, break things you can't undo, and have no way to collaborate with others.
+Вам предстоит написать сотни файлов кода в рамках 20 фаз. Без системы контроля версий вы будете терять работу, ломать вещи без возможности отката и не сможете нормально сотрудничать с другими.
 
-Git is the tool. GitHub is where the code lives. This lesson covers what you need for this course and nothing more.
+Git — это инструмент. GitHub — место, где хранится код. В этом уроке рассматривается только то, что действительно нужно для курса, и ничего лишнего.
 
-## The Concept
+## Концепция
 
 ```mermaid
 sequenceDiagram
@@ -35,21 +35,21 @@ sequenceDiagram
     LR->>WD: git pull
 ```
 
-Three things to remember:
-1. Save often (`git commit`)
-2. Push to remote (`git push`)
-3. Branch for experiments (`git checkout -b experiment`)
+Три вещи, которые нужно запомнить:
+1. Чаще сохраняйте изменения (`git commit`)
+2. Отправляйте изменения в удалённый репозиторий (`git push`)
+3. Используйте ветки для экспериментов (`git checkout -b experiment`)
 
-## Build It
+## Практика
 
-### Step 1: Configure git
+### Шаг 1: Настройка git
 
 ```bash
 git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 ```
 
-### Step 2: The daily workflow
+### Шаг 2: Ежедневный workflow
 
 ```bash
 git status
@@ -58,53 +58,53 @@ git commit -m "Add perceptron implementation"
 git push origin main
 ```
 
-### Step 3: Branching for experiments
+### Шаг 3: Ветки для экспериментов
 
 ```bash
 git checkout -b experiment/new-optimizer
 
-# ... make changes, commit ...
+# ... внесите изменения, сделайте commit ...
 
 git checkout main
 git merge experiment/new-optimizer
 ```
 
-### Step 4: Working with this course repo
+### Шаг 4: Работа с репозиторием курса
 
 ```bash
 git clone https://github.com/stabuev/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
 
 git checkout -b my-progress
-# work through lessons, commit your code
+# проходите уроки курса и коммитьте свой код
 git push origin my-progress
 ```
 
-## Use It
+## Использование
 
-For this course, you need exactly these commands:
+Для этого курса вам нужны ровно эти команды:
 
-| Command | When |
+| Команда | Когда использовать |
 |---------|------|
-| `git clone` | Get the course repo |
-| `git add` + `git commit` | Save your work |
-| `git push` | Back it up to GitHub |
-| `git checkout -b` | Try something without breaking main |
-| `git log --oneline` | See what you've done |
+| `git clone` | Получить репозиторий курса |
+| `git add` + `git commit` | Сохранить свою работу |
+| `git push` | Сделать резервную копию на GitHub |
+| `git checkout -b` | Попробовать что-то новое, не ломая main |
+| `git log --oneline` | Посмотреть историю изменений |
 
-That's it. You don't need rebase, cherry-pick, or submodules for this course.
+Вот и всё. Для этого курса вам не нужны rebase, cherry-pick или submodules.
 
-## Exercises
+## Упражнения
 
-1. Clone this repo, create a branch called `my-progress`, make a file, commit it, push it
-2. Create a `.gitignore` that excludes model checkpoint files (`.pt`, `.pth`, `.safetensors`)
-3. Look at the commit history of this repo with `git log --oneline` and read how lessons were added
+1. Клонируйте этот репозиторий, создайте ветку `my-progress`, создайте файл, закоммитьте его и отправьте в удалённый репозиторий
+2. Создайте `.gitignore`, который исключает файлы чекпоинтов моделей (`.pt`, `.pth`, `.safetensors`)
+3. Посмотрите историю коммитов этого репозитория с помощью `git log --oneline` и изучите, как добавлялись уроки
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это означает на самом деле |
 |------|----------------|----------------------|
-| Commit | "Saving" | A snapshot of your entire project at a point in time |
-| Branch | "A copy" | A pointer to a commit that moves forward as you work |
-| Merge | "Combining code" | Taking changes from one branch and applying them to another |
-| Remote | "The cloud" | A copy of your repo hosted somewhere else (GitHub, GitLab) |
+| Commit | «Сохранение» | Снимок всего проекта в определённый момент времени |
+| Branch | «Копия» | Указатель на коммит, который движется вперёд по мере вашей работы |
+| Merge | «Объединение кода» | Применение изменений из одной ветки к другой |
+| Remote | «Облако» | Копия репозитория, размещённая где-то ещё (GitHub, GitLab) |
