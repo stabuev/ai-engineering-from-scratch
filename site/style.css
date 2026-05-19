@@ -1,5 +1,5 @@
 :root {
-  --font-display: 'VT323', ui-monospace, 'JetBrains Mono', monospace;
+  --font-display: 'JetBrains Mono', monospace;
   --font-body: 'Source Serif 4', 'Source Serif Pro', 'Iowan Old Style', Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Consolas', monospace;
   --font-heading: var(--font-display);
