@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why is it important to have separate train, validation, and test splits in machine learning?",
-      "options": ["To make the dataset smaller so training is faster", "To evaluate model performance on unseen data and prevent overfitting", "To ensure each split uses a different file format", "To distribute data across multiple GPUs"],
+      "question": "Почему в машинном обучении важно иметь отдельные train, validation и test-разбиения?",
+      "options": [
+        "Чтобы уменьшить размер датасета и ускорить обучение",
+        "Чтобы оценивать качество модели на невидимых данных и предотвращать переобучение",
+        "Чтобы каждое разбиение использовало разный формат файлов",
+        "Чтобы распределять данные между несколькими GPU"
+      ],
       "correct": 1,
-      "explanation": "The training set teaches the model, the validation set tunes hyperparameters during training, and the test set provides a final unbiased evaluation on data the model has never seen."
+      "explanation": "Обучающая выборка используется для обучения модели, validation-набор — для подбора гиперпараметров во время обучения, а test-набор даёт финальную непредвзятую оценку на данных, которые модель никогда раньше не видела."
     },
     {
       "stage": "pre",
-      "question": "What is the Hugging Face Hub primarily used for in AI/ML workflows?",
-      "options": ["Hosting and sharing datasets, models, and ML artifacts", "Running GPU training jobs in the cloud", "Managing Python virtual environments", "Version controlling source code like GitHub"],
+      "question": "Для чего в первую очередь используется Hugging Face Hub в AI/ML‑workflow?",
+      "options": [
+        "Для хостинга и обмена датасетами, моделями и ML‑артефактами",
+        "Для запуска обучения на GPU в облаке",
+        "Для управления Python virtual environments",
+        "Для контроля версий исходного кода, как GitHub"
+      ],
       "correct": 0,
-      "explanation": "Hugging Face Hub is a platform for hosting and sharing pre-trained models, datasets, and ML demos. The 'datasets' library provides a standard way to load data from it."
+      "explanation": "Hugging Face Hub — это платформа для размещения и обмена предобученными моделями, датасетами и ML‑демо. Библиотека `datasets` предоставляет стандартный способ загрузки данных с неё."
     },
     {
       "stage": "post",
-      "question": "What advantage does the Parquet format have over CSV for storing ML datasets?",
-      "options": ["Parquet files are human-readable in any text editor", "Parquet uses columnar storage for smaller file sizes and faster read speeds", "Parquet supports more data types than CSV", "Parquet files can be edited in spreadsheet applications"],
+      "question": "Какое преимущество формат Parquet имеет перед CSV для хранения ML‑датасетов?",
+      "options": [
+        "Файлы Parquet читаются человеком в любом текстовом редакторе",
+        "Parquet использует колоночное хранение данных, обеспечивая меньший размер файлов и более высокую скорость чтения",
+        "Parquet поддерживает больше типов данных, чем CSV",
+        "Файлы Parquet можно редактировать в табличных редакторах"
+      ],
       "correct": 1,
-      "explanation": "Parquet is a columnar binary format that compresses better than CSV and enables fast column-level reads. It is the preferred storage format for ML datasets."
+      "explanation": "Parquet — это бинарный колоночный формат, который сжимается эффективнее CSV и позволяет быстро читать отдельные колонки. Это предпочтительный формат хранения ML‑датасетов."
     },
     {
       "stage": "post",
-      "question": "What does 'streaming=True' do when loading a dataset with the Hugging Face datasets library?",
-      "options": ["Downloads the dataset faster using parallel connections", "Loads data row by row without downloading the full dataset to disk", "Converts the dataset to a streaming video format", "Enables real-time updates as new data is added to the Hub"],
+      "question": "Что делает параметр `streaming=True` при загрузке датасета через библиотеку Hugging Face datasets?",
+      "options": [
+        "Ускоряет скачивание датасета за счёт параллельных соединений",
+        "Загружает данные построчно без скачивания полного датасета на диск",
+        "Конвертирует датасет в потоковый видеоформат",
+        "Включает обновление данных в реальном времени при добавлении новых данных в Hub"
+      ],
       "correct": 1,
-      "explanation": "Streaming mode creates an IterableDataset that fetches rows on demand. Memory usage stays constant regardless of dataset size, which is essential for datasets too large to fit on disk."
+      "explanation": "Режим streaming создаёт `IterableDataset`, который загружает строки по запросу. Использование памяти остаётся постоянным независимо от размера датасета, что особенно важно для очень больших наборов данных."
     },
     {
       "stage": "post",
-      "question": "When should you use DVC (Data Version Control) instead of just .gitignore for large files?",
-      "options": ["When your dataset is smaller than 1 MB", "When you need to reproduce exact experiments across machines with versioned data", "When you are working alone on a personal project", "When you only have CSV files in your project"],
+      "question": "Когда стоит использовать DVC (Data Version Control) вместо простого `.gitignore` для больших файлов?",
+      "options": [
+        "Когда ваш датасет меньше 1 MB",
+        "Когда необходимо воспроизводить точные эксперименты на разных машинах с версионируемыми данными",
+        "Когда вы работаете в одиночку над личным проектом",
+        "Когда в проекте используются только CSV‑файлы"
+      ],
       "correct": 1,
-      "explanation": "DVC tracks data versions with small pointer files in git while storing the actual data in remote storage (S3, GCS). It ensures anyone can reproduce your exact experiment with the same data."
+      "explanation": "DVC хранит версии данных через небольшие pointer‑файлы в git, а сами данные — в удалённом хранилище (S3, GCS). Это позволяет любому участнику воспроизвести ваш эксперимент с теми же самыми данными."
     }
   ]
 }

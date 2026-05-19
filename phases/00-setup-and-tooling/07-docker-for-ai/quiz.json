@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is the primary difference between a Docker container and a virtual machine?",
-      "options": ["Containers are slower but more secure than VMs", "Containers share the host OS kernel while VMs run their own full OS", "Containers can only run Linux while VMs support any OS", "There is no practical difference"],
+      "question": "В чём главное отличие Docker-контейнера от виртуальной машины?",
+      "options": [
+        "Контейнеры медленнее, но безопаснее виртуальных машин",
+        "Контейнеры используют kernel операционной системы хоста, а виртуальные машины запускают собственную полноценную ОС",
+        "Контейнеры могут запускать только Linux, а виртуальные машины поддерживают любую ОС",
+        "Практической разницы нет"
+      ],
       "correct": 1,
-      "explanation": "Containers share the host kernel and isolate at the process level, making them start in seconds. VMs run a complete guest OS with its own kernel, requiring more resources and slower startup."
+      "explanation": "Контейнеры используют kernel хоста и изолируются на уровне процессов, поэтому запускаются за секунды. Виртуальные машины запускают полноценную гостевую ОС со своим kernel, поэтому требуют больше ресурсов и стартуют медленнее."
     },
     {
       "stage": "pre",
-      "question": "What is a Dockerfile?",
-      "options": ["A configuration file for the Docker daemon", "A set of instructions for building a Docker image layer by layer", "A log file that records container activity", "A file that lists running containers"],
+      "question": "Что такое Dockerfile?",
+      "options": [
+        "Конфигурационный файл для Docker daemon",
+        "Набор инструкций для послойной сборки Docker image",
+        "Лог-файл, в котором записывается активность контейнера",
+        "Файл со списком запущенных контейнеров"
+      ],
       "correct": 1,
-      "explanation": "A Dockerfile contains sequential instructions (FROM, RUN, COPY, etc.) that Docker executes to build an image. Each instruction creates a cached layer."
+      "explanation": "Dockerfile содержит последовательные инструкции (FROM, RUN, COPY и т. д.), которые Docker выполняет для сборки image. Каждая инструкция создаёт кэшируемый слой."
     },
     {
       "stage": "post",
-      "question": "Why are volume mounts critical for AI development with Docker?",
-      "options": ["Volumes make containers run faster by using host disk speed", "Volumes persist data (models, datasets, code) across container rebuilds so you don't re-download gigabytes each time", "Volumes are required for Python packages to install correctly", "Volumes allow multiple containers to share the same GPU"],
+      "question": "Почему volume mounts критически важны для AI-разработки с Docker?",
+      "options": [
+        "Volumes ускоряют контейнеры за счёт скорости диска хоста",
+        "Volumes сохраняют данные (модели, датасеты, код) между пересборками контейнера, чтобы не скачивать гигабайты заново каждый раз",
+        "Volumes обязательны для корректной установки Python-пакетов",
+        "Volumes позволяют нескольким контейнерам использовать одну и ту же GPU"
+      ],
       "correct": 1,
-      "explanation": "Without volumes, everything inside a container is lost when it stops. Volume mounts map host directories into the container, so model weights (14+ GB) and datasets survive rebuilds."
+      "explanation": "Без volumes всё внутри контейнера теряется после его остановки. Volume mounts отображают директории хоста внутрь контейнера, поэтому веса моделей (14+ ГБ) и датасеты сохраняются между пересборками."
     },
     {
       "stage": "post",
-      "question": "What does the NVIDIA Container Toolkit enable?",
-      "options": ["Installing CUDA drivers inside the container", "Exposing host GPUs to Docker containers via the --gpus flag", "Running NVIDIA GPU containers on AMD hardware", "Compiling CUDA code during the Docker build process"],
+      "question": "Что позволяет делать NVIDIA Container Toolkit?",
+      "options": [
+        "Устанавливать CUDA-драйверы внутри контейнера",
+        "Предоставлять Docker-контейнерам доступ к GPU хоста через флаг --gpus",
+        "Запускать NVIDIA GPU-контейнеры на AMD-железе",
+        "Компилировать CUDA-код во время сборки Docker image"
+      ],
       "correct": 1,
-      "explanation": "The NVIDIA Container Toolkit is a runtime hook that exposes host GPUs to containers. The CUDA toolkit lives inside the container, but the GPU driver is shared from the host."
+      "explanation": "NVIDIA Container Toolkit — это runtime-хук, который предоставляет контейнерам доступ к GPU хоста. CUDA Toolkit находится внутри контейнера, а GPU-драйвер используется с хоста."
     },
     {
       "stage": "post",
-      "question": "In a Docker Compose file for AI, how does the 'ai-dev' service reach the 'qdrant' vector database?",
-      "options": ["By using the host machine's IP address and port", "By using the service name 'qdrant' as the hostname, since Compose creates a shared network", "By mounting a shared volume between the two containers", "By configuring a VPN between the containers"],
+      "question": "Как в Docker Compose-файле для AI сервис 'ai-dev' обращается к векторной базе данных 'qdrant'?",
+      "options": [
+        "Через IP-адрес хост-машины и порт",
+        "Через имя сервиса 'qdrant' как hostname, потому что Compose создаёт общую сеть",
+        "Через общий volume, подключённый к обоим контейнерам",
+        "Через настройку VPN между контейнерами"
+      ],
       "correct": 1,
-      "explanation": "Docker Compose automatically creates a shared network where services can reach each other by name. The ai-dev container connects to 'http://qdrant:6333' using the service name as hostname."
+      "explanation": "Docker Compose автоматически создаёт общую сеть, в которой сервисы могут обращаться друг к другу по имени. Контейнер ai-dev подключается к 'http://qdrant:6333', используя имя сервиса как hostname."
     }
   ]
 }

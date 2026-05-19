@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is a Language Server Protocol (LSP)?",
-      "options": ["A protocol for transferring files between editors", "A standard for editors to receive type info, completions, and diagnostics from a language-specific server", "A compression format for source code files", "A network protocol for remote pair programming"],
+      "question": "Что такое Language Server Protocol (LSP)?",
+      "options": [
+        "Протокол для передачи файлов между редакторами",
+        "Стандарт, через который редакторы получают информацию о типах, автодополнение и диагностику от language server",
+        "Формат сжатия файлов исходного кода",
+        "Сетевой протокол для удалённого парного программирования"
+      ],
       "correct": 1,
-      "explanation": "LSP is a standardized protocol that lets editors communicate with language servers for features like autocomplete, type checking, and error diagnostics, regardless of the editor used."
+      "explanation": "LSP — это стандартизированный протокол, который позволяет редакторам взаимодействовать с language server для таких возможностей, как автодополнение, проверка типов и диагностика ошибок, независимо от используемого редактора."
     },
     {
       "stage": "pre",
-      "question": "Why is format-on-save useful for team projects?",
-      "options": ["It reduces file sizes by removing whitespace", "It ensures consistent code style across all contributors without manual formatting", "It catches runtime bugs before the code is executed", "It compresses the code for faster git operations"],
+      "question": "Почему format-on-save полезен в командных проектах?",
+      "options": [
+        "Он уменьшает размер файлов за счёт удаления пробелов",
+        "Он обеспечивает единый стиль кода для всех участников без ручного форматирования",
+        "Он ловит runtime-баги до выполнения кода",
+        "Он сжимает код для ускорения git-операций"
+      ],
       "correct": 1,
-      "explanation": "Format-on-save runs a formatter (like Black or Ruff) every time you save, ensuring all code follows the same style conventions regardless of who wrote it."
+      "explanation": "Format-on-save запускает formatter (например, Black или Ruff) при каждом сохранении, благодаря чему весь код автоматически следует единым правилам стиля независимо от автора."
     },
     {
       "stage": "post",
-      "question": "Which VS Code extension enables editing code on a remote GPU machine as if it were local?",
-      "options": ["GitLens", "Pylance", "Remote SSH", "Debugpy"],
+      "question": "Какое расширение VS Code позволяет редактировать код на удалённой GPU‑машине так, будто она локальная?",
+      "options": [
+        "GitLens",
+        "Pylance",
+        "Remote SSH",
+        "Debugpy"
+      ],
       "correct": 2,
-      "explanation": "Remote SSH installs a lightweight VS Code server on the remote machine and streams the UI to your local editor, letting you edit files, run terminals, and debug remotely."
+      "explanation": "Remote SSH устанавливает лёгкий сервер VS Code на удалённой машине и транслирует UI в локальный редактор, позволяя редактировать файлы, запускать терминалы и отлаживать код удалённо."
     },
     {
       "stage": "post",
-      "question": "Why should 'notebook.output.scrolling' be enabled in VS Code settings for AI work?",
-      "options": ["It enables horizontal scrolling for wide dataframes", "It prevents training loop output (thousands of lines) from exploding the output panel", "It allows scrolling between notebook cells with the mouse wheel", "It enables smooth scrolling animations in the editor"],
+      "question": "Почему для AI‑разработки в настройках VS Code стоит включить 'notebook.output.scrolling'?",
+      "options": [
+        "Он включает горизонтальную прокрутку для широких dataframe",
+        "Он предотвращает разрастание панели вывода из-за training loop, печатающих тысячи строк",
+        "Он позволяет прокручивать notebook между ячейками колесом мыши",
+        "Он включает плавную анимацию прокрутки в редакторе"
+      ],
       "correct": 1,
-      "explanation": "Training loops can print thousands of lines of output. Without output scrolling, the notebook output panel grows unbounded, making the notebook unusable."
+      "explanation": "Training loop могут выводить тысячи строк текста. Без прокрутки панель вывода notebook бесконтрольно разрастается и становится неудобной для работы."
     },
     {
       "stage": "post",
-      "question": "What does setting 'python.analysis.typeCheckingMode' to 'basic' in VS Code accomplish?",
-      "options": ["It enables syntax highlighting for Python files", "It catches wrong argument types and tensor shape mismatches before running the code", "It formats Python code according to PEP 8 standards", "It enables Python 3.12 language features"],
+      "question": "Что даёт установка 'python.analysis.typeCheckingMode' в значение 'basic' в VS Code?",
+      "options": [
+        "Она включает подсветку синтаксиса Python",
+        "Она позволяет ловить неправильные типы аргументов и несовпадения форм тензоров до запуска кода",
+        "Она форматирует Python‑код по стандарту PEP 8",
+        "Она включает возможности языка Python 3.12"
+      ],
       "correct": 1,
-      "explanation": "Basic type checking with Pylance flags type mismatches, wrong argument types, and incorrect API parameters at edit time, catching bugs before you run a potentially expensive training script."
+      "explanation": "Базовая проверка типов через Pylance обнаруживает несовпадения типов, неправильные аргументы и ошибки API ещё во время редактирования, помогая находить баги до запуска потенциально дорогого training script."
     }
   ]
 }

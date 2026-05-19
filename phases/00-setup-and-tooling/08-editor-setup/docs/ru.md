@@ -1,57 +1,57 @@
-# Editor Setup
+# Настройка редактора
 
-> Your editor is your co-pilot. Configure it once so it stays out of your way and starts pulling its weight.
+> Ваш редактор — это ваш второй пилот. Настройте его один раз, чтобы он не мешал работе и действительно начал помогать.
 
-**Type:** Build
-**Languages:** --
-**Prerequisites:** Phase 0, Lesson 01
-**Time:** ~20 minutes
+**Тип:** Практика  
+**Языки:** --  
+**Предварительные требования:** Фаза 0, Урок 01  
+**Время:** ~20 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Install VS Code with essential extensions for Python, Jupyter, linting, and remote SSH
-- Configure format-on-save, type checking, and notebook output scrolling for AI workflows
-- Set up Remote SSH to edit and debug code on remote GPU machines as if they were local
-- Evaluate editor alternatives (Cursor, Windsurf, Neovim) and their tradeoffs for AI work
+- Установить VS Code с необходимыми расширениями для Python, Jupyter, линтинга и Remote SSH
+- Настроить автоформатирование при сохранении, проверку типов и прокрутку вывода ноутбуков для AI‑workflow
+- Настроить Remote SSH для редактирования и отладки кода на удалённых GPU‑машинах так, будто они локальные
+- Оценить альтернативы редактора (Cursor, Windsurf, Neovim) и их компромиссы для AI‑разработки
 
-## The Problem
+## Проблема
 
-You'll spend thousands of hours inside your editor writing Python, running notebooks, debugging training loops, and SSH-ing into GPU boxes. A misconfigured editor turns every session into friction: no autocomplete, no type hints, no inline errors, manual formatting, and a clunky terminal workflow.
+Вы проведёте тысячи часов внутри редактора: будете писать Python, запускать ноутбуки, отлаживать training loop и подключаться по SSH к GPU‑серверам. Неправильно настроенный редактор превращает каждую сессию в постоянное трение: нет автодополнения, подсказок типов, встроенных ошибок, автоформатирования и удобного терминального workflow.
 
-The right setup takes 20 minutes. Skipping it costs you 20 minutes every day.
+Правильная настройка занимает 20 минут. Если её пропустить — вы будете терять по 20 минут каждый день.
 
-## The Concept
+## Концепция
 
-An AI engineering editor setup needs five things:
+Настройка редактора для AI‑инженерии требует пяти вещей:
 
 ```mermaid
 graph TD
-    L5["5. Remote Development<br/>SSH into GPU boxes, cloud VMs"] --> L4
-    L4["4. Terminal Integration<br/>Run scripts, debug, monitor GPU"] --> L3
-    L3["3. AI-Specific Settings<br/>Auto-format, type checking, rulers"] --> L2
-    L2["2. Extensions<br/>Python, Jupyter, Pylance, GitLens"] --> L1
-    L1["1. Base Editor<br/>VS Code — free, extensible, universal"]
+    L5["5. Удалённая разработка<br/>SSH к GPU-серверам и облачным VM"] --> L4
+    L4["4. Интеграция терминала<br/>Запуск скриптов, отладка, мониторинг GPU"] --> L3
+    L3["3. Настройки для AI<br/>Автоформатирование, проверка типов, rulers"] --> L2
+    L2["2. Расширения<br/>Python, Jupyter, Pylance, GitLens"] --> L1
+    L1["1. Базовый редактор<br/>VS Code — бесплатный, расширяемый, универсальный"]
 ```
 
-## Build It
+## Практика
 
-### Step 1: Install VS Code
+### Шаг 1: Установите VS Code
 
-VS Code is the recommended editor. It is free, runs on every OS, has first-class Jupyter notebook support, and the extension ecosystem covers everything you need for AI work.
+VS Code — рекомендуемый редактор. Он бесплатный, работает на любой ОС, имеет первоклассную поддержку Jupyter Notebook, а экосистема расширений покрывает всё необходимое для AI‑разработки.
 
-Download it from [code.visualstudio.com](https://code.visualstudio.com/).
+Скачать можно с [code.visualstudio.com](https://code.visualstudio.com/).
 
-Verify from the terminal:
+Проверьте установку из терминала:
 
 ```bash
 code --version
 ```
 
-If `code` is not found on macOS, open VS Code, press `Cmd+Shift+P`, type "Shell Command", and select "Install 'code' command in PATH".
+Если `code` не найден в macOS, откройте VS Code, нажмите `Cmd+Shift+P`, введите «Shell Command» и выберите «Install 'code' command in PATH».
 
-### Step 2: Install Essential Extensions
+### Шаг 2: Установите необходимые расширения
 
-Open the integrated terminal in VS Code (`Ctrl+`` ` or `` Cmd+` ``) and install the extensions that matter for AI work:
+Откройте встроенный терминал в VS Code (`Ctrl+`` ` или `` Cmd+` ``) и установите расширения, которые действительно важны для AI‑разработки:
 
 ```bash
 code --install-extension ms-python.python
@@ -64,26 +64,26 @@ code --install-extension ms-python.black-formatter
 code --install-extension charliermarsh.ruff
 ```
 
-What each one does:
+Что делает каждое из них:
 
-| Extension | Why |
+| Расширение | Зачем нужно |
 |-----------|-----|
-| Python | Language support, virtual env detection, run/debug |
-| Pylance | Fast type checking, autocomplete, import resolution |
-| Jupyter | Run notebooks inside VS Code, variable explorer |
-| GitLens | See who changed what, inline git blame |
-| Remote SSH | Open a folder on a remote GPU box as if it were local |
-| Debugpy | Step-through debugging for Python |
-| Black Formatter | Auto-format on save, consistent style |
-| Ruff | Fast linting, catches common mistakes |
+| Python | Поддержка языка, обнаружение virtual env, запуск и отладка |
+| Pylance | Быстрая проверка типов, автодополнение, разрешение импортов |
+| Jupyter | Запуск ноутбуков прямо внутри VS Code, просмотр переменных |
+| GitLens | Показывает, кто и что изменил, inline git blame |
+| Remote SSH | Открытие папки на удалённом GPU‑сервере как локальной |
+| Debugpy | Пошаговая отладка Python |
+| Black Formatter | Автоформатирование при сохранении, единый стиль |
+| Ruff | Быстрый линтер, ловит распространённые ошибки |
 
-The file `code/.vscode/extensions.json` in this lesson contains the full recommendations list. When you open the project folder, VS Code will prompt you to install them.
+Файл `code/.vscode/extensions.json` в этом уроке содержит полный список рекомендуемых расширений. Когда вы откроете папку проекта, VS Code предложит установить их автоматически.
 
-### Step 3: Configure Settings
+### Шаг 3: Настройте параметры
 
-Copy the settings from `code/.vscode/settings.json` in this lesson, or apply them manually through `Settings > Open Settings (JSON)`.
+Скопируйте настройки из `code/.vscode/settings.json` этого урока или примените их вручную через `Settings > Open Settings (JSON)`.
 
-The key settings for AI work:
+Ключевые настройки для AI‑разработки:
 
 ```jsonc
 {
@@ -95,19 +95,19 @@ The key settings for AI work:
 }
 ```
 
-Why these matter:
+Почему это важно:
 
-- **Type checking on basic**: Catches wrong argument types before you run. Saves debugging time on tensor shape mismatches and wrong API parameters.
-- **Format on save**: Never think about formatting again. Black handles it.
-- **Rulers at 88 and 120**: Black wraps at 88. The 120 marker shows when docstrings and comments are getting too long.
-- **Notebook output scrolling**: Training loops print thousands of lines. Without scrolling, the output panel explodes.
-- **Auto-save**: You will forget to save. Your training script will run stale code. Auto-save prevents that.
+- **Проверка типов в режиме basic**: ловит неправильные типы аргументов ещё до запуска. Экономит время на отладке несовпадений форм тензоров и неверных параметров API.
+- **Форматирование при сохранении**: больше никогда не думайте о форматировании. Black всё сделает сам.
+- **Линейки на 88 и 120**: Black переносит строки на 88 символах. Маркер 120 показывает, когда docstring или комментарии становятся слишком длинными.
+- **Прокрутка вывода notebook**: training loop могут печатать тысячи строк. Без прокрутки панель вывода превращается в хаос.
+- **Автосохранение**: вы забудете сохранить файл. Ваш training script запустит устаревший код. Автосохранение предотвращает это.
 
-### Step 4: Terminal Integration
+### Шаг 4: Интеграция терминала
 
-VS Code's integrated terminal is where you run training scripts, monitor GPUs, and manage environments.
+Встроенный терминал VS Code — место, где вы запускаете training script, следите за GPU и управляете окружениями.
 
-Set it up properly:
+Настройте его правильно:
 
 ```jsonc
 {
@@ -118,37 +118,37 @@ Set it up properly:
 }
 ```
 
-Useful shortcuts:
+Полезные сочетания клавиш:
 
-| Action | macOS | Linux/Windows |
+| Действие | macOS | Linux/Windows |
 |--------|-------|---------------|
-| Toggle terminal | `` Ctrl+` `` | `` Ctrl+` `` |
-| New terminal | `Ctrl+Shift+`` ` | `Ctrl+Shift+`` ` |
-| Split terminal | `Cmd+\` | `Ctrl+\` |
+| Открыть/скрыть терминал | `` Ctrl+` `` | `` Ctrl+` `` |
+| Новый терминал | `Ctrl+Shift+`` ` | `Ctrl+Shift+`` ` |
+| Разделить терминал | `Cmd+\` | `Ctrl+\` |
 
-Split terminals are useful: one for running your script, one for monitoring GPU with `nvidia-smi -l 1` or `watch -n 1 nvidia-smi`.
+Разделённые терминалы особенно полезны: один для запуска скрипта, второй — для мониторинга GPU через `nvidia-smi -l 1` или `watch -n 1 nvidia-smi`.
 
-### Step 5: Remote Development (SSH into GPU Boxes)
+### Шаг 5: Удалённая разработка (SSH к GPU‑серверам)
 
-This is the most important extension for AI work. You will run training on remote machines (cloud VMs, lab servers, Lambda, Vast.ai). Remote SSH lets you open the remote filesystem, edit files, run terminals, and debug as if everything were local.
+Это самое важное расширение для AI‑разработки. Вы будете обучать модели на удалённых машинах (облачные VM, лабораторные серверы, Lambda, Vast.ai). Remote SSH позволяет открывать удалённую файловую систему, редактировать файлы, запускать терминалы и отлаживать код так, будто всё работает локально.
 
-Setup:
+Настройка:
 
-1. Install the Remote SSH extension (done in Step 2).
-2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type "Remote-SSH: Connect to Host".
-3. Enter `user@your-gpu-box-ip`.
-4. VS Code installs its server component on the remote machine automatically.
+1. Установите расширение Remote SSH (сделано на шаге 2).
+2. Нажмите `Ctrl+Shift+P` (или `Cmd+Shift+P`), введите «Remote-SSH: Connect to Host».
+3. Введите `user@your-gpu-box-ip`.
+4. VS Code автоматически установит серверный компонент на удалённую машину.
 
-For passwordless access, set up SSH keys:
+Для беспарольного доступа настройте SSH‑ключи:
 
 ```bash
 ssh-keygen -t ed25519 -C "your-email@example.com"
 ssh-copy-id user@your-gpu-box-ip
 ```
 
-Add the host to `~/.ssh/config` for convenience:
+Добавьте хост в `~/.ssh/config` для удобства:
 
-```
+```text
 Host gpu-box
     HostName 203.0.113.50
     User ubuntu
@@ -156,52 +156,52 @@ Host gpu-box
     ForwardAgent yes
 ```
 
-Now `Remote-SSH: Connect to Host > gpu-box` connects instantly.
+Теперь `Remote-SSH: Connect to Host > gpu-box` подключается мгновенно.
 
-## Alternatives
+## Альтернативы
 
 ### Cursor
 
-[cursor.com](https://cursor.com) is a VS Code fork with built-in AI code generation. It uses the same extension ecosystem and settings format. If you use Cursor, everything in this lesson still applies. Import the same `settings.json` and `extensions.json`.
+[cursor.com](https://cursor.com) — форк VS Code со встроенной AI‑генерацией кода. Он использует ту же экосистему расширений и тот же формат настроек. Если вы используете Cursor, всё из этого урока остаётся актуальным. Импортируйте те же `settings.json` и `extensions.json`.
 
 ### Windsurf
 
-[windsurf.com](https://windsurf.com) is another AI-first VS Code fork. Same story: same extensions, same settings format, same Remote SSH support.
+[windsurf.com](https://windsurf.com) — ещё один AI‑ориентированный форк VS Code. Та же история: те же расширения, тот же формат настроек, та же поддержка Remote SSH.
 
 ### Vim/Neovim
 
-If you already use Vim or Neovim and are productive in it, stay there. The minimum setup for AI Python work:
+Если вы уже используете Vim или Neovim и продуктивно в них работаете — оставайтесь на них. Минимальная настройка для AI‑разработки на Python:
 
-- **pyright** or **pylsp** for type checking (via Mason or manual install)
-- **nvim-lspconfig** for language server integration
-- **jupyter-vim** or **molten-nvim** for notebook-like execution
-- **telescope.nvim** for file/symbol search
-- **none-ls.nvim** with black and ruff for formatting/linting
+- **pyright** или **pylsp** для проверки типов (через Mason или вручную)
+- **nvim-lspconfig** для интеграции language server
+- **jupyter-vim** или **molten-nvim** для notebook‑подобного выполнения кода
+- **telescope.nvim** для поиска файлов и символов
+- **none-ls.nvim** с black и ruff для форматирования и линтинга
 
-If you do not already use Vim, do not start now. The learning curve will compete with learning AI engineering. Use VS Code.
+Если вы ещё не пользуетесь Vim — не начинайте сейчас. Кривая обучения будет конкурировать с изучением AI‑инженерии. Используйте VS Code.
 
-## Use It
+## Использование
 
-With this setup, your daily workflow looks like:
+С такой настройкой ваш ежедневный workflow выглядит так:
 
-1. Open the project folder in VS Code (or connect via Remote SSH to a GPU box).
-2. Write Python in the editor with autocomplete, type hints, and inline errors.
-3. Run Jupyter notebooks inline with the Jupyter extension.
-4. Use the integrated terminal for training scripts, `uv pip install`, and GPU monitoring.
-5. Review changes with GitLens before committing.
+1. Откройте папку проекта в VS Code (или подключитесь к GPU‑серверу через Remote SSH).
+2. Пишите Python‑код с автодополнением, подсказками типов и встроенными ошибками.
+3. Запускайте Jupyter Notebook прямо внутри редактора.
+4. Используйте встроенный терминал для training script, `uv pip install` и мониторинга GPU.
+5. Просматривайте изменения через GitLens перед коммитом.
 
-## Exercises
+## Упражнения
 
-1. Install VS Code and all extensions listed in Step 2
-2. Copy the `settings.json` from this lesson into your VS Code config
-3. Open a Python file and verify that Pylance shows type hints and Black formats on save
-4. If you have access to a remote machine, set up Remote SSH and open a folder on it
+1. Установите VS Code и все расширения из шага 2
+2. Скопируйте `settings.json` из этого урока в конфигурацию VS Code
+3. Откройте Python‑файл и убедитесь, что Pylance показывает подсказки типов, а Black форматирует код при сохранении
+4. Если у вас есть доступ к удалённой машине — настройте Remote SSH и откройте на ней папку
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это означает на самом деле |
 |------|----------------|----------------------|
-| LSP | "Autocomplete engine" | Language Server Protocol: a standard for editors to get type info, completions, and diagnostics from a language-specific server |
-| Pylance | "The Python plugin" | Microsoft's Python language server using Pyright for type checking and IntelliSense |
-| Remote SSH | "Working on the server" | VS Code extension that runs a lightweight server on a remote machine and streams the UI to your local editor |
-| Format on save | "Auto-prettier" | The editor runs a formatter (Black, Ruff) every time you save, so code style is always consistent |
+| LSP | «Движок автодополнения» | Language Server Protocol — стандарт, через который редакторы получают информацию о типах, автодополнение и диагностику от language server |
+| Pylance | «Python‑плагин» | Python language server от Microsoft, использующий Pyright для проверки типов и IntelliSense |
+| Remote SSH | «Работа на сервере» | Расширение VS Code, которое запускает лёгкий сервер на удалённой машине и транслирует UI в локальный редактор |
+| Format on save | «Автопричесывание кода» | Редактор запускает formatter (Black, Ruff) при каждом сохранении, чтобы стиль кода всегда оставался единообразным |
