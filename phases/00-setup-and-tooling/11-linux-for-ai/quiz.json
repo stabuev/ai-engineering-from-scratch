@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the '~' symbol represent in a Linux file path?",
-      "options": ["The root directory of the file system", "The current user's home directory", "The temporary files directory", "The directory where system programs are installed"],
+      "question": "Что обозначает символ '~' в пути Linux?",
+      "options": [
+        "Корневую директорию файловой системы",
+        "Домашнюю директорию текущего пользователя",
+        "Директорию временных файлов",
+        "Директорию, где установлены системные программы"
+      ],
       "correct": 1,
-      "explanation": "The tilde (~) is a shortcut for the current user's home directory, typically /home/username on Linux. 'cd ~' takes you home from anywhere."
+      "explanation": "Тильда (~) — это сокращение для домашней директории текущего пользователя, обычно /home/username в Linux. Команда `cd ~` возвращает вас домой из любой точки файловой системы."
     },
     {
       "stage": "pre",
-      "question": "What is the purpose of 'sudo' before a command?",
-      "options": ["It speeds up the command execution", "It runs the command with root (administrator) privileges", "It runs the command in a sandboxed environment", "It logs the command output to a system file"],
+      "question": "Для чего используется 'sudo' перед командой?",
+      "options": [
+        "Ускоряет выполнение команды",
+        "Запускает команду с правами root (администратора)",
+        "Запускает команду в изолированной среде",
+        "Сохраняет вывод команды в системный файл"
+      ],
       "correct": 1,
-      "explanation": "sudo (superuser do) temporarily elevates your privileges to root level for a single command. Required for system-level operations like installing packages with apt."
+      "explanation": "`sudo` (superuser do) временно повышает ваши привилегии до уровня root для одной команды. Используется для системных операций, например установки пакетов через apt."
     },
     {
       "stage": "post",
-      "question": "You get 'Permission denied' when trying to run a shell script. What command fixes this?",
-      "options": ["sudo rm script.sh", "chmod +x script.sh", "chown root script.sh", "mv script.sh /usr/bin/"],
+      "question": "Вы получили ошибку 'Permission denied' при запуске shell-скрипта. Какая команда это исправит?",
+      "options": [
+        "sudo rm script.sh",
+        "chmod +x script.sh",
+        "chown root script.sh",
+        "mv script.sh /usr/bin/"
+      ],
       "correct": 1,
-      "explanation": "chmod +x adds execute permission to the file. Without the execute bit set, the shell refuses to run the script even if you own it."
+      "explanation": "`chmod +x` добавляет файлу право на выполнение. Без execute-бита shell не запустит скрипт, даже если файл принадлежит вам."
     },
     {
       "stage": "post",
-      "question": "On a remote GPU box, your training data fills the disk. Which command shows the largest directories consuming space?",
-      "options": ["ls -la /", "du -h --max-depth=1 / | sort -hr | head -20", "cat /proc/meminfo", "free -h"],
+      "question": "На удалённом GPU-сервере обучающие данные заполнили диск. Какая команда покажет директории, занимающие больше всего места?",
+      "options": [
+        "ls -la /",
+        "du -h --max-depth=1 / | sort -hr | head -20",
+        "cat /proc/meminfo",
+        "free -h"
+      ],
       "correct": 1,
-      "explanation": "du -h shows disk usage per directory, --max-depth=1 limits to top-level directories, and sort -hr sorts by size in descending order. This reveals which directories are consuming the most space."
+      "explanation": "`du -h` показывает использование диска по директориям, `--max-depth=1` ограничивает вывод верхним уровнем, а `sort -hr` сортирует по размеру в порядке убывания. Это помогает найти директории, занимающие больше всего места."
     },
     {
       "stage": "post",
-      "question": "What is a key difference between the macOS and Linux versions of 'sed -i'?",
-      "options": ["Linux sed is faster than macOS sed", "macOS sed requires an empty string argument after -i ('sed -i \"\"'), while Linux does not", "Linux sed does not support regular expressions", "macOS sed cannot modify files in place"],
+      "question": "В чём ключевое различие между версиями `sed -i` в macOS и Linux?",
+      "options": [
+        "`sed` в Linux работает быстрее, чем в macOS",
+        "В macOS `sed` требует пустую строку после `-i` (`sed -i \"\"`), а в Linux — нет",
+        "`sed` в Linux не поддерживает регулярные выражения",
+        "`sed` в macOS не умеет изменять файлы на месте"
+      ],
       "correct": 1,
-      "explanation": "macOS uses BSD sed which requires 'sed -i \"\" pattern file', while Linux uses GNU sed which accepts 'sed -i pattern file'. This is a common gotcha when moving scripts between systems."
+      "explanation": "В macOS используется BSD sed, которому требуется синтаксис `sed -i \"\" pattern file`, а в Linux используется GNU sed с синтаксисом `sed -i pattern file`. Это частая проблема при переносе скриптов между системами."
     }
   ]
 }

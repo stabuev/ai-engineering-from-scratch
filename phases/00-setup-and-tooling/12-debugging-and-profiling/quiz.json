@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What makes debugging AI/ML code fundamentally different from debugging a typical web application?",
-      "options": ["AI code uses different programming languages", "AI bugs often don't crash -- they silently produce incorrect results with no error messages", "AI code cannot be debugged with standard tools like print statements", "AI code always requires a GPU to debug"],
+      "question": "Что принципиально отличает отладку AI/ML-кода от отладки типичного веб-приложения?",
+      "options": [
+        "AI-код использует другие языки программирования",
+        "AI-баги часто не приводят к падению программы — они молча выдают неверные результаты без сообщений об ошибках",
+        "AI-код нельзя отлаживать стандартными инструментами вроде print",
+        "Для отладки AI-кода всегда нужен GPU"
+      ],
       "correct": 1,
-      "explanation": "The worst AI bugs produce valid-looking output. A misconfigured training loop might run for hours without errors while the model learns nothing useful, unlike web apps that crash with stack traces."
+      "explanation": "Худшие AI-баги выдают внешне корректный результат. Неправильно настроенный training loop может работать часами без ошибок, при этом модель не будет учиться ничему полезному — в отличие от веб-приложений, которые обычно падают со stack trace."
     },
     {
       "stage": "pre",
-      "question": "What does a profiler measure?",
-      "options": ["Whether the code produces correct output", "How much time and memory each part of the code consumes", "How many bugs exist in the codebase", "The code coverage of unit tests"],
+      "question": "Что измеряет профилировщик (profiler)?",
+      "options": [
+        "Корректность результатов работы кода",
+        "Сколько времени и памяти потребляет каждая часть кода",
+        "Сколько багов существует в кодовой базе",
+        "Покрытие unit-тестами"
+      ],
       "correct": 1,
-      "explanation": "Profilers measure resource consumption -- execution time per function, memory allocation, and GPU utilization -- helping you find bottlenecks and optimize performance."
+      "explanation": "Профилировщики измеряют потребление ресурсов — время выполнения функций, выделение памяти и использование GPU — помогая находить узкие места и оптимизировать производительность."
     },
     {
       "stage": "post",
-      "question": "Your model achieves 99% accuracy on the test set. What AI-specific bug should you suspect first?",
-      "options": ["The model has too many parameters", "Data leakage -- test samples may have leaked into the training set", "The learning rate is too high", "The batch size is too large"],
+      "question": "Модель показывает 99% точности на тестовом наборе. Какой AI-специфичный баг нужно заподозрить в первую очередь?",
+      "options": [
+        "У модели слишком много параметров",
+        "Утечка данных — тестовые примеры могли попасть в обучающую выборку",
+        "Слишком высокий learning rate",
+        "Слишком большой batch size"
+      ],
       "correct": 1,
-      "explanation": "Suspiciously high accuracy often indicates data leakage -- overlap between training and test data, or features that contain the target label. Always check for train/test overlap."
+      "explanation": "Подозрительно высокая точность часто указывает на утечку данных — пересечение train и test выборок или признаки, содержащие целевую метку. Всегда проверяйте пересечение train/test."
     },
     {
       "stage": "post",
-      "question": "What is the most common finding when profiling a training loop's time breakdown?",
-      "options": ["The backward pass takes 90% of the time", "Data loading takes more time than the forward and backward passes combined", "Writing logs takes the most time", "GPU memory allocation is the bottleneck"],
+      "question": "Какой результат чаще всего обнаруживается при профилировании training loop?",
+      "options": [
+        "Backward pass занимает 90% времени",
+        "Загрузка данных занимает больше времени, чем forward и backward pass вместе",
+        "Логирование занимает больше всего времени",
+        "Главное узкое место — выделение GPU-памяти"
+      ],
       "correct": 1,
-      "explanation": "Data loading often takes 60%+ of training time when num_workers=0 in the DataLoader. The fix is setting num_workers > 0 to load data in parallel with GPU computation."
+      "explanation": "Загрузка данных часто занимает более 60% времени обучения, когда в DataLoader установлен num_workers=0. Решение — установить num_workers > 0 для параллельной загрузки данных одновременно с вычислениями на GPU."
     },
     {
       "stage": "post",
-      "question": "You see NaN loss at step 500. Which approach will help you find the root cause?",
-      "options": ["Restart training from scratch with a different random seed", "Use detect_nan to check for NaN/Inf in gradients and add breakpoint() at the failure point", "Increase the batch size to stabilize gradients", "Switch from Adam to SGD optimizer"],
+      "question": "Вы видите NaN loss на 500-м шаге. Какой подход поможет найти первопричину?",
+      "options": [
+        "Перезапустить обучение с другим random seed",
+        "Использовать detect_nan для проверки NaN/Inf в градиентах и добавить breakpoint() в точке ошибки",
+        "Увеличить batch size для стабилизации градиентов",
+        "Переключиться с оптимизатора Adam на SGD"
+      ],
       "correct": 1,
-      "explanation": "First identify WHERE the NaN originates by checking gradients for each parameter. A conditional breakpoint at the NaN step lets you inspect tensor values interactively. Common causes: learning rate too high, log(0), or division by zero."
+      "explanation": "Сначала нужно определить, ГДЕ именно возникает NaN, проверяя градиенты каждого параметра. Условный breakpoint на шаге с NaN позволит интерактивно исследовать значения тензоров. Частые причины: слишком высокий learning rate, log(0) или деление на ноль."
     }
   ]
 }

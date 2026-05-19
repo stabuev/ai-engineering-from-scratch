@@ -1,43 +1,43 @@
-# Debugging and Profiling
+# Отладка и профилирование
 
-> The worst AI bugs don't crash. They train silently on garbage and report a beautiful loss curve.
+> Худшие баги в AI не приводят к падению программы. Они молча обучаются на мусоре и показывают красивую кривую loss.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Lesson 1 (Dev Environment), basic PyTorch familiarity
-**Time:** ~60 minutes
+**Тип:** Build
+**Язык:** Python
+**Требования:** Урок 1 (Dev Environment), базовое знакомство с PyTorch
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Use conditional `breakpoint()` and `debug_print` to inspect tensor shapes, dtypes, and NaN values mid-training
-- Profile training loops with `cProfile`, `line_profiler`, and `tracemalloc` to find bottlenecks
-- Detect common AI bugs: shape mismatches, NaN loss, data leakage, and wrong-device tensors
-- Set up TensorBoard to visualize loss curves, weight histograms, and gradient distributions
+- Использовать условный `breakpoint()` и `debug_print` для проверки форм тензоров, типов данных и значений NaN во время обучения
+- Профилировать циклы обучения с помощью `cProfile`, `line_profiler` и `tracemalloc` для поиска узких мест
+- Находить распространённые AI-баги: несовпадение форм, NaN в loss, утечку данных и тензоры на неправильном устройстве
+- Настроить TensorBoard для визуализации кривых loss, гистограмм весов и распределений градиентов
 
-## The Problem
+## Проблема
 
-AI code fails differently than regular code. A web app crashes with a stack trace. A misconfigured training loop runs for 8 hours, burns $200 in GPU time, and produces a model that predicts the mean of every input. The code never errored. The bug was a tensor on the wrong device, a forgotten `.detach()`, or labels leaking into features.
+AI-код ломается не так, как обычный код. Веб-приложение падает со stack trace. Неправильно настроенный training loop работает 8 часов, сжигает $200 GPU-времени и выдаёт модель, которая предсказывает среднее значение для любого входа. Код ни разу не упал. Багом оказался тензор на неправильном устройстве, забытый `.detach()` или утечка меток в признаки.
 
-You need debugging tools that catch these silent failures before they waste your time and compute.
+Вам нужны инструменты отладки, которые ловят такие «тихие» ошибки до того, как они потратят ваше время и вычислительные ресурсы.
 
-## The Concept
+## Концепция
 
-AI debugging operates at three levels:
+Отладка AI работает на трёх уровнях:
 
 ```mermaid
 graph TD
-    L3["3. Training Dynamics<br/>Loss curves, gradient norms, activations"] --> L2
-    L2["2. Tensor Operations<br/>Shapes, dtypes, devices, NaN/Inf values"] --> L1
-    L1["1. Standard Python<br/>Breakpoints, logging, profiling, memory"]
+    L3["3. Динамика обучения<br/>Кривые loss, нормы градиентов, активации"] --> L2
+    L2["2. Операции с тензорами<br/>Формы, типы данных, устройства, значения NaN/Inf"] --> L1
+    L1["1. Стандартный Python<br/>Breakpoints, логирование, профилирование, память"]
 ```
 
-Most people jump straight to level 3 (staring at TensorBoard). But 80% of AI bugs live at levels 1 and 2.
+Большинство людей сразу прыгают на уровень 3 (смотрят в TensorBoard). Но 80% AI-багов живут на уровнях 1 и 2.
 
 ## Build It
 
-### Part 1: Print Debugging (Yes, It Works)
+### Часть 1: Отладка через print (да, это работает)
 
-Print debugging gets dismissed. It shouldn't. For tensor code, a targeted print statement beats stepping through a debugger because you need to see shapes, dtypes, and value ranges all at once.
+Многие пренебрежительно относятся к print-отладке. Зря. Для тензорного кода точечный print полезнее пошагового дебаггера, потому что вам нужно сразу видеть формы, типы данных и диапазоны значений.
 
 ```python
 def debug_print(name, tensor):
@@ -48,11 +48,11 @@ def debug_print(name, tensor):
           f"has_nan={tensor.isnan().any().item()}")
 ```
 
-Call this after every suspicious operation. When the bug is found, remove the prints. Simple.
+Вызывайте это после каждой подозрительной операции. Когда найдёте баг — удалите print. Всё просто.
 
-### Part 2: Python Debugger (pdb and breakpoint)
+### Часть 2: Python Debugger (pdb и breakpoint)
 
-The built-in debugger is underrated for AI work. Drop `breakpoint()` into your training loop and inspect tensors interactively.
+Встроенный дебаггер недооценён в AI-разработке. Вставьте `breakpoint()` в training loop и интерактивно исследуйте тензоры.
 
 ```python
 def training_step(model, batch, criterion, optimizer):
@@ -67,19 +67,19 @@ def training_step(model, batch, criterion, optimizer):
     optimizer.step()
 ```
 
-When the debugger drops you in, useful commands:
+Когда выполнение остановится в дебаггере, полезны такие команды:
 
-- `p outputs.shape` to check shapes
-- `p loss.item()` to see the loss value
-- `p torch.isnan(outputs).sum()` to count NaNs
-- `p model.fc1.weight.grad` to check gradients
-- `c` to continue, `q` to quit
+- `p outputs.shape` — проверить формы
+- `p loss.item()` — посмотреть значение loss
+- `p torch.isnan(outputs).sum()` — посчитать количество NaN
+- `p model.fc1.weight.grad` — проверить градиенты
+- `c` — продолжить, `q` — выйти
 
-This is conditional debugging. You only stop when something looks wrong. For a 10,000-step training run, that matters.
+Это условная отладка. Вы останавливаетесь только тогда, когда что-то выглядит неправильно. Для training run на 10 000 шагов это важно.
 
-### Part 3: Python Logging
+### Часть 3: Логирование в Python
 
-Replace print statements with logging when your debugging goes beyond a quick check.
+Заменяйте print на логирование, когда отладка выходит за рамки быстрой проверки.
 
 ```python
 import logging
@@ -99,11 +99,11 @@ logger.warning("Loss spike detected: %.4f at step %d", loss.item(), step)
 logger.error("NaN loss at step %d, stopping", step)
 ```
 
-Logging gives you timestamps, severity levels, and file output. When a training run fails at 3 AM, you want a log file, not terminal output that scrolled off screen.
+Логирование даёт временные метки, уровни важности и запись в файл. Когда training run падает в 3 часа ночи, вам нужен log-файл, а не вывод в терминале, который давно прокрутился за пределы экрана.
 
-### Part 4: Timing Code Sections
+### Часть 4: Измерение времени отдельных участков кода
 
-Knowing where time goes is the first step to optimization.
+Понимание того, куда уходит время, — первый шаг к оптимизации.
 
 ```python
 import time
@@ -130,17 +130,17 @@ with Timer("backward pass"):
     loss.backward()
 ```
 
-Common finding: data loading takes 60% of training time. The fix is `num_workers > 0` in your DataLoader, not a faster GPU.
+Типичная находка: загрузка данных занимает 60% времени обучения. Решение — `num_workers > 0` в DataLoader, а не более быстрая GPU.
 
-### Part 5: cProfile and line_profiler
+### Часть 5: cProfile и line_profiler
 
-When you need more than manual timers:
+Когда ручных таймеров недостаточно:
 
 ```bash
 python -m cProfile -s cumtime train.py
 ```
 
-This shows every function call sorted by cumulative time. For line-by-line profiling:
+Эта команда показывает все вызовы функций, отсортированные по суммарному времени выполнения. Для построчного профилирования:
 
 ```bash
 pip install line_profiler
@@ -157,9 +157,9 @@ def train_step(model, data, target):
 # Run with: kernprof -l -v train.py
 ```
 
-### Part 6: Memory Profiling
+### Часть 6: Профилирование памяти
 
-#### CPU Memory with tracemalloc
+#### CPU-память с помощью tracemalloc
 
 ```python
 import tracemalloc
@@ -176,7 +176,7 @@ for stat in top_stats[:10]:
     print(stat)
 ```
 
-#### CPU Memory with memory_profiler
+#### CPU-память с помощью memory_profiler
 
 ```bash
 pip install memory_profiler
@@ -192,9 +192,9 @@ def load_data():
     return processed
 ```
 
-Run with `python -m memory_profiler your_script.py` to see line-by-line memory usage.
+Запустите `python -m memory_profiler your_script.py`, чтобы увидеть построчное потребление памяти.
 
-#### GPU Memory with PyTorch
+#### GPU-память с помощью PyTorch
 
 ```python
 import torch
@@ -206,19 +206,19 @@ if torch.cuda.is_available():
     print(f"Cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
 ```
 
-When you hit OOM (Out of Memory):
+Когда вы сталкиваетесь с OOM (Out of Memory):
 
-1. Reduce batch size (first thing to try, always)
-2. Use `torch.cuda.empty_cache()` to free cached memory
-3. Use `del tensor` followed by `torch.cuda.empty_cache()` for large intermediates
-4. Use mixed precision (`torch.cuda.amp`) to halve memory usage
-5. Use gradient checkpointing for very deep models
+1. Уменьшите batch size (это всегда первое, что стоит попробовать)
+2. Используйте `torch.cuda.empty_cache()`, чтобы освободить кэшированную память
+3. Используйте `del tensor`, а затем `torch.cuda.empty_cache()` для больших промежуточных тензоров
+4. Используйте mixed precision (`torch.cuda.amp`), чтобы примерно вдвое снизить потребление памяти
+5. Используйте gradient checkpointing для очень глубоких моделей
 
-### Part 7: Common AI Bugs and How to Catch Them
+### Часть 7: Распространённые AI-баги и как их ловить
 
-#### Shape Mismatch
+#### Несовпадение форм
 
-The most frequent bug. A tensor has shape `[batch, features]` when the model expects `[batch, channels, height, width]`.
+Самый частый баг. У тензора форма `[batch, features]`, а модель ожидает `[batch, channels, height, width]`.
 
 ```python
 def check_shapes(model, sample_input):
@@ -242,16 +242,16 @@ def check_shapes(model, sample_input):
         h.remove()
 ```
 
-Run this once with a sample batch. It maps every shape transformation in your model.
+Запустите это один раз на sample batch. Так вы получите карту всех преобразований форм внутри модели.
 
-#### NaN Loss
+#### NaN в loss
 
-NaN loss means something exploded. Common causes:
+NaN в loss означает, что что-то «взорвалось». Частые причины:
 
-- Learning rate too high
-- Division by zero in custom loss
-- Log of zero or negative number
-- Exploding gradients in RNNs
+- Слишком высокий learning rate
+- Деление на ноль в кастомной loss-функции
+- Логарифм нуля или отрицательного числа
+- Взрывающиеся градиенты в RNN
 
 ```python
 def detect_nan(model, loss, step):
@@ -267,9 +267,9 @@ def detect_nan(model, loss, step):
     return False
 ```
 
-#### Data Leakage
+#### Утечка данных
 
-Your model gets 99% accuracy on the test set. Sounds great. It's a bug.
+Модель показывает 99% accuracy на test set. Звучит отлично. На самом деле это баг.
 
 ```python
 def check_data_leakage(train_set, test_set, id_column="id"):
@@ -282,11 +282,11 @@ def check_data_leakage(train_set, test_set, id_column="id"):
     return False
 ```
 
-Also check for temporal leakage: using future data to predict the past. Sort by timestamp before splitting.
+Также проверяйте temporal leakage: использование будущих данных для предсказания прошлого. Перед разделением данных сортируйте их по timestamp.
 
-#### Wrong Device
+#### Неправильное устройство
 
-Tensors on different devices (CPU vs GPU) cause runtime errors. But sometimes a tensor silently stays on CPU while everything else is on GPU, and training just runs slowly.
+Тензоры на разных устройствах (CPU и GPU) вызывают runtime errors. Но иногда тензор молча остаётся на CPU, пока всё остальное находится на GPU, и обучение просто идёт медленно.
 
 ```python
 def check_devices(model, *tensors):
@@ -297,9 +297,9 @@ def check_devices(model, *tensors):
             print(f"  WARNING: tensor {i} on {t.device}, model on {model_device}")
 ```
 
-### Part 8: TensorBoard Basics
+### Часть 8: Основы TensorBoard
 
-TensorBoard shows you what's happening inside training over time.
+TensorBoard показывает, что происходит внутри обучения во времени.
 
 ```bash
 pip install tensorboard
@@ -325,24 +325,24 @@ for step in range(num_steps):
 writer.close()
 ```
 
-Launch it:
+Запустите TensorBoard:
 
 ```bash
 tensorboard --logdir=runs
 ```
 
-What to look for:
+На что смотреть:
 
-- **Loss not decreasing**: Learning rate too low, or model architecture issue
-- **Loss oscillating wildly**: Learning rate too high
-- **Loss goes to NaN**: Numerical instability (see NaN section above)
-- **Train loss decreasing, val loss increasing**: Overfitting
-- **Weight histograms collapsing to zero**: Vanishing gradients
-- **Gradient histograms exploding**: Need gradient clipping
+- **Loss не уменьшается**: learning rate слишком низкий или проблема в архитектуре модели
+- **Loss сильно осциллирует**: learning rate слишком высокий
+- **Loss становится NaN**: численная нестабильность (см. раздел про NaN выше)
+- **Train loss уменьшается, val loss растёт**: переобучение
+- **Гистограммы весов схлопываются к нулю**: затухающие градиенты
+- **Гистограммы градиентов взрываются**: нужен gradient clipping
 
-### Part 9: VS Code Debugger
+### Часть 9: Дебаггер VS Code
 
-For interactive debugging, configure VS Code with a `launch.json`:
+Для интерактивной отладки настройте VS Code с помощью `launch.json`:
 
 ```json
 {
@@ -360,34 +360,34 @@ For interactive debugging, configure VS Code with a `launch.json`:
 }
 ```
 
-Set breakpoints by clicking the gutter. Use the Variables pane to inspect tensor properties. The Debug Console lets you run arbitrary Python expressions mid-execution.
+Ставьте breakpoints, кликая по gutter. Используйте панель Variables для проверки свойств тензоров. Debug Console позволяет выполнять произвольные Python-выражения во время выполнения программы.
 
-Useful for stepping through data preprocessing pipelines where you want to see each transformation.
+Это полезно для пошаговой проверки data preprocessing pipelines, когда нужно видеть каждое преобразование.
 
 ## Use It
 
-Here's the debugging workflow that catches most AI bugs:
+Вот рабочий процесс отладки, который ловит большинство AI-багов:
 
-1. **Before training**: Run `check_shapes` with a sample batch. Verify input and output dimensions match expectations.
-2. **First 10 steps**: Use `debug_print` on loss, outputs, and gradients. Confirm nothing is NaN and values are in reasonable ranges.
-3. **During training**: Log loss, learning rate, and gradient norms. Use TensorBoard for visualization.
-4. **When something breaks**: Drop `breakpoint()` at the failure point. Inspect tensors interactively.
-5. **For performance**: Time your data loading vs forward vs backward pass. Profile memory if you're near OOM.
+1. **Перед обучением**: запустите `check_shapes` на sample batch. Проверьте, что входные и выходные размерности соответствуют ожиданиям.
+2. **Первые 10 шагов**: используйте `debug_print` для loss, outputs и gradients. Убедитесь, что нигде нет NaN и значения находятся в разумных диапазонах.
+3. **Во время обучения**: логируйте loss, learning rate и нормы градиентов. Используйте TensorBoard для визуализации.
+4. **Когда что-то ломается**: поставьте `breakpoint()` в точке сбоя. Интерактивно исследуйте тензоры.
+5. **Для производительности**: измеряйте время data loading, forward pass и backward pass. Профилируйте память, если приближаетесь к OOM.
 
 ## Ship It
 
-Run the debugging toolkit script:
+Запустите скрипт с набором инструментов для отладки:
 
 ```bash
 python phases/00-setup-and-tooling/12-debugging-and-profiling/code/debug_tools.py
 ```
 
-See `outputs/prompt-debug-ai-code.md` for a prompt that helps diagnose AI-specific bugs.
+См. `outputs/prompt-debug-ai-code.md` — там находится prompt, который помогает диагностировать AI-специфичные баги.
 
-## Exercises
+## Упражнения
 
-1. Run `debug_tools.py` and read through each section's output. Modify the dummy model to introduce a NaN (hint: divide by zero in the forward pass) and watch the detector catch it.
-2. Profile a training loop with `cProfile` and identify the slowest function.
-3. Use `tracemalloc` to find which line in your data loading pipeline allocates the most memory.
-4. Set up TensorBoard for a simple training run and identify whether the model is overfitting.
-5. Use `breakpoint()` inside a training loop. Practice inspecting tensor shapes, devices, and gradient values from the debugger prompt.
+1. Запустите `debug_tools.py` и изучите вывод каждого раздела. Измените dummy model так, чтобы создать NaN (подсказка: разделите на ноль в forward pass), и посмотрите, как detector это поймает.
+2. Профилируйте training loop с помощью `cProfile` и найдите самую медленную функцию.
+3. Используйте `tracemalloc`, чтобы найти строку в вашем data loading pipeline, которая выделяет больше всего памяти.
+4. Настройте TensorBoard для простого training run и определите, переобучается ли модель.
+5. Используйте `breakpoint()` внутри training loop. Потренируйтесь проверять формы тензоров, устройства и значения градиентов из prompt дебаггера.
