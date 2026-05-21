@@ -1,37 +1,37 @@
-# Monocular Depth & Geometry Estimation
+# Оценка монокулярной глубины и геометрии
 
-> A depth map is a single-channel image where each pixel is a distance from the camera. Predicting it from one RGB frame used to be impossible without stereo or LiDAR. In 2026 a frozen ViT encoder plus a lightweight head gets within a few percent of ground truth.
+> Карта глубины - это одноканальное изображение, где каждый пиксель является расстоянием от камеры. Предсказывать ее по одному RGB-кадру раньше было невозможно без стерео или LiDAR. В 2026 году замороженный ViT-энкодер плюс легкая голова дают результат в пределах нескольких процентов от истинной разметки.
 
-**Type:** Build + Use
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 14 (ViT), Phase 4 Lesson 17 (Self-Supervised Vision), Phase 4 Lesson 07 (U-Net)
-**Time:** ~60 minutes
+**Тип:** Build + Use
+**Языки:** Python
+**Предварительные требования:** Phase 4 Lesson 14 (ViT), Phase 4 Lesson 17 (Self-Supervised Vision), Phase 4 Lesson 07 (U-Net)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish relative and metric depth and state which one each production model (MiDaS, Marigold, Depth Anything V3, ZoeDepth) solves
-- Use Depth Anything V3 (DINOv2 backbone) to predict depth for arbitrary single images with no calibration
-- Explain why monocular depth works at all from a single image (perspective cues, texture gradients, learned priors) and what it cannot recover (absolute scale, occluded geometry)
-- Lift 2D detections to 3D points using a depth map and pinhole camera intrinsics
+- Различать относительную и метрическую глубину и указывать, какую из них решает каждая production-модель (MiDaS, Marigold, Depth Anything V3, ZoeDepth)
+- Использовать Depth Anything V3 (DINOv2 backbone), чтобы предсказывать глубину для произвольных одиночных изображений без калибровки
+- Объяснять, почему монокулярная глубина вообще работает по одному изображению (перспективные признаки, градиенты текстуры, выученные априорные знания) и что она не может восстановить (абсолютный масштаб, окклюдированную геометрию)
+- Поднимать 2D-детекции в 3D-точки с помощью карты глубины и внутренней калибровки камеры-обскуры
 
-## The Problem
+## Проблема
 
-Depth is the missing axis in 2D computer vision. Given RGB, you know where things appear in the image plane; you do not know how far they are. Depth sensors (stereo rigs, LiDAR, time-of-flight) solve this directly but are expensive, fragile, and limited in range.
+Глубина - это недостающая ось в 2D компьютерном зрении. Имея RGB, вы знаете, где объекты появляются в плоскости изображения; вы не знаете, насколько далеко они находятся. Датчики глубины (стереосистемы, LiDAR, time-of-flight) решают это напрямую, но они дороги, хрупки и ограничены по дальности.
 
-Monocular depth estimation — predicting depth from a single RGB frame — used to produce blurry, unreliable output. By 2026 large pretrained encoders changed that: Depth Anything V3 uses a frozen DINOv2 backbone and produces depth maps that generalise across indoor, outdoor, medical, and satellite domains. Marigold reframes depth as a conditional diffusion problem. ZoeDepth regresses true metric distances.
+Оценка монокулярной глубины - предсказание глубины по одному RGB-кадру - раньше давала размытый и ненадежный результат. К 2026 году большие предварительно обученные энкодеры изменили ситуацию: Depth Anything V3 использует замороженный DINOv2 backbone и производит карты глубины, которые обобщаются на помещения, улицу, медицинские и спутниковые домены. Marigold переформулирует глубину как задачу условной диффузии. ZoeDepth регрессирует истинные метрические расстояния.
 
-Depth is also the bridge between 2D detection and 3D understanding: multiply a detected box's pixels by depth and you lift the 2D object into a 3D point cloud. That is the core of every AR occlusion system, every obstacle-avoidance pipeline, and every "pick up the cup" robot.
+Глубина также является мостом между 2D-детекцией и 3D-пониманием: умножьте пиксели обнаруженного bounding box на глубину, и вы поднимете 2D-объект в 3D-облако точек. Это ядро каждой системы AR-окклюзии, каждого пайплайна обхода препятствий и каждого робота, который должен "pick up the cup".
 
-## The Concept
+## Концепция
 
-### Relative vs metric depth
+### Относительная и метрическая глубина
 
-- **Relative depth** — ordered `z` values without a real-world unit. "Pixel A is closer than pixel B, but the ratio of distances is not anchored to metres."
-- **Metric depth** — absolute distance in metres from the camera. Requires the model to have learnt the statistical relationship between image cues and real distance.
+- **Относительная глубина** - упорядоченные значения `z` без единицы реального мира. "Пиксель A ближе, чем пиксель B, но отношение расстояний не привязано к метрам."
+- **Метрическая глубина** - абсолютное расстояние в метрах от камеры. Требует, чтобы модель выучила статистическую связь между признаками изображения и реальным расстоянием.
 
-MiDaS and Depth Anything V3 produce relative depth. Marigold produces relative depth. ZoeDepth, UniDepth, and Metric3D produce metric depth. Metric models are sensitive to camera intrinsics; relative models are not.
+MiDaS и Depth Anything V3 производят относительную глубину. Marigold производит относительную глубину. ZoeDepth, UniDepth и Metric3D производят метрическую глубину. Метрические модели чувствительны к внутренним параметрам камеры; относительные модели - нет.
 
-### The encoder-decoder pattern
+### Паттерн энкодер-декодер
 
 ```mermaid
 flowchart LR
@@ -45,43 +45,43 @@ flowchart LR
     style DEPTH fill:#dcfce7,stroke:#16a34a
 ```
 
-Depth Anything V3 freezes the encoder and trains only the DPT-style decoder. The encoder provides rich features; the decoder interpolates them back to image resolution and regresses depth.
+Depth Anything V3 замораживает энкодер и обучает только DPT-style декодер. Энкодер предоставляет богатые признаки; декодер интерполирует их обратно к разрешению изображения и регрессирует глубину.
 
-### Why a single image produces depth at all
+### Почему одно изображение вообще дает глубину
 
-A 2D image contains many monocular cues that correlate with depth:
+2D-изображение содержит много монокулярных признаков, которые коррелируют с глубиной:
 
-- **Perspective** — parallel lines in 3D converge in 2D.
-- **Texture gradient** — surfaces far away have smaller, denser texture.
-- **Occlusion order** — nearer objects occlude farther ones.
-- **Size constancy** — known objects (cars, humans) give approximate scale.
-- **Atmospheric perspective** — distant objects appear hazier and bluer in outdoor scenes.
+- **Перспектива** - параллельные линии в 3D сходятся в 2D.
+- **Градиент текстуры** - удаленные поверхности имеют более мелкую и плотную текстуру.
+- **Порядок окклюзий** - более близкие объекты перекрывают более дальние.
+- **Постоянство размера** - известные объекты (машины, люди) дают приблизительный масштаб.
+- **Воздушная перспектива** - далекие объекты выглядят более дымчатыми и синеватыми в уличных сценах.
 
-A ViT trained on billions of images internalises these cues. With enough data and a strong backbone, monocular depth hits reasonable accuracy without any explicit 3D supervision.
+ViT, обученный на миллиардах изображений, интернализует эти признаки. При достаточном объеме данных и сильном backbone монокулярная глубина достигает разумной точности без какого-либо явного 3D-supervision.
 
-### What monocular depth cannot do
+### Что монокулярная глубина не может сделать
 
-- **Absolute metric scale** without intrinsics or a known object in the scene. The network can predict "the cup is twice as far as the spoon" without knowing whether the cup is 1 m or 10 m away.
-- **Occluded geometry** — the back of a chair is unseen and cannot be inferred reliably.
-- **Truly untextured / reflective surfaces** — mirrors, glass, uniform walls. The network reports plausible but wrong depth.
+- **Абсолютный метрический масштаб** без внутренних параметров камеры или известного объекта в сцене. Сеть может предсказать, что "чашка вдвое дальше ложки", не зная, находится чашка на расстоянии 1 m или 10 m.
+- **Окклюдированная геометрия** - спинка стула не видна и не может быть надежно выведена.
+- **По-настоящему нетекстурированные / отражающие поверхности** - зеркала, стекло, однородные стены. Сеть сообщает правдоподобную, но неверную глубину.
 
-### Depth Anything V3 in 2026
+### Depth Anything V3 в 2026 году
 
-- Vanilla DINOv2 ViT-L/14 as encoder (frozen).
-- DPT decoder.
-- Trained on posed image pairs from diverse sources (no explicit depth supervision needed beyond photometric consistency).
-- Predicts spatially consistent geometry from **an arbitrary number of visual inputs, with or without known camera poses**.
-- SOTA across monocular depth, any-view geometry, visual rendering, camera pose estimation.
+- Vanilla DINOv2 ViT-L/14 как энкодер (замороженный).
+- DPT-декодер.
+- Обучается на позированных парах изображений из разнообразных источников (явная разметка глубины не нужна сверх фотометрической согласованности).
+- Предсказывает пространственно согласованную геометрию по **произвольному числу визуальных входов, с известными позами камеры или без них**.
+- SOTA для монокулярной глубины, геометрии любого ракурса, визуального рендеринга, оценки позы камеры.
 
-This is the drop-in model to call when you need depth in 2026.
+Это drop-in модель, которую стоит вызывать, когда вам нужна глубина в 2026 году.
 
-### Marigold — diffusion for depth
+### Marigold - диффузия для глубины
 
-Marigold (Ke et al., CVPR 2024) reframes depth estimation as conditional image-to-image diffusion. Conditioning: RGB. Target: depth map. Uses a pretrained Stable Diffusion 2 U-Net as backbone. Output depth maps are exceptionally sharp at object boundaries. Trade-off: slower inference than feed-forward models (10-50 denoising steps).
+Marigold (Ke et al., CVPR 2024) переформулирует оценку глубины как условную диффузию image-to-image. Условие: RGB. Цель: карта глубины. Использует предварительно обученную Stable Diffusion 2 U-Net как backbone. Выходные карты глубины исключительно резкие на границах объектов. Компромисс: более медленный инференс, чем у feed-forward моделей (10-50 шагов denoising).
 
-### Intrinsics and the pinhole camera
+### Внутренние параметры и камера-обскура
 
-To lift a pixel `(u, v)` with depth `d` to a 3D point `(X, Y, Z)` in camera coordinates:
+Чтобы поднять пиксель `(u, v)` с глубиной `d` в 3D-точку `(X, Y, Z)` в координатах камеры:
 
 ```
 fx, fy, cx, cy = camera intrinsics
@@ -90,20 +90,20 @@ Y = (v - cy) * d / fy
 Z = d
 ```
 
-Intrinsics come from EXIF metadata, a calibration pattern, or a monocular intrinsics estimator (Perspective Fields, UniDepth). Without intrinsics, you can still render a point cloud by assuming a 60-70° FOV and moderate-resolution principals — usable for visualisation, not for measurement.
+Внутренние параметры берутся из EXIF metadata, калибровочного шаблона или монокулярного оценщика внутренних параметров (intrinsics estimator: Perspective Fields, UniDepth). Без внутренних параметров вы все еще можете отрендерить облако точек, предположив 60-70° FOV и главные точки умеренного разрешения (principal points) - пригодно для визуализации, но не для измерений.
 
-### Evaluation
+### Оценивание
 
-Two standard metrics:
+Две стандартные метрики:
 
-- **AbsRel** (absolute relative error): `mean(|d_pred - d_gt| / d_gt)`. Lower is better. 0.05-0.1 for production models.
-- **delta < 1.25** (threshold accuracy): fraction of pixels where `max(d_pred/d_gt, d_gt/d_pred) < 1.25`. Higher is better. 0.9+ for SOTA.
+- **AbsRel** (absolute relative error): `mean(|d_pred - d_gt| / d_gt)`. Чем ниже, тем лучше. 0.05-0.1 для production-моделей.
+- **delta < 1.25** (threshold accuracy): доля пикселей, где `max(d_pred/d_gt, d_gt/d_pred) < 1.25`. Чем выше, тем лучше. 0.9+ для SOTA.
 
-For relative depth (Depth Anything V3, MiDaS), evaluation uses scale-and-shift invariant versions of both metrics.
+Для относительной глубины (Depth Anything V3, MiDaS) оценивание использует scale-and-shift invariant версии обеих метрик.
 
-## Build It
+## Соберите это
 
-### Step 1: Depth metrics
+### Шаг 1: Метрики глубины
 
 ```python
 import torch
@@ -123,11 +123,11 @@ def delta_accuracy(pred, target, threshold=1.25, mask=None):
     return (ratio < threshold).float().mean().item()
 ```
 
-Always mask invalid depth pixels (zero, NaN, saturated) before evaluation.
+Всегда маскируйте невалидные пиксели глубины (ноль, NaN, насыщенные) перед оцениванием.
 
-### Step 2: Scale-and-shift alignment
+### Шаг 2: Выравнивание масштаба и сдвига
 
-For relative-depth models, align prediction to ground truth before computing metrics. Least-squares fit of `a * pred + b = target`:
+Для моделей относительной глубины выровняйте предсказание с истинной разметкой перед вычислением метрик. Аппроксимация методом наименьших квадратов для `a * pred + b = target`:
 
 ```python
 def align_scale_shift(pred, target, mask=None):
@@ -143,9 +143,9 @@ def align_scale_shift(pred, target, mask=None):
     return a * pred + b
 ```
 
-Run `align_scale_shift` before `abs_rel_error` when evaluating MiDaS / Depth Anything.
+Запускайте `align_scale_shift` перед `abs_rel_error` при оценивании MiDaS / Depth Anything.
 
-### Step 3: Lift depth to a point cloud
+### Шаг 3: Поднимите глубину в облако точек
 
 ```python
 import numpy as np
@@ -166,9 +166,9 @@ pc = depth_to_point_cloud(depth, intr)
 print(f"point cloud shape: {pc.shape}  (H, W, 3)")
 ```
 
-One function, every 3D-lifted application. Export the point cloud to `.ply` and open in MeshLab or CloudCompare.
+Одна функция - любое приложение с подъемом в 3D. Экспортируйте облако точек в `.ply` и откройте в MeshLab или CloudCompare.
 
-### Step 4: Smoke test with a synthetic depth scene
+### Шаг 4: Smoke test с синтетической сценой глубины
 
 ```python
 def synthetic_depth(size=96):
@@ -188,7 +188,7 @@ print(f"before align  absRel = {abs_rel_error(pred, gt):.3f}")
 print(f"after align   absRel = {abs_rel_error(aligned, gt):.3f}")
 ```
 
-### Step 5: Depth Anything V3 usage (reference)
+### Шаг 5: Использование Depth Anything V3 (reference)
 
 ```python
 import torch
@@ -202,56 +202,56 @@ out = pipe(image)
 depth_np = np.array(out["depth"])
 ```
 
-Three lines. `out["depth"]` is a PIL grayscale; convert to numpy for math. For Depth Anything V3 specifically, swap the model id once released; the API is unchanged.
+Три строки. `out["depth"]` - это PIL grayscale; преобразуйте в numpy для математики. Конкретно для Depth Anything V3 замените model id после релиза; API не меняется.
 
-## Use It
+## Используйте это
 
-- **Depth Anything V3** (Meta AI / ByteDance, 2024-2026) — the default for relative depth. Fastest ViT-large-backbone model in production.
-- **Marigold** (ETH, 2024) — highest visual quality, slow inference.
-- **UniDepth** (ETH, 2024) — metric depth with camera intrinsics estimation.
-- **ZoeDepth** (Intel, 2023) — metric depth; older, still reliable.
-- **MiDaS v3.1** — legacy but stable; good baseline for comparison.
+- **Depth Anything V3** (Meta AI / ByteDance, 2024-2026) - вариант по умолчанию для относительной глубины. Самая быстрая модель с ViT-large-backbone в production.
+- **Marigold** (ETH, 2024) - наивысшее визуальное качество, медленный инференс.
+- **UniDepth** (ETH, 2024) - метрическая глубина с оценкой внутренних параметров камеры.
+- **ZoeDepth** (Intel, 2023) - метрическая глубина; более старая, все еще надежная.
+- **MiDaS v3.1** - legacy, но стабильная; хороший baseline для сравнения.
 
-Typical integration pattern:
+Типичный паттерн интеграции:
 
-1. RGB frame arrives.
-2. Depth model produces depth map.
-3. Detector produces boxes.
-4. Lift box centroids through depth to 3D; merge with point cloud if available.
-5. Downstream: AR occlusion, path planning, object-size estimation, stereo replacement.
+1. Приходит RGB-кадр.
+2. Модель глубины производит карту глубины.
+3. Детектор производит bounding boxes.
+4. Поднимите центроиды bounding boxes через глубину в 3D; объедините с облаком точек, если оно доступно.
+5. Downstream: AR-окклюзия, планирование пути, оценка размера объектов, замена стерео.
 
-For real-time use, Depth Anything V2 Small (INT8 quantised) hits ~30 fps on a consumer GPU at 518x518.
+Для использования в реальном времени Depth Anything V2 Small (INT8 quantised) достигает ~30 fps на потребительском GPU при 518x518.
 
-## Ship It
+## Доведите до поставки
 
-This lesson produces:
+Этот урок производит:
 
-- `outputs/prompt-depth-model-picker.md` — picks between Depth Anything V3, Marigold, UniDepth, MiDaS given latency, metric-vs-relative need, and scene type.
-- `outputs/skill-depth-to-pointcloud.md` — a skill that builds point clouds from depth maps with correct intrinsics handling and export to `.ply`.
+- `outputs/prompt-depth-model-picker.md` - выбирает между Depth Anything V3, Marigold, UniDepth, MiDaS с учетом задержки, потребности в метрической или относительной глубине и типа сцены.
+- `outputs/skill-depth-to-pointcloud.md` - skill, который строит облака точек из карт глубины с корректной обработкой внутренних параметров и экспортом в `.ply`.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Run Depth Anything V2 on any 10 images of your desk. Save depth as grayscale PNGs and inspect. Identify one object whose predicted depth looks wrong and explain why the monocular cues failed.
-2. **(Medium)** Given RGB + depth from Depth Anything V2, lift to a point cloud and render with `open3d`. Compare two scenes (indoor / outdoor) and note which looks more believable.
-3. **(Hard)** Take five pairs of images that differ only by a known object's position (e.g. bottle moved 30 cm closer). Use UniDepth to predict metric depth on both. Report the predicted distance delta vs the true 30 cm.
+1. **(Easy)** Запустите Depth Anything V2 на любых 10 изображениях вашего стола. Сохраните глубину как grayscale PNGs и изучите. Найдите один объект, чья предсказанная глубина выглядит неверной, и объясните, почему монокулярные признаки не сработали.
+2. **(Medium)** Имея RGB + depth от Depth Anything V2, поднимите их в облако точек и отрендерьте с `open3d`. Сравните две сцены (indoor / outdoor) и отметьте, какая выглядит более правдоподобной.
+3. **(Hard)** Возьмите пять пар изображений, которые отличаются только положением известного объекта (например, бутылка передвинута на 30 cm ближе). Используйте UniDepth, чтобы предсказать метрическую глубину на обоих. Сообщите предсказанную дельту расстояния относительно истинных 30 cm.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Monocular depth | "Single-image depth" | Depth estimation from one RGB frame, no stereo or LiDAR |
-| Relative depth | "Ordered depth" | Ordered z-values without real-world units |
-| Metric depth | "Absolute distance" | Depth in metres; requires calibration or a model trained with metric supervision |
-| AbsRel | "Absolute relative error" | Mean of |d_pred - d_gt| / d_gt; standard depth metric |
-| Delta accuracy | "delta < 1.25" | Fraction of pixels with prediction within 25% of ground truth |
-| Pinhole camera | "fx, fy, cx, cy" | The camera model used to lift (u, v, d) to (X, Y, Z) |
-| DPT | "Dense Prediction Transformer" | The conv-based decoder used on top of frozen ViT encoders for depth |
-| DINOv2 backbone | "The reason it works" | Self-supervised features that generalise across domains without depth labels |
+| Monocular depth | "Глубина по одному изображению (Single-image depth)" | Оценка глубины по одному RGB-кадру, без стерео или LiDAR |
+| Relative depth | "Упорядоченная глубина (Ordered depth)" | Упорядоченные z-значения без единиц реального мира |
+| Metric depth | "Абсолютное расстояние (Absolute distance)" | Глубина в метрах; требует калибровки или модели, обученной с метрическим supervision |
+| AbsRel | "Absolute relative error" | Среднее |d_pred - d_gt| / d_gt; стандартная метрика глубины |
+| Delta accuracy | "delta < 1.25" | Доля пикселей, у которых предсказание находится в пределах 25% от истинной разметки |
+| Pinhole camera | "fx, fy, cx, cy" | Модель камеры, используемая для подъема (u, v, d) в (X, Y, Z) |
+| DPT | "Dense Prediction Transformer" | Conv-based декодер, используемый поверх замороженных ViT-энкодеров для глубины |
+| DINOv2 backbone | "The reason it works" | Self-supervised признаки, которые обобщаются между доменами без depth labels |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Depth Anything V3 paper page](https://depth-anything.github.io/) — SOTA monocular depth with DINOv2 encoder
-- [Marigold (Ke et al., CVPR 2024)](https://marigoldmonodepth.github.io/) — diffusion-based depth estimation
-- [UniDepth (Piccinelli et al., 2024)](https://arxiv.org/abs/2403.18913) — metric depth with intrinsics
-- [MiDaS v3.1 (Intel ISL)](https://github.com/isl-org/MiDaS) — the canonical relative-depth baseline
-- [DINOv3 blog post (Meta)](https://ai.meta.com/blog/dinov3-self-supervised-vision-model/) — the encoder family that lifts depth accuracy
+- [Depth Anything V3 paper page](https://depth-anything.github.io/) - SOTA монокулярная глубина с DINOv2 encoder
+- [Marigold (Ke et al., CVPR 2024)](https://marigoldmonodepth.github.io/) - diffusion-based оценка глубины
+- [UniDepth (Piccinelli et al., 2024)](https://arxiv.org/abs/2403.18913) - метрическая глубина с intrinsics
+- [MiDaS v3.1 (Intel ISL)](https://github.com/isl-org/MiDaS) - канонический baseline относительной глубины
+- [DINOv3 blog post (Meta)](https://ai.meta.com/blog/dinov3-self-supervised-vision-model/) - семейство энкодеров, которое повышает точность глубины

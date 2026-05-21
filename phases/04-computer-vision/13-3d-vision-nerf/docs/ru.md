@@ -1,32 +1,32 @@
-# 3D Vision — Point Clouds & NeRFs
+# 3D-зрение — облака точек и NeRF
 
-> 3D vision comes in two flavours. Point clouds are the sensor's raw output. NeRFs are the learned volumetric field. Both answer "what is where in space."
+> 3D-зрение бывает двух видов. Облака точек — это сырые выходные данные сенсора. NeRF — это выученное объемное поле. Оба отвечают на вопрос «что где находится в пространстве».
 
-**Type:** Learn + Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 03 (CNNs), Phase 1 Lesson 12 (Tensor Operations)
-**Time:** ~45 minutes
+**Тип:** изучить + построить
+**Языки:** Python
+**Предварительные требования:** фаза 4, урок 03 (CNNs), фаза 1, урок 12 (Tensor Operations)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish explicit (point cloud, mesh, voxel) and implicit (signed distance field, NeRF) 3D representations and when each is used
-- Understand PointNet's symmetric-function trick that makes a neural network permutation-invariant over an unordered set of points
-- Trace a NeRF forward pass: ray casting, volumetric rendering, positional encoding, MLP density+colour head
-- Use `nerfstudio` or `instant-ngp` for pretrained 3D reconstruction from a small set of posed images
+- Различать явные (облако точек, mesh, voxel) и неявные (signed distance field, NeRF) 3D-представления и понимать, когда используется каждое из них
+- Понять трюк PointNet с симметричной функцией, который делает нейронную сеть инвариантной к перестановкам на неупорядоченном множестве точек
+- Проследить прямой проход NeRF: трассировка лучей, объемный рендеринг, позиционное кодирование, MLP-голова для плотности+цвета
+- Использовать `nerfstudio` или `instant-ngp` для предобученной 3D-реконструкции по небольшому набору изображений с известными позами
 
-## The Problem
+## Проблема
 
-A camera produces a 2D image. A LIDAR produces a set of 3D points with no ordering. A structure-from-motion pipeline produces a sparse cloud of 3D keypoints. A NeRF reconstructs an entire 3D scene from a handful of posed images. All of these are "vision" but none of them look like the dense tensor a CNN wants.
+Камера создает 2D-изображение. LIDAR создает множество 3D-точек без порядка. Конвейер structure-from-motion создает разреженное облако 3D-ключевых точек. NeRF реконструирует целую 3D-сцену по нескольким изображениям с известными позами. Все это — «зрение», но ничто из этого не похоже на плотный тензор, который ожидает CNN.
 
-3D vision matters because almost every high-value robot task runs in 3D: grasping, obstacle avoidance, navigation, AR occlusion, 3D content capture. A vision engineer who only understands 2D images is locked out of the fastest-growing slice of the field (AR/VR content, robotics, autonomous driving stacks, NeRF-based 3D reconstruction for real-estate or construction).
+3D-зрение важно, потому что почти каждая ценная робототехническая задача выполняется в 3D: захват объектов, обход препятствий, навигация, окклюзия в AR, захват 3D-контента. Инженер по компьютерному зрению, который понимает только 2D-изображения, отрезан от самого быстрорастущего сегмента области (AR/VR-контент, робототехника, стеки автономного вождения, 3D-реконструкция на основе NeRF для недвижимости или строительства).
 
-The two representations dominate for different reasons. Point clouds are what sensors give you for free. NeRFs and their successors (3D Gaussian splatting, neural SDFs) are what you get when you ask a neural network to learn a scene.
+Эти два представления доминируют по разным причинам. Облака точек — это то, что сенсоры дают вам бесплатно. NeRF и их преемники (3D Gaussian splatting, neural SDFs) — это то, что вы получаете, когда просите нейронную сеть выучить сцену.
 
-## The Concept
+## Концепция
 
-### Point clouds
+### Облака точек
 
-A point cloud is an unordered set of N points in R^3, optionally each with features (colour, intensity, normal).
+Облако точек — это неупорядоченное множество из N точек в R^3, где каждая точка опционально имеет признаки (цвет, интенсивность, нормаль).
 
 ```
 cloud = [
@@ -37,20 +37,20 @@ cloud = [
 ]
 ```
 
-No grid, no connectivity. Two properties make this hard for neural networks:
+Нет сетки, нет связности. Два свойства делают это сложным для нейронных сетей:
 
-- **Permutation invariance** — the output must not depend on point order.
-- **Variable N** — a single model must handle clouds of different sizes.
+- **Инвариантность к перестановкам** — выход не должен зависеть от порядка точек.
+- **Переменное N** — одна модель должна обрабатывать облака разных размеров.
 
-PointNet (Qi et al., 2017) solved both with one idea: apply a shared MLP to every point, then aggregate with a symmetric function (max pool). The result is a fixed-size vector that does not depend on order.
+PointNet (Qi et al., 2017) решил обе проблемы одной идеей: применить общий MLP к каждой точке, а затем агрегировать симметричной функцией (max pool). Результат — вектор фиксированного размера, который не зависит от порядка.
 
 ```
 f(P) = max_{p in P} MLP(p)
 ```
 
-This is the entire core of PointNet. Deeper variants (PointNet++, Point Transformer) add hierarchical sampling and local aggregation but the symmetric-function trick is unchanged.
+Это все ядро PointNet. Более глубокие варианты (PointNet++, Point Transformer) добавляют иерархическую выборку и локальную агрегацию, но трюк с симметричной функцией остается тем же.
 
-### The PointNet architecture
+### Архитектура PointNet
 
 ```mermaid
 flowchart LR
@@ -66,11 +66,11 @@ flowchart LR
     style CLS fill:#dcfce7,stroke:#16a34a
 ```
 
-"Shared MLP" means the same MLP runs on every point independently. Implemented as a 1x1 conv over the point dimension for efficiency.
+"Shared MLP" означает, что один и тот же MLP запускается на каждой точке независимо. Для эффективности реализуется как 1x1 conv по измерению точек.
 
 ### Neural Radiance Fields (NeRFs)
 
-NeRFs (Mildenhall et al., 2020) took the question "can we reconstruct a 3D scene from N photos?" and answered with a neural network that is the scene. The network maps `(x, y, z, viewing_direction)` to `(density, colour)`. Rendering a new view is a ray-casting loop over this network.
+NeRF (Mildenhall et al., 2020) взяли вопрос «можем ли мы реконструировать 3D-сцену по N фотографиям?» и ответили на него нейронной сетью, которая сама является сценой. Сеть отображает `(x, y, z, viewing_direction)` в `(density, colour)`. Рендеринг нового вида — это цикл трассировки лучей по этой сети.
 
 ```
 NeRF MLP:  (x, y, z, theta, phi) -> (sigma, r, g, b)
@@ -83,19 +83,19 @@ To render a pixel (u, v) of a new view:
   5. The sum is the rendered pixel colour
 ```
 
-A loss compares the rendered pixel to the ground-truth pixel in the training photos. Backprop through the rendering step updates the MLP. No 3D ground truth, no explicit geometry — the scene is stored in the MLP weights.
+Функция потерь сравнивает отрендеренный пиксель с истинным пикселем на обучающих фотографиях. Обратное распространение через шаг рендеринга обновляет MLP. Нет 3D-разметки, нет явной геометрии — сцена хранится в весах MLP.
 
-### Positional encoding in NeRF
+### Позиционное кодирование в NeRF
 
-A vanilla MLP on `(x, y, z)` cannot represent high-frequency details because MLPs are spectrally biased toward low frequencies. NeRF fixes this by encoding each coordinate into a Fourier feature vector before the MLP:
+Обычный MLP на `(x, y, z)` не может представлять высокочастотные детали, потому что MLP спектрально смещены в сторону низких частот. NeRF исправляет это, кодируя каждую координату в вектор признаков Фурье перед MLP:
 
 ```
 gamma(p) = (sin(2^0 pi p), cos(2^0 pi p), sin(2^1 pi p), cos(2^1 pi p), ...)
 ```
 
-Up to L=10 frequency levels. This is the same trick transformers use for positions, and it appears again in diffusion time conditioning (Lesson 10). Without it, NeRFs look blurry.
+До L=10 уровней частот. Это тот же трюк, который трансформеры используют для позиций, и он снова появляется в обусловливании времени в диффузии (урок 10). Без него NeRF выглядят размытыми.
 
-### Volumetric rendering
+### Объемный рендеринг
 
 ```
 C(r) = sum_i T_i * (1 - exp(-sigma_i * delta_i)) * c_i
@@ -104,29 +104,29 @@ T_i  = exp(- sum_{j<i} sigma_j * delta_j)
 delta_i = t_{i+1} - t_i
 ```
 
-`T_i` is transmittance — how much light survives to point i. `(1 - exp(-sigma_i * delta_i))` is the opacity at point i. `c_i` is the colour. The final pixel is a weighted sum along the ray.
+`T_i` — это пропускание (transmittance): сколько света доходит до точки i. `(1 - exp(-sigma_i * delta_i))` — это непрозрачность в точке i. `c_i` — цвет. Итоговый пиксель — взвешенная сумма вдоль луча.
 
-### What replaced NeRFs
+### Что заменило NeRF
 
-Pure NeRFs are slow to train (hours) and slow to render (seconds per image). The lineage since:
+Чистые NeRF медленно обучаются (часы) и медленно рендерятся (секунды на изображение). Последующая линия развития:
 
-- **Instant-NGP** (2022) — hash-grid encoding replaces the MLP's position input; trains in seconds.
-- **Mip-NeRF 360** — handles unbounded scenes and anti-aliasing.
-- **3D Gaussian Splatting** (2023) — replaces the volumetric field with millions of 3D Gaussians; trains in minutes, renders in real time. The current production default.
+- **Instant-NGP** (2022) — hash-grid encoding заменяет позиционный вход MLP; обучается за секунды.
+- **Mip-NeRF 360** — обрабатывает неограниченные сцены и anti-aliasing.
+- **3D Gaussian Splatting** (2023) — заменяет объемное поле миллионами 3D-гауссиан; обучается за минуты, рендерится в реальном времени. Текущий производственный стандарт.
 
-Almost every real NeRF product in 2026 is actually 3D Gaussian splatting. The mental model is still NeRF.
+Почти каждый реальный NeRF-продукт в 2026 году на самом деле использует 3D Gaussian splatting. Ментальная модель все еще остается NeRF.
 
-### Datasets and benchmarks
+### Датасеты и бенчмарки
 
-- **ShapeNet** — classification and segmentation of 3D CAD models as point clouds.
-- **ScanNet** — real indoor scans for segmentation.
-- **KITTI** — outdoor LIDAR point clouds for autonomous driving.
-- **NeRF Synthetic** / **Blended MVS** — posed-image datasets for view synthesis.
-- **Mip-NeRF 360** dataset — unbounded real scenes.
+- **ShapeNet** — классификация и сегментация 3D CAD-моделей как облаков точек.
+- **ScanNet** — реальные сканы помещений для сегментации.
+- **KITTI** — уличные облака точек LIDAR для автономного вождения.
+- **NeRF Synthetic** / **Blended MVS** — датасеты изображений с позами для синтеза видов.
+- **Mip-NeRF 360** dataset — неограниченные реальные сцены.
 
-## Build It
+## Построим это
 
-### Step 1: PointNet classifier
+### Шаг 1: классификатор PointNet
 
 ```python
 import torch
@@ -164,9 +164,9 @@ print(f"output: {net(pts).shape}")
 print(f"params: {sum(p.numel() for p in net.parameters()):,}")
 ```
 
-About 1.6M parameters. Runs on 1,024 points per cloud.
+Около 1.6M параметров. Работает на 1,024 точках на облако.
 
-### Step 2: Positional encoding
+### Шаг 2: позиционное кодирование
 
 ```python
 def positional_encoding(x, L=10):
@@ -184,9 +184,9 @@ print(f"input:  {x.shape}")
 print(f"encoded: {y.shape}     # (5, 60)")
 ```
 
-Multiplying by `2^l * pi` gives progressively higher frequencies.
+Умножение на `2^l * pi` дает постепенно более высокие частоты.
 
-### Step 3: Tiny NeRF MLP
+### Шаг 3: небольшой NeRF MLP
 
 ```python
 class TinyNeRF(nn.Module):
@@ -223,9 +223,9 @@ s, c = nerf(x, d)
 print(f"sigma: {s.shape}   rgb: {c.shape}")
 ```
 
-Tiny compared to the original NeRF (which has 2 MLP trunks of depth 8). Enough to demonstrate the architecture.
+Крошечный по сравнению с исходным NeRF (у которого 2 MLP-ствола глубины 8). Достаточно, чтобы продемонстрировать архитектуру.
 
-### Step 4: Volumetric rendering along a ray
+### Шаг 4: объемный рендеринг вдоль луча
 
 ```python
 def volumetric_render(sigma, rgb, t_vals):
@@ -252,47 +252,47 @@ print(f"rendered colour: {rendered.tolist()}")
 print(f"depth:           {depth.item():.2f}")
 ```
 
-One ray, 64 samples, composite to a single RGB pixel and a depth.
+Один луч, 64 отсчета, композиция в один RGB-пиксель и глубину.
 
-## Use It
+## Используйте это
 
-For real work:
+Для реальной работы:
 
-- `nerfstudio` (Tancik et al.) — the current reference library for NeRF / Instant-NGP / Gaussian Splatting. Command-line plus a web viewer.
-- `pytorch3d` (Meta) — differentiable rendering, point-cloud utilities, mesh ops.
-- `open3d` — point cloud processing, registration, visualisation.
+- `nerfstudio` (Tancik et al.) — текущая референсная библиотека для NeRF / Instant-NGP / Gaussian Splatting. Командная строка плюс веб-просмотрщик.
+- `pytorch3d` (Meta) — дифференцируемый рендеринг, утилиты для облаков точек, операции с mesh.
+- `open3d` — обработка облаков точек, регистрация, визуализация.
 
-For deployment, 3D Gaussian splatting has largely replaced pure NeRFs because it renders 100x faster. The reconstruction quality is comparable.
+Для развертывания 3D Gaussian splatting в значительной степени заменил чистые NeRF, потому что рендерится в 100x быстрее. Качество реконструкции сопоставимо.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-3d-task-router.md` — a prompt that routes to the right 3D representation (point cloud, mesh, voxel, NeRF, Gaussian splat) based on task and input data.
-- `outputs/skill-point-cloud-loader.md` — a skill that writes a PyTorch `Dataset` for .ply / .pcd / .xyz files with correct normalisation, centring, and point sampling.
+- `outputs/prompt-3d-task-router.md` — промпт, который направляет к правильному 3D-представлению (облако точек, mesh, voxel, NeRF, Gaussian splat) на основе задачи и входных данных.
+- `outputs/skill-point-cloud-loader.md` — навык, который пишет PyTorch `Dataset` для файлов .ply / .pcd / .xyz с корректной нормализацией, центрированием и выборкой точек.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Show that PointNet is permutation-invariant: run the same cloud through twice, once with points shuffled. Verify outputs are identical up to floating-point noise.
-2. **(Medium)** Implement a minimal ray-generation function that, given camera intrinsics and pose, produces ray origins and directions for every pixel of an H x W image.
-3. **(Hard)** Train a TinyNeRF on a synthetic dataset of rendered views of a coloured cube (generated via differentiable rendering or a simple ray tracer). Report rendering loss at epoch 1, 10, and 100. At what epoch does the model produce recognisable views?
+1. **(Легко)** Покажите, что PointNet инвариантен к перестановкам: пропустите одно и то же облако дважды, один раз с перемешанными точками. Проверьте, что выходы идентичны с точностью до шума чисел с плавающей точкой.
+2. **(Средне)** Реализуйте минимальную функцию генерации лучей, которая по внутренним параметрам камеры и позе создает начала и направления лучей для каждого пикселя изображения H x W.
+3. **(Сложно)** Обучите TinyNeRF на синтетическом датасете отрендеренных видов цветного куба (созданных через дифференцируемый рендеринг или простой трассировщик лучей). Сообщите loss рендеринга на эпохах 1, 10 и 100. На какой эпохе модель начинает создавать узнаваемые виды?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Point cloud | "3D points from LIDAR" | Unordered set of (x, y, z) + optional features per point |
-| PointNet | "First neural net on point clouds" | Shared MLP per point + symmetric (max) pool; permutation-invariant by construction |
-| NeRF | "MLP that is the scene" | Network mapping (x, y, z, dir) to (density, colour); rendered by ray casting |
-| Positional encoding | "Fourier features" | Encode each coordinate into sin/cos at multiple frequencies to overcome MLP low-frequency bias |
-| Volumetric rendering | "Ray integration" | Composite samples along a ray into a single pixel using transmittance and alpha |
-| Instant-NGP | "Hash-grid NeRF" | Replaces NeRF's coordinate MLP with a multi-resolution hash grid; 100-1000x faster |
-| 3D Gaussian splatting | "Millions of Gaussians" | Scene = collection of 3D Gaussians; renders in real time, trains in minutes |
-| SDF | "Signed distance field" | Function returning signed distance to the nearest surface; another implicit representation |
+| Point cloud | "3D points from LIDAR" | Неупорядоченное множество (x, y, z) + опциональные признаки для каждой точки |
+| PointNet | "First neural net on point clouds" | Общий MLP на точку + симметричный (max) pool; инвариантен к перестановкам по конструкции |
+| NeRF | "MLP that is the scene" | Сеть, отображающая (x, y, z, dir) в (density, colour); рендерится трассировкой лучей |
+| Positional encoding | "Fourier features" | Кодирует каждую координату в sin/cos на нескольких частотах, чтобы преодолеть низкочастотное смещение MLP |
+| Volumetric rendering | "Ray integration" | Композиция отсчетов вдоль луча в один пиксель с использованием пропускания и alpha |
+| Instant-NGP | "Hash-grid NeRF" | Заменяет координатный MLP NeRF многомасштабной hash grid; в 100-1000x быстрее |
+| 3D Gaussian splatting | "Millions of Gaussians" | Сцена = набор 3D-гауссиан; рендерится в реальном времени, обучается за минуты |
+| SDF | "Signed distance field" | Функция, возвращающая signed distance до ближайшей поверхности; еще одно неявное представление |
 
-## Further Reading
+## Дополнительное чтение
 
-- [PointNet (Qi et al., 2017)](https://arxiv.org/abs/1612.00593) — the permutation-invariant classifier
-- [NeRF (Mildenhall et al., 2020)](https://arxiv.org/abs/2003.08934) — the paper that made 3D reconstruction from photos a neural-net problem
-- [Instant-NGP (Müller et al., 2022)](https://arxiv.org/abs/2201.05989) — hash grids, 1000x speedup
-- [3D Gaussian Splatting (Kerbl et al., 2023)](https://arxiv.org/abs/2308.04079) — the architecture that replaced NeRFs in production
+- [PointNet (Qi et al., 2017)](https://arxiv.org/abs/1612.00593) — классификатор, инвариантный к перестановкам
+- [NeRF (Mildenhall et al., 2020)](https://arxiv.org/abs/2003.08934) — статья, которая превратила 3D-реконструкцию по фотографиям в задачу для нейронной сети
+- [Instant-NGP (Müller et al., 2022)](https://arxiv.org/abs/2201.05989) — hash grids, ускорение в 1000x
+- [3D Gaussian Splatting (Kerbl et al., 2023)](https://arxiv.org/abs/2308.04079) — архитектура, которая заменила NeRF в production

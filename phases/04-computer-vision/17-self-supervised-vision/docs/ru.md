@@ -1,30 +1,30 @@
-# Self-Supervised Vision — SimCLR, DINO, MAE
+# Самообучаемое зрение — SimCLR, DINO, MAE
 
-> Labels are the bottleneck of supervised vision. Self-supervised pretraining removes them: learn visual features from 100M unlabelled images, fine-tune on 10k labelled ones.
+> Разметка — узкое место supervised vision. Самообучаемое предобучение (self-supervised pretraining) убирает его: модель учится визуальным признакам на 100M неразмеченных изображений, а затем дообучается на 10k размеченных.
 
-**Type:** Learn + Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 04 (Image Classification), Phase 4 Lesson 14 (ViT)
-**Time:** ~75 minutes
+**Тип:** Изучить + собрать
+**Языки:** Python
+**Предварительные требования:** Phase 4 Lesson 04 (Image Classification), Phase 4 Lesson 14 (ViT)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Trace the three major self-supervised families — contrastive (SimCLR), teacher-student (DINO), masked reconstruction (MAE) — and state what each one optimises
-- Implement an InfoNCE loss from scratch and explain why a batch of 512 works but a batch of 32 fails
-- Explain why MAE's 75% masking ratio is not arbitrary and how it differs from BERT's 15% for text
-- Use DINOv2 or MAE ImageNet checkpoints for linear probing and zero-shot retrieval
+- Проследить три основные семьи самообучаемых методов — контрастивные (SimCLR), teacher-student (DINO), masked reconstruction (MAE) — и сформулировать, что оптимизирует каждая из них
+- Реализовать loss InfoNCE с нуля и объяснить, почему batch из 512 работает, а batch из 32 ломается
+- Объяснить, почему 75% mask ratio в MAE не произволен и чем он отличается от 15% у BERT для текста
+- Использовать checkpoint'ы DINOv2 или MAE ImageNet для linear probing и zero-shot retrieval
 
-## The Problem
+## Проблема
 
-Supervised ImageNet has 1.3M labelled images, which cost an estimated $10M to annotate. Medical and industrial datasets are smaller and even more expensive to label. Every vision team asks: can we pretrain on cheap unlabelled data — YouTube frames, web crawls, webcam footage, satellite sweeps — and then fine-tune on a small labelled set?
+Supervised ImageNet содержит 1.3M размеченных изображений; их разметка, по оценкам, стоила $10M. Медицинские и промышленные датасеты меньше, но размечать их еще дороже. Каждая команда computer vision задает один и тот же вопрос: можно ли предобучаться на дешевых неразмеченных данных — кадрах YouTube, веб-краулах, видео с веб-камер, спутниковых съемках — а затем дообучаться на небольшом размеченном наборе?
 
-Self-supervised learning is the answer. A modern self-supervised ViT trained on LAION or JFT reaches or beats supervised ImageNet accuracy when fine-tuned. It also transfers better to downstream tasks (detection, segmentation, depth) than supervised pretraining. DINOv2 (Meta, 2023) and MAE (Meta, 2022) are the current production defaults for transferable vision features.
+Ответ — self-supervised learning. Современный self-supervised ViT, обученный на LAION или JFT, при fine-tuning достигает точности supervised ImageNet или превосходит ее. Он также лучше переносится на downstream tasks (detection, segmentation, depth), чем supervised pretraining. DINOv2 (Meta, 2023) и MAE (Meta, 2022) — текущие production defaults для переносимых визуальных признаков.
 
-The conceptual shift is that the pretext task — the thing the model is trained to do — does not have to be the downstream task. What matters is that it forces the model to learn useful features. Predict the colour of grayscale images, rotate images and ask the model to classify the rotation, mask patches and reconstruct them — all have worked. The three approaches that scale are contrastive learning, teacher-student distillation, and masked reconstruction.
+Концептуальный сдвиг в том, что pretext task — задача, на которой обучают модель, — не обязана совпадать с downstream task. Важно, чтобы она заставляла модель учить полезные признаки. Предсказывать цвет grayscale-изображений, поворачивать изображения и просить модель классифицировать поворот, маскировать патчи и восстанавливать их — все это работало. Три подхода, которые масштабируются, — contrastive learning, teacher-student distillation и masked reconstruction.
 
-## The Concept
+## Концепция
 
-### Three families
+### Три семьи
 
 ```mermaid
 flowchart LR
@@ -37,9 +37,9 @@ flowchart LR
     style C fill:#dcfce7,stroke:#16a34a
 ```
 
-### Contrastive learning (SimCLR)
+### Контрастивное обучение (SimCLR)
 
-Take one image, apply two random augmentations, get two views. Feed both through the same encoder plus a projection head. Minimise a loss that says "these two embeddings should be close" and "this embedding should be far from every other image's embeddings in the batch."
+Берем одно изображение, применяем две случайные аугментации и получаем два представления (views). Оба пропускаем через один и тот же encoder плюс projection head. Минимизируем loss, который говорит: "эти два embedding должны быть близко" и "этот embedding должен быть далеко от embedding'ов всех остальных изображений в batch".
 
 ```
 Loss for positive pair (z_i, z_j) among 2N views per batch:
@@ -50,11 +50,11 @@ sim = cosine similarity
 tau = temperature (0.1 standard)
 ```
 
-This is the InfoNCE loss. It requires many negatives per positive, so batch size matters — SimCLR needs 512-8192. MoCo introduced a momentum queue of past batches to decouple negative count from batch size.
+Это loss InfoNCE. Ему нужно много negative samples на каждый positive sample, поэтому размер batch важен — SimCLR требует 512-8192. MoCo ввел momentum queue прошлых batch'ей, чтобы отвязать число negatives от размера batch.
 
 ### Teacher-student (DINO)
 
-Two networks with the same architecture: student and teacher. The teacher is an exponential moving average (EMA) of the student's weights. Both see augmented views of the image. The student's output is trained to match the teacher's — no explicit negatives.
+Две сети с одной архитектурой: student и teacher. Teacher — экспоненциальное скользящее среднее (EMA) весов student. Обе видят аугментированные представления изображения. Выход student обучается совпадать с выходом teacher — без явных negatives.
 
 ```
 loss = CE( student_output(view_1),  teacher_output(view_2) )
@@ -63,13 +63,13 @@ loss = CE( student_output(view_1),  teacher_output(view_2) )
 teacher_weights = m * teacher_weights + (1 - m) * student_weights   (m ≈ 0.996)
 ```
 
-Why it does not collapse to "predict a constant": the teacher's output is centred (subtract per-dimension mean) and sharpened (divide by small temperature). Centering prevents one dimension from dominating; sharpening prevents output collapse to uniform.
+Почему это не схлопывается в "предсказывать константу": выход teacher центрируется (вычитается среднее по каждой размерности) и заостряется (делится на малую temperature). Centering не дает одной размерности доминировать; sharpening не дает выходу схлопнуться к равномерному распределению.
 
-DINO is what DINOv2 scales up, on 142M curated images. The resulting features are the current SOTA for zero-shot visual retrieval and dense prediction.
+DINO — это подход, который DINOv2 масштабирует на 142M curated images. Полученные признаки — текущий SOTA для zero-shot visual retrieval и dense prediction.
 
 ### Masked reconstruction (MAE)
 
-Mask 75% of patches of a ViT input. Pass only the visible 25% through the encoder. A small decoder receives the encoder's output plus mask tokens at masked positions, and is trained to reconstruct the pixels of the masked patches.
+Маскируем 75% патчей входа ViT. Через encoder пропускаем только видимые 25%. Небольшой decoder получает выход encoder плюс mask tokens в замаскированных позициях и обучается восстанавливать пиксели замаскированных патчей.
 
 ```
 Encoder:  visible 25% of patches -> features
@@ -77,35 +77,35 @@ Decoder:  features + mask tokens at masked positions -> reconstructed pixels
 Loss:     MSE between reconstructed and original pixels on masked patches only
 ```
 
-Key design choices that make MAE work:
+Ключевые проектные решения, благодаря которым MAE работает:
 
-- **75% mask ratio** — high. Forces the encoder to learn semantic features; reconstructing 25% would be near-trivial (neighbouring pixels are so correlated that a CNN could nail it).
-- **Asymmetric encoder/decoder** — the big ViT encoder only sees visible patches; a small decoder (8-layer, 512-dim) handles reconstruction. 3x faster pretraining than naive BEiT.
-- **Pixel-space reconstruction target** — simpler than BEiT's tokenised target and works better on ViT.
+- **75% mask ratio** — высокий. Заставляет encoder учить семантические признаки; восстановление 25% было бы почти тривиальным (соседние пиксели настолько коррелированы, что CNN легко справилась бы).
+- **Asymmetric encoder/decoder** — большой ViT encoder видит только видимые патчи; небольшой decoder (8-layer, 512-dim) занимается восстановлением. Предобучение в 3x быстрее, чем наивный BEiT.
+- **Pixel-space reconstruction target** — проще, чем tokenised target в BEiT, и лучше работает на ViT.
 
-After pretraining, discard the decoder. The encoder is the feature extractor.
+После предобучения decoder отбрасывают. Encoder становится извлекателем признаков.
 
-### Why 75% and not 15%
+### Почему 75%, а не 15%
 
-BERT masks 15% of tokens. MAE masks 75%. The difference is information density.
+BERT маскирует 15% токенов. MAE маскирует 75%. Разница — в плотности информации.
 
-- Natural language has high entropy per token. Predicting 15% of tokens is still hard because each masked position has many plausible completions.
-- Image patches have low entropy — an unmasked neighbourhood often determines the masked patch's pixels almost exactly. To make prediction require semantic understanding, you have to mask aggressively.
+- У естественного языка высокая энтропия на токен. Предсказывать 15% токенов все еще сложно, потому что у каждой замаскированной позиции много правдоподобных продолжений.
+- У патчей изображения низкая энтропия — незамаскированная окрестность часто почти точно определяет пиксели замаскированного патча. Чтобы предсказание требовало семантического понимания, маскировать нужно агрессивно.
 
-75% is high enough that simple spatial extrapolation cannot solve the task; the encoder must represent the image content.
+75% достаточно много, чтобы простая пространственная экстраполяция не решала задачу; encoder должен представлять содержимое изображения.
 
-### Linear-probe evaluation
+### Оценка linear probe
 
-After self-supervised pretraining, the standard evaluation is a **linear probe**: freeze the encoder, train a single linear classifier on top on ImageNet labels. Reports top-1 accuracy.
+После self-supervised pretraining стандартная оценка — **linear probe**: заморозить encoder и обучить поверх него один линейный classifier на labels ImageNet. В отчетах указывают top-1 accuracy.
 
 - SimCLR ResNet-50: ~71% (2020)
 - DINO ViT-S/16: ~77% (2021)
 - MAE ViT-L/16: ~76% (2022)
 - DINOv2 ViT-g/14: ~86% (2023)
 
-Linear probe is a pure measure of feature quality; fine-tuning typically adds 2-5 points but also mixes in the effect of head retraining.
+Linear probe — чистая мера качества признаков; fine-tuning обычно добавляет 2-5 points, но также смешивает результат с эффектом переобучения head.
 
-## Build It
+## Соберите это
 
 ### Step 1: Two-view augmentation pipeline
 
@@ -137,7 +137,7 @@ class TwoViewDataset(torch.utils.data.Dataset):
         return v1, v2
 ```
 
-Each __getitem__ returns two augmented views of the same image; labels are not needed.
+Каждый __getitem__ возвращает два аугментированных представления одного и того же изображения; labels не нужны.
 
 ### Step 2: InfoNCE loss
 
@@ -159,7 +159,7 @@ def info_nce(z1, z2, tau=0.1):
     return F.cross_entropy(sim, targets)
 ```
 
-L2-normalise embeddings before calling. `tau=0.1` is the SimCLR default; lower makes the loss sharper and requires more negatives.
+L2-нормализуйте embeddings перед вызовом. `tau=0.1` — значение по умолчанию в SimCLR; меньшее значение делает loss острее и требует больше negatives.
 
 ### Step 3: Sanity check InfoNCE
 
@@ -173,7 +173,7 @@ print(f"InfoNCE with identical pairs:  {loss_same:.3f}")
 print(f"InfoNCE with random pairs:     {loss_random:.3f}")
 ```
 
-Identical pairs should give a low loss (close to 0 for a large batch and cold temperature). Random pairs should give log(2N-1) = ~log(31) = ~3.4 with a 16-pair batch.
+Идентичные пары должны давать низкий loss (близкий к 0 для большого batch и низкой temperature). Случайные пары должны давать log(2N-1) = ~log(31) = ~3.4 при batch из 16 пар.
 
 ### Step 4: MAE-style masking
 
@@ -193,11 +193,11 @@ print(f"visible: {len(visible)} / {num_patches}")
 print(f"masked:  {len(masked)} / {num_patches}")
 ```
 
-Simple, fast, and deterministic for a given seed. Real MAE implementations batch this and keep per-sample masks.
+Просто, быстро и детерминированно для заданного seed. Реальные реализации MAE делают это по batch и хранят masks для каждого sample.
 
-## Use It
+## Используйте это
 
-DINOv2 is the production standard in 2026:
+DINOv2 — production standard в 2026 году:
 
 ```python
 import torch
@@ -214,39 +214,39 @@ with torch.no_grad():
     embedding = outputs.last_hidden_state[:, 0]  # CLS token
 ```
 
-The resulting 768-dim embedding is the backbone of modern image retrieval, dense correspondence, and zero-shot transfer pipelines. Fine-tuning on a downstream task rarely needs more than a linear head.
+Полученный 768-dim embedding — основа современных pipeline'ов image retrieval, dense correspondence и zero-shot transfer. Fine-tuning на downstream task редко требует больше, чем linear head.
 
-For image-text embeddings, SigLIP or OpenCLIP is the equivalent; for MAE-style fine-tuning, the `timm` repo ships every MAE checkpoint.
+Для image-text embeddings аналогом служит SigLIP или OpenCLIP; для fine-tuning в стиле MAE repo `timm` поставляет каждый checkpoint MAE.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-ssl-pretraining-picker.md` — a prompt that picks SimCLR / MAE / DINOv2 given dataset size, compute, and downstream task.
-- `outputs/skill-linear-probe-runner.md` — a skill that writes the linear-probe evaluation for any frozen encoder + labelled dataset.
+- `outputs/prompt-ssl-pretraining-picker.md` — prompt, который выбирает SimCLR / MAE / DINOv2 по размеру датасета, compute и downstream task.
+- `outputs/skill-linear-probe-runner.md` — skill, который пишет оценку linear-probe для любого frozen encoder + labelled dataset.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Verify that InfoNCE loss drops when you decrease temperature for well-aligned embeddings and rises when you decrease temperature for random embeddings. Produce a plot `tau in [0.05, 0.1, 0.2, 0.5]` vs loss.
-2. **(Medium)** Implement a DINO-style centre buffer. Show that without the centring, the student collapses to a constant vector within a few epochs.
-3. **(Hard)** Train MAE on CIFAR-100 using the TinyUNet from Lesson 10 as the backbone. Report linear-probe accuracy at 10, 50, and 200 epochs. Show that a MAE-pretrained linear probe beats a from-scratch supervised linear probe on the same 1,000-image subset.
+1. **(Easy)** Проверьте, что InfoNCE loss падает при уменьшении temperature для хорошо выровненных embeddings и растет при уменьшении temperature для случайных embeddings. Постройте график `tau in [0.05, 0.1, 0.2, 0.5]` vs loss.
+2. **(Medium)** Реализуйте centre buffer в стиле DINO. Покажите, что без centring student схлопывается к константному вектору за несколько epochs.
+3. **(Hard)** Обучите MAE на CIFAR-100, используя TinyUNet из Lesson 10 как backbone. Сообщите linear-probe accuracy на 10, 50 и 200 epochs. Покажите, что MAE-pretrained linear probe превосходит supervised linear probe, обученный from scratch, на том же subset из 1,000 изображений.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Self-supervised | "Label-free" | A pretext task that produces useful representations from unlabelled data |
-| Pretext task | "The fake task" | The objective used during SSL (reconstruct patches, match views); discarded after pretraining |
-| Linear probe | "Frozen encoder + linear head" | Standard SSL evaluation: train only a linear classifier on top of frozen features |
-| InfoNCE | "Contrastive loss" | softmax over cosine similarities; positive pair is the target class, all others are negatives |
-| EMA teacher | "Moving-average teacher" | Teacher whose weights are an exponential moving average of the student's; used by BYOL, MoCo, DINO |
-| Mask ratio | "% of patches hidden" | Fraction of patches masked during MAE; 75% for vision, 15% for text |
-| Representation collapse | "Constant output" | SSL failure where the encoder outputs a constant vector for all inputs; prevented by centring, sharpening, or negatives |
-| DINOv2 | "Production SSL backbone" | Meta's 2023 self-supervised ViT; strongest general-purpose image features in 2026 |
+| Self-supervised | "Label-free" | Pretext task, которая получает полезные представления из неразмеченных данных |
+| Pretext task | "The fake task" | Objective, используемая во время SSL (восстановить патчи, сопоставить views); отбрасывается после pretraining |
+| Linear probe | "Frozen encoder + linear head" | Стандартная оценка SSL: обучать только linear classifier поверх frozen features |
+| InfoNCE | "Contrastive loss" | softmax по cosine similarities; positive pair — target class, все остальные — negatives |
+| EMA teacher | "Moving-average teacher" | Teacher, веса которого являются экспоненциальным скользящим средним весов student; используется BYOL, MoCo, DINO |
+| Mask ratio | "% of patches hidden" | Доля патчей, маскируемых во время MAE; 75% для vision, 15% для text |
+| Representation collapse | "Constant output" | Сбой SSL, при котором encoder выдает константный vector для всех inputs; предотвращается centring, sharpening или negatives |
+| DINOv2 | "Production SSL backbone" | Self-supervised ViT от Meta 2023 года; strongest general-purpose image features in 2026 |
 
-## Further Reading
+## Дополнительное чтение
 
-- [SimCLR (Chen et al., 2020)](https://arxiv.org/abs/2002.05709) — contrastive learning reference
-- [DINO (Caron et al., 2021)](https://arxiv.org/abs/2104.14294) — teacher-student with momentum, centring, sharpening
-- [MAE (He et al., 2022)](https://arxiv.org/abs/2111.06377) — masked autoencoder pretraining for ViT
+- [SimCLR (Chen et al., 2020)](https://arxiv.org/abs/2002.05709) — reference по contrastive learning
+- [DINO (Caron et al., 2021)](https://arxiv.org/abs/2104.14294) — teacher-student с momentum, centring, sharpening
+- [MAE (He et al., 2022)](https://arxiv.org/abs/2111.06377) — masked autoencoder pretraining для ViT
 - [DINOv2 (Oquab et al., 2023)](https://arxiv.org/abs/2304.07193) — scaling self-supervised ViT to production features

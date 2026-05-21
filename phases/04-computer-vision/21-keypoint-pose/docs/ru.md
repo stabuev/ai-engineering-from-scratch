@@ -1,28 +1,28 @@
-# Keypoint Detection & Pose Estimation
+# Детекция ключевых точек и оценка позы
 
-> A pose is a set of ordered keypoints. A keypoint detector is a heatmap regressor. Everything else is bookkeeping.
+> Поза - это набор упорядоченных ключевых точек. Детектор ключевых точек - это регрессор тепловых карт (heatmap). Все остальное - учет и сопоставление.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 06 (Detection), Phase 4 Lesson 07 (U-Net)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 4, урок 06 (детекция), фаза 4, урок 07 (U-Net)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish top-down and bottom-up pose estimation and state when each is used
-- Regress heatmaps for K keypoints with a Gaussian-per-keypoint target and extract keypoint coordinates at inference
-- Explain Part Affinity Fields (PAFs) and how bottom-up pipelines associate keypoints into instances
-- Use MediaPipe Pose or MMPose for production keypoint estimation and understand their output format
+- Различать top-down и bottom-up оценку позы и объяснять, когда используется каждый подход
+- Регрессировать тепловые карты для K ключевых точек с целевой разметкой в виде одной гауссианы на ключевую точку и извлекать координаты ключевых точек при инференсе
+- Объяснять Part Affinity Fields (PAFs) и то, как bottom-up конвейеры связывают ключевые точки в экземпляры
+- Использовать MediaPipe Pose или MMPose для production-оценки ключевых точек и понимать формат их выходных данных
 
-## The Problem
+## Задача
 
-Keypoint tasks hide under many names: human pose (17 body joints), face landmarks (68 or 478 points), hand (21 points), animal pose, robotic object pose, medical anatomy landmarks. Every one of them shares the same structure: detect K discrete points on an object and output their (x, y) coordinates.
+Задачи с ключевыми точками скрываются под множеством названий: поза человека (17 суставов тела), лицевые ориентиры (68 или 478 точек), кисть (21 точка), поза животного, поза робототехнического объекта, анатомические ориентиры в медицине. У всех них одна и та же структура: обнаружить K дискретных точек на объекте и выдать их координаты (x, y).
 
-Pose estimation is the foundation of motion capture, fitness apps, sports analytics, gesture control, animation, AR try-on, and robotic grasping. The 2D case is mature; 3D pose (estimating joint positions in world coordinates from a single camera) is the current research frontier.
+Оценка позы лежит в основе захвата движения, фитнес-приложений, спортивной аналитики, управления жестами, анимации, AR-примерки и роботизированного захвата. Случай 2D уже зрелый; 3D-поза (оценка положений суставов в мировых координатах по одной камере) остается текущим фронтиром исследований.
 
-The engineering question is scale. A single-image, single-person pose is a 20ms problem. Multi-person pose in a crowd at 30 fps is a different problem with different architectures.
+Инженерный вопрос - масштаб. Поза одного человека на одном изображении - задача на 20ms. Многоперсонная поза в толпе при 30 fps - другая задача с другими архитектурами.
 
-## The Concept
+## Концепция
 
 ### Top-down vs bottom-up
 
@@ -41,30 +41,30 @@ flowchart LR
     style BU fill:#fef3c7,stroke:#d97706
 ```
 
-- **Top-down** — detect people first, then run a per-person keypoint model on each crop. Highest accuracy; scales linearly with number of people.
-- **Bottom-up** — one forward pass predicts all keypoints plus an association field; group them. Constant time regardless of crowd size.
+- **Top-down** - сначала обнаружить людей, затем запустить модель ключевых точек для каждого человека на каждом crop. Самая высокая точность; масштабируется линейно по числу людей.
+- **Bottom-up** - один прямой проход предсказывает все ключевые точки плюс поле ассоциаций; затем они группируются. Постоянное время независимо от размера толпы.
 
-Top-down (HRNet, ViTPose) is the accuracy leader; bottom-up (OpenPose, HigherHRNet) is the throughput leader for crowded scenes.
+Top-down (HRNet, ViTPose) лидирует по точности; bottom-up (OpenPose, HigherHRNet) лидирует по пропускной способности для сцен с толпой.
 
-### Heatmap regression
+### Регрессия тепловых карт
 
-Instead of regressing `(x, y)` directly, predict an `H x W` heatmap per keypoint with a Gaussian blob centred at the true location.
+Вместо прямой регрессии `(x, y)` предсказывайте тепловую карту `H x W` для каждой ключевой точки с гауссовым пятном, центрированным в истинном положении.
 
 ```
 target[k, y, x] = exp(-((x - cx_k)^2 + (y - cy_k)^2) / (2 sigma^2))
 ```
 
-At inference, the argmax of each heatmap is the predicted keypoint location.
+При инференсе argmax каждой тепловой карты является предсказанным положением ключевой точки.
 
-Why heatmaps work better than direct regression: the network's spatial structure (conv feature map) aligns naturally with spatial output. Gaussian targets also regularise — a small localisation error produces a small loss, not zero.
+Почему тепловые карты работают лучше прямой регрессии: пространственная структура сети (сверточная карта признаков) естественно согласуется с пространственным выходом. Гауссовы цели также регуляризуют - небольшая ошибка локализации дает небольшую потерю, а не ноль.
 
-### Sub-pixel localisation
+### Субпиксельная локализация
 
-Argmax gives integer coordinates. For sub-pixel precision, refine by fitting a parabola to the argmax and its neighbours, or use the well-known offset `(dx, dy) = 0.25 * (heatmap[y, x+1] - heatmap[y, x-1], ...)` direction.
+Argmax дает целочисленные координаты. Для субпиксельной точности уточните результат, подгоняя параболу к argmax и его соседям, или используйте известное направление смещения `(dx, dy) = 0.25 * (heatmap[y, x+1] - heatmap[y, x-1], ...)`.
 
 ### Part Affinity Fields (PAFs)
 
-OpenPose's trick for bottom-up association. For each pair of connected keypoints (e.g. left shoulder to left elbow), predict a 2-channel field that encodes the unit vector pointing from one to the other. To associate a shoulder with its elbow, integrate the PAF along the line connecting candidate pairs; the pair with the highest integral is matched.
+Прием OpenPose для bottom-up ассоциации. Для каждой пары соединенных ключевых точек (например, от левого плеча до левого локтя) предсказывается 2-канальное поле, кодирующее единичный вектор, направленный от одной точки к другой. Чтобы связать плечо с локтем, PAF интегрируют вдоль линии, соединяющей пары кандидатов; сопоставляется пара с наибольшим интегралом.
 
 ```
 For each connection (limb):
@@ -73,23 +73,23 @@ For each connection (limb):
   Higher integral = stronger match
 ```
 
-Elegant and scales to arbitrary crowd sizes without per-person crops.
+Элегантно и масштабируется на произвольные размеры толпы без crop для каждого человека.
 
-### COCO keypoints
+### Ключевые точки COCO
 
-The standard body-pose dataset: 17 keypoints per person, PCK (Percentage of Correct Keypoints) and OKS (Object Keypoint Similarity) as metrics. OKS is the keypoint analogue of IoU and is what COCO mAP@OKS reports.
+Стандартный датасет для позы тела: 17 ключевых точек на человека, метрики PCK (Percentage of Correct Keypoints) и OKS (Object Keypoint Similarity). OKS - аналог IoU для ключевых точек, и именно его сообщает COCO mAP@OKS.
 
 ### 2D vs 3D
 
-- **2D pose** — image coordinates; solved at production quality (MediaPipe, HRNet, ViTPose).
-- **3D pose** — world / camera coordinates; still active research. Common approaches:
-  - Lift 2D predictions to 3D with a small MLP (VideoPose3D).
-  - Direct 3D regression from image (PyMAF, MHFormer).
-  - Multi-view setups (CMU Panoptic) for ground truth.
+- **2D-поза** - координаты изображения; решена на production-уровне качества (MediaPipe, HRNet, ViTPose).
+- **3D-поза** - мировые координаты / координаты камеры; все еще активная область исследований. Распространенные подходы:
+  - Поднять 2D-предсказания в 3D с помощью небольшой MLP (VideoPose3D).
+  - Прямая 3D-регрессия по изображению (PyMAF, MHFormer).
+  - Многовидовые установки (CMU Panoptic) для ground truth.
 
-## Build It
+## Соберите это
 
-### Step 1: Gaussian heatmap target
+### Шаг 1: Целевая гауссова тепловая карта
 
 ```python
 import numpy as np
@@ -103,11 +103,11 @@ hm = gaussian_heatmap(64, 32, 32, sigma=2.0)
 print(f"peak: {hm.max():.3f} at ({hm.argmax() % 64}, {hm.argmax() // 64})")
 ```
 
-Per-keypoint heatmaps stacked along a channel axis give the full target tensor.
+Тепловые карты для отдельных ключевых точек, сложенные вдоль оси каналов, дают полный целевой тензор.
 
-### Step 2: Tiny keypoint head
+### Шаг 2: Маленькая головка ключевых точек
 
-A U-Net-style model that outputs K heatmap channels.
+Модель в стиле U-Net, которая выводит K каналов тепловых карт.
 
 ```python
 import torch.nn as nn
@@ -130,9 +130,9 @@ class TinyKeypointNet(nn.Module):
         return self.up2(u1)
 ```
 
-Input `(N, 3, H, W)`, output `(N, K, H, W)`. Loss is per-pixel MSE against Gaussian targets.
+Вход `(N, 3, H, W)`, выход `(N, K, H, W)`. Функция потерь - попиксельная MSE относительно гауссовых целей.
 
-### Step 3: Inference — extract keypoint coordinates
+### Шаг 3: Инференс - извлечение координат ключевых точек
 
 ```python
 def heatmap_to_coords(heatmaps):
@@ -151,11 +151,11 @@ coords = heatmap_to_coords(torch.randn(2, 4, 32, 32))
 print(f"coords: {coords.shape}")  # (2, 4, 2)
 ```
 
-One line at inference. For sub-pixel refinement, interpolate around the argmax.
+Одна строка при инференсе. Для субпиксельного уточнения интерполируйте вокруг argmax.
 
-### Step 4: Synthetic keypoint dataset
+### Шаг 4: Синтетический датасет ключевых точек
 
-Simple: draw four points on a white canvas and learn to predict them.
+Просто: нарисуйте четыре точки на белом холсте и научитесь их предсказывать.
 
 ```python
 def make_synthetic_sample(size=64):
@@ -168,9 +168,9 @@ def make_synthetic_sample(size=64):
     return img, hms, kps
 ```
 
-Easy enough for a tiny model to learn in a minute.
+Достаточно просто, чтобы маленькая модель выучила это за минуту.
 
-### Step 5: Training
+### Шаг 5: Обучение
 
 ```python
 model = TinyKeypointNet(num_keypoints=4)
@@ -187,42 +187,42 @@ for step in range(200):
     opt.zero_grad(); loss.backward(); opt.step()
 ```
 
-## Use It
+## Используйте это
 
-- **MediaPipe Pose** — Google's production pose estimator; ships WebGL + mobile runtimes with sub-10ms latency.
-- **MMPose** (OpenMMLab) — comprehensive research codebase; every SOTA architecture with pretrained weights.
-- **YOLOv8-pose** — fastest real-time multi-person pose with a single forward pass.
-- **transformers HumanDPT / PoseAnything** — newer vision-language approaches for open-vocabulary pose (any object, any keypoint set).
+- **MediaPipe Pose** - production-оценщик позы от Google; поставляет WebGL + мобильные runtime с задержкой меньше 10ms.
+- **MMPose** (OpenMMLab) - полноценная исследовательская кодовая база; все SOTA-архитектуры с предобученными весами.
+- **YOLOv8-pose** - самая быстрая real-time многоперсонная поза с одним прямым проходом.
+- **transformers HumanDPT / PoseAnything** - более новые vision-language подходы для open-vocabulary позы (любой объект, любой набор ключевых точек).
 
-## Ship It
+## Доведите до поставки
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-pose-stack-picker.md` — a prompt that picks MediaPipe / YOLOv8-pose / HRNet / ViTPose given latency, crowd size, and 2D vs 3D need.
-- `outputs/skill-heatmap-to-coords.md` — a skill that writes the sub-pixel heatmap-to-coordinate routine used by every production pose model.
+- `outputs/prompt-pose-stack-picker.md` - prompt, который выбирает MediaPipe / YOLOv8-pose / HRNet / ViTPose с учетом задержки, размера толпы и потребности в 2D vs 3D.
+- `outputs/skill-heatmap-to-coords.md` - skill, который пишет процедуру субпиксельного преобразования тепловой карты в координаты, используемую каждой production-моделью позы.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Train the tiny keypoint model on the synthetic 4-point dataset. Report mean L2 error between predicted and true keypoints after 200 steps.
-2. **(Medium)** Add sub-pixel refinement: given the argmax position, fit a 1D parabola along x and y from the neighbouring pixels. Report the accuracy gain vs integer argmax.
-3. **(Hard)** Build a 2-person synthetic dataset where each image shows two instances of the 4-keypoint pattern. Train a bottom-up pipeline with PAFs that predict which keypoint belongs to which instance, and evaluate OKS.
+1. **(Легко)** Обучите маленькую модель ключевых точек на синтетическом датасете с 4 точками. Сообщите среднюю L2-ошибку между предсказанными и истинными ключевыми точками после 200 шагов.
+2. **(Средне)** Добавьте субпиксельное уточнение: по позиции argmax подгоните 1D-параболу вдоль x и y по соседним пикселям. Сообщите прирост точности по сравнению с целочисленным argmax.
+3. **(Сложно)** Постройте синтетический датасет с 2 людьми, где каждое изображение показывает два экземпляра паттерна из 4 ключевых точек. Обучите bottom-up конвейер с PAF, которые предсказывают, какая ключевая точка принадлежит какому экземпляру, и оцените OKS.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Keypoint | "A landmark" | A specific ordered point on an object (joint, corner, feature) |
-| Pose | "The skeleton" | An ordered set of keypoints belonging to one instance |
-| Top-down | "Detect then pose" | Two-stage pipeline: person detector + per-crop keypoint model; highest accuracy |
-| Bottom-up | "Pose first, group later" | Single-pass all-keypoint prediction + grouping; constant time in crowd size |
-| Heatmap | "Gaussian target" | H x W tensor per keypoint with peak at the true location; the preferred regression target |
-| PAF | "Part Affinity Field" | 2-channel unit vector field encoding limb directions; used to group keypoints into instances |
-| OKS | "Keypoint IoU" | Object Keypoint Similarity; the COCO metric for pose |
-| HRNet | "High-Resolution Net" | The dominant top-down keypoint architecture; preserves high-res features throughout |
+| Keypoint | "Ориентир" | Конкретная упорядоченная точка на объекте (сустав, угол, признак) |
+| Pose | "Скелет" | Упорядоченный набор ключевых точек, принадлежащих одному экземпляру |
+| Top-down | "Сначала детекция, потом поза" | Двухэтапный конвейер: детектор людей + модель ключевых точек для каждого crop; самая высокая точность |
+| Bottom-up | "Сначала поза, группировка потом" | Однопроходное предсказание всех ключевых точек + группировка; постоянное время по размеру толпы |
+| Heatmap | "Гауссова цель" | Тензор H x W для каждой ключевой точки с пиком в истинном положении; предпочтительная цель регрессии |
+| PAF | "Part Affinity Field" | 2-канальное поле единичных векторов, кодирующее направления конечностей; используется для группировки ключевых точек в экземпляры |
+| OKS | "Keypoint IoU" | Object Keypoint Similarity; метрика COCO для позы |
+| HRNet | "High-Resolution Net" | Доминирующая top-down архитектура ключевых точек; сохраняет признаки высокого разрешения на всем протяжении |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenPose (Cao et al., 2017)](https://arxiv.org/abs/1812.08008) — bottom-up with PAFs; still the best writeup of the approach
-- [HRNet (Sun et al., 2019)](https://arxiv.org/abs/1902.09212) — the top-down reference architecture
-- [ViTPose (Xu et al., 2022)](https://arxiv.org/abs/2204.12484) — plain ViT as a pose backbone; current SOTA on many benchmarks
-- [MediaPipe Pose](https://developers.google.com/mediapipe/solutions/vision/pose_landmarker) — production real-time pose; the fastest deployed stack in 2026
+- [OpenPose (Cao et al., 2017)](https://arxiv.org/abs/1812.08008) - bottom-up с PAF; все еще лучшее описание этого подхода
+- [HRNet (Sun et al., 2019)](https://arxiv.org/abs/1902.09212) - эталонная top-down архитектура
+- [ViTPose (Xu et al., 2022)](https://arxiv.org/abs/2204.12484) - обычный ViT как backbone для позы; текущий SOTA на многих бенчмарках
+- [MediaPipe Pose](https://developers.google.com/mediapipe/solutions/vision/pose_landmarker) - production real-time поза; самый быстрый развернутый стек в 2026 году

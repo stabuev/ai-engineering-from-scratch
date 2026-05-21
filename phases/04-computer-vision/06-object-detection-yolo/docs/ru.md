@@ -1,32 +1,32 @@
-# Object Detection — YOLO from Scratch
+# Детекция объектов — YOLO с нуля
 
-> Detection is classification plus regression, run at every position in a feature map, then cleaned up with non-maximum suppression.
+> Детекция — это классификация плюс регрессия, выполняемые в каждой позиции карты признаков, а затем очищенные с помощью подавления немаксимумов.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 03 (CNNs), Phase 4 Lesson 04 (Image Classification), Phase 4 Lesson 05 (Transfer Learning)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 4 Урок 03 (CNNs), Фаза 4 Урок 04 (Image Classification), Фаза 4 Урок 05 (Transfer Learning)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the grid-and-anchor design that turns detection into a dense prediction problem and state what every number in the output tensor means
-- Compute Intersection-over-Union between boxes and implement non-maximum suppression from scratch
-- Build a minimal YOLO-style head on top of a pretrained backbone, including the classification, objectness, and box-regression losses
-- Read a detection metric row (precision@0.5, recall, mAP@0.5, mAP@0.5:0.95) and pick which knob to turn next
+- Объяснить схему сетки и якорей, которая превращает детекцию в задачу плотного предсказания, и указать, что означает каждое число в выходном тензоре
+- Вычислять Intersection-over-Union между рамками и реализовать подавление немаксимумов с нуля
+- Построить минимальную YOLO-подобную голову поверх предобученной основы, включая потери классификации, objectness и регрессии рамок
+- Читать строку метрик детекции (precision@0.5, recall, mAP@0.5, mAP@0.5:0.95) и выбирать, какую ручку настраивать следующей
 
-## The Problem
+## Проблема
 
-Classification says "this image is a dog." Detection says "there is a dog at pixels (112, 40, 280, 210), there is a cat at (400, 180, 560, 310), and nothing else in the frame." That one structural change — predicting a variable number of labelled boxes instead of one label per image — is what every autonomous system, every surveillance product, every document layout parser, and every factory vision line depends on.
+Классификация говорит: "это изображение собаки". Детекция говорит: "собака находится в пикселях (112, 40, 280, 210), кошка находится в (400, 180, 560, 310), и больше в кадре ничего нет". Это одно структурное изменение — предсказывать переменное число размеченных рамок вместо одной метки на изображение — лежит в основе каждой автономной системы, каждого продукта видеонаблюдения, каждого парсера макета документов и каждой линии машинного зрения на производстве.
 
-Detection is also where every engineering trade-off in vision shows up at once. You want boxes that are accurate (regression head), you want the right class for each box (classification head), you want the model to know when there is nothing to detect (objectness score), and you want exactly one prediction per real object (non-maximum suppression). Miss any of these and the pipeline either misses objects, reports hallucinated boxes, or predicts the same object fifteen times in slightly different positions.
+Детекция также является местом, где сразу проявляются все инженерные компромиссы компьютерного зрения. Вам нужны точные рамки (голова регрессии), правильный класс для каждой рамки (голова классификации), способность модели понимать, когда детектировать нечего (оценка objectness), и ровно одно предсказание на каждый реальный объект (подавление немаксимумов). Если упустить любую из этих частей, конвейер либо пропускает объекты, либо сообщает галлюцинированные рамки, либо предсказывает один и тот же объект пятнадцать раз в слегка разных позициях.
 
-YOLO (You Only Look Once, Redmon et al. 2016) was the design that made all of this run in real time by doing it with a single forward pass of a conv net, and the same structural decisions are still the backbone of modern detectors (YOLOv8, YOLOv9, YOLO-NAS, RT-DETR). Learn the core and every variant becomes a rearrangement of the same parts.
+YOLO (You Only Look Once, Redmon et al. 2016) стала архитектурной идеей, которая позволила всему этому работать в реальном времени за счет одного прямого прохода сверточной сети, и те же структурные решения по-прежнему лежат в основе современных детекторов (YOLOv8, YOLOv9, YOLO-NAS, RT-DETR). Освойте ядро, и каждая разновидность станет перестановкой тех же частей.
 
-## The Concept
+## Концепция
 
-### Detection as dense prediction
+### Детекция как плотное предсказание
 
-A classifier outputs C numbers per image. A YOLO-style detector outputs `(S x S x (5 + C))` numbers per image, where S is the spatial grid size.
+Классификатор выдает C чисел на изображение. YOLO-подобный детектор выдает `(S x S x (5 + C))` чисел на изображение, где S — пространственный размер сетки.
 
 ```mermaid
 flowchart LR
@@ -44,19 +44,19 @@ flowchart LR
     style RESULT fill:#dcfce7,stroke:#16a34a
 ```
 
-Each of the `S * S` grid cells predicts `B` boxes. For each box:
+Каждая из `S * S` ячеек сетки предсказывает `B` рамок. Для каждой рамки:
 
-- 4 numbers describe geometry: `tx, ty, tw, th`.
-- 1 number is the objectness score: "is there an object centred in this cell?"
-- C numbers are class probabilities.
+- 4 числа описывают геометрию: `tx, ty, tw, th`.
+- 1 число — это оценка objectness: "есть ли объект с центром в этой ячейке?"
+- C чисел — вероятности классов.
 
-Total per cell: `B * (5 + C)`. For VOC with `S=13, B=2, C=20`, that is 50 numbers per cell.
+Итого на ячейку: `B * (5 + C)`. Для VOC при `S=13, B=2, C=20` это 50 чисел на ячейку.
 
-### Why grids and anchors
+### Зачем нужны сетки и якоря
 
-Plain regression would predict `(x, y, w, h)` for every object as an absolute coordinate. That is hard for a conv network because translating the image should not translate all predictions by the same amount — each object is spatially anchored. The grid answers this by assigning each ground-truth box to the grid cell its centre falls in; only that cell is responsible for that object.
+Прямая регрессия предсказывала бы `(x, y, w, h)` для каждого объекта как абсолютные координаты. Для сверточной сети это трудно, потому что сдвиг изображения не должен сдвигать все предсказания на одну и ту же величину — каждый объект пространственно привязан. Сетка решает это, назначая каждую ground-truth рамку той ячейке сетки, в которую попадает ее центр; только эта ячейка отвечает за этот объект.
 
-Anchors address a second problem. A 3x3 conv cannot easily regress a 500-pixel-wide box out of a 16-pixel receptive field feature cell. Instead, we pre-define `B` prior box shapes (anchors) per cell and predict small deltas from each anchor. The model learns to pick the right anchor and nudge it rather than regress from nothing.
+Якоря решают вторую проблему. Свертка 3x3 не может легко регрессировать рамку шириной 500 пикселей из ячейки признаков с 16-пиксельным рецептивным полем. Вместо этого мы заранее задаем `B` априорных форм рамок (якорей) на ячейку и предсказываем небольшие дельты относительно каждого якоря. Модель учится выбирать подходящий якорь и слегка его сдвигать, а не регрессировать с нуля.
 
 ```
 Anchor box priors (example for 416x416 input):
@@ -68,11 +68,11 @@ Anchor box priors (example for 416x416 input):
 At each grid cell, every anchor emits (tx, ty, tw, th, obj, c_1, ..., c_C).
 ```
 
-Modern detectors often use FPN with different anchor sets per resolution — small anchors on shallow high-resolution maps, large anchors on deep low-resolution maps. Same idea, more scales.
+Современные детекторы часто используют FPN с разными наборами якорей для разных разрешений — маленькие якоря на неглубоких картах высокого разрешения, большие якоря на глубоких картах низкого разрешения. Идея та же, масштабов больше.
 
-### Decoding predictions
+### Декодирование предсказаний
 
-The raw `tx, ty, tw, th` are not box coordinates; they are regression targets to be transformed before plotting:
+Сырые `tx, ty, tw, th` не являются координатами рамки; это целевые значения регрессии, которые нужно преобразовать перед отрисовкой:
 
 ```
 centre x  = (sigmoid(tx) + cell_x) * stride
@@ -81,21 +81,21 @@ width     = anchor_w * exp(tw)
 height    = anchor_h * exp(th)
 ```
 
-`sigmoid` keeps centre offsets inside the cell. `exp` lets the width scale freely from the anchor without a sign flip. `stride` scales the grid coordinates back to pixels. This decode step is the same in every YOLO version since v2.
+`sigmoid` удерживает смещения центра внутри ячейки. `exp` позволяет ширине свободно масштабироваться относительно якоря без смены знака. `stride` масштабирует координаты сетки обратно в пиксели. Этот шаг декодирования одинаков во всех версиях YOLO начиная с v2.
 
 ### IoU
 
-Detection's universal similarity metric between two boxes:
+Универсальная метрика сходства в детекции между двумя рамками:
 
 ```
 IoU(A, B) = area(A intersect B) / area(A union B)
 ```
 
-IoU = 1 means identical; IoU = 0 means no overlap. IoU between the prediction and the ground-truth box is what decides whether a prediction counts as a true positive (typically IoU >= 0.5). IoU between two predictions is what NMS uses to deduplicate.
+IoU = 1 означает полное совпадение; IoU = 0 означает отсутствие пересечения. IoU между предсказанием и ground-truth рамкой определяет, считается ли предсказание истинно положительным (обычно IoU >= 0.5). IoU между двумя предсказаниями используется NMS для удаления дублей.
 
-### Non-maximum suppression
+### Подавление немаксимумов
 
-A conv network trained on adjacent anchors will often predict overlapping boxes for the same object. NMS keeps the highest-confidence prediction and deletes any other prediction with IoU above a threshold.
+Сверточная сеть, обученная на соседних якорях, часто предсказывает перекрывающиеся рамки для одного и того же объекта. NMS оставляет предсказание с наибольшей уверенностью и удаляет любое другое предсказание с IoU выше порога.
 
 ```
 NMS(boxes, scores, iou_threshold):
@@ -107,11 +107,11 @@ NMS(boxes, scores, iou_threshold):
     return keep
 ```
 
-Typical threshold: 0.45 for object detection. Recent detectors replace standard NMS with `soft-NMS`, `DIoU-NMS`, or learn the suppression directly (RT-DETR) but the structural purpose is the same.
+Типичный порог: 0.45 для детекции объектов. Новые детекторы заменяют стандартный NMS на `soft-NMS`, `DIoU-NMS` или обучают подавление напрямую (RT-DETR), но структурная цель остается той же.
 
-### The loss
+### Функция потерь
 
-YOLO loss is three losses added with weights:
+Потери YOLO — это три потери, сложенные с весами:
 
 ```
 L = lambda_coord * L_box(pred, target, where obj=1)
@@ -120,26 +120,26 @@ L = lambda_coord * L_box(pred, target, where obj=1)
   + lambda_cls   * L_cls(pred, target, where obj=1)
 ```
 
-Only cells that contain an object contribute to the box-regression and classification losses. Cells without objects contribute only to the objectness loss (teaching the model to stay silent). `lambda_noobj` is usually small (~0.5) because the vast majority of cells are empty and would otherwise dominate the total loss.
+Только ячейки, содержащие объект, вносят вклад в потери регрессии рамок и классификации. Ячейки без объектов вносят вклад только в потери objectness (обучая модель молчать). `lambda_noobj` обычно мала (~0.5), потому что подавляющее большинство ячеек пусты и иначе доминировали бы в общей потере.
 
-Modern variants swap MSE box loss for CIoU / DIoU (which optimise IoU directly), use focal loss for class imbalance, and balance objectness with quality focal loss. The three-component structure is unchanged.
+Современные варианты заменяют MSE-потерю рамок на CIoU / DIoU (которые оптимизируют IoU напрямую), используют focal loss для дисбаланса классов и балансируют objectness с quality focal loss. Трехкомпонентная структура не меняется.
 
-### Detection metrics
+### Метрики детекции
 
-Accuracy does not transfer to detection. Four numbers that do:
+Accuracy не переносится на детекцию. Четыре числа, которые переносятся:
 
-- **Precision@IoU=0.5** — of the predictions counted as positives, how many are actually correct.
-- **Recall@IoU=0.5** — of the real objects, how many did we find.
-- **AP@0.5** — precision-recall curve area at IoU threshold 0.5; one number per class.
-- **mAP@0.5:0.95** — average of AP over IoU thresholds 0.5, 0.55, ..., 0.95. The COCO metric; strictest and most informative.
+- **Precision@IoU=0.5** — среди предсказаний, посчитанных положительными, какая доля действительно верна.
+- **Recall@IoU=0.5** — среди реальных объектов, сколько мы нашли.
+- **AP@0.5** — площадь под кривой precision-recall при пороге IoU 0.5; одно число на класс.
+- **mAP@0.5:0.95** — среднее AP по порогам IoU 0.5, 0.55, ..., 0.95. Метрика COCO; самая строгая и наиболее информативная.
 
-Report all four. A detector that is strong on mAP@0.5 but weak on mAP@0.5:0.95 is localising roughly but not tightly; fix with better box-regression loss. A detector with high precision and low recall is too conservative; lower the confidence threshold or increase the objectness weight.
+Сообщайте все четыре. Детектор, сильный по mAP@0.5, но слабый по mAP@0.5:0.95, локализует примерно, но не плотно; исправляйте это лучшей потерей регрессии рамок. Детектор с высокой precision и низкой recall слишком консервативен; уменьшите порог уверенности или увеличьте вес objectness.
 
-## Build It
+## Соберите это
 
-### Step 1: IoU
+### Шаг 1: IoU
 
-The workhorse of the whole lesson. Works on two arrays of boxes in `(x1, y1, x2, y2)` format.
+Рабочая лошадка всего урока. Работает с двумя массивами рамок в формате `(x1, y1, x2, y2)`.
 
 ```python
 import numpy as np
@@ -163,9 +163,9 @@ def box_iou(boxes_a, boxes_b):
     return inter / np.clip(union, 1e-8, None)
 ```
 
-Returns an `(N_a, N_b)` matrix of pairwise IoUs. Use it against a single ground-truth box by making one of the arrays shape `(1, 4)`.
+Возвращает матрицу попарных IoU размера `(N_a, N_b)`. Используйте ее против одной ground-truth рамки, сделав один из массивов формы `(1, 4)`.
 
-### Step 2: Non-max suppression
+### Шаг 2: Подавление немаксимумов
 
 ```python
 def nms(boxes, scores, iou_threshold=0.45):
@@ -182,11 +182,11 @@ def nms(boxes, scores, iou_threshold=0.45):
     return np.array(keep, dtype=np.int64)
 ```
 
-Deterministic, `O(N log N)` from the sort, and matches the behaviour of `torchvision.ops.nms` on identical inputs.
+Детерминированно, `O(N log N)` из-за сортировки, и совпадает с поведением `torchvision.ops.nms` на идентичных входах.
 
-### Step 3: Box encoding and decoding
+### Шаг 3: Кодирование и декодирование рамок
 
-Convert between pixel coordinates and the `(tx, ty, tw, th)` targets that the network actually regresses.
+Преобразуйте пиксельные координаты в целевые значения `(tx, ty, tw, th)`, которые сеть фактически регрессирует, и обратно.
 
 ```python
 def encode(box_xyxy, cell_x, cell_y, stride, anchor_wh):
@@ -215,11 +215,11 @@ def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 ```
 
-Test: encode a box then decode — you should get back something very close to the original (up to the sigmoid inverse not being perfectly invertible when `tx` is not in the post-sigmoid range).
+Тест: закодируйте рамку, затем декодируйте — вы должны получить что-то очень близкое к исходному (с учетом того, что обратная sigmoid не идеально обратима, когда `tx` не находится в диапазоне после sigmoid).
 
-### Step 4: A minimal YOLO head
+### Шаг 4: Минимальная YOLO-голова
 
-One 1x1 conv on a feature map, reshaping to `(B, S, S, num_anchors, 5 + C)`.
+Одна свертка 1x1 на карте признаков с изменением формы в `(B, S, S, num_anchors, 5 + C)`.
 
 ```python
 import torch
@@ -240,11 +240,11 @@ class YOLOHead(nn.Module):
         return y
 ```
 
-Output shape: `(N, H, W, num_anchors, 5 + C)`. The last dimension holds `[tx, ty, tw, th, obj, cls_0, ..., cls_{C-1}]`.
+Форма выхода: `(N, H, W, num_anchors, 5 + C)`. Последнее измерение содержит `[tx, ty, tw, th, obj, cls_0, ..., cls_{C-1}]`.
 
-### Step 5: Ground-truth assignment
+### Шаг 5: Назначение ground-truth
 
-For every ground-truth box, decide which `(cell, anchor)` is responsible.
+Для каждой ground-truth рамки решите, какая пара `(cell, anchor)` за нее отвечает.
 
 ```python
 def assign_targets(boxes_xyxy, classes, anchors, stride, grid_size, num_classes):
@@ -275,9 +275,9 @@ def assign_targets(boxes_xyxy, classes, anchors, stride, grid_size, num_classes)
     return target, has_obj
 ```
 
-Anchor selection is "best shape IoU with the ground truth" — a cheap proxy that matches the YOLOv2/v3 assignment. v5 and later use more sophisticated strategies (task-aligned matching, dynamic k) that refine the same idea.
+Выбор якоря — это "лучший IoU формы с ground truth", дешевый прокси-критерий, соответствующий назначению в YOLOv2/v3. v5 и более поздние версии используют более сложные стратегии (task-aligned matching, dynamic k), которые уточняют ту же идею.
 
-### Step 6: The three losses
+### Шаг 6: Три потери
 
 ```python
 def yolo_loss(pred, target, has_obj, lambda_coord=5.0, lambda_obj=1.0, lambda_noobj=0.5, lambda_cls=1.0):
@@ -311,11 +311,11 @@ def yolo_loss(pred, target, has_obj, lambda_coord=5.0, lambda_obj=1.0, lambda_no
                    "obj_neg": loss_obj_neg.item(), "cls": loss_cls.item()}
 ```
 
-Five hyper-parameters that every YOLO tutorial either hardcodes or sweeps. The ratios matter: `lambda_coord=5, lambda_noobj=0.5` mirrors the original YOLOv1 paper and still works as a reasonable default.
+Пять гиперпараметров, которые каждый учебник по YOLO либо зашивает, либо перебирает. Важны соотношения: `lambda_coord=5, lambda_noobj=0.5` повторяет оригинальную статью YOLOv1 и все еще работает как разумное значение по умолчанию.
 
-### Step 7: Inference pipeline
+### Шаг 7: Конвейер инференса
 
-Decode the raw head output, apply sigmoid/exp, threshold on objectness, and NMS.
+Декодируйте сырой выход головы, примените sigmoid/exp, отфильтруйте по objectness и выполните NMS.
 
 ```python
 def postprocess(pred_tensor, anchors, stride, img_size, conf_threshold=0.25, iou_threshold=0.45):
@@ -349,11 +349,11 @@ def postprocess(pred_tensor, anchors, stride, img_size, conf_threshold=0.25, iou
     return boxes[keep], scores[keep], classes[keep]
 ```
 
-That is the complete eval path: head -> decode -> threshold -> NMS.
+Это полный путь eval: head -> decode -> threshold -> NMS.
 
-## Use It
+## Используйте это
 
-`torchvision.models.detection` ships production detectors with the same conceptual structure. Loading a pretrained model takes three lines.
+`torchvision.models.detection` поставляет production-детекторы с той же концептуальной структурой. Загрузка предобученной модели занимает три строки.
 
 ```python
 import torch
@@ -369,37 +369,37 @@ print(f"scores: {predictions[0]['scores'].shape}")
 print(f"labels: {predictions[0]['labels'].shape}")
 ```
 
-For real-time inference pipelines, `ultralytics` (YOLOv8/v9) is the standard: `from ultralytics import YOLO; model = YOLO('yolov8n.pt'); model(img)`. The model handles decoding and NMS internally and returns the same `boxes / scores / labels` triple you built above.
+Для конвейеров инференса в реальном времени стандартом является `ultralytics` (YOLOv8/v9): `from ultralytics import YOLO; model = YOLO('yolov8n.pt'); model(img)`. Модель обрабатывает декодирование и NMS внутри и возвращает ту же тройку `boxes / scores / labels`, которую вы построили выше.
 
-## Ship It
+## Доведите до поставки
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-detection-metric-reader.md` — a prompt that turns a `precision, recall, AP, mAP@0.5:0.95` row into a one-line diagnosis and the single most useful next experiment.
-- `outputs/skill-anchor-designer.md` — a skill that, given a dataset of ground-truth boxes, runs k-means on `(w, h)` and returns anchor sets per FPN level plus the coverage statistics you need to pick the right number of anchors.
+- `outputs/prompt-detection-metric-reader.md` — промпт, который превращает строку `precision, recall, AP, mAP@0.5:0.95` в однострочный диагноз и единственный самый полезный следующий эксперимент.
+- `outputs/skill-anchor-designer.md` — навык, который по набору данных ground-truth рамок запускает k-means на `(w, h)` и возвращает наборы якорей на уровень FPN плюс статистики покрытия, необходимые для выбора правильного числа якорей.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Implement `box_iou` and run it against `torchvision.ops.box_iou` on 1,000 random box pairs. Verify max absolute difference is below `1e-6`.
-2. **(Medium)** Port `yolo_loss` to a version that uses `CIoU` box loss instead of MSE. Show on a 100-image synthetic dataset that CIoU converges to a better final mAP@0.5:0.95 than MSE in the same number of epochs.
-3. **(Hard)** Implement multi-scale inference: feed the same image at three resolutions through the model, union the box predictions, and run a single NMS at the end. Measure the mAP lift vs single-scale inference on a held-out set.
+1. **(Easy)** Реализуйте `box_iou` и запустите его против `torchvision.ops.box_iou` на 1,000 случайных пар рамок. Убедитесь, что максимальная абсолютная разница ниже `1e-6`.
+2. **(Medium)** Перенесите `yolo_loss` в версию, которая использует потерю рамок `CIoU` вместо MSE. Покажите на синтетическом наборе данных из 100 изображений, что CIoU сходится к лучшему итоговому mAP@0.5:0.95, чем MSE, за то же число эпох.
+3. **(Hard)** Реализуйте многомасштабный инференс: подайте одно и то же изображение в модель в трех разрешениях, объедините предсказания рамок и выполните один NMS в конце. Измерьте прирост mAP относительно single-scale inference на отложенном наборе.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Anchor | "Box prior" | A pre-defined box shape at each grid cell from which the network predicts deltas instead of absolute coordinates |
-| IoU | "Overlap" | Intersection-over-union of two boxes; the universal similarity measure in detection |
-| NMS | "Deduplicate" | Greedy algorithm that keeps highest-score predictions and removes overlapping ones above a threshold |
-| Objectness | "Is there something here" | Per-anchor, per-cell scalar predicting whether an object is centred in that cell |
-| Grid stride | "Downsample factor" | Pixels per grid cell; a 416-px input with a 13-grid head has stride 32 |
-| mAP | "Mean average precision" | Average of the area under the precision-recall curve, averaged over classes and (for COCO) IoU thresholds |
-| AP@0.5 | "PASCAL VOC AP" | Average precision with IoU threshold 0.5; the lenient version of the metric |
-| mAP@0.5:0.95 | "COCO AP" | Average over IoU thresholds 0.5..0.95 step 0.05; the strict version and current community standard |
+| Anchor | "Априорная рамка" | Заранее заданная форма рамки в каждой ячейке сетки, относительно которой сеть предсказывает дельты вместо абсолютных координат |
+| IoU | "Перекрытие" | Intersection-over-union двух рамок; универсальная мера сходства в детекции |
+| NMS | "Удалить дубли" | Жадный алгоритм, который оставляет предсказания с наибольшим score и удаляет перекрывающиеся выше порога |
+| Objectness | "Есть ли здесь что-то" | Скаляр на якорь и ячейку, предсказывающий, находится ли центр объекта в этой ячейке |
+| Grid stride | "Коэффициент downsample" | Пиксели на ячейку сетки; вход 416 px с головой на 13 ячеек имеет stride 32 |
+| mAP | "Mean average precision" | Среднее площади под кривой precision-recall, усредненное по классам и (для COCO) порогам IoU |
+| AP@0.5 | "PASCAL VOC AP" | Average precision с порогом IoU 0.5; более мягкая версия метрики |
+| mAP@0.5:0.95 | "COCO AP" | Среднее по порогам IoU 0.5..0.95 с шагом 0.05; строгая версия и текущий стандарт сообщества |
 
-## Further Reading
+## Дополнительное чтение
 
-- [YOLOv1: You Only Look Once (Redmon et al., 2016)](https://arxiv.org/abs/1506.02640) — the founding paper; every YOLO since is a refinement of this structure
-- [YOLOv3 (Redmon & Farhadi, 2018)](https://arxiv.org/abs/1804.02767) — the paper that introduced multi-scale FPN-style heads; still the clearest diagram
-- [Ultralytics YOLOv8 docs](https://docs.ultralytics.com) — the current production reference; covers dataset formats, augmentations, training recipes
-- [The Illustrated Guide to Object Detection (Jonathan Hui)](https://jonathan-hui.medium.com/object-detection-series-24d03a12f904) — best plain-English tour of the full detector zoo; priceless for understanding how DETR, RetinaNet, FCOS, and YOLO relate
+- [YOLOv1: You Only Look Once (Redmon et al., 2016)](https://arxiv.org/abs/1506.02640) — основополагающая статья; каждая YOLO с тех пор является уточнением этой структуры
+- [YOLOv3 (Redmon & Farhadi, 2018)](https://arxiv.org/abs/1804.02767) — статья, которая ввела многомасштабные FPN-подобные головы; по-прежнему самая ясная диаграмма
+- [Ultralytics YOLOv8 docs](https://docs.ultralytics.com) — текущий production-ориентир; охватывает форматы наборов данных, аугментации, рецепты обучения
+- [The Illustrated Guide to Object Detection (Jonathan Hui)](https://jonathan-hui.medium.com/object-detection-series-24d03a12f904) — лучший простой англоязычный обзор всего зоопарка детекторов; бесценен для понимания того, как связаны DETR, RetinaNet, FCOS и YOLO
