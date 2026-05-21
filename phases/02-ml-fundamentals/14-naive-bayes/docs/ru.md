@@ -1,82 +1,82 @@
-# Naive Bayes
+# Наивный Байес
 
-> The "naive" assumption is wrong, and it works anyway. That's the beauty of it.
+> «Наивное» предположение неверно, но все равно работает. В этом его красота.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 2, Lessons 01-07 (classification, Bayes' theorem)
-**Time:** ~75 minutes
+**Тип:** Практика
+**Язык:** Python
+**Требования:** Фаза 2, Уроки 01-07 (классификация, теорема Байеса)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement Multinomial Naive Bayes from scratch with Laplace smoothing for text classification
-- Explain why the naive independence assumption is mathematically wrong but produces correct class rankings in practice
-- Compare Multinomial, Bernoulli, and Gaussian Naive Bayes variants and select the right one for a given feature type
-- Evaluate Naive Bayes against logistic regression on high-dimensional sparse data and explain the bias-variance tradeoff at work
+- Реализовать Multinomial Naive Bayes с нуля с Laplace smoothing для классификации текста
+- Объяснить, почему наивное предположение независимости математически неверно, но на практике дает правильное ранжирование классов
+- Сравнить варианты Multinomial, Bernoulli и Gaussian Naive Bayes и выбрать подходящий для заданного типа признаков
+- Оценить Naive Bayes относительно logistic regression на высокоразмерных разреженных данных и объяснить bias-variance tradeoff
 
-## The Problem
+## Проблема
 
-You need to classify text. Emails into spam or not-spam. Customer reviews into positive or negative. Support tickets into categories. You have thousands of features (one per word) and limited training data.
+Вам нужно классифицировать текст. Письма — на spam или not-spam. Отзывы клиентов — на positive или negative. Support tickets — по категориям. У вас тысячи признаков (по одному на слово) и ограниченные training data.
 
-Most classifiers choke here. Logistic regression needs enough samples to estimate thousands of weights reliably. Decision trees split on one word at a time and overfit wildly. KNN in 10,000 dimensions is meaningless because every point is equally far from every other point.
+Большинство классификаторов здесь задыхается. Logistic regression нужны достаточные samples, чтобы надежно оценить тысячи weights. Decision trees делят по одному слову за раз и сильно переобучаются. KNN в 10 000 измерениях бессмысленен, потому что каждая точка примерно одинаково далека от любой другой.
 
-Naive Bayes handles this. It makes a mathematically wrong assumption (that every feature is independent of every other feature given the class), and it still outperforms "smarter" models on text classification, especially with small training sets. It trains in a single pass through the data. It scales to millions of features. It produces probability estimates (though often poorly calibrated due to the independence assumption).
+Naive Bayes справляется. Он делает математически неверное предположение (что каждый признак независим от каждого другого при условии класса), но все равно превосходит «более умные» модели на text classification, особенно с малыми training sets. Он обучается за один проход по данным. Масштабируется до миллионов признаков. Выдает probability estimates (хотя часто плохо calibrated из-за assumption independence).
 
-Understanding why a wrong assumption leads to good predictions teaches you something fundamental about machine learning: the best model is not the most correct one, it is the one with the best bias-variance tradeoff for your data.
+Понимание того, почему неверное предположение дает хорошие predictions, учит фундаментальной вещи о machine learning: лучшая модель — не самая «правильная», а та, у которой лучший bias-variance tradeoff для ваших данных.
 
-## The Concept
+## Концепция
 
-### Bayes' Theorem (Quick Review)
+### Теорема Байеса (быстрый повтор)
 
-Bayes' theorem flips conditional probabilities:
+Теорема Байеса переворачивает условные вероятности:
 
 ```
 P(class | features) = P(features | class) * P(class) / P(features)
 ```
 
-We want `P(class | features)` -- the probability that a document belongs to a class given the words in it. We can compute this from:
-- `P(features | class)` -- the likelihood of seeing these words in documents of this class
-- `P(class)` -- the prior probability of the class (how common is spam in general?)
-- `P(features)` -- the evidence, same for all classes, so we can ignore it when comparing
+Нам нужна `P(class | features)` — вероятность, что документ принадлежит классу при данных словах. Ее можно вычислить из:
+- `P(features | class)` — likelihood увидеть эти слова в документах этого класса
+- `P(class)` — prior probability класса (насколько spam распространен вообще?)
+- `P(features)` — evidence, одинаковый для всех классов, поэтому при сравнении его можно игнорировать
 
-The class with the highest `P(class | features)` wins.
+Побеждает класс с максимальной `P(class | features)`.
 
-### The Naive Independence Assumption
+### Наивное предположение независимости
 
-Computing `P(features | class)` exactly requires estimating the joint probability of all features together. With a vocabulary of 10,000 words, you would need to estimate a distribution over 2^10,000 possible combinations. Impossible.
+Точное вычисление `P(features | class)` требует оценки joint probability всех признаков вместе. При vocabulary из 10 000 слов нужно оценить распределение по 2^10,000 возможных combinations. Невозможно.
 
-The naive assumption: every feature is conditionally independent given the class.
+Наивное предположение: каждый признак условно независим при заданном классе.
 
 ```
 P(w1, w2, ..., wn | class) = P(w1 | class) * P(w2 | class) * ... * P(wn | class)
 ```
 
-Instead of one impossible joint distribution, you estimate n simple per-feature distributions. Each one needs only a count.
+Вместо одного невозможного joint distribution вы оцениваете n простых per-feature distributions. Каждому нужен только count.
 
-This assumption is obviously wrong. The words "machine" and "learning" are not independent in any document. But the classifier does not need correct probability estimates. It needs correct rankings -- which class has the highest probability. The independence assumption introduces systematic errors, but those errors affect all classes similarly, so the ranking stays correct.
+Это предположение очевидно неверно. Слова "machine" и "learning" не независимы ни в каком документе. Но классификатору не нужны корректные probability estimates. Ему нужно корректное ranking — у какого класса probability максимальна. Independence assumption вносит систематические ошибки, но они похожим образом влияют на все классы, поэтому ranking остается правильным.
 
-### Why It Still Works
+### Почему это все равно работает
 
-Three reasons:
+Три причины:
 
-1. **Ranking over calibration.** Classification only needs the top-ranked class to be correct. Even if P(spam) = 0.99999 when the true probability is 0.7, the classifier still picks spam correctly. We do not need correct probabilities. We need the correct winner.
+1. **Ranking over calibration.** Классификации нужно только, чтобы top-ranked class был верным. Даже если P(spam) = 0.99999 при истинной вероятности 0.7, классификатор все равно правильно выбирает spam. Нам не нужны точные probabilities. Нам нужен правильный winner.
 
-2. **High bias, low variance.** The independence assumption is a strong prior. It constrains the model heavily, which prevents overfitting. With limited training data, a model that is slightly wrong but stable beats a model that is theoretically right but wildly unstable. This is the bias-variance tradeoff in action.
+2. **High bias, low variance.** Independence assumption — сильный prior. Он жестко ограничивает модель и предотвращает overfitting. При ограниченных training data модель, которая слегка неверна, но стабильна, лучше теоретически правильной, но wildly unstable. Это bias-variance tradeoff в действии.
 
-3. **Feature redundancy cancels out.** Correlated features provide redundant evidence. The classifier double-counts this evidence, but it double-counts it for the correct class too. If "machine" and "learning" always appear together, both provide evidence for the "tech" class. NB counts them twice, but it counts them twice for the right class.
+3. **Feature redundancy cancels out.** Коррелированные признаки дают redundant evidence. Классификатор double-counts эту evidence, но он double-counts ее и для правильного класса. Если "machine" и "learning" всегда появляются вместе, оба дают evidence за "tech" class. NB считает их дважды, но считает дважды за правильный класс.
 
-A fourth, practical reason: Naive Bayes is extremely fast. Training is a single pass through the data counting frequencies. Prediction is a matrix multiplication. You can train on a million documents in seconds. This speed means you can iterate faster, try more feature sets, and run more experiments than with slower models.
+Четвертая практическая причина: Naive Bayes крайне быстр. Training — один проход по данным с подсчетом frequencies. Prediction — matrix multiplication. Можно обучаться на миллионе документов за секунды. Эта скорость позволяет быстрее итерировать, пробовать больше feature sets и запускать больше experiments, чем с медленными моделями.
 
-### The Math Step by Step
+### Математика шаг за шагом
 
-Let us trace through a concrete example. Suppose we have two classes: spam and not-spam. Our vocabulary has three words: "free", "money", "meeting".
+Разберем конкретный пример. Пусть есть два класса: spam и not-spam. Vocabulary содержит три слова: "free", "money", "meeting".
 
 Training data:
-- Spam emails mention "free" 80 times, "money" 60 times, "meeting" 10 times (150 total words)
-- Not-spam emails mention "free" 5 times, "money" 10 times, "meeting" 100 times (115 total words)
-- 40% of emails are spam, 60% are not-spam
+- Spam emails упоминают "free" 80 раз, "money" 60 раз, "meeting" 10 раз (150 total words)
+- Not-spam emails упоминают "free" 5 раз, "money" 10 раз, "meeting" 100 раз (115 total words)
+- 40% emails — spam, 60% — not-spam
 
-With Laplace smoothing (alpha=1):
+С Laplace smoothing (alpha=1):
 
 ```
 P(free | spam)    = (80 + 1) / (150 + 3) = 81/153 = 0.529
@@ -88,7 +88,7 @@ P(money | not-spam)   = (10 + 1) / (115 + 3) = 11/118 = 0.093
 P(meeting | not-spam) = (100 + 1) / (115 + 3) = 101/118 = 0.856
 ```
 
-New email contains: "free" (2 times), "money" (1 time), "meeting" (0 times).
+Новое email содержит: "free" (2 раза), "money" (1 раз), "meeting" (0 раз).
 
 ```
 log P(spam | email) = log(0.4) + 2*log(0.529) + 1*log(0.399) + 0*log(0.072)
@@ -100,115 +100,115 @@ log P(not-spam | email) = log(0.6) + 2*log(0.051) + 1*log(0.093) + 0*log(0.856)
                         = -8.838
 ```
 
-Spam wins by a large margin. The word "free" appearing twice is strong evidence for spam. Note that "meeting" not appearing contributes zero to both log sums (0 * log(P)) -- in Multinomial NB, absent words have no effect. It is Bernoulli NB that explicitly models word absence.
+Spam побеждает с большим отрывом. Слово "free", встречающееся дважды, — сильное evidence за spam. Заметьте, что отсутствие "meeting" дает нулевой вклад в обе log sums (0 * log(P)) — в Multinomial NB отсутствующие слова не влияют. Bernoulli NB явно моделирует отсутствие слов.
 
-### Three Variants
+### Три варианта
 
-Naive Bayes comes in three flavors. Each models `P(feature | class)` differently.
+Naive Bayes бывает в трех вариантах. Каждый по-своему моделирует `P(feature | class)`.
 
 #### Multinomial Naive Bayes
 
-Models each feature as a count. Best for text data where features are word frequencies or TF-IDF values.
+Моделирует каждый признак как count. Лучше всего подходит для text data, где признаки — word frequencies или TF-IDF values.
 
 ```
 P(word_i | class) = (count of word_i in class + alpha) / (total words in class + alpha * vocab_size)
 ```
 
-The `alpha` is Laplace smoothing (explained below). This variant is the workhorse for text classification.
+`alpha` — Laplace smoothing (объясняется ниже). Это рабочая лошадка text classification.
 
 #### Gaussian Naive Bayes
 
-Models each feature as a normal distribution. Best for continuous features.
+Моделирует каждый признак нормальным распределением. Лучше всего подходит для continuous features.
 
 ```
 P(x_i | class) = (1 / sqrt(2 * pi * var)) * exp(-(x_i - mean)^2 / (2 * var))
 ```
 
-Each class gets its own mean and variance per feature. This works well when features genuinely follow a bell curve within each class.
+Для каждого класса оцениваются mean и variance по каждому признаку. Это хорошо работает, когда признаки внутри каждого класса действительно похожи на bell curve.
 
 #### Bernoulli Naive Bayes
 
-Models each feature as binary (present or absent). Best for short text or binary feature vectors.
+Моделирует каждый признак как binary (present or absent). Лучше всего подходит для коротких текстов или binary feature vectors.
 
 ```
 P(word_i | class) = (docs in class containing word_i + alpha) / (total docs in class + 2 * alpha)
 ```
 
-Unlike Multinomial, Bernoulli explicitly penalizes the absence of a word. If "free" typically appears in spam but is absent from this email, Bernoulli counts that as evidence against spam.
+В отличие от Multinomial, Bernoulli явно штрафует отсутствие слова. Если "free" обычно встречается в spam, но в этом email отсутствует, Bernoulli считает это evidence против spam.
 
-### When to Use Each Variant
+### Когда использовать какой вариант
 
-| Variant | Feature Type | Best For | Example |
-|---------|-------------|----------|---------|
-| Multinomial | Counts or frequencies | Text classification, bag-of-words | Email spam, topic classification |
-| Gaussian | Continuous values | Tabular data with normal-ish features | Iris classification, sensor data |
-| Bernoulli | Binary (0/1) | Short text, binary feature vectors | SMS spam, presence/absence features |
+| Вариант | Тип признаков | Лучше всего для | Пример |
+|---------|---------------|-----------------|--------|
+| Multinomial | Counts или frequencies | Text classification, bag-of-words | Email spam, topic classification |
+| Gaussian | Continuous values | Табличные данные с roughly normal features | Iris classification, sensor data |
+| Bernoulli | Binary (0/1) | Короткий текст, binary feature vectors | SMS spam, presence/absence features |
 
 ### Laplace Smoothing
 
-What happens when a word appears in the test data but never appeared in the training data for a particular class?
+Что происходит, когда слово встречается в test data, но никогда не встречалось в training data для конкретного класса?
 
-Without smoothing: `P(word | class) = 0/N = 0`. One zero multiplied through the entire product makes `P(class | features) = 0`, regardless of all other evidence. A single unseen word destroys the entire prediction, no matter how much other evidence supports it.
+Без smoothing: `P(word | class) = 0/N = 0`. Один ноль, умноженный на весь product, делает `P(class | features) = 0` независимо от всех остальных evidence. Одно unseen word уничтожает prediction, каким бы сильным ни было остальное evidence.
 
-Laplace smoothing adds a small count `alpha` (usually 1) to every feature count:
+Laplace smoothing добавляет небольшой count `alpha` (обычно 1) к каждому feature count:
 
 ```
 P(word_i | class) = (count(word_i, class) + alpha) / (total_words_in_class + alpha * vocab_size)
 ```
 
-With alpha=1, every word gets at least a tiny probability. The word "discombobulate" appearing in a test email no longer kills the spam probability. The smoothing has a Bayesian interpretation: it is equivalent to placing a uniform Dirichlet prior on the word distributions.
+При alpha=1 каждое слово получает хотя бы крошечную probability. Слово "discombobulate" в test email больше не убивает spam probability. У smoothing есть Bayesian interpretation: он эквивалентен uniform Dirichlet prior на word distributions.
 
-Higher alpha means stronger smoothing (more uniform distributions). Lower alpha means the model trusts the data more. Alpha is a hyperparameter you tune.
+Более высокий alpha означает более сильное smoothing (более uniform distributions). Более низкий alpha означает, что модель сильнее доверяет data. Alpha — гиперпараметр, который нужно подбирать.
 
-The effect of alpha:
+Эффект alpha:
 
-| Alpha | Effect | When to use |
-|-------|--------|-------------|
-| 0.001 | Almost no smoothing, trust the data | Very large training set, no unseen features expected |
-| 0.1 | Light smoothing | Large training set |
-| 1.0 | Standard Laplace smoothing | Default starting point |
-| 10.0 | Heavy smoothing, flattens distributions | Very small training set, many unseen features expected |
+| Alpha | Эффект | Когда использовать |
+|-------|--------|--------------------|
+| 0.001 | Почти нет smoothing, доверяем data | Очень большой training set, unseen features не ожидаются |
+| 0.1 | Легкое smoothing | Большой training set |
+| 1.0 | Стандартное Laplace smoothing | Стартовый default |
+| 10.0 | Сильное smoothing, выравнивает distributions | Очень маленький training set, ожидается много unseen features |
 
-### Log-Space Computation
+### Вычисления в log-space
 
-Multiplying hundreds of probabilities (each less than 1) causes floating-point underflow. The product becomes zero in floating point even though the true value is a very small positive number.
+Перемножение сотен probabilities (каждая меньше 1) вызывает floating-point underflow. Product становится нулем в floating point, хотя истинное значение — очень маленькое положительное число.
 
-The solution: work in log space. Instead of multiplying probabilities, add their logarithms:
+Решение: работать в log space. Вместо перемножения probabilities складывать их логарифмы:
 
 ```
 log P(class | x1, x2, ..., xn) = log P(class) + sum_i log P(xi | class)
 ```
 
-This turns the prediction into a dot product:
+Это превращает prediction в dot product:
 
 ```
 log_scores = X @ log_feature_probs.T + log_class_priors
 prediction = argmax(log_scores)
 ```
 
-Matrix multiplication. That is why Naive Bayes prediction is so fast -- it is the same operation as a single-layer linear model.
+Matrix multiplication. Поэтому prediction в Naive Bayes такой быстрый — это та же операция, что и в single-layer linear model.
 
 ### Naive Bayes vs Logistic Regression
 
-Both are linear classifiers for text. The difference is in what they model.
+Оба являются linear classifiers для текста. Отличие в том, что они моделируют.
 
-| Aspect | Naive Bayes | Logistic Regression |
-|--------|------------|-------------------|
-| Type | Generative (models P(X\|Y)) | Discriminative (models P(Y\|X)) |
+| Аспект | Naive Bayes | Logistic Regression |
+|--------|-------------|---------------------|
+| Тип | Generative (models P(X\|Y)) | Discriminative (models P(Y\|X)) |
 | Training | Count frequencies | Optimize loss function |
-| Small data | Better (strong prior helps) | Worse (not enough to estimate weights) |
-| Large data | Worse (wrong assumption hurts) | Better (flexible boundary) |
+| Small data | Лучше (strong prior помогает) | Хуже (недостаточно для оценки weights) |
+| Large data | Хуже (wrong assumption hurts) | Лучше (flexible boundary) |
 | Features | Assumes independence | Handles correlations |
-| Speed | Single pass, very fast | Iterative optimization |
+| Speed | Single pass, очень быстро | Iterative optimization |
 | Calibration | Poor probabilities | Better probabilities |
 
-Rule of thumb: start with Naive Bayes. If you have enough data and NB plateaus, switch to logistic regression.
+Правило: начинайте с Naive Bayes. Если данных достаточно и NB вышел на плато, переходите к logistic regression.
 
 ### Classification Pipeline
 
 ```mermaid
 flowchart LR
-    A[Raw Text] --> B[Tokenize]
+    A[Сырой текст] --> B[Tokenize]
     B --> C[Build Vocabulary]
     C --> D[Count Word Frequencies]
     D --> E[Apply Smoothing]
@@ -219,25 +219,25 @@ flowchart LR
     style G fill:#9f9,stroke:#333
 ```
 
-In practice, we work in log space to avoid floating-point underflow. Instead of multiplying many small probabilities, we add their logarithms:
+На практике мы работаем в log space, чтобы избежать floating-point underflow. Вместо перемножения множества маленьких probabilities складываем их логарифмы:
 
 ```
 log P(class | features) = log P(class) + sum_i log P(feature_i | class)
 ```
 
-## Build It
+## Соберите это
 
-The code in `code/naive_bayes.py` implements both MultinomialNB and GaussianNB from scratch.
+Код в `code/naive_bayes.py` реализует MultinomialNB и GaussianNB с нуля.
 
 ### MultinomialNB
 
-The from-scratch implementation:
+Реализация с нуля:
 
-1. **fit(X, y)**: For each class, count the frequency of each feature. Add Laplace smoothing. Compute log probabilities. Store class priors (log of class frequencies).
+1. **fit(X, y)**: для каждого класса посчитать frequency каждого feature. Добавить Laplace smoothing. Вычислить log probabilities. Сохранить class priors (log class frequencies).
 
-2. **predict_log_proba(X)**: For each sample, compute log P(class) + sum of log P(feature_i | class) for all classes. This is a matrix multiplication: X @ log_probs.T + log_priors.
+2. **predict_log_proba(X)**: для каждого sample вычислить log P(class) + sum log P(feature_i | class) для всех classes. Это matrix multiplication: X @ log_probs.T + log_priors.
 
-3. **predict(X)**: Return the class with highest log probability.
+3. **predict(X)**: вернуть class с максимальной log probability.
 
 ```python
 class MultinomialNB:
@@ -262,11 +262,11 @@ class MultinomialNB:
         return self
 ```
 
-The key insight: after fitting, prediction is just matrix multiplication plus a bias. This is why Naive Bayes is so fast.
+Ключевая идея: после fitting prediction — это просто matrix multiplication плюс bias. Поэтому Naive Bayes такой быстрый.
 
 ### GaussianNB
 
-For continuous features, we estimate mean and variance per class per feature:
+Для continuous features оцениваем mean и variance по class и feature:
 
 ```python
 class GaussianNB:
@@ -289,34 +289,34 @@ class GaussianNB:
         return self
 ```
 
-Prediction uses the Gaussian PDF per feature, multiplied across features (added in log space).
+Prediction использует Gaussian PDF по каждому feature, перемножая по features (складывая в log space).
 
 ### Demo: Text Classification
 
-The code generates synthetic bag-of-words data simulating two classes (tech articles vs sports articles). Each class has a different word frequency distribution. MultinomialNB classifies them using word counts.
+Код генерирует synthetic bag-of-words data, имитирующие два класса (tech articles vs sports articles). У каждого класса свое word frequency distribution. MultinomialNB классифицирует их по word counts.
 
-The synthetic data works like this: we create 200 "words" (feature columns). Words 0-39 have high frequency in tech articles and low in sports. Words 80-119 have high frequency in sports and low in tech. Words 40-79 are medium frequency in both. This creates a realistic scenario where some words are strong class indicators and others are noise.
+Synthetic data работает так: мы создаем 200 «слов» (feature columns). Words 0-39 имеют high frequency в tech articles и low в sports. Words 80-119 имеют high frequency в sports и low в tech. Words 40-79 имеют medium frequency в обоих. Это создает реалистичный сценарий, где некоторые words — сильные class indicators, а остальные noise.
 
 ### Demo: Continuous Features
 
-The code generates Iris-like data (3 classes, 4 features, Gaussian clusters). GaussianNB classifies using per-class mean and variance. Each class has a different center (mean vector) and different spread (variance), mimicking real-world data where measurements differ systematically between categories.
+Код генерирует Iris-like data (3 classes, 4 features, Gaussian clusters). GaussianNB классифицирует по per-class mean и variance. У каждого class свой center (mean vector) и spread (variance), имитируя real-world data, где measurements систематически отличаются между categories.
 
-The code also demonstrates:
-- **Smoothing comparison:** Training MultinomialNB with different alpha values to show the effect of smoothing strength on accuracy.
-- **Training size experiment:** How NB accuracy improves as training data grows from 20 to 1600 samples. NB reaches decent accuracy even with very few samples -- this is its main advantage.
-- **Confusion matrix:** Per-class precision, recall, and F1 score to show where NB makes mistakes.
+Код также показывает:
+- **Smoothing comparison:** training MultinomialNB с разными alpha values, чтобы увидеть влияние smoothing strength на accuracy.
+- **Training size experiment:** как NB accuracy растет при увеличении training data от 20 до 1600 samples. NB достигает приличной accuracy даже с очень малым числом samples — это его главное преимущество.
+- **Confusion matrix:** per-class precision, recall и F1 score, чтобы показать, где NB ошибается.
 
-### Prediction Speed
+### Скорость prediction
 
-Naive Bayes prediction is a matrix multiplication. For n samples with d features and k classes:
-- MultinomialNB: one matrix multiply (n x d) @ (d x k) = O(n * d * k)
-- GaussianNB: n * k Gaussian PDF evaluations, each over d features = O(n * d * k)
+Naive Bayes prediction — matrix multiplication. Для n samples с d features и k classes:
+- MultinomialNB: одно matrix multiply (n x d) @ (d x k) = O(n * d * k)
+- GaussianNB: n * k Gaussian PDF evaluations, каждая по d features = O(n * d * k)
 
-Both are linear in every dimension. Compare this to KNN (which requires distance computation to all training points) or SVM with RBF kernel (which requires kernel evaluation against all support vectors). NB is faster by orders of magnitude at prediction time.
+Оба линейны по каждой размерности. Сравните это с KNN (требует distance computation до всех training points) или SVM с RBF kernel (требует kernel evaluation против всех support vectors). NB на порядки быстрее во время prediction.
 
-## Use It
+## Используйте это
 
-With sklearn, both variants are one-liners:
+Со sklearn оба варианта — one-liners:
 
 ```python
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -330,7 +330,7 @@ mnb.fit(X_train_counts, y_train)
 print(f"MultinomialNB accuracy: {mnb.score(X_test_counts, y_test):.3f}")
 ```
 
-For text classification with sklearn:
+Для text classification со sklearn:
 
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
@@ -346,11 +346,11 @@ text_clf.fit(train_texts, train_labels)
 accuracy = text_clf.score(test_texts, test_labels)
 ```
 
-The code in `naive_bayes.py` compares from-scratch implementations against sklearn on the same data to verify correctness.
+Код в `naive_bayes.py` сравнивает implementations from scratch со sklearn на тех же данных, чтобы проверить correctness.
 
-### TF-IDF with Naive Bayes
+### TF-IDF с Naive Bayes
 
-Raw word counts give every word equal weight per occurrence. But common words like "the" and "is" appear frequently in every class -- they carry no information. TF-IDF (Term Frequency - Inverse Document Frequency) downweights common words and upweights rare, discriminative words.
+Сырые word counts дают каждому слову одинаковый вес на occurrence. Но частые слова вроде "the" и "is" часто встречаются в каждом class и не несут информации. TF-IDF (Term Frequency - Inverse Document Frequency) снижает вес common words и повышает вес rare, discriminative words.
 
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -363,11 +363,11 @@ text_clf = Pipeline([
 ])
 ```
 
-TF-IDF values are non-negative, so they work with MultinomialNB. The combination of TF-IDF + MultinomialNB is one of the strongest baselines for text classification. It frequently beats more complex models on datasets with fewer than 10,000 training samples.
+TF-IDF values неотрицательны, поэтому работают с MultinomialNB. Комбинация TF-IDF + MultinomialNB — один из сильнейших baselines для text classification. Она часто превосходит более сложные модели на datasets с менее чем 10 000 training samples.
 
-### BernoulliNB for Short Text
+### BernoulliNB для короткого текста
 
-For short text (tweets, SMS, chat messages), BernoulliNB can outperform MultinomialNB. Short texts have low word counts, so the frequency information that MultinomialNB relies on is noisy. BernoulliNB only cares about presence or absence, which is more reliable with short text.
+Для коротких текстов (tweets, SMS, chat messages) BernoulliNB может превосходить MultinomialNB. В коротких текстах low word counts, поэтому frequency information, на которую опирается MultinomialNB, шумная. BernoulliNB смотрит только на presence or absence, что надежнее для короткого текста.
 
 ```python
 from sklearn.naive_bayes import BernoulliNB
@@ -379,11 +379,11 @@ text_clf = Pipeline([
 ])
 ```
 
-The `binary=True` flag in CountVectorizer converts all counts to 0/1. Without it, BernoulliNB still works but is seeing counts that it was not designed for.
+Флаг `binary=True` в CountVectorizer превращает все counts в 0/1. Без него BernoulliNB тоже работает, но видит counts, для которых он не проектировался.
 
-### Calibrating NB Probabilities
+### Калибровка NB probabilities
 
-NB probabilities are poorly calibrated. When NB says P(spam) = 0.95, the true probability might be 0.7. If you need reliable probability estimates (for example, to set a threshold or to combine with other models), use sklearn's CalibratedClassifierCV:
+NB probabilities плохо calibrated. Когда NB говорит P(spam) = 0.95, истинная вероятность может быть 0.7. Если нужны надежные probability estimates (например, чтобы задать threshold или объединить с другими моделями), используйте sklearn `CalibratedClassifierCV`:
 
 ```python
 from sklearn.calibration import CalibratedClassifierCV
@@ -393,65 +393,65 @@ calibrated_nb.fit(X_train, y_train)
 proba = calibrated_nb.predict_proba(X_test)
 ```
 
-This fits a logistic regression on top of NB's raw scores using cross-validation. The resulting probabilities are much closer to the true class frequencies.
+Это обучает logistic regression поверх raw scores NB с использованием cross-validation. Полученные probabilities намного ближе к истинным class frequencies.
 
-### Common Gotchas
+### Частые ловушки
 
-1. **Negative feature values.** MultinomialNB requires non-negative features. If you have negative values (like TF-IDF with certain settings or standardized features), use GaussianNB instead, or shift the features to be positive.
+1. **Отрицательные значения признаков.** MultinomialNB требует неотрицательные features. Если есть negative values (например, TF-IDF с некоторыми settings или standardized features), используйте GaussianNB или сдвиньте features в positive.
 
-2. **Zero variance features.** GaussianNB divides by variance. If a feature has zero variance for a class (all values identical), the probability computation breaks. The code adds a small smoothing term (1e-9) to all variances to prevent this.
+2. **Zero variance features.** GaussianNB делит на variance. Если feature имеет zero variance для class (все значения одинаковы), probability computation ломается. Код добавляет маленький smoothing term (1e-9) ко всем variances.
 
-3. **Class imbalance.** If 99% of emails are not-spam, the prior P(not-spam) = 0.99 is so strong that it overwhelms the likelihood evidence. You can set class priors manually or use class_prior parameter in sklearn.
+3. **Class imbalance.** Если 99% emails not-spam, prior P(not-spam) = 0.99 настолько силен, что подавляет likelihood evidence. Можно вручную задать class priors или использовать class_prior parameter в sklearn.
 
-4. **Feature scaling.** MultinomialNB does not need scaling (it works on counts). GaussianNB does not need scaling either (it estimates per-feature statistics). This is an advantage over logistic regression and SVM, which are sensitive to feature scales.
+4. **Feature scaling.** MultinomialNB не требует scaling (работает на counts). GaussianNB тоже не требует scaling (оценивает per-feature statistics). Это преимущество перед logistic regression и SVM, чувствительными к feature scales.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/skill-naive-bayes-chooser.md` -- a decision skill for picking the right NB variant
-- `code/naive_bayes.py` -- MultinomialNB and GaussianNB from scratch, with sklearn comparison
+Этот урок создает:
+- `outputs/skill-naive-bayes-chooser.md` — decision skill для выбора правильного NB variant
+- `code/naive_bayes.py` — MultinomialNB и GaussianNB с нуля со сравнением sklearn
 
-### When Naive Bayes Fails
+### Когда Naive Bayes ломается
 
-NB fails when the independence assumption causes incorrect rankings (not just incorrect probabilities). This happens when:
+NB ломается, когда independence assumption вызывает неверное ranking (а не только неверные probabilities). Это происходит, когда:
 
-1. **Strong feature interactions.** If the class depends on the combination of two features but not either alone (XOR-like patterns), NB will miss it entirely. Each feature alone provides no evidence, and NB cannot combine them nonlinearly.
+1. **Сильные feature interactions.** Если class зависит от комбинации двух features, но не от каждого по отдельности (XOR-like patterns), NB полностью пропустит это. Каждый feature сам по себе не дает evidence, и NB не может нелинейно их комбинировать.
 
-2. **Highly correlated features with opposing evidence.** If feature A says "spam" and feature B says "not-spam", but A and B are perfectly correlated (they always agree in reality), NB will see conflicting evidence where there is none.
+2. **Сильно коррелированные features с противоположной evidence.** Если feature A говорит "spam", а feature B говорит "not-spam", но A и B perfectly correlated (в реальности всегда согласуются), NB увидит конфликтующую evidence там, где ее нет.
 
-3. **Very large training sets.** With enough data, discriminative models like logistic regression learn the true decision boundary and outperform NB. The independence assumption that helped with small data now holds the model back.
+3. **Очень большие training sets.** При достаточном количестве данных discriminative models вроде logistic regression учат истинную decision boundary и превосходят NB. Independence assumption, помогавшая на малых данных, теперь ограничивает модель.
 
-In practice, these failure modes are rare for text classification. Text features are numerous, individually weak, and the independence assumption's errors tend to cancel out. For tabular data with few strongly correlated features, consider logistic regression or tree-based models first.
+На практике эти failure modes редки для text classification. Text features многочисленны, individually weak, а ошибки independence assumption обычно компенсируются. Для tabular data с небольшим числом сильно коррелированных features сначала рассмотрите logistic regression или tree-based models.
 
-## Exercises
+## Упражнения
 
-1. **Smoothing experiment.** Train MultinomialNB on text data with alpha values of 0.01, 0.1, 1.0, 10.0, and 100.0. Plot accuracy vs alpha. Where does performance peak? Why does very high alpha hurt?
+1. **Smoothing experiment.** Обучите MultinomialNB на text data с alpha values 0.01, 0.1, 1.0, 10.0 и 100.0. Постройте accuracy vs alpha. Где performance достигает пика? Почему слишком высокий alpha вредит?
 
-2. **Feature independence test.** Take a real text dataset. Pick two words that are obviously correlated ("machine" and "learning"). Compute P(word1 | class) * P(word2 | class) and compare to P(word1 AND word2 | class). How wrong is the independence assumption? Does it affect classification accuracy?
+2. **Feature independence test.** Возьмите реальный text dataset. Выберите два явно коррелированных слова ("machine" и "learning"). Вычислите P(word1 | class) * P(word2 | class) и сравните с P(word1 AND word2 | class). Насколько ошибается independence assumption? Влияет ли это на classification accuracy?
 
-3. **Bernoulli implementation.** Extend the code with a BernoulliNB class. Convert bag-of-words to binary (present/absent) and compare accuracy against MultinomialNB on text data. When does Bernoulli win?
+3. **Bernoulli implementation.** Расширьте код классом BernoulliNB. Преобразуйте bag-of-words в binary (present/absent) и сравните accuracy с MultinomialNB на text data. Когда Bernoulli выигрывает?
 
-4. **NB vs Logistic Regression.** Train both on text data. Start with 100 training samples and increase to 10,000. Plot accuracy vs training set size for both. At what point does Logistic Regression overtake Naive Bayes?
+4. **NB vs Logistic Regression.** Обучите обе модели на text data. Начните со 100 training samples и увеличивайте до 10 000. Постройте accuracy vs training set size для обеих. В какой точке Logistic Regression обгоняет Naive Bayes?
 
-5. **Spam filter.** Build a complete spam classifier: tokenize raw email text, build vocabulary, create bag-of-words features, train MultinomialNB, evaluate with precision and recall (not just accuracy -- why?).
+5. **Spam filter.** Постройте полный spam classifier: tokenize raw email text, build vocabulary, create bag-of-words features, train MultinomialNB, evaluate with precision and recall (not just accuracy — почему?).
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Naive Bayes | "Simple probabilistic classifier" | A classifier that applies Bayes' theorem with the assumption that features are conditionally independent given the class |
-| Conditional independence | "Features don't affect each other" | P(A, B \| C) = P(A \| C) * P(B \| C) -- knowing B tells you nothing new about A once you know C |
-| Laplace smoothing | "Add-one smoothing" | Adding a small count to every feature to prevent zero probabilities from dominating the prediction |
-| Prior | "What you believed before seeing data" | P(class) -- the probability of each class before observing any features |
-| Likelihood | "How well the data fits" | P(features \| class) -- the probability of observing these features if the class is known |
-| Posterior | "What you believe after seeing data" | P(class \| features) -- the updated probability of the class after observing the features |
-| Generative model | "Models how data is generated" | A model that learns P(X \| Y) and P(Y), then uses Bayes' theorem to get P(Y \| X) |
-| Discriminative model | "Models the decision boundary" | A model that directly learns P(Y \| X) without modeling how X is generated |
-| Log probability | "Avoid underflow" | Working with log P instead of P to prevent the product of many small numbers from becoming zero in floating point |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Naive Bayes | «Простой probabilistic classifier» | Классификатор, применяющий теорему Байеса с предположением, что features conditionally independent given class |
+| Conditional independence | «Features не влияют друг на друга» | P(A, B \| C) = P(A \| C) * P(B \| C) — знание B не сообщает ничего нового об A, если C известно |
+| Laplace smoothing | «Add-one smoothing» | Добавление малого count к каждому feature, чтобы zero probabilities не доминировали в prediction |
+| Prior | «Что вы думали до данных» | P(class) — probability каждого class до наблюдения features |
+| Likelihood | «Насколько data подходит» | P(features \| class) — probability наблюдать эти features, если class известен |
+| Posterior | «Что вы думаете после данных» | P(class \| features) — обновленная probability class после наблюдения features |
+| Generative model | «Моделирует, как генерируются данные» | Модель, изучающая P(X \| Y) и P(Y), затем использующая теорему Байеса для P(Y \| X) |
+| Discriminative model | «Моделирует decision boundary» | Модель, напрямую изучающая P(Y \| X), не моделируя генерацию X |
+| Log probability | «Избежать underflow» | Работа с log P вместо P, чтобы произведение многих малых чисел не стало нулем в floating point |
 
-## Further Reading
+## Дополнительное чтение
 
-- [scikit-learn Naive Bayes docs](https://scikit-learn.org/stable/modules/naive_bayes.html) -- all three variants with mathematical details
-- [McCallum and Nigam, A Comparison of Event Models for Naive Bayes Text Classification (1998)](https://www.cs.cmu.edu/~knigam/papers/multinomial-aaaiws98.pdf) -- the classic comparison of Multinomial vs Bernoulli for text
-- [Rennie et al., Tackling the Poor Assumptions of Naive Bayes Text Classifiers (2003)](https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf) -- improvements to NB for text
-- [Ng and Jordan, On Discriminative vs. Generative Classifiers (2001)](https://ai.stanford.edu/~ang/papers/nips01-discriminativegenerative.pdf) -- proves NB converges faster than LR with less data
+- [scikit-learn Naive Bayes docs](https://scikit-learn.org/stable/modules/naive_bayes.html) — все три варианта с математическими деталями
+- [McCallum and Nigam, A Comparison of Event Models for Naive Bayes Text Classification (1998)](https://www.cs.cmu.edu/~knigam/papers/multinomial-aaaiws98.pdf) — классическое сравнение Multinomial и Bernoulli для текста
+- [Rennie et al., Tackling the Poor Assumptions of Naive Bayes Text Classifiers (2003)](https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf) — улучшения NB для текста
+- [Ng and Jordan, On Discriminative vs. Generative Classifiers (2001)](https://ai.stanford.edu/~ang/papers/nips01-discriminativegenerative.pdf) — доказывает, что NB сходится быстрее LR на меньшем числе данных

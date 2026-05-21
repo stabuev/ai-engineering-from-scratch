@@ -1,52 +1,52 @@
-# Decision Trees and Random Forests
+# Деревья решений и случайные леса
 
-> A decision tree is just a flowchart. But a forest of them is one of the most powerful tools in ML.
+> Дерево решений — это просто блок-схема. Но лес из таких деревьев — один из самых сильных инструментов в ML.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1 (Lessons 09 Information Theory, 06 Probability)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Требования:** Фаза 1 (уроки 09 «Теория информации», 06 «Вероятность»)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement Gini impurity, entropy, and information gain calculations to find optimal decision tree splits
-- Build a decision tree classifier from scratch with pre-pruning controls (max depth, min samples)
-- Construct a random forest using bootstrap sampling and feature randomization, and explain why it reduces variance
-- Compare MDI feature importance with permutation importance and identify when MDI is biased
+- Реализовать вычисления нечистоты Джини, энтропии и информационного выигрыша для поиска оптимальных разбиений дерева решений
+- Построить классификатор дерева решений с нуля с управлением предварительной обрезкой (max depth, min samples)
+- Собрать случайный лес с bootstrap-выборками и рандомизацией признаков и объяснить, почему это снижает дисперсию
+- Сравнить важность признаков MDI с permutation importance и определить, когда MDI смещена
 
-## The Problem
+## Проблема
 
-You have tabular data. Rows are samples, columns are features, and there is a target column you want to predict. You could throw a neural network at it. But for tabular data, tree-based models (decision trees, random forests, gradient boosted trees) consistently outperform deep learning. Kaggle competitions on structured data are dominated by XGBoost and LightGBM, not transformers.
+У вас есть табличные данные. Строки — объекты, столбцы — признаки, и есть целевой столбец, который нужно предсказать. Можно бросить на это нейросеть. Но для табличных данных модели на деревьях (деревья решений, случайные леса, градиентный бустинг над деревьями) стабильно превосходят deep learning. В соревнованиях Kaggle на структурированных данных доминируют XGBoost и LightGBM, а не трансформеры.
 
-Why? Trees handle mixed feature types (numeric and categorical) without preprocessing. They handle nonlinear relationships without feature engineering. They are interpretable: you can look at the tree and see exactly why a prediction was made. And random forests, which average many trees, are highly resistant to overfitting on moderate-sized datasets.
+Почему? Деревья работают со смешанными типами признаков (числовыми и категориальными) без сложной предобработки. Они обрабатывают нелинейные зависимости без feature engineering. Они интерпретируемы: можно посмотреть на дерево и увидеть, почему было сделано предсказание. А случайные леса, усредняющие много деревьев, очень устойчивы к переобучению на наборах данных среднего размера.
 
-This lesson builds decision trees from scratch using recursive splitting, then builds a random forest on top. You will implement the math behind split criteria (Gini impurity, entropy, information gain) and understand why an ensemble of weak learners becomes a strong one.
+В этом уроке мы строим деревья решений с нуля через рекурсивное разбиение, а затем поверх них строим случайный лес. Вы реализуете математику критериев разбиения (нечистота Джини, энтропия, информационный выигрыш) и поймете, почему ансамбль слабых моделей становится сильной моделью.
 
-## The Concept
+## Концепция
 
-### What a decision tree does
+### Что делает дерево решений
 
-A decision tree partitions the feature space into rectangular regions by asking a sequence of yes/no questions.
+Дерево решений разбивает пространство признаков на прямоугольные области, задавая последовательность вопросов «да/нет».
 
 ```mermaid
 graph TD
-    A["Age < 30?"] -->|Yes| B["Income > 50k?"]
-    A -->|No| C["Credit Score > 700?"]
-    B -->|Yes| D["Approve"]
-    B -->|No| E["Deny"]
-    C -->|Yes| F["Approve"]
-    C -->|No| G["Deny"]
+    A["Возраст < 30?"] -->|Да| B["Доход > 50k?"]
+    A -->|Нет| C["Кредитный рейтинг > 700?"]
+    B -->|Да| D["Одобрить"]
+    B -->|Нет| E["Отказать"]
+    C -->|Да| F["Одобрить"]
+    C -->|Нет| G["Отказать"]
 ```
 
-Each internal node tests a feature against a threshold. Each leaf node makes a prediction. To classify a new data point, you start at the root and follow the branches until you reach a leaf.
+Каждый внутренний узел проверяет признак относительно порога. Каждый лист делает предсказание. Чтобы классифицировать новую точку данных, вы начинаете с корня и идете по веткам, пока не дойдете до листа.
 
-The tree is built top-down by choosing, at each node, the feature and threshold that best separate the data. "Best" is defined by a split criterion.
+Дерево строится сверху вниз: в каждом узле выбирается признак и порог, которые лучше всего разделяют данные. «Лучше всего» определяется критерием разбиения.
 
-### Split criteria: measuring impurity
+### Критерии разбиения: измерение нечистоты
 
-At each node, we have a set of samples. We want to split them so that the resulting child nodes are as "pure" as possible, meaning each child contains mostly one class.
+В каждом узле есть набор примеров. Мы хотим разделить их так, чтобы дочерние узлы были как можно более «чистыми», то есть каждый дочерний узел содержал в основном один класс.
 
-**Gini impurity** measures the probability that a randomly chosen sample would be misclassified if it were labeled according to the class distribution at that node.
+**Нечистота Джини (Gini impurity)** измеряет вероятность того, что случайно выбранный пример будет классифицирован неверно, если присвоить ему метку согласно распределению классов в этом узле.
 
 ```
 Gini(S) = 1 - sum(p_k^2)
@@ -54,7 +54,7 @@ Gini(S) = 1 - sum(p_k^2)
 where p_k is the proportion of class k in set S.
 ```
 
-For a pure node (all one class), Gini = 0. For a binary split with 50/50 classes, Gini = 0.5. Lower is better.
+Для чистого узла (все примеры одного класса) Gini = 0. Для бинарного разбиения 50/50 Gini = 0.5. Меньше — лучше.
 
 ```
 Example: 6 cats, 4 dogs
@@ -62,13 +62,13 @@ Example: 6 cats, 4 dogs
 Gini = 1 - (0.6^2 + 0.4^2) = 1 - (0.36 + 0.16) = 0.48
 ```
 
-**Entropy** measures the information content (disorder) in a node. Covered in Phase 1 Lesson 09.
+**Энтропия** измеряет информационное содержание (беспорядок) в узле. Это разбиралось в Фазе 1 Уроке 09.
 
 ```
 Entropy(S) = -sum(p_k * log2(p_k))
 ```
 
-For a pure node, entropy = 0. For a 50/50 binary split, entropy = 1.0. Lower is better.
+Для чистого узла entropy = 0. Для бинарного разбиения 50/50 entropy = 1.0. Меньше — лучше.
 
 ```
 Example: 6 cats, 4 dogs
@@ -79,7 +79,7 @@ Entropy = -(0.6 * log2(0.6) + 0.4 * log2(0.4))
         = 0.971 bits
 ```
 
-**Information gain** is the reduction in impurity (entropy or Gini) after a split.
+**Информационный выигрыш (information gain)** — это уменьшение нечистоты (энтропии или Gini) после разбиения.
 
 ```
 IG(S, feature, threshold) = Impurity(S) - weighted_avg(Impurity(S_left), Impurity(S_right))
@@ -87,113 +87,113 @@ IG(S, feature, threshold) = Impurity(S) - weighted_avg(Impurity(S_left), Impurit
 where the weights are the proportions of samples in each child.
 ```
 
-The greedy algorithm at each node: try every feature and every possible threshold. Pick the (feature, threshold) pair that maximizes information gain.
+Жадный алгоритм в каждом узле: попробовать каждый признак и каждый возможный порог. Выбрать пару (признак, порог), которая максимизирует информационный выигрыш.
 
-### How splitting works
+### Как работает разбиение
 
-For a dataset with n features and m samples at the current node:
+Для набора данных с n признаками и m примерами в текущем узле:
 
-1. For each feature j (j = 1 to n):
-   - Sort the samples by feature j
-   - Try every midpoint between consecutive distinct values as a threshold
-   - Compute the information gain for each threshold
-2. Select the feature and threshold with the highest information gain
-3. Split the data into left (feature <= threshold) and right (feature > threshold)
-4. Recurse on each child
+1. Для каждого признака j (j = 1 ... n):
+   - Отсортировать примеры по признаку j
+   - Попробовать каждый midpoint между соседними различными значениями как порог
+   - Вычислить информационный выигрыш для каждого порога
+2. Выбрать признак и порог с максимальным информационным выигрышем
+3. Разделить данные на left (feature <= threshold) и right (feature > threshold)
+4. Рекурсивно повторить для каждого дочернего узла
 
-This greedy approach does not guarantee the globally optimal tree. Finding the optimal tree is NP-hard. But greedy splitting works well in practice.
+Этот жадный подход не гарантирует глобально оптимального дерева. Поиск оптимального дерева — NP-трудная задача. Но на практике жадное разбиение работает хорошо.
 
-### Stopping conditions
+### Условия остановки
 
-Without stopping conditions, the tree grows until every leaf is pure (one sample per leaf). This perfectly memorizes the training data and generalizes terribly.
+Без условий остановки дерево растет, пока каждый лист не станет чистым (один пример на лист). Это идеально запоминает обучающие данные и ужасно обобщает.
 
-**Pre-pruning** stops the tree before it fully grows:
-- Maximum depth: stop splitting when the tree reaches a set depth
-- Minimum samples per leaf: stop if a node has fewer than k samples
-- Minimum information gain: stop if the best split improves impurity by less than a threshold
-- Maximum leaf nodes: limit the total number of leaves
+**Предварительная обрезка (pre-pruning)** останавливает дерево до полного роста:
+- Максимальная глубина: остановить разбиение, когда дерево достигло заданной глубины
+- Минимум примеров в листе: остановить, если в узле меньше k примеров
+- Минимальный информационный выигрыш: остановить, если лучшее разбиение улучшает нечистоту меньше заданного порога
+- Максимальное число листьев: ограничить общее число листьев
 
-**Post-pruning** grows the full tree, then trims it back:
-- Cost-complexity pruning (used by scikit-learn): adds a penalty proportional to the number of leaves. Increase the penalty to get smaller trees
-- Reduced error pruning: remove a subtree if the validation error does not increase
+**Пост-обрезка (post-pruning)** сначала выращивает полное дерево, затем подрезает его:
+- Cost-complexity pruning (используется в scikit-learn): добавляет штраф, пропорциональный числу листьев. Увеличение штрафа дает меньшие деревья
+- Reduced error pruning: удалить поддерево, если ошибка на валидации не увеличивается
 
-Pre-pruning is simpler and faster. Post-pruning often produces better trees because it does not prematurely stop splits that might lead to useful further splits.
+Pre-pruning проще и быстрее. Post-pruning часто дает лучшие деревья, потому что не останавливает преждевременно разбиения, которые могли бы привести к полезным дальнейшим разбиениям.
 
-### Decision trees for regression
+### Деревья решений для регрессии
 
-For regression, the leaf prediction is the mean of the target values in that leaf. The split criterion changes too:
+Для регрессии предсказание в листе — среднее целевых значений в этом листе. Критерий разбиения тоже меняется:
 
-**Variance reduction** replaces information gain:
+**Уменьшение дисперсии (variance reduction)** заменяет информационный выигрыш:
 
 ```
 VR(S, feature, threshold) = Var(S) - weighted_avg(Var(S_left), Var(S_right))
 ```
 
-Pick the split that reduces variance the most. The tree partitions the input space into regions, and predicts a constant (the mean) in each region.
+Выбирается разбиение, которое сильнее всего уменьшает дисперсию. Дерево разбивает входное пространство на области и предсказывает константу (среднее) в каждой области.
 
-### Random forests: the power of ensembles
+### Случайные леса: сила ансамблей
 
-A single decision tree is high variance. Small changes in the data can produce completely different trees. Random forests fix this by averaging many trees.
+Одно дерево решений имеет высокую дисперсию. Малые изменения данных могут дать совершенно другие деревья. Случайные леса исправляют это, усредняя много деревьев.
 
 ```mermaid
 graph TD
-    D["Training Data"] --> B1["Bootstrap Sample 1"]
-    D --> B2["Bootstrap Sample 2"]
-    D --> B3["Bootstrap Sample 3"]
-    D --> BN["Bootstrap Sample N"]
-    B1 --> T1["Tree 1<br>(random feature subset)"]
-    B2 --> T2["Tree 2<br>(random feature subset)"]
-    B3 --> T3["Tree 3<br>(random feature subset)"]
-    BN --> TN["Tree N<br>(random feature subset)"]
-    T1 --> V["Aggregate Predictions<br>(majority vote or average)"]
+    D["Обучающие данные"] --> B1["Bootstrap-выборка 1"]
+    D --> B2["Bootstrap-выборка 2"]
+    D --> B3["Bootstrap-выборка 3"]
+    D --> BN["Bootstrap-выборка N"]
+    B1 --> T1["Дерево 1<br>(случайное подмножество признаков)"]
+    B2 --> T2["Дерево 2<br>(случайное подмножество признаков)"]
+    B3 --> T3["Дерево 3<br>(случайное подмножество признаков)"]
+    BN --> TN["Дерево N<br>(случайное подмножество признаков)"]
+    T1 --> V["Агрегировать предсказания<br>(majority vote или average)"]
     T2 --> V
     T3 --> V
     TN --> V
 ```
 
-Two sources of randomness make the trees diverse:
+Два источника случайности делают деревья разнообразными:
 
-**Bagging (bootstrap aggregating):** Each tree is trained on a bootstrap sample, a random sample with replacement from the training data. About 63% of the original samples appear in each bootstrap (the rest are out-of-bag samples that can be used for validation).
+**Bagging (bootstrap aggregating):** каждое дерево обучается на bootstrap-выборке — случайной выборке с возвращением из обучающих данных. Около 63% исходных примеров попадают в каждый bootstrap (остальные — out-of-bag samples, их можно использовать для валидации).
 
-**Feature randomization:** At each split, only a random subset of features is considered. For classification, the default is sqrt(n_features). For regression, n_features/3. This prevents all trees from splitting on the same dominant feature.
+**Рандомизация признаков:** в каждом разбиении рассматривается только случайное подмножество признаков. Для классификации стандартно берут sqrt(n_features). Для регрессии — n_features/3. Это не дает всем деревьям делить по одному и тому же доминирующему признаку.
 
-The key insight: averaging many decorrelated trees reduces variance without increasing bias. Each individual tree may be mediocre. The ensemble is strong.
+Ключевая идея: усреднение множества декоррелированных деревьев снижает дисперсию, не увеличивая смещение. Каждое отдельное дерево может быть посредственным. Ансамбль получается сильным.
 
-### Feature importance
+### Важность признаков
 
-Random forests naturally provide feature importance scores. The most common method:
+Случайные леса естественно дают оценки важности признаков. Самый распространенный метод:
 
-**Mean Decrease in Impurity (MDI):** For each feature, sum the total reduction in impurity across all trees and all nodes where that feature is used. Features that produce bigger impurity reductions at earlier splits are more important.
+**Mean Decrease in Impurity (MDI):** для каждого признака суммируется полное уменьшение нечистоты по всем деревьям и всем узлам, где этот признак использовался. Признаки, которые дают большие уменьшения нечистоты на ранних разбиениях, считаются более важными.
 
 ```
 importance(feature_j) = sum over all nodes where feature_j is used:
     (n_samples_at_node / n_total_samples) * impurity_decrease
 ```
 
-This is fast (computed during training) but biased toward high-cardinality features and features with many possible split points.
+Это быстро (вычисляется во время обучения), но смещено в пользу признаков с высокой кардинальностью и признаков с большим числом возможных точек разбиения.
 
-**Permutation importance** is the alternative: shuffle one feature's values and measure how much the model's accuracy drops. More reliable but slower.
+**Permutation importance** — альтернатива: перемешать значения одного признака и измерить, насколько падает accuracy модели. Надежнее, но медленнее.
 
-### When trees beat neural networks
+### Когда деревья побеждают нейросети
 
-Trees and forests dominate neural networks on tabular data. Several reasons:
+Деревья и леса доминируют над нейросетями на табличных данных. Причин несколько:
 
-| Factor | Trees | Neural networks |
-|--------|-------|----------------|
-| Mixed types (numeric + categorical) | Native support | Need encoding |
-| Small datasets (< 10k rows) | Work well | Overfit |
-| Feature interactions | Found by splitting | Need architecture design |
-| Interpretability | Full transparency | Black box |
-| Training time | Minutes | Hours |
-| Hyperparameter sensitivity | Low | High |
+| Фактор | Деревья | Нейросети |
+|--------|---------|-----------|
+| Смешанные типы (числовые + категориальные) | Нативная поддержка | Нужно кодирование |
+| Маленькие наборы данных (< 10k строк) | Хорошо работают | Переобучаются |
+| Взаимодействия признаков | Находятся разбиениями | Нужен дизайн архитектуры |
+| Интерпретируемость | Полная прозрачность | Черный ящик |
+| Время обучения | Минуты | Часы |
+| Чувствительность к гиперпараметрам | Низкая | Высокая |
 
-Neural networks win when the data has spatial or sequential structure (images, text, audio). For flat tables of features, trees are the default.
+Нейросети выигрывают, когда данные имеют пространственную или последовательную структуру (изображения, текст, аудио). Для плоских таблиц признаков деревья — выбор по умолчанию.
 
-## Build It
+## Соберите это
 
-### Step 1: Gini impurity and entropy
+### Шаг 1: нечистота Джини и энтропия
 
-Build both split criteria from scratch and verify they agree on which splits are good.
+Постройте оба критерия разбиения с нуля и проверьте, что они согласуются в том, какие разбиения хороши.
 
 ```python
 import math
@@ -219,9 +219,9 @@ def entropy(labels):
     )
 ```
 
-### Step 2: Find the best split
+### Шаг 2: найти лучшее разбиение
 
-Try every feature and every threshold. Return the one with the highest information gain.
+Попробуйте каждый признак и каждый порог. Верните тот, у которого максимальный информационный выигрыш.
 
 ```python
 def information_gain(parent_labels, left_labels, right_labels, criterion="gini"):
@@ -239,9 +239,9 @@ def information_gain(parent_labels, left_labels, right_labels, criterion="gini")
     return parent_impurity - child_impurity
 ```
 
-### Step 3: Build the DecisionTree class
+### Шаг 3: построить класс DecisionTree
 
-Recursive splitting, prediction, and feature importance tracking.
+Рекурсивное разбиение, предсказание и отслеживание важности признаков.
 
 ```python
 class DecisionTree:
@@ -271,9 +271,9 @@ class DecisionTree:
         return [self._predict_one(x, self.tree) for x in X]
 ```
 
-### Step 4: Build the RandomForest class
+### Шаг 4: построить класс RandomForest
 
-Bootstrap sampling, feature randomization, and majority voting.
+Bootstrap-выборки, рандомизация признаков и голосование большинством.
 
 ```python
 class RandomForest:
@@ -314,11 +314,11 @@ class RandomForest:
         return predictions
 ```
 
-See `code/trees.py` for the complete implementation with all helper methods.
+Полную реализацию со всеми вспомогательными методами смотрите в `code/trees.py`.
 
-## Use It
+## Используйте это
 
-With scikit-learn, training a random forest is three lines:
+Со scikit-learn обучение случайного леса занимает три строки:
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
@@ -334,44 +334,44 @@ print(f"Accuracy: {rf.score(X_test, y_test):.4f}")
 print(f"Feature importances: {rf.feature_importances_}")
 ```
 
-In practice, gradient boosted trees (XGBoost, LightGBM, CatBoost) are often stronger than random forests because they build trees sequentially, with each tree correcting the errors of the previous ones. But random forests are harder to misconfigure and require almost no hyperparameter tuning.
+На практике gradient boosted trees (XGBoost, LightGBM, CatBoost) часто сильнее случайных лесов, потому что строят деревья последовательно: каждое следующее дерево исправляет ошибки предыдущих. Но случайные леса сложнее испортить настройками, и им почти не нужен подбор гиперпараметров.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/prompt-tree-interpreter.md` -- a prompt that interprets decision tree splits for business stakeholders. Feed it a trained tree's structure (depth, features, split thresholds, accuracy) and it translates the model into plain-language rules, ranks feature importance, flags overfitting or leakage, and recommends next steps. Use it any time you need to explain a tree-based model to someone who does not read code.
+Этот урок создает `outputs/prompt-tree-interpreter.md` — промпт, который интерпретирует разбиения дерева решений для бизнес-стейкхолдеров. Передайте ему структуру обученного дерева (глубина, признаки, пороги разбиения, accuracy), и он переведет модель в правила на обычном языке, ранжирует важность признаков, отметит переобучение или утечку данных и порекомендует следующие шаги. Используйте его каждый раз, когда нужно объяснить модель на деревьях человеку, который не читает код.
 
-## Exercises
+## Упражнения
 
-1. Train a single decision tree on a 2D dataset with 3 classes. Manually trace the splits and draw the rectangular decision boundaries. Compare the boundaries at max_depth=2 vs max_depth=10.
+1. Обучите одно дерево решений на двумерном наборе данных с 3 классами. Вручную проследите разбиения и нарисуйте прямоугольные границы решений. Сравните границы при max_depth=2 и max_depth=10.
 
-2. Implement variance reduction splitting for regression trees. Generate y = sin(x) + noise for 200 points and fit your regression tree. Plot the tree's piecewise-constant predictions against the true curve.
+2. Реализуйте разбиение по уменьшению дисперсии для регрессионных деревьев. Сгенерируйте y = sin(x) + шум для 200 точек и подгоните регрессионное дерево. Постройте кусочно-постоянные предсказания дерева рядом с истинной кривой.
 
-3. Build a random forest with 1, 5, 10, 50, and 200 trees. Plot training accuracy and test accuracy vs number of trees. Observe that test accuracy plateaus but does not decrease (forests resist overfitting).
+3. Постройте случайный лес с 1, 5, 10, 50 и 200 деревьями. Постройте график обучающей accuracy и тестовой accuracy от числа деревьев. Заметьте, что тестовая accuracy выходит на плато, но не падает (леса сопротивляются переобучению).
 
-4. Compare Gini impurity vs entropy as split criteria on 5 different datasets. Measure accuracy and tree depth. In most cases, they produce nearly identical results. Explain why.
+4. Сравните нечистоту Джини и энтропию как критерии разбиения на 5 разных наборах данных. Измерьте accuracy и глубину дерева. В большинстве случаев они дают почти одинаковые результаты. Объясните почему.
 
-5. Implement permutation importance. Compare it with MDI importance on a dataset where one feature is random noise but has high cardinality. MDI will rank the noise feature highly. Permutation importance will not.
+5. Реализуйте permutation importance. Сравните ее с MDI importance на наборе данных, где один признак является случайным шумом, но имеет высокую кардинальность. MDI высоко оценит шумовой признак. Permutation importance — нет.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Decision tree | "A flowchart for predictions" | A model that partitions feature space into rectangular regions by learning a sequence of if/else splits |
-| Gini impurity | "How mixed the node is" | Probability of misclassifying a random sample at a node. 0 = pure, 0.5 = maximum impurity for binary |
-| Entropy | "The disorder in a node" | Information content at a node. 0 = pure, 1.0 = maximum uncertainty for binary. From information theory |
-| Information gain | "How good a split is" | Reduction in impurity after a split. The greedy criterion for choosing splits |
-| Pre-pruning | "Stop the tree early" | Stopping tree growth early by setting max depth, min samples, or min gain thresholds |
-| Post-pruning | "Trim the tree after" | Growing the full tree, then removing subtrees that do not improve validation performance |
-| Bagging | "Train on random subsets" | Bootstrap aggregating. Train each model on a different random sample with replacement |
-| Random forest | "A bunch of trees" | Ensemble of decision trees, each trained on a bootstrap sample with random feature subsets at each split |
-| Feature importance (MDI) | "Which features matter" | Total impurity decrease contributed by each feature, summed across all trees and nodes |
-| Permutation importance | "Shuffle and check" | Accuracy drop when a feature's values are randomly shuffled. More reliable than MDI for noisy features |
-| Variance reduction | "The regression version of info gain" | The regression tree analogue of information gain. Picks the split that reduces target variance the most |
-| Bootstrap sample | "Random sample with repeats" | A random sample drawn with replacement from the original dataset. Same size, but with duplicates |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Дерево решений | «Блок-схема для предсказаний» | Модель, которая разбивает пространство признаков на прямоугольные области, обучая последовательность if/else-разбиений |
+| Нечистота Джини | «Насколько узел смешанный» | Вероятность ошибочно классифицировать случайный пример в узле. 0 = чистый, 0.5 = максимум нечистоты для бинарного случая |
+| Энтропия | «Беспорядок в узле» | Информационное содержание в узле. 0 = чистый, 1.0 = максимальная неопределенность для бинарного случая. Из теории информации |
+| Информационный выигрыш | «Насколько хорош split» | Уменьшение нечистоты после разбиения. Жадный критерий выбора split |
+| Pre-pruning | «Остановить дерево раньше» | Ранняя остановка роста дерева через max depth, min samples или min gain thresholds |
+| Post-pruning | «Подрезать дерево после» | Вырастить полное дерево, затем удалить поддеревья, которые не улучшают качество на валидации |
+| Bagging | «Обучать на случайных поднаборах» | Bootstrap aggregating. Обучение каждой модели на другой случайной выборке с возвращением |
+| Случайный лес | «Куча деревьев» | Ансамбль деревьев решений, каждое обучено на bootstrap-выборке со случайными подмножествами признаков в каждом split |
+| Важность признаков (MDI) | «Какие признаки важны» | Полное уменьшение нечистоты, внесенное каждым признаком, суммированное по всем деревьям и узлам |
+| Permutation importance | «Перемешать и проверить» | Падение accuracy, когда значения признака случайно перемешаны. Надежнее MDI для шумовых признаков |
+| Уменьшение дисперсии | «Регрессионная версия info gain» | Аналог информационного выигрыша для регрессионных деревьев. Выбирает split, сильнее всего уменьшающий дисперсию target |
+| Bootstrap-выборка | «Случайная выборка с повторами» | Случайная выборка с возвращением из исходного набора данных. Того же размера, но с дубликатами |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Breiman: Random Forests (2001)](https://link.springer.com/article/10.1023/A:1010933404324) - the original random forest paper
-- [Grinsztajn et al.: Why do tree-based models still outperform deep learning on tabular data? (2022)](https://arxiv.org/abs/2207.08815) - rigorous comparison of trees vs neural networks on tabular tasks
-- [scikit-learn Decision Trees documentation](https://scikit-learn.org/stable/modules/tree.html) - practical guide with visualization tools
-- [XGBoost: A Scalable Tree Boosting System (Chen & Guestrin, 2016)](https://arxiv.org/abs/1603.02754) - the gradient boosting paper that dominates Kaggle
+- [Breiman: Random Forests (2001)](https://link.springer.com/article/10.1023/A:1010933404324) — оригинальная статья о random forest
+- [Grinsztajn et al.: Why do tree-based models still outperform deep learning on tabular data? (2022)](https://arxiv.org/abs/2207.08815) — строгий сравнительный анализ деревьев и нейросетей на табличных задачах
+- [scikit-learn Decision Trees documentation](https://scikit-learn.org/stable/modules/tree.html) — практическое руководство с инструментами визуализации
+- [XGBoost: A Scalable Tree Boosting System (Chen & Guestrin, 2016)](https://arxiv.org/abs/1603.02754) — статья о gradient boosting, который доминирует на Kaggle
