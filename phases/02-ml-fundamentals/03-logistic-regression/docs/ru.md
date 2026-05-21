@@ -1,177 +1,177 @@
-# Logistic Regression
+# Логистическая регрессия
 
-> Logistic regression bends a straight line into an S-curve to answer yes-or-no questions with probabilities.
+> Логистическая регрессия изгибает прямую в S-образную кривую, чтобы отвечать на вопросы «да или нет» вероятностями.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 2 Lesson 1-2 (What Is ML, Linear Regression)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Языки:** Python
+**Требования:** Фаза 2 Уроки 1-2 (что такое ML, линейная регрессия)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement logistic regression from scratch using the sigmoid function and binary cross-entropy loss
-- Compute and interpret precision, recall, F1 score, and the confusion matrix for binary classification
-- Explain why MSE fails for classification and why binary cross-entropy produces a convex cost surface
-- Build a softmax regression model for multi-class classification and evaluate threshold tuning tradeoffs
+- Реализовать логистическую регрессию с нуля, используя сигмоиду и бинарную кросс-энтропию
+- Вычислять и интерпретировать precision, recall, F1-score и матрицу ошибок для бинарной классификации
+- Объяснить, почему MSE плохо подходит для классификации и почему бинарная кросс-энтропия дает выпуклую поверхность стоимости
+- Построить softmax-регрессию для многоклассовой классификации и оценить компромиссы при настройке порога
 
-## The Problem
+## Проблема
 
-You want to predict whether a tumor is malignant or benign given its size. You try linear regression. It outputs numbers like 0.3 or 1.7 or -0.5. What do those mean? Is 1.7 "very malignant"? Is -0.5 "very benign"? Linear regression outputs unbounded numbers. Classification needs bounded probabilities between 0 and 1, and a clear decision: yes or no.
+Вы хотите предсказать, является ли опухоль злокачественной или доброкачественной, по ее размеру. Вы пробуете линейную регрессию. Она выдает числа вроде 0.3, 1.7 или -0.5. Что они означают? 1.7 — это «очень злокачественная»? -0.5 — «очень доброкачественная»? Линейная регрессия выдает неограниченные числа. Классификации нужны ограниченные вероятности от 0 до 1 и ясное решение: да или нет.
 
-Logistic regression solves this. It takes the same linear combination (wx + b) and passes it through the sigmoid function, which squashes any number into the range (0, 1). The output is a probability. You set a threshold (usually 0.5) and make a decision.
+Логистическая регрессия решает это. Она берет ту же линейную комбинацию (wx + b) и пропускает ее через сигмоидную функцию, которая сжимает любое число в диапазон (0, 1). Выход — это вероятность. Вы задаете порог (обычно 0.5) и принимаете решение.
 
-This is one of the most widely used algorithms in practice. Despite its name, logistic regression is a classification algorithm, not a regression algorithm. The name comes from the logistic (sigmoid) function it uses.
+Это один из самых широко используемых алгоритмов на практике. Несмотря на название, логистическая регрессия — алгоритм классификации, а не регрессии. Название происходит от логистической (сигмоидной) функции, которую она использует.
 
-## The Concept
+## Концепция
 
-### Why Linear Regression Fails for Classification
+### Почему линейная регрессия не работает для классификации
 
-Imagine predicting pass/fail (1/0) based on study hours. Linear regression fits a line through the data:
+Представьте, что мы предсказываем «сдал/не сдал» (1/0) по числу часов учебы. Линейная регрессия подгоняет прямую к данным:
 
 ```
 hours:  1   2   3   4   5   6   7   8   9   10
 actual: 0   0   0   0   1   1   1   1   1   1
 ```
 
-A linear fit might produce predictions like -0.2 at hour 1 and 1.3 at hour 10. These values are not probabilities. They go below 0 and above 1. Worse, a single outlier (someone who studied 50 hours) would drag the entire line, changing predictions for everyone.
+Линейная подгонка может дать предсказания вроде -0.2 при 1 часе и 1.3 при 10 часах. Эти значения не являются вероятностями. Они уходят ниже 0 и выше 1. Хуже того, один выброс (кто-то учился 50 часов) потянет всю прямую и изменит предсказания для всех.
 
-Classification needs a function that:
-- Outputs values between 0 and 1 (probabilities)
-- Creates a sharp transition (a decision boundary)
-- Is not distorted by outliers far from the boundary
+Классификации нужна функция, которая:
+- Выдает значения между 0 и 1 (вероятности)
+- Создает резкий переход (границу решений)
+- Не искажается выбросами, далекими от границы
 
-### The Sigmoid Function
+### Сигмоидная функция
 
-The sigmoid function does exactly this:
+Сигмоида делает именно это:
 
 ```
 sigmoid(z) = 1 / (1 + e^(-z))
 ```
 
-Properties:
-- When z is large and positive, sigmoid(z) approaches 1
-- When z is large and negative, sigmoid(z) approaches 0
-- When z = 0, sigmoid(z) = 0.5
-- The output is always between 0 and 1
-- The function is smooth and differentiable everywhere
+Свойства:
+- Когда z большое и положительное, sigmoid(z) стремится к 1
+- Когда z большое и отрицательное, sigmoid(z) стремится к 0
+- Когда z = 0, sigmoid(z) = 0.5
+- Выход всегда находится между 0 и 1
+- Функция гладкая и дифференцируема везде
 
-The derivative has a convenient form: sigmoid'(z) = sigmoid(z) * (1 - sigmoid(z)). This makes gradient computation efficient.
+Производная имеет удобный вид: sigmoid'(z) = sigmoid(z) * (1 - sigmoid(z)). Это делает вычисление градиентов эффективным.
 
-### Logistic Regression = Linear Model + Sigmoid
+### Логистическая регрессия = линейная модель + сигмоида
 
-The model computes z = wx + b (same as linear regression), then applies sigmoid:
+Модель вычисляет z = wx + b (как в линейной регрессии), затем применяет сигмоиду:
 
 ```mermaid
 flowchart LR
-    X[Input features x] --> L["Linear: z = wx + b"]
-    L --> S["Sigmoid: p = 1/(1+e^-z)"]
+    X[Входные признаки x] --> L["Линейная часть: z = wx + b"]
+    L --> S["Сигмоида: p = 1/(1+e^-z)"]
     S --> D{"p >= 0.5?"}
-    D -->|Yes| P[Predict 1]
-    D -->|No| N[Predict 0]
+    D -->|Да| P[Предсказать 1]
+    D -->|Нет| N[Предсказать 0]
 ```
 
-The output p is interpreted as P(y=1 | x), the probability that the input belongs to class 1. The decision boundary is where wx + b = 0, which makes sigmoid output exactly 0.5.
+Выход p интерпретируется как P(y=1 | x), вероятность того, что вход принадлежит классу 1. Граница решений находится там, где wx + b = 0; в этой точке сигмоида выдает ровно 0.5.
 
-### Binary Cross-Entropy Loss
+### Бинарная кросс-энтропия
 
-You cannot use MSE for logistic regression. MSE with a sigmoid creates a non-convex cost surface with many local minima. Instead, use binary cross-entropy (log loss):
+Для логистической регрессии нельзя использовать MSE. MSE вместе с сигмоидой создает невыпуклую поверхность стоимости с множеством локальных минимумов. Вместо этого используют бинарную кросс-энтропию (log loss):
 
 ```
 Loss = -(1/n) * sum(y * log(p) + (1-y) * log(1-p))
 ```
 
-Why this works:
-- When y=1 and p is close to 1: log(1) = 0, so loss is near 0 (correct, low cost)
-- When y=1 and p is close to 0: log(0) approaches negative infinity, so loss is huge (wrong, high cost)
-- When y=0 and p is close to 0: log(1) = 0, so loss is near 0 (correct, low cost)
-- When y=0 and p is close to 1: log(0) approaches negative infinity, so loss is huge (wrong, high cost)
+Почему это работает:
+- Когда y=1 и p близко к 1: log(1) = 0, поэтому loss близок к 0 (верно, низкая стоимость)
+- Когда y=1 и p близко к 0: log(0) стремится к минус бесконечности, поэтому loss огромен (ошибка, высокая стоимость)
+- Когда y=0 и p близко к 0: log(1) = 0, поэтому loss близок к 0 (верно, низкая стоимость)
+- Когда y=0 и p близко к 1: log(0) стремится к минус бесконечности, поэтому loss огромен (ошибка, высокая стоимость)
 
-This loss function is convex for logistic regression, guaranteeing a single global minimum.
+Для логистической регрессии эта функция потерь выпуклая, поэтому гарантирует единственный глобальный минимум.
 
-### Gradient Descent for Logistic Regression
+### Градиентный спуск для логистической регрессии
 
-The gradients for binary cross-entropy with sigmoid have a clean form:
+Градиенты бинарной кросс-энтропии с сигмоидой имеют простой вид:
 
 ```
 dL/dw = (1/n) * sum((p - y) * x)
 dL/db = (1/n) * sum(p - y)
 ```
 
-These look identical to the linear regression gradients. The difference is that p = sigmoid(wx + b) instead of p = wx + b. The sigmoid introduces the nonlinearity, but the gradient update rule stays the same.
+Они выглядят точно как градиенты линейной регрессии. Разница в том, что p = sigmoid(wx + b), а не p = wx + b. Сигмоида вносит нелинейность, но правило обновления градиента остается тем же.
 
 ```mermaid
 flowchart TD
-    A[Initialize w=0, b=0] --> B[Forward pass: z = wx+b, p = sigmoid z]
-    B --> C[Compute loss: binary cross-entropy]
-    C --> D["Compute gradients: dw = (1/n) * sum((p-y)*x)"]
-    D --> E[Update: w = w - lr*dw, b = b - lr*db]
-    E --> F{Converged?}
-    F -->|No| B
-    F -->|Yes| G[Model trained]
+    A[Инициализировать w=0, b=0] --> B[Прямой проход: z = wx+b, p = sigmoid z]
+    B --> C[Вычислить loss: бинарная кросс-энтропия]
+    C --> D["Вычислить градиенты: dw = (1/n) * sum((p-y)*x)"]
+    D --> E[Обновить: w = w - lr*dw, b = b - lr*db]
+    E --> F{Сошлось?}
+    F -->|Нет| B
+    F -->|Да| G[Модель обучена]
 ```
 
-### The Decision Boundary
+### Граница решений
 
-For a 2D input (two features), the decision boundary is the line where:
+Для двумерного входа (двух признаков) граница решений — это прямая, где:
 
 ```
 w1*x1 + w2*x2 + b = 0
 ```
 
-Points on one side get classified as 1, points on the other side as 0. Logistic regression always produces a linear decision boundary. If you need a curved boundary, you either add polynomial features or use a nonlinear model.
+Точки по одну сторону классифицируются как 1, по другую — как 0. Логистическая регрессия всегда дает линейную границу решений. Если нужна изогнутая граница, добавьте полиномиальные признаки или используйте нелинейную модель.
 
-### Multi-Class Classification with Softmax
+### Многоклассовая классификация с softmax
 
-Binary logistic regression handles two classes. For k classes, use the softmax function:
+Бинарная логистическая регрессия работает с двумя классами. Для k классов используйте функцию softmax:
 
 ```
 softmax(z_i) = e^(z_i) / sum(e^(z_j) for all j)
 ```
 
-Each class has its own weight vector. The model computes a score z_i for each class, then softmax converts scores to probabilities that sum to 1. The predicted class is the one with the highest probability.
+У каждого класса есть свой вектор весов. Модель вычисляет score z_i для каждого класса, затем softmax превращает scores в вероятности, сумма которых равна 1. Предсказанный класс — тот, у которого вероятность максимальна.
 
-The loss function becomes categorical cross-entropy:
+Функция потерь становится категориальной кросс-энтропией:
 
 ```
 Loss = -(1/n) * sum(sum(y_k * log(p_k)))
 ```
 
-where y_k is 1 for the true class and 0 for all others (one-hot encoding).
+где y_k равно 1 для истинного класса и 0 для всех остальных (one-hot encoding).
 
-### Evaluation Metrics
+### Метрики оценки
 
-Accuracy alone is not enough. For a dataset with 95% negative and 5% positive, a model that always predicts negative gets 95% accuracy but is useless.
+Одной accuracy недостаточно. Для набора данных с 95% отрицательных и 5% положительных примеров модель, всегда предсказывающая отрицательный класс, получает 95% accuracy, но бесполезна.
 
-**Confusion Matrix**:
+**Матрица ошибок (confusion matrix)**:
 
-| | Predicted Positive | Predicted Negative |
+| | Предсказан положительный | Предсказан отрицательный |
 |---|---|---|
-| Actually Positive | True Positive (TP) | False Negative (FN) |
-| Actually Negative | False Positive (FP) | True Negative (TN) |
+| Фактически положительный | True Positive (TP) | False Negative (FN) |
+| Фактически отрицательный | False Positive (FP) | True Negative (TN) |
 
-**Precision**: Of all predicted positives, how many are actually positive?
+**Precision**: среди всех предсказанных положительных сколько действительно положительных?
 ```
 Precision = TP / (TP + FP)
 ```
 
-**Recall** (Sensitivity): Of all actual positives, how many did we catch?
+**Recall** (чувствительность): среди всех фактических положительных сколько мы нашли?
 ```
 Recall = TP / (TP + FN)
 ```
 
-**F1 Score**: Harmonic mean of precision and recall. Balances both metrics.
+**F1-score**: гармоническое среднее precision и recall. Балансирует обе метрики.
 ```
 F1 = 2 * (Precision * Recall) / (Precision + Recall)
 ```
 
-When to prioritize:
-- **Precision**: when false positives are costly (spam filter, you do not want to block legitimate email)
-- **Recall**: when false negatives are costly (cancer screening, you do not want to miss a tumor)
-- **F1**: when you need a single balanced metric
+Когда что приоритизировать:
+- **Precision**: когда ложноположительные ошибки дороги (спам-фильтр: вы не хотите блокировать настоящую почту)
+- **Recall**: когда ложноотрицательные ошибки дороги (скрининг рака: вы не хотите пропустить опухоль)
+- **F1**: когда нужна одна сбалансированная метрика
 
-## Build It
+## Соберите это
 
-### Step 1: Sigmoid function and data generation
+### Шаг 1: сигмоида и генерация данных
 
 ```python
 import random
@@ -208,7 +208,7 @@ for i in range(5):
     print(f"  Features: [{X[i][0]:.2f}, {X[i][1]:.2f}], Label: {y[i]}")
 ```
 
-### Step 2: Logistic regression from scratch
+### Шаг 2: логистическая регрессия с нуля
 
 ```python
 class LogisticRegression:
@@ -274,7 +274,7 @@ print(f"Weights: [{model.weights[0]:.4f}, {model.weights[1]:.4f}]")
 print(f"Bias: {model.bias:.4f}")
 ```
 
-### Step 3: Confusion matrix and metrics from scratch
+### Шаг 3: матрица ошибок и метрики с нуля
 
 ```python
 class ClassificationMetrics:
@@ -322,7 +322,7 @@ metrics = ClassificationMetrics(y_test, y_pred_test)
 metrics.print_report()
 ```
 
-### Step 4: Decision boundary analysis
+### Шаг 4: анализ границы решений
 
 ```python
 print("\n=== Decision Boundary ===")
@@ -346,7 +346,7 @@ for point in test_points:
     print(f"  [{point[0]}, {point[1]}] -> prob={prob:.4f}, class={pred}")
 ```
 
-### Step 5: Multi-class with softmax
+### Шаг 5: многоклассовая классификация с softmax
 
 ```python
 class SoftmaxRegression:
@@ -438,7 +438,7 @@ for i in range(5):
     print(f"  True: {y_test_3[i]}, Predicted: {pred}, Probs: [{', '.join(f'{p:.3f}' for p in probs)}]")
 ```
 
-### Step 6: Threshold tuning
+### Шаг 6: настройка порога
 
 ```python
 print("\n=== Threshold Tuning ===")
@@ -454,9 +454,9 @@ for t in thresholds:
     print(f"{t:>10.1f} {m.accuracy():>10.4f} {m.precision():>10.4f} {m.recall():>10.4f} {m.f1():>10.4f}")
 ```
 
-## Use It
+## Используйте это
 
-Now the same thing with scikit-learn.
+Теперь то же самое со scikit-learn.
 
 ```python
 from sklearn.linear_model import LogisticRegression as SklearnLR
@@ -491,32 +491,32 @@ print(f"\nConfusion Matrix:\n{confusion_matrix(y_te, y_pred)}")
 print(f"\nClassification Report:\n{classification_report(y_te, y_pred)}")
 ```
 
-Your from-scratch implementation produces the same decision boundary and metrics. Scikit-learn adds solver options (liblinear, lbfgs, saga), automatic regularization, multi-class strategies (one-vs-rest, multinomial), and numerical stability optimizations.
+Ваша реализация с нуля дает ту же границу решений и метрики. Scikit-learn добавляет варианты solver (liblinear, lbfgs, saga), автоматическую регуляризацию, стратегии многоклассовой классификации (one-vs-rest, multinomial) и оптимизации численной устойчивости.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `code/logistic_regression.py` - logistic regression from scratch with metrics
+Этот урок создает:
+- `code/logistic_regression.py` — логистическая регрессия с нуля и метриками
 
-## Exercises
+## Упражнения
 
-1. Generate a dataset that is NOT linearly separable (e.g., two concentric circles). Train logistic regression and observe its failure. Then add polynomial features (x1^2, x2^2, x1*x2) and train again. Show that the accuracy improves.
-2. Implement a multi-class confusion matrix for the 3-class softmax model. Compute per-class precision and recall. Which class is hardest to classify?
-3. Build an ROC curve from scratch. For 100 threshold values from 0 to 1, compute the true positive rate and false positive rate. Calculate the AUC (area under the curve) using the trapezoidal rule.
+1. Сгенерируйте набор данных, который НЕ является линейно разделимым (например, две концентрические окружности). Обучите логистическую регрессию и наблюдайте ее провал. Затем добавьте полиномиальные признаки (x1^2, x2^2, x1*x2) и обучите снова. Покажите, что accuracy улучшилась.
+2. Реализуйте многоклассовую матрицу ошибок для 3-классовой softmax-модели. Вычислите precision и recall по каждому классу. Какой класс сложнее всего классифицировать?
+3. Постройте ROC-кривую с нуля. Для 100 порогов от 0 до 1 вычислите true positive rate и false positive rate. Рассчитайте AUC (площадь под кривой) методом трапеций.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Logistic regression | "Regression for classification" | A linear model followed by a sigmoid function that outputs class probabilities |
-| Sigmoid function | "The S-curve" | The function 1/(1+e^(-z)) that maps any real number to the range (0, 1) |
-| Binary cross-entropy | "Log loss" | The loss function -[y*log(p) + (1-y)*log(1-p)] that penalizes confident wrong predictions severely |
-| Decision boundary | "The dividing line" | The surface where the model's output probability equals 0.5, separating predicted classes |
-| Softmax | "Multi-class sigmoid" | A function that converts a vector of scores into probabilities that sum to 1 |
-| Precision | "How many selected are relevant" | TP / (TP + FP), the fraction of positive predictions that are actually positive |
-| Recall | "How many relevant are selected" | TP / (TP + FN), the fraction of actual positives that the model correctly identifies |
-| F1 score | "Balanced accuracy" | The harmonic mean of precision and recall: 2*P*R / (P+R) |
-| Confusion matrix | "The error breakdown" | A table showing TP, TN, FP, FN counts for each class pair |
-| Threshold | "The cutoff" | The probability value above which the model predicts class 1 (default 0.5, tunable) |
-| One-hot encoding | "Binary columns for categories" | Representing class k as a vector of zeros with a 1 at position k |
-| Categorical cross-entropy | "Multi-class log loss" | The extension of binary cross-entropy to k classes using one-hot encoded labels |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Логистическая регрессия | «Регрессия для классификации» | Линейная модель, за которой следует сигмоида, выдающая вероятности классов |
+| Сигмоида | «S-кривая» | Функция 1/(1+e^(-z)), отображающая любое вещественное число в диапазон (0, 1) |
+| Бинарная кросс-энтропия | «Log loss» | Функция потерь -[y*log(p) + (1-y)*log(1-p)], которая жестко штрафует уверенные неверные предсказания |
+| Граница решений | «Разделяющая линия» | Поверхность, где выходная вероятность модели равна 0.5 и которая разделяет предсказанные классы |
+| Softmax | «Многоклассовая сигмоида» | Функция, превращающая вектор scores в вероятности, сумма которых равна 1 |
+| Precision | «Сколько выбранных релевантны» | TP / (TP + FP), доля положительных предсказаний, которые действительно положительны |
+| Recall | «Сколько релевантных выбрано» | TP / (TP + FN), доля фактических положительных примеров, которые модель нашла |
+| F1-score | «Сбалансированная accuracy» | Гармоническое среднее precision и recall: 2*P*R / (P+R) |
+| Матрица ошибок | «Разбор ошибок» | Таблица с количествами TP, TN, FP, FN для пар классов |
+| Порог | «Отсечка» | Значение вероятности, выше которого модель предсказывает класс 1 (по умолчанию 0.5, можно настраивать) |
+| One-hot encoding | «Бинарные столбцы для категорий» | Представление класса k вектором из нулей с единицей в позиции k |
+| Категориальная кросс-энтропия | «Многоклассовый log loss» | Расширение бинарной кросс-энтропии на k классов с one-hot-метками |

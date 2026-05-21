@@ -1,130 +1,130 @@
-# Unsupervised Learning
+# Обучение без учителя
 
-> No labels, no teacher. The algorithm finds structure on its own.
+> Нет меток, нет учителя. Алгоритм сам находит структуру.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 1 (Norms & Distances, Probability & Distributions), Phase 2 Lessons 1-6
-**Time:** ~90 minutes
+**Тип:** Практика
+**Языки:** Python
+**Требования:** Фаза 1 (нормы и расстояния, вероятность и распределения), Фаза 2 Уроки 1-6
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement K-Means, DBSCAN, and Gaussian Mixture Models from scratch and compare their clustering behavior
-- Evaluate cluster quality using the silhouette score and the elbow method to select the optimal K
-- Explain when DBSCAN outperforms K-Means and identify which algorithm handles non-spherical clusters and outliers
-- Build an anomaly detection pipeline using clustering methods to flag points that deviate from normal patterns
+- Реализовать K-Means, DBSCAN и Gaussian Mixture Models с нуля и сравнить их поведение при кластеризации
+- Оценивать качество кластеров с помощью silhouette score и elbow method для выбора оптимального K
+- Объяснить, когда DBSCAN превосходит K-Means, и определить, какой алгоритм работает с несферическими кластерами и выбросами
+- Построить pipeline обнаружения аномалий с помощью методов кластеризации, чтобы помечать точки, отклоняющиеся от нормальных паттернов
 
-## The Problem
+## Проблема
 
-Every ML lesson so far has assumed labeled data: "here is an input, here is the correct output." In the real world, labels are expensive. A hospital has millions of patient records but no one has manually tagged each one with a disease category. An e-commerce site has millions of user sessions but no one has hand-labeled customer segments. A security team has network logs but nobody has flagged every anomaly.
+Все предыдущие уроки ML предполагали размеченные данные: «вот вход, вот правильный выход». В реальном мире метки дороги. У больницы есть миллионы записей пациентов, но никто вручную не отметил каждую категорией заболевания. У e-commerce сайта есть миллионы пользовательских сессий, но никто вручную не разметил клиентские сегменты. У команды безопасности есть сетевые логи, но никто не пометил каждую аномалию.
 
-Unsupervised learning finds patterns without being told what to look for. It groups similar data points, discovers hidden structures, and surfaces anomalies. If supervised learning is learning from a textbook with an answer key, unsupervised learning is staring at raw data until the patterns reveal themselves.
+Обучение без учителя находит паттерны, не получая указаний, что именно искать. Оно группирует похожие точки данных, обнаруживает скрытые структуры и выводит на поверхность аномалии. Если обучение с учителем — это учебник с ответами в конце, то обучение без учителя — это взгляд на сырые данные до тех пор, пока паттерны не начнут проявляться.
 
-The catch: without labels, you cannot directly measure "right" or "wrong." You need different tools to evaluate whether the structure your algorithm found is meaningful.
+Сложность в том, что без меток нельзя напрямую измерить «правильно» или «неправильно». Нужны другие инструменты, чтобы оценить, осмысленна ли структура, найденная алгоритмом.
 
-## The Concept
+## Концепция
 
-### Clustering: Grouping Similar Things Together
+### Кластеризация: группировка похожих объектов
 
-Clustering assigns each data point to a group (cluster) so that points within the same group are more similar to each other than to points in other groups. The question is always: what does "similar" mean?
+Кластеризация назначает каждой точке данных группу (кластер), чтобы точки внутри одной группы были более похожи друг на друга, чем на точки из других групп. Вопрос всегда один: что значит «похожи»?
 
 ```mermaid
 flowchart LR
-    A[Raw Data] --> B{Choose Method}
+    A[Сырые данные] --> B{Выбрать метод}
     B --> C[K-Means]
     B --> D[DBSCAN]
-    B --> E[Hierarchical]
+    B --> E[Иерархическая]
     B --> F[GMM]
-    C --> G[Flat, spherical clusters]
-    D --> H[Arbitrary shapes, noise detection]
-    E --> I[Tree of nested clusters]
-    F --> J[Soft assignments, elliptical clusters]
+    C --> G[Плоские сферические кластеры]
+    D --> H[Произвольные формы, поиск шума]
+    E --> I[Дерево вложенных кластеров]
+    F --> J[Мягкие назначения, эллиптические кластеры]
 ```
 
-### K-Means: The Workhorse
+### K-Means: рабочая лошадка
 
-K-Means partitions data into exactly K clusters. Each cluster has a centroid (its center of mass), and every point belongs to the nearest centroid.
+K-Means разбивает данные ровно на K кластеров. У каждого кластера есть центроид (центр масс), и каждая точка принадлежит ближайшему центроиду.
 
-Lloyd's algorithm:
+Алгоритм Ллойда:
 
-1. Pick K random points as initial centroids
-2. Assign each data point to the nearest centroid
-3. Recompute each centroid as the mean of its assigned points
-4. Repeat steps 2-3 until assignments stop changing
+1. Выбрать K случайных точек как начальные центроиды
+2. Назначить каждую точку данных ближайшему центроиду
+3. Пересчитать каждый центроид как среднее назначенных ему точек
+4. Повторять шаги 2-3, пока назначения не перестанут меняться
 
-The objective function (inertia) measures the total squared distance from each point to its assigned centroid. K-Means minimizes this, but only finds a local minimum. Different initializations can give different results.
+Целевая функция (inertia) измеряет суммарное квадратное расстояние от каждой точки до назначенного центроида. K-Means минимизирует ее, но находит только локальный минимум. Разные инициализации могут дать разные результаты.
 
-### Choosing K
+### Выбор K
 
-Two standard methods:
+Два стандартных метода:
 
-**Elbow method:** Run K-Means for K = 1, 2, 3, ..., n. Plot inertia vs K. Look for the "elbow" where adding more clusters stops reducing inertia significantly.
+**Elbow method:** запустить K-Means для K = 1, 2, 3, ..., n. Построить inertia vs K. Искать «локоть», где добавление новых кластеров перестает значительно снижать inertia.
 
-**Silhouette score:** For each point, measure how similar it is to its own cluster (a) versus the nearest other cluster (b). The silhouette coefficient is (b - a) / max(a, b), ranging from -1 (wrong cluster) to +1 (well-clustered). Average across all points for a global score.
+**Silhouette score:** для каждой точки измерить, насколько она похожа на свой кластер (a) по сравнению с ближайшим другим кластером (b). Silhouette coefficient равен (b - a) / max(a, b) и лежит от -1 (неверный кластер) до +1 (хорошо кластеризована). Среднее по всем точкам дает глобальную оценку.
 
-### DBSCAN: Density-Based Clustering
+### DBSCAN: плотностная кластеризация
 
-K-Means assumes clusters are spherical and requires you to pick K upfront. DBSCAN makes neither assumption. It finds clusters as dense regions separated by sparse regions.
+K-Means предполагает сферические кластеры и требует заранее выбрать K. DBSCAN не делает ни того, ни другого. Он находит кластеры как плотные области, разделенные разреженными областями.
 
-Two parameters:
-- **eps**: the radius of a neighborhood
-- **min_samples**: the minimum number of points needed to form a dense region
+Два параметра:
+- **eps**: радиус окрестности
+- **min_samples**: минимальное число точек, нужное для образования плотной области
 
-Three types of points:
-- **Core point**: has at least min_samples points within eps distance
-- **Border point**: within eps of a core point but not itself a core point
-- **Noise point**: neither core nor border. These are outliers.
+Три типа точек:
+- **Core point:** имеет минимум min_samples точек на расстоянии eps
+- **Border point:** находится в пределах eps от core point, но сама не является core point
+- **Noise point:** не core и не border. Это выбросы.
 
-DBSCAN connects core points that are within eps of each other into the same cluster. Border points join the cluster of a nearby core point. Noise points belong to no cluster.
+DBSCAN соединяет core points, находящиеся в пределах eps друг от друга, в один кластер. Border points присоединяются к кластеру ближайшей core point. Noise points не принадлежат ни одному кластеру.
 
-Strengths: finds clusters of any shape, automatically determines the number of clusters, identifies outliers. Weakness: struggles with clusters of varying densities.
+Сильные стороны: находит кластеры любой формы, автоматически определяет число кластеров, выявляет выбросы. Слабость: плохо справляется с кластерами разной плотности.
 
-### Hierarchical Clustering
+### Иерархическая кластеризация
 
-Builds a tree (dendrogram) of nested clusters.
+Строит дерево (дендрограмму) вложенных кластеров.
 
-Agglomerative (bottom-up):
-1. Start with each point as its own cluster
-2. Merge the two closest clusters
-3. Repeat until only one cluster remains
-4. Cut the dendrogram at the desired level to get K clusters
+Агломеративная (снизу вверх):
+1. Начать с каждой точки как отдельного кластера
+2. Объединить два ближайших кластера
+3. Повторять, пока не останется один кластер
+4. Разрезать дендрограмму на нужном уровне, чтобы получить K кластеров
 
-The "closeness" between clusters can be measured as:
-- **Single linkage**: minimum distance between any two points in the two clusters
-- **Complete linkage**: maximum distance between any two points
-- **Average linkage**: average distance between all pairs
-- **Ward's method**: the merge that causes the smallest increase in total within-cluster variance
+«Близость» между кластерами можно измерять так:
+- **Single linkage:** минимальное расстояние между любыми двумя точками из двух кластеров
+- **Complete linkage:** максимальное расстояние между любыми двумя точками
+- **Average linkage:** среднее расстояние между всеми парами
+- **Метод Уорда:** объединение, вызывающее наименьший рост суммарной внутрикластерной дисперсии
 
 ### Gaussian Mixture Models (GMM)
 
-K-Means gives hard assignments: each point belongs to exactly one cluster. GMM gives soft assignments: each point has a probability of belonging to each cluster.
+K-Means дает жесткие назначения: каждая точка принадлежит ровно одному кластеру. GMM дает мягкие назначения: у каждой точки есть вероятность принадлежности каждому кластеру.
 
-GMM assumes the data is generated from a mixture of K Gaussian distributions, each with its own mean and covariance. The Expectation-Maximization (EM) algorithm alternates between:
+GMM предполагает, что данные порождены смесью K гауссовых распределений, каждое со своим средним и ковариацией. Алгоритм Expectation-Maximization (EM) чередует:
 
-- **E-step**: compute the probability that each point belongs to each Gaussian
-- **M-step**: update the mean, covariance, and mixing weight of each Gaussian to maximize the likelihood of the data
+- **E-step:** вычислить вероятность принадлежности каждой точки каждой гауссиане
+- **M-step:** обновить среднее, ковариацию и вес смешивания каждой гауссианы, чтобы максимизировать правдоподобие данных
 
-GMM can model elliptical clusters (not just spherical like K-Means) and naturally handles overlapping clusters.
+GMM может моделировать эллиптические кластеры (а не только сферические, как K-Means) и естественно работает с перекрывающимися кластерами.
 
-### When to Use Which
+### Когда что использовать
 
-| Method | Best for | Avoid when |
-|--------|----------|------------|
-| K-Means | Large datasets, spherical clusters, known K | Irregular shapes, outliers present |
-| DBSCAN | Unknown K, arbitrary shapes, outlier detection | Varying densities, very high dimensions |
-| Hierarchical | Small datasets, need dendrogram, unknown K | Large datasets (O(n^2) memory) |
-| GMM | Overlapping clusters, soft assignments needed | Very large datasets, too many dimensions |
+| Метод | Лучше всего для | Избегать, когда |
+|-------|-----------------|-----------------|
+| K-Means | Большие наборы данных, сферические кластеры, известный K | Нерегулярные формы, есть выбросы |
+| DBSCAN | Неизвестный K, произвольные формы, поиск выбросов | Разная плотность, очень высокая размерность |
+| Иерархическая | Малые наборы данных, нужна дендрограмма, неизвестный K | Большие наборы данных (O(n^2) памяти) |
+| GMM | Перекрывающиеся кластеры, нужны soft assignments | Очень большие наборы данных, слишком много измерений |
 
-### Anomaly Detection with Clustering
+### Обнаружение аномалий через кластеризацию
 
-Clustering naturally supports anomaly detection:
-- **K-Means**: points far from any centroid are anomalies
-- **DBSCAN**: noise points are anomalies by definition
-- **GMM**: points with low probability under all Gaussians are anomalies
+Кластеризация естественно поддерживает поиск аномалий:
+- **K-Means**: точки далеко от любого центроида — аномалии
+- **DBSCAN**: noise points являются аномалиями по определению
+- **GMM**: точки с низкой вероятностью во всех гауссианах — аномалии
 
-## Build It
+## Соберите это
 
-### Step 1: K-Means from scratch
+### Шаг 1: K-Means с нуля
 
 ```python
 import math
@@ -174,7 +174,7 @@ def kmeans(data, k, max_iterations=100, seed=42):
     return assignments, centroids
 ```
 
-### Step 2: Elbow method and silhouette score
+### Шаг 2: elbow method и silhouette score
 
 ```python
 def compute_inertia(data, assignments, centroids):
@@ -240,7 +240,7 @@ def find_best_k(data, max_k=10):
     return inertias
 ```
 
-### Step 3: DBSCAN from scratch
+### Шаг 3: DBSCAN с нуля
 
 ```python
 def dbscan(data, eps, min_samples):
@@ -294,7 +294,7 @@ def dbscan(data, eps, min_samples):
     return labels
 ```
 
-### Step 4: Gaussian Mixture Model (EM algorithm)
+### Шаг 4: Gaussian Mixture Model (EM-алгоритм)
 
 ```python
 def gmm(data, k, max_iterations=100, seed=42):
@@ -359,7 +359,7 @@ def gmm(data, k, max_iterations=100, seed=42):
     return assignments, means, weights, responsibilities
 ```
 
-### Step 5: Generate test data and run everything
+### Шаг 5: сгенерировать тестовые данные и запустить все
 
 ```python
 def make_blobs(centers, n_per_cluster=50, spread=0.5, seed=42):
@@ -450,9 +450,9 @@ if __name__ == "__main__":
         print(f"    Point {[round(v, 2) for v in a]}")
 ```
 
-## Use It
+## Используйте это
 
-With scikit-learn, the same algorithms are one-liners:
+Со scikit-learn те же алгоритмы — это one-liners:
 
 ```python
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
@@ -465,33 +465,33 @@ agg = AgglomerativeClustering(n_clusters=3).fit(data)
 gmm_model = GaussianMixture(n_components=3, random_state=42).fit(data)
 ```
 
-The from-scratch versions show you exactly what these libraries compute. K-Means iterates between assigning and recomputing. DBSCAN grows clusters from dense seeds. GMM alternates between expectation and maximization. The library versions add numerical stability, smarter initialization (K-Means++), and GPU acceleration, but the core logic is the same.
+Реализации с нуля показывают, что именно считают библиотеки. K-Means чередует назначение и пересчет. DBSCAN выращивает кластеры из плотных «семян». GMM чередует expectation и maximization. Библиотечные версии добавляют численную устойчивость, более умную инициализацию (K-Means++), GPU-ускорение, но базовая логика та же.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces working implementations of K-Means, DBSCAN, and GMM from scratch. The clustering code can be reused as a foundation for more advanced unsupervised methods.
+Этот урок создает рабочие реализации K-Means, DBSCAN и GMM с нуля. Код кластеризации можно переиспользовать как основу для более продвинутых методов обучения без учителя.
 
-## Exercises
+## Упражнения
 
-1. Implement K-Means++ initialization: instead of picking random centroids, pick the first randomly and each subsequent centroid with probability proportional to its squared distance from the nearest existing centroid. Compare convergence speed to random initialization.
-2. Add hierarchical agglomerative clustering to the code. Implement Ward's linkage and produce a dendrogram (as a nested list of merges). Cut it at different levels and compare to K-Means results.
-3. Build a simple anomaly detection pipeline: run DBSCAN and GMM on the same data, flag points that both methods agree are outliers (noise in DBSCAN, low probability in GMM). Measure the overlap and discuss when the methods disagree.
+1. Реализуйте инициализацию K-Means++: вместо случайного выбора центроидов выберите первый случайно, а каждый следующий — с вероятностью, пропорциональной квадрату расстояния до ближайшего существующего центроида. Сравните скорость сходимости со случайной инициализацией.
+2. Добавьте в код иерархическую агломеративную кластеризацию. Реализуйте linkage Уорда и создайте дендрограмму (как вложенный список слияний). Разрежьте ее на разных уровнях и сравните с результатами K-Means.
+3. Постройте простой pipeline поиска аномалий: запустите DBSCAN и GMM на одних данных, помечайте точки, которые оба метода считают выбросами (noise в DBSCAN, low probability в GMM). Измерьте пересечение и обсудите, когда методы расходятся.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Clustering | "Grouping similar things" | Partitioning data into subsets where within-group similarity exceeds between-group similarity, measured by a specific distance metric |
-| Centroid | "The center of a cluster" | The mean of all points assigned to a cluster; used by K-Means as the cluster representative |
-| Inertia | "How tight the clusters are" | Sum of squared distances from each point to its assigned centroid; lower is tighter |
-| Silhouette score | "How well-separated clusters are" | For each point, (b - a) / max(a, b) where a is mean intra-cluster distance and b is mean nearest-cluster distance |
-| Core point | "A point in a dense region" | A point with at least min_samples neighbors within eps distance, in DBSCAN |
-| EM algorithm | "Soft K-Means" | Expectation-Maximization: iteratively compute membership probabilities (E-step) and update distribution parameters (M-step) |
-| Dendrogram | "A tree of clusters" | A tree diagram showing the order and distance at which clusters were merged in hierarchical clustering |
-| Anomaly | "An outlier" | A data point that does not conform to the expected pattern, identified as noise by DBSCAN or low-probability by GMM |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Кластеризация | «Группировка похожих объектов» | Разбиение данных на подмножества, где внутригрупповая похожесть выше межгрупповой, измеренная конкретной метрикой расстояния |
+| Центроид | «Центр кластера» | Среднее всех точек, назначенных кластеру; используется K-Means как представитель кластера |
+| Inertia | «Насколько плотные кластеры» | Сумма квадратов расстояний от каждой точки до назначенного центроида; чем ниже, тем плотнее |
+| Silhouette score | «Насколько хорошо разделены кластеры» | Для каждой точки (b - a) / max(a, b), где a — среднее внутрикластерное расстояние, b — среднее расстояние до ближайшего другого кластера |
+| Core point | «Точка в плотной области» | Точка с минимум min_samples соседями в пределах eps в DBSCAN |
+| EM algorithm | «Soft K-Means» | Expectation-Maximization: итеративно вычисляет вероятности принадлежности (E-step) и обновляет параметры распределений (M-step) |
+| Дендрограмма | «Дерево кластеров» | Древовидная диаграмма, показывающая порядок и расстояния, на которых кластеры объединялись в иерархической кластеризации |
+| Аномалия | «Выброс» | Точка данных, не соответствующая ожидаемому паттерну; определяется как noise в DBSCAN или low-probability в GMM |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Stanford CS229 - Unsupervised Learning](https://cs229.stanford.edu/notes2022fall/main_notes.pdf) - Andrew Ng's lecture notes on clustering and EM
-- [scikit-learn Clustering Guide](https://scikit-learn.org/stable/modules/clustering.html) - practical comparison of all clustering algorithms with visual examples
-- [DBSCAN original paper (Ester et al., 1996)](https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf) - the paper that introduced density-based clustering
+- [Stanford CS229 - Unsupervised Learning](https://cs229.stanford.edu/notes2022fall/main_notes.pdf) — конспекты Andrew Ng по кластеризации и EM
+- [scikit-learn Clustering Guide](https://scikit-learn.org/stable/modules/clustering.html) — практическое сравнение алгоритмов кластеризации с визуальными примерами
+- [DBSCAN original paper (Ester et al., 1996)](https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf) — статья, представившая density-based clustering

@@ -1,51 +1,51 @@
-# ML Pipelines
+# ML-пайплайны
 
-> A model is not a product. A pipeline is. The pipeline is everything from raw data to deployed prediction, and every step must be reproducible.
+> Модель — это не продукт. Пайплайн — продукт. Пайплайн — это все от сырых данных до развернутого предсказания, и каждый шаг должен быть воспроизводимым.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 2, Lesson 12 (Hyperparameter Tuning)
-**Time:** ~120 minutes
+**Тип:** Практика
+**Язык:** Python
+**Требования:** Фаза 2, Урок 12 (подбор гиперпараметров)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build an ML pipeline from scratch that chains imputation, scaling, encoding, and model training into a single reproducible object
-- Identify data leakage scenarios and explain how pipelines prevent them by fitting transformers only on training data
-- Construct a ColumnTransformer that applies different preprocessing to numeric and categorical features
-- Implement pipeline serialization and demonstrate that the same fitted pipeline produces identical results in training and production
+- Построить ML pipeline с нуля, который объединяет imputation, scaling, encoding и model training в один воспроизводимый объект
+- Определять сценарии data leakage и объяснять, как pipelines предотвращают их, fitting transformers только на training data
+- Собрать ColumnTransformer, который применяет разную предобработку к числовым и категориальным признакам
+- Реализовать сериализацию pipeline и показать, что один и тот же fitted pipeline дает одинаковые результаты в training и production
 
-## The Problem
+## Проблема
 
-You have a notebook that loads data, fills missing values with the median, scales features, trains a model, and prints accuracy. It works. You ship it.
+У вас есть notebook, который загружает данные, заполняет пропуски медианой, масштабирует признаки, обучает модель и печатает accuracy. Он работает. Вы выкатываете его.
 
-A month later, someone retrains the model and gets different results. The median was computed on the full dataset including test data (data leakage). The scaling parameters were not saved, so inference uses different statistics. The feature engineering code was copy-pasted between training and serving, and the copies diverged. A categorical column gained a new value in production that the encoder has never seen.
+Через месяц кто-то переобучает модель и получает другие результаты. Медиана считалась на полном наборе данных, включая test data (data leakage). Параметры scaling не были сохранены, поэтому inference использует другую статистику. Feature engineering code был copy-paste между training и serving, и копии разошлись. В категориальном столбце в production появилось новое значение, которого encoder никогда не видел.
 
-These are not hypothetical. They are the most common reasons ML systems fail in production. Pipelines solve all of them by packaging every transformation step into a single, ordered, reproducible object.
+Это не гипотетика. Это самые частые причины падения ML-систем в production. Pipelines решают все эти проблемы, упаковывая каждый transformation step в один упорядоченный, воспроизводимый объект.
 
-## The Concept
+## Концепция
 
-### What a Pipeline Is
+### Что такое Pipeline
 
-A pipeline is an ordered sequence of data transformations followed by a model. Each step takes the output of the previous step as input. The entire pipeline is fitted once on training data. At inference time, the same fitted pipeline transforms new data and produces predictions.
+Pipeline — это упорядоченная последовательность преобразований данных, за которой следует модель. Каждый шаг получает на вход выход предыдущего шага. Весь pipeline fitted один раз на training data. Во время inference тот же fitted pipeline преобразует новые данные и выдает predictions.
 
 ```mermaid
 flowchart LR
-    A[Raw Data] --> B[Impute Missing Values]
-    B --> C[Scale Numeric Features]
-    C --> D[Encode Categoricals]
-    D --> E[Train Model]
-    E --> F[Prediction]
+    A[Сырые данные] --> B[Заполнить пропуски]
+    B --> C[Масштабировать числовые признаки]
+    C --> D[Закодировать категории]
+    D --> E[Обучить модель]
+    E --> F[Предсказание]
 ```
 
-The pipeline guarantees:
-- Transformations are fitted only on training data (no leakage)
-- The same transformations are applied at inference time
-- The entire object can be serialized and deployed as one artifact
-- Cross-validation applies the pipeline per fold, preventing subtle leakage
+Pipeline гарантирует:
+- Transformations fitted только на training data (нет leakage)
+- Те же transformations применяются во время inference
+- Весь объект можно сериализовать и развернуть как один artifact
+- Cross-validation применяет pipeline по каждому fold, предотвращая тонкий leakage
 
-### Data Leakage: The Silent Killer
+### Data Leakage: тихий убийца
 
-Data leakage happens when information from the test set or future data contaminates training. Pipelines prevent the most common forms.
+Data leakage происходит, когда информация из test set или будущих данных загрязняет training. Pipelines предотвращают самые частые формы.
 
 **Leaky (wrong):**
 ```python
@@ -59,7 +59,7 @@ X_train, X_test = X_scaled[:800], X_scaled[800:]
 y_train, y_test = y[:800], y[800:]
 ```
 
-The scaler saw test data. The mean and standard deviation include test samples. This inflates accuracy estimates.
+Scaler видел test data. Mean и standard deviation включают test samples. Это завышает accuracy estimates.
 
 **Correct:**
 ```python
@@ -70,11 +70,11 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 ```
 
-With a pipeline, you do not need to think about this. The pipeline handles it automatically.
+С pipeline об этом не нужно думать. Pipeline делает это автоматически.
 
 ### sklearn Pipeline
 
-sklearn's `Pipeline` chains transformers and an estimator. It exposes `.fit()`, `.predict()`, and `.score()` that apply all steps in order.
+sklearn `Pipeline` связывает transformers и estimator. Он предоставляет `.fit()`, `.predict()` и `.score()`, применяющие все шаги по порядку.
 
 ```python
 from sklearn.pipeline import Pipeline
@@ -90,19 +90,19 @@ pipe.fit(X_train, y_train)
 predictions = pipe.predict(X_test)
 ```
 
-When you call `pipe.fit(X_train, y_train)`:
-1. Scaler calls `fit_transform` on X_train
-2. Model calls `fit` on the scaled X_train
+Когда вы вызываете `pipe.fit(X_train, y_train)`:
+1. Scaler вызывает `fit_transform` на X_train
+2. Model вызывает `fit` на scaled X_train
 
-When you call `pipe.predict(X_test)`:
-1. Scaler calls `transform` (not fit_transform) on X_test
-2. Model calls `predict` on the scaled X_test
+Когда вы вызываете `pipe.predict(X_test)`:
+1. Scaler вызывает `transform` (не fit_transform) на X_test
+2. Model вызывает `predict` на scaled X_test
 
-The scaler never sees test data during fitting. This is the whole point.
+Scaler никогда не видит test data во время fitting. В этом весь смысл.
 
-### ColumnTransformer: Different Pipelines for Different Columns
+### ColumnTransformer: разные pipelines для разных столбцов
 
-Real datasets have numeric and categorical columns that need different preprocessing. `ColumnTransformer` handles this.
+В реальных наборах данных есть числовые и категориальные столбцы, которым нужна разная предобработка. `ColumnTransformer` решает это.
 
 ```python
 from sklearn.compose import ColumnTransformer
@@ -130,13 +130,13 @@ full_pipeline = Pipeline([
 ])
 ```
 
-The `handle_unknown="ignore"` in OneHotEncoder is critical for production. When a new category appears (a city the model has never seen), it produces a zero vector instead of crashing.
+`handle_unknown="ignore"` в OneHotEncoder критичен для production. Когда появляется новая категория (город, которого модель не видела), encoder создает нулевой вектор вместо падения.
 
 ### Experiment Tracking
 
-A pipeline makes training reproducible, but you also need to track what happened across experiments: which hyperparameters were used, which dataset version, what the metrics were, which code was running.
+Pipeline делает training воспроизводимым, но нужно также отслеживать, что происходило между experiments: какие hyperparameters использовались, какая версия dataset, какие metrics, какой code запускался.
 
-**MLflow** is the most common open-source solution:
+**MLflow** — самое распространенное open-source решение:
 
 ```python
 import mlflow
@@ -153,9 +153,9 @@ with mlflow.start_run():
     mlflow.sklearn.log_model(pipe, "model")
 ```
 
-Every run is recorded with parameters, metrics, artifacts, and the full model. You can compare runs, reproduce any experiment, and deploy any model version.
+Каждый run записывается с parameters, metrics, artifacts и полной model. Можно сравнивать runs, воспроизводить любой experiment и deploy любую version модели.
 
-**Weights & Biases (wandb)** provides the same functionality with a hosted dashboard:
+**Weights & Biases (wandb)** предоставляет ту же функциональность с hosted dashboard:
 
 ```python
 import wandb
@@ -169,19 +169,19 @@ accuracy = pipe.score(X_test, y_test)
 wandb.log({"accuracy": accuracy})
 ```
 
-### Model Versioning
+### Версионирование моделей
 
-After experiment tracking, you need to manage model versions. Which model is in production? Which is staging? Which was last week's?
+После experiment tracking нужно управлять model versions. Какая модель в production? Какая в staging? Какая была на прошлой неделе?
 
-MLflow's Model Registry provides:
-- **Version tracking:** Every saved model gets a version number
+MLflow Model Registry предоставляет:
+- **Version tracking:** каждая сохраненная model получает version number
 - **Stage transitions:** "Staging", "Production", "Archived"
-- **Approval workflow:** Models must be explicitly promoted to production
-- **Rollback:** Switch back to a previous version instantly
+- **Approval workflow:** models должны быть явно promoted to production
+- **Rollback:** мгновенный возврат к предыдущей version
 
-### Data Versioning with DVC
+### Версионирование данных с DVC
 
-Code is versioned with git. Data should be versioned too, but git cannot handle large files. DVC (Data Version Control) solves this.
+Code версионируется git. Data тоже нужно версионировать, но git не справляется с большими файлами. DVC (Data Version Control) решает это.
 
 ```
 dvc init
@@ -191,18 +191,18 @@ git commit -m "Track training data"
 dvc push
 ```
 
-DVC stores the actual data in remote storage (S3, GCS, Azure) and keeps a small `.dvc` file in git that records the hash. When you checkout a git commit, `dvc checkout` restores the exact data that was used.
+DVC хранит сами данные в remote storage (S3, GCS, Azure) и оставляет в git маленький `.dvc` file с hash. Когда вы checkout git commit, `dvc checkout` восстанавливает ровно те данные, которые использовались.
 
-This means every git commit pins both the code and the data. Full reproducibility.
+Это значит, что каждый git commit фиксирует и code, и data. Полная воспроизводимость.
 
-### Reproducible Experiments
+### Воспроизводимые эксперименты
 
-A reproducible experiment requires four things:
+Воспроизводимому experiment нужны четыре вещи:
 
-1. **Fixed random seeds:** Set seeds for numpy, random, and the framework (torch, sklearn)
-2. **Pinned dependencies:** requirements.txt or poetry.lock with exact versions
-3. **Versioned data:** DVC or similar
-4. **Config files:** All hyperparameters in a config, not hardcoded
+1. **Fixed random seeds:** задать seeds для numpy, random и framework (torch, sklearn)
+2. **Pinned dependencies:** requirements.txt или poetry.lock с точными versions
+3. **Versioned data:** DVC или аналог
+4. **Config files:** все hyperparameters в config, а не hardcoded
 
 ```python
 import numpy as np
@@ -220,49 +220,49 @@ def set_seed(seed=42):
         pass
 ```
 
-### From Notebook to Production Pipeline
+### От Notebook к Production Pipeline
 
 ```mermaid
 flowchart TD
-    A[Jupyter Notebook] --> B[Extract functions]
-    B --> C[Build Pipeline object]
-    C --> D[Add config file for hyperparameters]
-    D --> E[Add experiment tracking]
-    E --> F[Add data validation]
-    F --> G[Add tests]
-    G --> H[Package for deployment]
+    A[Jupyter Notebook] --> B[Вынести functions]
+    B --> C[Построить Pipeline object]
+    C --> D[Добавить config file для hyperparameters]
+    D --> E[Добавить experiment tracking]
+    E --> F[Добавить data validation]
+    F --> G[Добавить tests]
+    G --> H[Упаковать для deployment]
 
     style A fill:#fdd,stroke:#333
     style H fill:#dfd,stroke:#333
 ```
 
-The typical progression:
+Типичный путь:
 
-1. **Notebook exploration:** Quick experiments, visualizations, feature ideas
-2. **Extract functions:** Move preprocessing, feature engineering, evaluation into modules
-3. **Build Pipeline:** Chain transformations into a sklearn Pipeline or custom class
-4. **Config management:** Move all hyperparameters into a YAML/JSON config
-5. **Experiment tracking:** Add MLflow or wandb logging
-6. **Data validation:** Check schema, distributions, and missing value patterns before training
-7. **Tests:** Unit tests for transformers, integration tests for the full pipeline
-8. **Deployment:** Serialize the pipeline, wrap in an API (FastAPI, Flask), containerize
+1. **Notebook exploration:** быстрые experiments, визуализации, идеи признаков
+2. **Extract functions:** перенести preprocessing, feature engineering, evaluation в modules
+3. **Build Pipeline:** связать transformations в sklearn Pipeline или custom class
+4. **Config management:** вынести все hyperparameters в YAML/JSON config
+5. **Experiment tracking:** добавить MLflow или wandb logging
+6. **Data validation:** проверять schema, distributions и missing value patterns перед training
+7. **Tests:** unit tests для transformers, integration tests для полного pipeline
+8. **Deployment:** сериализовать pipeline, завернуть в API (FastAPI, Flask), containerize
 
-### Common Pipeline Mistakes
+### Частые ошибки Pipeline
 
-| Mistake | Why it is bad | Fix |
-|---------|-------------|-----|
-| Fitting on full data before splitting | Data leakage | Use Pipeline with cross_val_score |
-| Feature engineering outside pipeline | Different transforms at train vs serve | Put all transforms in the Pipeline |
-| Not handling unknown categories | Production crash on new values | OneHotEncoder(handle_unknown="ignore") |
-| Hardcoded column names | Breaks when schema changes | Use column name lists from config |
-| No data validation | Silently wrong predictions on bad data | Add schema checks before prediction |
-| Training/serving skew | Model sees different features in prod | One Pipeline object for both |
+| Ошибка | Почему плохо | Исправление |
+|--------|--------------|-------------|
+| Fitting на full data до split | Data leakage | Использовать Pipeline с cross_val_score |
+| Feature engineering вне pipeline | Разные transforms на train и serve | Поместить все transforms в Pipeline |
+| Не обрабатывать unknown categories | Production crash на новых значениях | OneHotEncoder(handle_unknown="ignore") |
+| Hardcoded column names | Ломается при изменении schema | Брать lists column names из config |
+| Нет data validation | Тихо неверные predictions на плохих данных | Добавить schema checks перед prediction |
+| Training/serving skew | Model видит разные features в prod | Один Pipeline object для обоих |
 
-## Build It
+## Соберите это
 
-The code in `code/pipeline.py` builds a complete ML pipeline from scratch:
+Код в `code/pipeline.py` строит полный ML pipeline с нуля:
 
-### Step 1: Custom Transformer
+### Шаг 1: Custom Transformer
 
 ```python
 class CustomTransformer:
@@ -283,7 +283,7 @@ class CustomTransformer:
         return self.fit(X).transform(X)
 ```
 
-### Step 2: Pipeline from Scratch
+### Шаг 2: Pipeline с нуля
 
 ```python
 class PipelineFromScratch:
@@ -306,50 +306,50 @@ class PipelineFromScratch:
         return model.predict(X_current)
 ```
 
-### Step 3: Cross-Validation with Pipeline
+### Шаг 3: Cross-Validation с Pipeline
 
-The code demonstrates how cross-validation with a pipeline prevents data leakage: the scaler is fit separately on each fold's training data.
+Код показывает, как cross-validation с pipeline предотвращает data leakage: scaler fitted отдельно на training data каждого fold.
 
-### Step 4: Full Production Pipeline with sklearn
+### Шаг 4: полный production pipeline со sklearn
 
-A complete pipeline with `ColumnTransformer`, multiple preprocessing paths, and a model, trained with proper cross-validation and experiment logging.
+Полный pipeline с `ColumnTransformer`, несколькими путями preprocessing и model, обученный с правильной cross-validation и experiment logging.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/prompt-ml-pipeline.md` -- a skill for building and debugging ML pipelines
-- `code/pipeline.py` -- a complete pipeline from scratch through sklearn
+Этот урок создает:
+- `outputs/prompt-ml-pipeline.md` — skill для построения и отладки ML pipelines
+- `code/pipeline.py` — полный pipeline от реализации с нуля до sklearn
 
-## Exercises
+## Упражнения
 
-1. Build a pipeline that handles a dataset with 3 numeric columns and 2 categorical columns. Use `ColumnTransformer` to apply median imputation + scaling to numerics and most-frequent imputation + one-hot encoding to categoricals. Train with 5-fold cross-validation.
+1. Постройте pipeline для dataset с 3 numeric columns и 2 categorical columns. Используйте `ColumnTransformer`: median imputation + scaling для numeric и most-frequent imputation + one-hot encoding для categorical. Обучите с 5-fold cross-validation.
 
-2. Deliberately introduce data leakage: fit the scaler on the full dataset before splitting. Compare the cross-validation score (leaky) to the pipeline cross-validation score (clean). How large is the difference?
+2. Намеренно внесите data leakage: fit scaler на полном dataset до splitting. Сравните cross-validation score (leaky) с pipeline cross-validation score (clean). Насколько велика разница?
 
-3. Serialize your pipeline with `joblib.dump`. Load it in a separate script and run predictions. Verify the predictions are identical.
+3. Сериализуйте pipeline через `joblib.dump`. Загрузите его в отдельном script и запустите predictions. Проверьте, что predictions идентичны.
 
-4. Add a custom transformer to the pipeline that creates polynomial features (degree 2) for the two most important numeric columns. Where should it go in the pipeline?
+4. Добавьте в pipeline custom transformer, который создает polynomial features (degree 2) для двух самых важных numeric columns. Где он должен стоять в pipeline?
 
-5. Set up MLflow tracking for the pipeline. Run 5 experiments with different hyperparameters. Use the MLflow UI (`mlflow ui`) to compare runs and pick the best model.
+5. Настройте MLflow tracking для pipeline. Запустите 5 experiments с разными hyperparameters. Используйте MLflow UI (`mlflow ui`), чтобы сравнить runs и выбрать лучшую model.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Pipeline | "Chain of transforms + model" | An ordered sequence of fitted transformers and a model, applied as one unit to prevent leakage |
-| Data leakage | "Test info leaked into training" | Using information from outside the training set to build the model, inflating performance estimates |
-| ColumnTransformer | "Different preprocessing per column" | Applies different pipelines to different subsets of columns, combining results |
-| Experiment tracking | "Logging your runs" | Recording parameters, metrics, artifacts, and code versions for every training run |
-| MLflow | "Track and deploy models" | Open-source platform for experiment tracking, model registry, and deployment |
-| DVC | "Git for data" | Version control system for large data files, storing hashes in git and data in remote storage |
-| Model registry | "Model version catalog" | A system that tracks model versions with stage labels (staging, production, archived) |
-| Training/serving skew | "It worked in the notebook" | Differences between how data is processed during training versus inference, causing silent errors |
-| Reproducibility | "Same code, same result" | The ability to get identical results from the same code, data, and configuration |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Pipeline | «Цепочка transforms + model» | Упорядоченная последовательность fitted transformers и model, применяемая как единый объект для предотвращения leakage |
+| Data leakage | «Test info попала в training» | Использование информации вне training set для построения model, завышающее performance estimates |
+| ColumnTransformer | «Разная предобработка по столбцам» | Применяет разные pipelines к разным subsets of columns и объединяет результаты |
+| Experiment tracking | «Логирование runs» | Запись parameters, metrics, artifacts и code versions для каждого training run |
+| MLflow | «Track and deploy models» | Open-source платформа для experiment tracking, model registry и deployment |
+| DVC | «Git для данных» | Version control system для больших data files, хранящий hashes в git и data в remote storage |
+| Model registry | «Каталог версий моделей» | Система, отслеживающая model versions со stage labels (staging, production, archived) |
+| Training/serving skew | «В notebook работало» | Различия в обработке данных при training и inference, вызывающие тихие ошибки |
+| Воспроизводимость | «Тот же code, тот же result» | Возможность получить идентичные results из того же code, data и configuration |
 
-## Further Reading
+## Дополнительное чтение
 
-- [scikit-learn Pipeline docs](https://scikit-learn.org/stable/modules/compose.html) -- the official pipeline reference
-- [MLflow documentation](https://mlflow.org/docs/latest/index.html) -- experiment tracking and model registry
-- [DVC documentation](https://dvc.org/doc) -- data versioning
-- [Sculley et al., Hidden Technical Debt in Machine Learning Systems (2015)](https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) -- the seminal paper on ML systems complexity
-- [Google ML Best Practices: Rules of ML](https://developers.google.com/machine-learning/guides/rules-of-ml) -- practical production ML advice
+- [scikit-learn Pipeline docs](https://scikit-learn.org/stable/modules/compose.html) — официальный справочник по pipeline
+- [MLflow documentation](https://mlflow.org/docs/latest/index.html) — experiment tracking и model registry
+- [DVC documentation](https://dvc.org/doc) — data versioning
+- [Sculley et al., Hidden Technical Debt in Machine Learning Systems (2015)](https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) — ключевая статья о сложности ML-систем
+- [Google ML Best Practices: Rules of ML](https://developers.google.com/machine-learning/guides/rules-of-ml) — практические советы по production ML

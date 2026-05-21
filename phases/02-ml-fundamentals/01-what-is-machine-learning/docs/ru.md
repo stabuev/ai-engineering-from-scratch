@@ -1,300 +1,300 @@
-# What Is Machine Learning
+# Что такое машинное обучение
 
-> Machine learning is teaching computers to find patterns in data instead of writing rules by hand.
+> Машинное обучение учит компьютеры находить закономерности в данных вместо ручного написания правил.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 1 (Math Foundations)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Требования:** Фаза 1 (математические основы)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the difference between supervised, unsupervised, and reinforcement learning and identify which type applies to a given problem
-- Implement a nearest centroid classifier from scratch and evaluate it against a random baseline
-- Distinguish between classification and regression tasks and select the appropriate loss function for each
-- Evaluate whether a given business problem is suitable for ML or better solved with deterministic rules
+- Объяснять различие между обучением с учителем, обучением без учителя и обучением с подкреплением, а также определять, какой тип подходит для заданной задачи
+- Реализовать с нуля классификатор ближайшего центроида и сравнить его со случайной базовой моделью
+- Различать задачи классификации и регрессии и выбирать подходящую функцию потерь для каждой из них
+- Оценивать, подходит ли бизнес-задача для ML или ее лучше решить детерминированными правилами
 
-## The Problem
+## Проблема
 
-You want to build a spam filter. The traditional approach: sit down and write hundreds of rules. "If the email contains 'FREE MONEY', mark it spam. If it has more than 3 exclamation marks, mark it spam." You spend weeks writing rules. Then spammers change their wording. Your rules break. You write more rules. The cycle never ends.
+Вы хотите построить спам-фильтр. Традиционный подход: сесть и написать сотни правил. «Если письмо содержит "FREE MONEY", пометить как спам. Если в нем больше трех восклицательных знаков, пометить как спам». Вы неделями пишете правила. Затем спамеры меняют формулировки. Ваши правила ломаются. Вы пишете еще правила. Цикл не заканчивается.
 
-Machine learning flips this. Instead of writing rules, you give the computer thousands of labeled emails ("spam" or "not spam") and let it figure out the rules on its own. The computer finds patterns you never would have thought of. When spammers change tactics, you retrain on new data instead of rewriting code.
+Машинное обучение переворачивает этот подход. Вместо написания правил вы даете компьютеру тысячи размеченных писем («спам» или «не спам») и позволяете ему самому вывести правила. Компьютер находит закономерности, о которых вы бы не подумали. Когда спамеры меняют тактику, вы переобучаете модель на новых данных вместо переписывания кода.
 
-This shift from "programming rules" to "learning from data" is the core of machine learning. Every recommendation engine, voice assistant, self-driving car, and language model works this way.
+Этот переход от «программирования правил» к «обучению на данных» и есть ядро машинного обучения. Так работают рекомендательные системы, голосовые ассистенты, беспилотные автомобили и языковые модели.
 
-## The Concept
+## Концепция
 
-### Learning From Data, Not Rules
+### Обучение на данных, а не на правилах
 
-Traditional programming and machine learning solve problems in opposite directions.
+Традиционное программирование и машинное обучение решают задачи в противоположных направлениях.
 
 ```mermaid
 flowchart LR
-    subgraph Traditional["Traditional Programming"]
+    subgraph Traditional["Традиционное программирование"]
         direction LR
-        R[Rules] --> P1[Program]
-        D1[Data] --> P1
-        P1 --> O1[Output]
+        R[Правила] --> P1[Программа]
+        D1[Данные] --> P1
+        P1 --> O1[Вывод]
     end
 
-    subgraph ML["Machine Learning"]
+    subgraph ML["Машинное обучение"]
         direction LR
-        D2[Data] --> P2[Learning Algorithm]
-        O2[Expected Output] --> P2
-        P2 --> M[Model / Rules]
+        D2[Данные] --> P2[Алгоритм обучения]
+        O2[Ожидаемый вывод] --> P2
+        P2 --> M[Модель / правила]
     end
 ```
 
-Traditional programming: you write the rules. The program applies them to data to produce output.
+Традиционное программирование: вы пишете правила. Программа применяет их к данным, чтобы получить результат.
 
-Machine learning: you provide data and expected outputs. The algorithm discovers the rules.
+Машинное обучение: вы предоставляете данные и ожидаемые ответы. Алгоритм обнаруживает правила.
 
-The "model" that comes out of training IS the rules, encoded as numbers (weights, parameters). It generalizes from examples it has seen to make predictions on data it has never seen.
+«Модель», получающаяся после обучения, и ЕСТЬ правила, закодированные числами (весами, параметрами). Она обобщает примеры, которые видела, чтобы делать предсказания на данных, которых никогда не видела.
 
-### The Three Types of Machine Learning
+### Три типа машинного обучения
 
 ```mermaid
 flowchart TD
-    ML[Machine Learning] --> SL[Supervised Learning]
-    ML --> UL[Unsupervised Learning]
-    ML --> RL[Reinforcement Learning]
+    ML[Машинное обучение] --> SL[Обучение с учителем]
+    ML --> UL[Обучение без учителя]
+    ML --> RL[Обучение с подкреплением]
 
-    SL --> C[Classification]
-    SL --> R[Regression]
+    SL --> C[Классификация]
+    SL --> R[Регрессия]
 
-    UL --> CL[Clustering]
-    UL --> DR[Dimensionality Reduction]
+    UL --> CL[Кластеризация]
+    UL --> DR[Снижение размерности]
 
-    RL --> PO[Policy Optimization]
-    RL --> VL[Value Learning]
+    RL --> PO[Оптимизация политики]
+    RL --> VL[Обучение функции ценности]
 ```
 
-**Supervised Learning**: You have input-output pairs. The model learns to map inputs to outputs.
-- "Here are 10,000 photos labeled cat or dog. Learn to tell them apart."
-- "Here are house features and prices. Learn to predict the price."
+**Обучение с учителем**: у вас есть пары «вход-выход». Модель учится отображать входы в выходы.
+- «Вот 10 000 фотографий с метками "кошка" или "собака". Научись их различать».
+- «Вот характеристики домов и цены. Научись предсказывать цену».
 
-**Unsupervised Learning**: You have inputs only. No labels. The model finds structure on its own.
-- "Here are 10,000 customer purchase histories. Find natural groupings."
-- "Here are 1,000 dimensional data points. Reduce to 2 dimensions while keeping structure."
+**Обучение без учителя**: у вас есть только входные данные. Меток нет. Модель сама находит структуру.
+- «Вот 10 000 историй покупок клиентов. Найди естественные группы».
+- «Вот точки в 1000-мерном пространстве. Сожми их до 2 измерений, сохранив структуру».
 
-**Reinforcement Learning**: An agent takes actions in an environment and receives rewards or penalties. It learns a strategy (policy) to maximize total reward.
-- "Play this game. +1 for winning, -1 for losing. Figure out a strategy."
-- "Control this robot arm. +1 for picking up the object, -0.01 for each second wasted."
+**Обучение с подкреплением**: агент выполняет действия в среде и получает награды или штрафы. Он учится стратегии (политике), которая максимизирует суммарную награду.
+- «Играй в эту игру. +1 за победу, -1 за поражение. Найди стратегию».
+- «Управляй этой роботизированной рукой. +1 за поднятый объект, -0.01 за каждую потраченную секунду».
 
-Most of what you will build in practice uses supervised learning. Unsupervised learning is common for preprocessing and exploration. Reinforcement learning powers game AI, robotics, and RLHF for language models.
+Большинство того, что вы будете строить на практике, использует обучение с учителем. Обучение без учителя часто применяется для предобработки и исследования данных. Обучение с подкреплением используется в игровом ИИ, робототехнике и RLHF для языковых моделей.
 
-### Beyond the Big Three
+### За пределами большой тройки
 
-The three categories above are clean, but real-world ML often blurs the lines.
+Три категории выше выглядят аккуратно, но в реальном ML границы часто размываются.
 
-**Semi-supervised learning** uses a small set of labeled data and a large set of unlabeled data. You might have 100 labeled medical images and 100,000 unlabeled ones. Techniques include:
+**Полуобучение (semi-supervised learning)** использует небольшой набор размеченных данных и большой набор неразмеченных данных. Например, у вас может быть 100 размеченных медицинских изображений и 100 000 неразмеченных. Техники включают:
 
-- **Label propagation:** Build a graph connecting similar data points. Labels spread from labeled nodes to unlabeled neighbors through the graph.
-- **Pseudo-labeling:** Train a model on the labeled data, use it to predict labels for unlabeled data, then retrain on everything. The model bootstraps its own training set.
-- **Consistency regularization:** The model should give the same prediction for an input and a slightly perturbed version of that input. This works even without labels.
+- **Распространение меток (label propagation):** построить граф, соединяющий похожие точки данных. Метки распространяются от размеченных узлов к неразмеченным соседям по графу.
+- **Псевдоразметка (pseudo-labeling):** обучить модель на размеченных данных, использовать ее для предсказания меток неразмеченных данных, затем переобучить на всем наборе. Модель сама расширяет свой обучающий набор.
+- **Регуляризация согласованности (consistency regularization):** модель должна давать одно и то же предсказание для входа и его слегка возмущенной версии. Это работает даже без меток.
 
-**Self-supervised learning** creates supervision from the data itself. No human labels needed at all. The model creates its own prediction task from the structure of the data.
+**Самообучение с самоконтролем (self-supervised learning)** создает сигнал обучения из самих данных. Человеческая разметка вообще не нужна. Модель формирует собственную задачу предсказания из структуры данных.
 
-- **Masked language modeling (BERT):** Hide 15% of words in a sentence, train the model to predict the missing words. The "labels" come from the original text.
-- **Contrastive learning (SimCLR):** Take an image, create two augmented versions. Train the model to recognize they came from the same image while distinguishing them from augmented versions of other images.
-- **Next-token prediction (GPT):** Predict the next word given all previous words. Every text document becomes a training example.
+- **Маскированное языковое моделирование (BERT):** скрыть 15% слов в предложении и обучить модель предсказывать пропущенные слова. «Метки» берутся из исходного текста.
+- **Контрастивное обучение (SimCLR):** взять изображение и создать две аугментированные версии. Обучить модель распознавать, что они получены из одного изображения, и отличать их от аугментированных версий других изображений.
+- **Предсказание следующего токена (GPT):** предсказывать следующее слово по всем предыдущим словам. Каждый текстовый документ становится обучающим примером.
 
-These are not separate categories from the big three. They are strategies that combine supervised and unsupervised ideas. Self-supervised learning is technically supervised (the model predicts something), but the labels are generated automatically, not by humans.
+Это не отдельные категории относительно большой тройки. Это стратегии, которые объединяют идеи обучения с учителем и без учителя. Self-supervised learning технически является обучением с учителем (модель что-то предсказывает), но метки генерируются автоматически, а не людьми.
 
-### Classification vs Regression
+### Классификация и регрессия
 
-These are the two main supervised learning tasks.
+Это две главные задачи обучения с учителем.
 
-| Aspect | Classification | Regression |
-|--------|---------------|------------|
-| Output | Discrete categories | Continuous numbers |
-| Example | "Is this email spam?" | "What will the house price be?" |
-| Output space | {cat, dog, bird} | Any real number |
-| Loss function | Cross-entropy, accuracy | Mean squared error, MAE |
-| Decision | Boundaries between classes | A curve that fits the data |
+| Аспект | Классификация | Регрессия |
+|--------|---------------|-----------|
+| Выход | Дискретные категории | Непрерывные числа |
+| Пример | «Это письмо спам?» | «Какой будет цена дома?» |
+| Пространство выходов | {кошка, собака, птица} | Любое вещественное число |
+| Функция потерь | Кросс-энтропия, accuracy | Среднеквадратичная ошибка, MAE |
+| Решение | Границы между классами | Кривая, аппроксимирующая данные |
 
-Classification answers "which category?" Regression answers "how much?"
+Классификация отвечает на вопрос «какая категория?». Регрессия отвечает на вопрос «сколько?».
 
-Some problems can be framed either way. Predicting if a stock goes up or down is classification. Predicting the exact price is regression.
+Некоторые задачи можно сформулировать обоими способами. Предсказать, вырастет акция или упадет, — классификация. Предсказать точную цену — регрессия.
 
-### The ML Workflow
+### Рабочий процесс ML
 
-Every machine learning project follows the same pipeline, regardless of the algorithm.
+Каждый проект машинного обучения следует одному и тому же конвейеру независимо от алгоритма.
 
 ```mermaid
 flowchart LR
-    A[Collect Data] --> B[Clean & Explore]
-    B --> C[Feature Engineering]
-    C --> D[Split Data]
-    D --> E[Train Model]
-    E --> F[Evaluate]
-    F -->|Not good enough| C
-    F -->|Good enough| G[Deploy]
-    G --> H[Monitor]
-    H -->|Performance drops| A
+    A[Собрать данные] --> B[Очистить и исследовать]
+    B --> C[Сконструировать признаки]
+    C --> D[Разделить данные]
+    D --> E[Обучить модель]
+    E --> F[Оценить]
+    F -->|Недостаточно хорошо| C
+    F -->|Достаточно хорошо| G[Развернуть]
+    G --> H[Мониторить]
+    H -->|Качество падает| A
 ```
 
-**Collect Data**: Gather raw data. More data is almost always better, but quality matters more than quantity.
+**Сбор данных**: собрать сырые данные. Больше данных почти всегда лучше, но качество важнее количества.
 
-**Clean & Explore**: Handle missing values, remove duplicates, visualize distributions, spot anomalies. This step often takes 60-80% of total project time.
+**Очистка и исследование**: обработать пропуски, удалить дубликаты, визуализировать распределения, найти аномалии. Этот шаг часто занимает 60-80% общего времени проекта.
 
-**Feature Engineering**: Transform raw data into features the model can use. Turn dates into day-of-week. Normalize numerical columns. Encode categorical variables. Good features matter more than fancy algorithms.
+**Конструирование признаков (feature engineering)**: преобразовать сырые данные в признаки, которые модель может использовать. Превратить даты в день недели. Нормализовать числовые столбцы. Закодировать категориальные переменные. Хорошие признаки важнее модных алгоритмов.
 
-**Split Data**: Divide into training, validation, and test sets. The model trains on training data, you tune hyperparameters on validation data, and you report final performance on test data.
+**Разделение данных**: разделить данные на обучающую, валидационную и тестовую выборки. Модель обучается на обучающих данных, вы настраиваете гиперпараметры на валидационных данных, а финальное качество сообщаете на тестовых данных.
 
-**Train Model**: Feed training data into an algorithm. The algorithm adjusts internal parameters to minimize a loss function.
+**Обучение модели**: подать обучающие данные в алгоритм. Алгоритм подстраивает внутренние параметры, чтобы минимизировать функцию потерь.
 
-**Evaluate**: Measure performance on validation/test data. If performance is not acceptable, go back and try different features, algorithms, or hyperparameters.
+**Оценка**: измерить качество на валидационных/тестовых данных. Если качество неприемлемо, вернуться назад и попробовать другие признаки, алгоритмы или гиперпараметры.
 
-**Deploy**: Put the model into production where it makes predictions on new data.
+**Развертывание**: поместить модель в production, где она делает предсказания на новых данных.
 
-**Monitor**: Track performance over time. Data distributions change (data drift), and models degrade. When performance drops, retrain.
+**Мониторинг**: отслеживать качество со временем. Распределения данных меняются (data drift), и модели деградируют. Когда качество падает, модель переобучают.
 
-### Training, Validation, and Test Splits
+### Обучающая, валидационная и тестовая выборки
 
-This is the most important concept beginners get wrong. You must evaluate your model on data it has never seen during training. Otherwise you are measuring memorization, not learning.
+Это самая важная идея, в которой начинающие часто ошибаются. Модель нужно оценивать на данных, которых она никогда не видела во время обучения. Иначе вы измеряете запоминание, а не обучение.
 
 ```mermaid
 flowchart LR
-    subgraph Dataset["Full Dataset (100%)"]
+    subgraph Dataset["Полный набор данных (100%)"]
         direction LR
-        TR["Training Set (70%)"]
-        VA["Validation Set (15%)"]
-        TE["Test Set (15%)"]
+        TR["Обучающая выборка (70%)"]
+        VA["Валидационная выборка (15%)"]
+        TE["Тестовая выборка (15%)"]
     end
 
-    TR -->|Train model| M[Model]
-    M -->|Tune hyperparameters| VA
-    VA -->|Final evaluation| TE
+    TR -->|Обучить модель| M[Модель]
+    M -->|Настроить гиперпараметры| VA
+    VA -->|Финальная оценка| TE
 ```
 
-| Split | Purpose | When used | Typical size |
-|-------|---------|-----------|-------------|
-| Training | Model learns from this data | During training | 60-80% |
-| Validation | Tune hyperparameters, compare models | After each training run | 10-20% |
-| Test | Final unbiased performance estimate | Once, at the very end | 10-20% |
+| Выборка | Назначение | Когда используется | Типичный размер |
+|---------|------------|--------------------|-----------------|
+| Обучающая | Модель учится на этих данных | Во время обучения | 60-80% |
+| Валидационная | Настройка гиперпараметров, сравнение моделей | После каждого запуска обучения | 10-20% |
+| Тестовая | Финальная несмещенная оценка качества | Один раз, в самом конце | 10-20% |
 
-The test set is sacred. You look at it exactly once. If you keep adjusting your model based on test performance, you are effectively training on the test set and your reported numbers are meaningless.
+Тестовая выборка неприкосновенна. Вы смотрите на нее ровно один раз. Если вы продолжаете подстраивать модель на основе тестового качества, вы фактически обучаетесь на тестовой выборке, и ваши опубликованные числа бессмысленны.
 
-For small datasets, use k-fold cross-validation: split data into k parts, train on k-1 parts, validate on the remaining part, rotate, and average results.
+Для маленьких наборов данных используйте k-fold cross-validation: разделите данные на k частей, обучайте на k-1 частях, валидируйте на оставшейся части, вращайте роли частей и усредняйте результаты.
 
-### Overfitting vs Underfitting
+### Переобучение и недообучение
 
 ```mermaid
 flowchart LR
-    subgraph UF["Underfitting"]
-        U1["Model too simple"]
-        U2["High bias"]
-        U3["Misses patterns"]
+    subgraph UF["Недообучение"]
+        U1["Модель слишком простая"]
+        U2["Высокое смещение"]
+        U3["Пропускает закономерности"]
     end
 
-    subgraph GF["Good Fit"]
-        G1["Right complexity"]
-        G2["Balanced"]
-        G3["Generalizes well"]
+    subgraph GF["Хорошее соответствие"]
+        G1["Правильная сложность"]
+        G2["Сбалансирована"]
+        G3["Хорошо обобщает"]
     end
 
-    subgraph OF["Overfitting"]
-        O1["Model too complex"]
-        O2["High variance"]
-        O3["Memorizes noise"]
+    subgraph OF["Переобучение"]
+        O1["Модель слишком сложная"]
+        O2["Высокая дисперсия"]
+        O3["Запоминает шум"]
     end
 
-    UF -->|Increase complexity| GF
-    GF -->|Too much complexity| OF
+    UF -->|Увеличить сложность| GF
+    GF -->|Слишком большая сложность| OF
 ```
 
-**Underfitting**: The model is too simple to capture the patterns in the data. A straight line trying to fit a curved relationship. Training error is high. Test error is high.
+**Недообучение (underfitting)**: модель слишком проста, чтобы уловить закономерности в данных. Например, прямая линия пытается описать криволинейную зависимость. Ошибка на обучении высокая. Ошибка на тесте высокая.
 
-**Overfitting**: The model is too complex and memorizes the training data, including its noise. A wiggly curve that passes through every training point but fails on new data. Training error is low. Test error is high.
+**Переобучение (overfitting)**: модель слишком сложна и запоминает обучающие данные, включая шум. Извилистая кривая проходит через каждую обучающую точку, но проваливается на новых данных. Ошибка на обучении низкая. Ошибка на тесте высокая.
 
-**Good fit**: The model captures real patterns without memorizing noise. Training error and test error are both reasonably low.
+**Хорошее соответствие**: модель улавливает реальные закономерности, не запоминая шум. Ошибка на обучении и тесте достаточно низкая.
 
-Signs of overfitting:
-- Training accuracy is much higher than validation accuracy
-- The model performs well on training data but poorly on new data
-- Adding more training data improves performance (the model was memorizing, not learning)
+Признаки переобучения:
+- Accuracy на обучении намного выше, чем accuracy на валидации
+- Модель хорошо работает на обучающих данных, но плохо на новых
+- Добавление обучающих данных улучшает качество (модель запоминала, а не училась)
 
-Fixes for overfitting:
-- Get more training data
-- Reduce model complexity (fewer parameters, simpler architecture)
-- Regularization (add a penalty for large weights)
-- Dropout (randomly zero out neurons during training)
-- Early stopping (stop training when validation error starts increasing)
+Как исправлять переобучение:
+- Получить больше обучающих данных
+- Уменьшить сложность модели (меньше параметров, более простая архитектура)
+- Регуляризация (добавить штраф за большие веса)
+- Dropout (случайно занулять нейроны во время обучения)
+- Early stopping (остановить обучение, когда валидационная ошибка начинает расти)
 
-Fixes for underfitting:
-- Use a more complex model
-- Add more features
-- Reduce regularization
-- Train longer
+Как исправлять недообучение:
+- Использовать более сложную модель
+- Добавить больше признаков
+- Ослабить регуляризацию
+- Обучать дольше
 
-### The Bias-Variance Tradeoff
+### Компромисс смещения и дисперсии
 
-This is the mathematical framework behind overfitting and underfitting.
+Это математическая рамка, стоящая за переобучением и недообучением.
 
-**Bias**: Error from wrong assumptions in the model. A linear model has high bias when the true relationship is nonlinear. High bias leads to underfitting.
+**Смещение (bias)**: ошибка из-за неверных предположений модели. Линейная модель имеет высокое смещение, когда истинная зависимость нелинейна. Высокое смещение ведет к недообучению.
 
-**Variance**: Error from sensitivity to small fluctuations in the training data. A model with high variance gives very different predictions when trained on different subsets of data. High variance leads to overfitting.
+**Дисперсия (variance)**: ошибка из-за чувствительности к небольшим колебаниям в обучающих данных. Модель с высокой дисперсией дает очень разные предсказания при обучении на разных поднаборах данных. Высокая дисперсия ведет к переобучению.
 
-| Model complexity | Bias | Variance | Result |
-|-----------------|------|----------|--------|
-| Too low (linear model for curved data) | High | Low | Underfitting |
-| Just right | Medium | Medium | Good generalization |
-| Too high (degree-20 polynomial for 10 points) | Low | High | Overfitting |
+| Сложность модели | Смещение | Дисперсия | Результат |
+|------------------|----------|-----------|-----------|
+| Слишком низкая (линейная модель для криволинейных данных) | Высокое | Низкая | Недообучение |
+| В самый раз | Среднее | Средняя | Хорошее обобщение |
+| Слишком высокая (полином 20-й степени для 10 точек) | Низкое | Высокая | Переобучение |
 
-Total error = Bias^2 + Variance + Irreducible noise
+Полная ошибка = Смещение^2 + Дисперсия + Неустранимый шум
 
-You cannot reduce irreducible noise (it is randomness in the data itself). You want to find the sweet spot where bias^2 + variance is minimized.
+Неустранимый шум уменьшить нельзя (это случайность в самих данных). Нужно найти «золотую середину», где сумма смещения^2 и дисперсии минимальна.
 
-### No Free Lunch Theorem
+### Теорема «бесплатных обедов не бывает»
 
-There is no single algorithm that works best for every problem. An algorithm that performs well on one class of problems will perform poorly on another. This is why data scientists try multiple algorithms and compare results.
+Не существует одного алгоритма, который лучше всего работает для всех задач. Алгоритм, хорошо работающий на одном классе задач, будет плохо работать на другом. Поэтому специалисты по данным пробуют несколько алгоритмов и сравнивают результаты.
 
-In practice, the choice depends on:
-- How much data you have
-- How many features there are
-- Whether the relationship is linear or nonlinear
-- Whether you need interpretability
-- How much compute you can afford
+На практике выбор зависит от:
+- Сколько у вас данных
+- Сколько есть признаков
+- Линейная зависимость или нелинейная
+- Нужна ли интерпретируемость
+- Сколько вычислений вы можете себе позволить
 
-### When NOT to Use Machine Learning
+### Когда НЕ стоит использовать машинное обучение
 
-ML is powerful but not always the right tool. Before reaching for a model, ask whether you actually need one.
+ML мощен, но не всегда является правильным инструментом. Перед тем как брать модель, спросите себя, действительно ли она нужна.
 
-**Do not use ML when:**
+**Не используйте ML, когда:**
 
-- **Rules are simple and well-defined.** Tax calculation, sorting algorithms, unit conversions. If you can write the logic in a few if-statements, a model adds complexity for no benefit.
-- **You have no data or very little data.** ML needs examples to learn from. With 10 data points, you cannot train anything meaningful. Collect data first.
-- **The cost of being wrong is catastrophic and you need guaranteed correctness.** Medical dosage calculation, nuclear reactor control, cryptographic verification. ML models are probabilistic. They will sometimes be wrong. If "sometimes wrong" is unacceptable, use deterministic methods.
-- **A lookup table or heuristic solves the problem.** If a simple threshold or table covers 99% of cases, adding ML increases maintenance cost without meaningful improvement.
-- **You cannot explain the decision and explainability is required.** Regulated industries (lending, insurance, criminal justice) sometimes require that every decision be fully explainable. Some ML models are interpretable (linear regression, small decision trees). Most are not.
-- **The problem changes faster than you can retrain.** If the rules change daily and retraining takes a week, the model is always stale.
+- **Правила просты и хорошо определены.** Расчет налогов, алгоритмы сортировки, преобразования единиц измерения. Если логику можно записать несколькими `if`, модель добавит сложность без пользы.
+- **У вас нет данных или их очень мало.** ML нужны примеры, на которых можно учиться. На 10 точках данных нельзя обучить ничего содержательного. Сначала соберите данные.
+- **Цена ошибки катастрофична, и нужна гарантированная корректность.** Расчет медицинской дозировки, управление ядерным реактором, криптографическая проверка. ML-модели вероятностны. Иногда они ошибаются. Если «иногда ошибается» неприемлемо, используйте детерминированные методы.
+- **Таблица соответствий или эвристика решает задачу.** Если простой порог или таблица покрывает 99% случаев, добавление ML увеличит стоимость поддержки без значимого улучшения.
+- **Вы не можете объяснить решение, а объяснимость обязательна.** В регулируемых отраслях (кредитование, страхование, уголовное правосудие) иногда требуется, чтобы каждое решение было полностью объяснимым. Некоторые ML-модели интерпретируемы (линейная регрессия, небольшие деревья решений). Большинство — нет.
+- **Задача меняется быстрее, чем вы можете переобучать модель.** Если правила меняются ежедневно, а переобучение занимает неделю, модель всегда устаревшая.
 
-Use this decision flowchart:
+Используйте эту блок-схему принятия решения:
 
 ```mermaid
 flowchart TD
-    A["Do you have data?"] -->|No| B["Collect data first or use rules"]
-    A -->|Yes| C["Can you write the rules explicitly?"]
-    C -->|"Yes, and they are simple"| D["Use rules. Skip ML."]
-    C -->|"No, or they are too complex"| E["Is the cost of errors acceptable?"]
-    E -->|"No, need guaranteed correctness"| F["Use deterministic methods"]
-    E -->|Yes| G["Do you need explainability?"]
-    G -->|"Yes, strictly"| H["Use interpretable models only"]
-    G -->|"No, or partially"| I["Use ML"]
-    I --> J["Do you have enough labeled data?"]
-    J -->|Yes| K["Supervised learning"]
-    J -->|"Some labels"| L["Semi-supervised learning"]
-    J -->|"No labels"| M["Unsupervised or self-supervised"]
+    A["У вас есть данные?"] -->|Нет| B["Сначала соберите данные или используйте правила"]
+    A -->|Да| C["Можно ли явно записать правила?"]
+    C -->|"Да, и они простые"| D["Используйте правила. ML не нужен."]
+    C -->|"Нет, или они слишком сложные"| E["Допустима ли цена ошибок?"]
+    E -->|"Нет, нужна гарантированная корректность"| F["Используйте детерминированные методы"]
+    E -->|Да| G["Нужна ли объяснимость?"]
+    G -->|"Да, строго"| H["Используйте только интерпретируемые модели"]
+    G -->|"Нет, или частично"| I["Используйте ML"]
+    I --> J["Достаточно ли размеченных данных?"]
+    J -->|Да| K["Обучение с учителем"]
+    J -->|"Есть часть меток"| L["Полуобучение"]
+    J -->|"Меток нет"| M["Обучение без учителя или self-supervised"]
 ```
 
-## Build It
+## Соберите это
 
-The code in `code/ml_intro.py` implements a nearest centroid classifier from scratch, the simplest possible ML algorithm. It demonstrates the core idea: learn from data, then predict on new data.
+Код в `code/ml_intro.py` реализует с нуля классификатор ближайшего центроида, самый простой возможный ML-алгоритм. Он показывает главную идею: учиться на данных, затем предсказывать на новых данных.
 
-### Step 1: Nearest Centroid Classifier from Scratch
+### Шаг 1: классификатор ближайшего центроида с нуля
 
-The nearest centroid classifier computes the center (mean) of each class in the training data. To predict, it assigns each new point to the class whose center is closest.
+Классификатор ближайшего центроида вычисляет центр (среднее) каждого класса в обучающих данных. Для предсказания он относит каждую новую точку к классу, центр которого ближе всего.
 
 ```python
 class NearestCentroid:
@@ -312,11 +312,11 @@ class NearestCentroid:
         return self.classes[distances.argmin(axis=0)]
 ```
 
-That is the entire algorithm. Fit computes two means. Predict computes distances. No gradient descent, no iteration, no hyperparameters.
+Это весь алгоритм. `fit` вычисляет два средних. `predict` вычисляет расстояния. Никакого градиентного спуска, никаких итераций, никаких гиперпараметров.
 
-### Step 2: Train on Synthetic Data
+### Шаг 2: обучение на синтетических данных
 
-We generate a 2D classification dataset with two classes that overlap slightly. The centroid classifier draws a linear decision boundary between the class centers.
+Мы генерируем двумерный классификационный набор данных с двумя классами, которые слегка перекрываются. Центроидный классификатор проводит линейную границу решений между центрами классов.
 
 ```python
 rng = np.random.RandomState(42)
@@ -326,40 +326,40 @@ X = np.vstack([X_class0, X_class1])
 y = np.array([0] * 100 + [1] * 100)
 ```
 
-### Step 3: Compare Against a Baseline
+### Шаг 3: сравнение с базовой моделью
 
-Every ML model should be compared against a trivial baseline. Here, the baseline predicts a random class. If your ML model does not beat random guessing, something is wrong.
+Каждую ML-модель нужно сравнивать с тривиальной базовой моделью. Здесь базовая модель предсказывает случайный класс. Если ваша ML-модель не превосходит случайное угадывание, что-то не так.
 
 ```python
 baseline_preds = rng.choice([0, 1], size=len(y_test))
 baseline_acc = np.mean(baseline_preds == y_test)
 ```
 
-The centroid classifier should get around 90%+ accuracy on this clean dataset. Random baseline gets around 50%.
+На этом чистом наборе данных центроидный классификатор должен давать accuracy около 90% и выше. Случайная базовая модель дает около 50%.
 
-### Why This Matters
+### Почему это важно
 
-The nearest centroid classifier is trivially simple. It has no hyperparameters, no iteration, no gradient descent. Yet it captures the fundamental ML pattern:
+Классификатор ближайшего центроида предельно прост. У него нет гиперпараметров, итераций и градиентного спуска. Но он отражает фундаментальный ML-шаблон:
 
-1. **Learn** a representation from training data (the centroids)
-2. **Predict** on new data using that representation (nearest distance)
-3. **Evaluate** against a baseline (random guessing)
+1. **Выучить** представление по обучающим данным (центроиды)
+2. **Предсказать** на новых данных с помощью этого представления (ближайшее расстояние)
+3. **Оценить** относительно базовой модели (случайного угадывания)
 
-Every ML algorithm, from logistic regression to transformers, follows this same three-step pattern. The representation gets more complex, but the workflow stays the same.
+Каждый ML-алгоритм, от логистической регрессии до трансформеров, следует этому трехшаговому шаблону. Представление становится сложнее, но рабочий процесс остается тем же.
 
-### Step 4: What the Centroid Classifier Cannot Do
+### Шаг 4: чего не умеет центроидный классификатор
 
-The nearest centroid classifier assumes each class forms a single blob. It draws linear decision boundaries. It fails when:
+Классификатор ближайшего центроида предполагает, что каждый класс образует одно «пятно». Он проводит линейные границы решений. Он ломается, когда:
 
-- Classes have multiple clusters (e.g., the digit "1" can be written in several different ways)
-- The decision boundary is nonlinear (e.g., one class wraps around another)
-- Features have very different scales (distance is dominated by the largest-scale feature)
+- Классы имеют несколько кластеров (например, цифру «1» можно написать несколькими разными способами)
+- Граница решений нелинейна (например, один класс окружает другой)
+- Признаки имеют очень разные масштабы (расстояние начинает определяться признаком с самым большим масштабом)
 
-These limitations motivate every other algorithm you will learn. K-nearest neighbors handles multiple clusters. Decision trees handle nonlinear boundaries. Feature scaling fixes the scale problem. Each lesson builds on the limitations of the previous one.
+Эти ограничения мотивируют все остальные алгоритмы, которые вы будете изучать. K ближайших соседей справляется с несколькими кластерами. Деревья решений справляются с нелинейными границами. Масштабирование признаков исправляет проблему масштаба. Каждый урок строится на ограничениях предыдущего.
 
-## Use It
+## Используйте это
 
-sklearn provides `NearestCentroid` and synthetic data generators:
+В sklearn есть `NearestCentroid` и генераторы синтетических данных:
 
 ```python
 from sklearn.neighbors import NearestCentroid
@@ -377,35 +377,35 @@ clf.fit(X_train, y_train)
 print(f"Accuracy: {clf.score(X_test, y_test):.3f}")
 ```
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/prompt-ml-problem-framer.md` -- a prompt that turns vague business problems into concrete ML tasks. Give it a problem description ("we want to reduce churn" or "predict demand for next quarter") and it identifies the learning type, defines the prediction target, lists candidate features, picks a success metric, establishes a baseline, and flags pitfalls like data leakage or class imbalance. Use it at the start of any ML project to avoid building the wrong thing.
+Этот урок создает `outputs/prompt-ml-problem-framer.md` — промпт, который превращает размытые бизнес-задачи в конкретные ML-задачи. Дайте ему описание проблемы («мы хотим снизить churn» или «предсказать спрос на следующий квартал»), и он определит тип обучения, задаст целевую переменную, перечислит возможные признаки, выберет метрику успеха, установит базовую модель и отметит риски вроде утечки данных или дисбаланса классов. Используйте его в начале любого ML-проекта, чтобы не строить не то, что нужно.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Model | "The AI" | A mathematical function with learnable parameters that maps inputs to outputs |
-| Training | "Teaching the AI" | Running an optimization algorithm to adjust model parameters so predictions match known outputs |
-| Feature | "An input column" | A measurable property of the data that the model uses to make predictions |
-| Label | "The answer" | The known output for a training example, used to compute the error signal |
-| Hyperparameter | "A setting you tweak" | A parameter set before training that controls the learning process (learning rate, number of layers) |
-| Loss function | "How wrong the model is" | A function that measures the gap between predicted and actual outputs, which training tries to minimize |
-| Overfitting | "It memorized the test" | The model learned training-specific noise instead of general patterns, so it fails on new data |
-| Underfitting | "It didn't learn anything" | The model is too simple to capture the real patterns in the data |
-| Generalization | "It works on new data" | The model's ability to make accurate predictions on data it was not trained on |
-| Cross-validation | "Testing on different chunks" | Repeatedly splitting data into train/test folds and averaging results, giving a more robust performance estimate |
-| Regularization | "Keeping weights small" | Adding a penalty term to the loss function that discourages overly complex models |
-| Data drift | "The world changed" | The statistical distribution of incoming data shifts over time, degrading model performance |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Модель | «ИИ» | Математическая функция с обучаемыми параметрами, отображающая входы в выходы |
+| Обучение | «Учить ИИ» | Запуск алгоритма оптимизации для настройки параметров модели так, чтобы предсказания совпадали с известными выходами |
+| Признак | «Входной столбец» | Измеримое свойство данных, которое модель использует для предсказаний |
+| Метка | «Ответ» | Известный выход для обучающего примера, используемый для вычисления сигнала ошибки |
+| Гиперпараметр | «Настройка, которую подкручивают» | Параметр, заданный до обучения и управляющий процессом обучения (learning rate, число слоев) |
+| Функция потерь | «Насколько модель ошибается» | Функция, измеряющая разрыв между предсказанными и фактическими выходами; обучение пытается ее минимизировать |
+| Переобучение | «Она запомнила тест» | Модель выучила шум, специфичный для обучения, вместо общих закономерностей, поэтому проваливается на новых данных |
+| Недообучение | «Она ничего не выучила» | Модель слишком проста, чтобы уловить реальные закономерности в данных |
+| Обобщение | «Работает на новых данных» | Способность модели делать точные предсказания на данных, на которых она не обучалась |
+| Кросс-валидация | «Тестирование на разных кусках» | Повторное разбиение данных на train/test-фолды с усреднением результатов, дающее более устойчивую оценку качества |
+| Регуляризация | «Держать веса маленькими» | Добавление штрафного члена к функции потерь, который препятствует чрезмерной сложности модели |
+| Data drift | «Мир изменился» | Статистическое распределение входящих данных со временем смещается, ухудшая качество модели |
 
-## Exercises
+## Упражнения
 
-1. Take any dataset (e.g., Iris, Titanic). Split it 70/15/15 into train/validation/test. Explain why you should not tune hyperparameters on the test set.
-2. List three real-world problems. For each one, identify whether it is classification, regression, or clustering, and whether it is supervised or unsupervised.
-3. A model gets 99% accuracy on training data but 60% on test data. Diagnose the problem and list three things you would try to fix it.
+1. Возьмите любой набор данных (например, Iris, Titanic). Разделите его в пропорции 70/15/15 на train/validation/test. Объясните, почему нельзя настраивать гиперпараметры на тестовой выборке.
+2. Перечислите три реальные задачи. Для каждой определите, является ли она классификацией, регрессией или кластеризацией, а также обучением с учителем или без учителя.
+3. Модель получает 99% accuracy на обучающих данных, но 60% на тестовых. Диагностируйте проблему и перечислите три действия, которые вы попробовали бы для исправления.
 
-## Further Reading
+## Дополнительное чтение
 
-- [An Introduction to Statistical Learning](https://www.statlearning.com/) - free textbook covering all classical ML methods with practical examples
-- [Google's Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course) - concise visual introduction to ML concepts
-- [Scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) - the practical reference for implementing ML in Python
+- [An Introduction to Statistical Learning](https://www.statlearning.com/) — бесплатный учебник по классическим методам ML с практическими примерами
+- [Google's Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course) — краткое визуальное введение в концепции ML
+- [Scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — практический справочник по реализации ML в Python

@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "For matrix multiplication (m x n) @ (n x p), what must be true about the dimensions?",
-      "options": ["m must equal p", "The inner dimensions n must match", "All dimensions must be equal", "m must be greater than p"],
+      "question": "Для умножения матриц (m x n) @ (n x p), что должно выполняться для размерностей?",
+      "options": [
+        "m должно быть равно p",
+        "Внутренние размерности n должны совпадать",
+        "Все размерности должны быть одинаковыми",
+        "m должно быть больше p"
+      ],
       "correct": 1,
-      "explanation": "Matrix multiplication requires the number of columns in the first matrix (n) to equal the number of rows in the second matrix (n). The result has shape (m x p)."
+      "explanation": "Умножение матриц требует, чтобы число столбцов первой матрицы (n) совпадало с числом строк второй матрицы (n). Результирующая матрица имеет размерность (m x p)."
     },
     {
       "stage": "pre",
-      "question": "What is the identity matrix?",
-      "options": ["A matrix of all ones", "A square matrix with ones on the diagonal and zeros elsewhere that acts as the multiplicative identity", "A matrix where every element is unique", "The transpose of any given matrix"],
+      "question": "Что такое единичная матрица?",
+      "options": [
+        "Матрица, состоящая только из единиц",
+        "Квадратная матрица с единицами на главной диагонали и нулями в остальных элементах, выступающая мультипликативной единицей",
+        "Матрица, в которой каждый элемент уникален",
+        "Транспонированная версия любой матрицы"
+      ],
       "correct": 1,
-      "explanation": "The identity matrix I has ones on the diagonal and zeros everywhere else. Multiplying any matrix by I returns the original matrix unchanged, like multiplying a number by 1."
+      "explanation": "Единичная матрица I содержит единицы на главной диагонали и нули во всех остальных позициях. Умножение любой матрицы на I возвращает исходную матрицу без изменений — так же, как умножение числа на 1."
     },
     {
       "stage": "post",
-      "question": "What is the key difference between element-wise multiplication and matrix multiplication?",
-      "options": ["Element-wise is faster while matrix multiplication is more accurate", "Element-wise multiplies matching positions (same shape required), matrix multiplication takes dot products of rows and columns (inner dimensions must match)", "They produce the same result but use different notation", "Element-wise only works on vectors while matrix multiplication works on matrices"],
+      "question": "В чём ключевое различие между поэлементным умножением и умножением матриц?",
+      "options": [
+        "Поэлементное умножение быстрее, а умножение матриц точнее",
+        "Поэлементное умножение перемножает соответствующие элементы (требуются одинаковые размерности), а умножение матриц вычисляет скалярные произведения строк и столбцов (внутренние размерности должны совпадать)",
+        "Они дают одинаковый результат, но используют разную нотацию",
+        "Поэлементное умножение работает только для векторов, а умножение матриц — только для матриц"
+      ],
       "correct": 1,
-      "explanation": "Element-wise (Hadamard) product multiplies corresponding elements and requires identical shapes. Matrix multiplication computes dot products between rows and columns with the rule (m,n)@(n,p)=(m,p)."
+      "explanation": "Поэлементное (Hadamard) умножение перемножает соответствующие элементы и требует одинаковых размерностей. Умножение матриц вычисляет скалярные произведения строк и столбцов по правилу (m,n)@(n,p)=(m,p)."
     },
     {
       "stage": "post",
-      "question": "In the expression 'output = relu(W @ x + b)', what role does broadcasting play?",
-      "options": ["It broadcasts the computation across multiple GPUs", "It automatically stretches the bias vector b to match the shape of W @ x so they can be added", "It converts the data types of W and x to match", "It repeats the relu activation across all elements"],
+      "question": "Какую роль играет broadcasting в выражении 'output = relu(W @ x + b)'?",
+      "options": [
+        "Он распределяет вычисления между несколькими GPU",
+        "Он автоматически растягивает вектор bias b до размерности W @ x, чтобы их можно было сложить",
+        "Он приводит типы данных W и x к одному формату",
+        "Он повторяет активацию relu для всех элементов"
+      ],
       "correct": 1,
-      "explanation": "W @ x produces a column vector, and b is also a vector. Broadcasting stretches b across the batch dimension if needed, allowing element-wise addition without explicit shape matching."
+      "explanation": "W @ x создаёт вектор-столбец, а b также является вектором. Broadcasting при необходимости растягивает b вдоль batch-размерности, позволяя выполнить поэлементное сложение без явного согласования размерностей."
     },
     {
       "stage": "post",
-      "question": "What does a determinant of zero for a matrix indicate?",
-      "options": ["The matrix has all zero entries", "The matrix is singular: it crushes at least one dimension, cannot be inverted, and has no unique solution", "The matrix is the identity matrix", "The matrix performs a rotation"],
+      "question": "Что означает нулевой определитель матрицы?",
+      "options": [
+        "Матрица состоит только из нулей",
+        "Матрица вырождена: она схлопывает хотя бы одно измерение, не имеет обратной матрицы и не даёт единственного решения",
+        "Матрица является единичной",
+        "Матрица выполняет вращение"
+      ],
       "correct": 1,
-      "explanation": "A zero determinant means the transformation collapses space by at least one dimension (e.g., mapping 2D to a line). The matrix has no inverse, and linear systems using it have either no solution or infinitely many."
+      "explanation": "Нулевой определитель означает, что преобразование схлопывает пространство хотя бы по одному измерению (например, отображает плоскость в линию). Такая матрица не имеет обратной, а соответствующая система линейных уравнений либо не имеет решений, либо имеет бесконечно много решений."
     }
   ]
 }
