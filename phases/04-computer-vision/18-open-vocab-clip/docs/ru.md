@@ -1,30 +1,30 @@
-# Open-Vocabulary Vision — CLIP
+# Зрение с открытым словарем — CLIP
 
-> Train an image encoder and a text encoder together so that matching (image, caption) pairs land at the same point in a shared space. That is the whole trick.
+> Обучите энкодер изображений и энкодер текста вместе так, чтобы соответствующие пары (изображение, подпись) попадали в одну и ту же точку общего пространства. В этом весь прием.
 
-**Type:** Build + Use
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 14 (ViT), Phase 4 Lesson 17 (Self-Supervised)
-**Time:** ~45 minutes
+**Тип:** Сборка + использование
+**Языки:** Python
+**Предварительные требования:** Фаза 4 Урок 14 (ViT), Фаза 4 Урок 17 (самообучение)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain CLIP's two-tower architecture and contrastive training objective
-- Use a pretrained CLIP (or SigLIP) for zero-shot classification without any task-specific training
-- Implement zero-shot classification from scratch: encode class prompts, compute cosine similarity, take argmax
-- Distinguish CLIP, SigLIP, OpenCLIP, and LLaVA/LLaMA-vision models — what each is for in 2026
+- Объяснить двухбашенную архитектуру CLIP и контрастивную целевую функцию обучения
+- Использовать предобученный CLIP (или SigLIP) для zero-shot классификации без какого-либо обучения под конкретную задачу
+- Реализовать zero-shot классификацию с нуля: закодировать промпты классов, вычислить косинусное сходство, взять argmax
+- Различать модели CLIP, SigLIP, OpenCLIP и LLaVA/LLaMA-vision — для чего каждая нужна в 2026 году
 
-## The Problem
+## Проблема
 
-Traditional classifiers are closed-vocabulary: a 1000-class ImageNet model can only predict 1000 labels. Every new category requires labelled data and a retrained head.
+Традиционные классификаторы имеют закрытый словарь: модель ImageNet на 1000 классов может предсказывать только 1000 меток. Для каждой новой категории нужны размеченные данные и заново обученная голова.
 
-CLIP (Radford et al., OpenAI 2021) showed that training on 400M (image, caption) pairs scraped from the web produces a model that can classify into any set of categories at inference, described purely in natural language. You give it a new class by writing a sentence.
+CLIP (Radford et al., OpenAI 2021) показал, что обучение на 400M пар (изображение, подпись), собранных из веба, дает модель, которая во время инференса может классифицировать в любой набор категорий, описанных исключительно естественным языком. Вы задаете новый класс, написав предложение.
 
-That capability — zero-shot transfer — is why every modern vision system starts with a CLIP-family checkpoint. Detection (Grounding DINO, OWL-ViT), segmentation (CLIPSeg, SAM), retrieval, content moderation, VLMs, and text-to-image generation all build on CLIP-style joint embeddings.
+Именно эта возможность — zero-shot перенос — причина, по которой каждая современная система компьютерного зрения начинается с чекпоинта семейства CLIP. Детекция (Grounding DINO, OWL-ViT), сегментация (CLIPSeg, SAM), поиск, модерация контента, VLM и генерация текста в изображение — все это строится на совместных эмбеддингах в стиле CLIP.
 
-## The Concept
+## Концепция
 
-### Two towers
+### Две башни
 
 ```mermaid
 flowchart LR
@@ -38,11 +38,11 @@ flowchart LR
     style SIM fill:#dcfce7,stroke:#16a34a
 ```
 
-Both encoders end with a linear projection to the same embedding dimension (512 for CLIP-B/32, 1024 for CLIP-L/14). L2-normalise and compute cosine similarity.
+Оба энкодера завершаются линейной проекцией в одну и ту же размерность эмбеддинга (512 для CLIP-B/32, 1024 для CLIP-L/14). Выполните L2-нормализацию и вычислите косинусное сходство.
 
-### The objective
+### Целевая функция
 
-Given a batch of N (image, caption) pairs, build an NxN similarity matrix. Train both encoders so the diagonal (matching pairs) has high similarity and off-diagonals (non-matching) have low similarity.
+Для батча из N пар (изображение, подпись) постройте матрицу сходства NxN. Обучайте оба энкодера так, чтобы диагональ (соответствующие пары) имела высокое сходство, а внедиагональные элементы (несоответствующие пары) имели низкое сходство.
 
 ```
 sim_matrix = image_embeddings @ text_embeddings.T / tau
@@ -52,47 +52,47 @@ loss_t2i = cross_entropy(sim_matrix.T,     targets=arange(N))
 loss = (loss_i2t + loss_t2i) / 2
 ```
 
-Symmetric because both image-to-text and text-to-image retrieval should work. `tau` (temperature) is typically learned as a scalar parameter, initialised to 0.07.
+Симметричная, потому что должны работать и поиск изображения по тексту, и поиск текста по изображению. `tau` (температура) обычно обучается как скалярный параметр, инициализированный значением 0.07.
 
-### SigLIP: a better loss
+### SigLIP: более удачная функция потерь
 
-SigLIP (Zhai et al., 2023) replaced the softmax with per-pair sigmoid:
+SigLIP (Zhai et al., 2023) заменил softmax на sigmoid для каждой пары:
 
 ```
 loss = mean over pairs of log(1 + exp(-y_ij * sim_ij))
 y_ij = +1 if matching, -1 otherwise
 ```
 
-Per-pair loss removes the batch-level normalisation that CLIP requires. SigLIP trains better at small batch sizes and matches or exceeds CLIP at equal data.
+Попарная функция потерь убирает нормализацию на уровне батча, которая требуется CLIP. SigLIP лучше обучается при небольших размерах батча и при одинаковом объеме данных соответствует CLIP или превосходит его.
 
-### Zero-shot classification
+### Zero-shot классификация
 
-Given a trained CLIP:
+Имея обученный CLIP:
 
-1. For each class, compose a prompt: "a photo of a {class}".
-2. Encode all class prompts with the text encoder -> `T` shape (C, d).
-3. Encode the test image -> `I` shape (1, d).
-4. Similarity = `I @ T.T` shape (1, C).
-5. Argmax -> predicted class.
+1. Для каждого класса составьте промпт: "a photo of a {class}".
+2. Закодируйте все промпты классов текстовым энкодером -> `T` формы (C, d).
+3. Закодируйте тестовое изображение -> `I` формы (1, d).
+4. Сходство = `I @ T.T` формы (1, C).
+5. Argmax -> предсказанный класс.
 
-Prompt engineering matters. OpenAI published 80 prompt templates for ImageNet ("a photo of a {}", "a blurry photo of a {}", "a sketch of a {}", ...). Average the embeddings of all templates per class for an extra 1-3% top-1 accuracy.
+Проектирование промптов важно. OpenAI опубликовала 80 шаблонов промптов для ImageNet ("a photo of a {}", "a blurry photo of a {}", "a sketch of a {}", ...). Усреднение эмбеддингов всех шаблонов для каждого класса дает дополнительные 1-3% top-1 accuracy.
 
-### Where CLIP-style models are used in 2026
+### Где модели в стиле CLIP используются в 2026 году
 
-- **Zero-shot classification** — direct use.
-- **Image retrieval** — encode all images once, embed query at inference.
-- **Text-conditioned detection** — Grounding DINO, OWL-ViT wrap a CLIP text tower around a detector.
-- **Text-conditioned segmentation** — CLIPSeg; SAM uses text-prompt inputs via CLIP.
-- **VLMs** — LLaVA, Qwen-VL, InternVL wire a CLIP-family vision encoder into an LLM.
-- **Text-to-image gen** — Stable Diffusion, DALL-E 3 condition on CLIP text embeddings.
+- **Zero-shot классификация** — прямое использование.
+- **Поиск изображений** — закодировать все изображения один раз, встроить запрос во время инференса.
+- **Детекция, обусловленная текстом** — Grounding DINO, OWL-ViT оборачивают текстовую башню CLIP вокруг детектора.
+- **Сегментация, обусловленная текстом** — CLIPSeg; SAM использует текстовые входные промпты через CLIP.
+- **VLM** — LLaVA, Qwen-VL, InternVL подключают визуальный энкодер семейства CLIP к LLM.
+- **Генерация текста в изображение** — Stable Diffusion, DALL-E 3 используют CLIP text embeddings как условие.
 
-Once you have a shared embedding space, every vision+language task becomes a distance computation.
+Когда у вас есть общее пространство эмбеддингов, каждая задача зрение+язык становится вычислением расстояния.
 
-## Build It
+## Соберите это
 
-### Step 1: A tiny two-tower model
+### Шаг 1: Крошечная двухбашенная модель
 
-Real CLIP is ViT + transformer. For this lesson the towers are small MLPs over pre-extracted features so the training signal is visible on CPU.
+Настоящий CLIP — это ViT + transformer. В этом уроке башни — небольшие MLP поверх заранее извлеченных признаков, чтобы обучающий сигнал был виден на CPU.
 
 ```python
 import torch
@@ -113,9 +113,9 @@ class TwoTower(nn.Module):
         return i, t, self.logit_scale.exp()
 ```
 
-Two projections, shared-dim output, learned temperature. Same shape as the real CLIP API.
+Две проекции, выход общей размерности, обучаемая температура. Та же форма, что и в настоящем API CLIP.
 
-### Step 2: Contrastive loss
+### Шаг 2: Контрастивная функция потерь
 
 ```python
 def clip_loss(image_emb, text_emb, logit_scale):
@@ -127,9 +127,9 @@ def clip_loss(image_emb, text_emb, logit_scale):
     return (l_i + l_t) / 2
 ```
 
-Symmetric. Higher logit_scale = sharper softmax = more confident but risk of instability.
+Симметричная. Более высокий logit_scale = более резкий softmax = больше уверенности, но выше риск нестабильности.
 
-### Step 3: Zero-shot classifier
+### Шаг 3: Zero-shot классификатор
 
 ```python
 @torch.no_grad()
@@ -145,9 +145,9 @@ def zero_shot_classify(model, image_feats, class_text_feats, class_names):
     return [class_names[p] for p in pred.tolist()]
 ```
 
-One line per step. This is the exact zero-shot procedure used with a production CLIP checkpoint.
+Одна строка на каждый шаг. Это точная zero-shot процедура, используемая с production-чекпоинтом CLIP.
 
-### Step 4: Sanity check
+### Шаг 4: Sanity check
 
 ```python
 torch.manual_seed(0)
@@ -160,11 +160,11 @@ loss = clip_loss(i, t, scale)
 print(f"batch size: {i.size(0)}   loss: {loss.item():.3f}")
 ```
 
-Loss should be close to `log(N) = log(8) = 2.08` for a randomly initialised model — the symmetric cross-entropy target when no structure is learned yet.
+Функция потерь должна быть близка к `log(N) = log(8) = 2.08` для случайно инициализированной модели — симметричной cross-entropy цели, когда структура еще не выучена.
 
-## Use It
+## Используйте это
 
-OpenCLIP is the community default in 2026:
+OpenCLIP — стандарт сообщества в 2026 году:
 
 ```python
 import open_clip
@@ -187,37 +187,37 @@ with torch.no_grad():
 print(probs)
 ```
 
-SigLIP is newer, trains better at small scales, and is preferred for new work: `google/siglip-base-patch16-224`. Hugging Face ships both.
+SigLIP новее, лучше обучается на малых масштабах и предпочтителен для новой работы: `google/siglip-base-patch16-224`. Hugging Face поставляет оба.
 
-## Ship It
+## Отправьте в работу
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-zero-shot-class-picker.md` — a prompt that designs class templates for zero-shot CLIP given a list of classes and a domain.
-- `outputs/skill-image-text-retriever.md` — a skill that builds an image embedding index with any CLIP checkpoint, supports query-by-text and query-by-image.
+- `outputs/prompt-zero-shot-class-picker.md` — промпт, который проектирует шаблоны классов для zero-shot CLIP по заданному списку классов и домену.
+- `outputs/skill-image-text-retriever.md` — навык, который строит индекс эмбеддингов изображений с любым чекпоинтом CLIP, поддерживает query-by-text и query-by-image.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Use a pretrained OpenCLIP ViT-B/32 and do zero-shot classification on CIFAR-10 with the 80-template prompt set. Report top-1 accuracy; it should be around 85-90%.
-2. **(Medium)** Compare single-template ("a photo of a {}") vs 80-template averaged embeddings on the same CIFAR-10 task. Quantify the gap and explain why templates help.
-3. **(Hard)** Build a zero-shot image retrieval index: embed 1,000 images with CLIP, build a FAISS index, query with a natural language description. Report retrieval recall@5 for 20 held-out queries you write by hand.
+1. **(Легко)** Используйте предобученный OpenCLIP ViT-B/32 и выполните zero-shot классификацию на CIFAR-10 с набором из 80 шаблонов промптов. Сообщите top-1 accuracy; она должна быть около 85-90%.
+2. **(Средне)** Сравните один шаблон ("a photo of a {}") с усредненными эмбеддингами по 80 шаблонам на той же задаче CIFAR-10. Количественно оцените разрыв и объясните, почему шаблоны помогают.
+3. **(Сложно)** Постройте zero-shot индекс поиска изображений: встроите 1,000 изображений с CLIP, постройте индекс FAISS, выполните запрос описанием на естественном языке. Сообщите retrieval recall@5 для 20 отложенных запросов, которые вы напишете вручную.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Two-tower | "Dual encoder" | Separate image and text encoders ending in a shared-dim projection head |
-| Zero-shot | "No task-specific training" | Classify into classes described only by text at inference; no labels touched |
-| Temperature / logit_scale | "tau" | Learned scalar that scales the similarity matrix before softmax |
-| Prompt template | "A photo of a {}" | Natural-language wrapper around class names; averaging many templates boosts zero-shot accuracy |
-| CLIP | "Image+text model" | The 2021 OpenAI model; vocabulary of the field in 2026 |
-| SigLIP | "Sigmoid CLIP" | Swaps softmax for per-pair sigmoid; trains better at small batches |
-| OpenCLIP | "Open reproduction" | Community-trained CLIP variants on LAION; production default for open-source pipelines |
-| VLM | "Vision-language model" | A CLIP-family encoder plus an LLM, trained to answer questions about images |
+| Two-tower | "Dual encoder" | Отдельные энкодеры изображения и текста, заканчивающиеся проекционной головой общей размерности |
+| Zero-shot | "No task-specific training" | Классификация в классы, описанные только текстом во время инференса; метки не используются |
+| Temperature / logit_scale | "tau" | Обучаемый скаляр, который масштабирует матрицу сходства перед softmax |
+| Prompt template | "A photo of a {}" | Естественно-языковая обертка вокруг имен классов; усреднение многих шаблонов повышает zero-shot точность |
+| CLIP | "Image+text model" | Модель OpenAI 2021 года; словарь предметной области в 2026 году |
+| SigLIP | "Sigmoid CLIP" | Заменяет softmax на попарный sigmoid; лучше обучается на небольших батчах |
+| OpenCLIP | "Open reproduction" | Варианты CLIP, обученные сообществом на LAION; production-стандарт для open-source пайплайнов |
+| VLM | "Vision-language model" | Энкодер семейства CLIP плюс LLM, обученные отвечать на вопросы об изображениях |
 
-## Further Reading
+## Дополнительное чтение
 
 - [CLIP: Learning Transferable Visual Models from Natural Language Supervision (Radford et al., 2021)](https://arxiv.org/abs/2103.00020)
 - [SigLIP: Sigmoid Loss for Language-Image Pre-Training (Zhai et al., 2023)](https://arxiv.org/abs/2303.15343)
-- [OpenCLIP](https://github.com/mlfoundations/open_clip) — the community codebase
-- [DINOv2 vs CLIP vs MAE: a features comparison](https://huggingface.co/blog/dinov2) — HF guide with side-by-side use cases
+- [OpenCLIP](https://github.com/mlfoundations/open_clip) — кодовая база сообщества
+- [DINOv2 vs CLIP vs MAE: a features comparison](https://huggingface.co/blog/dinov2) — руководство HF с вариантами использования side-by-side

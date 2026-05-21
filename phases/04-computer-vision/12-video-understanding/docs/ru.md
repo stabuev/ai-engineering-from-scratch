@@ -1,30 +1,30 @@
-# Video Understanding — Temporal Modeling
+# Понимание видео — временное моделирование
 
-> A video is a sequence of images plus the physics that connects them. Every video model either treats time as an extra axis (3D conv), a sequence to attend over (transformer), or a feature to extract once and pool (2D+pool).
+> Видео — это последовательность изображений плюс физика, которая их связывает. Любая видеомодель либо рассматривает время как дополнительную ось (3D conv), либо как последовательность для механизма внимания (transformer), либо как признак, который нужно один раз извлечь и агрегировать (2D+pool).
 
-**Type:** Learn + Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 03 (CNNs), Phase 4 Lesson 04 (Image Classification)
-**Time:** ~45 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python
+**Предварительные требования:** Phase 4 Lesson 03 (CNNs), Phase 4 Lesson 04 (Image Classification)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish the three main video-modelling approaches (2D+pool, 3D conv, spatio-temporal transformer) and predict their cost and accuracy trade-offs
-- Implement frame sampling, temporal pooling, and a 2D+pool baseline classifier in PyTorch
-- Explain why I3D's "inflated" 3D kernels transfer well from ImageNet weights and what a factorised (2+1)D conv does differently
-- Read the standard action-recognition datasets and metrics: Kinetics-400/600, UCF101, Something-Something V2; top-1 accuracy at the clip and video level
+- Различать три основных подхода к моделированию видео (2D+pool, 3D conv, spatio-temporal transformer) и предсказывать компромиссы между их стоимостью и точностью
+- Реализовать выборку кадров, временной pooling и базовый классификатор 2D+pool в PyTorch
+- Объяснить, почему "раздутые" 3D-ядра I3D хорошо переносятся из весов ImageNet и чем факторизованная (2+1)D-свертка отличается от них
+- Читать стандартные наборы данных и метрики для распознавания действий: Kinetics-400/600, UCF101, Something-Something V2; точность top-1 на уровне клипа и видео
 
-## The Problem
+## Проблема
 
-A 30-second video at 30 fps is 900 images. Naively, video classification is image classification run 900 times followed by some kind of aggregation. That works when the action is visible in almost every frame (sports, cooking, exercise videos) and fails badly when the action is defined by motion itself: "pushing something from left to right" looks like two still objects in every single frame.
+30-секундное видео при 30 fps — это 900 изображений. Наивно видеоклассификация — это классификация изображений, запущенная 900 раз, за которой следует некоторая агрегация. Это работает, когда действие видно почти в каждом кадре (спорт, готовка, видео с упражнениями), и плохо проваливается, когда действие определяется самим движением: "толкать что-то слева направо" выглядит как два неподвижных объекта в каждом отдельном кадре.
 
-The core question for every video architecture is: when does temporal structure get modelled, and how? The answer drives everything else — compute cost, pretraining strategy, whether you can reuse ImageNet weights, what datasets the model trains on.
+Главный вопрос для любой видеоархитектуры: когда моделируется временная структура и как именно? Ответ определяет все остальное — вычислительную стоимость, стратегию предобучения, возможность переиспользовать веса ImageNet, наборы данных, на которых обучается модель.
 
-This lesson is deliberately shorter than the static-image lessons. The core image machinery is already in place, and video understanding is mostly about the temporal story: sampling, modelling, and aggregating.
+Этот урок намеренно короче уроков про статические изображения. Основные механизмы работы с изображениями уже есть, а понимание видео в основном сводится к временной части: выборке, моделированию и агрегации.
 
-## The Concept
+## Концепция
 
-### The three architectural families
+### Три семейства архитектур
 
 ```mermaid
 flowchart LR
@@ -43,85 +43,85 @@ flowchart LR
 
 ### 2D + pool
 
-Take a 2D CNN (ResNet, EfficientNet, ViT). Run it independently on every sampled frame. Average (or max-pool, or attention-pool) the per-frame embeddings. Feed the pooled vector to a classifier.
+Возьмите 2D CNN (ResNet, EfficientNet, ViT). Запустите ее независимо на каждом выбранном кадре. Усредните (или примените max-pool, или attention-pool) эмбеддинги отдельных кадров. Передайте агрегированный вектор в классификатор.
 
-Pros:
-- ImageNet pretraining transfers directly.
-- Simplest to implement.
-- Cheap: T frames * single-image inference cost.
+Плюсы:
+- Предобучение на ImageNet переносится напрямую.
+- Самый простой вариант для реализации.
+- Дешево: T кадров * стоимость инференса одного изображения.
 
-Cons:
-- Cannot model motion. Action = aggregate of appearances.
-- Temporal pooling is order-invariant; "open door" and "close door" look the same.
+Минусы:
+- Не может моделировать движение. Действие = агрегат внешнего вида.
+- Временной pooling инвариантен к порядку; "open door" и "close door" выглядят одинаково.
 
-When to use: appearance-heavy tasks, transfer learning on small video datasets, initial baselines.
+Когда использовать: задачи, сильно зависящие от внешнего вида, transfer learning на небольших видеонаборах данных, начальные baseline-модели.
 
-### 3D convolutions
+### 3D-свертки
 
-Replace 2D (H, W) kernels with 3D (T, H, W) kernels. The network convolves over both space and time. Early family: C3D, I3D, SlowFast.
+Замените 2D-ядра (H, W) на 3D-ядра (T, H, W). Сеть выполняет свертку и по пространству, и по времени. Раннее семейство: C3D, I3D, SlowFast.
 
-I3D trick: take a pretrained 2D ImageNet model, "inflate" each 2D kernel by copying it along a new time axis. A 3x3 2D conv becomes a 3x3x3 3D conv. This gives the 3D model strong pretrained weights instead of training from scratch.
+Трюк I3D: взять предобученную 2D-модель ImageNet и "раздуть" каждое 2D-ядро, скопировав его вдоль новой временной оси. 2D-свертка 3x3 становится 3D-сверткой 3x3x3. Это дает 3D-модели сильные предобученные веса вместо обучения с нуля.
 
-Pros:
-- Directly models motion.
-- I3D inflation gives free transfer learning.
+Плюсы:
+- Напрямую моделирует движение.
+- Раздутие I3D дает transfer learning почти бесплатно.
 
-Cons:
-- T/8 more FLOPs than the 2D counterpart (for temporal kernel of 3 stacked 3 times).
-- Temporal kernels are small; long-range motion needs a pyramid or dual-stream approach.
+Минусы:
+- В T/8 раз больше FLOPs, чем у 2D-аналога (для временного ядра размера 3, уложенного 3 раза).
+- Временные ядра малы; дальнее движение требует пирамиды или двухпоточного подхода.
 
-When to use: action recognition where motion is the signal (Something-Something V2, Kinetics with motion-heavy classes).
+Когда использовать: распознавание действий, где движение является сигналом (Something-Something V2, Kinetics с классами, сильно зависящими от движения).
 
-### Spatio-temporal transformers
+### Пространственно-временные трансформеры
 
-Tokenise the video into a grid of space-time patches and attend across all of them. TimeSformer, ViViT, Video Swin, VideoMAE.
+Токенизируйте видео в сетку пространственно-временных патчей и применяйте attention по всем ним. TimeSformer, ViViT, Video Swin, VideoMAE.
 
-Attention patterns that matter:
-- **Joint** — one big attention over (t, h, w). Quadratic in `T*H*W`; expensive.
-- **Divided** — two attentions per block: one over time, one over space. Linear-ish scaling.
-- **Factorised** — time attention alternates with space attention across blocks.
+Важные схемы attention:
+- **Joint** — один большой attention по (t, h, w). Квадратичен по `T*H*W`; дорогой.
+- **Divided** — два attention на блок: один по времени, один по пространству. Масштабирование примерно линейное.
+- **Factorised** — временной attention чередуется с пространственным attention между блоками.
 
-Pros:
-- SOTA accuracy on every major benchmark.
-- Transfers from image transformers (ViT) via patch inflation.
-- Supports long-context video via sparse attention.
+Плюсы:
+- SOTA-точность на каждом крупном бенчмарке.
+- Переносится из трансформеров для изображений (ViT) через раздувание патчей.
+- Поддерживает длинноконтекстное видео через разреженный attention.
 
-Cons:
-- Compute-hungry.
-- Requires careful attention pattern choice or runtime balloons.
+Минусы:
+- Требует много вычислений.
+- Нужен аккуратный выбор схемы attention, иначе время выполнения резко растет.
 
-When to use: large datasets, high-fidelity video understanding, multi-modal video+text tasks.
+Когда использовать: большие наборы данных, высокоточное понимание видео, мультимодальные задачи видео+текст.
 
-### Frame sampling
+### Выборка кадров
 
-A 10-second clip at 30 fps is 300 frames; feeding all 300 to any model is wasteful. Standard strategies:
+10-секундный клип при 30 fps — это 300 кадров; подавать все 300 в любую модель расточительно. Стандартные стратегии:
 
-- **Uniform sampling** — pick T frames evenly across the clip. Default for 2D+pool.
-- **Dense sampling** — random contiguous T-frame window. Common for 3D convs because motion requires neighbouring frames.
-- **Multi-clip** — sample multiple T-frame windows from the same video, classify each, average predictions at test time.
+- **Uniform sampling** — выбрать T кадров равномерно по клипу. Вариант по умолчанию для 2D+pool.
+- **Dense sampling** — случайное непрерывное окно из T кадров. Часто используется для 3D-сверток, потому что движение требует соседних кадров.
+- **Multi-clip** — выбрать несколько окон из T кадров из одного видео, классифицировать каждое, усреднить предсказания во время тестирования.
 
-T is usually 8, 16, 32, or 64. Higher T = more temporal signal at more compute.
+T обычно равно 8, 16, 32 или 64. Большее T = больше временного сигнала при большей вычислительной стоимости.
 
-### Evaluation
+### Оценка
 
-Two levels:
-- **Clip-level accuracy** — model sees one T-frame clip, reports top-k.
-- **Video-level accuracy** — average clip-level predictions across multiple clips per video; higher and more stable.
+Два уровня:
+- **Clip-level accuracy** — модель видит один клип из T кадров и сообщает top-k.
+- **Video-level accuracy** — усреднение предсказаний на уровне клипа по нескольким клипам одного видео; выше и стабильнее.
 
-Always report both. A model that scores 78% clip / 82% video is relying heavily on test-time averaging; one that scores 80% / 81% is more robust per-clip.
+Всегда сообщайте оба значения. Модель с результатом 78% clip / 82% video сильно полагается на усреднение во время тестирования; модель с 80% / 81% более робастна на уровне отдельных клипов.
 
-### Datasets you will meet
+### Наборы данных, которые вы встретите
 
-- **Kinetics-400 / 600 / 700** — the general-purpose action dataset. 400k clips; YouTube URLs (many now dead).
-- **Something-Something V2** — motion-defined actions ("moving X from left to right"). Cannot be solved by 2D+pool.
-- **UCF-101**, **HMDB-51** — older, smaller, still reported.
-- **AVA** — action *localisation* in space and time; harder than classification.
+- **Kinetics-400 / 600 / 700** — универсальный набор данных действий. 400k клипов; URL YouTube (многие уже недоступны).
+- **Something-Something V2** — действия, определяемые движением ("moving X from left to right"). Не решается с помощью 2D+pool.
+- **UCF-101**, **HMDB-51** — более старые и меньшие, но все еще часто приводятся в отчетах.
+- **AVA** — *локализация* действий в пространстве и времени; сложнее классификации.
 
-## Build It
+## Соберите это
 
-### Step 1: Frame sampler
+### Шаг 1: Сэмплер кадров
 
-Uniform and dense samplers that work on a list of frames (or a video tensor).
+Uniform- и dense-сэмплеры, которые работают со списком кадров (или видеотензором).
 
 ```python
 import numpy as np
@@ -141,11 +141,11 @@ def sample_dense(num_frames_total, T, rng=None):
     return list(range(start, start + T))
 ```
 
-Both return `T` indices that you use to slice the video tensor.
+Оба возвращают `T` индексов, которые вы используете для среза видеотензора.
 
-### Step 2: A 2D+pool baseline
+### Шаг 2: Baseline 2D+pool
 
-Run a 2D ResNet-18 over every frame, average-pool features, classify.
+Запустите 2D ResNet-18 по каждому кадру, усредните признаки через average-pool и классифицируйте.
 
 ```python
 import torch
@@ -174,11 +174,11 @@ print(f"output: {model(x).shape}")
 print(f"params: {sum(p.numel() for p in model.parameters()):,}")
 ```
 
-Eleven million parameters, ImageNet pretrained, runs per-frame, averages, classifies. This baseline is often within 5-10 points of proper 3D models on appearance-heavy tasks — sometimes better, because it reuses a stronger ImageNet backbone.
+Одиннадцать миллионов параметров, предобучение на ImageNet, запуск по кадрам, усреднение, классификация. Этот baseline часто находится в пределах 5-10 пунктов от полноценных 3D-моделей на задачах, сильно зависящих от внешнего вида, а иногда оказывается лучше, потому что переиспользует более сильный ImageNet backbone.
 
-### Step 3: An I3D-style inflated 3D conv
+### Шаг 3: Раздутая 3D-свертка в стиле I3D
 
-Turn a single 2D conv into a 3D conv by repeating weights along a new time axis.
+Превратите одну 2D-свертку в 3D-свертку, повторив веса вдоль новой временной оси.
 
 ```python
 def inflate_2d_to_3d(conv2d, time_kernel=3):
@@ -200,11 +200,11 @@ x = torch.randn(1, 3, 8, 56, 56)
 print(f"3D output shape:  {tuple(conv3d(x).shape)}")
 ```
 
-The division by `time_kernel` keeps the activation magnitudes roughly constant — important for not breaking batch-norm statistics on the first pass.
+Деление на `time_kernel` сохраняет масштабы активаций примерно постоянными — это важно, чтобы не сломать статистики batch-norm на первом проходе.
 
-### Step 4: Factorised (2+1)D conv
+### Шаг 4: Факторизованная (2+1)D-свертка
 
-Split a 3D conv into a 2D (spatial) and a 1D (temporal) conv. Same receptive field, fewer parameters, better accuracy on some benchmarks.
+Разбейте 3D-свертку на 2D (пространственную) и 1D (временную) свертки. То же рецептивное поле, меньше параметров, лучшая точность на некоторых бенчмарках.
 
 ```python
 class Conv2Plus1D(nn.Module):
@@ -227,46 +227,46 @@ x = torch.randn(1, 3, 8, 56, 56)
 print(f"(2+1)D output: {tuple(c(x).shape)}")
 ```
 
-A full R(2+1)D network is the same as a ResNet-18 with every 3x3 conv replaced by `Conv2Plus1D`.
+Полная сеть R(2+1)D — это то же, что ResNet-18, где каждая 3x3-свертка заменена на `Conv2Plus1D`.
 
-## Use It
+## Используйте это
 
-Two libraries cover production video work:
+Две библиотеки покрывают промышленную работу с видео:
 
-- `torchvision.models.video` — R(2+1)D, MViT, Swin3D with pretrained Kinetics weights. Same API as image models.
-- `pytorchvideo` (Meta) — model zoo, data loaders for Kinetics / SSv2 / AVA, standard transforms.
+- `torchvision.models.video` — R(2+1)D, MViT, Swin3D с предобученными весами Kinetics. Тот же API, что у моделей изображений.
+- `pytorchvideo` (Meta) — model zoo, загрузчики данных для Kinetics / SSv2 / AVA, стандартные преобразования.
 
-For Vision-Language video models (video captioning, video QA), use `transformers` (`VideoMAE`, `VideoLLaMA`, `InternVideo`).
+Для Vision-Language видеомоделей (video captioning, video QA) используйте `transformers` (`VideoMAE`, `VideoLLaMA`, `InternVideo`).
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-video-architecture-picker.md` — a prompt that picks 2D+pool / I3D / (2+1)D / transformer based on appearance-vs-motion, dataset size, and compute budget.
-- `outputs/skill-frame-sampler-auditor.md` — a skill that inspects a video pipeline's sampler and flags common bugs: off-by-one index, uneven sampling when `num_frames < T`, lack of aspect-preserving crop, etc.
+- `outputs/prompt-video-architecture-picker.md` — промпт, который выбирает 2D+pool / I3D / (2+1)D / transformer на основе соотношения appearance-vs-motion, размера набора данных и вычислительного бюджета.
+- `outputs/skill-frame-sampler-auditor.md` — навык, который проверяет сэмплер в видеопайплайне и отмечает типичные ошибки: индекс off-by-one, неравномерная выборка при `num_frames < T`, отсутствие crop с сохранением пропорций и т. д.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Compute FLOPs (approximate) for FramePool with T=8 vs an I3D-style 3D ResNet with T=8. Justify why 2D+pool is 3-5x cheaper.
-2. **(Medium)** Generate a synthetic video dataset: random balls moving in random directions, labelled by direction of motion ("left-to-right", "right-to-left", "diagonal-up"). Train FramePool on it. Show that it achieves near-chance accuracy, proving appearance alone is insufficient for motion tasks.
-3. **(Hard)** Build an R(2+1)D-18 by replacing every Conv2d in a ResNet-18 with `Conv2Plus1D`. Inflate the first conv's weights from an ImageNet-pretrained ResNet-18. Train on the motion dataset from exercise 2 and beat FramePool.
+1. **(Легко)** Посчитайте FLOPs (приблизительно) для FramePool с T=8 и для 3D ResNet в стиле I3D с T=8. Обоснуйте, почему 2D+pool дешевле в 3-5 раз.
+2. **(Средне)** Сгенерируйте синтетический видеонабор данных: случайные шары, движущиеся в случайных направлениях, с метками по направлению движения ("left-to-right", "right-to-left", "diagonal-up"). Обучите на нем FramePool. Покажите, что он достигает точности около случайного угадывания, доказывая, что одного внешнего вида недостаточно для задач движения.
+3. **(Сложно)** Постройте R(2+1)D-18, заменив каждую Conv2d в ResNet-18 на `Conv2Plus1D`. Раздуйте веса первой свертки из ResNet-18, предобученной на ImageNet. Обучите на наборе данных движения из упражнения 2 и превзойдите FramePool.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|----------------|----------------------|
-| 2D + pool | "Per-frame classifier" | Run a 2D CNN on every sampled frame, average-pool features across time, classify |
-| 3D convolution | "Spatio-temporal kernel" | Kernel that convolves over (T, H, W); can model motion natively |
-| Inflation | "Lift 2D weights to 3D" | Initialise 3D conv weights by repeating a 2D conv's weights along the new time axis, then divide by kernel_T to preserve activation scale |
-| (2+1)D | "Factorised conv" | Split 3D into 2D spatial + 1D temporal; fewer parameters, extra non-linearity between |
-| Divided attention | "Time then space" | Transformer block with two attentions per layer: one over tokens at the same frame, one over tokens at the same position |
-| Clip | "T-frame window" | A sampled subsequence of T frames; the unit a video model consumes |
-| Clip vs video accuracy | "Two eval settings" | Clip = one sample per video, video = average across multiple sampled clips |
-| Kinetics | "The ImageNet of video" | 400-700 action classes, 300k+ YouTube clips, the standard video pretraining corpus |
+| 2D + pool | "Per-frame classifier" | Запустить 2D CNN на каждом выбранном кадре, усреднить признаки по времени через average-pool, классифицировать |
+| 3D convolution | "Spatio-temporal kernel" | Ядро, которое выполняет свертку по (T, H, W); может естественно моделировать движение |
+| Inflation | "Lift 2D weights to 3D" | Инициализировать веса 3D-свертки, повторяя веса 2D-свертки вдоль новой временной оси, затем разделить на kernel_T, чтобы сохранить масштаб активаций |
+| (2+1)D | "Factorised conv" | Разбить 3D на 2D spatial + 1D temporal; меньше параметров, дополнительная нелинейность между ними |
+| Divided attention | "Time then space" | Блок transformer с двумя attention на слой: один по токенам в одном и том же кадре, один по токенам в одной и той же позиции |
+| Clip | "T-frame window" | Выбранная подпоследовательность из T кадров; единица, которую потребляет видеомодель |
+| Clip vs video accuracy | "Two eval settings" | Clip = один сэмпл на видео, video = среднее по нескольким выбранным клипам |
+| Kinetics | "The ImageNet of video" | 400-700 классов действий, 300k+ клипов YouTube, стандартный корпус для видеопредобучения |
 
-## Further Reading
+## Дополнительное чтение
 
-- [I3D: Quo Vadis, Action Recognition (Carreira & Zisserman, 2017)](https://arxiv.org/abs/1705.07750) — introduces inflation and the Kinetics dataset
-- [R(2+1)D: A Closer Look at Spatiotemporal Convolutions (Tran et al., 2018)](https://arxiv.org/abs/1711.11248) — factorised conv, still a strong baseline
-- [TimeSformer: Is Space-Time Attention All You Need? (Bertasius et al., 2021)](https://arxiv.org/abs/2102.05095) — the first strong video transformer
-- [VideoMAE (Tong et al., 2022)](https://arxiv.org/abs/2203.12602) — masked autoencoder pretraining for video; current dominant pretraining recipe
+- [I3D: Quo Vadis, Action Recognition (Carreira & Zisserman, 2017)](https://arxiv.org/abs/1705.07750) — вводит inflation и набор данных Kinetics
+- [R(2+1)D: A Closer Look at Spatiotemporal Convolutions (Tran et al., 2018)](https://arxiv.org/abs/1711.11248) — factorised conv, все еще сильный baseline
+- [TimeSformer: Is Space-Time Attention All You Need? (Bertasius et al., 2021)](https://arxiv.org/abs/2102.05095) — первый сильный video transformer
+- [VideoMAE (Tong et al., 2022)](https://arxiv.org/abs/2203.12602) — предобучение masked autoencoder для видео; текущий доминирующий рецепт предобучения

@@ -1,28 +1,28 @@
 # Multi-Object Tracking & Video Memory
 
-> Tracking is detection plus association. Detect every frame. Match this frame's detections to last frame's tracks by ID.
+> Трекинг — это детекция плюс сопоставление. Детектируйте каждый кадр. Сопоставляйте детекции текущего кадра с треками прошлого кадра по ID.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 06 (YOLO Detection), Phase 4 Lesson 08 (Mask R-CNN), Phase 4 Lesson 24 (SAM 3)
-**Time:** ~60 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 4 Lesson 06 (YOLO Detection), Phase 4 Lesson 08 (Mask R-CNN), Phase 4 Lesson 24 (SAM 3)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish tracking-by-detection from query-based tracking and name the algorithm families (SORT, DeepSORT, ByteTrack, BoT-SORT, SAM 2 memory tracker, SAM 3.1 Object Multiplex)
-- Implement IoU + Hungarian assignment from scratch for classic tracking-by-detection
-- Explain SAM 2's memory bank and why it handles occlusion better than IoU-based association
-- Read the three tracking metrics (MOTA, IDF1, HOTA) and pick which one matters for a given use case
+- Отличать tracking-by-detection от трекинга на основе запросов (query-based tracking) и называть семейства алгоритмов (SORT, DeepSORT, ByteTrack, BoT-SORT, SAM 2 memory tracker, SAM 3.1 Object Multiplex)
+- Реализовать IoU + венгерское назначение (Hungarian assignment) с нуля для классического tracking-by-detection
+- Объяснять банк памяти SAM 2 и почему он лучше справляется с окклюзиями, чем сопоставление на основе IoU
+- Читать три метрики трекинга (MOTA, IDF1, HOTA) и выбирать, какая важна для заданного сценария
 
-## The Problem
+## Проблема
 
-A detector tells you where the objects are in a single frame. A tracker tells you which detection in frame `t` is the same object as a detection in frame `t-1`. Without that, you cannot count objects crossing a line, follow a ball through an occlusion, or know "car #4 has been in the lane for 8 seconds."
+Детектор сообщает, где находятся объекты в одном кадре. Трекер сообщает, какая детекция в кадре `t` является тем же объектом, что и детекция в кадре `t-1`. Без этого нельзя считать объекты, пересекающие линию, сопровождать мяч через окклюзию или знать, что "car #4 has been in the lane for 8 seconds."
 
-Tracking is essential to every video-facing product: sports analytics, surveillance, autonomous driving, medical video analysis, wildlife monitoring, wordmark counting. The core building blocks are shared: a per-frame detector, a motion model (Kalman filter or something richer), an association step (Hungarian algorithm on IoU / cosine / learned features), and a track lifecycle (birth, update, death).
+Трекинг необходим каждому продукту, работающему с видео: спортивная аналитика, наблюдение, автономное вождение, анализ медицинского видео, мониторинг дикой природы, подсчет логотипов. Базовые строительные блоки общие: покадровый детектор, модель движения (фильтр Калмана или что-то богаче), шаг сопоставления (венгерский алгоритм по IoU / косинусной мере / обученным признакам) и жизненный цикл трека (рождение, обновление, удаление).
 
-2026 brought two new patterns: **SAM 2 memory-based tracking** (feature-memory instead of motion-model association) and **SAM 3.1 Object Multiplex** (shared memory for many instances of the same concept). This lesson walks the classical stack first, then the memory-based approach.
+В 2026 году появились два новых паттерна: **SAM 2 memory-based tracking** (память признаков вместо сопоставления через модель движения) и **SAM 3.1 Object Multiplex** (общая память для множества экземпляров одного и того же понятия). Этот урок сначала проходит классический стек, затем подход на основе памяти.
 
-## The Concept
+## Концепция
 
 ### Tracking-by-detection
 
@@ -45,60 +45,60 @@ flowchart LR
     style NEXT fill:#dcfce7,stroke:#16a34a
 ```
 
-Every tracker you will encounter in 2026 is a variation on this loop. The differences:
+Каждый трекер, который вы встретите в 2026 году, является вариацией этого цикла. Отличия:
 
-- **SORT** (2016): Kalman filter + IoU Hungarian. Simple, fast, no appearance model.
-- **DeepSORT** (2017): SORT + a CNN-based appearance feature per track (ReID embedding). Handles crossings better.
-- **ByteTrack** (2021): associates low-confidence detections as a second stage; no appearance features needed but top performer on MOT17.
-- **BoT-SORT** (2022): Byte + camera motion compensation + ReID.
-- **StrongSORT / OC-SORT** — ByteTrack descendants with better motion and appearance.
+- **SORT** (2016): фильтр Калмана + венгерское сопоставление по IoU. Простой, быстрый, без модели внешнего вида.
+- **DeepSORT** (2017): SORT + CNN-признак внешнего вида для каждого трека (ReID embedding). Лучше обрабатывает пересечения.
+- **ByteTrack** (2021): сопоставляет детекции с низкой уверенностью как второй этап; признаки внешнего вида не нужны, но это один из лидеров на MOT17.
+- **BoT-SORT** (2022): Byte + компенсация движения камеры + ReID.
+- **StrongSORT / OC-SORT** — потомки ByteTrack с улучшенными движением и внешним видом.
 
-### Kalman filter in one paragraph
+### Фильтр Калмана в одном абзаце
 
-A Kalman filter maintains a per-track state `(x, y, w, h, dx, dy, dw, dh)` with a covariance. At each frame, **predict** the state using a constant-velocity model, then **update** with the matched detection. The update trusts the detection more when the predict uncertainty is high. This gives smooth trajectories and the ability to continue a track through a short occlusion (1-5 frames).
+Фильтр Калмана поддерживает состояние для каждого трека `(x, y, w, h, dx, dy, dw, dh)` с ковариацией. На каждом кадре он сначала **предсказывает** состояние с помощью модели постоянной скорости, затем **обновляет** его по сопоставленной детекции. Обновление больше доверяет детекции, когда неопределенность предсказания высока. Это дает гладкие траектории и возможность продолжать трек через короткую окклюзию (1-5 кадров).
 
-Every classical tracker uses a Kalman filter in the motion-prediction step.
+Каждый классический трекер использует фильтр Калмана на шаге предсказания движения.
 
-### The Hungarian algorithm
+### Венгерский алгоритм
 
-Given a `M x N` cost matrix (tracks x detections), find the one-to-one assignment that minimises total cost. Cost is usually `1 - IoU(track_bbox, detection_bbox)` or negative cosine similarity of appearance features. Runtime is O((M+N)^3); for M, N up to ~1000 it is fast enough in Python via `scipy.optimize.linear_sum_assignment`.
+Дана матрица стоимости `M x N` (треки x детекции); нужно найти взаимно-однозначное назначение, минимизирующее суммарную стоимость. Стоимость обычно равна `1 - IoU(track_bbox, detection_bbox)` или отрицательному косинусному сходству признаков внешнего вида. Время работы — O((M+N)^3); для M, N до ~1000 это достаточно быстро в Python через `scipy.optimize.linear_sum_assignment`.
 
-### ByteTrack's key idea
+### Ключевая идея ByteTrack
 
-Standard trackers drop low-confidence detections (< 0.5). ByteTrack keeps them around as **second-stage candidates**: after matching tracks to high-confidence detections, unmatched tracks try to match low-confidence detections with a slightly looser IoU threshold. Recovers short occlusions, ID switches near crowds.
+Стандартные трекеры отбрасывают детекции с низкой уверенностью (< 0.5). ByteTrack оставляет их как **кандидатов второго этапа**: после сопоставления треков с детекциями высокой уверенности несопоставленные треки пытаются сопоставиться с детекциями низкой уверенности при немного более мягком пороге IoU. Это восстанавливает короткие окклюзии и переключения ID рядом с толпами.
 
 ### SAM 2 memory-based tracking
 
-SAM 2 handles video by keeping a **memory bank** of per-instance spatio-temporal features. Given a prompt (click, box, text) on one frame, it encodes the instance into memory. On subsequent frames, the memory is cross-attended against the new frame's features, and the decoder produces a mask for the same instance in the new frame.
+SAM 2 обрабатывает видео, сохраняя **банк памяти** пространственно-временных признаков для каждого экземпляра. Получив промпт (клик, рамку, текст) на одном кадре, он кодирует экземпляр в память. На последующих кадрах память сопоставляется с признаками нового кадра через cross-attention, а декодер выдает маску того же экземпляра в новом кадре.
 
-No Kalman filter, no Hungarian assignment. The association is implicit in the memory-attention operation.
+Нет фильтра Калмана, нет венгерского назначения. Сопоставление неявно задается операцией attention к памяти.
 
-Pros:
-- Robust to large occlusions (memory carries instance identity across many frames).
-- Open-vocabulary when combined with SAM 3's text prompts.
-- Works without a separate motion model.
+Плюсы:
+- Устойчив к большим окклюзиям (память переносит идентичность экземпляра через много кадров).
+- Open-vocabulary при сочетании с текстовыми промптами SAM 3.
+- Работает без отдельной модели движения.
 
-Cons:
-- Slower than ByteTrack for many-object tracking.
-- Memory bank grows; limits the context window.
+Минусы:
+- Медленнее ByteTrack для трекинга большого числа объектов.
+- Банк памяти растет; это ограничивает контекстное окно.
 
 ### SAM 3.1 Object Multiplex
 
-Prior SAM 2 / SAM 3 tracking keeps a separate memory bank per instance. For 50 objects, 50 memory banks. Object Multiplex (March 2026) collapses them into one shared memory with **per-instance query tokens**. Cost scales sub-linearly in number of instances.
+Предыдущий трекинг SAM 2 / SAM 3 держит отдельный банк памяти для каждого экземпляра. Для 50 объектов — 50 банков памяти. Object Multiplex (март 2026) сворачивает их в одну общую память с **токенами запросов для каждого экземпляра**. Стоимость растет суб-линейно по числу экземпляров.
 
-Multiplex is the new default for crowd tracking in 2026: concert crowds, warehouse workers, traffic intersections.
+Multiplex — новый вариант по умолчанию для трекинга толп в 2026 году: концертные толпы, складские работники, транспортные перекрестки.
 
-### Three metrics to know
+### Три метрики, которые нужно знать
 
-- **MOTA (Multi-Object Tracking Accuracy)** — 1 - (FN + FP + ID switches) / GT. Weighted by error type; a single metric that conflates detection and association failures.
-- **IDF1 (ID F1)** — harmonic mean of ID precision and recall. Focuses specifically on how well each ground-truth track keeps its ID over time. Better than MOTA for ID-switch-sensitive tasks.
-- **HOTA (Higher Order Tracking Accuracy)** — decomposes into detection accuracy (DetA) and association accuracy (AssA). The community standard since 2020; most comprehensive.
+- **MOTA (Multi-Object Tracking Accuracy)** — 1 - (FN + FP + ID switches) / GT. Взвешивается по типу ошибки; единая метрика, которая смешивает ошибки детекции и сопоставления.
+- **IDF1 (ID F1)** — гармоническое среднее ID precision и ID recall. Фокусируется именно на том, насколько хорошо каждый ground-truth трек сохраняет свой ID во времени. Лучше MOTA для задач, чувствительных к переключениям ID.
+- **HOTA (Higher Order Tracking Accuracy)** — раскладывается на точность детекции (DetA) и точность сопоставления (AssA). Стандарт сообщества с 2020 года; самая комплексная метрика.
 
-For surveillance (who is who): IDF1 is what you report. For sports analytics (counting passes): HOTA. For general academic comparison: HOTA.
+Для наблюдения (кто есть кто): отчетная метрика — IDF1. Для спортивной аналитики (подсчет передач): HOTA. Для общего академического сравнения: HOTA.
 
-## Build It
+## Соберите это
 
-### Step 1: IoU-based cost matrix
+### Шаг 1: Матрица стоимости на основе IoU
 
 ```python
 import numpy as np
@@ -122,9 +122,9 @@ def bbox_iou(a, b):
     return inter / np.clip(union, 1e-8, None)
 ```
 
-### Step 2: Minimal SORT-style tracker
+### Шаг 2: Минимальный трекер в стиле SORT
 
-Fixed constant-velocity Kalman omitted for brevity — we use a simple IoU association here; in production the Kalman predict is essential. The `sort` Python package provides the full version.
+Фиксированный фильтр Калмана с постоянной скоростью опущен для краткости — здесь мы используем простое сопоставление по IoU; в продакшене предсказание Калмана необходимо. Python-пакет `sort` предоставляет полную версию.
 
 ```python
 from scipy.optimize import linear_sum_assignment
@@ -182,9 +182,9 @@ class SimpleTracker:
         return [(t.id, t.bbox) for t in self.tracks]
 ```
 
-60 lines. Takes per-frame detections, returns per-frame track IDs. Real systems add the Kalman predict, ByteTrack's second-stage re-match, and appearance features.
+60 строк. Принимает покадровые детекции, возвращает ID треков для каждого кадра. Реальные системы добавляют предсказание Калмана, второй этап повторного сопоставления ByteTrack и признаки внешнего вида.
 
-### Step 3: Synthetic trajectory test
+### Шаг 3: Тест на синтетических траекториях
 
 ```python
 def synthetic_frames(num_frames=20, num_objects=3, H=240, W=320, seed=0):
@@ -206,9 +206,9 @@ for f, dets in enumerate(synthetic_frames()):
     tracks = tracker.step(dets, f)
 ```
 
-Three objects moving in straight lines should keep their IDs across all 20 frames.
+Три объекта, движущиеся по прямым линиям, должны сохранять свои ID на всех 20 кадрах.
 
-### Step 4: ID-switch metric
+### Шаг 4: Метрика переключений ID
 
 ```python
 def count_id_switches(tracks_per_frame, gt_per_frame):
@@ -235,56 +235,56 @@ def count_id_switches(tracks_per_frame, gt_per_frame):
     return switches
 ```
 
-This is a simplified IDF1-adjacent metric: count how many times a ground-truth object changes its assigned predicted track ID. Real MOTA / IDF1 / HOTA tooling lives in `py-motmetrics` and `TrackEval`.
+Это упрощенная метрика, близкая к IDF1: она считает, сколько раз ground-truth объект меняет назначенный ему предсказанный track ID. Реальные инструменты для MOTA / IDF1 / HOTA находятся в `py-motmetrics` и `TrackEval`.
 
-## Use It
+## Используйте это
 
-Production trackers in 2026:
+Продакшен-трекеры в 2026 году:
 
-- `ultralytics` — YOLOv8 + ByteTrack / BoT-SORT built-in. `results = model.track(source, tracker="bytetrack.yaml")`. The default.
-- `supervision` (Roboflow) — ByteTrack wrappers plus annotation utilities.
-- SAM 2 / SAM 3.1 — memory-based tracking via `processor.track()`.
-- Custom stack: detector (YOLOv8 / RT-DETR) + `sort-tracker` / `OC-SORT` / `StrongSORT`.
+- `ultralytics` — YOLOv8 + встроенные ByteTrack / BoT-SORT. `results = model.track(source, tracker="bytetrack.yaml")`. Вариант по умолчанию.
+- `supervision` (Roboflow) — обертки ByteTrack плюс утилиты аннотирования.
+- SAM 2 / SAM 3.1 — трекинг на основе памяти через `processor.track()`.
+- Пользовательский стек: детектор (YOLOv8 / RT-DETR) + `sort-tracker` / `OC-SORT` / `StrongSORT`.
 
-Picking:
+Выбор:
 
-- Pedestrians / cars / boxes at 30+ fps: **ByteTrack with ultralytics**.
-- Many instances of one class in a crowd: **SAM 3.1 Object Multiplex**.
-- Heavy occlusions with identifiable appearance: **DeepSORT / StrongSORT** (ReID features).
-- Sports / complex interactions: **BoT-SORT** or learned trackers (MOTRv3).
+- Пешеходы / автомобили / коробки при 30+ fps: **ByteTrack with ultralytics**.
+- Много экземпляров одного класса в толпе: **SAM 3.1 Object Multiplex**.
+- Сильные окклюзии с распознаваемым внешним видом: **DeepSORT / StrongSORT** (ReID-признаки).
+- Спорт / сложные взаимодействия: **BoT-SORT** или обученные трекеры (MOTRv3).
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-tracker-picker.md` — picks SORT / ByteTrack / BoT-SORT / SAM 2 / SAM 3.1 given scene type, occlusion patterns, and latency budget.
-- `outputs/skill-mot-evaluator.md` — writes a complete evaluation harness for MOTA / IDF1 / HOTA against ground-truth tracks.
+- `outputs/prompt-tracker-picker.md` — выбирает SORT / ByteTrack / BoT-SORT / SAM 2 / SAM 3.1 по типу сцены, паттернам окклюзии и бюджету задержки.
+- `outputs/skill-mot-evaluator.md` — пишет полный evaluation harness для MOTA / IDF1 / HOTA по ground-truth трекам.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Run the synthetic tracker above with 3, 10, and 30 objects. Report ID-switch count in each case. Identify where the simple IoU-only association starts to fail.
-2. **(Medium)** Add a constant-velocity Kalman predict step before association. Show that short (2-3 frame) occlusions no longer cause ID switches.
-3. **(Hard)** Integrate SAM 2's memory-based tracker (via `transformers`) as an alternative tracker backend. Run both SimpleTracker and SAM 2 on a 30-second clip of a crowd and compare ID-switch counts, manually labelling ground-truth IDs for 5 salient people.
+1. **(Легко)** Запустите синтетический трекер выше с 3, 10 и 30 объектами. Сообщите число переключений ID в каждом случае. Определите, где простое сопоставление только по IoU начинает ломаться.
+2. **(Средне)** Добавьте шаг предсказания фильтром Калмана с постоянной скоростью перед сопоставлением. Покажите, что короткие окклюзии (2-3 кадра) больше не вызывают переключений ID.
+3. **(Сложно)** Интегрируйте memory-based tracker SAM 2 (через `transformers`) как альтернативный backend трекера. Запустите SimpleTracker и SAM 2 на 30-секундном клипе толпы и сравните число переключений ID, вручную разметив ground-truth ID для 5 заметных людей.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Tracking-by-detection | "Detect then associate" | Per-frame detector + Hungarian assignment on IoU / appearance |
-| Kalman filter | "Motion predict" | Linear dynamics + covariance for smooth track predictions and occlusion handling |
-| Hungarian algorithm | "Optimal assignment" | Solves the minimum-cost bipartite matching problem; `scipy.optimize.linear_sum_assignment` |
-| ByteTrack | "Low-confidence second pass" | Re-match unmatched tracks to low-confidence detections to recover short occlusions |
-| DeepSORT | "SORT + appearance" | Adds a ReID feature for cross-frame matching; better for ID preservation |
-| Memory bank | "SAM 2 trick" | Per-instance spatio-temporal features stored across frames; cross-attention replaces explicit association |
-| Object Multiplex | "SAM 3.1 shared memory" | Single shared memory with per-instance queries for fast many-object tracking |
-| HOTA | "Modern tracking metric" | Decomposes into detection and association accuracy; community standard |
+| Tracking-by-detection | "Detect then associate" | Покадровый детектор + венгерское назначение по IoU / внешнему виду |
+| Kalman filter | "Motion predict" | Линейная динамика + ковариация для гладких предсказаний треков и обработки окклюзий |
+| Hungarian algorithm | "Optimal assignment" | Решает задачу двудольного сопоставления минимальной стоимости; `scipy.optimize.linear_sum_assignment` |
+| ByteTrack | "Low-confidence second pass" | Повторно сопоставляет несопоставленные треки с детекциями низкой уверенности, чтобы восстановить короткие окклюзии |
+| DeepSORT | "SORT + appearance" | Добавляет ReID-признак для сопоставления между кадрами; лучше сохраняет ID |
+| Memory bank | "SAM 2 trick" | Пространственно-временные признаки для каждого экземпляра, сохраненные между кадрами; cross-attention заменяет явное сопоставление |
+| Object Multiplex | "SAM 3.1 shared memory" | Единая общая память с запросами для каждого экземпляра для быстрого трекинга множества объектов |
+| HOTA | "Modern tracking metric" | Раскладывается на точность детекции и точность сопоставления; стандарт сообщества |
 
-## Further Reading
+## Дополнительное чтение
 
-- [SORT (Bewley et al., 2016)](https://arxiv.org/abs/1602.00763) — the minimal tracking-by-detection paper
-- [DeepSORT (Wojke et al., 2017)](https://arxiv.org/abs/1703.07402) — adds appearance feature
-- [ByteTrack (Zhang et al., 2022)](https://arxiv.org/abs/2110.06864) — low-confidence second pass
-- [BoT-SORT (Aharon et al., 2022)](https://arxiv.org/abs/2206.14651) — camera motion compensation
-- [HOTA (Luiten et al., 2020)](https://arxiv.org/abs/2009.07736) — decomposed tracking metric
-- [SAM 2 video segmentation (Meta, 2024)](https://ai.meta.com/sam2/) — memory-based tracker
+- [SORT (Bewley et al., 2016)](https://arxiv.org/abs/1602.00763) — минимальная статья о tracking-by-detection
+- [DeepSORT (Wojke et al., 2017)](https://arxiv.org/abs/1703.07402) — добавляет признак внешнего вида
+- [ByteTrack (Zhang et al., 2022)](https://arxiv.org/abs/2110.06864) — второй проход по детекциям низкой уверенности
+- [BoT-SORT (Aharon et al., 2022)](https://arxiv.org/abs/2206.14651) — компенсация движения камеры
+- [HOTA (Luiten et al., 2020)](https://arxiv.org/abs/2009.07736) — декомпозированная метрика трекинга
+- [SAM 2 video segmentation (Meta, 2024)](https://ai.meta.com/sam2/) — трекер на основе памяти
 - [SAM 3.1 Object Multiplex (Meta, March 2026)](https://ai.meta.com/blog/segment-anything-model-3/)

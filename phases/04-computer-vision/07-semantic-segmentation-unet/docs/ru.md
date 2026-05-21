@@ -1,6 +1,6 @@
 # Semantic Segmentation — U-Net
 
-> Segmentation is classification at every pixel. U-Net makes it work by pairing a downsampling encoder with an upsampling decoder and wiring skip connections between them.
+> Сегментация — это классификация каждого пикселя. U-Net делает это практичным, сочетая энкодер с понижением разрешения, декодер с повышением разрешения и skip connections между ними.
 
 **Type:** Build
 **Languages:** Python
@@ -9,18 +9,18 @@
 
 ## Learning Objectives
 
-- Distinguish semantic, instance, and panoptic segmentation and pick the right task for a given problem
-- Build a U-Net from scratch in PyTorch with encoder blocks, a bottleneck, a decoder with transposed convolutions, and skip connections
-- Implement pixel-wise cross-entropy, Dice loss, and the combined loss that is the current default for medical and industrial segmentation
-- Read IoU and Dice metrics per class and diagnose whether a bad score comes from small-object recall, boundary accuracy, or class imbalance
+- Различать семантическую, instance- и panoptic-сегментацию и выбирать правильную постановку задачи для конкретной проблемы
+- Построить U-Net с нуля в PyTorch: с блоками энкодера, bottleneck, декодером с transposed convolutions и skip connections
+- Реализовать попиксельную cross-entropy, Dice loss и комбинированную функцию потерь, которая сейчас является стандартным выбором по умолчанию для медицинской и промышленной сегментации
+- Читать метрики IoU и Dice по классам и диагностировать, связан ли плохой результат с recall малых объектов, точностью границ или дисбалансом классов
 
 ## The Problem
 
-Classification outputs one label per image. Detection outputs a handful of boxes per image. Segmentation outputs one label per pixel. For an input of size `H x W`, the output is a tensor of shape `H x W` (semantic) or `H x W x N_instances` (instance). That is millions of predictions per image, not one.
+Классификация выдаёт одну метку на изображение. Детекция выдаёт несколько рамок на изображение. Сегментация выдаёт одну метку на пиксель. Для входа размера `H x W` выход — это тензор формы `H x W` (semantic) или `H x W x N_instances` (instance). Это миллионы предсказаний на изображение, а не одно.
 
-The structure of segmentation is why it powers almost every dense-prediction vision product: medical imaging (tumour masks), autonomous driving (road, lane, obstacle), satellite (building footprints, crop boundaries), document parsing (layout zones), robotics (graspable regions). None of those tasks can be solved by putting a box around the object; they need the exact silhouette.
+Структура сегментации объясняет, почему она лежит в основе почти каждого продукта компьютерного зрения с плотными предсказаниями: медицинская визуализация (маски опухолей), автономное вождение (дорога, полоса, препятствие), спутниковые снимки (контуры зданий, границы посевов), разбор документов (зоны макета), робототехника (области, пригодные для захвата). Ни одну из этих задач нельзя решить, просто обведя объект рамкой; им нужен точный силуэт.
 
-The architectural problem is simple to state and not simple to solve: you need the network to see the global context of an image (what kind of scene is this) and the local pixel detail (exactly which pixel is road vs pavement) simultaneously. A standard CNN compresses spatially to gain context, which throws away the detail. U-Net was the design that got both.
+Архитектурную проблему легко сформулировать, но нелегко решить: сети нужно одновременно видеть глобальный контекст изображения (что это за сцена) и локальные детали пикселей (какой именно пиксель является дорогой, а какой — тротуаром). Стандартная CNN сжимает пространственные размеры, чтобы получить контекст, и из-за этого теряет детали. U-Net стала архитектурой, которая дала и то и другое.
 
 ## The Concept
 
@@ -37,11 +37,11 @@ flowchart LR
     style PAN fill:#dcfce7,stroke:#16a34a
 ```
 
-- **Semantic** says "this pixel is road, that pixel is car." Two cars next to each other collapse into a single blob.
-- **Instance** says "this pixel is car #3, that pixel is car #5." Ignores background stuff ("stuff" = sky, road, grass).
-- **Panoptic** unifies both: every pixel gets a class label, every instance gets a unique id, stuff and things both segmented.
+- **Semantic** говорит: "этот пиксель — дорога, тот пиксель — автомобиль." Два автомобиля рядом друг с другом сливаются в одну область.
+- **Instance** говорит: "этот пиксель — автомобиль #3, тот пиксель — автомобиль #5." Игнорирует фоновые категории ("stuff" = небо, дорога, трава).
+- **Panoptic** объединяет оба подхода: каждый пиксель получает метку класса, каждый экземпляр получает уникальный id, сегментируются и stuff, и things.
 
-This lesson covers semantic. The next lesson (Mask R-CNN) covers instance.
+В этом уроке рассматривается semantic. Следующий урок (Mask R-CNN) рассматривает instance.
 
 ### The U-Net shape
 
@@ -72,74 +72,74 @@ flowchart LR
     style DEC fill:#dcfce7,stroke:#16a34a
 ```
 
-The encoder halves spatial resolution four times and doubles channels. The decoder reverses: doubles spatial resolution four times and halves channels. The skip connections concatenate matching encoder features with decoder features at every resolution. The final 1x1 conv maps `64 -> num_classes` at full resolution.
+Энкодер четыре раза уменьшает пространственное разрешение вдвое и удваивает число каналов. Декодер выполняет обратное: четыре раза удваивает пространственное разрешение и уменьшает число каналов вдвое. Skip connections конкатенируют соответствующие признаки энкодера с признаками декодера на каждом разрешении. Финальная 1x1 conv отображает `64 -> num_classes` в полном разрешении.
 
-Why skip connections are necessary: the decoder has seen only small feature maps by the time it tries to output pixel-level predictions. Without the skips it cannot localise edges accurately because that information was compressed away in the encoder. Skip connections hand it the high-resolution feature maps the encoder computed on the way down.
+Почему skip connections необходимы: к моменту, когда декодер пытается выдавать предсказания на уровне пикселей, он видел только маленькие карты признаков. Без skips он не может точно локализовать края, потому что эта информация была сжата в энкодере. Skip connections передают ему высокоразрешающие карты признаков, которые энкодер вычислил на пути вниз.
 
 ### Transposed vs bilinear upsample
 
-The decoder has to expand spatial dimensions. Two options:
+Декодеру нужно расширять пространственные размеры. Есть два варианта:
 
-- **Transposed convolution** (`nn.ConvTranspose2d`) — learnable upsample. Historical U-Net default. Can produce checkerboard artifacts if stride and kernel size do not divide evenly.
-- **Bilinear upsample + 3x3 conv** — smooth upsample followed by a conv. Fewer artifacts, fewer parameters, now the modern default.
+- **Transposed convolution** (`nn.ConvTranspose2d`) — обучаемое повышение разрешения. Исторический вариант по умолчанию для U-Net. Может создавать checkerboard artifacts, если stride и kernel size делятся неравномерно.
+- **Bilinear upsample + 3x3 conv** — гладкое повышение разрешения, за которым следует conv. Меньше артефактов, меньше параметров, сейчас это современный вариант по умолчанию.
 
-Both appear in the wild. For a first U-Net, bilinear is safer.
+Оба встречаются на практике. Для первой U-Net bilinear безопаснее.
 
 ### Cross-entropy on a pixel grid
 
-For semantic segmentation with C classes, the model output is `(N, C, H, W)`. The target is `(N, H, W)` with integer class IDs. Cross-entropy is identical to the classification case, just applied at every spatial position:
+Для semantic segmentation с C классами выход модели имеет форму `(N, C, H, W)`. Цель имеет форму `(N, H, W)` с целочисленными ID классов. Cross-entropy идентична случаю классификации, только применяется в каждой пространственной позиции:
 
 ```
 Loss = mean over (n, h, w) of -log( softmax(logits[n, :, h, w])[target[n, h, w]] )
 ```
 
-`F.cross_entropy` in PyTorch handles this shape natively. No reshape needed.
+`F.cross_entropy` в PyTorch обрабатывает эту форму напрямую. Reshape не нужен.
 
 ### Dice loss and why you need it
 
-Cross-entropy treats every pixel equally. That is wrong when one class dominates the frame (medical imaging: 99% background, 1% tumour). The network can score 99% accuracy by predicting background everywhere and still be useless.
+Cross-entropy одинаково учитывает каждый пиксель. Это неверно, когда один класс доминирует в кадре (медицинская визуализация: 99% фон, 1% опухоль). Сеть может получить 99% accuracy, предсказывая фон везде, и всё равно быть бесполезной.
 
-Dice loss solves this by directly optimising the overlap between predicted and true mask:
+Dice loss решает это, напрямую оптимизируя перекрытие между предсказанной и истинной маской:
 
 ```
 Dice(p, y) = 2 * sum(p * y) / (sum(p) + sum(y) + epsilon)
 Dice_loss = 1 - Dice
 ```
 
-where `p` is the sigmoid/softmax probability map for a class and `y` is the binary ground-truth mask. The loss is zero only when the overlap is perfect. Because it is ratio-based, class imbalance is irrelevant.
+где `p` — sigmoid/softmax probability map для класса, а `y` — бинарная ground-truth mask. Потеря равна нулю только при идеальном перекрытии. Поскольку она основана на отношении, дисбаланс классов не имеет значения.
 
-In practice, use the **combined loss**:
+На практике используйте **combined loss**:
 
 ```
 L = L_cross_entropy + lambda * L_dice       (lambda ~ 1)
 ```
 
-Cross-entropy gives stable gradients early in training; Dice focuses the tail of training on actually matching the mask shape. This combination is the medical-imaging default and hard to beat on any class-imbalanced dataset.
+Cross-entropy даёт стабильные градиенты в начале обучения; Dice фокусирует финальную часть обучения на реальном совпадении формы маски. Эта комбинация является стандартом для медицинской визуализации и её трудно превзойти на любом датасете с дисбалансом классов.
 
 ### Evaluation metrics
 
-- **Pixel accuracy** — percent of pixels predicted correctly. Cheap. Broken on imbalanced data for the same reason as accuracy in classification.
-- **IoU per class** — intersection over union for each class's mask; average across classes = mIoU.
-- **Dice (F1 on pixels)** — similar to IoU; `Dice = 2 * IoU / (1 + IoU)`. Medical imaging prefers Dice, driving community prefers IoU; they are monotonically related.
-- **Boundary F1** — measures how close predicted boundaries are to ground-truth boundaries, penalising even small shifts. Important for high-precision tasks like semiconductor inspection.
+- **Pixel accuracy** — процент пикселей, предсказанных правильно. Дёшево. Ломается на несбалансированных данных по той же причине, что и accuracy в классификации.
+- **IoU per class** — intersection over union для маски каждого класса; среднее по классам = mIoU.
+- **Dice (F1 on pixels)** — похожа на IoU; `Dice = 2 * IoU / (1 + IoU)`. В медицинской визуализации предпочитают Dice, в сообществе автономного вождения — IoU; они монотонно связаны.
+- **Boundary F1** — измеряет, насколько близки предсказанные границы к ground-truth границам, штрафуя даже небольшие сдвиги. Важна для высокоточных задач вроде инспекции полупроводников.
 
-Report IoU per class, not just mIoU. Mean IoU hides a class at 15% when nine others are at 85%.
+Сообщайте IoU по классам, а не только mIoU. Mean IoU скрывает класс на 15%, когда девять остальных находятся на 85%.
 
 ### Input resolution trade-off
 
-U-Net's encoder halves resolution four times, so the input must be divisible by 16. Medical images are often 512x512 or 1024x1024. Autonomous-driving crops are 2048x1024. The memory cost of U-Net scales with `H * W * C_max`, and at 1024x1024 with 1024 bottleneck channels the forward pass already uses gigabytes of VRAM.
+Энкодер U-Net четыре раза уменьшает разрешение вдвое, поэтому вход должен делиться на 16. Медицинские изображения часто имеют размер 512x512 или 1024x1024. Кропы для автономного вождения бывают 2048x1024. Затраты памяти U-Net масштабируются как `H * W * C_max`, и при 1024x1024 с 1024 каналами bottleneck прямой проход уже использует гигабайты VRAM.
 
-Two standard workarounds:
-1. Tile the input — process 256x256 tiles with overlap and stitch.
-2. Replace the bottleneck with dilated convolutions that keep spatial resolution higher but widen receptive field (the DeepLab family).
+Два стандартных обходных пути:
+1. Разбить вход на тайлы — обрабатывать 256x256 tiles с перекрытием и сшивать.
+2. Заменить bottleneck на dilated convolutions, которые сохраняют более высокое пространственное разрешение, но расширяют receptive field (семейство DeepLab).
 
-For a first model, a 256x256 input with a 64-channel-base U-Net trains comfortably on 8 GB VRAM.
+Для первой модели вход 256x256 с 64-channel-base U-Net комфортно обучается на 8 GB VRAM.
 
 ## Build It
 
 ### Step 1: Encoder block
 
-Two 3x3 convs with batch norm and ReLU. The first conv changes channel count; the second keeps it.
+Две 3x3 conv с batch norm и ReLU. Первая conv меняет число каналов; вторая сохраняет его.
 
 ```python
 import torch
@@ -162,7 +162,7 @@ class DoubleConv(nn.Module):
         return self.net(x)
 ```
 
-This block is reused throughout. `bias=False` because BN's beta handles the bias.
+Этот блок переиспользуется во всей сети. `bias=False`, потому что beta в BN обрабатывает смещение.
 
 ### Step 2: Down and up blocks
 
@@ -193,7 +193,7 @@ class Up(nn.Module):
         return self.conv(x)
 ```
 
-The spatial-only shape check (`shape[-2:]`) handles inputs whose dimensions are not divisible by 16; a safe `F.interpolate` aligns the tensor before the concat. Comparing the full shape would also trigger on channel-count differences, which should be a loud error, not a silent interpolate.
+Проверка только пространственной формы (`shape[-2:]`) обрабатывает входы, размеры которых не делятся на 16; безопасный `F.interpolate` выравнивает тензор перед concat. Сравнение полной формы также срабатывало бы на различиях числа каналов, а это должно быть явной ошибкой, а не тихой интерполяцией.
 
 ### Step 3: The U-Net
 
@@ -230,7 +230,7 @@ print(f"output: {net(x).shape}")
 print(f"params: {sum(p.numel() for p in net.parameters()):,}")
 ```
 
-Output shape `(1, 2, 256, 256)` — same spatial size as the input, `num_classes` channels. About 7.7M parameters at `base=32`.
+Форма выхода `(1, 2, 256, 256)` — тот же пространственный размер, что и у входа, и `num_classes` каналов. Около 7.7M параметров при `base=32`.
 
 ### Step 4: Losses
 
@@ -251,7 +251,7 @@ def combined_loss(logits, targets, num_classes, lam=1.0):
     return ce + lam * dc, {"ce": ce.item(), "dice": dc.item()}
 ```
 
-Dice is computed per class then averaged (macro Dice). The `eps` prevents division by zero on classes absent from the batch.
+Dice вычисляется по классам, затем усредняется (macro Dice). `eps` предотвращает деление на ноль для классов, отсутствующих в batch.
 
 ### Step 5: IoU metric
 
@@ -269,11 +269,11 @@ def iou_per_class(logits, targets, num_classes):
     return ious
 ```
 
-Returns a vector of length C. `nan` marks classes absent from the batch — do not average over those when computing mIoU.
+Возвращает вектор длины C. `nan` помечает классы, отсутствующие в batch — не усредняйте по ним при вычислении mIoU.
 
 ### Step 6: Synthetic dataset for end-to-end verification
 
-Generate shapes on coloured backgrounds so the network has to learn shape, not pixel colour.
+Сгенерируйте фигуры на цветных фонах, чтобы сеть должна была учить форму, а не цвет пикселей.
 
 ```python
 import numpy as np
@@ -319,7 +319,7 @@ class SegDataset(Dataset):
         return img, mask
 ```
 
-Three classes: background (0), circles (1), squares (2). The network must learn to distinguish shape.
+Три класса: фон (0), круги (1), квадраты (2). Сеть должна научиться различать форму.
 
 ### Step 7: Training loop
 
@@ -341,11 +341,11 @@ def train_one_epoch(model, loader, optimizer, device, num_classes):
     return loss_sum / total, iou_sum / len(loader)
 ```
 
-Run this for 10-30 epochs on the synthetic dataset and watch mIoU climb past 0.9 for the shape classes. Note the `nan_to_num(0)` treats classes absent from a batch as zero; for accurate per-class IoU, mask by presence and use `torch.nanmean` across batches at evaluation time rather than averaging here.
+Запустите это на 10-30 эпохах на синтетическом датасете и наблюдайте, как mIoU для классов фигур поднимается выше 0.9. Обратите внимание: `nan_to_num(0)` трактует классы, отсутствующие в batch, как ноль; для точного per-class IoU маскируйте по наличию и используйте `torch.nanmean` по batch-ам во время evaluation, а не усредняйте здесь.
 
 ## Use It
 
-For production, `segmentation_models_pytorch` ("smp") wraps every standard segmentation architecture with any torchvision or timm backbone. Three lines:
+Для production `segmentation_models_pytorch` ("smp") оборачивает каждую стандартную архитектуру сегментации с любым backbone из torchvision или timm. Три строки:
 
 ```python
 import segmentation_models_pytorch as smp
@@ -358,42 +358,42 @@ model = smp.Unet(
 )
 ```
 
-Also worth knowing for real work:
-- **DeepLabV3+** replaces max-pool-based downsampling with dilated convs so the bottleneck keeps resolution; faster boundaries on satellite and driving data.
-- **SegFormer** swaps the conv encoder for a hierarchical transformer; current SOTA on many benchmarks.
-- **Mask2Former** / **OneFormer** unify semantic, instance, and panoptic segmentation in a single architecture.
+Также полезно знать для реальной работы:
+- **DeepLabV3+** заменяет downsampling на основе max-pool на dilated convs, чтобы bottleneck сохранял разрешение; даёт более быстрые границы на спутниковых данных и данных автономного вождения.
+- **SegFormer** заменяет conv encoder на иерархический transformer; текущий SOTA на многих benchmarks.
+- **Mask2Former** / **OneFormer** объединяют semantic, instance и panoptic segmentation в одной архитектуре.
 
-All three are drop-in replacements in `smp` or `transformers` with the same data loader.
+Все три являются drop-in replacements в `smp` или `transformers` с тем же data loader.
 
 ## Ship It
 
-This lesson produces:
+Этот урок создаёт:
 
-- `outputs/prompt-segmentation-task-picker.md` — a prompt that picks between semantic, instance, and panoptic segmentation and names the architecture for a given task.
-- `outputs/skill-segmentation-mask-inspector.md` — a skill that reports class distribution, predicted-mask statistics, and the classes that are under-predicted or boundary-blurred.
+- `outputs/prompt-segmentation-task-picker.md` — prompt, который выбирает между semantic, instance и panoptic segmentation и называет архитектуру для заданной задачи.
+- `outputs/skill-segmentation-mask-inspector.md` — skill, который сообщает распределение классов, статистики предсказанной маски и классы, которые недопредсказываются или имеют размытые границы.
 
 ## Exercises
 
-1. **(Easy)** Implement `bce_dice_loss` for a binary segmentation task (foreground vs background). Verify on a synthetic two-class dataset that the combined loss converges faster than BCE alone when the foreground is 5% of pixels.
-2. **(Medium)** Replace the `nn.Upsample + conv` up-block with a `nn.ConvTranspose2d` up-block. Train both on the synthetic dataset and compare mIoU. Observe where checkerboard artifacts appear in the transposed-conv version.
-3. **(Hard)** Take a real segmentation dataset (Oxford-IIIT Pets, Cityscapes mini split, or a medical subset) and train the U-Net to within 2 IoU points of the `smp.Unet` reference. Report per-class IoU and identify which classes benefit most from adding Dice to the loss.
+1. **(Easy)** Реализуйте `bce_dice_loss` для задачи binary segmentation (foreground vs background). Проверьте на синтетическом двухклассовом датасете, что combined loss сходится быстрее, чем только BCE, когда foreground занимает 5% пикселей.
+2. **(Medium)** Замените up-block `nn.Upsample + conv` на up-block `nn.ConvTranspose2d`. Обучите оба варианта на синтетическом датасете и сравните mIoU. Посмотрите, где в версии с transposed-conv появляются checkerboard artifacts.
+3. **(Hard)** Возьмите реальный датасет сегментации (Oxford-IIIT Pets, Cityscapes mini split или медицинское подмножество) и обучите U-Net до результата в пределах 2 IoU points от эталона `smp.Unet`. Сообщите per-class IoU и определите, какие классы больше всего выигрывают от добавления Dice к loss.
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |------|----------------|----------------------|
-| Semantic segmentation | "Label every pixel" | Per-pixel classification into C classes; instances of the same class merge |
-| Instance segmentation | "Label every object" | Separates distinct instances of the same class; foreground-only |
-| Panoptic segmentation | "Semantic + instance" | Every pixel gets a class; every thing instance also gets a unique id |
-| Skip connection | "U-Net bridge" | Concatenation of encoder features into matching-resolution decoder features; preserves high-frequency detail |
-| Transposed conv | "Deconvolution" | Learnable upsampling; can produce checkerboard artifacts |
-| Dice loss | "Overlap loss" | 1 - 2|A ∩ B| / (|A| + |B|); optimises mask overlap directly and is robust to class imbalance |
-| mIoU | "Mean intersection over union" | Average IoU across classes; the community-standard metric for segmentation |
-| Boundary F1 | "Boundary accuracy" | F1 score computed on boundary pixels only; matters for precision-critical tasks |
+| Semantic segmentation | "Разметить каждый пиксель" | Попиксельная классификация в C классов; экземпляры одного класса сливаются |
+| Instance segmentation | "Разметить каждый объект" | Разделяет разные экземпляры одного класса; только foreground |
+| Panoptic segmentation | "Semantic + instance" | Каждый пиксель получает класс; каждый экземпляр thing также получает уникальный id |
+| Skip connection | "Мост U-Net" | Конкатенация признаков энкодера с признаками декодера того же разрешения; сохраняет высокочастотные детали |
+| Transposed conv | "Deconvolution" | Обучаемое upsampling; может создавать checkerboard artifacts |
+| Dice loss | "Overlap loss" | 1 - 2|A ∩ B| / (|A| + |B|); напрямую оптимизирует перекрытие масок и устойчива к дисбалансу классов |
+| mIoU | "Mean intersection over union" | Среднее IoU по классам; стандартная метрика сообщества для segmentation |
+| Boundary F1 | "Boundary accuracy" | F1 score, вычисляемый только на граничных пикселях; важен для задач, критичных к точности |
 
 ## Further Reading
 
-- [U-Net: Convolutional Networks for Biomedical Image Segmentation (Ronneberger et al., 2015)](https://arxiv.org/abs/1505.04597) — the original paper; the figure everyone copies is on page 2
-- [Fully Convolutional Networks (Long et al., 2015)](https://arxiv.org/abs/1411.4038) — the paper that first made segmentation an end-to-end conv problem
-- [segmentation_models_pytorch](https://github.com/qubvel/segmentation_models.pytorch) — the reference for production segmentation; every standard architecture plus every standard loss
-- [Lessons learned from training SOTA segmentation (kaggle.com competitions)](https://www.kaggle.com/code/iafoss/carvana-unet-pytorch) — a walkthrough of why TTA, pseudo-labeling, and class weights matter on real data
+- [U-Net: Convolutional Networks for Biomedical Image Segmentation (Ronneberger et al., 2015)](https://arxiv.org/abs/1505.04597) — оригинальная статья; рисунок, который копируют все, находится на странице 2
+- [Fully Convolutional Networks (Long et al., 2015)](https://arxiv.org/abs/1411.4038) — статья, которая впервые превратила сегментацию в end-to-end conv задачу
+- [segmentation_models_pytorch](https://github.com/qubvel/segmentation_models.pytorch) — reference для production segmentation; каждая стандартная архитектура плюс каждая стандартная loss
+- [Lessons learned from training SOTA segmentation (kaggle.com competitions)](https://www.kaggle.com/code/iafoss/carvana-unet-pytorch) — walkthrough о том, почему TTA, pseudo-labeling и class weights важны на реальных данных

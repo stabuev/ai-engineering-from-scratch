@@ -1,42 +1,42 @@
-# Image Generation — Diffusion Models
+# Генерация изображений — диффузионные модели
 
-> A diffusion model learns to denoise. Train it to remove a tiny bit of noise from a noisy image, repeat that backwards a thousand times, and you have an image generator.
+> Диффузионная модель учится устранять шум. Обучите ее удалять крошечную долю шума из зашумленного изображения, повторите это в обратном направлении тысячу раз, и у вас получится генератор изображений.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 4 Lesson 07 (U-Net), Phase 1 Lesson 06 (Probability), Phase 3 Lesson 06 (Optimizers)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 4 Lesson 07 (U-Net), Phase 1 Lesson 06 (Probability), Phase 3 Lesson 06 (Optimizers)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Derive the forward noising process `x_0 -> x_1 -> ... -> x_T` and explain why the closed-form `q(x_t | x_0)` holds for any t
-- Implement a DDPM-style training objective that regresses the noise added at each step, and a sampler that walks back from pure noise to an image
-- Build a time-conditioned U-Net (small enough to train on CPU) that predicts the noise for any timestep
-- Explain the difference between DDPM and DDIM sampling, and when each is appropriate (Lesson 23 covers flow matching and rectified flow in depth)
+- Вывести прямой процесс зашумления `x_0 -> x_1 -> ... -> x_T` и объяснить, почему замкнутая форма `q(x_t | x_0)` верна для любого t
+- Реализовать обучающую цель в стиле DDPM, которая регрессирует шум, добавленный на каждом шаге, и семплер, который идет назад от чистого шума к изображению
+- Построить U-Net с временным условием, достаточно маленькую для обучения на CPU, которая предсказывает шум для любого временного шага
+- Объяснить различие между семплированием DDPM и DDIM и когда уместно каждое из них (Lesson 23 подробно рассматривает flow matching и rectified flow)
 
-## The Problem
+## Проблема
 
-GANs generate one-shot: noise in, image out, one forward pass. They are fast and hard to train. Diffusion models generate iteratively: start from pure noise, denoise in small steps, image emerges. They are slow and easy to train. For the last five years the latter property has dominated: any small team can train a diffusion model and get reasonable samples; GAN training is a craft you learn over years of failed runs.
+GAN генерируют за один проход: шум на входе, изображение на выходе, один прямой проход. Они быстрые, но их трудно обучать. Диффузионные модели генерируют итеративно: начинают с чистого шума, устраняют шум небольшими шагами, и появляется изображение. Они медленные, но их легко обучать. В последние пять лет именно последнее свойство доминировало: любая небольшая команда может обучить диффузионную модель и получить приемлемые сэмплы; обучение GAN — это ремесло, которому учатся годами неудачных запусков.
 
-Beyond training stability, diffusion's iterative structure is what unlocks everything modern image generation does: text conditioning, inpainting, image editing, super-resolution, controllable style. Each step of the sampling loop is a place to inject a new constraint. That hook is why Stable Diffusion, Imagen, DALL-E 3, Midjourney, and every controllable image model you will use are all diffusion-based.
+Помимо стабильности обучения, итеративная структура диффузии раскрывает все, что умеет современная генерация изображений: текстовое условие, inpainting (дорисовка), редактирование изображений, super-resolution (сверхразрешение), управляемый стиль. Каждый шаг цикла семплирования — это место, куда можно внедрить новое ограничение. Благодаря этому зацепу Stable Diffusion, Imagen, DALL-E 3, Midjourney и каждая управляемая модель изображений, которую вы будете использовать, основаны на диффузии.
 
-This lesson builds the minimal DDPM: forward noising, backward denoising, training loop. The next lesson (Stable Diffusion) wires it into a production system with a VAE, a text encoder, and classifier-free guidance.
+В этом уроке строится минимальная DDPM: прямое зашумление, обратное шумоподавление, цикл обучения. Следующий урок (Stable Diffusion) соединяет ее с производственной системой с VAE, текстовым энкодером и classifier-free guidance.
 
-## The Concept
+## Концепция
 
-### The forward process
+### Прямой процесс
 
-Take an image `x_0`. Add a tiny amount of Gaussian noise to get `x_1`. Add a tiny amount more to get `x_2`. Keep going for T steps until `x_T` is nearly indistinguishable from pure Gaussian noise.
+Возьмите изображение `x_0`. Добавьте небольшое количество гауссова шума, чтобы получить `x_1`. Добавьте еще немного, чтобы получить `x_2`. Продолжайте T шагов, пока `x_T` не станет почти неотличимым от чистого гауссова шума.
 
 ```
 q(x_t | x_{t-1}) = N(x_t; sqrt(1 - beta_t) * x_{t-1},  beta_t * I)
 ```
 
-`beta_t` is a small variance schedule, typically linear from 0.0001 to 0.02 over T=1000 steps. Each step slightly shrinks the signal and injects fresh noise.
+`beta_t` — это малое расписание дисперсии, обычно линейное от 0.0001 до 0.02 на T=1000 шагах. Каждый шаг слегка ослабляет сигнал и вводит новый шум.
 
-### The closed-form jump
+### Переход в замкнутой форме
 
-Adding noise one step at a time is a Markov chain, but the math folds: you can sample `x_t` directly from `x_0` in one step.
+Добавление шума по одному шагу — это марковская цепь, но математика сворачивается: можно сэмплировать `x_t` напрямую из `x_0` за один шаг.
 
 ```
 Define alpha_t = 1 - beta_t
@@ -50,11 +50,11 @@ Equivalently:
   where epsilon ~ N(0, I)
 ```
 
-This single equation is the whole reason diffusion is practical. During training you pick a random `t`, sample `x_t` directly from `x_0`, and train in one step — no simulation of the full Markov chain needed.
+Это единственное уравнение — главная причина, по которой диффузия практична. Во время обучения вы выбираете случайный `t`, сэмплируете `x_t` напрямую из `x_0` и обучаете за один шаг — симуляция полной марковской цепи не нужна.
 
-### The reverse process
+### Обратный процесс
 
-The forward process is fixed. The reverse process `p(x_{t-1} | x_t)` is what the neural network learns. Diffusion models do not predict `x_{t-1}` directly; they predict the noise `epsilon` added at step t, and the math derives `x_{t-1}` from it.
+Прямой процесс фиксирован. Обратный процесс `p(x_{t-1} | x_t)` — это то, что изучает нейронная сеть. Диффузионные модели не предсказывают `x_{t-1}` напрямую; они предсказывают шум `epsilon`, добавленный на шаге t, а математика выводит из него `x_{t-1}`.
 
 ```mermaid
 flowchart LR
@@ -74,22 +74,22 @@ flowchart LR
     style X0S fill:#dbeafe,stroke:#2563eb
 ```
 
-### The training loss
+### Функция потерь при обучении
 
-For every training step:
+На каждом шаге обучения:
 
-1. Sample a real image `x_0`.
-2. Sample a timestep `t` uniformly from [1, T].
-3. Sample noise `epsilon ~ N(0, I)`.
-4. Compute `x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon`.
-5. Predict `epsilon_theta(x_t, t)` with the network.
-6. Minimise `|| epsilon - epsilon_theta(x_t, t) ||^2`.
+1. Сэмплируйте реальное изображение `x_0`.
+2. Сэмплируйте временной шаг `t` равномерно из [1, T].
+3. Сэмплируйте шум `epsilon ~ N(0, I)`.
+4. Вычислите `x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon`.
+5. Предскажите `epsilon_theta(x_t, t)` с помощью сети.
+6. Минимизируйте `|| epsilon - epsilon_theta(x_t, t) ||^2`.
 
-That is it. The neural network learns to predict the noise at any timestep. The loss is MSE. There is no adversarial game, no collapse, no oscillation.
+Вот и все. Нейронная сеть учится предсказывать шум на любом временном шаге. Функция потерь — MSE. Нет состязательной игры, нет коллапса, нет осцилляций.
 
-### The sampler (DDPM)
+### Семплер (DDPM)
 
-To generate: start from `x_T ~ N(0, I)` and walk backwards one step at a time.
+Чтобы сгенерировать: начните с `x_T ~ N(0, I)` и идите назад по одному шагу.
 
 ```
 for t = T, T-1, ..., 1:
@@ -99,30 +99,30 @@ for t = T, T-1, ..., 1:
 return x_0
 ```
 
-The key is that even though the reverse conditional is not known in closed form in general, for this specific Gaussian forward process it is. The ugly-looking coefficients are what Bayes' rule gives you.
+Ключевой момент: хотя обратное условное распределение в общем случае неизвестно в замкнутой форме, для этого конкретного гауссова прямого процесса оно известно. Неуклюжие коэффициенты — это то, что дает правило Байеса.
 
-### Why 1000 steps
+### Почему 1000 шагов
 
-The forward noise schedule is chosen so each step adds just enough noise that the reverse step is nearly Gaussian. Too few steps and the reverse step is far from Gaussian, the network cannot model it well. Too many steps and sampling becomes expensive with diminishing gain. T=1000 with a linear schedule is the DDPM default.
+Расписание шума в прямом процессе выбирают так, чтобы каждый шаг добавлял ровно столько шума, что обратный шаг был почти гауссовым. Слишком мало шагов — и обратный шаг далек от гауссова, сеть не может хорошо его моделировать. Слишком много шагов — и семплирование становится дорогим при убывающей отдаче. T=1000 с линейным расписанием — стандарт DDPM.
 
-### DDIM: 20x faster sampling
+### DDIM: семплирование в 20 раз быстрее
 
-Training is the same. Sampling changes. DDIM (Song et al., 2020) defines a deterministic reverse process that skips timesteps without retraining. Sampling in 50 steps with DDIM gives near-1000-step DDPM quality. Every production system uses DDIM or an even faster variant (DPM-Solver, Euler ancestral).
+Обучение то же самое. Меняется семплирование. DDIM (Song et al., 2020) задает детерминированный обратный процесс, который пропускает временные шаги без переобучения. Семплирование за 50 шагов с DDIM дает качество, близкое к DDPM на 1000 шагах. Каждая производственная система использует DDIM или еще более быстрый вариант (DPM-Solver, Euler ancestral).
 
-### Time conditioning
+### Временное условие
 
-The network `epsilon_theta(x_t, t)` needs to know which timestep it is denoising. Modern diffusion models inject `t` via sinusoidal time embeddings (same idea as positional encoding in transformers) that get added to feature maps at every U-Net level.
+Сеть `epsilon_theta(x_t, t)` должна знать, какой временной шаг она очищает от шума. Современные диффузионные модели вводят `t` через синусоидальные временные эмбеддинги (та же идея, что и позиционное кодирование в трансформерах), которые добавляются к картам признаков на каждом уровне U-Net.
 
 ```
 t_embedding = sinusoidal(t)
 feature_map += MLP(t_embedding)
 ```
 
-Without time conditioning the network has to guess the noise level from the image itself, which works but is much less sample-efficient.
+Без временного условия сеть вынуждена угадывать уровень шума по самому изображению; это работает, но требует гораздо больше сэмплов.
 
-## Build It
+## Соберите это
 
-### Step 1: Noise schedule
+### Шаг 1: Расписание шума
 
 ```python
 import torch
@@ -146,9 +146,9 @@ def precompute_schedule(betas):
 schedule = precompute_schedule(linear_beta_schedule(T=1000))
 ```
 
-Precompute once, gather by index during training and sampling.
+Предвычислите один раз, выбирайте по индексу во время обучения и семплирования.
 
-### Step 2: Forward diffusion (q_sample)
+### Шаг 2: Прямая диффузия (q_sample)
 
 ```python
 def q_sample(x0, t, noise, schedule):
@@ -157,9 +157,9 @@ def q_sample(x0, t, noise, schedule):
     return sqrt_a * x0 + sqrt_one_minus_a * noise
 ```
 
-One-line closed form. `t` is a batch of timesteps, one per image in the batch.
+Однострочная замкнутая форма. `t` — это батч временных шагов, по одному на каждое изображение в батче.
 
-### Step 3: A tiny time-conditioned U-Net
+### Шаг 3: Крошечная U-Net с временным условием
 
 ```python
 import torch.nn as nn
@@ -203,9 +203,9 @@ class TinyUNet(nn.Module):
         return self.dec2(d2)
 ```
 
-Two-level U-Net with time conditioning injected at the bottleneck. Scale up the depth and width for real images.
+Двухуровневая U-Net с временным условием, введенным в bottleneck (узкое место). Для реальных изображений увеличьте глубину и ширину.
 
-### Step 4: Training loop
+### Шаг 4: Цикл обучения
 
 ```python
 def train_step(model, x0, schedule, optimizer, device, T=1000):
@@ -223,9 +223,9 @@ def train_step(model, x0, schedule, optimizer, device, T=1000):
     return loss.item()
 ```
 
-That is the entire training loop. No GAN game, no specialised loss, one MSE call.
+Это весь цикл обучения. Никакой игры GAN, никакой специализированной функции потерь, один вызов MSE.
 
-### Step 5: Sampler (DDPM)
+### Шаг 5: Семплер (DDPM)
 
 ```python
 @torch.no_grad()
@@ -248,9 +248,9 @@ def sample(model, schedule, shape, T=1000, device="cpu"):
     return x
 ```
 
-1000 forward passes to produce one batch of samples. In real code you would swap this for a DDIM 50-step sampler.
+1000 прямых проходов, чтобы получить один батч сэмплов. В реальном коде вы заменили бы это на DDIM-семплер на 50 шагов.
 
-### Step 6: DDIM sampler (deterministic, ~20x faster)
+### Шаг 6: DDIM-семплер (детерминированный, ~20x быстрее)
 
 ```python
 @torch.no_grad()
@@ -275,11 +275,11 @@ def sample_ddim(model, schedule, shape, steps=50, T=1000, device="cpu", eta=0.0)
     return x
 ```
 
-`eta=0` is fully deterministic (same noise input always produces the same output). `eta=1` recovers DDPM.
+`eta=0` полностью детерминирован (один и тот же шумовой вход всегда дает один и тот же выход). `eta=1` восстанавливает DDPM.
 
-## Use It
+## Используйте это
 
-For production work, use `diffusers`:
+Для производственной работы используйте `diffusers`:
 
 ```python
 from diffusers import DDPMScheduler, UNet2DModel
@@ -288,39 +288,39 @@ unet = UNet2DModel(sample_size=32, in_channels=3, out_channels=3, layers_per_blo
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 ```
 
-The library ships ready-made schedulers (DDPM, DDIM, DPM-Solver, Euler, Heun), configurable U-Nets, pipelines for text-to-image and image-to-image, and LoRA fine-tuning helpers.
+Библиотека поставляет готовые планировщики (DDPM, DDIM, DPM-Solver, Euler, Heun), настраиваемые U-Net, пайплайны для text-to-image и image-to-image, а также вспомогательные средства для LoRA fine-tuning.
 
-For research, `k-diffusion` (Katherine Crowson) has the most faithful reference implementations and the best sampling variants.
+Для исследований `k-diffusion` (Katherine Crowson) содержит самые точные эталонные реализации и лучшие варианты семплирования.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-diffusion-sampler-picker.md` — a prompt that picks DDPM / DDIM / DPM-Solver / Euler based on quality target, latency budget, and conditioning type.
-- `outputs/skill-noise-schedule-designer.md` — a skill that produces a linear, cosine, or sigmoid beta schedule given T and target corruption level, plus diagnostic plots of signal-to-noise ratio over time.
+- `outputs/prompt-diffusion-sampler-picker.md` — промпт, который выбирает DDPM / DDIM / DPM-Solver / Euler на основе целевого качества, бюджета задержки и типа условия.
+- `outputs/skill-noise-schedule-designer.md` — навык, который создает линейное, косинусное или сигмоидальное beta-расписание по заданным T и целевому уровню искажения, а также диагностические графики отношения сигнал/шум во времени.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Visualise the forward process: take one image and plot `x_t` at `t in [0, 100, 250, 500, 750, 1000]`. Verify that `x_1000` looks like pure Gaussian noise.
-2. **(Medium)** Train the TinyUNet on the synthetic-circles dataset for 20 epochs and sample 16 circles. Compare DDPM (1000 steps) and DDIM (50 steps) sampling — do they produce similar images from the same noise seed?
-3. **(Hard)** Implement a cosine noise schedule (Nichol & Dhariwal, 2021): `alpha_bar_t = cos^2((t/T + s) / (1 + s) * pi / 2)`. Train the same model with linear and cosine schedules and show that cosine gives better samples at low step counts.
+1. **(Легко)** Визуализируйте прямой процесс: возьмите одно изображение и постройте `x_t` при `t in [0, 100, 250, 500, 750, 1000]`. Убедитесь, что `x_1000` выглядит как чистый гауссов шум.
+2. **(Средне)** Обучите TinyUNet на датасете synthetic-circles в течение 20 эпох и сэмплируйте 16 кругов. Сравните семплирование DDPM (1000 шагов) и DDIM (50 шагов) — производят ли они похожие изображения из одного и того же зерна шума?
+3. **(Сложно)** Реализуйте косинусное расписание шума (Nichol & Dhariwal, 2021): `alpha_bar_t = cos^2((t/T + s) / (1 + s) * pi / 2)`. Обучите ту же модель с линейным и косинусным расписаниями и покажите, что косинусное дает лучшие сэмплы при малом числе шагов.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Forward process | "Add noise over time" | Fixed Markov chain that corrupts an image into Gaussian noise over T steps |
-| Reverse process | "Denoise step by step" | Learned distribution that walks back from noise to image |
-| Epsilon prediction | "Predict the noise" | The training target: `epsilon_theta(x_t, t)` predicts the noise added at step t |
-| Beta schedule | "Noise amounts" | Sequence of T small variances that define how much noise enters per step |
-| alpha_bar_t | "Cumulative retain factor" | Product of (1 - beta_s) up to time t; bigger t means less signal left |
-| DDPM sampler | "Ancestral, stochastic" | Samples each x_{t-1} from its conditional Gaussian; 1000 steps |
-| DDIM sampler | "Deterministic, fast" | Rewrites sampling as a deterministic ODE; 20-100 steps with similar quality |
-| Time conditioning | "Tell the model which t" | Sinusoidal embedding of t injected into the U-Net so it knows the noise level |
+| Прямой процесс (Forward process) | "Добавлять шум со временем" | Фиксированная марковская цепь, которая за T шагов искажает изображение до гауссова шума |
+| Обратный процесс (Reverse process) | "Пошагово устранять шум" | Выученное распределение, которое идет назад от шума к изображению |
+| Предсказание epsilon (Epsilon prediction) | "Предсказать шум" | Цель обучения: `epsilon_theta(x_t, t)` предсказывает шум, добавленный на шаге t |
+| Beta-расписание (Beta schedule) | "Величины шума" | Последовательность из T малых дисперсий, которые задают, сколько шума входит на каждом шаге |
+| alpha_bar_t | "Кумулятивный коэффициент сохранения" | Произведение (1 - beta_s) до времени t; большее t означает, что осталось меньше сигнала |
+| DDPM-семплер (DDPM sampler) | "Анцестральный, стохастический" | Сэмплирует каждое x_{t-1} из его условного гауссова распределения; 1000 шагов |
+| DDIM-семплер (DDIM sampler) | "Детерминированный, быстрый" | Переписывает семплирование как детерминированное ODE; 20-100 шагов с похожим качеством |
+| Временное условие (Time conditioning) | "Сообщить модели, какой t" | Синусоидальный эмбеддинг t, введенный в U-Net, чтобы она знала уровень шума |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Denoising Diffusion Probabilistic Models (Ho et al., 2020)](https://arxiv.org/abs/2006.11239) — the paper that made diffusion practical and beat GANs on FID
-- [Improved DDPM (Nichol & Dhariwal, 2021)](https://arxiv.org/abs/2102.09672) — cosine schedule and v-parameterisation
-- [DDIM (Song, Meng, Ermon, 2020)](https://arxiv.org/abs/2010.02502) — the deterministic sampler that made real-time inference possible
-- [Elucidating the Design Space of Diffusion (Karras et al., 2022)](https://arxiv.org/abs/2206.00364) — a unified view of every diffusion design choice; current best reference
+- [Denoising Diffusion Probabilistic Models (Ho et al., 2020)](https://arxiv.org/abs/2006.11239) — статья, которая сделала диффузию практичной и превзошла GAN по FID
+- [Improved DDPM (Nichol & Dhariwal, 2021)](https://arxiv.org/abs/2102.09672) — косинусное расписание и v-параметризация
+- [DDIM (Song, Meng, Ermon, 2020)](https://arxiv.org/abs/2010.02502) — детерминированный семплер, который сделал возможным вывод в реальном времени
+- [Elucidating the Design Space of Diffusion (Karras et al., 2022)](https://arxiv.org/abs/2206.00364) — единый взгляд на каждый проектный выбор в диффузии; лучшая актуальная ссылка

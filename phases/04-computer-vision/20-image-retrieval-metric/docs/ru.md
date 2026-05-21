@@ -1,30 +1,30 @@
-# Image Retrieval & Metric Learning
+# Поиск изображений и метрическое обучение
 
-> A retrieval system ranks candidates by a distance in embedding space. Metric learning is the discipline of shaping that space so the distances mean what you want.
+> Система поиска ранжирует кандидатов по расстоянию в пространстве эмбеддингов. Метрическое обучение (metric learning) — это дисциплина формирования такого пространства, чтобы расстояния означали именно то, что вам нужно.
 
 **Type:** Build
 **Languages:** Python
 **Prerequisites:** Phase 4 Lesson 14 (ViT), Phase 4 Lesson 18 (CLIP)
 **Time:** ~45 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Explain triplet, contrastive, and proxy-based metric learning losses and pick the right one for a given dataset
-- Implement L2-normalisation and cosine similarity correctly and audit the difference between "same item" and "same class" retrieval
-- Build a FAISS index, query it by text and by image, and report recall@K for a held-out query set
-- Use DINOv2, CLIP, and SigLIP as off-the-shelf embedding backbones and know when each wins
+- Объяснить функции потерь метрического обучения на основе триплетов, контрастивного подхода и прокси и выбрать подходящую для заданного датасета
+- Корректно реализовать L2-нормализацию и косинусное сходство и проанализировать разницу между поиском "того же объекта" и "того же класса"
+- Построить индекс FAISS, выполнять запросы к нему по тексту и по изображению и сообщать recall@K для отложенного набора запросов
+- Использовать DINOv2, CLIP и SigLIP как готовые основы для эмбеддингов и понимать, когда каждая из них выигрывает
 
-## The Problem
+## Проблема
 
-Retrieval is everywhere in production vision: duplicate detection, reverse image search, visual search ("find similar products"), face re-identification, person re-ID for surveillance, instance-level matching for e-commerce. The product question is always the same: "given this query image, rank my catalogue."
+Поиск встречается в промышленном компьютерном зрении повсюду: обнаружение дубликатов, обратный поиск по изображению, визуальный поиск ("найти похожие товары"), повторная идентификация лиц, person re-ID для видеонаблюдения, сопоставление на уровне экземпляров для электронной коммерции. Продуктовый вопрос всегда один и тот же: "по данному изображению-запросу ранжируй мой каталог."
 
-Two design decisions shape the whole system. The embedding — what model produces the vectors. The index — how to find nearest neighbours at scale. Both are commodity in 2026 (DINOv2 for the embedding, FAISS for the index), which raises the bar: the hard part is defining *what counts as similar* for your application, then shaping the embedding space so the distances match.
+Два проектных решения формируют всю систему. Эмбеддинг — какая модель производит векторы. Индекс — как искать ближайших соседей в масштабе. В 2026 году оба компонента стали типовыми (DINOv2 для эмбеддинга, FAISS для индекса), что повышает планку: сложная часть — определить, *что считается похожим* в вашем приложении, а затем сформировать пространство эмбеддингов так, чтобы расстояния этому соответствовали.
 
-That shaping is metric learning. It is a small but high-leverage discipline.
+Такое формирование и есть метрическое обучение. Это небольшая, но очень эффективная дисциплина.
 
-## The Concept
+## Концепция
 
-### Retrieval at a glance
+### Поиск вкратце
 
 ```mermaid
 flowchart LR
@@ -41,70 +41,70 @@ flowchart LR
     style OUT fill:#dcfce7,stroke:#16a34a
 ```
 
-### The four loss families
+### Четыре семейства функций потерь
 
-| Loss | Requires | Pros | Cons |
+| Функция потерь | Требует | Плюсы | Минусы |
 |------|----------|------|------|
-| **Contrastive** | (anchor, positive) + negatives | Simple, works with any pair label | Slow to converge without many negatives |
-| **Triplet** | (anchor, positive, negative) | Intuitive; direct margin control | Hard-triplet mining is expensive |
-| **NT-Xent / InfoNCE** | Pairs + batch-mined negatives | Scales to large batches | Needs big batch or momentum queue |
-| **Proxy-based (ProxyNCA)** | Class labels only | Fast, stable, no mining | Can overfit to proxies on small datasets |
+| **Contrastive** | (anchor, positive) + negatives | Простая, работает с любой парной меткой | Медленно сходится без большого числа негативов |
+| **Triplet** | (anchor, positive, negative) | Интуитивная; прямое управление margin | Майнинг сложных триплетов дорог |
+| **NT-Xent / InfoNCE** | пары + batch-mined negatives | Масштабируется на большие батчи | Нужен большой батч или очередь momentum |
+| **Proxy-based (ProxyNCA)** | только метки классов | Быстрая, стабильная, без майнинга | Может переобучаться на прокси на малых датасетах |
 
-For most production use cases, start with a pretrained backbone and only add a metric-learning fine-tune if the off-the-shelf embeddings underperform on your test set.
+Для большинства промышленных сценариев начните с предобученной основы и добавляйте дообучение с метрическим обучением только если готовые эмбеддинги дают слабый результат на вашем тестовом наборе.
 
-### Triplet loss formally
+### Формально о triplet loss
 
 ```
 L = max(0, ||f(a) - f(p)||^2 - ||f(a) - f(n)||^2 + margin)
 ```
 
-Pull anchor `a` close to positive `p`, push it away from negative `n`, with a `margin` that ensures a gap. The three-image structure generalises to any similarity ordering.
+Притягивайте anchor `a` к positive `p`, отталкивайте его от negative `n`, с `margin`, который обеспечивает зазор. Структура из трех изображений обобщается на любое упорядочивание по сходству.
 
-Mining matters: easy triplets (`n` already far from `a`) contribute zero loss; only hard triplets teach the network. Semi-hard mining (`n` further than `p` but within margin) is the 2016 FaceNet recipe and still dominates.
+Майнинг важен: легкие триплеты (`n` уже далеко от `a`) дают нулевую потерю; сеть обучают только сложные триплеты. Semi-hard mining (`n` дальше, чем `p`, но внутри margin) — рецепт FaceNet 2016 года, который по-прежнему доминирует.
 
-### Cosine similarity vs L2
+### Косинусное сходство против L2
 
-Two metrics, two conventions:
+Две метрики, две конвенции:
 
-- **Cosine**: angle between vectors. Requires L2-normalised embeddings.
-- **L2**: Euclidean distance. Works on raw or normalised embeddings, but is usually paired with L2-normalised + squared L2.
+- **Cosine**: угол между векторами. Требует L2-нормализованных эмбеддингов.
+- **L2**: евклидово расстояние. Работает на сырых или нормализованных эмбеддингах, но обычно используется в паре с L2-normalised + squared L2.
 
-For most modern nets the two are equivalent: `||a - b||^2 = 2 - 2 cos(a, b)` when `||a|| = ||b|| = 1`. Pick the convention that matches your embedding training; mixing them silently changes what "nearest" means.
+Для большинства современных сетей они эквивалентны: `||a - b||^2 = 2 - 2 cos(a, b)` при `||a|| = ||b|| = 1`. Выберите конвенцию, которая соответствует обучению вашего эмбеддинга; их смешивание незаметно меняет смысл "ближайшего".
 
 ### Recall@K
 
-The standard retrieval metric:
+Стандартная метрика поиска:
 
 ```
 recall@K = fraction of queries where at least one correct match is in the top K results
 ```
 
-Report recall@1, @5, @10 side by side. A recall@10 above 0.95 with recall@1 below 0.5 means the embedding space has the right structure but the ranking is noisy — try longer fine-tunes or a re-ranking step.
+Сообщайте recall@1, @5, @10 рядом. recall@10 выше 0.95 при recall@1 ниже 0.5 означает, что пространство эмбеддингов имеет правильную структуру, но ранжирование шумное — попробуйте более длительное дообучение или шаг повторного ранжирования.
 
-For duplicate detection, precision@K matters more because every false positive is a user-visible mistake. For visual search, recall@K is the product signal.
+Для обнаружения дубликатов precision@K важнее, потому что каждое ложное срабатывание — заметная пользователю ошибка. Для визуального поиска recall@K — продуктовый сигнал.
 
-### FAISS in one paragraph
+### FAISS в одном абзаце
 
-Facebook AI Similarity Search. The de-facto library for nearest-neighbour search. Three index choices:
+Facebook AI Similarity Search. Фактический стандарт библиотеки для поиска ближайших соседей. Три варианта индекса:
 
-- `IndexFlatIP` / `IndexFlatL2` — brute force, exact, no training. Use up to ~1M vectors.
-- `IndexIVFFlat` — partition into K cells, search only the closest few cells. Approximate, fast, needs training data.
-- `IndexHNSW` — graph-based, fastest for many queries, large index size.
+- `IndexFlatIP` / `IndexFlatL2` — полный перебор, точный, без обучения. Используйте примерно до ~1M векторов.
+- `IndexIVFFlat` — разбивает на K ячеек, ищет только в нескольких ближайших ячейках. Приближенный, быстрый, требует обучающих данных.
+- `IndexHNSW` — графовый, самый быстрый для большого числа запросов, с большим размером индекса.
 
-For 100k vectors you probably want `IndexFlatIP` on cosine similarity. For 10M you want `IndexIVFFlat`. For 100M+ combined with product quantisation (`IndexIVFPQ`).
+Для 100k векторов вам, вероятно, нужен `IndexFlatIP` с косинусным сходством. Для 10M нужен `IndexIVFFlat`. Для 100M+ — в сочетании с product quantisation (`IndexIVFPQ`).
 
-### Instance-level vs category-level retrieval
+### Поиск на уровне экземпляра против поиска на уровне категории
 
-Two very different problems with the same name:
+Две очень разные задачи с одним названием:
 
-- **Category-level** — "find cats in my catalogue." Class-conditional similarity; off-the-shelf CLIP / DINOv2 embeddings work well.
-- **Instance-level** — "find *this exact product* in my catalogue." Needs fine-grained discrimination between visually similar objects of the same class; off-the-shelf embeddings under-perform; fine-tuning with metric learning matters.
+- **Category-level** — "найти кошек в моем каталоге." Класс-условное сходство; готовые эмбеддинги CLIP / DINOv2 работают хорошо.
+- **Instance-level** — "найти *именно этот товар* в моем каталоге." Требует тонкого различения визуально похожих объектов одного класса; готовые эмбеддинги работают хуже; важно дообучение с метрическим обучением.
 
-Always ask which one you are solving before picking a model.
+Всегда спрашивайте, какую из них вы решаете, прежде чем выбирать модель.
 
-## Build It
+## Соберите это
 
-### Step 1: Triplet loss
+### Шаг 1: Triplet loss
 
 ```python
 import torch
@@ -116,11 +116,11 @@ def triplet_loss(anchor, positive, negative, margin=0.2):
     return F.relu(d_ap - d_an + margin).mean()
 ```
 
-One line. Works on L2-normalised or raw embeddings.
+Одна строка. Работает на L2-нормализованных или сырых эмбеддингах.
 
-### Step 2: Semi-hard mining
+### Шаг 2: Semi-hard mining
 
-Given a batch of embeddings and labels, find the hardest semi-hard negative for each anchor.
+Для заданного батча эмбеддингов и меток найдите самый сложный semi-hard negative для каждого anchor.
 
 ```python
 def semi_hard_negatives(emb, labels, margin=0.2):
@@ -148,9 +148,9 @@ def semi_hard_negatives(emb, labels, margin=0.2):
     return pos_idx, neg_idx
 ```
 
-Each anchor gets the hardest positive in-class and a semi-hard negative that is further than the positive but within margin.
+Каждый anchor получает самый сложный positive внутри класса и semi-hard negative, который дальше positive, но внутри margin.
 
-### Step 3: Recall@K
+### Шаг 3: Recall@K
 
 ```python
 def recall_at_k(query_emb, gallery_emb, query_labels, gallery_labels, k=1):
@@ -160,9 +160,9 @@ def recall_at_k(query_emb, gallery_emb, query_labels, gallery_labels, k=1):
     return matches.float().mean().item()
 ```
 
-Top-k by inner product on L2-normalised embeddings equals top-k by cosine. Report the mean proportion of queries with at least one correct neighbour.
+Top-k по внутреннему произведению на L2-нормализованных эмбеддингах равен top-k по косинусу. Сообщайте среднюю долю запросов, у которых есть хотя бы один правильный сосед.
 
-### Step 4: Putting it together
+### Шаг 4: Собираем вместе
 
 ```python
 import torch
@@ -200,48 +200,48 @@ for step in range(200):
     opt.zero_grad(); loss.backward(); opt.step()
 ```
 
-After a few hundred steps the embedding clusters form one cluster per class.
+Через несколько сотен шагов кластеры эмбеддингов формируют по одному кластеру на класс.
 
-## Use It
+## Используйте это
 
-Production stacks in 2026:
+Промышленные стеки в 2026 году:
 
-- **DINOv2 + FAISS** — general-purpose visual retrieval. Works off-the-shelf.
-- **CLIP + FAISS** — when queries are text.
-- **Fine-tuned DINOv2 + FAISS** — instance-level retrieval, face re-ID, fashion, e-commerce.
-- **Milvus / Weaviate / Qdrant** — managed vector DB wrappers around FAISS or HNSW.
+- **DINOv2 + FAISS** — визуальный поиск общего назначения. Работает из коробки.
+- **CLIP + FAISS** — когда запросы являются текстом.
+- **Fine-tuned DINOv2 + FAISS** — поиск на уровне экземпляра, face re-ID, мода, электронная коммерция.
+- **Milvus / Weaviate / Qdrant** — управляемые обертки векторных БД вокруг FAISS или HNSW.
 
-For SOTA instance retrieval, the recipe is: DINOv2 backbone, add an embedding head, fine-tune with a triplet or InfoNCE loss on instance-labelled pairs, index in FAISS.
+Для SOTA-поиска экземпляров рецепт такой: основа DINOv2, добавить embedding head, дообучить с triplet или InfoNCE loss на парах с метками экземпляров, индексировать в FAISS.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
+Этот урок создает:
 
-- `outputs/prompt-retrieval-loss-picker.md` — a prompt that picks triplet / InfoNCE / ProxyNCA for a given retrieval problem.
-- `outputs/skill-recall-at-k-runner.md` — a skill that writes a clean evaluation harness for recall@K with train/val/gallery splits and proper data contract.
+- `outputs/prompt-retrieval-loss-picker.md` — промпт, который выбирает triplet / InfoNCE / ProxyNCA для заданной задачи поиска.
+- `outputs/skill-recall-at-k-runner.md` — навык, который пишет чистый оценочный каркас для recall@K с train/val/gallery-разбиениями и корректным контрактом данных.
 
-## Exercises
+## Упражнения
 
-1. **(Easy)** Run the toy example above. Plot the embeddings with PCA before and after training to see the six clusters form.
-2. **(Medium)** Add a ProxyNCA loss implementation: one learned "proxy" per class, standard cross-entropy on cosine similarity. Compare convergence speed vs triplet loss on the toy data.
-3. **(Hard)** Take 1,000 ImageNet validation images, embed with DINOv2 via HuggingFace, build a FAISS flat index, and report recall@{1, 5, 10} against the same images as queries (should be 1.0) and against a held-out split with ImageNet labels as ground truth.
+1. **(Easy)** Запустите игрушечный пример выше. Визуализируйте эмбеддинги с помощью PCA до и после обучения, чтобы увидеть формирование шести кластеров.
+2. **(Medium)** Добавьте реализацию ProxyNCA loss: один обучаемый "proxy" на класс, стандартная cross-entropy по косинусному сходству. Сравните скорость сходимости с triplet loss на игрушечных данных.
+3. **(Hard)** Возьмите 1,000 валидационных изображений ImageNet, получите эмбеддинги с DINOv2 через HuggingFace, постройте плоский индекс FAISS и сообщите recall@{1, 5, 10} против тех же изображений как запросов (должно быть 1.0) и против отложенного разбиения с метками ImageNet как ground truth.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Metric learning | "Shape the space" | Training an encoder so distances in its output space reflect a target similarity |
-| Triplet loss | "Pull and push" | L = max(0, d(a, p) - d(a, n) + margin); the canonical metric-learning loss |
-| Semi-hard mining | "Useful negatives" | Negatives further from the anchor than the positive but within margin; empirically the most informative |
-| Proxy-based loss | "Class prototypes" | One learned proxy per class; cross-entropy over similarity-to-proxies; no pair mining |
-| Recall@K | "Top-K hit rate" | Fraction of queries with at least one correct result in the top K |
-| Instance retrieval | "Find this exact thing" | Fine-grained matching; off-the-shelf features usually underperform |
-| FAISS | "The NN library" | Facebook's nearest-neighbour library; supports exact and approximate indexes |
-| HNSW | "Graph index" | Hierarchical navigable small world; fast approximate NN with small memory overhead |
+| Metric learning | "Сформировать пространство" | Обучение кодировщика так, чтобы расстояния в его выходном пространстве отражали целевое сходство |
+| Triplet loss | "Притягивать и отталкивать" | L = max(0, d(a, p) - d(a, n) + margin); каноническая функция потерь метрического обучения |
+| Semi-hard mining | "Полезные негативы" | Негативы дальше от anchor, чем positive, но внутри margin; эмпирически наиболее информативные |
+| Proxy-based loss | "Прототипы классов" | Один обучаемый proxy на класс; cross-entropy по сходству с proxy; без майнинга пар |
+| Recall@K | "Доля попаданий Top-K" | Доля запросов хотя бы с одним правильным результатом в top K |
+| Instance retrieval | "Найти именно эту вещь" | Тонкое сопоставление; готовые признаки обычно работают хуже |
+| FAISS | "Библиотека NN" | Библиотека Facebook для ближайших соседей; поддерживает точные и приближенные индексы |
+| HNSW | "Графовый индекс" | Hierarchical navigable small world; быстрый приближенный NN с небольшими накладными расходами памяти |
 
-## Further Reading
+## Дополнительное чтение
 
-- [FaceNet: A Unified Embedding for Face Recognition (Schroff et al., 2015)](https://arxiv.org/abs/1503.03832) — the triplet loss / semi-hard mining paper
-- [In Defense of the Triplet Loss for Person Re-Identification (Hermans et al., 2017)](https://arxiv.org/abs/1703.07737) — practical guide to triplet fine-tuning
-- [FAISS documentation](https://github.com/facebookresearch/faiss/wiki) — every index, every trade-off
-- [SMoT: Metric Learning Taxonomy (Kim et al., 2021)](https://arxiv.org/abs/2010.06927) — survey of modern losses and their connections
+- [FaceNet: A Unified Embedding for Face Recognition (Schroff et al., 2015)](https://arxiv.org/abs/1503.03832) — статья о triplet loss / semi-hard mining
+- [In Defense of the Triplet Loss for Person Re-Identification (Hermans et al., 2017)](https://arxiv.org/abs/1703.07737) — практическое руководство по дообучению triplet loss
+- [FAISS documentation](https://github.com/facebookresearch/faiss/wiki) — каждый индекс, каждый компромисс
+- [SMoT: Metric Learning Taxonomy (Kim et al., 2021)](https://arxiv.org/abs/2010.06927) — обзор современных функций потерь и связей между ними
