@@ -1,155 +1,155 @@
-# Linear Regression
+# Линейная регрессия
 
-> Linear regression draws the best straight line through your data. It is the "hello world" of machine learning.
+> Линейная регрессия проводит через данные лучшую прямую. Это «hello world» машинного обучения.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 1 (Linear Algebra, Calculus, Optimization), Phase 2 Lesson 1
-**Time:** ~90 minutes
+**Тип:** Практика
+**Языки:** Python
+**Требования:** Фаза 1 (линейная алгебра, математический анализ, оптимизация), Фаза 2 Урок 1
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Derive the gradient descent update rules for mean squared error and implement linear regression from scratch
-- Compare gradient descent and the normal equation in terms of computational complexity and when to use each
-- Build a multiple linear regression model with feature standardization and interpret the learned weights
-- Explain how Ridge regression (L2 regularization) prevents overfitting by penalizing large weights
+- Вывести правила обновления градиентного спуска для среднеквадратичной ошибки и реализовать линейную регрессию с нуля
+- Сравнить градиентный спуск и нормальное уравнение по вычислительной сложности и понять, когда использовать каждый подход
+- Построить модель множественной линейной регрессии со стандартизацией признаков и интерпретировать выученные веса
+- Объяснить, как Ridge-регрессия (L2-регуляризация) предотвращает переобучение, штрафуя большие веса
 
-## The Problem
+## Проблема
 
-You have data: house sizes and their sale prices. You want to predict the price of a new house given its size. You could eyeball it on a scatter plot, but you need a formula. You need a line that best fits the data so you can plug in any size and get a price prediction.
+У вас есть данные: площади домов и цены их продажи. Вы хотите предсказать цену нового дома по его площади. Можно прикинуть на глаз по scatter plot, но вам нужна формула. Нужна прямая, которая лучше всего описывает данные, чтобы подставить любую площадь и получить прогноз цены.
 
-Linear regression gives you that line. More importantly, it introduces the entire ML training loop: define a model, define a cost function, optimize the parameters. Every ML algorithm follows this same pattern. Master it here with the simplest case, and you will recognize it everywhere.
+Линейная регрессия дает такую прямую. Что важнее, она вводит полный цикл обучения ML: задать модель, задать функцию стоимости, оптимизировать параметры. Каждый ML-алгоритм следует тому же шаблону. Освойте его здесь на самом простом случае, и вы будете узнавать его везде.
 
-This is not just for simple problems. Linear regression is used in production systems for demand forecasting, A/B test analysis, financial modeling, and as a baseline for every regression task.
+Это не только для простых задач. Линейная регрессия используется в production-системах для прогнозирования спроса, анализа A/B-тестов, финансового моделирования и как базовая модель для любой задачи регрессии.
 
-## The Concept
+## Концепция
 
-### The Model
+### Модель
 
-Linear regression assumes a linear relationship between input (x) and output (y):
+Линейная регрессия предполагает линейную зависимость между входом (x) и выходом (y):
 
 ```
 y = wx + b
 ```
 
-- `w` (weight/slope): how much y changes when x increases by 1
-- `b` (bias/intercept): the value of y when x = 0
+- `w` (вес/наклон): насколько меняется y, когда x увеличивается на 1
+- `b` (сдвиг/intercept): значение y при x = 0
 
-For multiple inputs (features), this extends to:
+Для нескольких входов (признаков) это расширяется до:
 
 ```
 y = w1*x1 + w2*x2 + ... + wn*xn + b
 ```
 
-Or in vector form: `y = w^T * x + b`
+Или в векторной форме: `y = w^T * x + b`
 
-The goal: find the values of w and b that make the predicted y as close as possible to the actual y across all training examples.
+Цель: найти значения w и b, при которых предсказанное y как можно ближе к фактическому y на всех обучающих примерах.
 
-### The Cost Function (Mean Squared Error)
+### Функция стоимости (среднеквадратичная ошибка)
 
-How do you measure "as close as possible"? You need a single number that captures how wrong your predictions are. The most common choice is Mean Squared Error (MSE):
+Как измерить «как можно ближе»? Нужна одна величина, которая показывает, насколько ошибаются предсказания. Самый распространенный выбор — среднеквадратичная ошибка (Mean Squared Error, MSE):
 
 ```
 MSE = (1/n) * sum((y_predicted - y_actual)^2)
 ```
 
-Why squared? Two reasons. First, it penalizes large errors more than small errors (an error of 10 is 100x worse than an error of 1, not 10x). Second, the squared function is smooth and differentiable everywhere, which makes optimization straightforward.
+Почему квадрат? По двум причинам. Во-первых, он штрафует большие ошибки сильнее малых (ошибка 10 в 100 раз хуже ошибки 1, а не в 10 раз). Во-вторых, квадратичная функция гладкая и дифференцируема везде, поэтому оптимизация становится простой.
 
-The cost function creates a surface. For a single weight w and bias b, the MSE surface looks like a bowl (a convex paraboloid). The bottom of the bowl is where MSE is minimized. Training means finding that bottom.
+Функция стоимости образует поверхность. Для одного веса w и сдвига b поверхность MSE похожа на чашу (выпуклый параболоид). Дно чаши — место, где MSE минимальна. Обучение означает найти это дно.
 
-### Gradient Descent
+### Градиентный спуск
 
-Gradient descent finds the bottom of the bowl by taking steps downhill.
+Градиентный спуск находит дно чаши, делая шаги вниз по склону.
 
 ```mermaid
 flowchart TD
-    A[Initialize w and b randomly] --> B[Compute predictions: y_hat = wx + b]
-    B --> C[Compute cost: MSE]
-    C --> D[Compute gradients: dMSE/dw, dMSE/db]
-    D --> E[Update parameters]
-    E --> F{Cost low enough?}
-    F -->|No| B
-    F -->|Yes| G[Done: optimal w and b found]
+    A[Случайно инициализировать w и b] --> B[Вычислить предсказания: y_hat = wx + b]
+    B --> C[Вычислить стоимость: MSE]
+    C --> D[Вычислить градиенты: dMSE/dw, dMSE/db]
+    D --> E[Обновить параметры]
+    E --> F{Стоимость достаточно мала?}
+    F -->|Нет| B
+    F -->|Да| G[Готово: найдены оптимальные w и b]
 ```
 
-The gradients tell you two things: which direction to move each parameter, and how much to move.
+Градиенты говорят две вещи: в каком направлении двигать каждый параметр и насколько сильно двигать.
 
-For MSE with y_hat = wx + b:
+Для MSE при y_hat = wx + b:
 
 ```
 dMSE/dw = (2/n) * sum((y_hat - y) * x)
 dMSE/db = (2/n) * sum(y_hat - y)
 ```
 
-The update rule:
+Правило обновления:
 
 ```
 w = w - learning_rate * dMSE/dw
 b = b - learning_rate * dMSE/db
 ```
 
-The learning rate controls step size. Too large: you overshoot the minimum and diverge. Too small: training takes forever. Typical starting values: 0.01, 0.001, or 0.0001.
+Learning rate управляет размером шага. Слишком большой: вы перескакиваете минимум и расходитесь. Слишком маленький: обучение длится вечность. Типичные начальные значения: 0.01, 0.001 или 0.0001.
 
-### The Normal Equation (Closed-Form Solution)
+### Нормальное уравнение (закрытое решение)
 
-For linear regression specifically, there is a direct formula that gives the optimal weights without any iteration:
+Именно для линейной регрессии существует прямая формула, которая дает оптимальные веса без итераций:
 
 ```
 w = (X^T * X)^(-1) * X^T * y
 ```
 
-This inverts a matrix to solve for w in one step. It works perfectly for small datasets. For large datasets (millions of rows or thousands of features), gradient descent is preferred because matrix inversion is O(n^3) in the number of features.
+Она обращает матрицу и решает задачу для w за один шаг. Это отлично работает на маленьких наборах данных. Для больших наборов (миллионы строк или тысячи признаков) предпочтительнее градиентный спуск, потому что обращение матрицы имеет сложность O(n^3) по числу признаков.
 
-### Multiple Linear Regression
+### Множественная линейная регрессия
 
-With multiple features, the model becomes:
+С несколькими признаками модель становится такой:
 
 ```
 y = w1*x1 + w2*x2 + ... + wn*xn + b
 ```
 
-Everything works the same: MSE is the cost function, gradient descent updates all weights simultaneously. The only difference is that you are fitting a hyperplane instead of a line.
+Все работает так же: MSE — функция стоимости, градиентный спуск одновременно обновляет все веса. Единственная разница в том, что вы подгоняете гиперплоскость вместо прямой.
 
-Feature scaling matters here. If one feature ranges from 0 to 1 and another ranges from 0 to 1,000,000, gradient descent will struggle because the cost surface becomes elongated. Standardize features (subtract mean, divide by standard deviation) before training.
+Здесь важно масштабирование признаков. Если один признак лежит в диапазоне от 0 до 1, а другой — от 0 до 1 000 000, градиентному спуску будет трудно, потому что поверхность стоимости станет вытянутой. Стандартизируйте признаки (вычесть среднее, разделить на стандартное отклонение) перед обучением.
 
-### Polynomial Regression
+### Полиномиальная регрессия
 
-What if the relationship is not linear? You can still use linear regression by creating polynomial features:
+Что если зависимость нелинейна? Линейную регрессию все равно можно использовать, создав полиномиальные признаки:
 
 ```
 y = w1*x + w2*x^2 + w3*x^3 + b
 ```
 
-This is still "linear" regression because the model is linear in the weights (w1, w2, w3). You are just using nonlinear features of x.
+Это все еще «линейная» регрессия, потому что модель линейна по весам (w1, w2, w3). Вы просто используете нелинейные признаки от x.
 
-Higher-degree polynomials can fit more complex curves but risk overfitting. A degree-10 polynomial will pass through every point in a 10-point dataset but predict poorly on new data.
+Полиномы более высокой степени могут подгонять более сложные кривые, но рискуют переобучиться. Полином 10-й степени пройдет через каждую точку в наборе из 10 точек, но будет плохо предсказывать на новых данных.
 
-### R-Squared Score
+### R-squared
 
-MSE tells you how wrong you are, but the number depends on the scale of y. R-squared (R^2) gives a scale-independent measure:
+MSE говорит, насколько вы ошибаетесь, но число зависит от масштаба y. R-squared (R^2) дает безмасштабную меру:
 
 ```
 R^2 = 1 - (sum of squared residuals) / (sum of squared deviations from mean)
     = 1 - SS_res / SS_tot
 ```
 
-- R^2 = 1.0: perfect predictions
-- R^2 = 0.0: the model is no better than predicting the mean every time
-- R^2 < 0.0: the model is worse than predicting the mean
+- R^2 = 1.0: идеальные предсказания
+- R^2 = 0.0: модель не лучше постоянного предсказания среднего
+- R^2 < 0.0: модель хуже предсказания среднего
 
-### Regularization Preview (Ridge Regression)
+### Предпросмотр регуляризации (Ridge-регрессия)
 
-When you have many features, the model can overfit by assigning large weights. Ridge regression (L2 regularization) adds a penalty:
+Когда признаков много, модель может переобучиться, назначая большие веса. Ridge-регрессия (L2-регуляризация) добавляет штраф:
 
 ```
 Cost = MSE + lambda * sum(w_i^2)
 ```
 
-The penalty term discourages large weights. The hyperparameter lambda controls the tradeoff: higher lambda means smaller weights and more regularization. This is covered in depth in a later lesson. For now, know that it exists and why it helps.
+Штрафной член препятствует большим весам. Гиперпараметр lambda управляет компромиссом: чем выше lambda, тем меньше веса и сильнее регуляризация. Это подробно разбирается в следующем уроке. Сейчас достаточно знать, что такая техника существует и почему она помогает.
 
-## Build It
+## Соберите это
 
-### Step 1: Generate sample data
+### Шаг 1: сгенерировать пример данных
 
 ```python
 import random
@@ -169,7 +169,7 @@ print(f"True relationship: y = {TRUE_W}x + {TRUE_B} (+ noise)")
 print(f"First 5 points: {[(round(X[i], 2), round(y[i], 2)) for i in range(5)]}")
 ```
 
-### Step 2: Linear regression from scratch with gradient descent
+### Шаг 2: линейная регрессия с нуля через градиентный спуск
 
 ```python
 class LinearRegression:
@@ -222,7 +222,7 @@ print(f"True:    y = {TRUE_W}x + {TRUE_B}")
 print(f"R-squared: {model.r_squared(X, y):.4f}")
 ```
 
-### Step 3: Normal equation (closed-form solution)
+### Шаг 3: нормальное уравнение (закрытое решение)
 
 ```python
 class LinearRegressionNormal:
@@ -258,7 +258,7 @@ print(f"Learned: y = {model_normal.w:.4f}x + {model_normal.b:.4f}")
 print(f"R-squared: {model_normal.r_squared(X, y):.4f}")
 ```
 
-### Step 4: Multiple linear regression
+### Шаг 4: множественная линейная регрессия
 
 ```python
 class MultipleLinearRegression:
@@ -347,7 +347,7 @@ print(f"Bias (standardized): {multi_model.bias:.4f}")
 print(f"R-squared: {multi_model.r_squared(X_scaled, y_scaled):.4f}")
 ```
 
-### Step 5: Polynomial regression
+### Шаг 5: полиномиальная регрессия
 
 ```python
 class PolynomialRegression:
@@ -415,7 +415,7 @@ print("\nDegree 2 fits the true curve well. Degree 5 fits training data slightly
 print("but risks overfitting on new data.")
 ```
 
-### Step 6: Ridge regression (L2 regularization)
+### Шаг 6: Ridge-регрессия (L2-регуляризация)
 
 ```python
 class RidgeRegression:
@@ -460,9 +460,9 @@ print(f"Plain weights: {[round(w, 4) for w in multi_model.weights]}")
 print("Ridge weights are smaller (shrunk toward zero) due to the L2 penalty.")
 ```
 
-## Use It
+## Используйте это
 
-Now the same thing with scikit-learn, which is what you will actually use in production.
+Теперь то же самое со scikit-learn — именно его вы будете использовать в production.
 
 ```python
 from sklearn.linear_model import LinearRegression as SklearnLR
@@ -506,39 +506,39 @@ print(f"Ridge R-squared: {r2_score(y_test, ridge.predict(X_test_scaled)):.4f}")
 print(f"Ridge coefficient: {ridge.coef_[0]:.4f}")
 ```
 
-Your from-scratch implementation and scikit-learn produce the same results. The difference: scikit-learn handles edge cases, numerical stability, and performance optimizations. Use the library for production. Use the from-scratch version to understand what is happening.
+Ваша реализация с нуля и scikit-learn дают одинаковые результаты. Разница в том, что scikit-learn обрабатывает пограничные случаи, численную устойчивость и оптимизации производительности. Используйте библиотеку в production. Версию с нуля используйте, чтобы понимать, что происходит.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/skill-regression.md` - a skill for choosing the right regression approach based on the problem
+Этот урок создает:
+- `outputs/skill-regression.md` — skill для выбора правильного регрессионного подхода по задаче
 
-## Exercises
+## Упражнения
 
-1. Implement batch gradient descent, stochastic gradient descent (SGD), and mini-batch gradient descent. Compare convergence speed on the same dataset. Which converges fastest? Which has the smoothest cost curve?
-2. Generate data from a cubic function (y = ax^3 + bx^2 + cx + d + noise). Fit polynomials of degree 1, 3, and 10. Compare training R^2 and test R^2. At what degree does overfitting become obvious?
-3. Implement Lasso regression (L1 regularization: penalty = alpha * sum(|w_i|)). Train on the multi-feature housing data. Compare which weights go to zero vs Ridge. Why does L1 produce sparse solutions while L2 does not?
+1. Реализуйте batch gradient descent, stochastic gradient descent (SGD) и mini-batch gradient descent. Сравните скорость сходимости на одном и том же наборе данных. Какой сходится быстрее? У какого самая гладкая кривая стоимости?
+2. Сгенерируйте данные из кубической функции (y = ax^3 + bx^2 + cx + d + шум). Подгоните полиномы степеней 1, 3 и 10. Сравните обучающий R^2 и тестовый R^2. На какой степени переобучение становится очевидным?
+3. Реализуйте Lasso-регрессию (L1-регуляризация: penalty = alpha * sum(|w_i|)). Обучите ее на жилищных данных с несколькими признаками. Сравните, какие веса уходят в ноль по сравнению с Ridge. Почему L1 дает разреженные решения, а L2 — нет?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Linear regression | "Draw a line through data" | Find weight w and bias b that minimize the sum of squared differences between wx+b and actual y values |
-| Cost function | "How bad the model is" | A function that maps model parameters to a single number measuring prediction error, which optimization minimizes |
-| Mean squared error | "Average of squared errors" | (1/n) * sum of (predicted - actual)^2, penalizing large errors disproportionately |
-| Gradient descent | "Walk downhill" | Iteratively adjust parameters in the direction that reduces the cost function, using partial derivatives |
-| Learning rate | "Step size" | A scalar that controls how much parameters change per gradient descent step |
-| Normal equation | "Solve it directly" | The closed-form solution w = (X^T X)^-1 X^T y that gives optimal weights without iteration |
-| R-squared | "How good the fit is" | The fraction of variance in y explained by the model, ranging from negative infinity to 1.0 |
-| Feature scaling | "Make features comparable" | Transforming features to similar ranges (e.g., zero mean, unit variance) so gradient descent converges faster |
-| Regularization | "Penalize complexity" | Adding a term to the cost function that shrinks weights, preventing overfitting |
-| Ridge regression | "L2 regularization" | Linear regression with a penalty of lambda * sum(w_i^2) added to MSE |
-| Polynomial regression | "Fitting curves with linear math" | Linear regression on polynomial features (x, x^2, x^3, ...), still linear in the weights |
-| Overfitting | "Memorizing training data" | Using a model so complex that it fits noise in training data and fails on new data |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Линейная регрессия | «Провести линию через данные» | Найти вес w и сдвиг b, минимизирующие сумму квадратов разностей между wx+b и фактическими значениями y |
+| Функция стоимости | «Насколько плоха модель» | Функция, отображающая параметры модели в одно число, измеряющее ошибку предсказаний; оптимизация минимизирует это число |
+| Среднеквадратичная ошибка | «Среднее квадратов ошибок» | (1/n) * сумма (предсказанное - фактическое)^2, непропорционально сильно штрафующая большие ошибки |
+| Градиентный спуск | «Идти вниз по склону» | Итеративно корректировать параметры в направлении уменьшения функции стоимости, используя частные производные |
+| Learning rate | «Размер шага» | Скаляр, управляющий тем, насколько сильно параметры меняются на одном шаге градиентного спуска |
+| Нормальное уравнение | «Решить напрямую» | Закрытое решение w = (X^T X)^-1 X^T y, дающее оптимальные веса без итераций |
+| R-squared | «Насколько хороша подгонка» | Доля дисперсии y, объясненная моделью; диапазон от минус бесконечности до 1.0 |
+| Масштабирование признаков | «Сделать признаки сопоставимыми» | Преобразование признаков к похожим диапазонам (например, нулевое среднее и единичная дисперсия), чтобы градиентный спуск сходился быстрее |
+| Регуляризация | «Штрафовать сложность» | Добавление к функции стоимости члена, уменьшающего веса и предотвращающего переобучение |
+| Ridge-регрессия | «L2-регуляризация» | Линейная регрессия со штрафом lambda * sum(w_i^2), добавленным к MSE |
+| Полиномиальная регрессия | «Подгонять кривые линейной математикой» | Линейная регрессия на полиномиальных признаках (x, x^2, x^3, ...), все еще линейная по весам |
+| Переобучение | «Запоминание обучающих данных» | Использование настолько сложной модели, что она подгоняет шум в обучающих данных и проваливается на новых |
 
-## Further Reading
+## Дополнительное чтение
 
-- [An Introduction to Statistical Learning (ISLR)](https://www.statlearning.com/) -- free PDF, chapters 3 and 6 cover linear regression and regularization with practical R examples
-- [The Elements of Statistical Learning (ESL)](https://hastie.su.domains/ElemStatLearn/) -- free PDF, the more mathematical companion to ISLR with deeper treatment of ridge and lasso
-- [Stanford CS229 Lecture Notes on Linear Regression](https://cs229.stanford.edu/main_notes.pdf) -- Andrew Ng's notes deriving the normal equation and gradient descent from first principles
-- [scikit-learn LinearRegression documentation](https://scikit-learn.org/stable/modules/linear_model.html) -- practical reference for LinearRegression, Ridge, Lasso, and ElasticNet with code examples
+- [An Introduction to Statistical Learning (ISLR)](https://www.statlearning.com/) — бесплатный PDF; главы 3 и 6 покрывают линейную регрессию и регуляризацию с практическими примерами на R
+- [The Elements of Statistical Learning (ESL)](https://hastie.su.domains/ElemStatLearn/) — бесплатный PDF; более математическое дополнение к ISLR с более глубоким разбором ridge и lasso
+- [Stanford CS229 Lecture Notes on Linear Regression](https://cs229.stanford.edu/main_notes.pdf) — конспекты Andrew Ng с выводом нормального уравнения и градиентного спуска с первых принципов
+- [scikit-learn LinearRegression documentation](https://scikit-learn.org/stable/modules/linear_model.html) — практический справочник по LinearRegression, Ridge, Lasso и ElasticNet с примерами кода

@@ -1,56 +1,56 @@
-# Model Evaluation
+# Оценка моделей
 
-> A model is only as good as the way you measure it.
+> Модель настолько хороша, насколько хорош способ ее измерения.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 1 (Probability & Distributions, Statistics for ML), Phase 2 Lessons 1-8
-**Time:** ~90 minutes
+**Тип:** Практика
+**Языки:** Python
+**Требования:** Фаза 1 (вероятность и распределения, статистика для ML), Фаза 2 Уроки 1-8
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement K-fold and stratified K-fold cross-validation from scratch and explain why stratification matters for imbalanced data
-- Compute precision, recall, F1, AUC-ROC, and regression metrics (MSE, RMSE, MAE, R-squared) from scratch
-- Interpret learning curves to diagnose whether a model suffers from high bias or high variance
-- Identify common evaluation mistakes including data leakage, wrong metric selection, and test set contamination
+- Реализовать K-fold и stratified K-fold cross-validation с нуля и объяснить, почему стратификация важна для несбалансированных данных
+- Вычислять precision, recall, F1, AUC-ROC и регрессионные метрики (MSE, RMSE, MAE, R-squared) с нуля
+- Интерпретировать learning curves, чтобы диагностировать высокое смещение или высокую дисперсию модели
+- Определять частые ошибки оценки: data leakage, неправильный выбор метрики и загрязнение тестовой выборки
 
-## The Problem
+## Проблема
 
-You trained a model. It gets 95% accuracy on your data. Is it good?
+Вы обучили модель. Она получает 95% accuracy на ваших данных. Это хорошо?
 
-Maybe. Maybe not. If 95% of your data belongs to one class, a model that always predicts that class gets 95% accuracy while being completely useless. If you evaluated on the same data you trained on, the 95% number is meaningless because the model just memorized the answers. If your dataset has a time component and you randomly shuffled before splitting, your model might be using future data to predict the past.
+Может быть. А может, нет. Если 95% данных принадлежат одному классу, модель, которая всегда предсказывает этот класс, получает 95% accuracy и при этом совершенно бесполезна. Если вы оценивали на тех же данных, на которых обучались, число 95% бессмысленно: модель просто запомнила ответы. Если в наборе данных есть временная компонента, а вы случайно перемешали данные перед разбиением, модель может использовать будущие данные, чтобы предсказывать прошлое.
 
-Model evaluation is where most ML projects go wrong. The wrong metric makes a bad model look good. The wrong split lets a model cheat. The wrong comparison makes you pick the worse model. Getting evaluation right is not optional. It is the difference between a model that works in production and one that fails the moment it sees real data.
+Оценка моделей — место, где ломается большинство ML-проектов. Неправильная метрика делает плохую модель хорошей на вид. Неправильное разбиение позволяет модели «жульничать». Неправильное сравнение заставляет выбрать худшую модель. Правильная оценка не опциональна. Это разница между моделью, которая работает в production, и моделью, которая падает при встрече с реальными данными.
 
-## The Concept
+## Концепция
 
 ### Train, Validation, Test
 
 ```mermaid
 flowchart LR
-    A[Full Dataset] --> B[Train Set 60-70%]
+    A[Полный набор данных] --> B[Train Set 60-70%]
     A --> C[Validation Set 15-20%]
     A --> D[Test Set 15-20%]
-    B --> E[Fit Model]
+    B --> E[Обучить модель]
     E --> C
-    C --> F[Tune Hyperparameters]
+    C --> F[Настроить гиперпараметры]
     F --> E
-    F --> G[Final Model]
+    F --> G[Финальная модель]
     G --> D
-    D --> H[Report Performance]
+    D --> H[Сообщить качество]
 ```
 
-Three splits, three purposes:
+Три разбиения, три назначения:
 
-- **Training set**: the model learns from this data. It sees these examples during training.
-- **Validation set**: used to tune hyperparameters and select between models. The model never trains on this data, but your decisions are influenced by it.
-- **Test set**: touched exactly once, at the very end, to report final performance. If you look at test performance and then go back to change your model, it is no longer a test set. It has become a second validation set.
+- **Training set**: модель учится на этих данных. Она видит эти примеры во время обучения.
+- **Validation set**: используется для настройки гиперпараметров и выбора между моделями. Модель не обучается на этих данных, но ваши решения зависят от них.
+- **Test set**: используется ровно один раз, в самом конце, чтобы сообщить финальное качество. Если вы посмотрели на test performance, а затем вернулись менять модель, это уже не test set. Он стал второй validation set.
 
-The test set is your hold-out guarantee that the reported performance reflects how the model will do on truly unseen data.
+Test set — ваша hold-out гарантия, что сообщенное качество отражает поведение модели на действительно невидимых данных.
 
 ### K-Fold Cross-Validation
 
-With small datasets, a single train/validation split wastes data and gives noisy estimates. K-fold cross-validation uses all the data for both training and validation:
+На малых наборах данных одно train/validation-разбиение тратит данные впустую и дает шумные оценки. K-fold cross-validation использует все данные и для обучения, и для валидации:
 
 ```mermaid
 flowchart TB
@@ -74,77 +74,77 @@ flowchart TB
         direction LR
         T5a["Train"] --- T5b["Train"] --- T5c["Train"] --- T5d["Train"] --- V5["Val"]
     end
-    Fold1 --> R["Average scores"]
+    Fold1 --> R["Усреднить scores"]
     Fold2 --> R
     Fold3 --> R
     Fold4 --> R
     Fold5 --> R
 ```
 
-1. Split data into K equal-sized folds
-2. For each fold, train on K-1 folds and validate on the remaining fold
-3. Average the K validation scores
+1. Разделить данные на K равных folds
+2. Для каждого fold обучаться на K-1 folds и валидироваться на оставшемся fold
+3. Усреднить K validation scores
 
-K=5 or K=10 are standard choices. Every data point gets used for validation exactly once. The average score is a more stable estimate than any single split.
+K=5 или K=10 — стандартные варианты. Каждая точка данных используется для валидации ровно один раз. Средний score — более стабильная оценка, чем любое одиночное разбиение.
 
-**Stratified K-fold**: preserves the class distribution in each fold. If your dataset is 70% class A and 30% class B, each fold will have roughly the same ratio. This is important for imbalanced datasets where a random split might put all minority samples in one fold.
+**Stratified K-fold**: сохраняет распределение классов в каждом fold. Если набор данных состоит из 70% класса A и 30% класса B, каждый fold будет иметь примерно такое же соотношение. Это важно для несбалансированных данных, где случайное разбиение может поместить все minority samples в один fold.
 
-### Classification Metrics
+### Метрики классификации
 
-**Confusion matrix**: the foundation. For binary classification:
+**Матрица ошибок (confusion matrix)** — основа. Для бинарной классификации:
 
-|  | Predicted Positive | Predicted Negative |
+|  | Предсказан Positive | Предсказан Negative |
 |--|---|---|
-| Actually Positive | True Positive (TP) | False Negative (FN) |
-| Actually Negative | False Positive (FP) | True Negative (TN) |
+| Фактически Positive | True Positive (TP) | False Negative (FN) |
+| Фактически Negative | False Positive (FP) | True Negative (TN) |
 
-From this matrix, all other metrics follow:
+Из этой матрицы следуют все остальные метрики:
 
-- **Accuracy** = (TP + TN) / (TP + TN + FP + FN). Fraction of correct predictions. Misleading when classes are imbalanced.
-- **Precision** = TP / (TP + FP). Of all things predicted positive, how many actually were? Use when false positives are costly (e.g., spam filter marking real email as spam).
-- **Recall** (sensitivity) = TP / (TP + FN). Of all actual positives, how many did we catch? Use when false negatives are costly (e.g., cancer screening missing a tumor).
-- **F1 score** = 2 * precision * recall / (precision + recall). Harmonic mean of precision and recall. Balances both when neither clearly dominates.
-- **AUC-ROC**: Area Under the Receiver Operating Characteristic curve. Plots true positive rate vs false positive rate at various classification thresholds. AUC = 0.5 means random guessing, AUC = 1.0 means perfect separation. Threshold-independent: it measures how well the model ranks positives above negatives, regardless of the cutoff you pick.
+- **Accuracy** = (TP + TN) / (TP + TN + FP + FN). Доля правильных предсказаний. Вводит в заблуждение при дисбалансе классов.
+- **Precision** = TP / (TP + FP). Среди всех предсказанных positive сколько действительно positive? Используйте, когда false positives дороги (например, спам-фильтр пометил настоящее письмо как спам).
+- **Recall** (sensitivity) = TP / (TP + FN). Среди всех фактических positive сколько мы нашли? Используйте, когда false negatives дороги (например, скрининг рака пропустил опухоль).
+- **F1 score** = 2 * precision * recall / (precision + recall). Гармоническое среднее precision и recall. Балансирует их, когда ни одна метрика явно не доминирует.
+- **AUC-ROC**: Area Under the Receiver Operating Characteristic curve. Строит true positive rate против false positive rate при разных порогах классификации. AUC = 0.5 означает случайное угадывание, AUC = 1.0 — идеальное разделение. Метрика не зависит от порога: она измеряет, насколько хорошо модель ранжирует positive выше negative независимо от выбранной отсечки.
 
-### Regression Metrics
+### Метрики регрессии
 
-- **MSE** (Mean Squared Error) = mean((y_true - y_pred)^2). Penalizes large errors quadratically. Sensitive to outliers.
-- **RMSE** (Root Mean Squared Error) = sqrt(MSE). Same units as the target variable. Easier to interpret than MSE.
-- **MAE** (Mean Absolute Error) = mean(|y_true - y_pred|). Treats all errors linearly. More robust to outliers than MSE.
-- **R-squared** = 1 - SS_res / SS_tot, where SS_res = sum((y_true - y_pred)^2) and SS_tot = sum((y_true - y_mean)^2). Fraction of variance explained by the model. R^2 = 1.0 is perfect. R^2 = 0.0 means the model is no better than always predicting the mean. R^2 can be negative if the model is worse than the mean.
+- **MSE** (Mean Squared Error) = mean((y_true - y_pred)^2). Квадратично штрафует большие ошибки. Чувствительна к выбросам.
+- **RMSE** (Root Mean Squared Error) = sqrt(MSE). В тех же единицах, что целевая переменная. Проще интерпретировать, чем MSE.
+- **MAE** (Mean Absolute Error) = mean(|y_true - y_pred|). Все ошибки учитывает линейно. Устойчивее к выбросам, чем MSE.
+- **R-squared** = 1 - SS_res / SS_tot, где SS_res = sum((y_true - y_pred)^2), а SS_tot = sum((y_true - y_mean)^2). Доля дисперсии, объясненная моделью. R^2 = 1.0 — идеально. R^2 = 0.0 означает, что модель не лучше постоянного предсказания среднего. R^2 может быть отрицательным, если модель хуже среднего.
 
 ### Learning Curves
 
-Plot training and validation scores as a function of training set size:
+Постройте training и validation scores как функцию размера обучающей выборки:
 
-- **High bias (underfitting)**: both curves converge to a low score. Adding more data will not help. You need a more complex model.
-- **High variance (overfitting)**: training score is high but validation score is much lower. The gap between them is large. Adding more data should help.
+- **High bias (underfitting)**: обе кривые сходятся к низкому score. Добавление данных не поможет. Нужна более сложная модель.
+- **High variance (overfitting)**: training score высокий, а validation score намного ниже. Разрыв между ними большой. Добавление данных должно помочь.
 
 ### Validation Curves
 
-Plot training and validation scores as a function of a hyperparameter:
+Постройте training и validation scores как функцию гиперпараметра:
 
-- At low complexity: both scores are low (underfitting)
-- At the right complexity: both scores are high and close together
-- At high complexity: training score stays high but validation score drops (overfitting)
+- При низкой сложности: оба score низкие (underfitting)
+- При правильной сложности: оба score высокие и близки
+- При высокой сложности: training score остается высоким, но validation score падает (overfitting)
 
-The optimal hyperparameter value is where the validation score peaks.
+Оптимальное значение гиперпараметра там, где validation score максимален.
 
-### Common Evaluation Mistakes
+### Частые ошибки оценки
 
-**Data leakage**: information from the test set leaks into training. Examples: fitting a scaler on the full dataset before splitting, including future data in time series prediction, using a feature that is derived from the target. Always split first, then preprocess.
+**Data leakage**: информация из test set просачивается в обучение. Примеры: scaler fitted на полном наборе до разбиения, включение будущих данных в прогнозирование временных рядов, использование признака, полученного из target. Всегда сначала разделяйте, затем предобрабатывайте.
 
-**Class imbalance**: 99% of transactions are legitimate, 1% are fraud. A model that always predicts "legitimate" gets 99% accuracy. Use precision, recall, F1, or AUC-ROC instead.
+**Дисбаланс классов**: 99% транзакций легитимны, 1% — fraud. Модель, всегда предсказывающая «легитимно», получает 99% accuracy. Используйте precision, recall, F1 или AUC-ROC.
 
-**Wrong metric**: optimizing accuracy when you should optimize recall (medical diagnosis), or optimizing RMSE when your data has heavy outliers (use MAE instead).
+**Неправильная метрика**: оптимизация accuracy, когда нужно оптимизировать recall (медицинская диагностика), или оптимизация RMSE при тяжелых выбросах (лучше MAE).
 
-**Not using stratified splits**: with imbalanced data, a random split might put very few minority samples in the validation fold, giving unstable estimates.
+**Нет stratified splits**: при дисбалансе случайное разбиение может поместить слишком мало minority samples в validation fold и дать нестабильные оценки.
 
-**Testing too often**: every time you look at test performance and adjust, you overfit to the test set. The test set is single-use.
+**Слишком частое тестирование**: каждый раз, когда вы смотрите на test performance и корректируете модель, вы переобучаетесь на test set. Test set используется один раз.
 
-## Build It
+## Соберите это
 
-### Step 1: Train/validation/test split
+### Шаг 1: train/validation/test split
 
 ```python
 import random
@@ -174,7 +174,7 @@ def train_val_test_split(X, y, train_ratio=0.6, val_ratio=0.2, seed=42):
     return X_train, y_train, X_val, y_val, X_test, y_test
 ```
 
-### Step 2: K-fold and stratified K-fold cross-validation
+### Шаг 2: K-fold и stratified K-fold cross-validation
 
 ```python
 def kfold_split(n, k=5, seed=42):
@@ -248,7 +248,7 @@ def cross_validate(X, y, model_fn, k=5, metric_fn=None, stratified=False):
     return scores
 ```
 
-### Step 3: Confusion matrix and classification metrics
+### Шаг 3: матрица ошибок и метрики классификации
 
 ```python
 def confusion_matrix(y_true, y_pred):
@@ -319,7 +319,7 @@ def auc_roc(y_true, y_scores):
     return area
 ```
 
-### Step 4: Regression metrics
+### Шаг 4: регрессионные метрики
 
 ```python
 def mse(y_true, y_pred):
@@ -345,7 +345,7 @@ def r_squared(y_true, y_pred):
     return 1.0 - ss_res / ss_tot
 ```
 
-### Step 5: Learning curves
+### Шаг 5: learning curves
 
 ```python
 def learning_curve(X, y, model_fn, metric_fn, train_sizes=None, val_ratio=0.2, seed=42):
@@ -384,7 +384,7 @@ def learning_curve(X, y, model_fn, metric_fn, train_sizes=None, val_ratio=0.2, s
     return train_sizes, train_scores, val_scores
 ```
 
-### Step 6: A simple classifier for testing, plus the full demo
+### Шаг 6: простой классификатор для тестов и полный demo
 
 ```python
 class SimpleLogistic:
@@ -625,9 +625,9 @@ if __name__ == "__main__":
     print(f"  (|t| > 2.78 for significance at p<0.05 with df=4)")
 ```
 
-## Use It
+## Используйте это
 
-With scikit-learn, evaluation is built into the workflow:
+В scikit-learn оценка встроена в workflow:
 
 ```python
 from sklearn.model_selection import cross_val_score, StratifiedKFold, learning_curve
@@ -641,35 +641,35 @@ model = LogisticRegression()
 scores = cross_val_score(model, X, y, cv=StratifiedKFold(5), scoring="f1")
 ```
 
-The from-scratch versions show exactly what cross-validation does (no magic, just for-loops and index tracking), how each metric is computed (just counting TP/FP/TN/FN), and why stratification matters (preserving class ratios in each fold). The library versions add parallelism, more scoring options, and integration with pipelines.
+Реализации с нуля показывают, что именно делает cross-validation (никакой магии, только циклы и отслеживание индексов), как считается каждая метрика (просто подсчет TP/FP/TN/FN) и почему важна стратификация (сохранение соотношения классов в каждом fold). Библиотечные версии добавляют параллелизм, больше scoring options и интеграцию с pipelines.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/skill-evaluation.md` - a skill covering evaluation strategy for classification and regression models
+Этот урок создает:
+- `outputs/skill-evaluation.md` — skill по стратегии оценки моделей классификации и регрессии
 
-## Exercises
+## Упражнения
 
-1. Implement precision-recall curves: plot precision vs recall at different thresholds. Compute the average precision (area under the PR curve). Compare the PR curve to the ROC curve on an imbalanced dataset and explain when each is more informative.
-2. Build a nested cross-validation loop: the outer loop evaluates model performance, the inner loop tunes hyperparameters. Use it to compare two models fairly without leaking validation data into the evaluation.
-3. Implement a permutation test for model comparison: shuffle the labels, retrain, and measure performance. Repeat 100 times to build a null distribution. Compute the p-value for the observed model performance against this distribution.
+1. Реализуйте precision-recall curves: постройте precision vs recall при разных порогах. Вычислите average precision (площадь под PR curve). Сравните PR curve с ROC curve на несбалансированном наборе данных и объясните, когда каждая информативнее.
+2. Постройте nested cross-validation loop: внешний цикл оценивает качество модели, внутренний подбирает гиперпараметры. Используйте его, чтобы честно сравнить две модели без утечки validation data в оценку.
+3. Реализуйте permutation test для сравнения моделей: перемешайте labels, переобучите и измерьте качество. Повторите 100 раз, чтобы построить null distribution. Вычислите p-value для наблюдаемого качества модели относительно этого распределения.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Overfitting | "Memorizing the training data" | The model captures noise in the training data, performing well on training but poorly on unseen data |
-| Cross-validation | "Testing on different subsets" | Systematically rotating which portion of data is used for validation, averaging results across all rotations |
-| Precision | "How many predicted positives are correct" | TP / (TP + FP): the fraction of positive predictions that are actually positive |
-| Recall | "How many actual positives we found" | TP / (TP + FN): the fraction of actual positives that were correctly identified |
-| AUC-ROC | "How well the model separates classes" | The area under the curve of true positive rate vs false positive rate across all thresholds, from 0.5 (random) to 1.0 (perfect) |
-| R-squared | "How much variance is explained" | 1 - (sum of squared residuals / total sum of squares): the fraction of target variance captured by the model |
-| Data leakage | "The model cheated" | Using information during training that would not be available at prediction time, leading to optimistic evaluation |
-| Learning curve | "How performance changes with more data" | A plot of training and validation scores vs training set size, revealing underfitting or overfitting |
-| Stratified split | "Keeping class ratios balanced" | Splitting data so each subset has the same proportion of each class as the full dataset |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Переобучение | «Запоминание обучающих данных» | Модель улавливает шум в обучающих данных: хорошо работает на training, но плохо на невидимых данных |
+| Cross-validation | «Тестирование на разных поднаборах» | Систематическое вращение части данных, используемой для валидации, с усреднением результатов по всем вращениям |
+| Precision | «Сколько предсказанных positive корректны» | TP / (TP + FP): доля positive-предсказаний, которые действительно positive |
+| Recall | «Сколько фактических positive мы нашли» | TP / (TP + FN): доля фактических positive, которые были правильно найдены |
+| AUC-ROC | «Насколько хорошо модель разделяет классы» | Площадь под кривой true positive rate vs false positive rate по всем порогам, от 0.5 (случайно) до 1.0 (идеально) |
+| R-squared | «Сколько дисперсии объяснено» | 1 - (сумма квадратов остатков / полная сумма квадратов): доля дисперсии target, захваченная моделью |
+| Data leakage | «Модель сжульничала» | Использование при обучении информации, недоступной во время предсказания, что ведет к оптимистичной оценке |
+| Learning curve | «Как качество меняется с большим объемом данных» | График training и validation scores от размера обучающего набора, показывающий underfitting или overfitting |
+| Stratified split | «Сохранить соотношение классов» | Разбиение данных так, чтобы каждый subset имел ту же долю каждого класса, что и полный набор |
 
-## Further Reading
+## Дополнительное чтение
 
-- [scikit-learn Model Selection Guide](https://scikit-learn.org/stable/model_selection.html) - comprehensive reference on cross-validation, metrics, and hyperparameter tuning
-- [Beyond Accuracy: Precision and Recall (Google ML Crash Course)](https://developers.google.com/machine-learning/crash-course/classification/precision-and-recall) - clear explanation with interactive examples
-- [A Survey of Cross-Validation Procedures (Arlot & Celisse, 2010)](https://projecteuclid.org/journals/statistics-surveys/volume-4/issue-none/A-survey-of-cross-validation-procedures-for-model-selection/10.1214/09-SS054.full) - rigorous treatment of when and why different CV strategies work
+- [scikit-learn Model Selection Guide](https://scikit-learn.org/stable/model_selection.html) — полный справочник по cross-validation, metrics и hyperparameter tuning
+- [Beyond Accuracy: Precision and Recall (Google ML Crash Course)](https://developers.google.com/machine-learning/crash-course/classification/precision-and-recall) — ясное объяснение с интерактивными примерами
+- [A Survey of Cross-Validation Procedures (Arlot & Celisse, 2010)](https://projecteuclid.org/journals/statistics-surveys/volume-4/issue-none/A-survey-of-cross-validation-procedures-for-model-selection/10.1214/09-SS054.full) — строгий разбор того, когда и почему разные CV-стратегии работают

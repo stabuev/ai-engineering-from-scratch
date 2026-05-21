@@ -1,99 +1,99 @@
-# Ensemble Methods
+# Ансамблевые методы
 
-> A group of weak learners, combined correctly, becomes a strong learner. This is not a metaphor. It is a theorem.
+> Группа слабых learners, правильно объединенная, становится сильным learner. Это не метафора. Это теорема.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 2, Lesson 10 (Bias-Variance Tradeoff)
-**Time:** ~120 minutes
+**Тип:** Практика
+**Язык:** Python
+**Требования:** Фаза 2, Урок 10 (компромисс смещения и дисперсии)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement AdaBoost and gradient boosting from scratch and explain how boosting sequentially reduces bias
-- Build a bagging ensemble and demonstrate how averaging decorrelated models reduces variance without increasing bias
-- Compare bagging, boosting, and stacking in terms of what error component each method targets
-- Evaluate ensemble diversity and explain why majority voting accuracy improves with more independent weak learners
+- Реализовать AdaBoost и gradient boosting с нуля и объяснить, как boosting последовательно снижает bias
+- Построить bagging ensemble и показать, как усреднение декоррелированных моделей снижает variance без увеличения bias
+- Сравнить bagging, boosting и stacking по тому, на какую компоненту ошибки нацелен каждый метод
+- Оценивать разнообразие ансамбля и объяснить, почему accuracy голосования большинством растет с числом независимых weak learners
 
-## The Problem
+## Проблема
 
-A single decision tree is fast to train and easy to interpret, but it overfits. A single linear model underfits on complex boundaries. You could spend days engineering the perfect model architecture. Or you could combine a bunch of imperfect models and get something better than any of them individually.
+Одно дерево решений быстро обучается и легко интерпретируется, но переобучается. Одна линейная модель недообучается на сложных границах. Можно потратить дни на проектирование идеальной архитектуры модели. А можно объединить несколько несовершенных моделей и получить результат лучше каждой из них по отдельности.
 
-Ensemble methods do exactly this. They are the most reliable technique for winning Kaggle competitions on tabular data, they power most production ML systems, and they illustrate the bias-variance tradeoff in action. Bagging reduces variance. Boosting reduces bias. Stacking learns which models to trust on which inputs.
+Ансамблевые методы делают именно это. Это самая надежная техника для победы в Kaggle-соревнованиях на табличных данных, они лежат в основе большинства production ML-систем и показывают bias-variance tradeoff в действии. Bagging снижает variance. Boosting снижает bias. Stacking учится, каким моделям доверять на каких входах.
 
-## The Concept
+## Концепция
 
-### Why Ensembles Work
+### Почему ансамбли работают
 
-Suppose you have N independent classifiers, each with accuracy p > 0.5. The majority vote has accuracy:
+Предположим, у вас есть N независимых классификаторов, каждый с accuracy p > 0.5. Accuracy majority vote равна:
 
 ```
 P(majority correct) = sum over k > N/2 of C(N,k) * p^k * (1-p)^(N-k)
 ```
 
-For 21 classifiers each with 60% accuracy, majority vote accuracy is about 74%. With 101 classifiers, it rises to 84%. The errors cancel out when the models make different mistakes.
+Для 21 классификатора с accuracy 60% голосование большинством дает около 74% accuracy. Для 101 классификатора — 84%. Ошибки взаимно компенсируются, когда модели ошибаются по-разному.
 
-The key requirement is **diversity**. If all models make the same errors, combining them helps nothing. Ensembles work because they produce diverse models through:
+Ключевое требование — **разнообразие**. Если все модели делают одни и те же ошибки, объединение ничего не дает. Ансамбли работают, потому что создают разнообразные модели через:
 
-- Different training subsets (bagging)
-- Different feature subsets (random forests)
-- Sequential error correction (boosting)
-- Different model families (stacking)
+- Разные обучающие поднаборы (bagging)
+- Разные подмножества признаков (random forests)
+- Последовательное исправление ошибок (boosting)
+- Разные семейства моделей (stacking)
 
 ### Bagging (Bootstrap Aggregating)
 
-Bagging creates diversity by training each model on a different bootstrap sample of the training data.
+Bagging создает разнообразие, обучая каждую модель на другой bootstrap-выборке обучающих данных.
 
 ```mermaid
 flowchart TD
-    D[Training Data] --> B1[Bootstrap Sample 1]
-    D --> B2[Bootstrap Sample 2]
-    D --> B3[Bootstrap Sample 3]
-    D --> BN[Bootstrap Sample N]
+    D[Обучающие данные] --> B1[Bootstrap-выборка 1]
+    D --> B2[Bootstrap-выборка 2]
+    D --> B3[Bootstrap-выборка 3]
+    D --> BN[Bootstrap-выборка N]
 
-    B1 --> M1[Model 1]
-    B2 --> M2[Model 2]
-    B3 --> M3[Model 3]
-    BN --> MN[Model N]
+    B1 --> M1[Модель 1]
+    B2 --> M2[Модель 2]
+    B3 --> M3[Модель 3]
+    BN --> MN[Модель N]
 
-    M1 --> V[Average or Majority Vote]
+    M1 --> V[Среднее или Majority Vote]
     M2 --> V
     M3 --> V
     MN --> V
 
-    V --> P[Final Prediction]
+    V --> P[Финальное предсказание]
 ```
 
-A bootstrap sample is drawn with replacement from the original data, same size as the original. About 63.2% of unique samples appear in each bootstrap. The remaining 36.8% (out-of-bag samples) provide a free validation set.
+Bootstrap-выборка берется с возвращением из исходных данных и имеет тот же размер, что исходный набор. Около 63.2% уникальных примеров попадает в каждый bootstrap. Оставшиеся 36.8% (out-of-bag samples) дают бесплатную validation set.
 
-Bagging reduces variance without increasing bias much. Each individual tree overfits to its bootstrap sample, but the overfitting is different for each tree, so averaging cancels out the noise.
+Bagging снижает variance, почти не увеличивая bias. Каждое отдельное дерево переобучается на своей bootstrap-выборке, но переобучение у каждого дерева разное, поэтому усреднение компенсирует шум.
 
-**Random Forests** are bagging with an extra twist: at each split, only a random subset of features is considered. This forces even more diversity among trees. The typical number of candidate features is `sqrt(n_features)` for classification and `n_features / 3` for regression.
+**Random Forests** — это bagging с дополнительным приемом: на каждом split рассматривается только случайное подмножество признаков. Это заставляет деревья быть еще более разнообразными. Типичное число candidate features — `sqrt(n_features)` для классификации и `n_features / 3` для регрессии.
 
-### Boosting (Sequential Error Correction)
+### Boosting (последовательное исправление ошибок)
 
-Boosting trains models sequentially. Each new model focuses on the examples that previous models got wrong.
+Boosting обучает модели последовательно. Каждая новая модель фокусируется на примерах, в которых предыдущие модели ошиблись.
 
 ```mermaid
 flowchart LR
-    D[Data with weights] --> M1[Model 1]
-    M1 --> E1[Find errors]
-    E1 --> W1[Increase weights on errors]
-    W1 --> M2[Model 2]
-    M2 --> E2[Find errors]
-    E2 --> W2[Increase weights on errors]
-    W2 --> M3[Model 3]
-    M3 --> F[Weighted sum of all models]
+    D[Данные с весами] --> M1[Модель 1]
+    M1 --> E1[Найти ошибки]
+    E1 --> W1[Увеличить веса ошибок]
+    W1 --> M2[Модель 2]
+    M2 --> E2[Найти ошибки]
+    E2 --> W2[Увеличить веса ошибок]
+    W2 --> M3[Модель 3]
+    M3 --> F[Взвешенная сумма всех моделей]
 ```
 
-Boosting reduces bias. Each new model corrects the systematic errors of the ensemble so far. The final prediction is a weighted sum of all models, where better models get higher weights.
+Boosting снижает bias. Каждая новая модель исправляет систематические ошибки текущего ансамбля. Финальное предсказание — взвешенная сумма всех моделей, где лучшие модели получают большие веса.
 
-The tradeoff: boosting can overfit if you run too many rounds, because it keeps fitting harder examples, some of which may be noise.
+Компромисс: boosting может переобучиться, если запускать слишком много раундов, потому что он продолжает подгонять трудные примеры, часть которых может быть шумом.
 
 ### AdaBoost
 
-AdaBoost (Adaptive Boosting) was the first practical boosting algorithm. It works with any base learner, typically decision stumps (depth-1 trees).
+AdaBoost (Adaptive Boosting) был первым практичным boosting-алгоритмом. Он работает с любым base learner, обычно с decision stumps (деревья глубины 1).
 
-The algorithm:
+Алгоритм:
 
 ```
 1. Initialize sample weights: w_i = 1/N for all i
@@ -111,11 +111,11 @@ The algorithm:
 3. Final prediction: H(x) = sign(sum(alpha_t * h_t(x)))
 ```
 
-Models with lower error get higher alpha. Misclassified samples get higher weights so the next model focuses on them.
+Модели с меньшей ошибкой получают больший alpha. Неверно классифицированные примеры получают больший вес, чтобы следующая модель сфокусировалась на них.
 
 ### Gradient Boosting
 
-Gradient boosting generalizes boosting to arbitrary loss functions. Instead of reweighting samples, it fits each new model to the residuals (negative gradient of the loss) of the current ensemble.
+Gradient boosting обобщает boosting на произвольные функции потерь. Вместо перевзвешивания примеров он подгоняет каждую новую модель к остаткам (отрицательному градиенту loss) текущего ансамбля.
 
 ```
 1. Initialize: F_0(x) = argmin_c sum(L(y_i, c))
@@ -132,60 +132,60 @@ Gradient boosting generalizes boosting to arbitrary loss functions. Instead of r
 3. Final prediction: F_T(x)
 ```
 
-For squared error loss, the pseudo-residuals are just the actual residuals: `r_i = y_i - F_{t-1}(x_i)`. Each tree literally fits the errors of the previous ensemble.
+Для squared error loss pseudo-residuals — это обычные остатки: `r_i = y_i - F_{t-1}(x_i)`. Каждое дерево буквально подгоняет ошибки предыдущего ансамбля.
 
-The learning rate (shrinkage) controls how much each tree contributes. Smaller learning rates require more trees but generalize better. Typical values: 0.01 to 0.3.
+Learning rate (shrinkage) управляет вкладом каждого дерева. Меньшие learning rates требуют больше деревьев, но лучше обобщают. Типичные значения: от 0.01 до 0.3.
 
-### XGBoost: Why It Dominates Tabular Data
+### XGBoost: почему он доминирует на табличных данных
 
-XGBoost (eXtreme Gradient Boosting) is gradient boosting with engineering optimizations that make it fast, accurate, and resistant to overfitting:
+XGBoost (eXtreme Gradient Boosting) — это gradient boosting с инженерными оптимизациями, которые делают его быстрым, точным и устойчивым к переобучению:
 
-- **Regularized objective:** L1 and L2 penalties on leaf weights prevent individual trees from being too confident
-- **Second-order approximation:** Uses both first and second derivatives of the loss, giving better split decisions
-- **Sparsity-aware splits:** Handles missing values natively by learning the best direction for missing data at each split
-- **Column subsampling:** Like random forests, samples features at each split for diversity
-- **Weighted quantile sketch:** Efficiently finds split points for continuous features on distributed data
-- **Cache-aware block structure:** Memory layout optimized for CPU cache lines
+- **Regularized objective:** L1 и L2 штрафы на веса листьев не дают отдельным деревьям быть слишком уверенными
+- **Second-order approximation:** использует и первые, и вторые производные loss, что дает лучшие split decisions
+- **Sparsity-aware splits:** нативно обрабатывает пропуски, обучая лучшее направление для missing data на каждом split
+- **Column subsampling:** как random forests, семплирует признаки на каждом split для разнообразия
+- **Weighted quantile sketch:** эффективно ищет split points для непрерывных признаков на распределенных данных
+- **Cache-aware block structure:** раскладка памяти оптимизирована под CPU cache lines
 
-For tabular data, XGBoost (and its successor LightGBM) consistently outperforms neural networks. This is not changing anytime soon. If your data fits in a table with rows and columns, start with gradient boosting.
+Для табличных данных XGBoost (и его преемник LightGBM) стабильно превосходит нейросети. В ближайшее время это не изменится. Если ваши данные помещаются в таблицу со строками и столбцами, начинайте с gradient boosting.
 
 ### Stacking (Meta-Learning)
 
-Stacking uses the predictions of multiple base models as features for a meta-learner.
+Stacking использует предсказания нескольких base models как признаки для meta-learner.
 
 ```mermaid
 flowchart TD
-    D[Training Data] --> M1[Model 1: Random Forest]
-    D --> M2[Model 2: SVM]
-    D --> M3[Model 3: Logistic Regression]
+    D[Обучающие данные] --> M1[Модель 1: Random Forest]
+    D --> M2[Модель 2: SVM]
+    D --> M3[Модель 3: Logistic Regression]
 
-    M1 --> P1[Predictions 1]
-    M2 --> P2[Predictions 2]
-    M3 --> P3[Predictions 3]
+    M1 --> P1[Предсказания 1]
+    M2 --> P2[Предсказания 2]
+    M3 --> P3[Предсказания 3]
 
     P1 --> META[Meta-Learner]
     P2 --> META
     P3 --> META
 
-    META --> F[Final Prediction]
+    META --> F[Финальное предсказание]
 ```
 
-The meta-learner learns which base model to trust for which inputs. If the random forest is better at certain regions and the SVM at others, the meta-learner will learn to route accordingly.
+Meta-learner учится, какой base model доверять для каких входов. Если random forest лучше в одних областях, а SVM — в других, meta-learner научится соответствующей маршрутизации.
 
-To avoid data leakage, base model predictions must be generated via cross-validation on the training set. You never train base models and generate meta-features on the same data.
+Чтобы избежать data leakage, предсказания base models должны генерироваться через cross-validation на training set. Нельзя обучать base models и генерировать meta-features на тех же данных.
 
 ### Voting
 
-The simplest ensemble. Just combine predictions directly.
+Самый простой ансамбль. Просто объединяет предсказания напрямую.
 
-- **Hard voting:** Majority vote on class labels.
-- **Soft voting:** Average predicted probabilities, pick the class with highest average probability. Usually better because it uses confidence information.
+- **Hard voting:** majority vote по меткам классов.
+- **Soft voting:** усреднить предсказанные вероятности и выбрать класс с максимальной средней вероятностью. Обычно лучше, потому что использует информацию об уверенности.
 
-## Build It
+## Соберите это
 
-### Step 1: Decision Stump (Base Learner)
+### Шаг 1: Decision Stump (base learner)
 
-The code in `code/ensembles.py` implements everything from scratch. We start with a decision stump: a tree with a single split.
+Код в `code/ensembles.py` реализует все с нуля. Начинаем с decision stump: дерева с одним split.
 
 ```python
 class DecisionStump:
@@ -220,7 +220,7 @@ class DecisionStump:
         return pred
 ```
 
-### Step 2: AdaBoost from Scratch
+### Шаг 2: AdaBoost с нуля
 
 ```python
 class AdaBoostScratch:
@@ -254,7 +254,7 @@ class AdaBoostScratch:
         return np.sign(total)
 ```
 
-### Step 3: Gradient Boosting from Scratch
+### Шаг 3: Gradient Boosting с нуля
 
 ```python
 class GradientBoostingScratch:
@@ -284,68 +284,68 @@ class GradientBoostingScratch:
         return pred
 ```
 
-### Step 4: Compare against sklearn
+### Шаг 4: сравнить со sklearn
 
-The code verifies that our from-scratch implementations produce similar accuracy to sklearn's `AdaBoostClassifier` and `GradientBoostingClassifier`, and compares all methods side by side.
+Код проверяет, что реализации с нуля дают accuracy, похожую на sklearn `AdaBoostClassifier` и `GradientBoostingClassifier`, и сравнивает все методы бок о бок.
 
-## Use It
+## Используйте это
 
-### When to Use Each Method
+### Когда использовать каждый метод
 
-| Method | Reduces | Best for | Watch out for |
-|--------|---------|----------|---------------|
-| Bagging / Random Forest | Variance | Noisy data, many features | Does not help with bias |
-| AdaBoost | Bias | Clean data, simple base learners | Sensitive to outliers and noise |
-| Gradient Boosting | Bias | Tabular data, competitions | Slow to train, easy to overfit without tuning |
-| XGBoost / LightGBM | Both | Production tabular ML | Many hyperparameters |
-| Stacking | Both | Getting last 1-2% accuracy | Complex, risk of overfitting meta-learner |
-| Voting | Variance | Quick combination of diverse models | Only helps if models are diverse |
+| Метод | Снижает | Лучше всего для | Осторожно с |
+|-------|---------|-----------------|-------------|
+| Bagging / Random Forest | Variance | Шумные данные, много признаков | Не помогает с bias |
+| AdaBoost | Bias | Чистые данные, простые base learners | Чувствителен к выбросам и шуму |
+| Gradient Boosting | Bias | Табличные данные, соревнования | Долго обучается, легко переобучить без настройки |
+| XGBoost / LightGBM | Оба | Production tabular ML | Много гиперпараметров |
+| Stacking | Оба | Последние 1-2% accuracy | Сложен, риск overfitting meta-learner |
+| Voting | Variance | Быстрая комбинация разных моделей | Помогает только если модели разнообразны |
 
-### The Production Stack for Tabular Data
+### Production stack для табличных данных
 
-For most tabular prediction problems, this is the order to try:
+Для большинства табличных prediction problems порядок такой:
 
-1. **LightGBM or XGBoost** with default parameters
-2. Tune n_estimators, learning_rate, max_depth, min_child_weight
-3. If you need the last 0.5%, build a stacking ensemble with 3-5 diverse models
-4. Use cross-validation throughout
+1. **LightGBM или XGBoost** с параметрами по умолчанию
+2. Настроить n_estimators, learning_rate, max_depth, min_child_weight
+3. Если нужны последние 0.5%, построить stacking ensemble из 3-5 разнообразных моделей
+4. Везде использовать cross-validation
 
-Neural networks on tabular data are almost always worse than gradient boosting, despite continued research attempts. TabNet, NODE, and similar architectures occasionally match but rarely beat a well-tuned XGBoost.
+Нейросети на табличных данных почти всегда хуже gradient boosting, несмотря на постоянные исследовательские попытки. TabNet, NODE и похожие архитектуры иногда догоняют, но редко превосходят хорошо настроенный XGBoost.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/prompt-ensemble-selector.md` -- a prompt that helps you pick the right ensemble method for a given dataset. Describe your data (size, feature types, noise level, class balance) and the problem you are solving. The prompt walks through a decision checklist, recommends a method, suggests starting hyperparameters, and warns about common mistakes for that method. Also produces `outputs/skill-ensemble-builder.md` with the full selection guide.
+Этот урок создает `outputs/prompt-ensemble-selector.md` — промпт, помогающий выбрать правильный ensemble method для заданного набора данных. Опишите данные (размер, типы признаков, уровень шума, баланс классов) и решаемую задачу. Промпт пройдет по decision checklist, порекомендует метод, предложит стартовые гиперпараметры и предупредит о частых ошибках для этого метода. Также создается `outputs/skill-ensemble-builder.md` с полным guide по выбору.
 
-## Exercises
+## Упражнения
 
-1. Modify the AdaBoost implementation to track training accuracy after each round. Plot accuracy vs. number of estimators. When does it converge?
+1. Измените реализацию AdaBoost, чтобы отслеживать training accuracy после каждого раунда. Постройте accuracy vs. number of estimators. Когда она сходится?
 
-2. Implement a random forest from scratch by adding random feature subsampling to the regression tree. Train 100 trees with `max_features=sqrt(n_features)` and average predictions. Compare variance reduction to a single tree.
+2. Реализуйте random forest с нуля, добавив random feature subsampling в regression tree. Обучите 100 деревьев с `max_features=sqrt(n_features)` и усредните предсказания. Сравните снижение variance с одним деревом.
 
-3. In the gradient boosting implementation, add early stopping: track validation loss after each round and stop when it has not improved for 10 consecutive rounds. How many trees does it actually need?
+3. В реализации gradient boosting добавьте early stopping: отслеживайте validation loss после каждого раунда и останавливайтесь, если он не улучшался 10 раундов подряд. Сколько деревьев реально нужно?
 
-4. Build a stacking ensemble with three base models (logistic regression, decision tree, k-nearest neighbors) and a logistic regression meta-learner. Use 5-fold cross-validation to generate meta-features. Compare to each base model alone.
+4. Постройте stacking ensemble с тремя base models (logistic regression, decision tree, k-nearest neighbors) и logistic regression meta-learner. Используйте 5-fold cross-validation для генерации meta-features. Сравните с каждой base model по отдельности.
 
-5. Run XGBoost on the same dataset with default parameters. Compare its accuracy to your from-scratch gradient boosting. Time both. How large is the speed difference?
+5. Запустите XGBoost на том же наборе данных с параметрами по умолчанию. Сравните его accuracy с вашим gradient boosting с нуля. Измерьте время обоих. Насколько велика разница в скорости?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Bagging | "Train on random subsets" | Bootstrap aggregating: train models on bootstrap samples, average predictions to reduce variance |
-| Boosting | "Focus on hard examples" | Train models sequentially, each correcting errors of the ensemble so far, to reduce bias |
-| AdaBoost | "Reweight the data" | Boosting via sample weight updates; misclassified points get higher weight for the next learner |
-| Gradient boosting | "Fit the residuals" | Boosting via fitting each new model to the negative gradient of the loss function |
-| XGBoost | "The Kaggle weapon" | Gradient boosting with regularization, second-order optimization, and systems-level speed tricks |
-| Stacking | "Models on top of models" | Use predictions of base models as input features for a meta-learner |
-| Random forest | "Many randomized trees" | Bagging with decision trees, adding random feature subsampling at each split for diversity |
-| Ensemble diversity | "Make different mistakes" | Models must be uncorrelated in their errors for the ensemble to improve over individuals |
-| Out-of-bag error | "Free validation" | Samples not in a bootstrap draw (~36.8%) serve as a validation set without needing a holdout |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Bagging | «Обучать на случайных поднаборах» | Bootstrap aggregating: обучить модели на bootstrap samples и усреднить предсказания, чтобы снизить variance |
+| Boosting | «Фокусироваться на трудных примерах» | Обучать модели последовательно, каждая исправляет ошибки текущего ансамбля, чтобы снизить bias |
+| AdaBoost | «Перевзвешивать данные» | Boosting через обновления sample weights; неверно классифицированные точки получают больший вес для следующего learner |
+| Gradient boosting | «Подгонять остатки» | Boosting через подгонку каждой новой модели к отрицательному градиенту функции потерь |
+| XGBoost | «Оружие Kaggle» | Gradient boosting с регуляризацией, second-order optimization и системными ускорениями |
+| Stacking | «Модели поверх моделей» | Использование предсказаний base models как входных признаков для meta-learner |
+| Random forest | «Много рандомизированных деревьев» | Bagging с деревьями решений плюс random feature subsampling на каждом split для разнообразия |
+| Ensemble diversity | «Делать разные ошибки» | Ошибки моделей должны быть некоррелированы, чтобы ансамбль улучшался относительно отдельных моделей |
+| Out-of-bag error | «Бесплатная валидация» | Примеры, не попавшие в bootstrap draw (~36.8%), служат validation set без отдельного holdout |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Schapire & Freund: Boosting: Foundations and Algorithms](https://mitpress.mit.edu/9780262526036/) -- the book by AdaBoost's creators
-- [Friedman: Greedy Function Approximation: A Gradient Boosting Machine (2001)](https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) -- the original gradient boosting paper
-- [Chen & Guestrin: XGBoost (2016)](https://arxiv.org/abs/1603.02754) -- the XGBoost paper
-- [Wolpert: Stacked Generalization (1992)](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) -- the original stacking paper
-- [scikit-learn Ensemble Methods](https://scikit-learn.org/stable/modules/ensemble.html) -- practical reference
+- [Schapire & Freund: Boosting: Foundations and Algorithms](https://mitpress.mit.edu/9780262526036/) — книга создателей AdaBoost
+- [Friedman: Greedy Function Approximation: A Gradient Boosting Machine (2001)](https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) — оригинальная статья о gradient boosting
+- [Chen & Guestrin: XGBoost (2016)](https://arxiv.org/abs/1603.02754) — статья об XGBoost
+- [Wolpert: Stacked Generalization (1992)](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) — оригинальная статья о stacking
+- [scikit-learn Ensemble Methods](https://scikit-learn.org/stable/modules/ensemble.html) — практический справочник

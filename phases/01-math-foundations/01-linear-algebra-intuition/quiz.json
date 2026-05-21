@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the dot product of two vectors measure?",
-      "options": ["The distance between the two vectors", "How similar or aligned the two vectors are", "The angle between the vectors in degrees", "The number of dimensions the vectors share"],
+      "question": "Что измеряет скалярное произведение двух векторов?",
+      "options": [
+        "Расстояние между двумя векторами",
+        "Насколько похожи или сонаправлены два вектора",
+        "Угол между векторами в градусах",
+        "Количество измерений, общих для векторов"
+      ],
       "correct": 1,
-      "explanation": "The dot product measures alignment: positive means same direction (similar), zero means perpendicular (unrelated), negative means opposite direction (dissimilar). This is the basis of similarity search in AI."
+      "explanation": "Скалярное произведение измеряет сонаправленность: положительное значение означает одинаковое направление (сходство), ноль — перпендикулярность (отсутствие связи), отрицательное — противоположные направления (несходство). Это основа поиска по сходству в AI."
     },
     {
       "stage": "pre",
-      "question": "In AI, what does 'embedding' refer to?",
-      "options": ["Inserting one model inside another", "A vector representation that captures the meaning of something (word, image, user)", "A technique for compressing model weights", "The process of converting code to machine instructions"],
+      "question": "Что означает термин «эмбеддинг» в AI?",
+      "options": [
+        "Встраивание одной модели внутрь другой",
+        "Векторное представление, отражающее смысл объекта (слова, изображения, пользователя)",
+        "Техника сжатия весов модели",
+        "Процесс преобразования кода в машинные инструкции"
+      ],
       "correct": 1,
-      "explanation": "An embedding maps discrete objects (words, images, users) to continuous vectors in a high-dimensional space where similar items are close together. It is the bridge between real-world concepts and mathematical operations."
+      "explanation": "Эмбеддинг отображает дискретные объекты (слова, изображения, пользователей) в непрерывные векторы в пространстве высокой размерности, где похожие объекты располагаются близко друг к другу. Это мост между реальными концепциями и математическими операциями."
     },
     {
       "stage": "post",
-      "question": "Three vectors v1=[1,0,0], v2=[0,1,0], v3=[2,1,0] are given. Are they linearly independent?",
-      "options": ["Yes, because there are three vectors in 3D space", "No, because v3 = 2*v1 + v2, so v3 is a linear combination of the others", "Yes, because none of the vectors are identical", "No, because they all have a zero component"],
+      "question": "Даны три вектора v1=[1,0,0], v2=[0,1,0], v3=[2,1,0]. Являются ли они линейно независимыми?",
+      "options": [
+        "Да, потому что это три вектора в 3D-пространстве",
+        "Нет, потому что v3 = 2*v1 + v2, то есть v3 является линейной комбинацией остальных",
+        "Да, потому что ни один из векторов не совпадает",
+        "Нет, потому что у всех есть нулевая компонента"
+      ],
       "correct": 1,
-      "explanation": "v3 = 2*v1 + v2, making the set linearly dependent. All three vectors lie in the xy-plane and cannot reach [0,0,1]. Despite having 3 vectors in 3D, they only span a 2D subspace."
+      "explanation": "v3 = 2*v1 + v2, поэтому набор является линейно зависимым. Все три вектора лежат в плоскости xy и не позволяют получить [0,0,1]. Несмотря на наличие 3 векторов в 3D, они натягивают только двумерное подпространство."
     },
     {
       "stage": "post",
-      "question": "What does the rank of a matrix tell you in the context of machine learning?",
-      "options": ["How fast the matrix can be multiplied", "The number of linearly independent columns, indicating how many dimensions of useful information it contains", "The maximum value in the matrix", "The number of non-zero entries in the matrix"],
+      "question": "Что показывает ранг матрицы в контексте машинного обучения?",
+      "options": [
+        "Насколько быстро можно перемножить матрицу",
+        "Количество линейно независимых столбцов, показывающее, сколько измерений полезной информации она содержит",
+        "Максимальное значение в матрице",
+        "Количество ненулевых элементов в матрице"
+      ],
       "correct": 1,
-      "explanation": "Rank equals the number of linearly independent columns. In ML, a rank-deficient feature matrix means redundant features, infinitely many weight solutions, and the need for regularization."
+      "explanation": "Ранг равен количеству линейно независимых столбцов. В ML матрица признаков с недостаточным рангом означает избыточные признаки, бесконечно много решений для весов и необходимость регуляризации."
     },
     {
       "stage": "post",
-      "question": "How does LoRA (Low-Rank Adaptation) use linear algebra to efficiently fine-tune large language models?",
-      "options": ["It removes unused rows from weight matrices to shrink the model", "It decomposes weight updates into two small low-rank matrices instead of updating the full weight matrix", "It converts all weights from float32 to int8", "It freezes the embedding layer and only trains the output head"],
+      "question": "Как LoRA (Low-Rank Adaptation) использует линейную алгебру для эффективного дообучения больших языковых моделей?",
+      "options": [
+        "Она удаляет неиспользуемые строки из матриц весов, уменьшая модель",
+        "Она раскладывает обновления весов на две небольшие низкоранговые матрицы вместо обновления полной матрицы весов",
+        "Она преобразует все веса из float32 в int8",
+        "Она замораживает слой эмбеддингов и обучает только выходной слой"
+      ],
       "correct": 1,
-      "explanation": "LoRA decomposes a 4096x4096 weight update into two matrices of size 4096x16 and 16x4096 (rank-16), reducing trainable parameters from 16M to 131K by assuming updates live in a low-dimensional subspace."
+      "explanation": "LoRA раскладывает обновление матрицы весов 4096x4096 на две матрицы размера 4096x16 и 16x4096 (rank-16), уменьшая количество обучаемых параметров с 16M до 131K за счёт предположения, что обновления лежат в низкоразмерном подпространстве."
     }
   ]
 }

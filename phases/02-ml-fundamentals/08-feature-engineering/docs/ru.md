@@ -1,73 +1,73 @@
-# Feature Engineering & Selection
+# Конструирование и отбор признаков
 
-> A good feature is worth a thousand data points.
+> Хороший признак стоит тысячи точек данных.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 1 (Statistics for ML, Linear Algebra), Phase 2 Lessons 1-7
-**Time:** ~90 minutes
+**Тип:** Практика
+**Языки:** Python
+**Требования:** Фаза 1 (статистика для ML, линейная алгебра), Фаза 2 Уроки 1-7
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement numerical transforms (standardization, min-max scaling, log transform, binning) and explain when each is appropriate
-- Build one-hot, label, and target encoding for categorical features and identify the data leakage risk in target encoding
-- Construct a TF-IDF vectorizer from scratch and explain why it outperforms raw word counts for text classification
-- Apply filter-based feature selection (variance threshold, correlation, mutual information) to reduce dimensionality
+- Реализовать числовые преобразования (стандартизация, min-max scaling, log transform, binning) и объяснить, когда каждое уместно
+- Построить one-hot, label и target encoding для категориальных признаков и определить риск утечки данных в target encoding
+- Собрать TF-IDF-векторизатор с нуля и объяснить, почему он лучше сырых счетчиков слов для классификации текста
+- Применить filter-based feature selection (variance threshold, correlation, mutual information), чтобы снизить размерность
 
-## The Problem
+## Проблема
 
-You have a dataset. You pick an algorithm. You train it. The results are mediocre. You try a fancier algorithm. Still mediocre. You spend a week tuning hyperparameters. Marginal improvement.
+У вас есть набор данных. Вы выбираете алгоритм. Обучаете его. Результаты посредственные. Пробуете более сложный алгоритм. Все еще посредственно. Тратите неделю на подбор гиперпараметров. Небольшое улучшение.
 
-Then someone transforms the raw data into better features and a simple logistic regression beats your tuned gradient-boosted ensemble.
+Затем кто-то преобразует сырые данные в более хорошие признаки, и простая логистическая регрессия обгоняет ваш настроенный ансамбль градиентного бустинга.
 
-This happens constantly. In classical ML, the representation of the data matters more than the choice of algorithm. A house price model with "square footage" and "number of bedrooms" will beat a model with "address as a raw string" no matter how sophisticated the learner is. The algorithm can only work with what you give it.
+Так происходит постоянно. В классическом ML представление данных важнее выбора алгоритма. Модель цены дома с признаками «площадь» и «число спален» обгонит модель с признаком «адрес как сырая строка», каким бы сложным ни был learner. Алгоритм может работать только с тем, что вы ему дали.
 
-Feature engineering is the process of transforming raw data into representations that make patterns easier for models to find. Feature selection is the process of throwing away features that add noise without adding signal. Together, they are the highest-leverage activity in classical ML.
+Feature engineering — процесс преобразования сырых данных в представления, где моделям легче находить паттерны. Feature selection — процесс удаления признаков, которые добавляют шум без сигнала. Вместе это самая высокоэффективная деятельность в классическом ML.
 
-## The Concept
+## Концепция
 
-### The Feature Pipeline
+### Pipeline признаков
 
 ```mermaid
 flowchart LR
-    A[Raw Data] --> B[Handle Missing Values]
-    B --> C[Numerical Transforms]
-    B --> D[Categorical Encoding]
-    B --> E[Text Features]
-    C --> F[Feature Interactions]
+    A[Сырые данные] --> B[Обработать пропуски]
+    B --> C[Числовые преобразования]
+    B --> D[Кодирование категорий]
+    B --> E[Текстовые признаки]
+    C --> F[Взаимодействия признаков]
     D --> F
     E --> F
-    F --> G[Feature Selection]
-    G --> H[Model-Ready Data]
+    F --> G[Отбор признаков]
+    G --> H[Данные, готовые для модели]
 ```
 
-### Numerical Features
+### Числовые признаки
 
-Raw numbers are rarely model-ready. Common transforms:
+Сырые числа редко готовы для модели. Частые преобразования:
 
-**Scaling:** Put features on the same range so distance-based algorithms (K-Means, KNN, SVM) treat all features equally. Min-max scaling maps to [0, 1]. Standardization (z-score) maps to mean=0, std=1.
+**Масштабирование:** приводит признаки к одному диапазону, чтобы distance-based алгоритмы (K-Means, KNN, SVM) относились ко всем признакам одинаково. Min-max scaling отображает в [0, 1]. Стандартизация (z-score) отображает к mean=0, std=1.
 
-**Log transform:** Compresses right-skewed distributions (income, population, word counts). Turns multiplicative relationships into additive ones.
+**Логарифмическое преобразование:** сжимает распределения с правой асимметрией (доход, население, счетчики слов). Превращает мультипликативные зависимости в аддитивные.
 
-**Binning:** Converts continuous values into categories. Useful when the relationship between feature and target is non-linear but step-wise (e.g., age groups).
+**Binning:** превращает непрерывные значения в категории. Полезно, когда зависимость между признаком и target нелинейная, но ступенчатая (например, возрастные группы).
 
-**Polynomial features:** Creates x^2, x^3, x1*x2 terms. Lets linear models capture non-linear relationships at the cost of more features.
+**Полиномиальные признаки:** создает члены x^2, x^3, x1*x2. Позволяет линейным моделям улавливать нелинейные зависимости ценой роста числа признаков.
 
-### Categorical Features
+### Категориальные признаки
 
-Models need numbers. Categories need encoding.
+Моделям нужны числа. Категории нужно кодировать.
 
-**One-hot encoding:** Creates a binary column for each category. "color = red/blue/green" becomes three columns: is_red, is_blue, is_green. Works well for low-cardinality features but explodes with many categories.
+**One-hot encoding:** создает бинарный столбец для каждой категории. `color = red/blue/green` превращается в три столбца: `is_red`, `is_blue`, `is_green`. Хорошо работает для признаков с низкой кардинальностью, но взрывается при большом числе категорий.
 
-**Label encoding:** Maps each category to an integer: red=0, blue=1, green=2. Introduces false ordering (the model might think green > blue > red). Only appropriate for tree-based models that split on individual values.
+**Label encoding:** отображает каждую категорию в целое число: red=0, blue=1, green=2. Вводит ложный порядок (модель может подумать, что green > blue > red). Уместно только для моделей на деревьях, которые делят по отдельным значениям.
 
-**Target encoding:** Replaces each category with the mean of the target variable for that category. Powerful but dangerous: high risk of data leakage. Must be computed only on training data and applied to test data.
+**Target encoding:** заменяет каждую категорию средним значением целевой переменной для этой категории. Мощно, но опасно: высокий риск data leakage. Нужно вычислять только на обучающих данных и применять к тестовым.
 
-### Text Features
+### Текстовые признаки
 
-**Count vectorizer:** Counts how many times each word appears in a document. "the cat sat on the mat" becomes {the: 2, cat: 1, sat: 1, on: 1, mat: 1}.
+**Count vectorizer:** считает, сколько раз каждое слово встречается в документе. «the cat sat on the mat» превращается в {the: 2, cat: 1, sat: 1, on: 1, mat: 1}.
 
-**TF-IDF:** Term Frequency-Inverse Document Frequency. Weighs words by how unique they are across documents. Common words like "the" get low weight. Rare, distinctive words get high weight.
+**TF-IDF:** Term Frequency-Inverse Document Frequency. Взвешивает слова по тому, насколько они уникальны среди документов. Частые слова вроде "the" получают малый вес. Редкие отличительные слова получают высокий вес.
 
 ```
 TF(word, doc) = count(word in doc) / total words in doc
@@ -75,38 +75,38 @@ IDF(word) = log(total docs / docs containing word)
 TF-IDF = TF * IDF
 ```
 
-### Missing Values
+### Пропущенные значения
 
-Real data has holes. Strategies:
+В реальных данных есть дыры. Стратегии:
 
-- **Drop rows:** Only when missing data is rare and random
-- **Mean/median imputation:** Simple, preserves distribution shape (median is more robust to outliers)
-- **Mode imputation:** For categorical features
-- **Indicator column:** Add a binary column "was_this_missing" before imputing. The fact that data is missing can itself be informative
-- **Forward/backward fill:** For time series data
+- **Удалить строки:** только когда пропусков мало и они случайны
+- **Mean/median imputation:** просто, сохраняет форму распределения (медиана устойчивее к выбросам)
+- **Mode imputation:** для категориальных признаков
+- **Indicator column:** добавить бинарный столбец `was_this_missing` перед заполнением. Сам факт пропуска может быть информативен
+- **Forward/backward fill:** для временных рядов
 
-### Feature Interaction
+### Взаимодействия признаков
 
-Sometimes the relationship is in the combination. "Height" and "weight" alone are less predictive than "BMI = weight / height^2". Feature interactions multiply the feature space, so use domain knowledge to pick the right ones.
+Иногда зависимость находится в комбинации. «Рост» и «вес» по отдельности менее предсказательны, чем «BMI = weight / height^2». Feature interactions умножают пространство признаков, поэтому используйте доменное знание, чтобы выбирать правильные.
 
-### Feature Selection
+### Отбор признаков
 
-More features is not always better. Irrelevant features add noise, increase training time, and can cause overfitting.
+Больше признаков — не всегда лучше. Нерелевантные признаки добавляют шум, увеличивают время обучения и могут вызывать переобучение.
 
-**Filter methods (pre-model):**
-- Correlation: remove features highly correlated with each other (redundant)
-- Mutual information: measures how much knowing a feature reduces uncertainty about the target
-- Variance threshold: remove features that barely vary
+**Filter methods (до модели):**
+- Correlation: удалить признаки, сильно коррелирующие друг с другом (избыточные)
+- Mutual information: измеряет, насколько знание признака снижает неопределенность о target
+- Variance threshold: удалить признаки, которые почти не меняются
 
 **Wrapper methods (model-based):**
-- L1 regularization (Lasso): drives irrelevant feature weights to exactly zero
-- Recursive feature elimination: train, remove least important feature, repeat
+- L1 regularization (Lasso): приводит веса нерелевантных признаков ровно к нулю
+- Recursive feature elimination: обучить, удалить наименее важный признак, повторить
 
-**Why selection matters:** A model with 10 good features will usually outperform a model with 10 good features and 90 noisy ones. The noisy features give the model opportunities to overfit on training data patterns that do not generalize.
+**Почему selection важен:** модель с 10 хорошими признаками обычно обгонит модель с 10 хорошими и 90 шумовыми. Шумовые признаки дают модели возможность переобучиться на паттерны обучающих данных, которые не обобщаются.
 
-## Build It
+## Соберите это
 
-### Step 1: Numerical transforms from scratch
+### Шаг 1: числовые преобразования с нуля
 
 ```python
 import math
@@ -158,7 +158,7 @@ def polynomial_features(row, degree=2):
     return result
 ```
 
-### Step 2: Categorical encoding from scratch
+### Шаг 2: категориальное кодирование с нуля
 
 ```python
 def one_hot_encode(values):
@@ -200,7 +200,7 @@ def target_encode(feature_values, target_values, smoothing=10):
     return [encoding[v] for v in feature_values], encoding
 ```
 
-### Step 3: Text features from scratch
+### Шаг 3: текстовые признаки с нуля
 
 ```python
 def count_vectorize(documents):
@@ -259,7 +259,7 @@ def tfidf(documents):
     return vectors, vocab
 ```
 
-### Step 4: Missing value imputation from scratch
+### Шаг 4: заполнение пропусков с нуля
 
 ```python
 def impute_mean(values):
@@ -297,7 +297,7 @@ def add_missing_indicator(values):
     return [0 if v is not None else 1 for v in values]
 ```
 
-### Step 5: Feature selection from scratch
+### Шаг 5: отбор признаков с нуля
 
 ```python
 def correlation(x, y):
@@ -380,7 +380,7 @@ def remove_correlated(features, threshold=0.9):
     return [i for i in range(n_features) if i not in to_remove]
 ```
 
-### Step 6: Full pipeline and demo
+### Шаг 6: полный pipeline и demo
 
 ```python
 import random
@@ -519,9 +519,9 @@ if __name__ == "__main__":
         print(f"    {feature_names[j]}: r={corr:.4f}")
 ```
 
-## Use It
+## Используйте это
 
-With scikit-learn, these transforms are composable pipelines:
+Со scikit-learn эти преобразования собираются в composable pipelines:
 
 ```python
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, PolynomialFeatures
@@ -546,35 +546,35 @@ preprocessor = ColumnTransformer([
 ])
 ```
 
-The from-scratch versions show exactly what happens inside each transform. The library versions add edge-case handling, sparse matrix support, and pipeline composition, but the math is the same.
+Реализации с нуля показывают, что именно происходит внутри каждого transform. Библиотечные версии добавляют обработку пограничных случаев, поддержку sparse matrices и композицию pipeline, но математика та же.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/prompt-feature-engineer.md` - a prompt for systematically engineering features from raw data
+Этот урок создает:
+- `outputs/prompt-feature-engineer.md` — промпт для систематического конструирования признаков из сырых данных
 
-## Exercises
+## Упражнения
 
-1. Add robust scaling (using median and interquartile range instead of mean and standard deviation) to the numerical transforms. Compare it to standard scaling on data with extreme outliers.
-2. Implement leave-one-out target encoding: for each row, compute the target mean excluding that row's own target value. Show how this reduces overfitting compared to naive target encoding.
-3. Build an automated feature selection pipeline that combines variance threshold, correlation filtering, and mutual information ranking. Apply it to the housing dataset and compare model performance (use a simple linear regression) with all features vs selected features.
+1. Добавьте robust scaling (с использованием медианы и interquartile range вместо среднего и стандартного отклонения) к числовым преобразованиям. Сравните его со standard scaling на данных с экстремальными выбросами.
+2. Реализуйте leave-one-out target encoding: для каждой строки вычисляйте средний target без target-значения этой же строки. Покажите, как это снижает переобучение по сравнению с naive target encoding.
+3. Постройте автоматический pipeline отбора признаков, объединяющий variance threshold, correlation filtering и mutual information ranking. Примените его к housing dataset и сравните качество модели (используйте простую линейную регрессию) на всех признаках и выбранных признаках.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Feature engineering | "Making new columns" | Transforming raw data into representations that expose patterns to the model |
-| Standardization | "Making it normal" | Subtracting the mean and dividing by standard deviation so the feature has mean=0 and std=1 |
-| One-hot encoding | "Making dummy variables" | Creating one binary column per category, where exactly one column is 1 for each row |
-| Target encoding | "Using the answer to encode" | Replacing each category with the average target value for that category, with smoothing to prevent overfitting |
-| TF-IDF | "Fancy word counts" | Term Frequency times Inverse Document Frequency: words weighted by how distinctive they are across the corpus |
-| Imputation | "Filling in blanks" | Replacing missing values with estimated values (mean, median, mode, or model-predicted) |
-| Feature selection | "Throwing out bad columns" | Removing features that add noise or redundancy, keeping only those with signal about the target |
-| Mutual information | "How much one thing tells you about another" | A measure of the reduction in uncertainty about variable Y gained by observing variable X |
-| Data leakage | "Accidentally cheating" | Using information during training that would not be available at prediction time, giving falsely optimistic results |
+| Термин | Как говорят | Что это на самом деле значит |
+|--------|-------------|------------------------------|
+| Feature engineering | «Делать новые столбцы» | Преобразование сырых данных в представления, раскрывающие паттерны для модели |
+| Стандартизация | «Сделать нормальным» | Вычитание среднего и деление на стандартное отклонение, чтобы признак имел mean=0 и std=1 |
+| One-hot encoding | «Сделать dummy variables» | Создание одного бинарного столбца на категорию, где ровно один столбец равен 1 для каждой строки |
+| Target encoding | «Кодировать через ответ» | Замена каждой категории средним target-значением для этой категории со сглаживанием для предотвращения переобучения |
+| TF-IDF | «Модные счетчики слов» | Term Frequency умноженная на Inverse Document Frequency: слова взвешиваются по их отличительности в корпусе |
+| Imputation | «Заполнение пустот» | Замена пропущенных значений оцененными значениями (средним, медианой, модой или предсказанием модели) |
+| Feature selection | «Выкидывание плохих столбцов» | Удаление признаков, добавляющих шум или избыточность, с сохранением только тех, где есть сигнал о target |
+| Mutual information | «Насколько одно говорит о другом» | Мера уменьшения неопределенности о переменной Y при наблюдении переменной X |
+| Data leakage | «Случайное жульничество» | Использование при обучении информации, недоступной во время предсказания, что дает ложно оптимистичные результаты |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Feature Engineering and Selection (Max Kuhn & Kjell Johnson)](http://www.feat.engineering/) - free online book covering the full landscape of feature engineering
-- [scikit-learn Preprocessing Guide](https://scikit-learn.org/stable/modules/preprocessing.html) - practical reference for all standard transforms
-- [Target Encoding Done Right (Micci-Barreca, 2001)](https://dl.acm.org/doi/10.1145/507533.507538) - the original paper on target encoding with smoothing
+- [Feature Engineering and Selection (Max Kuhn & Kjell Johnson)](http://www.feat.engineering/) — бесплатная онлайн-книга, покрывающая всю область feature engineering
+- [scikit-learn Preprocessing Guide](https://scikit-learn.org/stable/modules/preprocessing.html) — практический справочник по стандартным преобразованиям
+- [Target Encoding Done Right (Micci-Barreca, 2001)](https://dl.acm.org/doi/10.1145/507533.507538) — оригинальная статья о target encoding со сглаживанием
