@@ -1,44 +1,44 @@
-# Norms and Distances
+# Нормы и расстояния
 
-> Your distance function defines what "similar" means. Choose wrong and everything downstream breaks.
+> Ваша функция расстояния определяет, что значит "похожий". Выберите неправильно — и все последующие компоненты сломаются.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01 (Linear Algebra Intuition), 02 (Vectors, Matrices & Operations)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Предварительные требования:** Фаза 1, уроки 01 (интуиция линейной алгебры), 02 (векторы, матрицы и операции)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement L1, L2, cosine, Mahalanobis, Jaccard, and edit distance functions from scratch
-- Select the appropriate distance metric for a given ML task and explain why alternatives fail
-- Connect L1 and L2 norms to LASSO and Ridge regularization and their geometric constraint regions
-- Demonstrate how the same dataset produces different nearest neighbors under different metrics
+- Реализовать функции расстояния L1, L2, cosine, Mahalanobis, Jaccard и edit distance с нуля
+- Выбирать подходящую метрику расстояния для заданной ML-задачи и объяснять, почему альтернативы не подходят
+- Связать нормы L1 и L2 с регуляризацией LASSO и Ridge и их геометрическими областями ограничений
+- Показать, как один и тот же датасет дает разных ближайших соседей при разных метриках
 
-## The Problem
+## Проблема
 
-You have two vectors. Maybe they are word embeddings. Maybe they are user profiles. Maybe they are pixel arrays. You need to know: how close are they?
+У вас есть два вектора. Возможно, это word embeddings. Возможно, это профили пользователей. Возможно, это массивы пикселей. Вам нужно понять: насколько они близки?
 
-The answer depends entirely on which distance function you pick. Two data points can be nearest neighbors under one metric and far apart under another. Your KNN classifier, your recommendation engine, your vector database, your clustering algorithm, your loss function -- they all depend on this choice. Get it wrong and your model optimizes for the wrong thing.
+Ответ полностью зависит от выбранной функции расстояния. Две точки данных могут быть ближайшими соседями по одной метрике и далеко друг от друга по другой. Ваш KNN-классификатор, рекомендательная система, vector database, алгоритм кластеризации, loss function — все они зависят от этого выбора. Ошибитесь, и модель будет оптимизировать не то.
 
-There is no universal best distance. L2 works for spatial data. Cosine similarity dominates NLP. Jaccard handles sets. Edit distance handles strings. Mahalanobis accounts for correlations. Wasserstein moves probability mass. Each one encodes a different assumption about what "similar" means.
+Не существует универсально лучшего расстояния. L2 работает для пространственных данных. Cosine similarity доминирует в NLP. Jaccard работает с множествами. Edit distance работает со строками. Mahalanobis учитывает корреляции. Wasserstein перемещает вероятностную массу. Каждая из них кодирует разное предположение о том, что значит "похожий".
 
-This lesson builds every major distance function from scratch, shows you when each one is the right tool, and demonstrates how the same data produces completely different nearest neighbors depending on which metric you use.
+Этот урок строит все основные функции расстояния с нуля, показывает, когда каждая из них является правильным инструментом, и демонстрирует, как одни и те же данные дают полностью разных ближайших соседей в зависимости от выбранной метрики.
 
-## The Concept
+## Концепция
 
-### Norms: measuring vector magnitude
+### Нормы: измерение величины вектора
 
-A norm measures the "size" of a vector. Every distance function between two vectors can be written as the norm of their difference: d(a, b) = ||a - b||. So understanding norms is understanding distances.
+Норма измеряет "размер" вектора. Любую функцию расстояния между двумя векторами можно записать как норму их разности: d(a, b) = ||a - b||. Поэтому понимание норм — это понимание расстояний.
 
-### L1 Norm (Manhattan distance)
+### L1-норма (Manhattan distance)
 
-The L1 norm sums the absolute values of all components.
+L1-норма суммирует абсолютные значения всех компонент.
 
 ```
 ||x||_1 = |x_1| + |x_2| + ... + |x_n|
 ```
 
-It is called Manhattan distance because it measures how far you walk on a city grid where you can only move along axes. No diagonals.
+Она называется Manhattan distance, потому что измеряет, сколько вы пройдете по городской сетке, где можно двигаться только вдоль осей. Без диагоналей.
 
 ```
 Point A = (1, 1)
@@ -49,24 +49,24 @@ L1 distance = |4-1| + |5-1| = 3 + 4 = 7
 On a grid, you walk 3 blocks east and 4 blocks north.
 ```
 
-When to use L1:
-- High-dimensional sparse data (text features, one-hot encodings)
-- When you want robustness to outliers (a single huge difference does not dominate)
-- Feature selection problems (L1 regularization promotes sparsity)
+Когда использовать L1:
+- Разреженные данные высокой размерности (текстовые признаки, one-hot encodings)
+- Когда нужна устойчивость к выбросам (одно огромное различие не доминирует)
+- Задачи отбора признаков (L1 regularization способствует разреженности)
 
-Connection to L1 regularization (Lasso): adding ||w||_1 to your loss function penalizes the sum of absolute weight values. This pushes small weights to exactly zero, performing automatic feature selection. The L1 penalty creates diamond-shaped constraint regions in weight space, and the corners of diamonds lie on the axes where some weights are zero.
+Связь с L1 regularization (Lasso): добавление ||w||_1 к loss function штрафует сумму абсолютных значений весов. Это выталкивает малые веса ровно в ноль, выполняя автоматический отбор признаков. L1 penalty создает ромбовидные области ограничений в пространстве весов, а углы ромбов лежат на осях, где некоторые веса равны нулю.
 
-Connection to loss functions: Mean Absolute Error (MAE) is the average L1 distance between predictions and targets. It penalizes all errors linearly, making it robust to outliers compared to MSE.
+Связь с loss functions: Mean Absolute Error (MAE) — это среднее L1 distance между predictions и targets. Она штрафует все ошибки линейно, поэтому более устойчива к выбросам по сравнению с MSE.
 
-### L2 Norm (Euclidean distance)
+### L2-норма (Euclidean distance)
 
-The L2 norm is the straight-line distance. Square root of the sum of squared components.
+L2-норма — это расстояние по прямой. Квадратный корень из суммы квадратов компонент.
 
 ```
 ||x||_2 = sqrt(x_1^2 + x_2^2 + ... + x_n^2)
 ```
 
-This is the distance you learned in geometry class. Pythagoras in n dimensions.
+Это расстояние, которое вы учили на геометрии. Пифагор в n измерениях.
 
 ```
 Point A = (1, 1)
@@ -77,30 +77,30 @@ L2 distance = sqrt((4-1)^2 + (5-1)^2) = sqrt(9 + 16) = sqrt(25) = 5.0
 The straight line, cutting diagonally through the grid.
 ```
 
-When to use L2:
-- Low-to-medium dimensional continuous data
-- When the feature scales are comparable
-- Physical distances (spatial data, sensor readings)
-- Image similarity at the pixel level
+Когда использовать L2:
+- Непрерывные данные низкой и средней размерности
+- Когда масштабы признаков сопоставимы
+- Физические расстояния (пространственные данные, показания сенсоров)
+- Сходство изображений на уровне пикселей
 
-Connection to L2 regularization (Ridge): adding ||w||_2^2 to your loss function penalizes large weights. Unlike L1, it does not push weights to zero. It shrinks all weights toward zero proportionally. The L2 penalty creates circular constraint regions, so there are no corners on axes. Weights get small but rarely exactly zero.
+Связь с L2 regularization (Ridge): добавление ||w||_2^2 к loss function штрафует большие веса. В отличие от L1, оно не выталкивает веса в ноль. Оно пропорционально сжимает все веса к нулю. L2 penalty создает круглые области ограничений, поэтому на осях нет углов. Веса становятся малыми, но редко ровно нулевыми.
 
-Connection to loss functions: Mean Squared Error (MSE) is the average of L2 distances squared. Squaring penalizes large errors more heavily than small ones.
+Связь с loss functions: Mean Squared Error (MSE) — это среднее квадратов L2 distances. Возведение в квадрат штрафует большие ошибки сильнее, чем малые.
 
 ```
 MAE (L1 loss):  |y - y_hat|         Linear penalty. Robust to outliers.
 MSE (L2 loss):  (y - y_hat)^2       Quadratic penalty. Sensitive to outliers.
 ```
 
-### Lp Norms: the general family
+### Lp-нормы: общее семейство
 
-L1 and L2 are special cases of the Lp norm:
+L1 и L2 — частные случаи Lp-нормы:
 
 ```
 ||x||_p = (|x_1|^p + |x_2|^p + ... + |x_n|^p)^(1/p)
 ```
 
-Different values of p produce different shaped "unit balls" (the set of all points at distance 1 from the origin):
+Разные значения p дают разные формы "единичных шаров" (множества всех точек на расстоянии 1 от начала координат):
 
 ```
 p=1:    Diamond shape      (corners on axes)
@@ -109,15 +109,15 @@ p=3:    Superellipse       (rounded square)
 p=inf:  Square/hypercube   (flat sides along axes)
 ```
 
-### L-infinity Norm (Chebyshev distance)
+### L-infinity-норма (Chebyshev distance)
 
-As p approaches infinity, the Lp norm converges to the maximum absolute component.
+Когда p стремится к бесконечности, Lp-норма сходится к максимальной абсолютной компоненте.
 
 ```
 ||x||_inf = max(|x_1|, |x_2|, ..., |x_n|)
 ```
 
-The distance between two points is determined by the single dimension where they differ the most. All other dimensions are ignored.
+Расстояние между двумя точками определяется единственным измерением, где они различаются сильнее всего. Все остальные измерения игнорируются.
 
 ```
 Point A = (1, 1)
@@ -126,22 +126,22 @@ Point B = (4, 5)
 L-inf distance = max(|4-1|, |5-1|) = max(3, 4) = 4
 ```
 
-When to use L-infinity:
-- When the worst-case deviation in any single dimension matters
-- Game boards (a king in chess moves in L-infinity: one step in any direction costs 1)
-- Manufacturing tolerances (every dimension must be within spec)
+Когда использовать L-infinity:
+- Когда важно максимальное отклонение по любому одному измерению
+- Игровые доски (король в шахматах двигается в L-infinity: один шаг в любом направлении стоит 1)
+- Производственные допуски (каждое измерение должно быть в пределах спецификации)
 
-### Cosine Similarity and Cosine Distance
+### Cosine similarity и cosine distance
 
-Cosine similarity measures the angle between two vectors, ignoring their magnitudes.
+Cosine similarity измеряет угол между двумя векторами, игнорируя их величины.
 
 ```
 cos_sim(a, b) = (a . b) / (||a||_2 * ||b||_2)
 ```
 
-It ranges from -1 (opposite directions) to +1 (same direction). Perpendicular vectors have cosine similarity 0.
+Она лежит в диапазоне от -1 (противоположные направления) до +1 (одно направление). Перпендикулярные векторы имеют cosine similarity 0.
 
-Cosine distance converts it to a distance: cosine_distance = 1 - cosine_similarity. This ranges from 0 (identical direction) to 2 (opposite direction).
+Cosine distance превращает ее в расстояние: cosine_distance = 1 - cosine_similarity. Диапазон от 0 (одинаковое направление) до 2 (противоположное направление).
 
 ```
 a = (1, 0)    b = (1, 1)
@@ -150,31 +150,31 @@ cos_sim = (1*1 + 0*1) / (1 * sqrt(2)) = 1/sqrt(2) = 0.707
 cos_dist = 1 - 0.707 = 0.293
 ```
 
-Why cosine dominates NLP and embeddings: in text, document length should not affect similarity. A document about cats that is twice as long as another document about cats should still be "similar." Cosine similarity ignores magnitude (length) and only cares about direction. Two documents with the same word distribution but different lengths point in the same direction and get cosine similarity 1.0.
+Почему cosine доминирует в NLP и embeddings: в тексте длина документа не должна влиять на similarity. Документ о кошках, который вдвое длиннее другого документа о кошках, все равно должен быть "похожим". Cosine similarity игнорирует величину (длину) и смотрит только на направление. Два документа с одинаковым распределением слов, но разной длиной, указывают в одном направлении и получают cosine similarity 1.0.
 
-When to use cosine similarity:
-- Text similarity (TF-IDF vectors, word embeddings, sentence embeddings)
-- Any domain where magnitude is noise and direction is signal
-- Recommendation systems (user preference vectors)
-- Embedding search (vector databases almost always use cosine or dot product)
+Когда использовать cosine similarity:
+- Сходство текстов (TF-IDF vectors, word embeddings, sentence embeddings)
+- Любая область, где величина — шум, а направление — сигнал
+- Рекомендательные системы (векторы предпочтений пользователей)
+- Поиск по embeddings (vector databases почти всегда используют cosine или dot product)
 
-### Dot Product Similarity vs Cosine Similarity
+### Dot product similarity против cosine similarity
 
-The dot product of two vectors is:
+Dot product двух векторов:
 
 ```
 a . b = a_1*b_1 + a_2*b_2 + ... + a_n*b_n
       = ||a|| * ||b|| * cos(angle)
 ```
 
-Cosine similarity is the dot product normalized by both magnitudes. When both vectors are already unit-normalized (magnitude = 1), dot product and cosine similarity are identical.
+Cosine similarity — это dot product, нормированный на обе величины. Когда оба вектора уже нормированы до единичной длины (magnitude = 1), dot product и cosine similarity идентичны.
 
 ```
 If ||a|| = 1 and ||b|| = 1:
     a . b = cos(angle between a and b)
 ```
 
-When they differ: dot product includes magnitude information. A vector with larger magnitude gets a higher dot product score. This matters in some retrieval systems where you want "popular" items to rank higher. The magnitude acts as an implicit quality or importance signal.
+Когда они различаются: dot product включает информацию о величине. Вектор с большей magnitude получает более высокий score dot product. Это важно в некоторых поисковых системах, где вы хотите, чтобы "популярные" элементы ранжировались выше. Magnitude работает как неявный сигнал качества или важности.
 
 ```
 a = (3, 0)    b = (1, 0)    c = (0, 1)
@@ -185,25 +185,25 @@ cos(a, b) = 1.0   cos(a, c) = 0.0
 Both agree on direction, but dot product also reflects magnitude.
 ```
 
-In practice:
-- Use cosine similarity when you want pure directional similarity
-- Use dot product when magnitudes carry meaningful information
-- Many vector databases (Pinecone, Weaviate, Qdrant) let you choose between them
-- If your embeddings are L2-normalized, the choice does not matter
+На практике:
+- Используйте cosine similarity, когда нужно сходство только по направлению
+- Используйте dot product, когда величины несут осмысленную информацию
+- Многие vector databases (Pinecone, Weaviate, Qdrant) позволяют выбирать между ними
+- Если ваши embeddings L2-normalized, выбор не имеет значения
 
-### Mahalanobis Distance
+### Mahalanobis distance
 
-Euclidean distance treats all dimensions equally. But if your features are correlated or have different scales, L2 gives misleading results.
+Euclidean distance обращается со всеми измерениями одинаково. Но если признаки коррелированы или имеют разные масштабы, L2 дает вводящие в заблуждение результаты.
 
-Mahalanobis distance accounts for the covariance structure of the data.
+Mahalanobis distance учитывает ковариационную структуру данных.
 
 ```
 d_M(x, y) = sqrt((x - y)^T * S^(-1) * (x - y))
 ```
 
-where S is the covariance matrix of the data.
+где S — ковариационная матрица данных.
 
-Intuitively: Mahalanobis distance first decorrelates and normalizes the data (whitening), then computes L2 distance in that transformed space. If S is the identity matrix (uncorrelated, unit variance features), Mahalanobis distance reduces to Euclidean distance.
+Интуитивно: Mahalanobis distance сначала декоррелирует и нормализует данные (whitening), затем вычисляет L2 distance в этом преобразованном пространстве. Если S — единичная матрица (некоррелированные признаки с единичной дисперсией), Mahalanobis distance сводится к Euclidean distance.
 
 ```
 Example: height and weight are correlated.
@@ -215,21 +215,21 @@ Mahalanobis distance correctly identifies the second as an outlier
 because it accounts for the height-weight correlation.
 ```
 
-When to use Mahalanobis distance:
-- Outlier detection (points with large Mahalanobis distance from the mean are outliers)
-- Classification when features have different scales and correlations
-- When you have enough data to estimate a reliable covariance matrix
-- Quality control in manufacturing (multivariate process monitoring)
+Когда использовать Mahalanobis distance:
+- Обнаружение выбросов (точки с большим Mahalanobis distance от среднего — выбросы)
+- Классификация, когда признаки имеют разные масштабы и корреляции
+- Когда у вас достаточно данных, чтобы надежно оценить ковариационную матрицу
+- Контроль качества в производстве (многомерный мониторинг процесса)
 
-### Jaccard Similarity (for sets)
+### Jaccard similarity (для множеств)
 
-Jaccard similarity measures overlap between two sets.
+Jaccard similarity измеряет пересечение двух множеств.
 
 ```
 J(A, B) = |A intersect B| / |A union B|
 ```
 
-It ranges from 0 (no overlap) to 1 (identical sets). Jaccard distance = 1 - Jaccard similarity.
+Она лежит в диапазоне от 0 (нет пересечения) до 1 (множества совпадают). Jaccard distance = 1 - Jaccard similarity.
 
 ```
 A = {cat, dog, fish}
@@ -242,16 +242,16 @@ Jaccard similarity = 2/5 = 0.4
 Jaccard distance = 0.6
 ```
 
-When to use Jaccard:
-- Comparing sets of tags, categories, or features
-- Document similarity based on word presence (not frequency)
-- Near-duplicate detection (MinHash approximation of Jaccard)
-- Comparing binary feature vectors (presence/absence data)
-- Evaluating segmentation models (Intersection over Union = Jaccard)
+Когда использовать Jaccard:
+- Сравнение множеств тегов, категорий или признаков
+- Сходство документов на основе наличия слов (не частоты)
+- Обнаружение почти полных дублей (MinHash approximation of Jaccard)
+- Сравнение бинарных векторов признаков (данные присутствия/отсутствия)
+- Оценка моделей сегментации (Intersection over Union = Jaccard)
 
-### Edit Distance (Levenshtein Distance)
+### Edit distance (Levenshtein distance)
 
-Edit distance counts the minimum number of single-character operations needed to transform one string into another. The operations are: insert, delete, or substitute.
+Edit distance считает минимальное число односимвольных операций, нужных, чтобы превратить одну строку в другую. Операции: вставка, удаление или замена.
 
 ```
 "kitten" -> "sitting"
@@ -263,7 +263,7 @@ sittin -> sitting (insert g)
 Edit distance = 3
 ```
 
-Computed using dynamic programming. Fill a matrix where entry (i, j) is the edit distance between the first i characters of string A and the first j characters of string B.
+Вычисляется с помощью динамического программирования. Заполните матрицу, где ячейка (i, j) — edit distance между первыми i символами строки A и первыми j символами строки B.
 
 ```
         ""  s  i  t  t  i  n  g
@@ -276,55 +276,55 @@ Computed using dynamic programming. Fill a matrix where entry (i, j) is the edit
     n    6  6  5  4  3  3  2  3
 ```
 
-When to use edit distance:
-- Spell checking and correction
-- DNA sequence alignment (with weighted operations)
-- Fuzzy string matching
-- Deduplication of messy text data
+Когда использовать edit distance:
+- Проверка и исправление орфографии
+- Выравнивание последовательностей ДНК (со взвешенными операциями)
+- Нечеткое сопоставление строк
+- Дедупликация грязных текстовых данных
 
-### KL Divergence (not a distance, but used like one)
+### KL Divergence (не distance, но используется как distance)
 
-KL divergence measures how one probability distribution differs from another. Covered in Lesson 09, but it belongs in this discussion because people use it as a "distance" despite it not being one.
+KL divergence измеряет, насколько одно распределение вероятностей отличается от другого. Это покрыто в уроке 09, но относится к этому обсуждению, потому что люди используют ее как "расстояние", несмотря на то что она им не является.
 
 ```
 D_KL(P || Q) = sum(p(x) * log(p(x) / q(x)))
 ```
 
-Critical property: KL divergence is NOT symmetric.
+Критическое свойство: KL divergence НЕ симметрична.
 
 ```
 D_KL(P || Q) != D_KL(Q || P)
 ```
 
-This means it fails the basic requirement of a distance metric. It also does not satisfy the triangle inequality. It is a divergence, not a distance.
+Это значит, что она не выполняет базовое требование метрики расстояния. Она также не удовлетворяет неравенству треугольника. Это divergence, не distance.
 
-Forward KL (D_KL(P || Q)) is "mean-seeking": Q tries to cover all modes of P.
-Reverse KL (D_KL(Q || P)) is "mode-seeking": Q focuses on a single mode of P.
+Forward KL (D_KL(P || Q)) — "ищет среднее": Q пытается покрыть все моды P.
+Reverse KL (D_KL(Q || P)) — "ищет моду": Q фокусируется на одной моде P.
 
-When you see KL divergence:
-- VAEs (the KL term in the ELBO pushes the latent distribution toward a prior)
-- Knowledge distillation (student tries to match teacher's distribution)
-- RLHF (the KL penalty keeps the fine-tuned model close to the base model)
-- Policy gradient methods (constraining policy updates)
+Где вы увидите KL divergence:
+- VAEs (KL-слагаемое в ELBO подталкивает latent distribution к prior)
+- Knowledge distillation (student пытается приблизиться к teacher's distribution)
+- RLHF (KL penalty удерживает fine-tuned model рядом с base model)
+- Policy gradient methods (ограничение обновлений политики)
 
-### Wasserstein Distance (Earth Mover's Distance)
+### Wasserstein distance (Earth Mover's Distance)
 
-Wasserstein distance measures the minimum "work" needed to transform one probability distribution into another. Think of it as: if one distribution is a pile of dirt and the other is a hole, how much dirt do you have to move and how far?
+Wasserstein distance измеряет минимальную "работу", нужную, чтобы превратить одно распределение вероятностей в другое. Думайте так: если одно распределение — куча земли, а другое — яма, сколько земли нужно переместить и насколько далеко?
 
 ```
 W(P, Q) = inf over all transport plans gamma of E[d(x, y)]
 ```
 
-For 1D distributions, it simplifies to the integral of the absolute difference of the cumulative distribution functions:
+Для одномерных распределений это упрощается до интеграла абсолютной разности cumulative distribution functions:
 
 ```
 W_1(P, Q) = integral |CDF_P(x) - CDF_Q(x)| dx
 ```
 
-Why Wasserstein matters:
-- It is a true metric (symmetric, satisfies triangle inequality)
-- It provides gradients even when distributions do not overlap (KL divergence goes to infinity)
-- This property made it central to Wasserstein GANs (WGANs), which solved the training instability of original GANs
+Почему Wasserstein важен:
+- Это настоящая метрика (симметрична и удовлетворяет неравенству треугольника)
+- Он дает градиенты даже когда распределения не пересекаются (KL divergence уходит в бесконечность)
+- Это свойство сделало его центральным для Wasserstein GANs (WGANs), которые решили нестабильность обучения оригинальных GANs
 
 ```
 Distributions with no overlap:
@@ -337,32 +337,32 @@ Wasserstein: 4 (move all mass 4 bins)
 Wasserstein gives a meaningful gradient. KL does not.
 ```
 
-When to use Wasserstein:
-- GAN training (WGAN, WGAN-GP)
-- Comparing distributions that may not overlap
-- Optimal transport problems
-- Image retrieval (comparing color histograms)
+Когда использовать Wasserstein:
+- Обучение GAN (WGAN, WGAN-GP)
+- Сравнение распределений, которые могут не пересекаться
+- Задачи optimal transport
+- Поиск изображений (сравнение цветовых гистограмм)
 
-### Why Different Tasks Need Different Distances
+### Почему разным задачам нужны разные расстояния
 
-| Task | Best distance | Why |
+| Задача | Лучшее расстояние | Почему |
 |------|--------------|-----|
-| Text similarity | Cosine | Magnitude is noise, direction is meaning |
-| Image pixel comparison | L2 | Spatial relationships matter, features are comparable scale |
-| Sparse high-dim features | L1 | Robust, does not amplify rare large differences |
-| Set overlap (tags, categories) | Jaccard | Data is naturally set-valued, not vectorial |
-| String matching | Edit distance | Operations map to human editing intuition |
-| Outlier detection | Mahalanobis | Accounts for feature correlations and scales |
-| Comparing distributions | KL divergence | Measures information lost by using Q instead of P |
-| GAN training | Wasserstein | Provides gradients even when distributions do not overlap |
-| Embeddings (vector DB) | Cosine or dot product | Embeddings are trained to encode meaning in direction |
-| Recommendation | Dot product | Magnitude can encode popularity or confidence |
-| DNA sequences | Weighted edit distance | Substitution costs vary by nucleotide pair |
-| Manufacturing QC | L-infinity | Worst-case deviation in any dimension matters |
+| Сходство текстов | Cosine | Величина — шум, направление — смысл |
+| Сравнение пикселей изображений | L2 | Пространственные отношения важны, признаки имеют сопоставимый масштаб |
+| Разреженные признаки высокой размерности | L1 | Устойчива, не усиливает редкие большие различия |
+| Пересечение множеств (теги, категории) | Jaccard | Данные естественно представлены множествами, а не векторами |
+| Сопоставление строк | Edit distance | Операции соответствуют человеческой интуиции редактирования |
+| Обнаружение выбросов | Mahalanobis | Учитывает корреляции и масштабы признаков |
+| Сравнение распределений | KL divergence | Измеряет потерю информации при использовании Q вместо P |
+| Обучение GAN | Wasserstein | Дает градиенты, даже когда распределения не пересекаются |
+| Embeddings (vector DB) | Cosine или dot product | Embeddings обучаются кодировать смысл в направлении |
+| Рекомендации | Dot product | Величина может кодировать популярность или уверенность |
+| Последовательности ДНК | Взвешенное edit distance | Цена замены зависит от пары нуклеотидов |
+| Контроль качества производства | L-infinity | Важно худшее отклонение по любому измерению |
 
-### Connection to Loss Functions
+### Связь с loss functions
 
-Loss functions are distance functions applied to predictions vs targets.
+Loss functions — это функции расстояния, примененные к predictions и targets.
 
 ```
 Loss function       Distance it uses       Behavior
@@ -378,9 +378,9 @@ Contrastive loss    L2                     Similar pairs close, dissimilar
                                            pairs beyond margin
 ```
 
-### Connection to Regularization
+### Связь с regularization
 
-Regularization adds a norm penalty on the weights to the loss function.
+Regularization добавляет штраф за норму весов к loss function.
 
 ```
 L1 regularization (Lasso):   loss + lambda * ||w||_1
@@ -398,15 +398,15 @@ Elastic Net:                  loss + lambda_1 * ||w||_1 + lambda_2 * ||w||_2^2
   -> Groups of correlated features are kept or dropped together.
 ```
 
-Why L1 produces sparsity but L2 does not: picture the constraint region in 2D weight space. L1 is a diamond, L2 is a circle. The loss function's contours (ellipses) are most likely to touch the diamond at a corner, where one weight is zero. They touch the circle at a smooth point, where both weights are nonzero.
+Почему L1 дает разреженность, а L2 нет: представьте область ограничений в двумерном пространстве весов. L1 — ромб, L2 — круг. Линии уровня loss function (эллипсы) с большей вероятностью коснутся ромба в углу, где один вес равен нулю. Они касаются круга в гладкой точке, где оба веса ненулевые.
 
-### Nearest Neighbor Search
+### Nearest neighbor search
 
-Every distance function implies a nearest neighbor search problem: given a query point, find the closest points in a dataset.
+Каждая функция расстояния задает задачу nearest neighbor search: по query point найти ближайшие точки в датасете.
 
-Exact nearest neighbor search is O(n * d) per query in a dataset of n points with d dimensions. For large datasets, this is too slow.
+Точный nearest neighbor search имеет сложность O(n * d) на запрос в датасете из n точек с d измерениями. Для больших датасетов это слишком медленно.
 
-Approximate Nearest Neighbor (ANN) algorithms trade a small amount of accuracy for massive speed gains:
+Алгоритмы approximate nearest neighbor (ANN) обменивают небольшую долю точности на огромный выигрыш в скорости:
 
 ```
 Algorithm         Approach                      Used by
@@ -421,25 +421,25 @@ Product quant.    Compress vectors, search       FAISS (memory-constrained)
                   in compressed space
 ```
 
-HNSW (Hierarchical Navigable Small World) is the dominant algorithm in modern vector databases. It builds a multi-layer graph where each node connects to its approximate nearest neighbors. Search starts at the top layer (sparse, long jumps) and descends to the bottom layer (dense, short jumps).
+HNSW (Hierarchical Navigable Small World) — доминирующий алгоритм в современных vector databases. Он строит многоуровневый граф, где каждый узел соединяется со своими approximate nearest neighbors. Поиск начинается на верхнем уровне (разреженный, длинные переходы) и спускается к нижнему уровню (плотный, короткие переходы).
 
-## Build It
+## Реализуйте
 
-### Step 1: All norm and distance functions
+### Шаг 1: Все нормы и функции расстояния
 
-See `code/distances.py` for the complete implementation. Every function is built from scratch using only basic Python math.
+См. `code/distances.py` для полной реализации. Каждая функция построена с нуля, используя только базовую математику Python.
 
-### Step 2: Same data, different distances, different neighbors
+### Шаг 2: Одни данные, разные distances, разные neighbors
 
-The demo in `distances.py` creates a dataset, picks a query point, and shows how the nearest neighbor changes depending on the distance metric. The point that is "closest" under L1 may not be closest under L2 or cosine.
+Демо в `distances.py` создает датасет, выбирает query point и показывает, как nearest neighbor меняется в зависимости от метрики расстояния. Точка, которая "ближайшая" по L1, может не быть ближайшей по L2 или cosine.
 
-### Step 3: Embedding similarity search
+### Шаг 3: Embedding similarity search
 
-The code includes a mock embedding similarity search that finds the most similar "documents" to a query using cosine similarity vs L2 distance, showing that the rankings can differ.
+Код включает mock embedding similarity search, который находит наиболее похожие "документы" на query с помощью cosine similarity vs L2 distance, показывая, что ранжирования могут различаться.
 
-## Use It
+## Используйте
 
-The most common practical use: finding similar items in a vector database.
+Самое распространенное практическое применение: поиск похожих элементов в vector database.
 
 ```python
 import numpy as np
@@ -461,47 +461,47 @@ print(f"Top 5 most similar to item 0: {top_k}")
 print(f"Similarities: {similarities[top_k]}")
 ```
 
-When you call `model.encode(text)` and then search a vector database, this is what happens under the hood. The embedding model maps text to vectors. The vector database computes cosine similarity (or dot product) between your query vector and every stored vector, using ANN algorithms to avoid checking all of them.
+Когда вы вызываете `model.encode(text)`, а затем ищете в vector database, именно это происходит под капотом. Embedding model отображает текст в векторы. Vector database вычисляет cosine similarity (или dot product) между вашим query vector и каждым stored vector, используя ANN algorithms, чтобы не проверять их все.
 
-## Exercises
+## Упражнения
 
-1. Compute L1, L2, and L-infinity distances between (1, 2, 3) and (4, 0, 6). Verify that L-inf <= L2 <= L1 always holds for any pair of points. Prove why this ordering is guaranteed.
+1. Вычислите L1, L2 и L-infinity distances между (1, 2, 3) и (4, 0, 6). Проверьте, что L-inf <= L2 <= L1 всегда выполняется для любой пары точек. Докажите, почему этот порядок гарантирован.
 
-2. Create two vectors where cosine similarity is high (> 0.9) but L2 distance is large (> 10). Explain geometrically what is happening. Then create two vectors where cosine similarity is low (< 0.3) but L2 distance is small (< 0.5).
+2. Создайте два вектора, где cosine similarity высокая (> 0.9), но L2 distance большая (> 10). Объясните геометрически, что происходит. Затем создайте два вектора, где cosine similarity низкая (< 0.3), но L2 distance малая (< 0.5).
 
-3. Implement a function that takes a dataset and a query point and returns the nearest neighbor under L1, L2, cosine, and Mahalanobis distance. Find a dataset where all four disagree on which point is nearest.
+3. Реализуйте функцию, которая принимает датасет и query point и возвращает nearest neighbor по L1, L2, cosine и Mahalanobis distance. Найдите датасет, где все четыре метрики расходятся в том, какая точка ближайшая.
 
-4. Compute the Wasserstein distance between [0.5, 0.5, 0, 0] and [0, 0, 0.5, 0.5] by hand using the CDF method. Then compute it between [0.25, 0.25, 0.25, 0.25] and [0, 0, 0.5, 0.5]. Which is larger and why?
+4. Вычислите Wasserstein distance между [0.5, 0.5, 0, 0] и [0, 0, 0.5, 0.5] вручную методом CDF. Затем вычислите его между [0.25, 0.25, 0.25, 0.25] и [0, 0, 0.5, 0.5]. Какое больше и почему?
 
-5. Implement MinHash for approximate Jaccard similarity. Generate 100 random sets, compute exact Jaccard for all pairs, and compare with MinHash approximation using 50, 100, and 200 hash functions. Plot the approximation error.
+5. Реализуйте MinHash для approximate Jaccard similarity. Сгенерируйте 100 случайных множеств, вычислите exact Jaccard для всех пар и сравните с MinHash approximation при 50, 100 и 200 hash functions. Постройте график ошибки аппроксимации.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Norm | "Size of a vector" | A function that maps a vector to a non-negative scalar, satisfying triangle inequality, absolute homogeneity, and zero only for the zero vector |
-| L1 norm | "Manhattan distance" | Sum of absolute component values. Produces sparsity in optimization. Robust to outliers |
-| L2 norm | "Euclidean distance" | Square root of sum of squared components. The straight-line distance in Euclidean space |
-| Lp norm | "Generalized norm" | The p-th root of the sum of p-th powers of absolute components. L1 and L2 are special cases |
-| L-infinity norm | "Max norm" or "Chebyshev distance" | The maximum absolute component value. The limit of Lp as p approaches infinity |
-| Cosine similarity | "Angle between vectors" | Dot product normalized by both magnitudes. Ranges from -1 to +1. Ignores vector length |
-| Cosine distance | "1 minus cosine similarity" | Converts cosine similarity to a distance. Ranges from 0 to 2 |
-| Dot product | "Unnormalized cosine" | Sum of component-wise products. Equals cosine similarity times both magnitudes |
-| Mahalanobis distance | "Correlation-aware distance" | L2 distance in a space that has been whitened (decorrelated and normalized) using the data covariance matrix |
-| Jaccard similarity | "Set overlap" | Size of intersection divided by size of union. For sets, not vectors |
-| Edit distance | "Levenshtein distance" | Minimum insertions, deletions, and substitutions to transform one string into another |
-| KL divergence | "Distance between distributions" | Not a true distance (not symmetric). Measures extra bits from using Q to encode P |
-| Wasserstein distance | "Earth mover's distance" | Minimum work to transport mass from one distribution to another. A true metric |
-| Approximate nearest neighbor | "ANN search" | Algorithms (HNSW, LSH, IVF) that find approximately closest points much faster than exact search |
-| HNSW | "The vector DB algorithm" | Hierarchical Navigable Small World graph. Multi-layer graph for fast approximate nearest neighbor search |
-| L1 regularization | "Lasso" | Adding the L1 norm of weights to the loss. Drives weights to zero (sparsity) |
-| L2 regularization | "Ridge" or "weight decay" | Adding the squared L2 norm of weights to the loss. Shrinks weights toward zero without sparsity |
-| Elastic Net | "L1 + L2" | Combines L1 and L2 regularization. Handles correlated feature groups better than either alone |
+| Norm | "Размер вектора" | Функция, отображающая вектор в неотрицательный скаляр и удовлетворяющая неравенству треугольника, абсолютной однородности и равенству нулю только для нулевого вектора |
+| L1 norm | "Manhattan distance" | Сумма абсолютных значений компонент. Дает разреженность в оптимизации. Устойчива к выбросам |
+| L2 norm | "Euclidean distance" | Квадратный корень из суммы квадратов компонент. Расстояние по прямой в евклидовом пространстве |
+| Lp norm | "Обобщенная норма" | p-й корень из суммы p-х степеней абсолютных компонент. L1 и L2 — частные случаи |
+| L-infinity norm | "Max norm" или "Chebyshev distance" | Максимальное абсолютное значение компоненты. Предел Lp при p, стремящемся к бесконечности |
+| Cosine similarity | "Угол между векторами" | Dot product, нормированный на обе величины. Диапазон от -1 до +1. Игнорирует длину вектора |
+| Cosine distance | "1 минус cosine similarity" | Превращает cosine similarity в расстояние. Диапазон от 0 до 2 |
+| Dot product | "Ненормированный cosine" | Сумма покомпонентных произведений. Равен cosine similarity, умноженной на обе величины |
+| Mahalanobis distance | "Расстояние с учетом корреляций" | L2 distance в пространстве, которое было whitened (декоррелировано и нормализовано) с помощью ковариационной матрицы данных |
+| Jaccard similarity | "Пересечение множеств" | Размер intersection, деленный на размер union. Для множеств, не векторов |
+| Edit distance | "Levenshtein distance" | Минимальное число вставок, удалений и замен, чтобы превратить одну строку в другую |
+| KL divergence | "Расстояние между распределениями" | Не настоящее расстояние (не симметрична). Измеряет дополнительные биты от использования Q для кодирования P |
+| Wasserstein distance | "Earth mover's distance" | Минимальная работа для переноса массы из одного распределения в другое. Настоящая метрика |
+| Approximate nearest neighbor | "ANN search" | Алгоритмы (HNSW, LSH, IVF), которые находят приблизительно ближайшие точки намного быстрее точного поиска |
+| HNSW | "Алгоритм vector DB" | Hierarchical Navigable Small World graph. Многоуровневый граф для быстрого approximate nearest neighbor search |
+| L1 regularization | "Lasso" | Добавление L1 norm весов к loss. Доводит веса до нуля (разреженность) |
+| L2 regularization | "Ridge" или "weight decay" | Добавление squared L2 norm весов к loss. Сжимает веса к нулю без разреженности |
+| Elastic Net | "L1 + L2" | Комбинирует L1 и L2 regularization. Лучше работает с коррелированными группами признаков, чем каждая по отдельности |
 
-## Further Reading
+## Дополнительные материалы
 
-- [FAISS: A Library for Efficient Similarity Search](https://github.com/facebookresearch/faiss) - Meta's library for billion-scale ANN search
-- [Wasserstein GAN (Arjovsky et al., 2017)](https://arxiv.org/abs/1701.07875) - the paper that introduced Earth Mover's distance to GANs
-- [Locality-Sensitive Hashing (Indyk & Motwani, 1998)](https://dl.acm.org/doi/10.1145/276698.276876) - foundational ANN algorithm
-- [Efficient Estimation of Word Representations (Mikolov et al., 2013)](https://arxiv.org/abs/1301.3781) - Word2Vec, where cosine similarity became the default for embeddings
-- [sklearn.neighbors documentation](https://scikit-learn.org/stable/modules/neighbors.html) - practical guide to distance metrics and neighbor algorithms in scikit-learn
+- [FAISS: A Library for Efficient Similarity Search](https://github.com/facebookresearch/faiss) - библиотека Meta для billion-scale ANN search
+- [Wasserstein GAN (Arjovsky et al., 2017)](https://arxiv.org/abs/1701.07875) - статья, которая ввела Earth Mover's distance в GANs
+- [Locality-Sensitive Hashing (Indyk & Motwani, 1998)](https://dl.acm.org/doi/10.1145/276698.276876) - фундаментальный ANN-алгоритм
+- [Efficient Estimation of Word Representations (Mikolov et al., 2013)](https://arxiv.org/abs/1301.3781) - Word2Vec, где cosine similarity стала стандартом для embeddings
+- [sklearn.neighbors documentation](https://scikit-learn.org/stable/modules/neighbors.html) - практическое руководство по метрикам расстояния и алгоритмам соседей в scikit-learn

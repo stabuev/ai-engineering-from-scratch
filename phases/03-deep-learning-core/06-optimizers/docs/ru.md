@@ -1,120 +1,120 @@
-# Optimizers
+# Оптимизаторы
 
-> Gradient descent tells you which direction to move. It says nothing about how far or how fast. SGD is a compass. Adam is GPS with traffic data.
+> Градиентный спуск говорит, в каком направлении двигаться. Он ничего не говорит о том, насколько далеко или насколько быстро. SGD — это компас. Adam — это GPS с данными о пробках.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Lesson 03.05 (Loss Functions)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Урок 03.05 (Функции потерь)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement SGD, SGD with momentum, Adam, and AdamW optimizers from scratch in Python
-- Explain how Adam's bias correction compensates for zero-initialized moment estimates in early training steps
-- Demonstrate why AdamW produces better generalization than Adam with L2 regularization on the same task
-- Select the appropriate optimizer and default hyperparameters for transformers, CNNs, GANs, and fine-tuning
+- Реализовать оптимизаторы SGD, SGD с импульсом (momentum), Adam и AdamW с нуля на Python
+- Объяснить, как коррекция смещения (bias correction) в Adam компенсирует инициализированные нулями оценки моментов на ранних шагах обучения
+- Показать, почему AdamW дает лучшую обобщающую способность, чем Adam с L2-регуляризацией на той же задаче
+- Выбирать подходящий оптимизатор и стандартные гиперпараметры для трансформеров (transformers), CNN, GAN и дообучения (fine-tuning)
 
-## The Problem
+## Проблема
 
-You computed the gradients. You know that weight #4,721 should decrease by 0.003 to reduce the loss. But 0.003 in what units? Scaled by what? And should you move the same amount on step 1 as on step 1,000?
+Вы вычислили градиенты. Вы знаете, что вес #4,721 должен уменьшиться на 0.003, чтобы снизить потерю. Но 0.003 в каких единицах? С каким масштабированием? И нужно ли двигаться на одну и ту же величину на шаге 1 и на шаге 1,000?
 
-Vanilla gradient descent applies the same learning rate to every parameter on every step: w = w - lr * gradient. This creates three problems that make training neural networks painful in practice.
+Обычный градиентный спуск применяет одну и ту же скорость обучения (learning rate) к каждому параметру на каждом шаге: w = w - lr * gradient. Это создает три проблемы, которые на практике делают обучение нейронных сетей болезненным.
 
-First, oscillation. The loss landscape is rarely shaped like a smooth bowl. It's more like a long, narrow valley. The gradient points across the valley (steep direction), not along it (shallow direction). Gradient descent bounces back and forth across the narrow dimension while making tiny progress along the useful one. You've seen this: loss drops fast then plateaus, not because the model converged but because it's oscillating.
+Во-первых, осцилляции. Ландшафт функции потерь редко похож на гладкую чашу. Он скорее напоминает длинную узкую долину. Градиент указывает поперек долины (крутое направление), а не вдоль нее (пологе направление). Градиентный спуск скачет туда-сюда поперек узкого измерения, делая крошечный прогресс вдоль полезного. Вы это видели: потеря быстро падает, а затем выходит на плато не потому, что модель сошлась, а потому, что она осциллирует.
 
-Second, one learning rate for all parameters is wrong. Some weights need large updates (they're in the early, underfitting stage). Others need tiny updates (they're near their optimal value). A learning rate that works for the former destroys the latter, and vice versa.
+Во-вторых, одна скорость обучения для всех параметров — неверно. Некоторым весам нужны большие обновления (они на ранней стадии недообучения). Другим нужны крошечные обновления (они близки к оптимальному значению). Скорость обучения, которая подходит первым, разрушает вторые, и наоборот.
 
-Third, saddle points. In high dimensions, the loss landscape has vast flat regions where the gradient is near zero. Vanilla SGD crawls through these at the speed of the gradient, which is effectively zero. The model looks stuck. It isn't stuck -- it's in a flat region with useful descent on the other side. But SGD has no mechanism to push through.
+В-третьих, седловые точки. В высоких размерностях ландшафт потерь имеет огромные плоские области, где градиент близок к нулю. Обычный SGD ползет через них со скоростью градиента, которая фактически равна нулю. Модель выглядит застрявшей. Она не застряла -- она находится в плоской области, за которой есть полезный спуск. Но у SGD нет механизма, чтобы протолкнуть ее дальше.
 
-Adam solves all three. It maintains two running averages per parameter -- the mean gradient (momentum, handles oscillation) and the mean squared gradient (adaptive rate, handles different scales). Combined with bias correction for the first few steps, it gives you a single optimizer that works on 80% of problems with default hyperparameters. This lesson builds it from scratch so you understand exactly when and why it fails on the other 20%.
+Adam решает все три проблемы. Он поддерживает два скользящих средних для каждого параметра -- средний градиент (momentum, справляется с осцилляциями) и средний квадрат градиента (adaptive rate, справляется с разными масштабами). В сочетании с коррекцией смещения для первых нескольких шагов это дает один оптимизатор, который работает на 80% задач со стандартными гиперпараметрами. В этом уроке вы соберете его с нуля, чтобы точно понимать, когда и почему он ломается на остальных 20%.
 
-## The Concept
+## Концепция
 
-### Stochastic Gradient Descent (SGD)
+### Стохастический градиентный спуск (SGD)
 
-The simplest optimizer. Compute the gradient on a mini-batch and step in the opposite direction.
+Самый простой оптимизатор. Вычислите градиент на мини-батче (mini-batch) и сделайте шаг в противоположном направлении.
 
 ```
 w = w - lr * gradient
 ```
 
-The "stochastic" means you use a random subset (mini-batch) of data to estimate the gradient, rather than the full dataset. This noise is actually useful -- it helps escape sharp local minima. But the noise also causes oscillation.
+"Стохастический" означает, что вы используете случайное подмножество данных (мини-батч) для оценки градиента, а не весь датасет. Этот шум на самом деле полезен -- он помогает выходить из острых локальных минимумов. Но шум также вызывает осцилляции.
 
-Learning rate is the only knob. Too high: the loss diverges. Too low: training takes forever. The optimal value depends on the architecture, the data, the batch size, and the current stage of training. For vanilla SGD on modern networks, typical values range from 0.01 to 0.1. But even within a single training run, the ideal learning rate changes.
+Скорость обучения — единственная ручка управления. Слишком высокая: потеря расходится. Слишком низкая: обучение длится вечность. Оптимальное значение зависит от архитектуры, данных, размера батча и текущей стадии обучения. Для обычного SGD на современных сетях типичные значения находятся в диапазоне от 0.01 до 0.1. Но даже внутри одного запуска обучения идеальная скорость обучения меняется.
 
 ### Momentum
 
-The ball-rolling-downhill analogy is overused but accurate. Instead of stepping by the gradient alone, you maintain a velocity that accumulates past gradients.
+Аналогия с шаром, катящимся вниз по склону, избита, но точна. Вместо шага только по текущему градиенту вы поддерживаете скорость (velocity), которая накапливает прошлые градиенты.
 
 ```
 m_t = beta * m_{t-1} + gradient
 w = w - lr * m_t
 ```
 
-Beta (typically 0.9) controls how much history to keep. With beta = 0.9, the momentum is roughly the average of the last 10 gradients (1 / (1 - 0.9) = 10).
+Beta (обычно 0.9) управляет тем, сколько истории сохранять. При beta = 0.9 импульс примерно равен среднему последних 10 градиентов (1 / (1 - 0.9) = 10).
 
-Why this fixes oscillation: gradients that point in the same direction accumulate. Gradients that flip direction cancel out. In that narrow valley, the "across" component flips sign each step and gets dampened. The "along" component stays consistent and gets amplified. The result is smooth acceleration in the useful direction.
+Почему это исправляет осцилляции: градиенты, указывающие в одном направлении, накапливаются. Градиенты, которые меняют направление на противоположное, взаимно уничтожаются. В той узкой долине "поперечная" компонента меняет знак на каждом шаге и подавляется. "Продольная" компонента остается согласованной и усиливается. Результат — плавное ускорение в полезном направлении.
 
-Real numbers: SGD alone on a badly conditioned loss landscape might take 10,000 steps. SGD with momentum (beta=0.9) typically takes 3,000-5,000 steps on the same problem. The speedup is not marginal.
+Конкретные числа: один SGD на плохо обусловленном ландшафте потерь может занять 10,000 шагов. SGD с импульсом (beta=0.9) обычно занимает 3,000-5,000 шагов на той же задаче. Ускорение не маргинальное.
 
 ### RMSProp
 
-The first per-parameter adaptive learning rate method that actually worked. Proposed by Hinton in a Coursera lecture (never formally published).
+Первый метод адаптивной скорости обучения для каждого параметра, который действительно заработал. Предложен Хинтоном в лекции Coursera (формально так и не опубликован).
 
 ```
 s_t = beta * s_{t-1} + (1 - beta) * gradient^2
 w = w - lr * gradient / (sqrt(s_t) + epsilon)
 ```
 
-s_t tracks the running average of squared gradients. Parameters with consistently large gradients get divided by a large number (smaller effective learning rate). Parameters with small gradients get divided by a small number (larger effective learning rate).
+s_t отслеживает скользящее среднее квадратов градиентов. Параметры с постоянно большими градиентами делятся на большое число (меньшая эффективная скорость обучения). Параметры с малыми градиентами делятся на малое число (большая эффективная скорость обучения).
 
-This solves the "one learning rate for all parameters" problem. A weight that's already been getting large updates is probably near its target -- slow it down. A weight that's been getting tiny updates might be undertrained -- speed it up.
+Это решает проблему "одной скорости обучения для всех параметров". Вес, который уже получал большие обновления, вероятно, близок к целевому значению -- замедлите его. Вес, который получал крошечные обновления, может быть недообучен -- ускорьте его.
 
-Epsilon (typically 1e-8) prevents division by zero when a parameter hasn't been updated.
+Epsilon (обычно 1e-8) предотвращает деление на ноль, когда параметр еще не обновлялся.
 
 ### Adam: Momentum + RMSProp
 
-Adam combines both ideas. It maintains two exponential moving averages per parameter:
+Adam объединяет обе идеи. Он поддерживает два экспоненциальных скользящих средних для каждого параметра:
 
 ```
 m_t = beta1 * m_{t-1} + (1 - beta1) * gradient        (first moment: mean)
 v_t = beta2 * v_{t-1} + (1 - beta2) * gradient^2       (second moment: variance)
 ```
 
-**Bias correction** is the key detail most explanations skip. At step 1, m_1 = (1 - beta1) * gradient. With beta1 = 0.9, that's 0.1 * gradient -- ten times too small. The moving average hasn't warmed up yet. Bias correction compensates:
+**Коррекция смещения (bias correction)** — ключевая деталь, которую большинство объяснений пропускает. На шаге 1, m_1 = (1 - beta1) * gradient. При beta1 = 0.9 это 0.1 * gradient -- в десять раз меньше нужного. Скользящее среднее еще не разогрелось. Коррекция смещения это компенсирует:
 
 ```
 m_hat = m_t / (1 - beta1^t)
 v_hat = v_t / (1 - beta2^t)
 ```
 
-At step 1 with beta1 = 0.9: m_hat = m_1 / (1 - 0.9) = m_1 / 0.1 = the actual gradient. At step 100: (1 - 0.9^100) is approximately 1.0, so the correction vanishes. Bias correction matters for the first ~10 steps and is irrelevant after ~50.
+На шаге 1 при beta1 = 0.9: m_hat = m_1 / (1 - 0.9) = m_1 / 0.1 = фактический градиент. На шаге 100: (1 - 0.9^100) приблизительно равно 1.0, поэтому коррекция исчезает. Коррекция смещения важна для первых ~10 шагов и несущественна после ~50.
 
-The update:
+Обновление:
 
 ```
 w = w - lr * m_hat / (sqrt(v_hat) + epsilon)
 ```
 
-Adam defaults: lr = 0.001, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-8. These defaults work for 80% of problems. When they don't, change lr first. Then beta2. Almost never change beta1 or epsilon.
+Стандартные значения Adam: lr = 0.001, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-8. Эти значения работают для 80% задач. Когда не работают, сначала меняйте lr. Затем beta2. Почти никогда не меняйте beta1 или epsilon.
 
-### AdamW: Weight Decay Done Right
+### AdamW: правильный Weight Decay
 
-L2 regularization adds lambda * w^2 to the loss. In vanilla SGD, this is equivalent to weight decay (subtracting lambda * w from the weight at each step). In Adam, this equivalence breaks.
+L2-регуляризация добавляет lambda * w^2 к функции потерь. В обычном SGD это эквивалентно weight decay (вычитанию lambda * w из веса на каждом шаге). В Adam эта эквивалентность нарушается.
 
-The Loshchilov & Hutter insight: when you add L2 to the loss and then Adam processes the gradient, the adaptive learning rate scales the regularization term too. Parameters with large gradient variance get less regularization. Parameters with small variance get more. This is not what you want -- you want uniform regularization regardless of the gradient statistics.
+Инсайт Loshchilov & Hutter: когда вы добавляете L2 к функции потерь, а затем Adam обрабатывает градиент, адаптивная скорость обучения масштабирует и член регуляризации. Параметры с большой дисперсией градиента получают меньше регуляризации. Параметры с малой дисперсией получают больше. Это не то, что нужно -- нужна равномерная регуляризация независимо от статистики градиентов.
 
-AdamW fixes this by applying weight decay directly to the weights, after the Adam update:
+AdamW исправляет это, применяя weight decay напрямую к весам, после обновления Adam:
 
 ```
 w = w - lr * m_hat / (sqrt(v_hat) + epsilon) - lr * lambda * w
 ```
 
-The weight decay term (lr * lambda * w) is not scaled by Adam's adaptive factor. Every parameter gets the same proportional shrinkage.
+Член weight decay (lr * lambda * w) не масштабируется адаптивным множителем Adam. Каждый параметр получает одинаковое пропорциональное сжатие.
 
-This seems like a minor detail. It's not. AdamW converges to better solutions than Adam + L2 regularization on virtually every task. It's the default optimizer in PyTorch for training transformers, diffusion models, and most modern architectures. BERT, GPT, LLaMA, Stable Diffusion -- all trained with AdamW.
+Это кажется мелкой деталью. Это не так. AdamW сходится к лучшим решениям, чем Adam + L2-регуляризация, практически на каждой задаче. Это стандартный оптимизатор в PyTorch для обучения трансформеров, диффузионных моделей и большинства современных архитектур. BERT, GPT, LLaMA, Stable Diffusion -- все обучались с AdamW.
 
-### Learning Rate: The Most Important Hyperparameter
+### Скорость обучения: самый важный гиперпараметр
 
 ```mermaid
 graph TD
@@ -131,14 +131,14 @@ graph TD
     Schedule --> Decay["Decay: reduce over time<br/>Cosine or linear"]
 ```
 
-If you tune one hyperparameter, tune the learning rate. A 10x change in learning rate matters more than any architectural decision you'll make. Common defaults:
+Если настраивать один гиперпараметр, настраивайте скорость обучения. Изменение скорости обучения в 10 раз важнее любого архитектурного решения, которое вы примете. Распространенные стандартные значения:
 
 - SGD: lr = 0.01 to 0.1
 - Adam/AdamW: lr = 1e-4 to 3e-4
-- Fine-tuning pretrained models: lr = 1e-5 to 5e-5
-- Learning rate warmup: linear ramp over first 1-10% of steps
+- Дообучение предобученных моделей: lr = 1e-5 to 5e-5
+- Разогрев скорости обучения (learning rate warmup): линейный рост в течение первых 1-10% шагов
 
-### Optimizer Comparison
+### Сравнение оптимизаторов
 
 ```mermaid
 flowchart LR
@@ -151,7 +151,7 @@ flowchart LR
     SGD_P --> Mom_P --> Adam_P --> AdamW_P
 ```
 
-### When Each Optimizer Wins
+### Когда какой оптимизатор выигрывает
 
 ```mermaid
 flowchart TD
@@ -164,9 +164,9 @@ flowchart TD
     Type -->|"Don't know yet"| Default["Start with AdamW<br/>lr=3e-4, wd=0.01"]
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Vanilla SGD
+### Шаг 1: Vanilla SGD
 
 ```python
 class SGD:
@@ -178,7 +178,7 @@ class SGD:
             params[i] -= self.lr * grads[i]
 ```
 
-### Step 2: SGD with Momentum
+### Шаг 2: SGD with Momentum
 
 ```python
 class SGDMomentum:
@@ -195,7 +195,7 @@ class SGDMomentum:
             params[i] -= self.lr * self.velocities[i]
 ```
 
-### Step 3: Adam
+### Шаг 3: Adam
 
 ```python
 import math
@@ -227,7 +227,7 @@ class Adam:
             params[i] -= self.lr * m_hat / (math.sqrt(v_hat) + self.epsilon)
 ```
 
-### Step 4: AdamW
+### Шаг 4: AdamW
 
 ```python
 class AdamW:
@@ -259,9 +259,9 @@ class AdamW:
             params[i] -= self.lr * self.weight_decay * params[i]
 ```
 
-### Step 5: Training Comparison
+### Шаг 5: Сравнение обучения
 
-Train the same two-layer network on the circle dataset from lesson 05 with all four optimizers. Compare convergence.
+Обучите одну и ту же двухслойную сеть на датасете окружностей из урока 05 со всеми четырьмя оптимизаторами. Сравните сходимость.
 
 ```python
 import random
@@ -381,9 +381,9 @@ class OptimizerTestNetwork:
         return losses
 ```
 
-## Use It
+## Используйте это
 
-PyTorch optimizers handle parameter groups, gradient clipping, and learning rate scheduling:
+Оптимизаторы PyTorch обрабатывают группы параметров, отсечение градиентов (gradient clipping) и расписание скорости обучения:
 
 ```python
 import torch
@@ -409,45 +409,45 @@ for epoch in range(100):
     scheduler.step()
 ```
 
-The pattern is always: zero_grad, forward, loss, backward, (clip), step, (schedule). Memorize this order. Getting it wrong (e.g., calling scheduler.step() before optimizer.step()) is a common source of subtle bugs.
+Паттерн всегда такой: zero_grad, forward, loss, backward, (clip), step, (schedule). Запомните этот порядок. Ошибка в нем (например, вызов scheduler.step() перед optimizer.step()) — частый источник тонких багов.
 
-For CNNs, many practitioners still prefer SGD + momentum (lr=0.1, momentum=0.9, weight_decay=1e-4) with a step or cosine schedule. SGD finds flatter minima, which often generalize better. For transformers and LLMs, AdamW with warmup + cosine decay is the universal default. Don't fight the consensus without a measured reason.
+Для CNN многие практики все еще предпочитают SGD + momentum (lr=0.1, momentum=0.9, weight_decay=1e-4) с пошаговым или косинусным расписанием. SGD находит более плоские минимумы, которые часто лучше обобщаются. Для трансформеров и LLM универсальный стандарт — AdamW с разогревом (warmup) + косинусным спадом. Не спорьте с консенсусом без измеримой причины.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
-- `outputs/prompt-optimizer-selector.md` -- a decision prompt for choosing the right optimizer and learning rate for any architecture
+Этот урок создает:
+- `outputs/prompt-optimizer-selector.md` -- промпт для выбора подходящего оптимизатора и скорости обучения для любой архитектуры
 
-## Exercises
+## Упражнения
 
-1. Implement Nesterov momentum, where you compute the gradient at the "lookahead" position (w - lr * beta * v) instead of the current position. Compare convergence to standard momentum on the circle dataset.
+1. Реализуйте импульс Нестерова (Nesterov momentum), где градиент вычисляется в позиции "с заглядыванием вперед" (w - lr * beta * v), а не в текущей позиции. Сравните сходимость со стандартным momentum на датасете окружностей.
 
-2. Implement a learning rate warmup schedule: linear ramp from 0 to max_lr over the first 10% of training steps, then cosine decay to 0. Train with Adam + warmup vs Adam without warmup. Measure how many epochs it takes to reach 90% accuracy on the circle dataset.
+2. Реализуйте расписание разогрева скорости обучения: линейный рост от 0 до max_lr в течение первых 10% шагов обучения, затем косинусный спад до 0. Обучите с Adam + warmup и Adam без warmup. Измерьте, сколько эпох нужно, чтобы достичь 90% точности на датасете окружностей.
 
-3. Track the effective learning rate for each parameter during Adam training. The effective rate is lr * m_hat / (sqrt(v_hat) + eps). Plot the distribution of effective rates after 10, 50, and 200 steps. Are all parameters being updated at the same speed?
+3. Отслеживайте эффективную скорость обучения для каждого параметра во время обучения Adam. Эффективная скорость равна lr * m_hat / (sqrt(v_hat) + eps). Постройте распределение эффективных скоростей после 10, 50 и 200 шагов. Все ли параметры обновляются с одинаковой скоростью?
 
-4. Implement gradient clipping (clip by global norm). Set the max gradient norm to 1.0. Train with and without clipping using a high learning rate (lr=0.01 for Adam). Count how many runs diverge (loss goes to NaN) with and without clipping over 10 random seeds.
+4. Реализуйте отсечение градиентов (clip by global norm). Установите максимальную норму градиента в 1.0. Обучите с отсечением и без него, используя высокую скорость обучения (lr=0.01 для Adam). Подсчитайте, сколько запусков расходится (loss становится NaN) с отсечением и без него на 10 случайных seed.
 
-5. Compare Adam vs AdamW on a network with large weights. Initialize all weights to random values in [-5, 5] (much larger than normal). Train for 200 epochs with weight_decay=0.1. Plot the L2 norm of weights over training for both optimizers. AdamW should show faster weight shrinkage.
+5. Сравните Adam и AdamW на сети с большими весами. Инициализируйте все веса случайными значениями в [-5, 5] (намного больше обычного). Обучайте 200 эпох с weight_decay=0.1. Постройте L2-норму весов в ходе обучения для обоих оптимизаторов. AdamW должен показать более быстрое сжатие весов.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Learning rate | "Step size" | The scalar multiplier on the gradient update; the single most impactful hyperparameter in training |
-| SGD | "Basic gradient descent" | Stochastic gradient descent: update weights by subtracting lr * gradient, computed on a mini-batch |
-| Momentum | "Rolling ball analogy" | Exponential moving average of past gradients; dampens oscillation and accelerates consistent directions |
-| RMSProp | "Adaptive learning rate" | Divides each parameter's gradient by the running RMS of its recent gradients; equalizes learning rates |
-| Adam | "The default optimizer" | Combines momentum (first moment) and RMSProp (second moment) with bias correction for the initial steps |
-| AdamW | "Adam done right" | Adam with decoupled weight decay; applies regularization directly to weights rather than through the gradient |
-| Bias correction | "Warmup for running averages" | Dividing by (1 - beta^t) to compensate for the zero-initialization of Adam's moment estimates |
-| Weight decay | "Shrink the weights" | Subtracting a fraction of the weight value at each step; a regularizer that penalizes large weights |
-| Learning rate schedule | "Changing lr over time" | A function that adjusts the learning rate during training; warmup + cosine decay is the modern default |
-| Gradient clipping | "Capping the gradient norm" | Scaling down the gradient vector when its norm exceeds a threshold; prevents exploding gradient updates |
+| Скорость обучения (Learning rate) | "Размер шага" | Скалярный множитель при обновлении градиента; самый влиятельный гиперпараметр в обучении |
+| SGD | "Базовый градиентный спуск" | Стохастический градиентный спуск: обновляет веса, вычитая lr * gradient, вычисленный на мини-батче |
+| Momentum | "Аналогия с катящимся шаром" | Экспоненциальное скользящее среднее прошлых градиентов; подавляет осцилляции и ускоряет согласованные направления |
+| RMSProp | "Адаптивная скорость обучения" | Делит градиент каждого параметра на скользящее RMS его недавних градиентов; выравнивает скорости обучения |
+| Adam | "Стандартный оптимизатор" | Объединяет momentum (первый момент) и RMSProp (второй момент) с коррекцией смещения на начальных шагах |
+| AdamW | "Adam, сделанный правильно" | Adam с развязанным weight decay; применяет регуляризацию напрямую к весам, а не через градиент |
+| Коррекция смещения (Bias correction) | "Разогрев для скользящих средних" | Деление на (1 - beta^t), чтобы компенсировать нулевую инициализацию оценок моментов Adam |
+| Weight decay | "Сжимать веса" | Вычитание доли значения веса на каждом шаге; регуляризатор, который штрафует большие веса |
+| Расписание скорости обучения (Learning rate schedule) | "Изменение lr со временем" | Функция, которая корректирует скорость обучения во время обучения; warmup + косинусный спад — современный стандарт |
+| Отсечение градиентов (Gradient clipping) | "Ограничение нормы градиента" | Масштабирование вектора градиента вниз, когда его норма превышает порог; предотвращает взрывные обновления градиента |
 
-## Further Reading
+## Дополнительное чтение
 
-- Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014) -- the original Adam paper with convergence analysis and the bias correction derivation
-- Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017) -- proved that L2 regularization and weight decay are not equivalent in Adam, and proposed AdamW
-- Smith, "Cyclical Learning Rates for Training Neural Networks" (2017) -- introduced the LR range test and cyclical schedules that remove the need to tune a fixed learning rate
-- Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016) -- the best single survey of all optimizer variants, with clear comparisons and intuitions
+- Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014) -- оригинальная статья Adam с анализом сходимости и выводом коррекции смещения
+- Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017) -- доказали, что L2-регуляризация и weight decay не эквивалентны в Adam, и предложили AdamW
+- Smith, "Cyclical Learning Rates for Training Neural Networks" (2017) -- ввел LR range test и циклические расписания, которые устраняют необходимость настраивать фиксированную скорость обучения
+- Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016) -- лучший единый обзор всех вариантов оптимизаторов, с ясными сравнениями и интуициями

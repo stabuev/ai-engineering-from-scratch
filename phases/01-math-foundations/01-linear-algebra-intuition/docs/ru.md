@@ -1,47 +1,47 @@
-# Linear Algebra Intuition
+# Интуиция линейной алгебры
 
-> Every AI model is just matrix math wearing a fancy hat.
+> Любая AI-модель — это просто матричная математика в модной шляпе.
 
-**Type:** Learn
-**Languages:** Python, Julia
-**Prerequisites:** Phase 0
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python, Julia
+**Предварительные требования:** Phase 0
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement vector and matrix operations (addition, dot product, matrix multiply) from scratch in Python
-- Explain geometrically what the dot product, projection, and Gram-Schmidt process do
-- Determine linear independence, rank, and basis of a set of vectors using row reduction
-- Connect linear algebra concepts to their AI applications: embeddings, attention scores, and LoRA
+- Реализовать операции с векторами и матрицами (сложение, скалярное произведение, умножение матриц) с нуля на Python
+- Объяснить геометрически, что делают скалярное произведение, проекция и процесс Грама-Шмидта
+- Определять линейную независимость, ранг и базис набора векторов с помощью приведения строк
+- Связать понятия линейной алгебры с их применением в AI: embeddings, attention scores и LoRA
 
-## The Problem
+## Проблема
 
-Open any ML paper. Within the first page, you'll see vectors, matrices, dot products, and transformations. Without linear algebra intuition, these are just symbols. With it, you can see what a neural network is actually doing -- moving points around in space.
+Откройте любую статью по ML. Уже на первой странице вы увидите векторы, матрицы, скалярные произведения и преобразования. Без интуиции линейной алгебры это просто символы. С ней вы видите, что нейронная сеть действительно делает: перемещает точки в пространстве.
 
-You don't need to be a mathematician. You need to see what these operations mean geometrically, then code them yourself.
+Вам не нужно быть математиком. Вам нужно увидеть, что эти операции означают геометрически, а затем реализовать их самостоятельно.
 
-## The Concept
+## Концепция
 
-### Vectors Are Points (and Directions)
+### Векторы — это точки (и направления)
 
-A vector is just a list of numbers. But those numbers mean something -- they're coordinates in space.
+Вектор — это просто список чисел. Но эти числа что-то означают: это координаты в пространстве.
 
-**2D vector [3, 2]:**
+**2D-вектор [3, 2]:**
 
-| x | y | Point |
+| x | y | Точка |
 |---|---|-------|
-| 3 | 2 | The vector points from origin (0,0) to (3, 2) on the plane |
+| 3 | 2 | Вектор указывает из начала координат (0,0) в точку (3, 2) на плоскости |
 
-The vector has magnitude sqrt(3^2 + 2^2) = sqrt(13) and points up and to the right.
+Вектор имеет длину sqrt(3^2 + 2^2) = sqrt(13) и направлен вверх и вправо.
 
-In AI, vectors represent everything:
-- A word → a vector of 768 numbers (its "meaning" in embedding space)
-- An image → a vector of millions of pixel values
-- A user → a vector of preferences
+В AI векторы представляют все:
+- Слово → вектор из 768 чисел (его "смысл" в embedding space)
+- Изображение → вектор из миллионов значений пикселей
+- Пользователь → вектор предпочтений
 
-### Matrices Are Transformations
+### Матрицы — это преобразования
 
-A matrix transforms one vector into another. It can rotate, scale, stretch, or project.
+Матрица преобразует один вектор в другой. Она может вращать, масштабировать, растягивать или проецировать.
 
 ```mermaid
 graph LR
@@ -62,14 +62,14 @@ graph LR
     M --> B2
 ```
 
-In AI, matrices ARE the model:
-- Neural network weights → matrices that transform input into output
-- Attention scores → matrices that decide what to focus on
-- Embeddings → matrices that map words to vectors
+В AI матрицы И ЕСТЬ модель:
+- Веса нейронной сети → матрицы, которые преобразуют вход в выход
+- Attention scores → матрицы, которые решают, на чем сфокусироваться
+- Embeddings → матрицы, которые отображают слова в векторы
 
-### The Dot Product Measures Similarity
+### Скалярное произведение измеряет сходство
 
-The dot product of two vectors tells you how similar they are.
+Скалярное произведение двух векторов показывает, насколько они похожи.
 
 ```
 a · b = a₁×b₁ + a₂×b₂ + ... + aₙ×bₙ
@@ -79,15 +79,15 @@ Perpendicular:       a · b = 0  (unrelated)
 Opposite direction:  a · b < 0  (dissimilar)
 ```
 
-This is literally how search engines, recommendation systems, and RAG work -- find vectors with high dot products.
+Именно так буквально работают поисковые системы, рекомендательные системы и RAG: находят векторы с высокими скалярными произведениями.
 
-### Linear Independence
+### Линейная независимость
 
-Vectors are linearly independent if no vector in the set can be written as a combination of the others. If v1, v2, v3 are independent, they span a 3D space. If one is a combination of the others, they only span a plane.
+Векторы линейно независимы, если ни один вектор в наборе нельзя записать как комбинацию остальных. Если v1, v2, v3 независимы, они натягивают 3D-пространство. Если один является комбинацией остальных, они натягивают только плоскость.
 
-Why it matters for AI: your feature matrix should have linearly independent columns. If two features are perfectly correlated (linearly dependent), the model cannot distinguish their effects. This causes multicollinearity in regression -- the weight matrix becomes unstable, and small input changes produce wild output swings.
+Почему это важно для AI: ваша матрица признаков должна иметь линейно независимые столбцы. Если два признака идеально коррелируют (линейно зависимы), модель не может различить их эффекты. Это вызывает мультиколлинеарность в регрессии: матрица весов становится нестабильной, и небольшие изменения входа приводят к резким скачкам выхода.
 
-**Concrete example:**
+**Конкретный пример:**
 
 ```
 v1 = [1, 0, 0]
@@ -95,42 +95,42 @@ v2 = [0, 1, 0]
 v3 = [2, 1, 0]   # v3 = 2*v1 + v2
 ```
 
-v1 and v2 are independent -- neither is a scalar multiple or combination of the other. But v3 = 2*v1 + v2, so {v1, v2, v3} is a dependent set. These three vectors all lie in the xy-plane. No matter how you combine them, you cannot reach [0, 0, 1]. You have three vectors but only two dimensions of freedom.
+v1 и v2 независимы: ни один не является скалярным кратным или комбинацией другого. Но v3 = 2*v1 + v2, поэтому {v1, v2, v3} — зависимый набор. Все три вектора лежат в xy-плоскости. Как бы вы их ни комбинировали, вы не сможете получить [0, 0, 1]. У вас три вектора, но только две степени свободы.
 
-In a dataset: if feature_3 = 2*feature_1 + feature_2, adding feature_3 gives the model zero new information. Worse, it makes the normal equations singular -- there is no unique solution for the weights.
+В датасете: если feature_3 = 2*feature_1 + feature_2, добавление feature_3 не дает модели никакой новой информации. Хуже того, это делает нормальные уравнения вырожденными: уникального решения для весов не существует.
 
-### Basis and Rank
+### Базис и ранг
 
-A basis is a minimal set of linearly independent vectors that span the entire space. The number of basis vectors is the dimension of the space.
+Базис — это минимальный набор линейно независимых векторов, который натягивает все пространство. Количество базисных векторов равно размерности пространства.
 
-The standard basis for 3D space is {[1,0,0], [0,1,0], [0,0,1]}. But any three independent vectors in 3D form a valid basis. The choice of basis is a choice of coordinate system.
+Стандартный базис для 3D-пространства — {[1,0,0], [0,1,0], [0,0,1]}. Но любые три независимых вектора в 3D образуют допустимый базис. Выбор базиса — это выбор системы координат.
 
-Rank of a matrix = number of linearly independent columns = number of linearly independent rows. If rank < min(rows, cols), the matrix is rank-deficient. This means:
-- The system has infinitely many solutions (or none)
-- Information is lost in the transformation
-- The matrix cannot be inverted
+Ранг матрицы = количество линейно независимых столбцов = количество линейно независимых строк. Если rank < min(rows, cols), матрица имеет неполный ранг. Это означает:
+- Система имеет бесконечно много решений (или ни одного)
+- Информация теряется при преобразовании
+- Матрицу нельзя обратить
 
-| Situation | Rank | What it means for ML |
+| Ситуация | Ранг | Что это значит для ML |
 |-----------|------|---------------------|
-| Full rank (rank = min(m, n)) | Maximum possible | Unique least-squares solution exists. Model is well-conditioned. |
-| Rank deficient (rank < min(m, n)) | Below maximum | Features are redundant. Infinitely many weight solutions. Regularization needed. |
-| Rank 1 | 1 | Every column is a scaled copy of one vector. All data lies on a line. |
-| Near rank-deficient (small singular values) | Numerically low | Matrix is ill-conditioned. Tiny input noise causes large output changes. Use SVD truncation or ridge regression. |
+| Полный ранг (rank = min(m, n)) | Максимально возможный | Существует уникальное решение методом наименьших квадратов. Модель хорошо обусловлена. |
+| Неполный ранг (rank < min(m, n)) | Ниже максимума | Признаки избыточны. Существует бесконечно много решений для весов. Нужна регуляризация. |
+| Ранг 1 | 1 | Каждый столбец — масштабированная копия одного вектора. Все данные лежат на прямой. |
+| Почти неполный ранг (малые сингулярные значения) | Численно низкий | Матрица плохо обусловлена. Крошечный шум во входе вызывает большие изменения выхода. Используйте усечение SVD или ridge regression. |
 
-### Projection
+### Проекция
 
-Projecting vector **a** onto vector **b** gives the component of **a** in the direction of **b**:
+Проекция вектора **a** на вектор **b** дает компоненту **a** в направлении **b**:
 
 ```
 proj_b(a) = (a dot b / b dot b) * b
 ```
 
-The residual (a - proj_b(a)) is perpendicular to b. This orthogonal decomposition is the foundation of least-squares fitting.
+Остаток (a - proj_b(a)) перпендикулярен b. Это ортогональное разложение лежит в основе подгонки методом наименьших квадратов.
 
-Projection is everywhere in ML:
-- Linear regression minimizes the distance from observations to the column space -- the solution IS a projection
-- PCA projects data onto the directions of maximum variance
-- Attention in transformers computes projections of queries onto keys
+Проекция встречается в ML повсюду:
+- Linear regression минимизирует расстояние от наблюдений до пространства столбцов: решение И ЕСТЬ проекция
+- PCA проецирует данные на направления максимальной дисперсии
+- Attention в transformers вычисляет проекции queries на keys
 
 ```mermaid
 graph LR
@@ -143,21 +143,21 @@ graph LR
     end
 ```
 
-**Example:** a = [3, 4], b = [1, 0]
+**Пример:** a = [3, 4], b = [1, 0]
 
 proj_b(a) = (3*1 + 4*0) / (1*1 + 0*0) * [1, 0] = 3 * [1, 0] = [3, 0]
 
-The projection drops the y-component. This is dimensionality reduction in its simplest form -- throw away the directions you don't care about.
+Проекция отбрасывает y-компоненту. Это снижение размерности в простейшей форме: отбросить направления, которые вас не интересуют.
 
-### Gram-Schmidt Process
+### Процесс Грама-Шмидта
 
-Converting any set of independent vectors into an orthonormal basis. Orthonormal means every vector has length 1 and every pair is perpendicular.
+Преобразование любого набора независимых векторов в ортонормированный базис. Ортонормированный означает, что каждый вектор имеет длину 1, а каждая пара векторов перпендикулярна.
 
-The algorithm:
-1. Take the first vector, normalize it
-2. Take the second vector, subtract its projection onto the first, normalize
-3. Take the third vector, subtract its projections onto all previous vectors, normalize
-4. Repeat for remaining vectors
+Алгоритм:
+1. Возьмите первый вектор и нормализуйте его
+2. Возьмите второй вектор, вычтите его проекцию на первый, нормализуйте
+3. Возьмите третий вектор, вычтите его проекции на все предыдущие векторы, нормализуйте
+4. Повторите для оставшихся векторов
 
 ```
 Input:  v1, v2, v3, ... (linearly independent)
@@ -173,14 +173,14 @@ u3 = w3 / |w3|
 Output: u1, u2, u3, ... (orthonormal basis)
 ```
 
-This is how QR decomposition works internally. Q is the orthonormal basis, R captures the projection coefficients. QR decomposition is used in:
-- Solving linear systems (more stable than Gaussian elimination)
-- Computing eigenvalues (QR algorithm)
-- Least-squares regression (the standard numerical method)
+Так внутри работает QR-разложение. Q — это ортонормированный базис, R хранит коэффициенты проекций. QR-разложение используется для:
+- Решения систем линейных уравнений (более устойчиво, чем метод Гаусса)
+- Вычисления собственных значений (QR algorithm)
+- Регрессии методом наименьших квадратов (стандартный численный метод)
 
-## Build It
+## Соберите это
 
-### Step 1: Vectors from scratch (Python)
+### Шаг 1: Векторы с нуля (Python)
 
 ```python
 class Vector:
@@ -220,7 +220,7 @@ print(f"|a| = {a.magnitude():.4f}")
 print(f"cosine similarity = {a.cosine_similarity(b):.4f}")
 ```
 
-### Step 2: Matrices from scratch (Python)
+### Шаг 2: Матрицы с нуля (Python)
 
 ```python
 class Matrix:
@@ -263,7 +263,7 @@ print(f"Original: {point}")
 print(f"Rotated 90°: {rotated}")
 ```
 
-### Step 3: Why this matters for AI
+### Шаг 3: Почему это важно для AI
 
 ```python
 import random
@@ -278,7 +278,7 @@ print(f"Output (2D): {output}")
 print("This is what a neural network layer does -- matrix multiplication.")
 ```
 
-### Step 4: Julia version
+### Шаг 4: Версия на Julia
 
 ```julia
 a = [1.0, 2.0, 3.0]
@@ -296,7 +296,7 @@ println("Wx = ", W * x)
 println("This is a neural network layer.")
 ```
 
-### Step 5: Linear independence and projection from scratch (Python)
+### Шаг 5: Линейная независимость и проекция с нуля (Python)
 
 ```python
 def is_linearly_independent(vectors):
@@ -355,9 +355,9 @@ print(f"u1 · u3 = {basis[0].dot(basis[2]):.6f}")
 print(f"u2 · u3 = {basis[1].dot(basis[2]):.6f}")
 ```
 
-## Use It
+## Используйте это
 
-Now the same thing with NumPy -- what you'll actually use in practice:
+Теперь то же самое с NumPy — именно так вы будете использовать это на практике:
 
 ```python
 import numpy as np
@@ -375,7 +375,7 @@ x = np.array([1.0, 0.5, -0.3])
 print(f"Wx = {W @ x}")
 ```
 
-### Rank, Projection, and QR with NumPy
+### Ранг, проекция и QR с NumPy
 
 ```python
 import numpy as np
@@ -393,7 +393,7 @@ print(f"Q is orthogonal: {np.allclose(Q @ Q.T, np.eye(3))}")
 print(f"R is upper triangular: {np.allclose(R, np.triu(R))}")
 ```
 
-### PyTorch -- Tensors Are Vectors with Autodiff
+### PyTorch: тензоры — это векторы с autodiff
 
 ```python
 import torch
@@ -410,50 +410,50 @@ print(f"dot product = {similarity.item():.4f}")
 print(f"d(dot)/dx = {x.grad}")
 ```
 
-The gradient of the dot product with respect to x is just y. PyTorch computed this automatically. Every operation in a neural network is built from operations like this -- matrix multiplies, dot products, projections -- and autodiff tracks gradients through all of them.
+Градиент скалярного произведения по x — это просто y. PyTorch вычислил это автоматически. Каждая операция в нейронной сети строится из таких операций: умножения матриц, скалярных произведений, проекций, — а autodiff отслеживает градиенты через все них.
 
-You just built from scratch what NumPy does in one line. Now you know what's happening under the hood.
+Вы только что с нуля построили то, что NumPy делает в одну строку. Теперь вы знаете, что происходит под капотом.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/prompt-linear-algebra-tutor.md` -- a prompt for AI assistants to teach linear algebra through geometric intuition
+Этот урок создает:
+- `outputs/prompt-linear-algebra-tutor.md` — prompt для AI assistants, чтобы обучать линейной алгебре через геометрическую интуицию
 
-## Connections
+## Связи
 
-Everything in this lesson connects to specific parts of modern AI:
+Все в этом уроке связано с конкретными частями современного AI:
 
-| Concept | Where it shows up |
+| Концепция | Где встречается |
 |---------|------------------|
-| Dot product | Attention scores in transformers, cosine similarity in RAG |
-| Matrix multiply | Every neural network layer, every linear transformation |
-| Linear independence | Feature selection, avoiding multicollinearity |
-| Rank | Determining if a system is solvable, LoRA (low-rank adaptation) |
-| Projection | Linear regression (projecting onto column space), PCA |
-| Gram-Schmidt / QR | Numerical solvers, eigenvalue computation |
-| Orthonormal basis | Stable numerical computation, whitening transforms |
+| Скалярное произведение | Attention scores в transformers, cosine similarity в RAG |
+| Умножение матриц | Каждый слой нейронной сети, каждое линейное преобразование |
+| Линейная независимость | Feature selection, избегание мультиколлинеарности |
+| Ранг | Определение разрешимости системы, LoRA (low-rank adaptation) |
+| Проекция | Linear regression (проекция на пространство столбцов), PCA |
+| Gram-Schmidt / QR | Численные решатели, вычисление собственных значений |
+| Ортонормированный базис | Устойчивые численные вычисления, whitening transforms |
 
-LoRA deserves special mention. It fine-tunes large language models by decomposing weight updates into low-rank matrices. Instead of updating a 4096x4096 weight matrix (16M parameters), LoRA updates two matrices of size 4096x16 and 16x4096 (131K parameters). The rank-16 constraint means LoRA assumes the weight update lives in a 16-dimensional subspace of the full 4096-dimensional space. That is linear algebra doing real work.
+LoRA заслуживает отдельного упоминания. Она дообучает большие языковые модели, раскладывая обновления весов на матрицы низкого ранга. Вместо обновления матрицы весов 4096x4096 (16M параметров) LoRA обновляет две матрицы размера 4096x16 и 16x4096 (131K параметров). Ограничение rank-16 означает, что LoRA предполагает: обновление весов живет в 16-мерном подпространстве полного 4096-мерного пространства. Это линейная алгебра, выполняющая реальную работу.
 
-## Exercises
+## Упражнения
 
-1. Implement `Vector.angle_between(other)` that returns the angle in degrees between two vectors
-2. Create a 2D scaling matrix that doubles the x-coordinate and triples the y-coordinate, then apply it to the vector [1, 1]
-3. Given 5 random word-like vectors (dimension 50), find the two most similar using cosine similarity
-4. Verify that the Gram-Schmidt output is truly orthonormal: check that every pair has dot product 0 and every vector has magnitude 1
-5. Create a 3x3 matrix with rank 2. Verify using the `rank()` method. Then explain what geometric object the columns span.
-6. Project the vector [1, 2, 3] onto [1, 1, 1]. What does the result represent geometrically?
+1. Реализуйте `Vector.angle_between(other)`, который возвращает угол в градусах между двумя векторами
+2. Создайте 2D-матрицу масштабирования, которая удваивает x-координату и утраивает y-координату, затем примените ее к вектору [1, 1]
+3. Для 5 случайных word-like vectors (размерность 50) найдите две самые похожие с помощью cosine similarity
+4. Проверьте, что результат Gram-Schmidt действительно ортонормирован: убедитесь, что каждая пара имеет скалярное произведение 0, а каждый вектор имеет длину 1
+5. Создайте матрицу 3x3 с рангом 2. Проверьте с помощью метода `rank()`. Затем объясните, какой геометрический объект натягивают столбцы.
+6. Спроецируйте вектор [1, 2, 3] на [1, 1, 1]. Что результат представляет геометрически?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Vector | "An arrow" | A list of numbers representing a point or direction in n-dimensional space |
-| Matrix | "A table of numbers" | A transformation that maps vectors from one space to another |
-| Dot product | "Multiply and sum" | A measure of how aligned two vectors are -- the core of similarity search |
-| Embedding | "Some AI magic" | A vector that represents the meaning of something (word, image, user) |
-| Linear independence | "They don't overlap" | No vector in the set can be written as a combination of the others |
-| Rank | "How many dimensions" | The number of linearly independent columns (or rows) in a matrix |
-| Projection | "The shadow" | The component of one vector in the direction of another |
-| Basis | "The coordinate axes" | A minimal set of independent vectors that span the space |
-| Orthonormal | "Perpendicular unit vectors" | Vectors that are mutually perpendicular and each have length 1 |
+| Вектор | "Стрелка" | Список чисел, представляющий точку или направление в n-мерном пространстве |
+| Матрица | "Таблица чисел" | Преобразование, которое отображает векторы из одного пространства в другое |
+| Скалярное произведение | "Умножить и сложить" | Мера того, насколько два вектора сонаправлены: основа similarity search |
+| Embedding | "Какая-то AI-магия" | Вектор, который представляет смысл чего-либо (слова, изображения, пользователя) |
+| Линейная независимость | "Они не перекрываются" | Ни один вектор в наборе нельзя записать как комбинацию остальных |
+| Ранг | "Сколько измерений" | Количество линейно независимых столбцов (или строк) в матрице |
+| Проекция | "Тень" | Компонента одного вектора в направлении другого |
+| Базис | "Оси координат" | Минимальный набор независимых векторов, натягивающий пространство |
+| Ортонормированный | "Перпендикулярные единичные векторы" | Векторы, которые взаимно перпендикулярны и каждый имеет длину 1 |

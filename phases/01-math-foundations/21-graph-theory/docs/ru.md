@@ -1,64 +1,64 @@
-# Graph Theory for Machine Learning
+# Теория графов для машинного обучения
 
-> Graphs are the data structure of relationships. If your data has connections, you need graph theory.
+> Графы -- это структура данных для отношений. Если в ваших данных есть связи, вам нужна теория графов.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01-03 (linear algebra, matrices)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 01-03 (линейная алгебра, матрицы)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a graph class with adjacency matrix/list representations and implement BFS and DFS traversals
-- Compute the graph Laplacian and use its eigenvalues to detect connected components and cluster nodes
-- Implement one round of GNN-style message passing as a normalized adjacency matrix multiplication
-- Apply spectral clustering to partition a graph using the Fiedler vector
+- Построить класс графа с представлениями через матрицу/список смежности и реализовать обходы BFS и DFS
+- Вычислять лапласиан графа и использовать его собственные значения для обнаружения связных компонент и кластеризации узлов
+- Реализовать один раунд GNN-style message passing как умножение на нормализованную матрицу смежности
+- Применять спектральную кластеризацию для разбиения графа с помощью вектора Фидлера
 
-## The Problem
+## Проблема
 
-Social networks, molecules, knowledge bases, citation networks, road maps -- all are graphs. Traditional ML treats data as flat tables. Each row is independent. Each feature is a column. But when the structure of connections matters, tables fail.
+Социальные сети, молекулы, базы знаний, сети цитирования, дорожные карты -- все это графы. Традиционное ML рассматривает данные как плоские таблицы. Каждая строка независима. Каждый признак -- столбец. Но когда важна структура связей, таблицы не справляются.
 
-Consider a social network. You want to predict what product a user will buy. Their purchase history matters. But their friends' purchase history matters more. The connections carry signal.
+Рассмотрим социальную сеть. Вы хотите предсказать, какой продукт купит пользователь. Его история покупок важна. Но история покупок его друзей может быть важнее. Связи несут сигнал.
 
-Or consider a molecule. You want to predict if it binds to a protein. The atoms matter, but what really matters is how atoms are bonded to each other. The structure is the data.
+Или рассмотрим молекулу. Вы хотите предсказать, связывается ли она с белком. Атомы важны, но действительно важно то, как атомы связаны друг с другом. Структура и есть данные.
 
-Graph Neural Networks (GNNs) are the fastest-growing area in deep learning. They power drug discovery, social recommendation, fraud detection, and knowledge graph reasoning. Every GNN builds on the same foundation: basic graph theory.
+Graph Neural Networks (GNNs) -- одна из самых быстрорастущих областей deep learning. Они используются в разработке лекарств, социальных рекомендациях, обнаружении мошенничества и reasoning по knowledge graphs. Каждый GNN опирается на одну и ту же основу: базовую теорию графов.
 
-You need four things:
-1. A way to represent graphs as matrices (so you can multiply them)
-2. Traversal algorithms to explore graph structure
-3. The Laplacian -- the single most important matrix in spectral graph theory
-4. Message passing -- the operation that makes GNNs work
+Вам нужны четыре вещи:
+1. Способ представлять графы как матрицы (чтобы их можно было умножать)
+2. Алгоритмы обхода для исследования структуры графа
+3. Лапласиан -- самая важная матрица в спектральной теории графов
+4. Message passing -- операция, благодаря которой работают GNN
 
-## The Concept
+## Концепция
 
-### Graphs: Nodes and Edges
+### Графы: узлы и ребра
 
-A graph G = (V, E) consists of vertices (nodes) V and edges E. Each edge connects two nodes.
+Граф G = (V, E) состоит из вершин (узлов) V и ребер E. Каждое ребро соединяет два узла.
 
-**Directed vs undirected.** In an undirected graph, edge (u, v) means u connects to v AND v connects to u. In a directed graph (digraph), edge (u, v) means u points to v, but not necessarily the reverse.
+**Ориентированный и неориентированный.** В неориентированном графе ребро (u, v) означает, что u связан с v И v связан с u. В ориентированном графе (digraph) ребро (u, v) означает, что u указывает на v, но не обязательно наоборот.
 
-**Weighted vs unweighted.** In an unweighted graph, edges either exist or they don't. In a weighted graph, each edge has a numerical weight -- a distance, a cost, a strength.
+**Взвешенный и невзвешенный.** В невзвешенном графе ребра либо существуют, либо нет. Во взвешенном графе у каждого ребра есть численный вес -- расстояние, стоимость, сила связи.
 
-| Graph type | Example |
+| Тип графа | Пример |
 |-----------|---------|
-| Undirected, unweighted | Facebook friendship network |
-| Directed, unweighted | Twitter follow network |
-| Undirected, weighted | Road map (distances) |
-| Directed, weighted | Web page links (PageRank scores) |
+| Неориентированный, невзвешенный | Сеть дружбы Facebook |
+| Ориентированный, невзвешенный | Сеть подписок Twitter |
+| Неориентированный, взвешенный | Дорожная карта (расстояния) |
+| Ориентированный, взвешенный | Ссылки веб-страниц (PageRank scores) |
 
-### The Adjacency Matrix
+### Матрица смежности
 
-The adjacency matrix A is the core representation. For a graph with n nodes:
+Матрица смежности A -- центральное представление. Для графа с n узлами:
 
 ```
 A[i][j] = 1    if there is an edge from node i to node j
 A[i][j] = 0    otherwise
 ```
 
-For undirected graphs, A is symmetric: A[i][j] = A[j][i]. For weighted graphs, A[i][j] = weight of edge (i, j).
+Для неориентированных графов A симметрична: A[i][j] = A[j][i]. Для взвешенных графов A[i][j] = вес ребра (i, j).
 
-**Example -- a triangle:**
+**Пример -- треугольник:**
 
 ```
 Nodes: 0, 1, 2
@@ -69,28 +69,28 @@ A = [[0, 1, 1],
      [1, 1, 0]]
 ```
 
-The adjacency matrix is the input to every GNN. Matrix operations on A correspond to operations on the graph.
+Матрица смежности -- вход для каждого GNN. Матричные операции с A соответствуют операциям над графом.
 
-### Degree
+### Степень
 
-The degree of a node is the number of edges connected to it. For directed graphs, you have in-degree (edges coming in) and out-degree (edges going out).
+Степень узла -- это количество ребер, связанных с ним. Для ориентированных графов есть входящая степень (ребра входят) и исходящая степень (ребра выходят).
 
-The degree matrix D is diagonal:
+Матрица степеней D диагональна:
 
 ```
 D[i][i] = degree of node i
 D[i][j] = 0    for i != j
 ```
 
-For the triangle example: D = diag(2, 2, 2) because every node connects to two others.
+Для примера с треугольником: D = diag(2, 2, 2), потому что каждый узел связан с двумя другими.
 
-Degree tells you about node importance. High degree = hub node. The degree distribution of a network reveals its structure. Social networks follow power laws (few hubs, many leaf nodes). Random graphs have Poisson-distributed degrees.
+Степень говорит о важности узла. Высокая степень = узел-хаб. Распределение степеней сети раскрывает ее структуру. Социальные сети следуют степенным законам (немного хабов, много листовых узлов). Случайные графы имеют пуассоновское распределение степеней.
 
-### BFS and DFS
+### BFS и DFS
 
-The two fundamental graph traversal algorithms. You need both.
+Два фундаментальных алгоритма обхода графа. Нужны оба.
 
-**Breadth-First Search (BFS):** Explore all neighbors first, then neighbors' neighbors. Uses a queue (FIFO).
+**Breadth-First Search (BFS):** сначала исследовать всех соседей, затем соседей соседей. Использует очередь (FIFO).
 
 ```
 BFS from node 0:
@@ -104,9 +104,9 @@ BFS from node 0:
   Queue: []            (done)
 ```
 
-BFS finds shortest paths in unweighted graphs. The distance from the start to any node equals the BFS level at which that node is first discovered. This is why BFS is used for hop-count distances in social networks.
+BFS находит кратчайшие пути в невзвешенных графах. Расстояние от стартового узла до любого другого равно уровню BFS, на котором этот узел был впервые обнаружен. Поэтому BFS используют для расстояний в числе hops в социальных сетях.
 
-**Depth-First Search (DFS):** Go as deep as possible before backtracking. Uses a stack (LIFO) or recursion.
+**Depth-First Search (DFS):** идти как можно глубже, прежде чем возвращаться назад. Использует стек (LIFO) или рекурсию.
 
 ```
 DFS from node 0:
@@ -120,21 +120,21 @@ DFS from node 0:
   Stack: []             (done)
 ```
 
-DFS is useful for:
-- Finding connected components (run DFS from unvisited nodes)
-- Cycle detection (back edges in DFS tree)
-- Topological sorting (reverse DFS finish order)
+DFS полезен для:
+- Поиска связных компонент (запускайте DFS из непосещенных узлов)
+- Обнаружения циклов (обратные ребра в дереве DFS)
+- Топологической сортировки (обратный порядок завершения DFS)
 
-| Algorithm | Data structure | Finds | Use case |
+| Алгоритм | Структура данных | Находит | Применение |
 |-----------|---------------|-------|----------|
-| BFS | Queue | Shortest paths | Social network distance, knowledge graph traversal |
-| DFS | Stack | Components, cycles | Connectivity, topological sort |
+| BFS | Очередь | Кратчайшие пути | Расстояния в социальных сетях, обход knowledge graph |
+| DFS | Стек | Компоненты, циклы | Связность, топологическая сортировка |
 
-### The Graph Laplacian
+### Лапласиан графа
 
-L = D - A. The most important matrix in spectral graph theory.
+L = D - A. Самая важная матрица в спектральной теории графов.
 
-For the triangle:
+Для треугольника:
 
 ```
 D = [[2, 0, 0],    A = [[0, 1, 1],    L = [[2, -1, -1],
@@ -142,15 +142,15 @@ D = [[2, 0, 0],    A = [[0, 1, 1],    L = [[2, -1, -1],
      [0, 0, 2]]         [1, 1, 0]]         [-1, -1,  2]]
 ```
 
-The Laplacian has remarkable properties:
+У лапласиана есть замечательные свойства:
 
-1. **L is positive semi-definite.** All eigenvalues are >= 0.
+1. **L положительно полуопределена.** Все собственные значения >= 0.
 
-2. **The number of zero eigenvalues equals the number of connected components.** A connected graph has exactly one zero eigenvalue. A graph with 3 disconnected components has three zero eigenvalues.
+2. **Количество нулевых собственных значений равно количеству связных компонент.** Связный граф имеет ровно одно нулевое собственное значение. Граф с 3 несвязными компонентами имеет три нулевых собственных значения.
 
-3. **The smallest non-zero eigenvalue (Fiedler value) measures connectivity.** A large Fiedler value means the graph is well-connected. A small Fiedler value means the graph has a weak point -- a bottleneck.
+3. **Наименьшее ненулевое собственное значение (значение Фидлера) измеряет связность.** Большое значение Фидлера означает, что граф хорошо связан. Малое значение Фидлера означает, что в графе есть слабое место -- bottleneck.
 
-4. **The eigenvector of the Fiedler value (Fiedler vector) reveals the best split.** Nodes with positive values go in one group, nodes with negative values go in the other. This is spectral clustering.
+4. **Собственный вектор значения Фидлера (вектор Фидлера) выявляет лучшее разбиение.** Узлы с положительными значениями попадают в одну группу, узлы с отрицательными -- в другую. Это спектральная кластеризация.
 
 ```mermaid
 graph TD
@@ -169,43 +169,43 @@ graph TD
     end
 ```
 
-### Spectral Properties
+### Спектральные свойства
 
-The eigenvalues of the adjacency matrix and Laplacian reveal structural properties without any traversal.
+Собственные значения матрицы смежности и лапласиана раскрывают структурные свойства без какого-либо обхода.
 
-**Spectral clustering** works like this:
-1. Compute the Laplacian L
-2. Find the k smallest eigenvectors of L (skip the first, which is all-ones for connected graphs)
-3. Use those eigenvectors as new coordinates for each node
-4. Run k-means on those coordinates
+**Спектральная кластеризация** работает так:
+1. Вычислить лапласиан L
+2. Найти k наименьших собственных векторов L (пропустить первый, который для связных графов является вектором из единиц)
+3. Использовать эти собственные векторы как новые координаты каждого узла
+4. Запустить k-means на этих координатах
 
-Why does this work? The eigenvectors of L encode the "smoothest" functions on the graph. Nodes that are well-connected get similar eigenvector values. Nodes separated by a bottleneck get different values. The eigenvectors naturally separate clusters.
+Почему это работает? Собственные векторы L кодируют самые "гладкие" функции на графе. Хорошо связанные узлы получают похожие значения собственных векторов. Узлы, разделенные bottleneck, получают разные значения. Собственные векторы естественно отделяют кластеры.
 
-**Random walk connection.** The normalized Laplacian relates to random walks on the graph. The stationary distribution of a random walk is proportional to node degree. The mixing time (how fast the walk converges) depends on the spectral gap.
+**Связь со случайным блужданием.** Нормализованный лапласиан связан со случайными блужданиями по графу. Стационарное распределение случайного блуждания пропорционально степени узла. Время перемешивания (как быстро блуждание сходится) зависит от спектрального зазора.
 
 ### Message Passing
 
-The core operation of Graph Neural Networks. Each node collects messages from its neighbors, aggregates them, and updates its own state.
+Базовая операция Graph Neural Networks. Каждый узел собирает сообщения от соседей, агрегирует их и обновляет свое состояние.
 
 ```
 h_v^(k+1) = UPDATE(h_v^(k), AGGREGATE({h_u^(k) : u in neighbors(v)}))
 ```
 
-In the simplest form, AGGREGATE = mean, and UPDATE = linear transform + activation:
+В простейшей форме AGGREGATE = mean, а UPDATE = linear transform + activation:
 
 ```
 h_v^(k+1) = sigma(W * mean({h_u^(k) : u in neighbors(v)}))
 ```
 
-This is matrix multiplication in disguise. If H is the matrix of all node features and A is the adjacency matrix:
+Это замаскированное матричное умножение. Если H -- матрица признаков всех узлов, а A -- матрица смежности:
 
 ```
 H^(k+1) = sigma(A_norm * H^(k) * W)
 ```
 
-where A_norm is the normalized adjacency matrix (each row sums to 1).
+где A_norm -- нормализованная матрица смежности (каждая строка суммируется в 1).
 
-One round of message passing lets each node "see" its immediate neighbors. Two rounds let it see neighbors of neighbors. K rounds give each node information from its K-hop neighborhood.
+Один раунд message passing позволяет каждому узлу "видеть" своих непосредственных соседей. Два раунда позволяют видеть соседей соседей. K раундов дают каждому узлу информацию из его K-hop neighborhood.
 
 ```mermaid
 graph LR
@@ -228,22 +228,22 @@ graph LR
     B0 --> C1
 ```
 
-### Concepts and ML Applications
+### Концепции и применения в ML
 
-| Concept | ML Application |
+| Концепция | Применение в ML |
 |---------|---------------|
-| Adjacency matrix | GNN input representation |
-| Graph Laplacian | Spectral clustering, community detection |
-| BFS/DFS | Knowledge graph traversal, path finding |
-| Degree distribution | Node importance, feature engineering |
-| Message passing | GNN layers (GCN, GAT, GraphSAGE) |
-| Eigenvalues of L | Community detection, graph partitioning |
-| Spectral clustering | Unsupervised node grouping |
-| PageRank | Node importance, web search |
+| Матрица смежности | Входное представление GNN |
+| Лапласиан графа | Спектральная кластеризация, обнаружение сообществ |
+| BFS/DFS | Обход knowledge graph, поиск путей |
+| Распределение степеней | Важность узлов, feature engineering |
+| Message passing (передача сообщений) | GNN layers (GCN, GAT, GraphSAGE) |
+| Собственные значения L | Обнаружение сообществ, разбиение графа |
+| Спектральная кластеризация | Неконтролируемая группировка узлов |
+| PageRank | Важность узлов, веб-поиск |
 
-## Build It
+## Реализация
 
-### Step 1: Graph class from scratch
+### Шаг 1: Класс Graph с нуля
 
 ```python
 class Graph:
@@ -282,9 +282,9 @@ class Graph:
         return self.degree_matrix() - self.adjacency_matrix()
 ```
 
-The adjacency list (`self.adj`) stores neighbors efficiently. The adjacency matrix conversion uses numpy because all the spectral operations need it.
+Список смежности (`self.adj`) эффективно хранит соседей. Преобразование в матрицу смежности использует numpy, потому что все спектральные операции нуждаются в нем.
 
-### Step 2: BFS and DFS
+### Шаг 2: BFS и DFS
 
 ```python
 from collections import deque
@@ -322,9 +322,9 @@ def dfs(graph, start):
     return order
 ```
 
-BFS uses a deque (double-ended queue) for O(1) popleft. DFS uses a list as a stack. Both visit every node exactly once -- O(V + E) time.
+BFS использует deque (двустороннюю очередь) для O(1) popleft. DFS использует list как стек. Оба посещают каждый узел ровно один раз -- время O(V + E).
 
-### Step 3: Connected components and Laplacian eigenvalues
+### Шаг 3: Связные компоненты и собственные значения лапласиана
 
 ```python
 def connected_components(graph):
@@ -345,9 +345,9 @@ def laplacian_eigenvalues(graph):
     return eigenvalues
 ```
 
-`eigvalsh` is for symmetric matrices -- the Laplacian is always symmetric for undirected graphs. It returns eigenvalues in ascending order. Count the zeros to find the number of connected components.
+`eigvalsh` предназначен для симметричных матриц -- лапласиан всегда симметричен для неориентированных графов. Он возвращает собственные значения в порядке возрастания. Посчитайте нули, чтобы найти число связных компонент.
 
-### Step 4: Spectral clustering
+### Шаг 4: Спектральная кластеризация
 
 ```python
 def spectral_clustering(graph, k=2):
@@ -365,9 +365,9 @@ def spectral_clustering(graph, k=2):
     return labels
 ```
 
-For k=2, the sign of the Fiedler vector splits the graph into two clusters. For k>2, you would run k-means on the first k eigenvectors (excluding the trivial all-ones eigenvector).
+Для k=2 знак вектора Фидлера делит граф на два кластера. Для k>2 вы запускали бы k-means на первых k собственных векторах (исключая тривиальный вектор из единиц).
 
-### Step 5: Message passing
+### Шаг 5: Message passing
 
 ```python
 def message_passing(graph, features, weight_matrix):
@@ -381,11 +381,11 @@ def message_passing(graph, features, weight_matrix):
     return output
 ```
 
-This is one round of GNN message passing. Each node's new features are the weighted average of its neighbors' features, transformed by the weight matrix. Stack multiple rounds to propagate information further.
+Это один раунд GNN message passing. Новые признаки каждого узла -- взвешенное среднее признаков соседей, преобразованное матрицей весов. Сложите несколько раундов, чтобы распространять информацию дальше.
 
-## Use It
+## Применение
 
-With networkx and numpy, the same operations are one-liners:
+С networkx и numpy те же операции становятся однострочными:
 
 ```python
 import networkx as nx
@@ -408,9 +408,9 @@ top_nodes = sorted(pr.items(), key=lambda x: x[1], reverse=True)[:5]
 print(f"Top 5 PageRank nodes: {top_nodes}")
 ```
 
-networkx handles graphs of any size with optimized C backends. Use it in production. Use your from-scratch implementation to understand what it does.
+networkx обрабатывает графы любого размера с оптимизированными C-бэкендами. Используйте его в production. Реализацию с нуля используйте, чтобы понимать, что он делает.
 
-### numpy spectral analysis
+### Спектральный анализ в numpy
 
 ```python
 import numpy as np
@@ -438,65 +438,65 @@ print(f"Cluster A: {group_a}")
 print(f"Cluster B: {group_b}")
 ```
 
-The Fiedler vector does the heavy lifting. Positive entries in one cluster, negative in the other. No iterative optimization needed -- just one eigendecomposition.
+Вектор Фидлера выполняет основную работу. Положительные элементы -- в одном кластере, отрицательные -- в другом. Никакой итеративной оптимизации не требуется: только одно eigendecomposition.
 
-## Ship It
+## Результат
 
-This lesson produces:
-- `outputs/skill-graph-analysis.md` -- a skill reference for analyzing graph-structured data
+Этот урок создает:
+- `outputs/skill-graph-analysis.md` -- skill reference для анализа graph-structured data
 
-## Connections
+## Связи
 
-| Concept | Where it shows up |
+| Концепция | Где встречается |
 |---------|------------------|
-| Adjacency matrix | GCN, GAT, GraphSAGE input |
-| Laplacian | Spectral clustering, ChebNet filters |
-| BFS | Knowledge graph traversal, shortest path queries |
-| Message passing | Every GNN layer, neural message passing |
-| Spectral gap | Graph connectivity, mixing time of random walks |
-| Degree distribution | Power-law networks, node feature engineering |
-| Connected components | Preprocessing, handling disconnected graphs |
-| PageRank | Node importance ranking, attention initialization |
+| Матрица смежности | Вход GCN, GAT, GraphSAGE |
+| Лапласиан | Спектральная кластеризация, ChebNet filters |
+| BFS | Обход knowledge graph, запросы кратчайшего пути |
+| Message passing | Каждый GNN layer, neural message passing |
+| Спектральный зазор | Связность графа, mixing time случайных блужданий |
+| Распределение степеней | Power-law networks, feature engineering узлов |
+| Связные компоненты | Preprocessing, обработка несвязных графов |
+| PageRank | Ранжирование важности узлов, инициализация attention |
 
-GNNs deserve special mention. The graph convolution operation in GCN (Kipf & Welling, 2017) uses the adjacency matrix with added self-loops, A_hat = A + I:
+GNNs заслуживают отдельного упоминания. Операция graph convolution в GCN (Kipf & Welling, 2017) использует матрицу смежности с добавленными self-loops, A_hat = A + I:
 
 ```text
 H^(l+1) = sigma(D_hat^(-1/2) * A_hat * D_hat^(-1/2) * H^(l) * W^(l))
 ```
 
-where A_hat = A + I (adjacency plus self-loops) and D_hat is the degree matrix of A_hat. The self-loops ensure each node includes its own features during aggregation. This is exactly message passing with symmetric normalization. D_hat^(-1/2) * A_hat * D_hat^(-1/2) is the normalized adjacency matrix. The Laplacian shows up because this normalization is related to L_sym = I - D^(-1/2) * A * D^(-1/2). Understanding the Laplacian means understanding why GCNs work.
+где A_hat = A + I (смежность плюс self-loops), а D_hat -- матрица степеней для A_hat. Self-loops гарантируют, что каждый узел включает собственные признаки при агрегации. Это ровно message passing с симметричной нормализацией. D_hat^(-1/2) * A_hat * D_hat^(-1/2) -- нормализованная матрица смежности. Лапласиан появляется потому, что эта нормализация связана с L_sym = I - D^(-1/2) * A * D^(-1/2). Понимание лапласиана означает понимание того, почему работают GCN.
 
-## Exercises
+## Упражнения
 
-1. **Implement PageRank from scratch.** Start with uniform scores. At each step: score(v) = (1-d)/n + d * sum(score(u)/out_degree(u)) for all u pointing to v. Use d=0.85. Run until convergence (change < 1e-6). Test on a small web graph.
+1. **Реализуйте PageRank с нуля.** Начните с равномерных оценок. На каждом шаге: score(v) = (1-d)/n + d * sum(score(u)/out_degree(u)) для всех u, указывающих на v. Используйте d=0.85. Запускайте до сходимости (изменение < 1e-6). Проверьте на небольшом web graph.
 
-2. **Find communities using spectral clustering.** Create a graph with two clearly separated clusters (e.g., two cliques connected by a single edge). Run spectral clustering and verify it finds the right split. What happens as you add more cross-cluster edges?
+2. **Найдите сообщества с помощью спектральной кластеризации.** Создайте граф с двумя явно разделенными кластерами (например, две клики, соединенные одним ребром). Запустите спектральную кластеризацию и проверьте, что она находит правильное разбиение. Что происходит, когда вы добавляете больше межкластерных ребер?
 
-3. **Implement Dijkstra's algorithm** for shortest paths in weighted graphs. Compare results to BFS on the same graph with uniform weights.
+3. **Реализуйте алгоритм Дейкстры** для кратчайших путей во взвешенных графах. Сравните результаты с BFS на том же графе с равномерными весами.
 
-4. **Build a 2-layer message passing network.** Apply message passing twice with different weight matrices. Show that after 2 rounds, each node has information from its 2-hop neighborhood.
+4. **Постройте 2-layer message passing network.** Примените message passing дважды с разными матрицами весов. Покажите, что после 2 раундов каждый узел содержит информацию из своего 2-hop neighborhood.
 
-5. **Analyze a real-world graph.** Use the Karate Club graph (34 nodes, 78 edges). Compute degree distribution, Laplacian eigenvalues, and spectral clustering. Compare the spectral clustering result to the known ground truth split.
+5. **Проанализируйте реальный граф.** Используйте Karate Club graph (34 узла, 78 ребер). Вычислите распределение степеней, собственные значения лапласиана и спектральную кластеризацию. Сравните результат спектральной кластеризации с известным ground truth split.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Graph | "Nodes and edges" | A mathematical structure G=(V,E) encoding pairwise relationships |
-| Adjacency matrix | "The connection table" | An n x n matrix where A[i][j] = 1 if nodes i and j are connected |
-| Degree | "How connected a node is" | The number of edges touching a node |
-| Laplacian | "D minus A" | L = D - A, the matrix whose eigenvalues reveal graph structure |
-| Fiedler value | "The algebraic connectivity" | The smallest non-zero eigenvalue of L, measuring how well-connected the graph is |
-| BFS | "Level-by-level search" | Traversal that visits all neighbors before going deeper, finds shortest paths |
-| DFS | "Go deep first" | Traversal that follows one path to its end before backtracking |
-| Message passing | "Nodes talk to neighbors" | Each node aggregates information from its neighbors, the core of GNNs |
-| Spectral clustering | "Cluster by eigenvectors" | Partition a graph using eigenvectors of its Laplacian |
-| Connected component | "A separate piece" | A maximal subgraph where every node can reach every other node |
+| Граф | "Узлы и ребра" | Математическая структура G=(V,E), кодирующая парные отношения |
+| Матрица смежности | "Таблица связей" | Матрица n x n, где A[i][j] = 1, если узлы i и j связаны |
+| Степень | "Насколько связан узел" | Количество ребер, касающихся узла |
+| Лапласиан | "D минус A" | L = D - A, матрица, собственные значения которой раскрывают структуру графа |
+| Значение Фидлера | "Алгебраическая связность" | Наименьшее ненулевое собственное значение L, измеряющее, насколько хорошо связан граф |
+| BFS | "Поиск уровень за уровнем" | Обход, который посещает всех соседей перед углублением, находит кратчайшие пути |
+| DFS | "Сначала идти в глубину" | Обход, который идет по одному пути до конца, прежде чем возвращаться назад |
+| Message passing | "Узлы разговаривают с соседями" | Каждый узел агрегирует информацию от соседей; ядро GNN |
+| Спектральная кластеризация | "Кластеризация по собственным векторам" | Разбиение графа с помощью собственных векторов его лапласиана |
+| Связная компонента | "Отдельный кусок" | Максимальный подграф, в котором каждый узел достижим из любого другого |
 
-## Further Reading
+## Дополнительное чтение
 
-- **Kipf & Welling (2017)** -- "Semi-Supervised Classification with Graph Convolutional Networks." The paper that launched modern GNNs. Shows that spectral graph convolutions simplify to message passing.
-- **Spielman (2012)** -- "Spectral Graph Theory" lecture notes. The definitive introduction to Laplacians, spectral gaps, and graph partitioning.
-- **Hamilton (2020)** -- "Graph Representation Learning." Book covering GNNs from fundamentals to applications.
-- **Bronstein et al. (2021)** -- "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges." The unifying framework paper.
-- **Veličković et al. (2018)** -- "Graph Attention Networks." Extends message passing with attention mechanisms.
+- **Kipf & Welling (2017)** -- "Semi-Supervised Classification with Graph Convolutional Networks." Статья, запустившая современные GNN. Показывает, что спектральные graph convolutions упрощаются до message passing.
+- **Spielman (2012)** -- "Spectral Graph Theory" lecture notes. Классическое введение в лапласианы, спектральные зазоры и разбиение графов.
+- **Hamilton (2020)** -- "Graph Representation Learning." Книга о GNN от основ до применений.
+- **Bronstein et al. (2021)** -- "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges." Статья с объединяющей рамкой.
+- **Veličković et al. (2018)** -- "Graph Attention Networks." Расширяет message passing механизмами attention.

@@ -1,58 +1,58 @@
-# Build Your Own Mini Framework
+# Соберите собственный мини-фреймворк
 
-> You have built neurons, layers, networks, backprop, activations, loss functions, optimizers, regularization, initialization, and LR schedules. All as separate pieces. Now wire them together into a framework. Not PyTorch. Not TensorFlow. Yours.
+> Вы уже собрали нейроны, слои, сети, обратное распространение, активации, функции потерь, оптимизаторы, регуляризацию, инициализацию и расписания LR. Все как отдельные части. Теперь соедините их во фреймворк. Не PyTorch. Не TensorFlow. Ваш.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** All of Phase 03 (Lessons 01-09)
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** Python
+**Требования:** Вся Фаза 03 (уроки 01-09)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a complete deep learning framework (~500 lines) with Module, Linear, ReLU, Sigmoid, Dropout, BatchNorm, Sequential, loss functions, optimizers, and DataLoader
-- Explain the Module abstraction (forward, backward, parameters) and why train/eval mode toggling is necessary
-- Wire all components into a working training loop that trains a 4-layer network on circle classification
-- Map each component of your framework to its PyTorch equivalent (nn.Module, nn.Sequential, optim.Adam, DataLoader)
+- Построить полноценный фреймворк глубокого обучения (~500 строк) с Module, Linear, ReLU, Sigmoid, Dropout, BatchNorm, Sequential, функциями потерь, оптимизаторами и DataLoader
+- Объяснить абстракцию Module (forward, backward, parameters) и почему необходимо переключение режимов train/eval
+- Соединить все компоненты в рабочий цикл обучения, который обучает 4-слойную сеть на классификации окружностей
+- Сопоставить каждый компонент вашего фреймворка с его эквивалентом в PyTorch (nn.Module, nn.Sequential, optim.Adam, DataLoader)
 
-## The Problem
+## Проблема
 
-You have ten lessons of building blocks scattered across separate files. A `Value` class here, a training loop there, weight initialization in another file, learning rate schedules in yet another. To train a network, you copy-paste from five different lessons and wire them together by hand.
+У вас есть десять уроков со строительными блоками, разбросанными по отдельным файлам. Класс `Value` здесь, цикл обучения там, инициализация весов в другом файле, расписания скорости обучения еще в одном. Чтобы обучить сеть, вы копируете код из пяти разных уроков и вручную соединяете его.
 
-That is what frameworks solve. PyTorch gives you `nn.Module`, `nn.Sequential`, `optim.Adam`, `DataLoader`, and a training loop pattern that ties them together. TensorFlow gives you `keras.Layer`, `keras.Sequential`, `keras.optimizers.Adam`. These are not magic. They are organizational patterns that make it possible to define, train, and evaluate networks without reinventing the plumbing every time.
+Именно это решают фреймворки. PyTorch дает вам `nn.Module`, `nn.Sequential`, `optim.Adam`, `DataLoader` и шаблон цикла обучения, который связывает их вместе. TensorFlow дает вам `keras.Layer`, `keras.Sequential`, `keras.optimizers.Adam`. Это не магия. Это организационные паттерны, которые позволяют определять, обучать и оценивать сети без повторного изобретения всей обвязки каждый раз.
 
-You are going to build the same thing in ~500 lines of Python. No numpy. No external dependencies. A framework that can define any feedforward network, train it with SGD or Adam, batch the data, apply dropout and batch normalization, use any activation, and schedule the learning rate.
+Вы построите то же самое примерно в 500 строках Python. Без numpy. Без внешних зависимостей. Фреймворк, который может определять любую полносвязную сеть (feedforward network), обучать ее с SGD или Adam, разбивать данные на батчи, применять dropout и пакетную нормализацию (batch normalization), использовать любую активацию и задавать расписание скорости обучения.
 
-When you finish, you will understand exactly what happens when you write `model = nn.Sequential(...)` in PyTorch. You will understand why `model.train()` and `model.eval()` exist. You will understand why `optimizer.zero_grad()` is a separate call. You will understand all of it, because you built all of it.
+Когда вы закончите, вы будете точно понимать, что происходит, когда вы пишете `model = nn.Sequential(...)` в PyTorch. Вы поймете, почему существуют `model.train()` и `model.eval()`. Вы поймете, почему `optimizer.zero_grad()` является отдельным вызовом. Вы поймете все это, потому что построили все это сами.
 
-## The Concept
+## Концепция
 
-### The Module Abstraction
+### Абстракция Module
 
-Every layer in PyTorch inherits from `nn.Module`. A Module has three responsibilities:
+Каждый слой в PyTorch наследуется от `nn.Module`. Module имеет три обязанности:
 
-1. **forward()** -- compute the output given inputs
-2. **parameters()** -- return all trainable weights
-3. **backward()** -- compute gradients (handled by autograd in PyTorch, explicit in ours)
+1. **forward()** -- вычислить выход по входам
+2. **parameters()** -- вернуть все обучаемые веса
+3. **backward()** -- вычислить градиенты (в PyTorch этим занимается autograd, у нас это явно)
 
-A Linear layer is a Module. A ReLU activation is a Module. A dropout layer is a Module. A batch normalization layer is a Module. They all have the same interface.
+Слой Linear является Module. Активация ReLU является Module. Слой dropout является Module. Слой пакетной нормализации является Module. У всех них одинаковый интерфейс.
 
-### Sequential Container
+### Контейнер Sequential
 
-`nn.Sequential` chains Modules. Forward pass: feed data through Module 1, then Module 2, then Module 3. Backward pass: reverse the chain. The container itself is a Module -- it has forward(), parameters(), and backward(). This is the composite pattern: a sequence of Modules is itself a Module.
+`nn.Sequential` связывает Modules в цепочку. Прямой проход (forward pass): передать данные через Module 1, затем Module 2, затем Module 3. Обратный проход (backward pass): пройти цепочку в обратном порядке. Сам контейнер тоже является Module -- у него есть forward(), parameters() и backward(). Это паттерн компоновщик (composite pattern): последовательность Modules сама является Module.
 
-### Training vs Evaluation Mode
+### Режим обучения и режим оценки
 
-Dropout randomly zeroes neurons during training but passes everything through during evaluation. Batch normalization uses batch statistics during training but running averages during evaluation. The `train()` and `eval()` methods toggle this behavior. Every Module has a `training` flag.
+Dropout случайно обнуляет нейроны во время обучения, но пропускает все без изменений во время оценки. Пакетная нормализация использует статистики батча во время обучения, но скользящие средние во время оценки. Методы `train()` и `eval()` переключают это поведение. У каждого Module есть флаг `training`.
 
-### Optimizer
+### Оптимизатор
 
-The optimizer updates parameters using their gradients. SGD: `param -= lr * grad`. Adam: maintains momentum and variance estimates, then updates. The optimizer does not know about the network architecture -- it only sees a flat list of parameters and their gradients.
+Оптимизатор обновляет параметры с использованием их градиентов. SGD: `param -= lr * grad`. Adam: поддерживает оценки момента и дисперсии, затем обновляет параметры. Оптимизатор ничего не знает об архитектуре сети -- он видит только плоский список параметров и их градиентов.
 
 ### DataLoader
 
-Batching matters for two reasons. First, you cannot fit the entire dataset in memory for large problems. Second, mini-batch gradient descent provides noise that helps escape local minima. The DataLoader splits data into batches and optionally shuffles between epochs.
+Разбиение на батчи важно по двум причинам. Во-первых, для больших задач весь набор данных может не помещаться в память. Во-вторых, мини-батчевый градиентный спуск дает шум, который помогает выходить из локальных минимумов. DataLoader разбивает данные на батчи и при необходимости перемешивает их между эпохами.
 
-### Framework Architecture
+### Архитектура фреймворка
 
 ```mermaid
 graph TD
@@ -89,7 +89,7 @@ graph TD
     DataLoader --> |"feeds"| Sequential
 ```
 
-### Training Loop
+### Цикл обучения
 
 ```mermaid
 sequenceDiagram
@@ -110,7 +110,7 @@ sequenceDiagram
     end
 ```
 
-### Module Hierarchy
+### Иерархия Module
 
 ```mermaid
 classDiagram
@@ -147,11 +147,11 @@ classDiagram
     Sequential *-- Module
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Module Base Class
+### Шаг 1: базовый класс Module
 
-The abstract interface that every layer implements.
+Абстрактный интерфейс, который реализует каждый слой.
 
 ```python
 class Module:
@@ -174,9 +174,9 @@ class Module:
         self.training = False
 ```
 
-### Step 2: Linear Layer
+### Шаг 2: слой Linear
 
-The fundamental building block. Stores weights and biases, computes Wx + b forward, and weight/input gradients backward.
+Фундаментальный строительный блок. Хранит веса и смещения, вычисляет Wx + b в прямом проходе, а в обратном проходе вычисляет градиенты весов и входа.
 
 ```python
 import math
@@ -223,9 +223,9 @@ class Linear(Module):
         return params
 ```
 
-### Step 3: Activation Modules
+### Шаг 3: модули активации
 
-ReLU, Sigmoid, and Tanh as Modules. Each caches what it needs for the backward pass.
+ReLU, Sigmoid и Tanh как Modules. Каждый кэширует то, что нужно для обратного прохода.
 
 ```python
 class ReLU(Module):
@@ -270,9 +270,9 @@ class Tanh(Module):
         return [g * (1 - o * o) for g, o in zip(grad, self.output)]
 ```
 
-### Step 4: Dropout Module
+### Шаг 4: модуль Dropout
 
-Randomly zeroes elements during training. Scales remaining elements by 1/(1-p) so expected values stay the same. Does nothing during eval.
+Случайно обнуляет элементы во время обучения. Масштабирует оставшиеся элементы на 1/(1-p), чтобы ожидаемые значения оставались теми же. Ничего не делает в режиме eval.
 
 ```python
 class Dropout(Module):
@@ -293,9 +293,9 @@ class Dropout(Module):
         return [g * m for g, m in zip(grad, self.mask)]
 ```
 
-### Step 5: BatchNorm Module
+### Шаг 5: модуль BatchNorm
 
-Normalizes activations to zero mean and unit variance per feature across the batch. Maintains running statistics for eval mode.
+Нормализует активации до нулевого среднего и единичной дисперсии для каждого признака по батчу. Поддерживает скользящие статистики для режима eval.
 
 ```python
 class BatchNorm(Module):
@@ -373,9 +373,9 @@ class BatchNorm(Module):
         return params
 ```
 
-### Step 6: Sequential Container
+### Шаг 6: контейнер Sequential
 
-Chains modules. Forward goes left-to-right, backward goes right-to-left.
+Связывает модули в цепочку. Прямой проход идет слева направо, обратный проход -- справа налево.
 
 ```python
 class Sequential(Module):
@@ -410,9 +410,9 @@ class Sequential(Module):
             module.eval()
 ```
 
-### Step 7: Loss Functions
+### Шаг 7: функции потерь
 
-MSE and Binary Cross-Entropy. Each returns the loss value and provides a backward() that returns the gradient.
+MSE и бинарная кросс-энтропия (Binary Cross-Entropy). Каждая возвращает значение потерь и предоставляет backward(), который возвращает градиент.
 
 ```python
 class MSELoss:
@@ -451,9 +451,9 @@ class BCELoss:
         return grads
 ```
 
-### Step 8: SGD and Adam Optimizers
+### Шаг 8: оптимизаторы SGD и Adam
 
-Both take a parameter list and update weights using gradients.
+Оба принимают список параметров и обновляют веса с использованием градиентов.
 
 ```python
 class SGD:
@@ -516,9 +516,9 @@ class Adam:
                 grad_container[i] = 0.0
 ```
 
-### Step 9: DataLoader
+### Шаг 9: DataLoader
 
-Splits data into batches, optionally shuffles each epoch.
+Разбивает данные на батчи, при необходимости перемешивает каждую эпоху.
 
 ```python
 class DataLoader:
@@ -542,9 +542,9 @@ class DataLoader:
         return (len(self.data) + self.batch_size - 1) // self.batch_size
 ```
 
-### Step 10: Train a 4-Layer Network on Circle Classification
+### Шаг 10: обучите 4-слойную сеть на классификации окружностей
 
-Wire everything together. Define a model, pick a loss, pick an optimizer, run the training loop.
+Соедините все вместе. Определите модель, выберите функцию потерь, выберите оптимизатор и запустите цикл обучения.
 
 ```python
 def make_circle_data(n=500, seed=42):
@@ -627,9 +627,9 @@ def train():
     return model, test_accuracy
 ```
 
-## Use It
+## Используйте это
 
-Here is the PyTorch equivalent of what you just built:
+Вот эквивалент PyTorch того, что вы только что построили:
 
 ```python
 import torch
@@ -664,44 +664,44 @@ for epoch in range(100):
         test_predictions = model(test_inputs)
 ```
 
-The structure is identical. `Sequential`, `Linear`, `ReLU`, `Sigmoid`, `BCELoss`, `Adam`, `zero_grad`, `backward`, `step`, `train`, `eval`. Every concept maps one-to-one. The difference is that PyTorch handles autograd automatically (no need to implement backward() in each module), runs on GPU, and has been optimized for years. But the bones are the same.
+Структура идентична. `Sequential`, `Linear`, `ReLU`, `Sigmoid`, `BCELoss`, `Adam`, `zero_grad`, `backward`, `step`, `train`, `eval`. Каждая концепция сопоставляется один к одному. Разница в том, что PyTorch автоматически обрабатывает autograd (не нужно реализовывать backward() в каждом модуле), работает на GPU и оптимизировался годами. Но основа та же.
 
-Now when you see PyTorch code, you know exactly what is happening at every line. That understanding is the whole point.
+Теперь, когда вы видите код PyTorch, вы точно знаете, что происходит в каждой строке. В этом понимании и заключается весь смысл.
 
-## Ship It
+## Отправьте результат
 
-This lesson produces:
-- `outputs/prompt-framework-architect.md` -- a prompt for designing neural network architectures using framework abstractions
+Этот урок создает:
+- `outputs/prompt-framework-architect.md` -- промпт для проектирования архитектур нейронных сетей с использованием абстракций фреймворка
 
-## Exercises
+## Упражнения
 
-1. Add a `SoftmaxCrossEntropyLoss` class for multi-class classification. Softmax the predictions, compute cross-entropy loss, and handle the combined backward pass. Test it on a 3-class spiral dataset.
+1. Добавьте класс `SoftmaxCrossEntropyLoss` для многоклассовой классификации. Примените softmax к предсказаниям, вычислите кросс-энтропийную потерю и обработайте объединенный обратный проход. Проверьте его на 3-классовом наборе данных spiral.
 
-2. Implement learning rate scheduling in the optimizer: add a `set_lr()` method and wire in the cosine schedule from Lesson 09. Train the circle classifier with warmup + cosine and compare to constant LR.
+2. Реализуйте расписание скорости обучения в оптимизаторе: добавьте метод `set_lr()` и подключите косинусное расписание из урока 09. Обучите классификатор окружностей с warmup + cosine и сравните с постоянной LR.
 
-3. Add a `save()` and `load()` method to Sequential that serializes all weights to a JSON file and loads them back. Verify that a loaded model produces the same predictions as the original.
+3. Добавьте методы `save()` и `load()` в Sequential, которые сериализуют все веса в JSON-файл и загружают их обратно. Проверьте, что загруженная модель дает те же предсказания, что и исходная.
 
-4. Implement weight decay (L2 regularization) in the Adam optimizer. Add a `weight_decay` parameter that shrinks weights toward zero each step. Compare training with decay=0 vs decay=0.01.
+4. Реализуйте weight decay (L2-регуляризацию) в оптимизаторе Adam. Добавьте параметр `weight_decay`, который на каждом шаге сдвигает веса к нулю. Сравните обучение с decay=0 и decay=0.01.
 
-5. Replace the per-sample training loop with proper mini-batch gradient accumulation: accumulate gradients across all samples in a batch, then divide by batch size and take one optimizer step. Measure whether this changes convergence speed.
+5. Замените посэмпловый цикл обучения на правильное накопление градиентов по мини-батчу: накапливайте градиенты по всем примерам в батче, затем делите на размер батча и делайте один шаг оптимизатора. Измерьте, меняет ли это скорость сходимости.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Module | "A layer" | The base abstraction in a framework -- anything with forward(), backward(), and parameters() |
-| Sequential | "Stack layers in order" | A container that chains modules, applying them in sequence for forward and reverse for backward |
-| Forward pass | "Run the network" | Computing the output by passing input through each module in order |
-| Backward pass | "Compute gradients" | Propagating the loss gradient through each module in reverse to compute parameter gradients |
-| Parameters | "The trainable weights" | All values in the network that the optimizer can update -- weights and biases |
-| Optimizer | "The thing that updates weights" | An algorithm that uses gradients to update parameters, implementing SGD, Adam, or other rules |
-| DataLoader | "The thing that feeds data" | An iterator that splits a dataset into batches, optionally shuffling between epochs |
-| Training mode | "model.train()" | A flag that enables stochastic behavior like dropout and batch normalization with batch stats |
-| Evaluation mode | "model.eval()" | A flag that disables dropout and uses running statistics for batch normalization |
-| Zero grad | "Clear the gradients" | Resetting all parameter gradients to zero before computing the next batch's gradients |
+| Module | "Слой" | Базовая абстракция во фреймворке -- все, что имеет forward(), backward() и parameters() |
+| Sequential | "Сложить слои по порядку" | Контейнер, который связывает модули в цепочку, применяя их последовательно для прямого прохода и в обратном порядке для обратного |
+| Forward pass | "Запустить сеть" | Вычисление выхода путем передачи входа через каждый модуль по порядку |
+| Backward pass | "Вычислить градиенты" | Распространение градиента потерь через каждый модуль в обратном порядке для вычисления градиентов параметров |
+| Parameters | "Обучаемые веса" | Все значения в сети, которые оптимизатор может обновлять -- веса и смещения |
+| Optimizer | "То, что обновляет веса" | Алгоритм, который использует градиенты для обновления параметров, реализуя SGD, Adam или другие правила |
+| DataLoader | "То, что подает данные" | Итератор, который разбивает набор данных на батчи, при необходимости перемешивая их между эпохами |
+| Training mode | "model.train()" | Флаг, который включает стохастическое поведение, такое как dropout и пакетная нормализация со статистиками батча |
+| Evaluation mode | "model.eval()" | Флаг, который отключает dropout и использует скользящие статистики для пакетной нормализации |
+| Zero grad | "Очистить градиенты" | Сброс всех градиентов параметров в ноль перед вычислением градиентов следующего батча |
 
-## Further Reading
+## Дополнительное чтение
 
-- Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019) -- the paper describing PyTorch's design decisions
-- Chollet, "Deep Learning with Python, Second Edition" (2021) -- Chapter 3 covers Keras internals with the same module/layer abstraction
-- Johnson, "Tiny-DNN" (https://github.com/tiny-dnn/tiny-dnn) -- a header-only C++ deep learning framework for understanding framework internals
+- Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019) -- статья, описывающая проектные решения PyTorch
+- Chollet, "Deep Learning with Python, Second Edition" (2021) -- глава 3 рассматривает внутреннее устройство Keras с той же абстракцией module/layer
+- Johnson, "Tiny-DNN" (https://github.com/tiny-dnn/tiny-dnn) -- header-only C++ фреймворк глубокого обучения для понимания внутреннего устройства фреймворков

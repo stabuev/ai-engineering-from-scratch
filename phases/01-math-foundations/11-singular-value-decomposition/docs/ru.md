@@ -1,30 +1,30 @@
-# Singular Value Decomposition
+# Разложение по сингулярным значениям
 
-> SVD is the Swiss Army knife of linear algebra. Every matrix has one. Every data scientist needs one.
+> SVD — швейцарский нож линейной алгебры. Оно есть у каждой матрицы. Оно нужно каждому data scientist.
 
-**Type:** Build
-**Languages:** Python, Julia
-**Prerequisites:** Phase 1, Lessons 01 (Linear Algebra Intuition), 02 (Vectors & Matrices Operations), 03 (Matrix Transformations)
-**Time:** ~120 minutes
+**Тип:** Практика
+**Языки:** Python, Julia
+**Предварительные требования:** Phase 1, Lessons 01 (Linear Algebra Intuition), 02 (Vectors & Matrices Operations), 03 (Matrix Transformations)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement SVD via power iteration and explain the geometric meaning of U, Sigma, and V^T
-- Apply truncated SVD for image compression and measure the compression ratio vs reconstruction error
-- Compute the Moore-Penrose pseudoinverse via SVD to solve overdetermined least-squares systems
-- Connect SVD to PCA, recommendation systems (latent factors), and Latent Semantic Analysis in NLP
+- Реализовать SVD через power iteration и объяснить геометрический смысл U, Sigma и V^T
+- Применить truncated SVD для сжатия изображений и измерить соотношение степени сжатия и ошибки реконструкции
+- Вычислить псевдообратную матрицу Мура-Пенроуза через SVD для решения переопределенных задач least squares
+- Связать SVD с PCA, рекомендательными системами (latent factors) и Latent Semantic Analysis в NLP
 
-## The Problem
+## Проблема
 
-You have a 1000x2000 matrix. Maybe it is user-movie ratings. Maybe it is a document-term frequency table. Maybe it is the pixel values of an image. You need to compress it, denoise it, find hidden structure in it, or solve a least-squares system with it. Eigendecomposition only works on square matrices. Even then, it requires the matrix to have a full set of linearly independent eigenvectors.
+У вас есть матрица 1000x2000. Возможно, это оценки пользователей для фильмов. Возможно, это таблица частот документ-термин. Возможно, это значения пикселей изображения. Вам нужно сжать ее, удалить шум, найти скрытую структуру или решить с ней задачу least squares. Eigendecomposition работает только для квадратных матриц. И даже тогда оно требует, чтобы у матрицы был полный набор линейно независимых собственных векторов.
 
-SVD works on any matrix. Any shape. Any rank. No conditions. It decomposes the matrix into three factors that reveal the geometry of what the matrix does to space. It is the most general and most useful factorization in all of linear algebra.
+SVD работает с любой матрицей. Любой формы. Любого ранга. Без условий. Оно раскладывает матрицу на три множителя, которые раскрывают геометрию того, что матрица делает с пространством. Это самая общая и самая полезная факторизация во всей линейной алгебре.
 
-## The Concept
+## Концепция
 
-### What SVD does geometrically
+### Что SVD делает геометрически
 
-Every matrix, regardless of shape, performs three operations in sequence: rotate, scale, rotate. SVD makes this decomposition explicit.
+Любая матрица, независимо от формы, выполняет три операции подряд: поворот, масштабирование, поворот. SVD делает это разложение явным.
 
 ```
 A = U * Sigma * V^T
@@ -33,10 +33,10 @@ A = U * Sigma * V^T
      (any)    (rotate)  (scale)  (rotate)
 ```
 
-Given any matrix A, SVD factors it into:
-- V^T rotates vectors in the input space (n-dimensional)
-- Sigma scales along each axis (stretches or compresses)
-- U rotates the result into the output space (m-dimensional)
+Для любой матрицы A SVD раскладывает ее на:
+- V^T поворачивает векторы во входном пространстве (n-мерном)
+- Sigma масштабирует вдоль каждой оси (растягивает или сжимает)
+- U поворачивает результат в выходное пространство (m-мерное)
 
 ```mermaid
 graph LR
@@ -44,11 +44,11 @@ graph LR
     B -->|"U\n(rotate)"| C["Output space (m-dim)\nRotated to output\norientation"]
 ```
 
-Think of it this way. You hand SVD a matrix. It tells you: "This matrix takes a sphere of inputs, first rotates it by V^T, then stretches it into an ellipsoid by Sigma, then rotates the ellipsoid by U." The singular values are the lengths of the ellipsoid's axes.
+Думайте об этом так. Вы даете SVD матрицу. Оно говорит: "Эта матрица берет сферу входов, сначала поворачивает ее на V^T, затем растягивает в эллипсоид с помощью Sigma, затем поворачивает эллипсоид с помощью U." Сингулярные значения — это длины осей эллипсоида.
 
-### The full decomposition
+### Полное разложение
 
-For a matrix A with shape m x n:
+Для матрицы A формы m x n:
 
 ```
 A = U * Sigma * V^T
@@ -62,19 +62,19 @@ The singular values sigma_1 >= sigma_2 >= ... >= sigma_r > 0
 where r = rank(A)
 ```
 
-The columns of U are called left singular vectors. The columns of V are called right singular vectors. The diagonal entries of Sigma are called singular values. They are always non-negative and conventionally sorted in decreasing order.
+Столбцы U называются левыми сингулярными векторами. Столбцы V называются правыми сингулярными векторами. Диагональные элементы Sigma называются сингулярными значениями. Они всегда неотрицательны и обычно отсортированы по убыванию.
 
-### Left singular vectors, singular values, right singular vectors
+### Левые сингулярные векторы, сингулярные значения, правые сингулярные векторы
 
-Each component of the SVD has a distinct geometric meaning.
+У каждого компонента SVD есть отдельный геометрический смысл.
 
-**Right singular vectors (columns of V):** These form an orthonormal basis for the input space (R^n). They are the directions in input space that the matrix maps to orthogonal directions in output space. Think of them as the natural coordinate system for the domain.
+**Правые сингулярные векторы (столбцы V):** Они образуют ортонормированный базис входного пространства (R^n). Это направления во входном пространстве, которые матрица отображает в ортогональные направления в выходном пространстве. Думайте о них как о естественной системе координат для области определения.
 
-**Singular values (diagonal of Sigma):** These are the scaling factors. The i-th singular value tells you how much the matrix stretches vectors along the i-th right singular vector. A singular value of zero means the matrix crushes that direction entirely.
+**Сингулярные значения (диагональ Sigma):** Это коэффициенты масштабирования. i-е сингулярное значение говорит, насколько матрица растягивает векторы вдоль i-го правого сингулярного вектора. Нулевое сингулярное значение означает, что матрица полностью сминает это направление.
 
-**Left singular vectors (columns of U):** These form an orthonormal basis for the output space (R^m). The i-th left singular vector is the direction in output space where the i-th right singular vector lands (after scaling).
+**Левые сингулярные векторы (столбцы U):** Они образуют ортонормированный базис выходного пространства (R^m). i-й левый сингулярный вектор — это направление в выходном пространстве, куда попадает i-й правый сингулярный вектор (после масштабирования).
 
-The relationship between them:
+Связь между ними:
 
 ```
 A * v_i = sigma_i * u_i
@@ -83,11 +83,11 @@ The matrix A takes the i-th right singular vector v_i,
 scales it by sigma_i, and maps it to the i-th left singular vector u_i.
 ```
 
-This gives you a coordinate-by-coordinate picture of what any matrix does.
+Это дает покоординатную картину того, что делает любая матрица.
 
-### Outer product form
+### Форма через внешние произведения
 
-The SVD can be written as a sum of rank-1 matrices:
+SVD можно записать как сумму матриц ранга 1:
 
 ```
 A = sigma_1 * u_1 * v_1^T + sigma_2 * u_2 * v_2^T + ... + sigma_r * u_r * v_r^T
@@ -96,7 +96,7 @@ Each term sigma_i * u_i * v_i^T is a rank-1 matrix (an outer product).
 The full matrix is the sum of r such matrices, where r is the rank.
 ```
 
-This form is the foundation of low-rank approximation. Each term adds one layer of structure. The first term captures the single most important pattern. The second captures the next most important. And so on. Truncating this sum gives you the best possible approximation at any given rank.
+Эта форма лежит в основе низкоранговой аппроксимации. Каждый член добавляет один слой структуры. Первый член улавливает самый важный паттерн. Второй — следующий по важности. И так далее. Усечение этой суммы дает наилучшую возможную аппроксимацию для любого заданного ранга.
 
 ```
 Rank-1 approx:    A_1 = sigma_1 * u_1 * v_1^T
@@ -109,9 +109,9 @@ Rank-k approx:    A_k = sum of top k terms
                   (optimal by the Eckart-Young theorem)
 ```
 
-### Relationship to eigendecomposition
+### Связь с eigendecomposition
 
-SVD and eigendecomposition are deeply connected. The singular values and vectors of A come directly from the eigenvalues and eigenvectors of A^T A and A A^T.
+SVD и eigendecomposition глубоко связаны. Сингулярные значения и векторы A напрямую получаются из собственных значений и собственных векторов A^T A и A A^T.
 
 ```
 A^T A = V * Sigma^T * U^T * U * Sigma * V^T
@@ -133,14 +133,14 @@ So:
 - The eigenvalues of A A^T are also sigma_i^2
 ```
 
-This connection tells you three things:
-1. Singular values are always real and non-negative (they are square roots of eigenvalues of a positive semi-definite matrix).
-2. You could compute SVD via eigendecomposition of A^T A, but this squares the condition number and loses numerical precision. Dedicated SVD algorithms avoid this.
-3. When A is square and symmetric positive semi-definite, SVD and eigendecomposition are the same thing.
+Эта связь говорит о трех вещах:
+1. Сингулярные значения всегда вещественные и неотрицательные (это квадратные корни из собственных значений положительно полуопределенной матрицы).
+2. SVD можно вычислять через eigendecomposition матрицы A^T A, но это возводит condition number в квадрат и теряет численную точность. Специализированные алгоритмы SVD избегают этого.
+3. Когда A квадратная и симметричная положительно полуопределенная, SVD и eigendecomposition совпадают.
 
-### Truncated SVD: low-rank approximation
+### Truncated SVD: низкоранговая аппроксимация
 
-The Eckart-Young-Mirsky theorem states that the best rank-k approximation to A (in both Frobenius and spectral norm) is obtained by keeping only the top k singular values and their corresponding vectors:
+Теорема Эккарта-Янга-Мирского утверждает, что лучшая аппроксимация A ранга k (и в норме Фробениуса, и в спектральной норме) получается, если оставить только верхние k сингулярных значений и соответствующие им векторы:
 
 ```
 A_k = U_k * Sigma_k * V_k^T
@@ -154,26 +154,26 @@ Approximation error = sigma_{k+1}  (in spectral norm)
                     = sqrt(sigma_{k+1}^2 + ... + sigma_r^2)  (in Frobenius norm)
 ```
 
-This is not just "a good" approximation. It is provably the best possible approximation of rank k. No other rank-k matrix is closer to A.
+Это не просто "хорошая" аппроксимация. Это доказуемо лучшая возможная аппроксимация ранга k. Никакая другая матрица ранга k не ближе к A.
 
-| Component | Relative magnitude | Kept in rank-3 approx? |
+| Компонент | Относительная величина | Оставлен в аппроксимации ранга 3? |
 |-----------|-------------------|------------------------|
-| sigma_1 | Largest | Yes |
-| sigma_2 | Large | Yes |
-| sigma_3 | Medium-large | Yes |
-| sigma_4 | Medium | No (error) |
-| sigma_5 | Medium-small | No (error) |
-| sigma_6 | Small | No (error) |
-| sigma_7 | Very small | No (error) |
-| sigma_8 | Tiny | No (error) |
+| sigma_1 | Наибольшая | Да |
+| sigma_2 | Большая | Да |
+| sigma_3 | Средне-большая | Да |
+| sigma_4 | Средняя | Нет (ошибка) |
+| sigma_5 | Средне-малая | Нет (ошибка) |
+| sigma_6 | Малая | Нет (ошибка) |
+| sigma_7 | Очень малая | Нет (ошибка) |
+| sigma_8 | Крошечная | Нет (ошибка) |
 
-Keep top 3: A_3 captures the three largest singular values. Error = remaining values (sigma_4 through sigma_8).
+Оставляем top 3: A_3 улавливает три крупнейших сингулярных значения. Ошибка = оставшиеся значения (от sigma_4 до sigma_8).
 
-If singular values decay fast, a small k captures most of the matrix. If they decay slowly, the matrix has no low-rank structure.
+Если сингулярные значения быстро убывают, малое k улавливает большую часть матрицы. Если они убывают медленно, у матрицы нет низкоранговой структуры.
 
-### Image compression with SVD
+### Сжатие изображений с помощью SVD
 
-A grayscale image is a matrix of pixel intensities. An 800x600 image has 480,000 values. SVD lets you approximate it with far fewer.
+Изображение в оттенках серого — это матрица интенсивностей пикселей. Изображение 800x600 содержит 480,000 значений. SVD позволяет аппроксимировать его гораздо меньшим числом значений.
 
 ```
 Original image: 800 x 600 = 480,000 values
@@ -192,11 +192,11 @@ SVD with rank k:
   but visual quality degrades.
 ```
 
-The key insight: natural images have rapidly decaying singular values. The first few singular values capture the broad structure (shapes, gradients). The later ones capture fine detail and noise. Truncating at rank 50 often produces an image that looks nearly identical to the original while using 85% less storage.
+Ключевая идея: у естественных изображений сингулярные значения быстро убывают. Первые несколько сингулярных значений улавливают крупную структуру (формы, градиенты). Более поздние улавливают мелкие детали и шум. Усечение на ранге 50 часто дает изображение, которое выглядит почти идентичным оригиналу, используя на 85% меньше памяти.
 
-### SVD for recommendation systems
+### SVD для рекомендательных систем
 
-The Netflix Prize made this famous. You have a user-movie ratings matrix where most entries are missing.
+Netflix Prize сделал эту идею знаменитой. У вас есть матрица пользователь-фильм с оценками, где большинство элементов отсутствует.
 
 ```
              Movie1  Movie2  Movie3  Movie4  Movie5
@@ -208,20 +208,20 @@ The Netflix Prize made this famous. You have a user-movie ratings matrix where m
   ? = unknown rating
 ```
 
-The idea: this ratings matrix has low rank. Users do not have completely independent tastes. There are a handful of latent factors (action vs. drama, old vs. new, cerebral vs. visceral) that explain most preferences.
+Идея: эта матрица оценок имеет низкий ранг. Вкусы пользователей не полностью независимы. Есть несколько latent factors (боевик против драмы, старое против нового, интеллектуальное против visceral), которые объясняют большинство предпочтений.
 
-SVD on the (filled-in) ratings matrix decomposes it into:
-- U: user profiles in latent factor space
-- Sigma: importance of each latent factor
-- V^T: movie profiles in latent factor space
+SVD на (заполненной) матрице оценок раскладывает ее на:
+- U: профили пользователей в пространстве latent factors
+- Sigma: важность каждого latent factor
+- V^T: профили фильмов в пространстве latent factors
 
-A user's predicted rating for a movie is the dot product of their user profile with the movie's profile (weighted by singular values). The low-rank approximation fills in the missing entries.
+Предсказанная оценка пользователя для фильма — это dot product его пользовательского профиля с профилем фильма (взвешенный сингулярными значениями). Низкоранговая аппроксимация заполняет отсутствующие элементы.
 
-In practice, you use variants like Simon Funk's incremental SVD or ALS (alternating least squares) that handle missing data directly. But the core idea is the same: latent factor decomposition via SVD.
+На практике используют варианты вроде incremental SVD Саймона Фанка или ALS (alternating least squares), которые напрямую работают с пропущенными данными. Но основная идея та же: разложение по latent factors через SVD.
 
-### SVD in NLP: Latent Semantic Analysis
+### SVD в NLP: Latent Semantic Analysis
 
-Latent Semantic Analysis (LSA), also called Latent Semantic Indexing (LSI), applies SVD to a term-document matrix.
+Latent Semantic Analysis (LSA), также называемый Latent Semantic Indexing (LSI), применяет SVD к матрице термин-документ.
 
 ```
              Doc1   Doc2   Doc3   Doc4
@@ -243,33 +243,33 @@ After SVD with rank k=2:
   Doc1 and Doc3 cluster if they share similar topics.
 ```
 
-LSA was one of the first successful methods for capturing semantic similarity from raw text. It works because synonymous terms tend to appear in similar documents, so SVD groups them into the same latent dimensions. Modern word embeddings (Word2Vec, GloVe) can be seen as descendants of this idea.
+LSA был одним из первых успешных методов для извлечения семантической близости из сырого текста. Он работает потому, что синонимичные термины обычно появляются в похожих документах, поэтому SVD группирует их в одни и те же скрытые измерения. Современные word embeddings (Word2Vec, GloVe) можно рассматривать как потомков этой идеи.
 
-### SVD for noise reduction
+### SVD для удаления шума
 
-Noisy data has signal concentrated in the top singular values and noise spread across all singular values. Truncating removes the noise floor.
+В зашумленных данных сигнал сосредоточен в верхних сингулярных значениях, а шум размазан по всем сингулярным значениям. Усечение удаляет шумовой уровень.
 
-**Clean signal singular values:**
+**Сингулярные значения чистого сигнала:**
 
-| Component | Magnitude | Type |
+| Компонент | Величина | Тип |
 |-----------|-----------|------|
-| sigma_1 | Very large | Signal |
-| sigma_2 | Large | Signal |
-| sigma_3 | Medium | Signal |
-| sigma_4 | Near zero | Negligible |
-| sigma_5 | Near zero | Negligible |
+| sigma_1 | Очень большая | Сигнал |
+| sigma_2 | Большая | Сигнал |
+| sigma_3 | Средняя | Сигнал |
+| sigma_4 | Близка к нулю | Пренебрежимо мала |
+| sigma_5 | Близка к нулю | Пренебрежимо мала |
 
-**Noisy signal singular values (noise adds to all):**
+**Сингулярные значения зашумленного сигнала (шум добавляется ко всем):**
 
-| Component | Magnitude | Type |
+| Компонент | Величина | Тип |
 |-----------|-----------|------|
-| sigma_1 | Very large | Signal |
-| sigma_2 | Large | Signal |
-| sigma_3 | Medium | Signal |
-| sigma_4 | Small | Noise |
-| sigma_5 | Small | Noise |
-| sigma_6 | Small | Noise |
-| sigma_7 | Small | Noise |
+| sigma_1 | Очень большая | Сигнал |
+| sigma_2 | Большая | Сигнал |
+| sigma_3 | Средняя | Сигнал |
+| sigma_4 | Малая | Шум |
+| sigma_5 | Малая | Шум |
+| sigma_6 | Малая | Шум |
+| sigma_7 | Малая | Шум |
 
 ```mermaid
 graph TD
@@ -279,11 +279,11 @@ graph TD
     C --> E["Reconstruct with A_k to get denoised version"]
 ```
 
-This is used in signal processing, scientific measurement, and data cleaning. Any time you have a matrix corrupted by additive noise, truncated SVD is a principled way to separate signal from noise.
+Это используется в обработке сигналов, научных измерениях и очистке данных. Каждый раз, когда у вас есть матрица, испорченная аддитивным шумом, truncated SVD дает принципиальный способ отделить сигнал от шума.
 
-### Pseudoinverse via SVD
+### Псевдообратная матрица через SVD
 
-The Moore-Penrose pseudoinverse A+ generalizes matrix inversion to non-square and singular matrices. SVD makes computing it trivial.
+Псевдообратная матрица Мура-Пенроуза A+ обобщает обращение матриц на неквадратные и сингулярные матрицы. SVD делает ее вычисление тривиальным.
 
 ```
 If A = U * Sigma * V^T, then:
@@ -299,7 +299,7 @@ For A (m x n):      A+ is (n x m)
 For Sigma (m x n):  Sigma+ is (n x m)
 ```
 
-The pseudoinverse solves least-squares problems. If Ax = b has no exact solution (overdetermined system), then x = A+ b is the least-squares solution (minimizes ||Ax - b||).
+Псевдообратная матрица решает задачи least squares. Если Ax = b не имеет точного решения (переопределенная система), то x = A+ b — решение least squares (минимизирует ||Ax - b||).
 
 ```
 Overdetermined system (more equations than unknowns):
@@ -315,9 +315,9 @@ Overdetermined system (more equations than unknowns):
   but numerically more stable.
 ```
 
-### Numerical stability advantages
+### Преимущества численной устойчивости
 
-Computing eigendecomposition of A^T A squares the singular values (eigenvalues of A^T A are sigma_i^2). This squares the condition number, amplifying numerical errors.
+Вычисление eigendecomposition для A^T A возводит сингулярные значения в квадрат (собственные значения A^T A равны sigma_i^2). Это возводит condition number в квадрат и усиливает численные ошибки.
 
 ```
 Example:
@@ -332,11 +332,11 @@ Example:
                            (6 extra digits of precision lost)
 ```
 
-Modern SVD algorithms (Golub-Kahan bidiagonalization) work directly on A, never forming A^T A. This is why you should always prefer `np.linalg.svd(A)` over `np.linalg.eig(A.T @ A)`.
+Современные алгоритмы SVD (бидиагонализация Голуба-Кахана) работают напрямую с A, никогда не формируя A^T A. Поэтому всегда стоит предпочитать `np.linalg.svd(A)` вместо `np.linalg.eig(A.T @ A)`.
 
-### Connection to PCA
+### Связь с PCA
 
-PCA IS SVD on centered data. This is not an analogy. It is literally the same computation.
+PCA — это SVD на центрированных данных. Это не аналогия. Это буквально то же вычисление.
 
 ```
 Given data matrix X (n_samples x n_features), centered (mean subtracted):
@@ -358,13 +358,13 @@ In sklearn, PCA is implemented using SVD, not eigendecomposition.
 It is faster and more numerically stable.
 ```
 
-This means everything you learned about dimensionality reduction in Lesson 10 is SVD under the hood. PCA is the most common application of SVD in machine learning.
+Это означает, что все, что вы изучили о снижении размерности в Lesson 10, под капотом является SVD. PCA — самое распространенное применение SVD в машинном обучении.
 
-## Build It
+## Реализуйте
 
-### Step 1: SVD from scratch using power iteration
+### Шаг 1: SVD с нуля через power iteration
 
-The idea: to find the largest singular value and its vectors, use power iteration on A^T A (or A A^T). Then deflate the matrix and repeat for the next singular value.
+Идея: чтобы найти крупнейшее сингулярное значение и его векторы, используйте power iteration на A^T A (или A A^T). Затем дефлируйте матрицу и повторяйте для следующего сингулярного значения.
 
 ```python
 import numpy as np
@@ -415,7 +415,7 @@ def svd_from_scratch(A, k=None):
     return U, S, V
 ```
 
-### Step 2: Test and compare with NumPy
+### Шаг 2: Тестирование и сравнение с NumPy
 
 ```python
 np.random.seed(42)
@@ -431,7 +431,7 @@ A_reconstructed = U_ours @ np.diag(S_ours) @ V_ours.T
 print(f"Reconstruction error: {np.linalg.norm(A - A_reconstructed):.8f}")
 ```
 
-### Step 3: Image compression demo
+### Шаг 3: Demo сжатия изображений
 
 ```python
 def compress_image_svd(image_matrix, k):
@@ -452,7 +452,7 @@ for k in [1, 5, 10, 20, 50]:
     print(f"k={k:>3d}  error={error:.4f}  storage={ratio:.1%}")
 ```
 
-### Step 4: Noise reduction
+### Шаг 4: Удаление шума
 
 ```python
 np.random.seed(42)
@@ -469,7 +469,7 @@ print(f"Denoised error: {np.linalg.norm(denoised - clean):.4f}")
 print(f"Improvement:    {(1 - np.linalg.norm(denoised - clean) / np.linalg.norm(noisy - clean)):.1%}")
 ```
 
-### Step 5: Pseudoinverse
+### Шаг 5: Псевдообратная матрица
 
 ```python
 A = np.array([[1, 1], [2, 1], [3, 1]], dtype=float)
@@ -488,59 +488,59 @@ print(f"np.linalg.lstsq solution:   {x_lstsq}")
 print(f"np.linalg.pinv solution:    {x_pinv}")
 ```
 
-## Use It
+## Используйте
 
-Full working demos are in `code/svd.py`. Run it to see SVD applied to image compression, recommendation systems, latent semantic analysis, and noise reduction.
+Полные рабочие демо находятся в `code/svd.py`. Запустите его, чтобы увидеть применение SVD к сжатию изображений, рекомендательным системам, latent semantic analysis и удалению шума.
 
 ```bash
 python svd.py
 ```
 
-The Julia version in `code/svd.jl` demonstrates the same concepts using Julia's native `svd()` function and `LinearAlgebra` package.
+Версия на Julia в `code/svd.jl` демонстрирует те же концепции с использованием нативной функции Julia `svd()` и пакета `LinearAlgebra`.
 
 ```bash
 julia svd.jl
 ```
 
-## Ship It
+## Итоговые артефакты
 
-This lesson produces:
-- `outputs/skill-svd.md` - a skill for knowing when and how to apply SVD in real projects
+Этот урок создает:
+- `outputs/skill-svd.md` — skill для понимания, когда и как применять SVD в реальных проектах
 
-## Exercises
+## Упражнения
 
-1. Implement the full SVD from scratch without using power iteration. Instead, compute the eigendecomposition of A^T A to get V and the singular values, then compute U = A V Sigma^{-1}. Compare numerical accuracy with your power iteration version and with NumPy.
+1. Реализуйте полное SVD с нуля без power iteration. Вместо этого вычислите eigendecomposition A^T A, чтобы получить V и сингулярные значения, затем вычислите U = A V Sigma^{-1}. Сравните численную точность с вашей версией на power iteration и с NumPy.
 
-2. Load a real grayscale image (or convert one to grayscale). Compress it at ranks 1, 5, 10, 25, 50, 100. For each rank, compute the compression ratio and the relative error. Find the rank where the image becomes visually acceptable.
+2. Загрузите реальное изображение в оттенках серого (или преобразуйте изображение в grayscale). Сожмите его на рангах 1, 5, 10, 25, 50, 100. Для каждого ранга вычислите степень сжатия и относительную ошибку. Найдите ранг, на котором изображение становится визуально приемлемым.
 
-3. Build a tiny recommendation system. Create a 10x8 user-movie ratings matrix with some known entries. Fill missing entries with row means. Compute SVD and reconstruct a rank-3 approximation. Use the reconstructed matrix to predict the missing ratings. Verify that the predictions are reasonable.
+3. Постройте маленькую рекомендательную систему. Создайте матрицу оценок пользователь-фильм размером 10x8 с некоторыми известными элементами. Заполните пропуски средними по строкам. Вычислите SVD и восстановите аппроксимацию ранга 3. Используйте восстановленную матрицу, чтобы предсказать отсутствующие оценки. Проверьте, что предсказания разумны.
 
-4. Create a 100x50 document-term matrix with 3 synthetic topics. Each topic has 5 associated terms. Add noise. Apply SVD and verify that the top 3 singular values are much larger than the rest. Project documents into the 3D latent space and check that documents from the same topic cluster together.
+4. Создайте матрицу документ-термин размером 100x50 с 3 синтетическими темами. У каждой темы 5 связанных терминов. Добавьте шум. Примените SVD и проверьте, что верхние 3 сингулярных значения намного больше остальных. Спроецируйте документы в 3D latent space и проверьте, что документы одной темы кластеризуются вместе.
 
-5. Generate a clean low-rank matrix (rank 3, size 50x40) and add Gaussian noise at different levels (sigma = 0.1, 0.5, 1.0, 2.0). For each noise level, find the optimal truncation rank by sweeping k from 1 to 40 and measuring reconstruction error against the clean matrix. Plot how the optimal k changes with noise level.
+5. Сгенерируйте чистую низкоранговую матрицу (ранг 3, размер 50x40) и добавьте гауссов шум разных уровней (sigma = 0.1, 0.5, 1.0, 2.0). Для каждого уровня шума найдите оптимальный ранг усечения, перебирая k от 1 до 40 и измеряя ошибку реконструкции относительно чистой матрицы. Постройте график того, как оптимальное k меняется с уровнем шума.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| SVD | "Factor any matrix" | Decompose A into U Sigma V^T where U and V are orthogonal and Sigma is diagonal with non-negative entries. Works for any matrix of any shape. |
-| Singular value | "How important this component is" | The i-th diagonal entry of Sigma. Measures how much the matrix stretches along the i-th principal direction. Always non-negative, sorted in decreasing order. |
-| Left singular vector | "Output direction" | A column of U. The direction in output space that the i-th right singular vector maps to (after scaling by sigma_i). |
-| Right singular vector | "Input direction" | A column of V. The direction in input space that the matrix maps to the i-th left singular vector (after scaling by sigma_i). |
-| Truncated SVD | "Low-rank approximation" | Keep only the top k singular values and their vectors. Produces the provably best rank-k approximation to the original matrix (Eckart-Young theorem). |
-| Rank | "True dimensionality" | The number of non-zero singular values. Tells you how many independent directions the matrix actually uses. |
-| Pseudoinverse | "Generalized inverse" | V Sigma+ U^T. Inverts non-zero singular values, leaves zeros as zeros. Solves least-squares problems for non-square or singular matrices. |
-| Condition number | "How sensitive to errors" | sigma_max / sigma_min. A large condition number means small input changes cause large output changes. SVD reveals this directly. |
-| Latent factor | "Hidden variable" | A dimension in the low-rank space discovered by SVD. In recommendations, a latent factor might correspond to genre preference. In NLP, it might correspond to a topic. |
-| Frobenius norm | "Total matrix size" | Square root of the sum of squared entries. Equals the square root of the sum of squared singular values. Used to measure approximation error. |
-| Eckart-Young theorem | "SVD gives the best compression" | For any target rank k, the truncated SVD minimizes the approximation error over all possible rank-k matrices. |
-| Power iteration | "Find the biggest eigenvector" | Repeatedly multiply a random vector by the matrix and normalize. Converges to the eigenvector with the largest eigenvalue. The building block of many SVD algorithms. |
+| SVD | "Разложить любую матрицу" | Разложить A на U Sigma V^T, где U и V ортогональны, а Sigma диагональна с неотрицательными элементами. Работает для любой матрицы любой формы. |
+| Singular value | "Насколько важен этот компонент" | i-й диагональный элемент Sigma. Измеряет, насколько матрица растягивает вдоль i-го главного направления. Всегда неотрицателен, отсортирован по убыванию. |
+| Left singular vector | "Выходное направление" | Столбец U. Направление в выходном пространстве, в которое отображается i-й правый сингулярный вектор (после масштабирования на sigma_i). |
+| Right singular vector | "Входное направление" | Столбец V. Направление во входном пространстве, которое матрица отображает в i-й левый сингулярный вектор (после масштабирования на sigma_i). |
+| Truncated SVD | "Низкоранговая аппроксимация" | Оставить только верхние k сингулярных значений и их векторы. Дает доказуемо лучшую аппроксимацию исходной матрицы ранга k (теорема Эккарта-Янга). |
+| Rank | "Истинная размерность" | Число ненулевых сингулярных значений. Показывает, сколько независимых направлений матрица реально использует. |
+| Pseudoinverse | "Обобщенная обратная" | V Sigma+ U^T. Инвертирует ненулевые сингулярные значения, оставляет нули нулями. Решает задачи least squares для неквадратных или сингулярных матриц. |
+| Condition number | "Насколько чувствительно к ошибкам" | sigma_max / sigma_min. Большой condition number означает, что малые изменения входа вызывают большие изменения выхода. SVD показывает это напрямую. |
+| Latent factor | "Скрытая переменная" | Измерение в низкоранговом пространстве, найденное SVD. В рекомендациях latent factor может соответствовать жанровому предпочтению. В NLP — теме. |
+| Frobenius norm | "Общий размер матрицы" | Квадратный корень из суммы квадратов элементов. Равна квадратному корню из суммы квадратов сингулярных значений. Используется для измерения ошибки аппроксимации. |
+| Eckart-Young theorem | "SVD дает лучшее сжатие" | Для любого целевого ранга k truncated SVD минимизирует ошибку аппроксимации среди всех возможных матриц ранга k. |
+| Power iteration | "Найти крупнейший собственный вектор" | Многократно умножать случайный вектор на матрицу и нормировать. Сходится к собственному вектору с крупнейшим собственным значением. Строительный блок многих алгоритмов SVD. |
 
-## Further Reading
+## Дополнительные материалы
 
-- [Gilbert Strang: Linear Algebra and Its Applications, Chapter 7](https://math.mit.edu/~gs/linearalgebra/) - thorough treatment of SVD with applications
-- [3Blue1Brown: But what is the SVD?](https://www.youtube.com/watch?v=vSczTbgc8Rc) - geometric intuition for SVD
-- [We Recommend a Singular Value Decomposition](https://www.ams.org/publicoutreach/feature-column/fcarc-svd) - accessible overview from the American Mathematical Society
-- [Netflix Prize and Matrix Factorization](https://sifter.org/~simon/journal/20061211.html) - Simon Funk's original blog post on SVD for recommendations
-- [Latent Semantic Analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis) - the original NLP application of SVD
-- [Numerical Linear Algebra by Trefethen and Bau](https://people.maths.ox.ac.uk/trefethen/text.html) - the gold standard for understanding SVD algorithms and their numerical properties
+- [Gilbert Strang: Linear Algebra and Its Applications, Chapter 7](https://math.mit.edu/~gs/linearalgebra/) - подробное изложение SVD с приложениями
+- [3Blue1Brown: But what is the SVD?](https://www.youtube.com/watch?v=vSczTbgc8Rc) - геометрическая интуиция для SVD
+- [We Recommend a Singular Value Decomposition](https://www.ams.org/publicoutreach/feature-column/fcarc-svd) - доступный обзор от American Mathematical Society
+- [Netflix Prize and Matrix Factorization](https://sifter.org/~simon/journal/20061211.html) - оригинальный блог-пост Саймона Фанка об SVD для рекомендаций
+- [Latent Semantic Analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis) - исходное NLP-приложение SVD
+- [Numerical Linear Algebra by Trefethen and Bau](https://people.maths.ox.ac.uk/trefethen/text.html) - золотой стандарт для понимания алгоритмов SVD и их численных свойств

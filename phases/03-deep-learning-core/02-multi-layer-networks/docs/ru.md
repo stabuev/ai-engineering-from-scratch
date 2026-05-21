@@ -1,40 +1,40 @@
-# Multi-Layer Networks and Forward Pass
+# Многослойные сети и прямой проход
 
-> One neuron draws a line. Stack them, and you can draw anything.
+> Один нейрон рисует линию. Сложите их в стек, и вы сможете нарисовать что угодно.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 01 (Math Foundations), Lesson 03.01 (The Perceptron)
-**Time:** ~90 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 01 (Math Foundations), Lesson 03.01 (The Perceptron)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a multi-layer network from scratch with Layer and Network classes that perform a complete forward pass
-- Trace matrix dimensions through each layer of a network and identify shape mismatches
-- Explain how stacking nonlinear activations enables a network to learn curved decision boundaries
-- Solve the XOR problem using a 2-2-1 architecture with hand-tuned sigmoid weights
+- Построить многослойную сеть (multi-layer network) с нуля с классами Layer и Network, которые выполняют полный прямой проход (forward pass)
+- Прослеживать размерности матриц через каждый слой сети и находить несовпадения форм (shape mismatches)
+- Объяснить, как стек нелинейных активаций позволяет сети учить криволинейные границы решений
+- Решить задачу XOR с архитектурой 2-2-1 и вручную подобранными весами sigmoid
 
-## The Problem
+## Проблема
 
-A single neuron is a line drawer. That's it. One straight line through your data. Every real problem in AI -- image recognition, language understanding, playing Go -- requires curves. Stacking neurons into layers is how you get curves.
+Один нейрон -- это рисователь линий. И все. Одна прямая линия через ваши данные. Любая реальная задача в AI -- распознавание изображений, понимание языка, игра в Go -- требует кривых. Объединение нейронов в слои -- способ получить кривые.
 
-In 1969, Minsky and Papert proved this limitation was fatal: a single-layer network cannot learn XOR. Not "struggles to learn" -- mathematically cannot. The XOR truth table places [0,1] and [1,0] on one side, [0,0] and [1,1] on the other. No single line separates them.
+В 1969 году Minsky и Papert доказали, что это ограничение фатально: однослойная сеть не может выучить XOR. Не "ей трудно выучить" -- математически не может. Таблица истинности XOR помещает [0,1] и [1,0] на одну сторону, а [0,0] и [1,1] -- на другую. Ни одна прямая не разделяет их.
 
-This killed neural network funding for over a decade. The fix was obvious in hindsight: stop using one layer. Stack neurons into layers. Let the first layer carve the input space into new features, and let the second layer combine those features into decisions no single line could make.
+Это убило финансирование нейронных сетей больше чем на десятилетие. В ретроспективе исправление было очевидным: перестать использовать один слой. Складывать нейроны в слои. Пусть первый слой вырезает из входного пространства новые признаки, а второй слой объединяет эти признаки в решения, которые не смогла бы принять ни одна отдельная линия.
 
-That stack is the multi-layer network. It is the foundation of every deep learning model in production today. The forward pass -- data flowing from input through hidden layers to output -- is the first thing you need to build before anything else works.
+Этот стек и есть многослойная сеть (multi-layer network). Это основа каждой модели глубокого обучения (deep learning), которая сегодня работает в продакшене. Прямой проход (forward pass) -- поток данных от входа через скрытые слои к выходу -- это первое, что нужно построить, прежде чем заработает что-либо еще.
 
-## The Concept
+## Концепция
 
-### Layers: Input, Hidden, Output
+### Слои: входной, скрытый, выходной
 
-A multi-layer network has three types of layers:
+В многослойной сети есть три типа слоев:
 
-**Input layer** -- not really a layer. It holds your raw data. Two features means two input nodes. No computation happens here.
+**Входной слой (input layer)** -- на самом деле не совсем слой. Он хранит сырые данные. Два признака означают два входных узла. Здесь не происходит вычислений.
 
-**Hidden layers** -- where the work happens. Each neuron takes every output from the previous layer, applies weights and a bias, then passes the result through an activation function. "Hidden" because you never see these values directly in the training data.
+**Скрытые слои (hidden layers)** -- место, где происходит работа. Каждый нейрон берет каждый выход предыдущего слоя, применяет веса и смещение (bias), а затем пропускает результат через функцию активации (activation function). "Скрытые", потому что вы никогда не видите эти значения напрямую в обучающих данных.
 
-**Output layer** -- the final answer. For binary classification, one neuron with sigmoid. For multi-class, one neuron per class.
+**Выходной слой (output layer)** -- финальный ответ. Для бинарной классификации -- один нейрон с sigmoid. Для многоклассовой -- по одному нейрону на класс.
 
 ```mermaid
 graph LR
@@ -61,29 +61,29 @@ graph LR
     h3 --> y
 ```
 
-This is a 2-3-1 network. Two inputs, three hidden neurons, one output. Every connection carries a weight. Every neuron (except input) carries a bias.
+Это сеть 2-3-1. Два входа, три скрытых нейрона, один выход. Каждое соединение несет вес. Каждый нейрон (кроме входного) несет смещение (bias).
 
-Each layer produces a vector of numbers called a hidden state. For text, hidden states increase dimensionality -- encoding a word as 768 numbers to capture semantic meaning. For images, they reduce dimensionality -- compressing millions of pixels into a manageable representation. The hidden state is where the learning lives.
+Каждый слой производит вектор чисел, который называется скрытым состоянием (hidden state). Для текста скрытые состояния увеличивают размерность -- кодируют слово как 768 чисел, чтобы захватить семантический смысл. Для изображений они уменьшают размерность -- сжимают миллионы пикселей в управляемое представление. Скрытое состояние -- место, где живет обучение.
 
-### Neurons and Activations
+### Нейроны и активации
 
-Each neuron does three things:
+Каждый нейрон делает три вещи:
 
-1. Multiply every input by its corresponding weight
-2. Sum all the products and add a bias
-3. Pass the sum through an activation function
+1. Умножает каждый вход на соответствующий вес
+2. Складывает все произведения и добавляет смещение (bias)
+3. Пропускает сумму через функцию активации (activation function)
 
-For now, the activation is sigmoid:
+Пока активация -- это sigmoid:
 
 ```
 sigmoid(z) = 1 / (1 + e^(-z))
 ```
 
-Sigmoid squashes any number into the range (0, 1). Large positive inputs push toward 1. Large negative inputs push toward 0. Zero maps to 0.5. This smooth curve is what makes learning possible -- unlike the perceptron's hard step, sigmoid has a gradient everywhere.
+Sigmoid сжимает любое число в диапазон (0, 1). Большие положительные входы тянут значение к 1. Большие отрицательные входы тянут к 0. Ноль отображается в 0.5. Эта гладкая кривая делает обучение возможным -- в отличие от жесткой ступеньки перцептрона, у sigmoid везде есть градиент.
 
-### Forward Pass: How Data Flows
+### Прямой проход: как текут данные
 
-The forward pass pushes input data through the network, layer by layer, until it reaches the output. No learning happens during the forward pass. It is pure computation: multiply, add, activate, repeat.
+Прямой проход (forward pass) проталкивает входные данные через сеть, слой за слоем, пока они не достигнут выхода. Во время прямого прохода обучение не происходит. Это чистое вычисление: умножить, сложить, активировать, повторить.
 
 ```mermaid
 graph TD
@@ -97,36 +97,36 @@ graph TD
     AO --> Y["Output: y"]
 ```
 
-At each layer, three operations happen in sequence:
+На каждом слое последовательно выполняются три операции:
 
 ```
 z = W * input + b       (linear transformation)
 a = sigmoid(z)           (activation)
 ```
 
-The output of one layer becomes the input to the next. That is the entire forward pass.
+Выход одного слоя становится входом следующего. Это и есть весь прямой проход.
 
-### Matrix Dimensions
+### Размерности матриц
 
-Tracking dimensions is the single most important debugging skill in deep learning. Here is the 2-3-1 network:
+Отслеживание размерностей -- самый важный навык отладки в глубоком обучении (deep learning). Вот сеть 2-3-1:
 
-| Step | Operation | Dimensions | Result Shape |
+| Шаг | Операция | Размерности | Форма результата |
 |------|-----------|------------|-------------|
-| Input | x | -- | (2,) |
-| Hidden linear | W1 * x + b1 | W1: (3, 2), b1: (3,) | (3,) |
-| Hidden activation | sigmoid(z1) | -- | (3,) |
-| Output linear | W2 * h + b2 | W2: (1, 3), b2: (1,) | (1,) |
-| Output activation | sigmoid(z2) | -- | (1,) |
+| Вход | x | -- | (2,) |
+| Линейная часть скрытого слоя | W1 * x + b1 | W1: (3, 2), b1: (3,) | (3,) |
+| Активация скрытого слоя | sigmoid(z1) | -- | (3,) |
+| Линейная часть выходного слоя | W2 * h + b2 | W2: (1, 3), b2: (1,) | (1,) |
+| Активация выходного слоя | sigmoid(z2) | -- | (1,) |
 
-The rule: weight matrix W at layer k has shape (neurons_in_layer_k, neurons_in_layer_k_minus_1). Rows match the current layer. Columns match the previous layer. If the shapes do not line up, you have a bug.
+Правило: матрица весов W на слое k имеет форму (neurons_in_layer_k, neurons_in_layer_k_minus_1). Строки соответствуют текущему слою. Столбцы соответствуют предыдущему слою. Если формы не сходятся, у вас баг.
 
-### Universal Approximation Theorem
+### Теорема универсальной аппроксимации
 
-In 1989, George Cybenko proved something remarkable: a neural network with a single hidden layer and enough neurons can approximate any continuous function to any desired accuracy.
+В 1989 году George Cybenko доказал замечательную вещь: нейронная сеть с одним скрытым слоем и достаточным количеством нейронов может аппроксимировать любую непрерывную функцию с любой желаемой точностью.
 
-This does not mean one hidden layer is always best. It means the architecture is theoretically capable. In practice, deeper networks (more layers, fewer neurons per layer) learn the same functions with far fewer total parameters than shallow-wide networks. That is why deep learning works.
+Это не означает, что один скрытый слой всегда лучше. Это означает, что архитектура теоретически способна на это. На практике более глубокие сети (больше слоев, меньше нейронов на слой) учат те же функции с гораздо меньшим общим числом параметров, чем мелкие широкие сети (shallow-wide networks). Поэтому глубокое обучение работает.
 
-The intuition: each neuron in the hidden layer learns one "bump" or feature. Enough bumps placed in the right locations can approximate any smooth curve. More neurons, more bumps, better approximation.
+Интуиция: каждый нейрон в скрытом слое учит один "бугорок" или признак. Достаточное количество бугорков, размещенных в правильных местах, может аппроксимировать любую гладкую кривую. Больше нейронов, больше бугорков, лучше аппроксимация.
 
 ```mermaid
 graph LR
@@ -142,15 +142,15 @@ graph LR
     FewNeurons --> MoreNeurons --> ManyNeurons
 ```
 
-### Composability
+### Компонуемость
 
-Neural networks are composable. You can stack them, chain them, run them in parallel. A Whisper model uses an encoder network to process audio and a separate decoder network to generate text. Modern LLMs are decoder-only. BERT is encoder-only. T5 is encoder-decoder. The architecture choice defines what the model can do.
+Нейронные сети компонуемы. Их можно складывать в стек, соединять в цепочки, запускать параллельно. Модель Whisper использует сеть-энкодер (encoder) для обработки аудио и отдельную сеть-декодер (decoder) для генерации текста. Современные LLM -- только декодеры (decoder-only). BERT -- только энкодер (encoder-only). T5 -- энкодер-декодер (encoder-decoder). Выбор архитектуры определяет, что модель может делать.
 
-## Build It
+## Сборка
 
-Pure Python. No numpy. Every matrix operation written from scratch.
+Чистый Python. Без numpy. Каждая матричная операция написана с нуля.
 
-### Step 1: Sigmoid Activation
+### Шаг 1: активация Sigmoid
 
 ```python
 import math
@@ -160,13 +160,13 @@ def sigmoid(x):
     return 1.0 / (1.0 + math.exp(-x))
 ```
 
-The clamp to [-500, 500] prevents overflow. `math.exp(500)` is large but finite. `math.exp(1000)` is infinity.
+Ограничение диапазоном [-500, 500] предотвращает переполнение. `math.exp(500)` велико, но конечно. `math.exp(1000)` -- это бесконечность.
 
-### Step 2: Layer Class
+### Шаг 2: класс Layer
 
-The most important operation in all of deep learning is matrix multiplication. Every layer, every attention head, every forward pass -- it's matmuls all the way down. A linear layer takes an input vector, multiplies it by a weight matrix, and adds a bias vector: y = Wx + b. That single equation is 90% of the compute in a neural network.
+Самая важная операция во всем глубоком обучении -- матричное умножение. Каждый слой, каждая голова внимания (attention head), каждый прямой проход -- везде матричные умножения (matmuls). Линейный слой берет входной вектор, умножает его на матрицу весов и добавляет вектор смещений: y = Wx + b. На это одно уравнение приходится 90% вычислений в нейронной сети.
 
-A layer holds a weight matrix and a bias vector. Its forward method takes an input vector and returns the activated output.
+Слой хранит матрицу весов и вектор смещений. Его метод forward принимает входной вектор и возвращает активированный выход.
 
 ```python
 class Layer:
@@ -196,11 +196,11 @@ class Layer:
         return self.last_output
 ```
 
-The weight matrix has shape (n_neurons, n_inputs). Each row is one neuron's weights across all inputs. The forward method loops through neurons, computes the weighted sum plus bias, applies sigmoid, and collects the results.
+Матрица весов имеет форму (n_neurons, n_inputs). Каждая строка -- это веса одного нейрона по всем входам. Метод forward проходит по нейронам, вычисляет взвешенную сумму плюс смещение, применяет sigmoid и собирает результаты.
 
-### Step 3: Network Class
+### Шаг 3: класс Network
 
-A network is a list of layers. The forward pass chains them: output of layer k feeds into layer k+1.
+Сеть -- это список слоев. Прямой проход связывает их в цепочку: выход слоя k подается на вход слоя k+1.
 
 ```python
 class Network:
@@ -214,11 +214,11 @@ class Network:
         return current
 ```
 
-That is the entire forward pass. Four lines of logic. Data goes in, flows through every layer, comes out the other side.
+Это весь прямой проход. Четыре строки логики. Данные входят, протекают через каждый слой и выходят с другой стороны.
 
-### Step 4: XOR with Hand-Tuned Weights
+### Шаг 4: XOR с вручную подобранными весами
 
-In Lesson 01, we solved XOR by combining OR, NAND, and AND perceptrons. Now do the same thing with our Layer and Network classes. The 2-2-1 architecture: two inputs, two hidden neurons, one output.
+В Lesson 01 мы решили XOR, комбинируя перцептроны OR, NAND и AND. Теперь сделайте то же самое с нашими классами Layer и Network. Архитектура 2-2-1: два входа, два скрытых нейрона, один выход.
 
 ```python
 hidden = Layer(
@@ -250,11 +250,11 @@ for inputs, expected in xor_data:
     print(f"  {inputs} -> {result[0]:.6f} (rounded: {predicted}, expected: {expected})")
 ```
 
-The large weights (20, -20) make sigmoid act like a step function. The first hidden neuron approximates OR. The second approximates NAND. The output neuron combines them into AND, which is XOR.
+Большие веса (20, -20) заставляют sigmoid вести себя как ступенчатая функция. Первый скрытый нейрон аппроксимирует OR. Второй аппроксимирует NAND. Выходной нейрон объединяет их в AND, что и дает XOR.
 
-### Step 5: Circle Classification
+### Шаг 5: классификация круга
 
-A harder problem: classify 2D points as inside or outside a circle of radius 0.5 centered at the origin. This requires a curved decision boundary -- impossible for a single perceptron.
+Более сложная задача: классифицировать 2D-точки как находящиеся внутри или снаружи круга радиуса 0.5 с центром в начале координат. Для этого нужна криволинейная граница решения -- невозможная для одного перцептрона.
 
 ```python
 import random
@@ -275,7 +275,7 @@ circle_net = Network([
 ])
 ```
 
-With random weights, the network will not classify well. But the forward pass still runs. This is the point -- the forward pass is just computation. Learning the right weights is backpropagation, coming in Lesson 03.
+Со случайными весами сеть не будет классифицировать хорошо. Но прямой проход все равно выполняется. В этом смысл -- прямой проход является просто вычислением. Обучение правильных весов -- это обратное распространение ошибки (backpropagation), которое появится в Lesson 03.
 
 ```python
 correct = 0
@@ -288,11 +288,11 @@ for inputs, expected in data:
 print(f"Accuracy with random weights: {correct}/{len(data)} ({100*correct/len(data):.1f}%)")
 ```
 
-Random weights give poor accuracy -- often worse than guessing the majority class. After training (Lesson 03), this same architecture with 8 hidden neurons will draw a curved boundary that separates inside from outside.
+Случайные веса дают плохую точность -- часто хуже, чем угадывание класса большинства. После обучения (Lesson 03) эта же архитектура с 8 скрытыми нейронами нарисует криволинейную границу, которая отделяет внутренние точки от внешних.
 
-## Use It
+## Использование
 
-PyTorch does everything above in four lines:
+PyTorch делает все вышеописанное в четыре строки:
 
 ```python
 import torch
@@ -310,48 +310,48 @@ output = model(x)
 print(output)
 ```
 
-`nn.Linear(2, 8)` is your Layer class: weight matrix of shape (8, 2), bias vector of shape (8,). `nn.Sigmoid()` is your sigmoid function applied element-wise. `nn.Sequential` is your Network class: chain layers in order.
+`nn.Linear(2, 8)` -- это ваш класс Layer: матрица весов формы (8, 2), вектор смещений формы (8,). `nn.Sigmoid()` -- это ваша функция sigmoid, примененная поэлементно. `nn.Sequential` -- это ваш класс Network: слои соединены в цепочку по порядку.
 
-The difference is speed and scale. PyTorch runs on GPUs, handles batches of millions of samples, and automatically computes gradients for backpropagation. But the forward pass logic is identical to what you just built from scratch.
+Разница -- в скорости и масштабе. PyTorch работает на GPU, обрабатывает батчи из миллионов примеров и автоматически вычисляет градиенты для обратного распространения ошибки (backpropagation). Но логика прямого прохода идентична той, которую вы только что построили с нуля.
 
-## Ship It
+## Результат
 
-This lesson produces a reusable prompt for designing network architectures:
+Этот урок создает переиспользуемый prompt для проектирования сетевых архитектур:
 
 - `outputs/prompt-network-architect.md`
 
-Use it when you need to decide how many layers, how many neurons per layer, and which activation functions to use for a given problem.
+Используйте его, когда нужно решить, сколько слоев, сколько нейронов на слой и какие функции активации применять для конкретной задачи.
 
-## Exercises
+## Упражнения
 
-1. Build a 2-4-2-1 network (two hidden layers) and run the forward pass on XOR data with random weights. Print the intermediate hidden layer outputs to see how the representation transforms at each layer.
+1. Постройте сеть 2-4-2-1 (два скрытых слоя) и запустите прямой проход на данных XOR со случайными весами. Выведите промежуточные выходы скрытых слоев, чтобы увидеть, как представление преобразуется на каждом слое.
 
-2. Change the hidden layer size in the circle classifier from 8 to 2, then to 32. Run the forward pass with random weights each time. Does the number of hidden neurons change the output range or distribution? Why?
+2. Измените размер скрытого слоя в классификаторе круга с 8 на 2, затем на 32. Каждый раз запускайте прямой проход со случайными весами. Меняет ли число скрытых нейронов диапазон или распределение выхода? Почему?
 
-3. Implement a `count_parameters` method on the Network class that returns the total number of trainable weights and biases. Test it on a 784-256-128-10 network (the classic MNIST architecture). How many parameters does it have?
+3. Реализуйте метод `count_parameters` в классе Network, который возвращает общее число обучаемых весов и смещений. Протестируйте его на сети 784-256-128-10 (классическая архитектура MNIST). Сколько в ней параметров?
 
-4. Build a forward pass for a 3-4-4-2 network. Feed it RGB color values (normalized to 0-1) and observe the two outputs. This is the architecture for a simple color classifier with two classes.
+4. Постройте прямой проход для сети 3-4-4-2. Подайте в нее значения цвета RGB (нормализованные к 0-1) и понаблюдайте за двумя выходами. Это архитектура простого классификатора цветов с двумя классами.
 
-5. Replace sigmoid with a "leaky step" function: return 0.01 * z if z < 0, else 1.0. Run the forward pass on XOR with the same hand-tuned weights from Step 4. Does it still work? Why is the smooth sigmoid preferred over hard cutoffs?
+5. Замените sigmoid функцией "leaky step": return 0.01 * z if z < 0, else 1.0. Запустите прямой проход на XOR с теми же вручную подобранными весами из Step 4. Работает ли это все еще? Почему гладкая sigmoid предпочтительнее жестких отсечений?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Forward pass | "Running the model" | Pushing input through every layer -- multiply by weights, add bias, activate -- to produce an output |
-| Hidden layer | "The middle part" | Any layer between input and output whose values are not directly observed in the data |
-| Multi-layer network | "A deep neural network" | Layers of neurons stacked sequentially, where each layer's output feeds the next layer's input |
-| Activation function | "The nonlinearity" | A function applied after the linear transformation that introduces curves into the decision boundary |
-| Sigmoid | "The S-curve" | sigma(z) = 1/(1+e^(-z)), squashes any real number to (0,1), smooth and differentiable everywhere |
-| Weight matrix | "The parameters" | A matrix W of shape (current_layer_neurons, previous_layer_neurons) containing learnable connection strengths |
-| Bias vector | "The offset" | A vector added after the matrix multiply that lets neurons activate even when all inputs are zero |
-| Universal approximation | "Neural nets can learn anything" | A single hidden layer with enough neurons can approximate any continuous function -- but "enough" can mean billions |
-| Linear transformation | "The matrix multiply step" | z = W * x + b, the computation before activation, which maps inputs to a new space |
-| Decision boundary | "Where the classifier switches" | The surface in input space where the network output crosses the classification threshold |
+| Прямой проход (forward pass) | "Запуск модели" | Проталкивание входа через каждый слой -- умножить на веса, добавить смещение, активировать -- чтобы получить выход |
+| Скрытый слой (hidden layer) | "Средняя часть" | Любой слой между входом и выходом, значения которого напрямую не наблюдаются в данных |
+| Многослойная сеть (multi-layer network) | "Глубокая нейронная сеть" | Последовательно сложенные слои нейронов, где выход каждого слоя подается на вход следующего |
+| Функция активации (activation function) | "Нелинейность" | Функция, применяемая после линейного преобразования, которая вводит кривые в границу решения |
+| Sigmoid | "S-кривая" | sigma(z) = 1/(1+e^(-z)), сжимает любое действительное число в (0,1), гладкая и везде дифференцируемая |
+| Матрица весов (weight matrix) | "Параметры" | Матрица W формы (current_layer_neurons, previous_layer_neurons), содержащая обучаемые силы связей |
+| Вектор смещений (bias vector) | "Сдвиг" | Вектор, добавляемый после матричного умножения, который позволяет нейронам активироваться даже когда все входы равны нулю |
+| Универсальная аппроксимация (universal approximation) | "Нейросети могут выучить что угодно" | Один скрытый слой с достаточным количеством нейронов может аппроксимировать любую непрерывную функцию -- но "достаточно" может означать миллиарды |
+| Линейное преобразование (linear transformation) | "Шаг матричного умножения" | z = W * x + b, вычисление перед активацией, которое отображает входы в новое пространство |
+| Граница решения (decision boundary) | "Где классификатор переключается" | Поверхность во входном пространстве, где выход сети пересекает порог классификации |
 
-## Further Reading
+## Дополнительное чтение
 
-- Michael Nielsen, "Neural Networks and Deep Learning", Chapter 1-2 (http://neuralnetworksanddeeplearning.com/) -- the clearest free explanation of forward passes and network structure, with interactive visualizations
-- Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989) -- the original universal approximation theorem paper, surprisingly readable
-- 3Blue1Brown, "But what is a neural network?" (https://www.youtube.com/watch?v=aircAruvnKk) -- 20-minute visual walkthrough of layers, weights, and forward passes that builds the right mental model
-- Goodfellow, Bengio, Courville, "Deep Learning", Chapter 6 (https://www.deeplearningbook.org/) -- the standard reference for multi-layer networks, free online
+- Michael Nielsen, "Neural Networks and Deep Learning", Chapter 1-2 (http://neuralnetworksanddeeplearning.com/) -- самое ясное бесплатное объяснение прямых проходов и структуры сети, с интерактивными визуализациями
+- Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989) -- оригинальная статья о теореме универсальной аппроксимации, на удивление читаемая
+- 3Blue1Brown, "But what is a neural network?" (https://www.youtube.com/watch?v=aircAruvnKk) -- 20-минутный визуальный разбор слоев, весов и прямых проходов, который строит правильную ментальную модель
+- Goodfellow, Bengio, Courville, "Deep Learning", Chapter 6 (https://www.deeplearningbook.org/) -- стандартный справочник по многослойным сетям, бесплатно доступный онлайн

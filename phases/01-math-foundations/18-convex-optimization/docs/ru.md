@@ -1,97 +1,97 @@
-# Convex Optimization
+# Выпуклая оптимизация
 
-> Convex problems have one valley. Neural networks have millions. Knowing the difference matters.
+> У выпуклых задач одна долина. У нейросетей — миллионы. Понимать разницу важно.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 04 (Calculus for ML), 08 (Optimization)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Предварительные требования:** Фаза 1, уроки 04 (Calculus for ML), 08 (Оптимизация)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Test whether a function is convex using the definition, second derivative, and Hessian criteria
-- Implement Newton's method and compare its quadratic convergence against gradient descent
-- Solve constrained optimization problems using Lagrange multipliers and interpret KKT conditions
-- Explain why neural network loss landscapes are non-convex yet SGD still finds good solutions
+- Проверять, является ли функция выпуклой, используя определение, вторую производную и критерий на основе Hessian
+- Реализовать Newton's method и сравнить его квадратичную сходимость с gradient descent
+- Решать задачи оптимизации с ограничениями с помощью множителей Лагранжа и интерпретировать условия KKT
+- Объяснить, почему ландшафты функции потерь нейросетей невыпуклые, но SGD все равно находит хорошие решения
 
-## The Problem
+## Проблема
 
-Lesson 08 taught you gradient descent, momentum, and Adam. Those optimizers walk downhill on any surface. But they come with no guarantees. Gradient descent on a non-convex landscape might land in a bad local minimum, get stuck on a saddle point, or oscillate forever. You used it anyway because neural networks are non-convex and there is no alternative.
+Урок 08 научил вас gradient descent, momentum и Adam. Эти оптимизаторы идут вниз по любой поверхности. Но они не дают гарантий. Gradient descent на невыпуклом ландшафте может попасть в плохой локальный минимум, застрять в седловой точке или колебаться бесконечно. Вы все равно использовали его, потому что нейросети невыпуклые и альтернативы нет.
 
-But many problems in machine learning are convex. Linear regression, logistic regression, SVMs, LASSO, ridge regression. For these, something stronger exists: optimization with mathematical guarantees. A convex problem has exactly one valley. Any algorithm that walks downhill will reach the global minimum. No restarts needed. No learning rate schedules. No prayer.
+Но многие задачи машинного обучения выпуклые. Linear regression, logistic regression, SVMs, LASSO, ridge regression. Для них есть нечто сильнее: оптимизация с математическими гарантиями. У выпуклой задачи ровно одна долина. Любой алгоритм, который идет вниз, достигнет глобального минимума. Не нужны перезапуски. Не нужны расписания learning rate. Не нужна вера.
 
-Understanding convexity does three things. First, it tells you when your problem is easy (convex) versus hard (non-convex). Second, it gives you faster tools like Newton's method for convex problems. Third, it explains concepts that appear throughout ML: regularization as a constraint, duality in SVMs, and why deep learning works despite violating every nice property convexity gives you.
+Понимание выпуклости дает три вещи. Во-первых, оно говорит, когда ваша задача легкая (выпуклая), а когда тяжелая (невыпуклая). Во-вторых, оно дает более быстрые инструменты, например Newton's method для выпуклых задач. В-третьих, оно объясняет идеи, которые встречаются во всем ML: регуляризация как ограничение, двойственность в SVMs и почему deep learning работает, несмотря на нарушение всех приятных свойств, которые дает выпуклость.
 
-## The Concept
+## Концепция
 
-### Convex sets
+### Выпуклые множества
 
-A set S is convex if for any two points in S, the line segment between them also lies entirely in S.
+Множество S выпукло, если для любых двух точек в S отрезок между ними тоже целиком лежит в S.
 
-| Convex sets | Not convex |
+| Выпуклые множества | Невыпуклые |
 |---|---|
-| **Rectangle**: any two points inside can be connected by a line segment that stays inside | **Star/crescent shape**: a line between two interior points can pass outside the set |
-| **Triangle**: same property holds for all interior points | **Donut/annulus**: the hole means some line segments leave the set |
-| The line segment between any two points stays within the set | The line segment between some pairs of points exits the set |
+| **Прямоугольник**: любые две точки внутри можно соединить отрезком, который остается внутри | **Звезда/полумесяц**: линия между двумя внутренними точками может выйти за пределы множества |
+| **Треугольник**: то же свойство выполняется для всех внутренних точек | **Бублик/кольцо**: отверстие означает, что некоторые отрезки выходят из множества |
+| Отрезок между любыми двумя точками остается внутри множества | Отрезок между некоторыми парами точек выходит из множества |
 
-Formal test: for any points x, y in S and any t in [0, 1], the point tx + (1-t)y is also in S.
+Формальный тест: для любых точек x, y в S и любого t из [0, 1] точка tx + (1-t)y тоже находится в S.
 
-Examples of convex sets:
-- A line, a plane, all of R^n
-- A ball (circle, sphere, hypersphere)
-- A halfspace: {x : a^T x <= b}
-- The intersection of any number of convex sets
+Примеры выпуклых множеств:
+- Прямая, плоскость, все R^n
+- Шар (окружность, сфера, гиперсфера)
+- Полупространство: {x : a^T x <= b}
+- Пересечение любого числа выпуклых множеств
 
-Examples of non-convex sets:
-- A donut (annulus)
-- The union of two disjoint circles
-- Any set with a "dent" or "hole"
+Примеры невыпуклых множеств:
+- Бублик (кольцо)
+- Объединение двух непересекающихся окружностей
+- Любое множество с «вмятиной» или «дырой»
 
-### Convex functions
+### Выпуклые функции
 
-A function f is convex if its domain is a convex set and for any two points x, y in its domain and any t in [0, 1]:
+Функция f выпукла, если ее область определения является выпуклым множеством и для любых двух точек x, y из этой области и любого t из [0, 1]:
 
 ```
 f(tx + (1-t)y) <= t*f(x) + (1-t)*f(y)
 ```
 
-Geometrically: the line segment between any two points on the graph lies above or on the graph.
+Геометрически: отрезок между любыми двумя точками на графике лежит выше графика или на нем.
 
-| Property | Convex function | Non-convex function |
+| Свойство | Выпуклая функция | Невыпуклая функция |
 |---|---|---|
-| **Line segment test** | The line between any two points on the graph lies **above or on** the curve | The line between some points on the graph dips **below** the curve |
-| **Shape** | Single bowl/valley curving upward | Multiple peaks and valleys with mixed curvature |
-| **Local minima** | Every local minimum is the global minimum | Multiple local minima may exist at different heights |
+| **Тест отрезка** | Линия между любыми двумя точками на графике лежит **выше кривой или на ней** | Линия между некоторыми точками на графике проваливается **ниже** кривой |
+| **Форма** | Одна чаша/долина, изгибающаяся вверх | Несколько пиков и долин со смешанной кривизной |
+| **Локальные минимумы** | Каждый локальный минимум является глобальным минимумом | Может существовать несколько локальных минимумов на разных высотах |
 
-Common convex functions:
-- f(x) = x^2 (parabola)
-- f(x) = |x| (absolute value)
-- f(x) = e^x (exponential)
-- f(x) = max(0, x) (ReLU, though piecewise linear)
-- f(x) = -log(x) for x > 0 (negative log)
-- Any linear function f(x) = a^T x + b (both convex and concave)
+Распространенные выпуклые функции:
+- f(x) = x^2 (парабола)
+- f(x) = |x| (модуль)
+- f(x) = e^x (экспонента)
+- f(x) = max(0, x) (ReLU, хотя функция кусочно-линейная)
+- f(x) = -log(x) для x > 0 (отрицательный логарифм)
+- Любая линейная функция f(x) = a^T x + b (одновременно выпуклая и вогнутая)
 
-### Testing for convexity
+### Проверка выпуклости
 
-Three practical tests, from easiest to most rigorous.
+Три практических теста, от самого простого до самого строгого.
 
-**Test 1: Second derivative test (1D).** If f''(x) >= 0 for all x, then f is convex.
+**Тест 1: проверка второй производной (1D).** Если f''(x) >= 0 для всех x, то f выпукла.
 
-- f(x) = x^2: f''(x) = 2 >= 0. Convex.
-- f(x) = x^3: f''(x) = 6x. Negative for x < 0. Not convex.
-- f(x) = e^x: f''(x) = e^x > 0. Convex.
+- f(x) = x^2: f''(x) = 2 >= 0. Выпуклая.
+- f(x) = x^3: f''(x) = 6x. Отрицательно при x < 0. Не выпуклая.
+- f(x) = e^x: f''(x) = e^x > 0. Выпуклая.
 
-**Test 2: Hessian test (multivariate).** If the Hessian matrix H(x) is positive semidefinite for all x, then f is convex. The Hessian is the matrix of second partial derivatives.
+**Тест 2: проверка Hessian (многомерный случай).** Если матрица Hessian H(x) положительно полуопределена для всех x, то f выпукла. Hessian — это матрица вторых частных производных.
 
-**Test 3: Definition test.** Check the inequality f(tx + (1-t)y) <= t*f(x) + (1-t)*f(y) directly. Useful for functions where derivatives are hard to compute.
+**Тест 3: проверка по определению.** Проверить неравенство f(tx + (1-t)y) <= t*f(x) + (1-t)*f(y) напрямую. Полезно для функций, где производные сложно вычислить.
 
-### Why convexity matters
+### Почему выпуклость важна
 
-The central theorem of convex optimization:
+Центральная теорема выпуклой оптимизации:
 
-**For a convex function, every local minimum is a global minimum.**
+**Для выпуклой функции каждый локальный минимум является глобальным минимумом.**
 
-This means gradient descent cannot get trapped. Any downhill path leads to the same answer. The algorithm is guaranteed to converge to the optimal solution.
+Это значит, что gradient descent не может попасть в ловушку. Любой путь вниз ведет к одному и тому же ответу. Алгоритм гарантированно сходится к оптимальному решению.
 
 ```mermaid
 graph LR
@@ -106,36 +106,36 @@ graph LR
     end
 ```
 
-Consequences:
-- No need for random restarts
-- No need for sophisticated learning rate schedules
-- Convergence proofs are possible (rate depends on function properties)
-- The solution is unique (up to flat regions)
+Следствия:
+- Не нужны случайные перезапуски
+- Не нужны сложные расписания learning rate
+- Возможны доказательства сходимости (скорость зависит от свойств функции)
+- Решение единственно (с точностью до плоских областей)
 
-### Convex vs non-convex in ML
+### Выпуклые и невыпуклые задачи в ML
 
-| Problem | Convex? | Why |
+| Задача | Выпуклая? | Почему |
 |---------|---------|-----|
-| Linear regression (MSE) | Yes | Loss is quadratic in weights |
-| Logistic regression | Yes | Log-loss is convex in weights |
-| SVM (hinge loss) | Yes | Maximum of linear functions |
-| LASSO (L1 regression) | Yes | Sum of convex functions is convex |
-| Ridge regression (L2) | Yes | Quadratic + quadratic = convex |
-| Neural network (any loss) | No | Nonlinear activations create non-convex landscape |
-| k-means clustering | No | Discrete assignment step |
-| Matrix factorization | No | Product of unknowns |
+| Linear regression (MSE) | Да | Функция потерь квадратична по весам |
+| Logistic regression | Да | Log-loss выпукл по весам |
+| SVM (hinge loss) | Да | Максимум линейных функций |
+| LASSO (L1 regression) | Да | Сумма выпуклых функций выпукла |
+| Ridge regression (L2) | Да | Квадратичная функция + квадратичная функция = выпуклая функция |
+| Нейросеть (любой loss) | Нет | Нелинейные активации создают невыпуклый ландшафт |
+| k-means clustering | Нет | Дискретный шаг назначения кластеров |
+| Matrix factorization | Нет | Произведение неизвестных |
 
-Linear models with convex losses are convex. The moment you add hidden layers with nonlinear activations, convexity breaks.
+Линейные модели с выпуклыми функциями потерь являются выпуклыми. Как только вы добавляете скрытые слои с нелинейными активациями, выпуклость ломается.
 
-### The Hessian matrix
+### Матрица Hessian
 
-The Hessian H of a function f: R^n -> R is the n x n matrix of second partial derivatives.
+Hessian H функции f: R^n -> R — это матрица n x n вторых частных производных.
 
 ```
 H[i][j] = d^2 f / (dx_i dx_j)
 ```
 
-For f(x, y) = x^2 + 3xy + y^2:
+Для f(x, y) = x^2 + 3xy + y^2:
 
 ```
 df/dx = 2x + 3y       d^2f/dx^2 = 2      d^2f/dxdy = 3
@@ -145,17 +145,17 @@ H = [ 2  3 ]
     [ 3  2 ]
 ```
 
-The Hessian tells you about curvature:
-- Eigenvalues all positive: the function curves upward in every direction (convex at that point)
-- Eigenvalues all negative: curves downward in every direction (concave, a local max)
-- Mixed signs: saddle point (curves up in some directions, down in others)
-- Zero eigenvalue: flat in that direction (degenerate)
+Hessian говорит о кривизне:
+- Все собственные значения положительные: функция изгибается вверх во всех направлениях (выпукла в этой точке)
+- Все собственные значения отрицательные: изгибается вниз во всех направлениях (вогнута, локальный максимум)
+- Смешанные знаки: седловая точка (в одних направлениях вверх, в других вниз)
+- Нулевое собственное значение: плоско в этом направлении (вырожденный случай)
 
-For convexity, the Hessian must be positive semidefinite (all eigenvalues >= 0) everywhere, not just at one point.
+Для выпуклости Hessian должен быть положительно полуопределенным (все собственные значения >= 0) везде, а не только в одной точке.
 
 ### Newton's method
 
-Gradient descent uses first-order information (the gradient). Newton's method uses second-order information (the Hessian). It fits a quadratic approximation at the current point and jumps directly to the minimum of that quadratic.
+Gradient descent использует информацию первого порядка (градиент). Newton's method использует информацию второго порядка (Hessian). Он строит квадратичную аппроксимацию в текущей точке и прыгает прямо в минимум этой аппроксимации.
 
 ```
 Update rule:
@@ -165,7 +165,7 @@ Compare to gradient descent:
   x_new = x - lr * gradient
 ```
 
-Newton's method replaces the scalar learning rate with the inverse Hessian. This automatically adjusts the step size and direction based on local curvature.
+Newton's method заменяет скалярный learning rate на обратный Hessian. Это автоматически настраивает размер и направление шага на основе локальной кривизны.
 
 ```mermaid
 graph TD
@@ -184,22 +184,22 @@ graph TD
     end
 ```
 
-Advantages:
-- Quadratic convergence near the minimum (error squares each step)
-- No learning rate to tune
-- Scale-invariant (works regardless of how you parameterize the problem)
+Преимущества:
+- Квадратичная сходимость около минимума (ошибка возводится в квадрат на каждом шаге)
+- Нет learning rate для настройки
+- Инвариантность к масштабу (работает независимо от параметризации задачи)
 
-Disadvantages:
-- Computing the Hessian costs O(n^2) memory and O(n^3) to invert
-- For a neural network with 1 million weights, that is 10^12 entries and 10^18 operations
-- Not practical for deep learning
+Недостатки:
+- Вычисление Hessian требует O(n^2) памяти и O(n^3) операций для инверсии
+- Для нейросети с 1 миллионом весов это 10^12 элементов и 10^18 операций
+- Непрактично для deep learning
 
-### Constrained optimization
+### Оптимизация с ограничениями
 
-Unconstrained optimization: minimize f(x) over all x.
-Constrained optimization: minimize f(x) subject to constraints.
+Оптимизация без ограничений: минимизировать f(x) по всем x.
+Оптимизация с ограничениями: минимизировать f(x) при ограничениях.
 
-Real problems have constraints. You want to minimize cost but your budget is limited. You want to minimize error but your model complexity is bounded.
+У реальных задач есть ограничения. Вы хотите минимизировать стоимость, но бюджет ограничен. Вы хотите минимизировать ошибку, но сложность модели ограничена.
 
 ```mermaid
 graph LR
@@ -212,26 +212,26 @@ graph LR
     end
 ```
 
-### Lagrange multipliers
+### Множители Лагранжа
 
-The method of Lagrange multipliers converts a constrained problem into an unconstrained one.
+Метод множителей Лагранжа превращает задачу с ограничениями в задачу без ограничений.
 
-Problem: minimize f(x) subject to g(x) = 0.
+Задача: минимизировать f(x) при условии g(x) = 0.
 
-Solution: introduce a new variable (the Lagrange multiplier lambda) and solve the unconstrained problem:
+Решение: введите новую переменную (множитель Лагранжа lambda) и решите задачу без ограничений:
 
 ```
 L(x, lambda) = f(x) + lambda * g(x)
 ```
 
-At the solution, the gradient of L is zero:
+В решении градиент функции L равен нулю:
 
 ```
 dL/dx = df/dx + lambda * dg/dx = 0
 dL/dlambda = g(x) = 0
 ```
 
-Geometric intuition: at the constrained minimum, the gradient of f must be parallel to the gradient of the constraint g. If they were not parallel, you could move along the constraint surface and reduce f further.
+Геометрическая интуиция: в минимуме с ограничением градиент функции f должен быть параллелен градиенту ограничения g. Если бы они не были параллельны, можно было бы двигаться вдоль поверхности ограничения и дальше уменьшать f.
 
 ```mermaid
 graph LR
@@ -240,7 +240,7 @@ graph LR
     S --- C["At the solution, gradient of f is parallel to gradient of g"]
 ```
 
-Example: minimize f(x,y) = x^2 + y^2 subject to x + y = 1.
+Пример: минимизировать f(x,y) = x^2 + y^2 при условии x + y = 1.
 
 ```
 L = x^2 + y^2 + lambda(x + y - 1)
@@ -253,15 +253,15 @@ From first two: x = y
 Substituting: 2x = 1, so x = y = 0.5, lambda = -1
 ```
 
-The closest point on the line x + y = 1 to the origin is (0.5, 0.5).
+Ближайшая к началу координат точка на линии x + y = 1 — это (0.5, 0.5).
 
-### KKT conditions
+### Условия KKT
 
-The Karush-Kuhn-Tucker conditions extend Lagrange multipliers to inequality constraints.
+Условия Karush-Kuhn-Tucker расширяют множители Лагранжа на ограничения-неравенства.
 
-Problem: minimize f(x) subject to g_i(x) <= 0 for i = 1, ..., m.
+Задача: минимизировать f(x) при условии g_i(x) <= 0 для i = 1, ..., m.
 
-The KKT conditions (necessary for optimality):
+Условия KKT (необходимые условия оптимальности):
 
 ```
 1. Stationarity:    df/dx + sum(lambda_i * dg_i/dx) = 0
@@ -270,15 +270,15 @@ The KKT conditions (necessary for optimality):
 4. Complementary slackness:  lambda_i * g_i(x) = 0  for all i
 ```
 
-Complementary slackness is the key insight: either the constraint is active (g_i = 0, the solution sits on the boundary) or the multiplier is zero (the constraint does not matter). A constraint that does not affect the solution has lambda = 0.
+Условие дополняющей нежесткости — ключевая идея: либо ограничение активно (g_i = 0, решение лежит на границе), либо множитель равен нулю (ограничение не важно). Ограничение, которое не влияет на решение, имеет lambda = 0.
 
-KKT conditions are central to SVMs. The support vectors are the data points where the constraint is active (lambda > 0). All other data points have lambda = 0 and do not affect the decision boundary.
+Условия KKT центральны для SVMs. Опорные векторы — это точки данных, где ограничение активно (lambda > 0). Все остальные точки данных имеют lambda = 0 и не влияют на разделяющую границу.
 
-### Regularization as constrained optimization
+### Регуляризация как оптимизация с ограничениями
 
-L1 and L2 regularization are not arbitrary tricks. They are constrained optimization problems in disguise.
+L1 и L2-регуляризация — не произвольные трюки. Это задачи оптимизации с ограничениями под другим видом.
 
-**L2 regularization (Ridge):**
+**L2-регуляризация (Ridge):**
 
 ```
 minimize  Loss(w)  subject to  ||w||^2 <= t
@@ -287,9 +287,9 @@ Equivalent unconstrained form:
 minimize  Loss(w) + lambda * ||w||^2
 ```
 
-The constraint ||w||^2 <= t defines a ball (circle in 2D, sphere in 3D). The solution is where the loss contours first touch this ball.
+Ограничение ||w||^2 <= t задает шар (окружность в 2D, сферу в 3D). Решение находится там, где контуры функции потерь впервые касаются этого шара.
 
-**L1 regularization (LASSO):**
+**L1-регуляризация (LASSO):**
 
 ```
 minimize  Loss(w)  subject to  ||w||_1 <= t
@@ -298,22 +298,22 @@ Equivalent unconstrained form:
 minimize  Loss(w) + lambda * ||w||_1
 ```
 
-The constraint ||w||_1 <= t defines a diamond (rotated square in 2D).
+Ограничение ||w||_1 <= t задает ромб (повернутый квадрат в 2D).
 
-| Property | L2 constraint (circle) | L1 constraint (diamond) |
+| Свойство | L2-ограничение (окружность) | L1-ограничение (ромб) |
 |---|---|---|
-| **Constraint shape** | Circle (sphere in higher dims) | Diamond (rotated square in 2D) |
-| **Where loss contour touches** | Smooth boundary — any point on the circle | Corner — aligned with an axis |
-| **Solution behavior** | Weights are small but nonzero | Some weights are exactly zero (sparse) |
-| **Result** | Weight shrinkage | Feature selection |
+| **Форма ограничения** | Окружность (сфера в больших размерностях) | Ромб (повернутый квадрат в 2D) |
+| **Где контур функции потерь касается ограничения** | Гладкая граница — любая точка на окружности | Угол — выровнен с осью |
+| **Поведение решения** | Веса маленькие, но ненулевые | Некоторые веса ровно нулевые (разреженность) |
+| **Результат** | Сжатие весов | Отбор признаков |
 
-This explains why L1 produces sparse models (feature selection) while L2 only shrinks weights. The diamond has corners aligned with axes. Loss contours are more likely to touch a corner, setting one or more weights exactly to zero.
+Это объясняет, почему L1 дает разреженные модели (отбор признаков), а L2 только сжимает веса. У ромба есть углы, выровненные с осями. Контуры функции потерь с большей вероятностью коснутся угла, зануляя один или несколько весов.
 
-### Duality
+### Двойственность
 
-Every constrained optimization problem (the primal) has a companion problem (the dual). For convex problems, the primal and dual have the same optimal value. This is strong duality.
+У каждой задачи оптимизации с ограничениями (primal) есть сопутствующая задача (dual). Для выпуклых задач primal и dual имеют одно и то же оптимальное значение. Это сильная двойственность.
 
-The Lagrangian dual function:
+Двойственная функция Лагранжа:
 
 ```
 Primal: minimize f(x) subject to g(x) <= 0
@@ -322,12 +322,12 @@ Dual function: d(lambda) = min_x L(x, lambda)
 Dual problem: maximize d(lambda) subject to lambda >= 0
 ```
 
-Why duality matters:
-- The dual problem is sometimes easier to solve than the primal
-- SVMs are solved in their dual form, where the problem depends on dot products between data points (enabling the kernel trick)
-- The dual provides a lower bound on the primal optimum, useful for checking solution quality
+Почему двойственность важна:
+- Двойственную задачу иногда легче решать, чем primal
+- SVMs решаются в двойственной форме, где задача зависит от скалярных произведений между точками данных (это включает kernel trick)
+- Двойственная задача дает нижнюю оценку для оптимума primal, полезную для проверки качества решения
 
-For SVMs specifically:
+Для SVMs конкретно:
 
 ```
 Primal: find w, b that maximize the margin 2/||w|| subject to
@@ -340,52 +340,52 @@ The dual only involves dot products x_i^T x_j.
 Replace x_i^T x_j with K(x_i, x_j) to get the kernel trick.
 ```
 
-### Why deep learning works despite non-convexity
+### Почему deep learning работает несмотря на невыпуклость
 
-Neural network loss functions are wildly non-convex. By every classical measure, optimizing them should fail. Yet stochastic gradient descent finds good solutions reliably. Several factors explain this.
+Функции потерь нейросетей крайне невыпуклые. По всем классическим меркам их оптимизация должна проваливаться. Но SGD надежно находит хорошие решения. Это объясняют несколько факторов.
 
-**Most local minima are good enough.** In high-dimensional spaces, random critical points (where the gradient is zero) are overwhelmingly saddle points, not local minima. The few local minima that exist tend to have loss values close to the global minimum. Getting trapped in a terrible local minimum is extremely unlikely when the parameter space has millions of dimensions.
+**Большинство локальных минимумов достаточно хороши.** В пространствах высокой размерности случайные критические точки (где градиент равен нулю) почти всегда являются седловыми точками, а не локальными минимумами. Немногие локальные минимумы, которые существуют, обычно имеют значения функции потерь, близкие к глобальному минимуму. Застрять в ужасном локальном минимуме крайне маловероятно, когда пространство параметров имеет миллионы измерений.
 
-**Saddle points, not local minima, are the real obstacle.** In a function with n parameters, a saddle point has a mix of positive and negative curvature directions. For a random critical point in high dimensions, the probability of all n eigenvalues being positive (local minimum) is roughly 2^(-n). Almost all critical points are saddle points. SGD's noise helps escape them.
+**Седловые точки, а не локальные минимумы, — реальное препятствие.** В функции с n параметрами седловая точка имеет смесь направлений положительной и отрицательной кривизны. Для случайной критической точки в пространстве высокой размерности вероятность того, что все n собственных значений положительны (локальный минимум), примерно 2^(-n). Почти все критические точки — седловые точки. Шум в SGD помогает из них выходить.
 
-**Overparameterization smooths the landscape.** Networks with more parameters than training examples have smoother, more connected loss surfaces. Wider networks have fewer bad local minima. This is counterintuitive but empirically consistent.
+**Overparameterization сглаживает ландшафт.** Сети с большим числом параметров, чем обучающих примеров, имеют более гладкие и связные поверхности функции потерь. У более широких сетей меньше плохих локальных минимумов. Это контринтуитивно, но согласуется с эмпирикой.
 
-**Loss landscape structure:**
+**Структура ландшафта функции потерь:**
 
-| Property | Low-dimensional space | High-dimensional space |
+| Свойство | Пространство низкой размерности | Пространство высокой размерности |
 |---|---|---|
-| **Landscape** | Many isolated peaks and valleys | Smoothly connected valleys |
-| **Minima** | Many isolated local minima | Few bad local minima; most are near-optimal |
-| **Navigation** | Hard to find global minimum | Many paths lead to good solutions |
-| **Critical points** | Mix of local minima and saddle points | Overwhelmingly saddle points, not local minima |
+| **Ландшафт** | Много изолированных пиков и долин | Плавно связанные долины |
+| **Минимумы** | Много изолированных локальных минимумов | Мало плохих локальных минимумов; большинство почти оптимальны |
+| **Навигация** | Трудно найти глобальный минимум | Много путей ведет к хорошим решениям |
+| **Критические точки** | Смесь локальных минимумов и седловых точек | Преимущественно седловые точки, а не локальные минимумы |
 
-**Stochastic noise acts as implicit regularization.** Mini-batch SGD adds noise that prevents settling into sharp minima. Sharp minima overfit; flat minima generalize. The noise biases optimization toward flat regions of the loss landscape.
+**Стохастический шум действует как неявная регуляризация.** Mini-batch SGD добавляет шум, который не дает осесть в острых минимумах. Острые минимумы переобучаются; плоские минимумы лучше обобщают. Шум смещает оптимизацию в сторону плоских областей ландшафта функции потерь.
 
-### Second-order methods in practice
+### Методы второго порядка на практике
 
-Pure Newton's method is impractical for large models. Several approximations make second-order information usable.
+Чистый Newton's method непрактичен для больших моделей. Несколько аппроксимаций делают информацию второго порядка пригодной.
 
-**L-BFGS (Limited-memory BFGS):** Approximates the inverse Hessian using the last m gradient differences. Requires O(mn) memory instead of O(n^2). Works well for problems with up to ~10,000 parameters. Used in classical ML (logistic regression, CRFs) but not deep learning.
+**L-BFGS (Limited-memory BFGS):** аппроксимирует обратный Hessian, используя последние m разностей градиентов. Требует O(mn) памяти вместо O(n^2). Хорошо работает для задач до ~10,000 параметров. Используется в классическом ML (logistic regression, CRFs), но не в deep learning.
 
-**Natural gradient:** Uses the Fisher information matrix (expected Hessian of the log-likelihood) instead of the standard Hessian. This accounts for the geometry of probability distributions. K-FAC (Kronecker-Factored Approximate Curvature) approximates the Fisher matrix as a Kronecker product, making it practical for neural networks.
+**Natural gradient:** использует матрицу информации Фишера (ожидаемый Hessian логарифмического правдоподобия) вместо стандартного Hessian. Это учитывает геометрию вероятностных распределений. K-FAC (Kronecker-Factored Approximate Curvature) аппроксимирует Fisher matrix как произведение Кронекера, делая метод практичным для нейросетей.
 
-**Hessian-free optimization:** Uses conjugate gradient to solve Hx = g without ever forming H. Only requires Hessian-vector products, which can be computed in O(n) time via automatic differentiation.
+**Hessian-free optimization:** использует метод сопряженных градиентов для решения Hx = g, никогда не формируя H. Требуются только произведения Hessian на вектор, которые можно вычислять за O(n) через автоматическое дифференцирование.
 
-**Diagonal approximations:** Adam's second moment is a diagonal approximation of the Hessian's diagonal. AdaHessian extends this by using actual Hessian diagonal elements via Hutchinson's estimator.
+**Диагональные аппроксимации:** второй момент Adam — это диагональная аппроксимация диагонали Hessian. AdaHessian расширяет это, используя реальные диагональные элементы Hessian через оцениватель Hutchinson.
 
-| Method | Memory | Per-step cost | When to use |
+| Метод | Память | Стоимость шага | Когда использовать |
 |--------|--------|--------------|-------------|
-| Gradient descent | O(n) | O(n) | Baseline, large models |
-| Newton's method | O(n^2) | O(n^3) | Small convex problems |
-| L-BFGS | O(mn) | O(mn) | Medium convex problems |
-| Adam | O(n) | O(n) | Deep learning default |
-| K-FAC | O(n) | O(n) per layer | Research, large-batch training |
+| Gradient descent | O(n) | O(n) | Базовый вариант, большие модели |
+| Newton's method | O(n^2) | O(n^3) | Небольшие выпуклые задачи |
+| L-BFGS | O(mn) | O(mn) | Средние выпуклые задачи |
+| Adam | O(n) | O(n) | Стандартный выбор для deep learning |
+| K-FAC | O(n) | O(n) на слой | Исследования, обучение с большими батчами |
 
-## Build It
+## Сборка
 
-### Step 1: Convexity checker
+### Шаг 1: Проверка выпуклости
 
-Build a function that tests convexity empirically by sampling points and checking the definition.
+Постройте функцию, которая эмпирически проверяет выпуклость, сэмплируя точки и проверяя определение.
 
 ```python
 import random
@@ -405,9 +405,9 @@ def check_convexity(f, dim, bounds=(-5, 5), samples=1000):
     return violations == 0, violations
 ```
 
-### Step 2: Newton's method for 2D
+### Шаг 2: Newton's method для 2D
 
-Implement Newton's method using an explicit Hessian. Compare convergence speed against gradient descent.
+Реализуйте Newton's method с явным Hessian. Сравните скорость сходимости с gradient descent.
 
 ```python
 def newtons_method(f, grad_f, hessian_f, x0, steps=50, tol=1e-12):
@@ -434,9 +434,9 @@ def newtons_method(f, grad_f, hessian_f, x0, steps=50, tol=1e-12):
     return history
 ```
 
-### Step 3: Lagrange multiplier solver
+### Шаг 3: Решатель с множителем Лагранжа
 
-Solve constrained optimization using gradient descent on the Lagrangian.
+Решите задачу оптимизации с ограничением через gradient descent по функции Лагранжа.
 
 ```python
 def lagrange_solve(f_grad, g_val, g_grad, x0, lr=0.01,
@@ -457,9 +457,9 @@ def lagrange_solve(f_grad, g_val, g_grad, x0, lr=0.01,
     return history
 ```
 
-### Step 4: Compare first-order vs second-order
+### Шаг 4: Сравнение методов первого и второго порядка
 
-Run gradient descent and Newton's method on the same quadratic function. Count the steps to convergence.
+Запустите gradient descent и Newton's method на одной и той же квадратичной функции. Посчитайте число шагов до сходимости.
 
 ```python
 def quadratic(x):
@@ -472,22 +472,22 @@ def quadratic_hessian(x):
     return [[10, 0], [0, 2]]
 ```
 
-Newton's method will converge in 1 step (it is exact for quadratics). Gradient descent will take hundreds of steps because the eigenvalues of the Hessian differ by a factor of 5, creating an elongated valley.
+Newton's method сойдется за 1 шаг (для квадратичных функций он точен). Gradient descent потребует сотни шагов, потому что собственные значения Hessian отличаются в 5 раз, создавая вытянутую долину.
 
-## Use It
+## Использование
 
-Convexity analysis applies directly when choosing ML models and solvers.
+Анализ выпуклости напрямую применяется при выборе ML-моделей и решателей.
 
-For convex problems (logistic regression, SVMs, LASSO):
-- Use dedicated solvers (liblinear, CVXPY, scipy.optimize.minimize with method='L-BFGS-B')
-- Expect a unique global solution
-- Second-order methods are practical and fast
+Для выпуклых задач (logistic regression, SVMs, LASSO):
+- Используйте специализированные решатели (liblinear, CVXPY, scipy.optimize.minimize with method='L-BFGS-B')
+- Ожидайте единственное глобальное решение
+- Методы второго порядка практичны и быстры
 
-For non-convex problems (neural networks):
-- Use first-order methods (SGD, Adam)
-- Accept that the solution depends on initialization and randomness
-- Use overparameterization, noise, and learning rate schedules as implicit regularization
-- Do not waste time searching for the global minimum. A good local minimum is sufficient.
+Для невыпуклых задач (нейросети):
+- Используйте методы первого порядка (SGD, Adam)
+- Примите, что решение зависит от инициализации и случайности
+- Используйте overparameterization, шум и расписания learning rate как неявную регуляризацию
+- Не тратьте время на поиск глобального минимума. Достаточно хорошего локального минимума.
 
 ```python
 from scipy.optimize import minimize
@@ -500,7 +500,7 @@ result = minimize(
 )
 ```
 
-For SVMs, the dual formulation lets you use the kernel trick:
+Для SVMs двойственная формулировка позволяет использовать kernel trick:
 
 ```python
 from sklearn.svm import SVC
@@ -510,42 +510,42 @@ svm.fit(X_train, y_train)
 print(f"Support vectors: {svm.n_support_}")
 ```
 
-## Exercises
+## Упражнения
 
-1. **Convexity gallery.** Test these functions for convexity using the checker: f(x) = x^4, f(x) = sin(x), f(x,y) = x^2 + y^2, f(x,y) = x*y, f(x) = max(x, 0). Explain why each result makes sense.
+1. **Галерея выпуклости.** Проверьте эти функции на выпуклость с помощью проверяющей функции: f(x) = x^4, f(x) = sin(x), f(x,y) = x^2 + y^2, f(x,y) = x*y, f(x) = max(x, 0). Объясните, почему каждый результат имеет смысл.
 
-2. **Newton vs gradient descent race.** Run both methods on f(x,y) = 50*x^2 + y^2 from the starting point (10, 10). How many steps does each need to reach loss < 1e-10? What happens to gradient descent when the condition number (ratio of largest to smallest Hessian eigenvalue) increases?
+2. **Newton против gradient descent.** Запустите оба метода на f(x,y) = 50*x^2 + y^2 из начальной точки (10, 10). Сколько шагов нужно каждому, чтобы достичь loss < 1e-10? Что происходит с gradient descent, когда число обусловленности (отношение наибольшего собственного значения Hessian к наименьшему) растет?
 
-3. **Lagrange multiplier geometry.** Minimize f(x,y) = (x-3)^2 + (y-3)^2 subject to x + 2y = 4. Verify the solution by checking that the gradient of f is parallel to the gradient of g at the solution.
+3. **Геометрия множителя Лагранжа.** Минимизируйте f(x,y) = (x-3)^2 + (y-3)^2 при условии x + 2y = 4. Проверьте решение, убедившись, что градиент функции f параллелен градиенту функции g в решении.
 
-4. **Regularization constraint.** Implement L1-constrained optimization: minimize (x-3)^2 + (y-2)^2 subject to |x| + |y| <= 1. Show that the solution has one coordinate equal to zero (sparsity from the diamond constraint).
+4. **Ограничение регуляризации.** Реализуйте оптимизацию с L1-ограничением: минимизировать (x-3)^2 + (y-2)^2 при условии |x| + |y| <= 1. Покажите, что в решении одна координата равна нулю (разреженность из-за ромбовидного ограничения).
 
-5. **Hessian eigenvalue analysis.** Compute the Hessian of the Rosenbrock function at (1,1) and at (-1,1). Compute eigenvalues at both points. What do the eigenvalues tell you about the curvature at the minimum versus far from it?
+5. **Анализ собственных значений Hessian.** Вычислите Hessian функции Rosenbrock в (1,1) и в (-1,1). Вычислите собственные значения в обеих точках. Что они говорят о кривизне в минимуме и вдали от него?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| Convex set | A set where the line segment between any two points in the set stays inside the set |
-| Convex function | A function where the line between any two points on its graph lies above or on the graph. Equivalently, Hessian is positive semidefinite everywhere |
-| Local minimum | A point lower than all nearby points. For convex functions, every local minimum is the global minimum |
-| Global minimum | The lowest point of a function over its entire domain |
-| Hessian matrix | The matrix of all second partial derivatives. Encodes curvature information |
-| Positive semidefinite | A matrix whose eigenvalues are all non-negative. The multidimensional analogue of "second derivative >= 0" |
-| Condition number | Ratio of largest to smallest eigenvalue of the Hessian. High condition number means elongated valleys and slow gradient descent |
-| Newton's method | Second-order optimizer that uses the inverse Hessian to determine step direction and size. Quadratic convergence near the minimum |
-| Lagrange multiplier | A variable introduced to convert a constrained optimization problem into an unconstrained one |
-| KKT conditions | Necessary conditions for optimality with inequality constraints. Generalize Lagrange multipliers |
-| Complementary slackness | At the solution, either a constraint is active or its multiplier is zero. Never both nonzero |
-| Duality | Every constrained problem has a companion dual problem. For convex problems, both have the same optimal value |
-| Strong duality | Primal and dual optimal values are equal. Holds for convex problems satisfying Slater's condition |
-| L-BFGS | Approximate second-order method that stores the last m gradient differences instead of the full Hessian |
-| Saddle point | A point where the gradient is zero but it is a minimum in some directions and a maximum in others |
-| Overparameterization | Using more parameters than training examples. Smooths the loss landscape and reduces bad local minima |
+| Convex set | Множество, где отрезок между любыми двумя точками множества остается внутри множества |
+| Convex function | Функция, где линия между любыми двумя точками на графике лежит выше графика или на нем. Эквивалентно, Hessian положительно полуопределен везде |
+| Local minimum | Точка ниже всех близких точек. Для выпуклых функций каждый локальный минимум является глобальным минимумом |
+| Global minimum | Самая низкая точка функции на всей ее области определения |
+| Hessian matrix | Матрица всех вторых частных производных. Кодирует информацию о кривизне |
+| Positive semidefinite | Матрица, все собственные значения которой неотрицательны. Многомерный аналог «вторая производная >= 0» |
+| Condition number | Отношение наибольшего собственного значения Hessian к наименьшему. Высокое число обусловленности означает вытянутые долины и медленный gradient descent |
+| Newton's method | Оптимизатор второго порядка, использующий обратный Hessian для выбора направления и размера шага. Имеет квадратичную сходимость около минимума |
+| Lagrange multiplier | Переменная, введенная для превращения задачи оптимизации с ограничениями в задачу без ограничений |
+| KKT conditions | Необходимые условия оптимальности при ограничениях-неравенствах. Обобщают множители Лагранжа |
+| Complementary slackness | В решении ограничение либо активно, либо его множитель равен нулю. Они никогда не бывают ненулевыми одновременно |
+| Duality | У каждой задачи с ограничениями есть сопутствующая двойственная задача. Для выпуклых задач обе имеют одно оптимальное значение |
+| Strong duality | Оптимальные значения primal и dual равны. Выполняется для выпуклых задач, удовлетворяющих условию Слейтера |
+| L-BFGS | Приближенный метод второго порядка, который хранит последние m разностей градиентов вместо полного Hessian |
+| Saddle point | Точка, где градиент равен нулю, но это минимум в одних направлениях и максимум в других |
+| Overparameterization | Использование большего числа параметров, чем обучающих примеров. Сглаживает ландшафт функции потерь и уменьшает число плохих локальных минимумов |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Boyd & Vandenberghe: Convex Optimization](https://web.stanford.edu/~boyd/cvxbook/) - the standard textbook, freely available online
-- [Bottou, Curtis, Nocedal: Optimization Methods for Large-Scale Machine Learning (2018)](https://arxiv.org/abs/1606.04838) - bridges convex optimization theory and deep learning practice
-- [Choromanska et al.: The Loss Surfaces of Multilayer Networks (2015)](https://arxiv.org/abs/1412.0233) - why non-convex neural network landscapes are not as bad as they seem
-- [Nocedal & Wright: Numerical Optimization](https://link.springer.com/book/10.1007/978-0-387-40065-5) - comprehensive reference for Newton's method, L-BFGS, and constrained optimization
+- [Boyd & Vandenberghe: Convex Optimization](https://web.stanford.edu/~boyd/cvxbook/) - стандартный учебник, свободно доступный онлайн
+- [Bottou, Curtis, Nocedal: Optimization Methods for Large-Scale Machine Learning (2018)](https://arxiv.org/abs/1606.04838) - связывает теорию выпуклой оптимизации и практику deep learning
+- [Choromanska et al.: The Loss Surfaces of Multilayer Networks (2015)](https://arxiv.org/abs/1412.0233) - почему невыпуклые ландшафты нейросетей не так плохи, как кажется
+- [Nocedal & Wright: Numerical Optimization](https://link.springer.com/book/10.1007/978-0-387-40065-5) - подробный справочник по Newton's method, L-BFGS и оптимизации с ограничениями

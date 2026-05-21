@@ -1,60 +1,60 @@
-# Vectors, Matrices & Operations
+# Векторы, матрицы и операции
 
-> Every neural network is just matrix multiplication with extra steps.
+> Любая нейронная сеть — это просто умножение матриц с дополнительными шагами.
 
-**Type:** Build
-**Languages:** Python, Julia
-**Prerequisites:** Phase 1, Lesson 01 (Linear Algebra Intuition)
-**Time:** ~60 minutes
+**Тип:** Практика
+**Языки:** Python, Julia
+**Предварительные требования:** Phase 1, Lesson 01 (Linear Algebra Intuition)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a Matrix class with element-wise operations, matrix multiplication, transpose, determinant, and inverse
-- Distinguish element-wise multiplication from matrix multiplication and explain when each applies
-- Implement a single dense neural network layer (`relu(W @ x + b)`) using only the from-scratch Matrix class
-- Explain broadcasting rules and how bias addition works in neural network frameworks
+- Построить класс Matrix с поэлементными операциями, умножением матриц, транспонированием, определителем и обратной матрицей
+- Отличать поэлементное умножение от умножения матриц и объяснять, когда применяется каждое из них
+- Реализовать один полносвязный слой нейронной сети (`relu(W @ x + b)`), используя только класс Matrix, написанный с нуля
+- Объяснять правила broadcasting и то, как добавление bias работает во фреймворках нейронных сетей
 
-## The Problem
+## Проблема
 
-You want to build a neural network. You read the code and see this:
+Вы хотите построить нейронную сеть. Вы читаете код и видите вот это:
 
 ```
 output = activation(weights @ input + bias)
 ```
 
-That `@` is matrix multiplication. The `weights` are a matrix. The `input` is a vector. If you do not know what those operations do, this line is magic. If you do know, it is the entire forward pass of a layer in three operations.
+Этот `@` — умножение матриц. `weights` — это матрица. `input` — это вектор. Если вы не знаете, что делают эти операции, эта строка выглядит как магия. Если знаете, то это весь forward pass слоя в трех операциях.
 
-Every image your model processes is a matrix of pixel values. Every word embedding is a vector. Every layer of every neural network is a matrix transformation. You cannot build AI systems without being fluent in matrix operations the same way you cannot write code without understanding variables.
+Каждое изображение, которое обрабатывает ваша модель, — это матрица значений пикселей. Каждый word embedding — это вектор. Каждый слой каждой нейронной сети — это матричное преобразование. Невозможно строить AI-системы без свободного владения матричными операциями, так же как невозможно писать код без понимания переменных.
 
-This lesson builds that fluency from scratch.
+Этот урок формирует такую уверенность с нуля.
 
-## The Concept
+## Концепция
 
-### Vectors: ordered lists of numbers
+### Векторы: упорядоченные списки чисел
 
-A vector is a list of numbers with a direction and magnitude. In AI, vectors represent data points, features, or parameters.
+Вектор — это список чисел с направлением и длиной. В AI векторы представляют точки данных, признаки или параметры.
 
 ```
 v = [3, 4]        -- a 2D vector
 w = [1, 0, -2]    -- a 3D vector
 ```
 
-A 2D vector `[3, 4]` points to coordinates (3, 4) on a plane. Its length (magnitude) is 5 (the 3-4-5 triangle).
+2D-вектор `[3, 4]` указывает на координаты (3, 4) на плоскости. Его длина (magnitude) равна 5 (треугольник 3-4-5).
 
-### Matrices: grids of numbers
+### Матрицы: сетки чисел
 
-A matrix is a 2D grid. Rows and columns. An m x n matrix has m rows and n columns.
+Матрица — это 2D-сетка. Строки и столбцы. Матрица m x n имеет m строк и n столбцов.
 
 ```
 A = | 1  2  3 |     -- 2x3 matrix (2 rows, 3 columns)
     | 4  5  6 |
 ```
 
-In neural networks, weight matrices transform input vectors into output vectors. A layer with 784 inputs and 128 outputs uses a 128x784 weight matrix.
+В нейронных сетях матрицы весов преобразуют входные векторы в выходные векторы. Слой с 784 входами и 128 выходами использует матрицу весов 128x784.
 
-### Why shapes matter
+### Почему shapes важны
 
-Matrix multiplication has a strict rule: `(m x n) @ (n x p) = (m x p)`. The inner dimensions must match.
+У умножения матриц есть строгое правило: `(m x n) @ (n x p) = (m x p)`. Внутренние размерности должны совпадать.
 
 ```
 (128 x 784) @ (784 x 1) = (128 x 1)
@@ -63,43 +63,43 @@ Matrix multiplication has a strict rule: `(m x n) @ (n x p) = (m x p)`. The inne
 Inner dimensions: 784 = 784  -- valid
 ```
 
-If you get a shape mismatch error in PyTorch, this is why.
+Если вы получаете ошибку несовпадения shapes в PyTorch, причина именно в этом.
 
-### The operations map
+### Карта операций
 
-| Operation | What it does | Neural network use |
+| Операция | Что делает | Использование в нейронных сетях |
 |-----------|-------------|-------------------|
-| Addition | Element-wise combine | Adding bias to output |
-| Scalar multiply | Scale every element | Learning rate * gradients |
-| Matrix multiply | Transform vectors | Layer forward pass |
-| Transpose | Flip rows and columns | Backpropagation |
-| Determinant | Single number summary | Checking invertibility |
-| Inverse | Undo a transformation | Solving linear systems |
-| Identity | Do-nothing matrix | Initialization, residual connections |
+| Сложение | Поэлементно объединяет | Добавление bias к output |
+| Умножение на скаляр | Масштабирует каждый элемент | Learning rate * gradients |
+| Умножение матриц | Преобразует векторы | Forward pass слоя |
+| Транспонирование | Меняет строки и столбцы местами | Backpropagation |
+| Определитель | Сводит матрицу к одному числу | Проверка обратимости |
+| Обратная матрица | Отменяет преобразование | Решение систем линейных уравнений |
+| Единичная матрица | Матрица, которая ничего не меняет | Initialization, residual connections |
 
-### Element-wise vs matrix multiplication
+### Поэлементное умножение против умножения матриц
 
-This distinction trips up beginners constantly.
+Это различие постоянно сбивает новичков.
 
-Element-wise: multiply matching positions. Both matrices must be the same shape.
+Поэлементное: умножение соответствующих позиций. Обе матрицы должны иметь одинаковую shape.
 
 ```
 | 1  2 |   | 5  6 |   | 5  12 |
 | 3  4 | * | 7  8 | = | 21 32 |
 ```
 
-Matrix multiplication: dot products of rows and columns. Inner dimensions must match.
+Умножение матриц: скалярные произведения строк и столбцов. Внутренние размерности должны совпадать.
 
 ```
 | 1  2 |   | 5  6 |   | 1*5+2*7  1*6+2*8 |   | 19  22 |
 | 3  4 | @ | 7  8 | = | 3*5+4*7  3*6+4*8 | = | 43  50 |
 ```
 
-Different operations, different results, different rules.
+Разные операции, разные результаты, разные правила.
 
 ### Broadcasting
 
-When you add a bias vector to a matrix of outputs, the shapes do not match. Broadcasting stretches the smaller array to fit.
+Когда вы добавляете bias vector к матрице outputs, shapes не совпадают. Broadcasting растягивает меньший array, чтобы он подошел.
 
 ```
 | 1  2  3 |   +   [10, 20, 30]
@@ -111,11 +111,11 @@ Broadcasting stretches the vector across rows:
 | 4  5  6 | + | 10  20  30 | = | 14  25  36 |
 ```
 
-Every modern framework does this automatically. Understanding it prevents confusion when shapes seem wrong but the code runs.
+Каждый современный фреймворк делает это автоматически. Понимание broadcasting предотвращает путаницу, когда shapes выглядят неправильными, но код выполняется.
 
-## Build It
+## Соберите это
 
-### Step 1: Vector class
+### Шаг 1: Класс Vector
 
 ```python
 class Vector:
@@ -142,7 +142,7 @@ class Vector:
         return sum(x ** 2 for x in self.data) ** 0.5
 ```
 
-### Step 2: Matrix class with core operations
+### Шаг 2: Класс Matrix с основными операциями
 
 ```python
 class Matrix:
@@ -226,7 +226,7 @@ class Matrix:
         ])
 ```
 
-### Step 3: See it work
+### Шаг 3: Посмотрите, как это работает
 
 ```python
 A = Matrix([[1, 2], [3, 4]])
@@ -242,7 +242,7 @@ I = Matrix.identity(2)
 print("A @ A^-1 =", A.matmul(A.inverse_2x2()).data)
 ```
 
-### Step 4: Connect to neural networks
+### Шаг 4: Связь с нейронными сетями
 
 ```python
 import random
@@ -266,11 +266,11 @@ print(f"Output shape: {output.shape}")
 print(f"Output: {output.data}")
 ```
 
-This is a single dense layer: `output = relu(W @ x + b)`. Every dense layer in every neural network does exactly this.
+Это один полносвязный слой: `output = relu(W @ x + b)`. Каждый dense layer в каждой нейронной сети делает ровно это.
 
-## Use It
+## Используйте это
 
-NumPy does everything above in fewer lines and orders of magnitude faster.
+NumPy делает все выше за меньшее число строк и на порядки быстрее.
 
 ```python
 import numpy as np
@@ -295,9 +295,9 @@ print(f"\nNeural network layer: {weights.shape} @ {inputs.shape} = {output.shape
 print(f"Output:\n{output}")
 ```
 
-The `@` operator in Python calls `__matmul__`. NumPy implements it with optimized BLAS routines written in C and Fortran. Same math, 100x faster.
+Оператор `@` в Python вызывает `__matmul__`. NumPy реализует его через оптимизированные BLAS routines, написанные на C и Fortran. Та же математика, в 100 раз быстрее.
 
-Broadcasting in NumPy:
+Broadcasting в NumPy:
 
 ```python
 matrix = np.array([[1, 2, 3], [4, 5, 6]])
@@ -305,38 +305,38 @@ bias = np.array([10, 20, 30])
 print(matrix + bias)
 ```
 
-NumPy automatically broadcasts the 1D bias across both rows. This is how bias addition works in every neural network framework.
+NumPy автоматически broadcasts 1D bias по обеим строкам. Так добавление bias работает в каждом фреймворке нейронных сетей.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces a prompt for teaching matrix operations through geometric intuition. See `outputs/prompt-matrix-operations.md`.
+Этот урок создает prompt для обучения матричным операциям через геометрическую интуицию. См. `outputs/prompt-matrix-operations.md`.
 
-The Matrix class built here is the foundation for the mini neural network framework we build in Phase 3, Lesson 10.
+Класс Matrix, построенный здесь, является основой для мини-фреймворка нейронной сети, который мы создадим в Phase 3, Lesson 10.
 
-## Exercises
+## Упражнения
 
-1. **Verify the inverse.** Multiply `A @ A.inverse_2x2()` and confirm you get the identity matrix. Try it with three different 2x2 matrices. What happens when the determinant is zero?
+1. **Проверьте обратную матрицу.** Умножьте `A @ A.inverse_2x2()` и подтвердите, что получаете единичную матрицу. Попробуйте это с тремя разными матрицами 2x2. Что происходит, когда определитель равен нулю?
 
-2. **Implement 3x3 inverse.** Extend the Matrix class to compute inverses for 3x3 matrices using the adjugate method. Test it against NumPy's `np.linalg.inv`.
+2. **Реализуйте обратную матрицу 3x3.** Расширьте класс Matrix, чтобы вычислять обратные матрицы 3x3 методом adjugate. Проверьте результат по NumPy `np.linalg.inv`.
 
-3. **Build a two-layer network.** Using only your Matrix class (no NumPy), create a two-layer neural network: input (3) -> hidden (4) -> output (2). Initialize random weights, run a forward pass, and verify all shapes are correct.
+3. **Постройте двухслойную сеть.** Используя только ваш класс Matrix (без NumPy), создайте двухслойную нейронную сеть: input (3) -> hidden (4) -> output (2). Инициализируйте случайные веса, выполните forward pass и проверьте, что все shapes корректны.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Vector | "An arrow" | An ordered list of numbers. In AI: a point in high-dimensional space. |
-| Matrix | "A table of numbers" | A linear transformation. It maps vectors from one space to another. |
-| Matrix multiply | "Just multiply the numbers" | Dot products between every row of the first matrix and every column of the second. Order matters. |
-| Transpose | "Flip it" | Swap rows and columns. Turns an m x n matrix into n x m. Critical in backpropagation. |
-| Determinant | "Some number from the matrix" | Measures how much the matrix scales area (2D) or volume (3D). Zero means the transformation crushes a dimension. |
-| Inverse | "Undo the matrix" | The matrix that reverses the transformation. Only exists when the determinant is not zero. |
-| Identity matrix | "The boring matrix" | The matrix equivalent of multiplying by 1. Used in residual connections (ResNets). |
-| Broadcasting | "Magic shape fixing" | Stretching a smaller array to match a larger one by repeating along missing dimensions. |
-| Element-wise | "Regular multiplication" | Multiply matching positions. Both arrays must have the same shape (or be broadcastable). |
+| Вектор | "Стрелка" | Упорядоченный список чисел. В AI: точка в многомерном пространстве. |
+| Матрица | "Таблица чисел" | Линейное преобразование. Она отображает векторы из одного пространства в другое. |
+| Умножение матриц | "Просто умножить числа" | Скалярные произведения между каждой строкой первой матрицы и каждым столбцом второй. Порядок важен. |
+| Транспонирование | "Перевернуть" | Поменять строки и столбцы местами. Превращает матрицу m x n в n x m. Критично в backpropagation. |
+| Определитель | "Какое-то число из матрицы" | Измеряет, насколько матрица масштабирует площадь (2D) или объем (3D). Ноль означает, что преобразование схлопывает измерение. |
+| Обратная матрица | "Отменить матрицу" | Матрица, которая обращает преобразование. Существует только когда определитель не равен нулю. |
+| Единичная матрица | "Скучная матрица" | Матричный эквивалент умножения на 1. Используется в residual connections (ResNets). |
+| Broadcasting | "Магическое исправление shapes" | Растягивание меньшего array до размера большего путем повторения вдоль недостающих измерений. |
+| Поэлементно | "Обычное умножение" | Умножение соответствующих позиций. Оба arrays должны иметь одинаковую shape (или быть broadcastable). |
 
-## Further Reading
+## Дополнительное чтение
 
-- [3Blue1Brown: Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) - visual intuition for every operation covered here
-- [NumPy documentation on broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html) - the exact rules NumPy follows
-- [Stanford CS229 Linear Algebra Review](http://cs229.stanford.edu/section/cs229-linalg.pdf) - concise reference for ML-specific linear algebra
+- [3Blue1Brown: Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) - визуальная интуиция для каждой операции, рассмотренной здесь
+- [NumPy documentation on broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html) - точные правила, которым следует NumPy
+- [Stanford CS229 Linear Algebra Review](http://cs229.stanford.edu/section/cs229-linalg.pdf) - краткий справочник по линейной алгебре для ML

@@ -1,34 +1,34 @@
-# The Fourier Transform
+# Преобразование Фурье
 
-> Every signal is a sum of sine waves. The Fourier transform tells you which ones.
+> Каждый сигнал -- это сумма синусоид. Преобразование Фурье показывает, каких именно.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01-04, 19 (complex numbers)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 01-04, 19 (комплексные числа)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement the DFT from scratch and verify it against the O(N log N) Cooley-Tukey FFT
-- Interpret frequency coefficients: extract amplitude, phase, and power spectrum from a signal
-- Apply the convolution theorem to perform convolution via FFT multiplication
-- Connect Fourier frequency decomposition to transformer positional encodings and CNN convolution layers
+- Реализовать DFT с нуля и проверить его относительно O(N log N) Cooley-Tukey FFT
+- Интерпретировать частотные коэффициенты: извлекать амплитуду, фазу и спектр мощности из сигнала
+- Применять теорему о свертке для выполнения свертки через умножение FFT
+- Связать частотное разложение Фурье с позиционными кодировками трансформеров и сверточными слоями CNN
 
-## The Problem
+## Проблема
 
-An audio recording is a sequence of pressure measurements over time. A stock price is a sequence of values over days. An image is a grid of pixel intensities over space. All of these are data in the time domain (or space domain). You see values changing over some index.
+Аудиозапись -- это последовательность измерений давления во времени. Цена акции -- последовательность значений по дням. Изображение -- сетка интенсивностей пикселей в пространстве. Все это данные во временной области (или пространственной области). Вы видите значения, меняющиеся по некоторому индексу.
 
-But many patterns are invisible in the time domain. Is this audio signal a pure tone or a chord? Does this stock price have a weekly cycle? Does this image have a repeating texture? These questions are about frequency content, and the time domain hides it.
+Но многие паттерны невидимы во временной области. Этот аудиосигнал -- чистый тон или аккорд? У этой цены акции есть недельный цикл? На этом изображении есть повторяющаяся текстура? Эти вопросы относятся к частотному содержанию, а временная область его скрывает.
 
-The Fourier transform converts data from the time domain to the frequency domain. It takes a signal and decomposes it into sine waves of different frequencies. Each sine wave has an amplitude (how strong it is) and a phase (where it starts). The Fourier transform tells you both.
+Преобразование Фурье переводит данные из временной области в частотную. Оно берет сигнал и раскладывает его на синусоиды разных частот. У каждой синусоиды есть амплитуда (насколько она сильна) и фаза (где она начинается). Преобразование Фурье сообщает и то, и другое.
 
-This matters for ML because frequency-domain thinking appears everywhere. Convolutional neural networks perform convolution, which is multiplication in the frequency domain. Transformer positional encodings use frequency decomposition to represent position. Audio models (speech recognition, music generation) operate on spectrograms -- frequency representations of sound. Time series models look for periodic patterns. Understanding the Fourier transform gives you the vocabulary to work with all of these.
+Это важно для ML, потому что мышление в частотной области встречается повсюду. Сверточные нейронные сети выполняют свертку, которая является умножением в частотной области. Позиционные кодировки трансформеров используют частотное разложение для представления позиции. Аудиомодели (распознавание речи, генерация музыки) работают со спектрограммами -- частотными представлениями звука. Модели временных рядов ищут периодические паттерны. Понимание преобразования Фурье дает вам словарь для работы со всем этим.
 
-## The Concept
+## Концепция
 
-### The DFT definition
+### Определение DFT
 
-Given N samples x[0], x[1], ..., x[N-1], the Discrete Fourier Transform produces N frequency coefficients X[0], X[1], ..., X[N-1]:
+Для N отсчетов x[0], x[1], ..., x[N-1] Discrete Fourier Transform производит N частотных коэффициентов X[0], X[1], ..., X[N-1]:
 
 ```
 X[k] = sum_{n=0}^{N-1} x[n] * e^(-2*pi*i*k*n/N)
@@ -36,27 +36,27 @@ X[k] = sum_{n=0}^{N-1} x[n] * e^(-2*pi*i*k*n/N)
 for k = 0, 1, ..., N-1
 ```
 
-Each X[k] is a complex number. Its magnitude |X[k]| tells you the amplitude of frequency k. Its phase angle(X[k]) tells you the phase offset of that frequency.
+Каждый X[k] -- комплексное число. Его модуль |X[k]| показывает амплитуду частоты k. Его фаза angle(X[k]) показывает фазовый сдвиг этой частоты.
 
-The key insight: `e^(-2*pi*i*k*n/N)` is a rotating phasor at frequency k. The DFT computes the correlation between the signal and each of N equally-spaced frequencies. If the signal contains energy at frequency k, the correlation is large. If not, it is near zero.
+Ключевая идея: `e^(-2*pi*i*k*n/N)` -- это вращающийся фазор на частоте k. DFT вычисляет корреляцию между сигналом и каждой из N равномерно расположенных частот. Если сигнал содержит энергию на частоте k, корреляция велика. Если нет, она близка к нулю.
 
-### What each coefficient means
+### Что означает каждый коэффициент
 
-**X[0]: the DC component.** This is the sum of all samples -- proportional to the mean. It represents the constant (zero-frequency) offset of the signal.
+**X[0]: DC-компонента.** Это сумма всех отсчетов -- пропорциональная среднему. Она представляет постоянное смещение сигнала с нулевой частотой.
 
 ```
 X[0] = sum_{n=0}^{N-1} x[n] * e^0 = sum of all samples
 ```
 
-**X[k] for 1 <= k <= N/2: positive frequencies.** X[k] represents frequency k cycles per N samples. Higher k means higher frequency (faster oscillation).
+**X[k] для 1 <= k <= N/2: положительные частоты.** X[k] представляет частоту k циклов на N отсчетов. Чем выше k, тем выше частота (быстрее осцилляция).
 
-**X[N/2]: the Nyquist frequency.** The highest frequency you can represent with N samples. Above this, you get aliasing -- high frequencies masquerading as low ones.
+**X[N/2]: частота Найквиста.** Самая высокая частота, которую можно представить N отсчетами. Выше нее возникает алиасинг -- высокие частоты маскируются под низкие.
 
-**X[k] for N/2 < k < N: negative frequencies.** For real-valued signals, X[N-k] = conj(X[k]). The negative frequencies are mirror images of the positive ones. This is why the useful information is in the first N/2 + 1 coefficients.
+**X[k] для N/2 < k < N: отрицательные частоты.** Для действительных сигналов X[N-k] = conj(X[k]). Отрицательные частоты являются зеркальным отражением положительных. Поэтому полезная информация находится в первых N/2 + 1 коэффициентах.
 
-### Inverse DFT
+### Обратное DFT
 
-The inverse DFT reconstructs the original signal from its frequency coefficients:
+Обратное DFT восстанавливает исходный сигнал из его частотных коэффициентов:
 
 ```
 x[n] = (1/N) * sum_{k=0}^{N-1} X[k] * e^(2*pi*i*k*n/N)
@@ -64,21 +64,21 @@ x[n] = (1/N) * sum_{k=0}^{N-1} X[k] * e^(2*pi*i*k*n/N)
 for n = 0, 1, ..., N-1
 ```
 
-The only differences from the forward DFT: the sign in the exponent is positive (not negative), and there is a 1/N normalization factor.
+Единственные отличия от прямого DFT: знак в экспоненте положительный (а не отрицательный), и есть нормирующий множитель 1/N.
 
-The inverse DFT is perfect reconstruction. No information is lost. You can go from time domain to frequency domain and back without any error. The DFT is a change of basis -- it re-expresses the same information in a different coordinate system.
+Обратное DFT дает точное восстановление. Информация не теряется. Вы можете перейти из временной области в частотную и обратно без какой-либо ошибки. DFT -- это смена базиса: оно выражает ту же информацию в другой системе координат.
 
-### The FFT: making it fast
+### FFT: как сделать быстро
 
-The DFT as defined above is O(N^2): for each of N output coefficients, you sum over N input samples. For N = 1 million, that is 10^12 operations.
+DFT в приведенном выше определении имеет сложность O(N^2): для каждого из N выходных коэффициентов нужно суммировать по N входным отсчетам. Для N = 1 миллион это 10^12 операций.
 
-The Fast Fourier Transform (FFT) computes the same result in O(N log N). For N = 1 million, that is about 20 million operations instead of a trillion. This is what makes frequency analysis practical.
+Fast Fourier Transform (FFT) вычисляет тот же результат за O(N log N). Для N = 1 миллион это около 20 миллионов операций вместо триллиона. Именно это делает частотный анализ практичным.
 
-The Cooley-Tukey algorithm (the most common FFT) works by divide and conquer:
+Алгоритм Cooley-Tukey (самый распространенный FFT) работает по принципу "разделяй и властвуй":
 
-1. Split the signal into even-indexed and odd-indexed samples.
-2. Compute the DFT of each half recursively.
-3. Combine the two half-size DFTs using "twiddle factors" e^(-2*pi*i*k/N).
+1. Разделить сигнал на отсчеты с четными и нечетными индексами.
+2. Рекурсивно вычислить DFT каждой половины.
+3. Объединить два DFT половинного размера с помощью "twiddle factors" e^(-2*pi*i*k/N).
 
 ```
 X[k] = E[k] + e^(-2*pi*i*k/N) * O[k]          for k = 0, ..., N/2 - 1
@@ -88,7 +88,7 @@ where E = DFT of even-indexed samples
       O = DFT of odd-indexed samples
 ```
 
-The symmetry means each level of recursion does O(N) work, and there are log2(N) levels. Total: O(N log N).
+Симметрия означает, что каждый уровень рекурсии выполняет O(N) работы, а уровней log2(N). Итого: O(N log N).
 
 ```mermaid
 graph TD
@@ -106,22 +106,22 @@ graph TD
     end
 ```
 
-The FFT requires the signal length to be a power of 2. In practice, signals are zero-padded to the next power of 2.
+FFT требует, чтобы длина сигнала была степенью 2. На практике сигналы дополняют нулями до следующей степени 2.
 
-### Spectral analysis
+### Спектральный анализ
 
-The **power spectrum** is |X[k]|^2 -- the squared magnitude of each frequency coefficient. It shows how much energy is at each frequency.
+**Спектр мощности** -- это |X[k]|^2, квадрат модуля каждого частотного коэффициента. Он показывает, сколько энергии приходится на каждую частоту.
 
-The **phase spectrum** is angle(X[k]) -- the phase offset of each frequency. For most analysis tasks, you care about the power spectrum and ignore the phase.
+**Фазовый спектр** -- это angle(X[k]), фазовый сдвиг каждой частоты. В большинстве задач анализа вас интересует спектр мощности, а фазу можно игнорировать.
 
 ```
 Power at frequency k:  P[k] = |X[k]|^2 = X[k].real^2 + X[k].imag^2
 Phase at frequency k:  phi[k] = atan2(X[k].imag, X[k].real)
 ```
 
-### Frequency resolution
+### Частотное разрешение
 
-The frequency resolution of the DFT depends on the number of samples N and the sampling rate fs.
+Частотное разрешение DFT зависит от числа отсчетов N и частоты дискретизации fs.
 
 ```
 Frequency of bin k:      f_k = k * fs / N
@@ -129,13 +129,13 @@ Frequency resolution:    delta_f = fs / N
 Maximum frequency:       f_max = fs / 2  (Nyquist)
 ```
 
-To resolve two frequencies that are close together, you need more samples. To capture high frequencies, you need a higher sampling rate.
+Чтобы различить две близкие частоты, нужно больше отсчетов. Чтобы захватывать высокие частоты, нужна более высокая частота дискретизации.
 
-### The convolution theorem
+### Теорема о свертке
 
-This is one of the most important results in signal processing and directly relevant to CNNs.
+Это один из важнейших результатов в обработке сигналов, напрямую связанный с CNN.
 
-**Convolution in the time domain equals pointwise multiplication in the frequency domain.**
+**Свертка во временной области равна поточечному умножению в частотной области.**
 
 ```
 x * h = IFFT(FFT(x) . FFT(h))
@@ -143,14 +143,14 @@ x * h = IFFT(FFT(x) . FFT(h))
 where * is convolution and . is element-wise multiplication
 ```
 
-Why this matters:
+Почему это важно:
 
-- Direct convolution of two signals of length N and M takes O(N*M) operations.
-- FFT-based convolution takes O(N log N): transform both, multiply, transform back.
-- For large kernels, FFT convolution is dramatically faster.
-- This is exactly what happens in convolutional layers with large receptive fields.
+- Прямая свертка двух сигналов длины N и M требует O(N*M) операций.
+- Свертка через FFT требует O(N log N): преобразовать оба, перемножить, преобразовать обратно.
+- Для больших ядер FFT-свертка значительно быстрее.
+- Именно это происходит в сверточных слоях с большими receptive fields.
 
-Note: the DFT computes circular convolution (the signal wraps around). For linear convolution (no wraparound), zero-pad both signals to length N + M - 1 before computing.
+Примечание: DFT вычисляет циклическую свертку (сигнал "заворачивается"). Для линейной свертки (без заворачивания) дополните оба сигнала нулями до длины N + M - 1 перед вычислением.
 
 ```mermaid
 graph LR
@@ -168,76 +168,76 @@ graph LR
     FD -.->|"same result"| TC
 ```
 
-### Windowing
+### Оконные функции
 
-The DFT assumes the signal is periodic -- it treats the N samples as one period of an infinitely repeating signal. If the signal does not start and end at the same value, this creates a discontinuity at the boundary, which shows up as spurious high-frequency content. This is called spectral leakage.
+DFT предполагает, что сигнал периодичен: оно рассматривает N отсчетов как один период бесконечно повторяющегося сигнала. Если сигнал не начинается и не заканчивается одним и тем же значением, на границе возникает разрыв, который проявляется как паразитное высокочастотное содержимое. Это называется спектральной утечкой.
 
-Windowing reduces leakage by tapering the signal to zero at both ends before computing the DFT.
+Оконное сглаживание уменьшает утечку, плавно сводя сигнал к нулю на обоих концах перед вычислением DFT.
 
-Common windows:
+Распространенные окна:
 
-| Window | Shape | Main lobe width | Side lobe level | Use case |
+| Окно | Форма | Ширина главного лепестка | Уровень боковых лепестков | Когда использовать |
 |--------|-------|----------------|-----------------|----------|
-| Rectangular | Flat (no window) | Narrowest | Highest (-13 dB) | When signal is exactly periodic in N samples |
-| Hann | Raised cosine | Moderate | Low (-31 dB) | General purpose spectral analysis |
-| Hamming | Modified cosine | Moderate | Lower (-42 dB) | Audio processing, speech analysis |
-| Blackman | Triple cosine | Wide | Very low (-58 dB) | When side lobe suppression is critical |
+| Rectangular | Плоское (без окна) | Самая узкая | Самый высокий (-13 dB) | Когда сигнал точно периодичен в N отсчетах |
+| Hann | Приподнятый косинус | Умеренная | Низкий (-31 dB) | Спектральный анализ общего назначения |
+| Hamming | Модифицированный косинус | Умеренная | Ниже (-42 dB) | Обработка аудио, анализ речи |
+| Blackman | Тройной косинус | Широкая | Очень низкий (-58 dB) | Когда критично подавление боковых лепестков |
 
 ```
 Hann window:    w[n] = 0.5 * (1 - cos(2*pi*n / (N-1)))
 Hamming window: w[n] = 0.54 - 0.46 * cos(2*pi*n / (N-1))
 ```
 
-Apply the window by multiplying it element-wise with the signal before the DFT: `X = DFT(x * w)`.
+Примените окно, умножив его поэлементно на сигнал перед DFT: `X = DFT(x * w)`.
 
-### DFT properties
+### Свойства DFT
 
-| Property | Time Domain | Frequency Domain |
+| Свойство | Временная область | Частотная область |
 |----------|-------------|-----------------|
-| Linearity | a*x + b*y | a*X + b*Y |
-| Time shift | x[n - k] | X[f] * e^(-2*pi*i*f*k/N) |
-| Frequency shift | x[n] * e^(2*pi*i*f0*n/N) | X[f - f0] |
-| Convolution | x * h | X * H (pointwise) |
-| Multiplication | x * h (pointwise) | X * H (circular convolution, scaled by 1/N) |
-| Parseval's theorem | sum \|x[n]\|^2 | (1/N) * sum \|X[k]\|^2 |
-| Conjugate symmetry (real input) | x[n] real | X[k] = conj(X[N-k]) |
+| Линейность | a*x + b*y | a*X + b*Y |
+| Сдвиг во времени | x[n - k] | X[f] * e^(-2*pi*i*f*k/N) |
+| Сдвиг по частоте | x[n] * e^(2*pi*i*f0*n/N) | X[f - f0] |
+| Свертка | x * h | X * H (pointwise) |
+| Умножение | x * h (pointwise) | X * H (circular convolution, scaled by 1/N) |
+| Теорема Парсеваля | sum \|x[n]\|^2 | (1/N) * sum \|X[k]\|^2 |
+| Сопряженная симметрия (действительный вход) | x[n] real | X[k] = conj(X[N-k]) |
 
-Parseval's theorem says the total energy is the same in both domains. Energy is conserved through the transform.
+Теорема Парсеваля говорит, что полная энергия одинакова в обеих областях. Энергия сохраняется при преобразовании.
 
-### Connection to positional encodings
+### Связь с позиционными кодировками
 
-The original Transformer uses sinusoidal positional encodings:
+Оригинальный Transformer использует синусоидальные позиционные кодировки:
 
 ```
 PE(pos, 2i)   = sin(pos / 10000^(2i/d_model))
 PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))
 ```
 
-Each dimension pair (2i, 2i+1) oscillates at a different frequency. The frequencies are geometrically spaced from high (dimension 0,1) to low (last dimensions). This gives each position a unique pattern across all frequency bands -- similar to how Fourier coefficients uniquely identify a signal.
+Каждая пара измерений (2i, 2i+1) осциллирует на своей частоте. Частоты расположены геометрически: от высоких (измерения 0,1) к низким (последние измерения). Это дает каждой позиции уникальный паттерн по всем частотным полосам -- похоже на то, как коэффициенты Фурье однозначно идентифицируют сигнал.
 
-The key properties this provides:
+Ключевые свойства:
 
-- **Uniqueness:** No two positions have the same encoding.
-- **Bounded values:** sin and cos are always in [-1, 1].
-- **Relative position:** The encoding of position p+k can be expressed as a linear function of the encoding at position p. The model can learn to attend to relative positions.
+- **Уникальность:** никакие две позиции не имеют одинаковой кодировки.
+- **Ограниченные значения:** sin и cos всегда лежат в [-1, 1].
+- **Относительная позиция:** кодировку позиции p+k можно выразить как линейную функцию от кодировки позиции p. Модель может научиться обращать внимание на относительные позиции.
 
-### Connection to CNNs
+### Связь с CNN
 
-A convolution layer applies a learned filter (kernel) to the input by sliding it across the signal or image. Mathematically, this is the convolution operation.
+Сверточный слой применяет обучаемый фильтр (kernel) к входу, сдвигая его по сигналу или изображению. Математически это операция свертки.
 
-By the convolution theorem, this is equivalent to:
-1. FFT the input
-2. FFT the kernel
-3. Multiply in frequency domain
-4. IFFT the result
+По теореме о свертке это эквивалентно:
+1. FFT входа
+2. FFT ядра
+3. Умножению в частотной области
+4. IFFT результата
 
-Standard CNN implementations use direct convolution (faster for small 3x3 kernels). But for large kernels or global convolution, FFT-based approaches are significantly faster. Some architectures (like FNet) replace attention entirely with FFT, achieving competitive accuracy with O(N log N) instead of O(N^2) complexity.
+Стандартные реализации CNN используют прямую свертку (она быстрее для маленьких ядер 3x3). Но для больших ядер или глобальной свертки подходы на основе FFT значительно быстрее. Некоторые архитектуры (например, FNet) полностью заменяют attention на FFT, достигая конкурентной точности со сложностью O(N log N) вместо O(N^2).
 
-### Spectrograms and the Short-Time Fourier Transform
+### Спектрограммы и Short-Time Fourier Transform
 
-A single FFT gives you the frequency content of the entire signal, but tells you nothing about when those frequencies occur. A chirp (a signal whose frequency increases over time) and a chord (all frequencies present simultaneously) can have the same magnitude spectrum.
+Один FFT показывает частотное содержимое всего сигнала, но ничего не говорит о том, когда эти частоты возникают. Чирп (сигнал, частота которого растет со временем) и аккорд (все частоты присутствуют одновременно) могут иметь один и тот же спектр модулей.
 
-The Short-Time Fourier Transform (STFT) solves this by computing FFTs on overlapping windows of the signal. The result is a spectrogram: a 2D representation with time on one axis and frequency on the other. The intensity at each point shows the energy at that frequency at that time.
+Short-Time Fourier Transform (STFT) решает это, вычисляя FFT на перекрывающихся окнах сигнала. Результат -- спектрограмма: 2D-представление, где на одной оси время, а на другой частота. Интенсивность в каждой точке показывает энергию на этой частоте в этот момент времени.
 
 ```
 STFT procedure:
@@ -250,11 +250,11 @@ STFT procedure:
    d. Store the magnitude spectrum as one column of the spectrogram
 ```
 
-Spectrograms are the standard input representation for audio ML models. Speech recognition models (Whisper, DeepSpeech) operate on mel-spectrograms -- spectrograms with frequencies mapped to the mel scale, which better matches human pitch perception.
+Спектрограммы -- стандартное входное представление для аудио ML-моделей. Модели распознавания речи (Whisper, DeepSpeech) работают с mel-spectrograms -- спектрограммами, где частоты отображены на mel-шкалу, лучше соответствующую восприятию высоты звука человеком.
 
-### Aliasing
+### Алиасинг
 
-If a signal contains frequencies above fs/2 (the Nyquist frequency), sampling at rate fs will create aliased copies. A 90 Hz signal sampled at 100 Hz looks identical to a 10 Hz signal. There is no way to distinguish them from the samples alone.
+Если сигнал содержит частоты выше fs/2 (частоты Найквиста), дискретизация с частотой fs создаст алиасные копии. Сигнал 90 Hz, дискретизированный с частотой 100 Hz, выглядит идентично сигналу 10 Hz. По одним только отсчетам их невозможно различить.
 
 ```
 Example:
@@ -267,19 +267,19 @@ Example:
   No amount of math can recover the original 90 Hz.
 ```
 
-This is why analog-to-digital converters include anti-aliasing filters that remove frequencies above Nyquist before sampling. In ML, aliasing appears when downsampling feature maps without proper low-pass filtering -- some architectures address this with anti-aliased pooling layers.
+Поэтому аналого-цифровые преобразователи включают антиалиасинговые фильтры, удаляющие частоты выше Найквиста перед дискретизацией. В ML алиасинг возникает при downsampling feature maps без корректной низкочастотной фильтрации -- некоторые архитектуры решают это с помощью anti-aliased pooling layers.
 
-### Zero-padding does not increase resolution
+### Дополнение нулями не повышает разрешение
 
-A common misconception: zero-padding a signal before FFT improves frequency resolution. It does not. Zero-padding interpolates between existing frequency bins, giving you a smoother-looking spectrum. But it cannot reveal frequency detail that was not present in the original samples.
+Распространенное заблуждение: дополнение сигнала нулями перед FFT улучшает частотное разрешение. Это не так. Дополнение нулями интерполирует между существующими частотными бинами, делая спектр визуально более гладким. Но оно не может выявить частотные детали, которых не было в исходных отсчетах.
 
-True frequency resolution depends only on the observation time T = N / fs. To resolve two frequencies separated by delta_f, you need at least T = 1 / delta_f seconds of data. No amount of zero-padding changes this fundamental limit.
+Настоящее частотное разрешение зависит только от времени наблюдения T = N / fs. Чтобы различить две частоты, разделенные delta_f, нужно как минимум T = 1 / delta_f секунд данных. Никакое дополнение нулями не меняет этот фундаментальный предел.
 
-## Build It
+## Реализация
 
-### Step 1: DFT from scratch
+### Шаг 1: DFT с нуля
 
-The O(N^2) DFT follows directly from the definition.
+O(N^2) DFT напрямую следует из определения.
 
 ```python
 import math
@@ -301,9 +301,9 @@ def dft(x):
     return result
 ```
 
-### Step 2: Inverse DFT
+### Шаг 2: Обратное DFT
 
-Same structure, positive exponent, divide by N.
+Та же структура, положительная экспонента, деление на N.
 
 ```python
 def idft(X):
@@ -319,9 +319,9 @@ def idft(X):
     return result
 ```
 
-### Step 3: FFT (Cooley-Tukey)
+### Шаг 3: FFT (Cooley-Tukey)
 
-The recursive FFT requires power-of-2 length. Split into even and odd, recurse, combine with twiddle factors.
+Рекурсивный FFT требует длину, равную степени 2. Разделите на четные и нечетные элементы, рекурсивно вычислите, объедините с twiddle factors.
 
 ```python
 def fft(x):
@@ -344,7 +344,7 @@ def fft(x):
     return result
 ```
 
-### Step 4: Spectral analysis helpers
+### Шаг 4: Вспомогательные функции спектрального анализа
 
 ```python
 def power_spectrum(X):
@@ -368,9 +368,9 @@ def convolve_fft(x, h):
     return [y[n].real for n in range(N)]
 ```
 
-## Use It
+## Применение
 
-For real work, use numpy's FFT which is backed by highly optimized C libraries.
+Для реальной работы используйте FFT из numpy, который опирается на высокооптимизированные C-библиотеки.
 
 ```python
 import numpy as np
@@ -385,7 +385,7 @@ positive_freqs = freqs[:len(freqs)//2]
 positive_power = power[:len(power)//2]
 ```
 
-For windowing and more advanced spectral analysis:
+Для оконных функций и более продвинутого спектрального анализа:
 
 ```python
 from scipy.signal import windows, stft
@@ -395,7 +395,7 @@ windowed = signal * window
 spectrum = np.fft.fft(windowed)
 ```
 
-For convolution:
+Для свертки:
 
 ```python
 from scipy.signal import fftconvolve
@@ -403,7 +403,7 @@ from scipy.signal import fftconvolve
 result = fftconvolve(signal, kernel, mode='full')
 ```
 
-For spectrograms:
+Для спектрограмм:
 
 ```python
 from scipy.signal import stft
@@ -412,50 +412,50 @@ frequencies, times, Zxx = stft(signal, fs=sample_rate, nperseg=256)
 spectrogram = np.abs(Zxx) ** 2
 ```
 
-The spectrogram matrix has shape (n_frequencies, n_time_frames). Each column is the power spectrum at one time window. This is what audio ML models consume as input.
+Матрица спектрограммы имеет форму (n_frequencies, n_time_frames). Каждый столбец -- спектр мощности в одном временном окне. Именно это аудио ML-модели получают на вход.
 
-## Ship It
+## Результат
 
-Run `code/fourier.py` to generate `outputs/prompt-spectral-analyzer.md`.
+Запустите `code/fourier.py`, чтобы сгенерировать `outputs/prompt-spectral-analyzer.md`.
 
-## Exercises
+## Упражнения
 
-1. **Pure tone identification.** Create a signal with a single sine wave at an unknown frequency (between 1 and 50 Hz), sampled at 128 Hz for 1 second. Use your DFT to identify the frequency. Verify the answer matches. Now add Gaussian noise with standard deviation 0.5 and repeat. How does noise affect the spectrum?
+1. **Определение чистого тона.** Создайте сигнал с одной синусоидой неизвестной частоты (между 1 и 50 Hz), дискретизированный с частотой 128 Hz в течение 1 секунды. Используйте свой DFT, чтобы определить частоту. Проверьте, что ответ совпадает. Теперь добавьте гауссов шум со стандартным отклонением 0.5 и повторите. Как шум влияет на спектр?
 
-2. **FFT vs DFT verification.** Generate a random signal of length 64. Compute both DFT (O(N^2)) and FFT. Verify that all coefficients match to within 1e-10. Time both functions on signals of length 256, 512, 1024, and 2048. Plot the ratio of DFT time to FFT time.
+2. **Проверка FFT против DFT.** Сгенерируйте случайный сигнал длины 64. Вычислите и DFT (O(N^2)), и FFT. Проверьте, что все коэффициенты совпадают с точностью до 1e-10. Измерьте время обеих функций на сигналах длины 256, 512, 1024 и 2048. Постройте график отношения времени DFT ко времени FFT.
 
-3. **Convolution theorem proof by example.** Create signal x = [1, 2, 3, 4, 0, 0, 0, 0] and filter h = [1, 1, 1, 0, 0, 0, 0, 0]. Compute their circular convolution directly (nested loop). Then compute it via FFT (transform, multiply, inverse transform). Verify the results match. Now do linear convolution by zero-padding appropriately.
+3. **Доказательство теоремы о свертке на примере.** Создайте сигнал x = [1, 2, 3, 4, 0, 0, 0, 0] и фильтр h = [1, 1, 1, 0, 0, 0, 0, 0]. Вычислите их циклическую свертку напрямую (вложенный цикл). Затем вычислите ее через FFT (преобразование, умножение, обратное преобразование). Проверьте, что результаты совпадают. Теперь выполните линейную свертку, корректно дополнив нулями.
 
-4. **Windowing effects.** Create a signal that is the sum of two sine waves at 10 Hz and 12 Hz (very close). Sample at 128 Hz for 1 second. Compute the power spectrum with no window, Hann window, and Hamming window. Which window makes it easiest to distinguish the two peaks? Why?
+4. **Эффекты оконных функций.** Создайте сигнал, являющийся суммой двух синусоид на 10 Hz и 12 Hz (очень близко). Дискретизируйте с частотой 128 Hz в течение 1 секунды. Вычислите спектр мощности без окна, с окном Hann и с окном Hamming. Какое окно облегчает различение двух пиков? Почему?
 
-5. **Positional encoding analysis.** Generate the sinusoidal positional encodings for d_model = 128 and max_pos = 512. For each pair of positions (p1, p2), compute the dot product of their encodings. Show that the dot product depends only on |p1 - p2|, not on the absolute positions. What happens to the dot product as the distance increases?
+5. **Анализ позиционных кодировок.** Сгенерируйте синусоидальные позиционные кодировки для d_model = 128 и max_pos = 512. Для каждой пары позиций (p1, p2) вычислите dot product их кодировок. Покажите, что dot product зависит только от |p1 - p2|, а не от абсолютных позиций. Что происходит с dot product при увеличении расстояния?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что это значит |
 |------|---------------|
-| DFT (Discrete Fourier Transform) | Converts N time-domain samples into N frequency-domain coefficients. Each coefficient is the correlation with a complex sinusoid at that frequency |
-| FFT (Fast Fourier Transform) | An O(N log N) algorithm to compute the DFT. The Cooley-Tukey algorithm splits even/odd indices recursively |
-| Inverse DFT | Reconstructs the time-domain signal from frequency coefficients. Same formula as DFT with flipped exponent sign and 1/N scaling |
-| Frequency bin | Each index k in the DFT output represents frequency k*fs/N Hz. The "bin" is the discrete frequency slot |
-| DC component | X[0], the zero-frequency coefficient. Proportional to the signal mean |
-| Nyquist frequency | fs/2, the maximum frequency representable at sampling rate fs. Frequencies above this alias |
-| Power spectrum | \|X[k]\|^2, the squared magnitude of each frequency coefficient. Shows energy distribution across frequencies |
-| Phase spectrum | angle(X[k]), the phase offset of each frequency component. Often ignored in analysis |
-| Spectral leakage | Spurious frequency content caused by treating a non-periodic signal as periodic. Reduced by windowing |
-| Window function | A tapering function (Hann, Hamming, Blackman) applied before DFT to reduce spectral leakage |
-| Twiddle factor | The complex exponential e^(-2*pi*i*k/N) used to combine sub-DFTs in the FFT butterfly computation |
-| Convolution theorem | Convolution in time domain equals pointwise multiplication in frequency domain. Fundamental to signal processing and CNNs |
-| Circular convolution | Convolution where the signal wraps around. This is what the DFT naturally computes |
-| Linear convolution | Standard convolution without wraparound. Achieved by zero-padding before DFT |
-| Parseval's theorem | Total energy is preserved through the Fourier transform. sum \|x[n]\|^2 = (1/N) sum \|X[k]\|^2 |
-| Aliasing | When frequencies above Nyquist appear as lower frequencies due to insufficient sampling rate |
+| DFT (Discrete Fourier Transform) | Преобразует N отсчетов временной области в N коэффициентов частотной области. Каждый коэффициент -- корреляция с комплексной синусоидой на этой частоте |
+| FFT (Fast Fourier Transform) | Алгоритм O(N log N) для вычисления DFT. Алгоритм Cooley-Tukey рекурсивно разделяет четные/нечетные индексы |
+| Обратное DFT | Восстанавливает сигнал временной области из частотных коэффициентов. Та же формула, что и DFT, но со сменой знака экспоненты и масштабированием 1/N |
+| Частотный бин | Каждый индекс k в выходе DFT представляет частоту k*fs/N Hz. "Бин" -- дискретная частотная ячейка |
+| DC-компонента | X[0], коэффициент нулевой частоты. Пропорционален среднему сигнала |
+| Частота Найквиста | fs/2, максимальная частота, представимая при частоте дискретизации fs. Частоты выше нее алиасируются |
+| Спектр мощности | \|X[k]\|^2, квадрат модуля каждого частотного коэффициента. Показывает распределение энергии по частотам |
+| Фазовый спектр | angle(X[k]), фазовый сдвиг каждой частотной компоненты. Часто игнорируется в анализе |
+| Спектральная утечка | Паразитное частотное содержимое, возникающее из-за трактовки непериодического сигнала как периодического. Уменьшается оконными функциями |
+| Оконная функция | Сглаживающая функция (Hann, Hamming, Blackman), применяемая перед DFT для уменьшения спектральной утечки |
+| Twiddle factor | Комплексная экспонента e^(-2*pi*i*k/N), используемая для объединения sub-DFTs в butterfly-вычислении FFT |
+| Теорема о свертке | Свертка во временной области равна поточечному умножению в частотной области. Фундаментальна для обработки сигналов и CNN |
+| Циклическая свертка | Свертка, в которой сигнал заворачивается. Именно ее естественно вычисляет DFT |
+| Линейная свертка | Стандартная свертка без заворачивания. Достигается дополнением нулями перед DFT |
+| Теорема Парсеваля | Полная энергия сохраняется при преобразовании Фурье. sum \|x[n]\|^2 = (1/N) sum \|X[k]\|^2 |
+| Алиасинг | Ситуация, когда частоты выше Найквиста проявляются как более низкие частоты из-за недостаточной частоты дискретизации |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Cooley & Tukey: An Algorithm for the Machine Calculation of Complex Fourier Series (1965)](https://www.ams.org/journals/mcom/1965-19-090/S0025-5718-1965-0178586-1/) - the original FFT paper that changed computing
-- [3Blue1Brown: But what is the Fourier Transform?](https://www.youtube.com/watch?v=spUNpyF58BY) - the best visual introduction to Fourier transforms
-- [Lee-Thorp et al.: FNet: Mixing Tokens with Fourier Transforms (2021)](https://arxiv.org/abs/2105.03824) - replaces self-attention with FFT in transformers
-- [Smith: The Scientist and Engineer's Guide to Digital Signal Processing](http://www.dspguide.com/) - free online textbook covering FFT, windowing, and spectral analysis in depth
-- [Vaswani et al.: Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) - sinusoidal positional encodings derived from Fourier frequency decomposition
-- [Radford et al.: Whisper (2022)](https://arxiv.org/abs/2212.04356) - speech recognition using mel-spectrograms as input representation
+- [Cooley & Tukey: An Algorithm for the Machine Calculation of Complex Fourier Series (1965)](https://www.ams.org/journals/mcom/1965-19-090/S0025-5718-1965-0178586-1/) - оригинальная статья об FFT, изменившая вычисления
+- [3Blue1Brown: But what is the Fourier Transform?](https://www.youtube.com/watch?v=spUNpyF58BY) - лучшее визуальное введение в преобразования Фурье
+- [Lee-Thorp et al.: FNet: Mixing Tokens with Fourier Transforms (2021)](https://arxiv.org/abs/2105.03824) - заменяет self-attention на FFT в трансформерах
+- [Smith: The Scientist and Engineer's Guide to Digital Signal Processing](http://www.dspguide.com/) - бесплатный онлайн-учебник, подробно покрывающий FFT, оконные функции и спектральный анализ
+- [Vaswani et al.: Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) - синусоидальные позиционные кодировки, выведенные из частотного разложения Фурье
+- [Radford et al.: Whisper (2022)](https://arxiv.org/abs/2212.04356) - распознавание речи с использованием mel-spectrograms как входного представления

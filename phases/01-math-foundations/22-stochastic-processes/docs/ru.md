@@ -1,46 +1,46 @@
-# Stochastic Processes
+# Стохастические процессы
 
-> Randomness with structure. The math behind random walks, Markov chains, and diffusion models.
+> Случайность со структурой. Математика случайных блужданий, марковских цепей и diffusion models.
 
-**Type:** Learn
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 06-07 (probability, Bayes)
-**Time:** ~75 minutes
+**Тип:** Изучение
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 06-07 (вероятность, Bayes)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Simulate 1D and 2D random walks and verify the sqrt(n) scaling of displacement
-- Build a Markov chain simulator and compute its stationary distribution via eigendecomposition
-- Implement Metropolis-Hastings MCMC and Langevin dynamics for sampling from target distributions
-- Connect the forward diffusion process to Brownian motion and explain how the reverse process generates data
+- Симулировать 1D- и 2D-случайные блуждания и проверять sqrt(n)-масштабирование смещения
+- Построить симулятор марковской цепи и вычислять ее стационарное распределение через eigendecomposition
+- Реализовать Metropolis-Hastings MCMC и Langevin dynamics для сэмплирования из целевых распределений
+- Связать forward diffusion process с броуновским движением и объяснять, как reverse process генерирует данные
 
-## The Problem
+## Проблема
 
-Many AI systems involve randomness that evolves over time. Not static randomness -- structured, sequential randomness where each step depends on what came before.
+Многие AI-системы включают случайность, которая развивается во времени. Не статическую случайность, а структурированную, последовательную случайность, где каждый шаг зависит от того, что было раньше.
 
-Language models generate tokens one at a time. Each token depends on the previous context. The model outputs a probability distribution, samples from it, and moves on. That is a stochastic process.
+Языковые модели генерируют токены по одному. Каждый токен зависит от предыдущего контекста. Модель выдает распределение вероятностей, сэмплирует из него и движется дальше. Это стохастический процесс.
 
-Diffusion models add noise to an image step by step until it becomes pure static. Then they reverse the process, denoising step by step until a new image emerges. The forward process is a Markov chain. The reverse process is a learned Markov chain running backward.
+Diffusion models добавляют шум к изображению шаг за шагом, пока оно не превращается в чистую помеху. Затем они обращают процесс, денойзя шаг за шагом, пока не появится новое изображение. Прямой процесс -- марковская цепь. Обратный процесс -- обученная марковская цепь, идущая назад.
 
-Reinforcement learning agents take actions in an environment. Each action leads to a new state with some probability. The agent follows a random policy in a random world. The whole thing is a Markov decision process.
+Reinforcement learning-агенты выполняют действия в среде. Каждое действие с некоторой вероятностью ведет к новому состоянию. Агент следует случайной политике в случайном мире. Вся система -- Markov decision process.
 
-MCMC sampling -- the backbone of Bayesian inference -- constructs a Markov chain whose stationary distribution is the posterior you want to sample from.
+MCMC sampling -- основа байесовского вывода -- строит марковскую цепь, стационарным распределением которой является posterior, из которого вы хотите сэмплировать.
 
-All of these build on four foundational ideas:
-1. Random walks -- the simplest stochastic process
-2. Markov chains -- structured randomness with a transition matrix
-3. Langevin dynamics -- gradient descent with noise
-4. Metropolis-Hastings -- sampling from any distribution
+Все это строится на четырех фундаментальных идеях:
+1. Случайные блуждания -- простейший стохастический процесс
+2. Марковские цепи -- структурированная случайность с матрицей переходов
+3. Langevin dynamics -- градиентный спуск с шумом
+4. Metropolis-Hastings -- сэмплирование из любого распределения
 
-## The Concept
+## Концепция
 
-### Random Walks
+### Случайные блуждания
 
-Start at position 0. At each step, flip a fair coin. Heads: move right (+1). Tails: move left (-1).
+Начните в позиции 0. На каждом шаге бросайте честную монету. Орел: движение вправо (+1). Решка: движение влево (-1).
 
-After n steps, your position is the sum of n random +/-1 values. The expected position is 0 (the walk is unbiased). But the expected distance from the origin grows as sqrt(n).
+После n шагов ваша позиция -- сумма n случайных значений +/-1. Ожидаемая позиция равна 0 (блуждание несмещенное). Но ожидаемое расстояние от начала растет как sqrt(n).
 
-This is counterintuitive. The walk is fair -- no drift in either direction. But over time, it wanders further and further from where it started. The standard deviation after n steps is sqrt(n).
+Это контринтуитивно. Блуждание честное -- нет дрейфа ни в одну сторону. Но со временем оно уходит все дальше и дальше от начальной точки. Стандартное отклонение после n шагов равно sqrt(n).
 
 ```
 Step 0:  Position = 0
@@ -51,35 +51,35 @@ Step 100: Expected distance from origin ~ 10 (sqrt(100))
 Step 10000: Expected distance from origin ~ 100 (sqrt(10000))
 ```
 
-**In 2D**, the walk moves up, down, left, or right with equal probability. The same sqrt(n) scaling applies to the distance from the origin. The path traces a fractal-like pattern.
+**В 2D** блуждание движется вверх, вниз, влево или вправо с равной вероятностью. То же sqrt(n)-масштабирование применимо к расстоянию от начала координат. Траектория образует фракталоподобный паттерн.
 
-**Why sqrt(n)?** Each step is +1 or -1 with equal probability. After n steps, the position S_n = X_1 + X_2 + ... + X_n where each X_i is +/-1. The variance of each step is 1, and the steps are independent, so Var(S_n) = n. Standard deviation = sqrt(n). By the central limit theorem, S_n / sqrt(n) converges to a standard normal distribution.
+**Почему sqrt(n)?** Каждый шаг равен +1 или -1 с равной вероятностью. После n шагов позиция S_n = X_1 + X_2 + ... + X_n, где каждый X_i равен +/-1. Дисперсия каждого шага равна 1, а шаги независимы, поэтому Var(S_n) = n. Стандартное отклонение = sqrt(n). По центральной предельной теореме S_n / sqrt(n) сходится к стандартному нормальному распределению.
 
-This sqrt(n) scaling shows up everywhere in ML. SGD noise scales as 1/sqrt(batch_size). Embedding dimensions scale as sqrt(d). The square root is the signature of independent random additions.
+Это sqrt(n)-масштабирование встречается повсюду в ML. Шум SGD масштабируется как 1/sqrt(batch_size). Размерности embedding масштабируются как sqrt(d). Квадратный корень -- признак независимых случайных сложений.
 
-**Connection to Brownian motion.** Take a random walk with step size 1/sqrt(n) and n steps per unit time. As n goes to infinity, the walk converges to Brownian motion B(t) -- a continuous-time process where B(t) is normally distributed with mean 0 and variance t.
+**Связь с броуновским движением.** Возьмите случайное блуждание с размером шага 1/sqrt(n) и n шагами за единицу времени. Когда n стремится к бесконечности, блуждание сходится к броуновскому движению B(t) -- непрерывному во времени процессу, где B(t) нормально распределено со средним 0 и дисперсией t.
 
-Brownian motion is the mathematical foundation of diffusion. It models the random jiggling of particles in a fluid, the fluctuations of stock prices, and -- crucially -- the noise process in diffusion models.
+Броуновское движение -- математическая основа diffusion. Оно моделирует случайное дрожание частиц в жидкости, колебания цен акций и -- что критично -- процесс шума в diffusion models.
 
-**Gambler's ruin.** A random walker starting at position k, with absorbing barriers at 0 and N. What is the probability of reaching N before 0? For a fair walk: P(reach N) = k/N. This is surprisingly simple and elegant. It connects to the theory of martingales -- the fair random walk is a martingale (expected future value = current value).
+**Разорение игрока.** Случайный блуждающий стартует в позиции k, с поглощающими барьерами в 0 и N. Какова вероятность достичь N раньше 0? Для честного блуждания: P(reach N) = k/N. Это удивительно просто и элегантно. Это связано с теорией martingales -- честное случайное блуждание является martingale (ожидаемое будущее значение = текущее значение).
 
-### Markov Chains
+### Марковские цепи
 
-A Markov chain is a system that transitions between states according to fixed probabilities. The key property: the next state depends only on the current state, not on the history.
+Марковская цепь -- система, переходящая между состояниями согласно фиксированным вероятностям. Ключевое свойство: следующее состояние зависит только от текущего состояния, а не от истории.
 
 ```
 P(X_{t+1} = j | X_t = i, X_{t-1} = ...) = P(X_{t+1} = j | X_t = i)
 ```
 
-This is the Markov property. It means you can describe the entire dynamics with a transition matrix P:
+Это марковское свойство. Оно означает, что всю динамику можно описать матрицей переходов P:
 
 ```
 P[i][j] = probability of going from state i to state j
 ```
 
-Each row of P sums to 1 (you must go somewhere).
+Каждая строка P суммируется в 1 (вы должны куда-то перейти).
 
-**Example -- Weather:**
+**Пример -- погода:**
 
 ```
 States: Sunny (0), Rainy (1), Cloudy (2)
@@ -89,9 +89,9 @@ P = [[0.7, 0.1, 0.2],    (if sunny: 70% sunny, 10% rainy, 20% cloudy)
      [0.4, 0.2, 0.4]]    (if cloudy: 40% sunny, 20% rainy, 40% cloudy)
 ```
 
-Start in any state. After many transitions, the distribution of states converges to the stationary distribution pi, where pi * P = pi. This is the left eigenvector of P with eigenvalue 1.
+Начните в любом состоянии. После многих переходов распределение состояний сходится к стационарному распределению pi, где pi * P = pi. Это левый собственный вектор P с собственным значением 1.
 
-For the weather chain, the stationary distribution might be [0.53, 0.18, 0.29] -- over the long run, it is sunny 53% of the time regardless of the starting state.
+Для цепи погоды стационарное распределение может быть [0.53, 0.18, 0.29] -- в долгосрочной перспективе солнечно 53% времени независимо от начального состояния.
 
 ```mermaid
 graph LR
@@ -106,78 +106,78 @@ graph LR
     C -->|0.4| C
 ```
 
-**Computing the stationary distribution.** There are two approaches:
+**Вычисление стационарного распределения.** Есть два подхода:
 
-1. **Power method**: multiply any initial distribution by P repeatedly. After enough iterations, it converges.
-2. **Eigenvalue method**: find the left eigenvector of P with eigenvalue 1. This is the eigenvector of P^T with eigenvalue 1.
+1. **Power method**: многократно умножать любое начальное распределение на P. После достаточного числа итераций оно сходится.
+2. **Eigenvalue method**: найти левый собственный вектор P с собственным значением 1. Это собственный вектор P^T с собственным значением 1.
 
-Both approaches require the chain to satisfy convergence conditions.
+Оба подхода требуют, чтобы цепь удовлетворяла условиям сходимости.
 
-**Convergence conditions.** A Markov chain converges to a unique stationary distribution if it is:
-- **Irreducible**: every state is reachable from every other state
-- **Aperiodic**: the chain does not cycle with a fixed period
+**Условия сходимости.** Марковская цепь сходится к уникальному стационарному распределению, если она:
+- **Неприводима**: каждое состояние достижимо из любого другого состояния
+- **Апериодична**: цепь не циклирует с фиксированным периодом
 
-Most chains you encounter in ML satisfy both conditions.
+Большинство цепей, которые встречаются в ML, удовлетворяют обоим условиям.
 
-**Absorbing states.** A state is absorbing if once you enter it, you never leave (P[i][i] = 1). Absorbing Markov chains model processes with terminal states -- a game that ends, a customer who churns, a token sequence that hits the end-of-text token.
+**Поглощающие состояния.** Состояние является поглощающим, если после входа в него вы никогда его не покидаете (P[i][i] = 1). Поглощающие марковские цепи моделируют процессы с терминальными состояниями -- завершившуюся игру, ушедшего клиента, последовательность токенов, достигшую end-of-text token.
 
-**Mixing time.** How many steps until the chain is "close" to the stationary distribution? Formally, the number of steps until the total variation distance from stationarity drops below some threshold. Fast mixing = few steps needed. The spectral gap of P (1 minus the second-largest eigenvalue) controls the mixing time. Larger gap = faster mixing.
+**Время перемешивания.** Сколько шагов нужно, чтобы цепь стала "близка" к стационарному распределению? Формально это число шагов, после которого total variation distance до стационарности падает ниже некоторого порога. Быстрое перемешивание = нужно мало шагов. Спектральный зазор P (1 минус второе по величине собственное значение) управляет временем перемешивания. Больший зазор = более быстрое перемешивание.
 
-### Connection to Language Models
+### Связь с языковыми моделями
 
-Token generation in a language model is approximately a Markov process. Given the current context, the model outputs a distribution over the next token. Temperature controls the sharpness:
+Генерация токенов в языковой модели примерно является марковским процессом. По текущему контексту модель выдает распределение по следующему токену. Temperature управляет резкостью:
 
 ```
 P(token_i) = exp(logit_i / temperature) / sum(exp(logit_j / temperature))
 ```
 
-- Temperature = 1.0: standard distribution
-- Temperature < 1.0: sharper (more deterministic)
-- Temperature > 1.0: flatter (more random)
+- Temperature = 1.0: стандартное распределение
+- Temperature < 1.0: более резкое (более детерминированное)
+- Temperature > 1.0: более плоское (более случайное)
 - Temperature -> 0: argmax (greedy)
 
-Top-k sampling truncates to the k highest-probability tokens. Top-p (nucleus) sampling truncates to the smallest set of tokens whose cumulative probability exceeds p. Both modify the Markov transition probabilities.
+Top-k sampling обрезает распределение до k токенов с наибольшей вероятностью. Top-p (nucleus) sampling обрезает до минимального набора токенов, чья суммарная вероятность превышает p. Оба метода изменяют вероятности марковских переходов.
 
-### Brownian Motion
+### Броуновское движение
 
-The continuous-time limit of the random walk. Position B(t) has three properties:
+Непрерывный во времени предел случайного блуждания. Позиция B(t) имеет три свойства:
 1. B(0) = 0
-2. B(t) - B(s) is normally distributed with mean 0 and variance t - s (for t > s)
-3. Increments on non-overlapping intervals are independent
+2. B(t) - B(s) нормально распределено со средним 0 и дисперсией t - s (для t > s)
+3. Приращения на непересекающихся интервалах независимы
 
-Brownian motion is continuous but nowhere differentiable -- it jiggles at every scale. The path has fractal dimension 2 in the plane.
+Броуновское движение непрерывно, но нигде не дифференцируемо -- оно дрожит на каждом масштабе. Траектория имеет фрактальную размерность 2 на плоскости.
 
-In discrete simulation, you approximate Brownian motion by:
+В дискретной симуляции броуновское движение аппроксимируют так:
 
 ```
 B(t + dt) = B(t) + sqrt(dt) * z,    where z ~ N(0, 1)
 ```
 
-The sqrt(dt) scaling is important. It comes from the central limit theorem applied to random walks.
+Масштабирование sqrt(dt) важно. Оно следует из центральной предельной теоремы, примененной к случайным блужданиям.
 
 ### Langevin Dynamics
 
-Gradient descent finds the minimum of a function. Langevin dynamics finds the probability distribution proportional to exp(-U(x)/T), where U is an energy function and T is temperature.
+Градиентный спуск находит минимум функции. Langevin dynamics находит распределение вероятностей, пропорциональное exp(-U(x)/T), где U -- энергетическая функция, а T -- температура.
 
 ```
 x_{t+1} = x_t - dt * gradient(U(x_t)) + sqrt(2 * T * dt) * z_t
 ```
 
-Two forces act on the particle:
-1. **Gradient force** (-dt * gradient(U)): pushes toward low energy (like gradient descent)
-2. **Random force** (sqrt(2*T*dt) * z): pushes in random directions (exploration)
+На частицу действуют две силы:
+1. **Градиентная сила** (-dt * gradient(U)): толкает к низкой энергии (как градиентный спуск)
+2. **Случайная сила** (sqrt(2*T*dt) * z): толкает в случайных направлениях (exploration)
 
-At temperature T = 0, this is pure gradient descent. At high temperature, it is nearly a random walk. At the right temperature, the particle explores the energy landscape and spends more time in low-energy regions.
+При температуре T = 0 это чистый градиентный спуск. При высокой температуре это почти случайное блуждание. При правильной температуре частица исследует энергетический ландшафт и проводит больше времени в областях низкой энергии.
 
-**Connection to diffusion models.** The forward process of a diffusion model is:
+**Связь с diffusion models.** Прямой процесс diffusion model:
 
 ```
 x_t = sqrt(alpha_t) * x_{t-1} + sqrt(1 - alpha_t) * noise
 ```
 
-This is a Markov chain that gradually mixes the data with noise. After enough steps, x_T is pure Gaussian noise.
+Это марковская цепь, которая постепенно смешивает данные с шумом. После достаточного числа шагов x_T становится чистым гауссовым шумом.
 
-The reverse process -- going from noise back to data -- is also a Markov chain, but its transition probabilities are learned by a neural network. The network learns to predict the noise that was added at each step, then subtracts it.
+Обратный процесс -- переход от шума обратно к данным -- тоже марковская цепь, но ее вероятности переходов обучаются нейронной сетью. Сеть учится предсказывать шум, добавленный на каждом шаге, а затем вычитать его.
 
 ```mermaid
 graph LR
@@ -195,42 +195,42 @@ graph LR
 
 ### MCMC: Markov Chain Monte Carlo
 
-Sometimes you need to sample from a distribution p(x) that you can evaluate (up to a constant) but cannot sample from directly. Bayesian posteriors are the classic example -- you know the likelihood times the prior, but the normalizing constant is intractable.
+Иногда нужно сэмплировать из распределения p(x), которое можно вычислять (с точностью до константы), но из которого нельзя сэмплировать напрямую. Байесовские posterior -- классический пример: вы знаете likelihood, умноженный на prior, но нормировочная константа невычислима.
 
-**Metropolis-Hastings** constructs a Markov chain whose stationary distribution is p(x):
+**Metropolis-Hastings** строит марковскую цепь, стационарным распределением которой является p(x):
 
-1. Start at some position x
-2. Propose a new position x' from a proposal distribution Q(x'|x)
-3. Compute acceptance ratio: a = p(x') * Q(x|x') / (p(x) * Q(x'|x))
-4. Accept x' with probability min(1, a). Otherwise stay at x.
-5. Repeat.
+1. Начать в некоторой позиции x
+2. Предложить новую позицию x' из proposal distribution Q(x'|x)
+3. Вычислить отношение принятия: a = p(x') * Q(x|x') / (p(x) * Q(x'|x))
+4. Принять x' с вероятностью min(1, a). Иначе остаться в x.
+5. Повторять.
 
-If Q is symmetric (e.g., Q(x'|x) = Q(x|x') = N(x, sigma^2)), the ratio simplifies to a = p(x') / p(x). You only need the ratio of probabilities -- the normalizing constant cancels.
+Если Q симметрично (например, Q(x'|x) = Q(x|x') = N(x, sigma^2)), отношение упрощается до a = p(x') / p(x). Нужен только ratio вероятностей -- нормировочная константа сокращается.
 
-The chain is guaranteed to converge to p(x) under mild conditions. But convergence can be slow if the proposal is too small (random walk) or too large (high rejection). Tuning the proposal is the art of MCMC.
+Цепь гарантированно сходится к p(x) при мягких условиях. Но сходимость может быть медленной, если proposal слишком мал (random walk) или слишком велик (много отклонений). Настройка proposal -- искусство MCMC.
 
-**Why it works.** The acceptance ratio ensures detailed balance: the probability of being at x and moving to x' equals the probability of being at x' and moving to x. Detailed balance implies that p(x) is the stationary distribution of the chain. So after enough steps, the samples come from p(x).
+**Почему это работает.** Отношение принятия обеспечивает detailed balance: вероятность быть в x и перейти в x' равна вероятности быть в x' и перейти в x. Detailed balance означает, что p(x) является стационарным распределением цепи. Поэтому после достаточного числа шагов сэмплы приходят из p(x).
 
-**Practical considerations:**
-- **Burn-in**: discard the first N samples. The chain needs time to reach the stationary distribution from its starting point.
-- **Thinning**: keep every k-th sample to reduce autocorrelation.
-- **Multiple chains**: run several chains from different starting points. If they converge to the same distribution, you have evidence of convergence.
-- **Acceptance rate**: for Gaussian proposals in d dimensions, the optimal acceptance rate is about 23% (Roberts & Rosenthal, 2001). Too high means the chain barely moves. Too low means it rejects everything.
+**Практические аспекты:**
+- **Burn-in**: отбросить первые N сэмплов. Цепи нужно время, чтобы дойти от стартовой точки до стационарного распределения.
+- **Thinning**: сохранять каждый k-й сэмпл, чтобы уменьшить автокорреляцию.
+- **Multiple chains**: запускать несколько цепей из разных начальных точек. Если они сходятся к одному распределению, это свидетельство сходимости.
+- **Acceptance rate**: для гауссовых proposals в d измерениях оптимальная доля принятия около 23% (Roberts & Rosenthal, 2001). Слишком высокая означает, что цепь почти не движется. Слишком низкая означает, что она все отклоняет.
 
-### Stochastic Processes in AI
+### Стохастические процессы в AI
 
-| Process | AI Application |
+| Процесс | Применение в AI |
 |---------|---------------|
-| Random walk | Exploration in RL, Node2Vec embeddings |
-| Markov chain | Text generation, MCMC sampling |
-| Brownian motion | Diffusion models (forward process) |
+| Случайное блуждание | Exploration in RL, Node2Vec embeddings |
+| Марковская цепь | Генерация текста, MCMC sampling |
+| Броуновское движение | Diffusion models (forward process, прямой процесс) |
 | Langevin dynamics | Score-based generative models, SGLD |
-| Markov decision process | Reinforcement learning |
-| Metropolis-Hastings | Bayesian inference, posterior sampling |
+| Markov decision process (марковский процесс принятия решений) | Reinforcement learning |
+| Metropolis-Hastings | Байесовский вывод, posterior sampling |
 
-## Build It
+## Реализация
 
-### Step 1: Random walk simulator
+### Шаг 1: Симулятор случайного блуждания
 
 ```python
 import numpy as np
@@ -256,9 +256,9 @@ def random_walk_2d(n_steps, seed=None):
     return x, y
 ```
 
-The 1D walk stores cumulative sums. Each step is +1 or -1. After n steps, the position is the sum. The variance grows linearly with n, so the standard deviation grows as sqrt(n).
+1D-блуждание хранит накопленные суммы. Каждый шаг равен +1 или -1. После n шагов позиция является суммой. Дисперсия растет линейно с n, поэтому стандартное отклонение растет как sqrt(n).
 
-### Step 2: Markov chain
+### Шаг 2: Марковская цепь
 
 ```python
 class MarkovChain:
@@ -290,9 +290,9 @@ class MarkovChain:
         return np.abs(stationary)
 ```
 
-The stationary distribution is the left eigenvector of P with eigenvalue 1. We find it by computing eigenvectors of P^T (transposing turns left eigenvectors into right eigenvectors).
+Стационарное распределение -- левый собственный вектор P с собственным значением 1. Мы находим его, вычисляя собственные векторы P^T (транспонирование превращает левые собственные векторы в правые).
 
-### Step 3: Langevin dynamics
+### Шаг 3: Langevin dynamics
 
 ```python
 def langevin_dynamics(grad_U, x0, dt, temperature, n_steps, seed=None):
@@ -306,9 +306,9 @@ def langevin_dynamics(grad_U, x0, dt, temperature, n_steps, seed=None):
     return np.array(trajectory)
 ```
 
-The gradient pushes x toward low energy. The noise prevents it from getting stuck. At equilibrium, the distribution of samples is proportional to exp(-U(x)/temperature).
+Градиент толкает x к низкой энергии. Шум не дает застрять. В равновесии распределение сэмплов пропорционально exp(-U(x)/temperature).
 
-### Step 4: Metropolis-Hastings
+### Шаг 4: Metropolis-Hastings
 
 ```python
 def metropolis_hastings(target_log_prob, proposal_std, x0, n_samples, seed=None):
@@ -327,11 +327,11 @@ def metropolis_hastings(target_log_prob, proposal_std, x0, n_samples, seed=None)
     return np.array(samples), acceptance_rate
 ```
 
-The algorithm proposes a new point, checks if it has higher probability (or accepts with probability proportional to the ratio), and repeats. The acceptance rate should be around 23-50% for good mixing.
+Алгоритм предлагает новую точку, проверяет, имеет ли она более высокую вероятность (или принимает с вероятностью, пропорциональной отношению), и повторяет. Доля принятия должна быть примерно 23-50% для хорошего перемешивания.
 
-## Use It
+## Применение
 
-In practice, you use established libraries for these algorithms. But understanding the mechanics matters for debugging and tuning.
+На практике для этих алгоритмов используют устоявшиеся библиотеки. Но понимание механики важно для отладки и настройки.
 
 ```python
 import numpy as np
@@ -343,7 +343,7 @@ print(f"Expected distance: {np.sqrt(10000):.1f}")
 print(f"Actual distance: {abs(walk[-1])}")
 ```
 
-### numpy for transition matrices
+### numpy для матриц переходов
 
 ```python
 import numpy as np
@@ -359,15 +359,15 @@ for _ in range(100):
 print(f"Stationary distribution: {np.round(distribution, 4)}")
 ```
 
-Multiply the initial distribution by P repeatedly. After enough iterations, it converges to the stationary distribution regardless of where you started. This is the power method for finding the dominant left eigenvector.
+Многократно умножайте начальное распределение на P. После достаточного числа итераций оно сходится к стационарному распределению независимо от начальной точки. Это power method для нахождения доминирующего левого собственного вектора.
 
-### Connections to real frameworks
+### Связи с реальными фреймворками
 
-- **PyTorch diffusion:** The `DDPMScheduler` in Hugging Face `diffusers` implements the forward and reverse Markov chains
-- **NumPyro / PyMC:** Use MCMC (NUTS sampler, which improves on Metropolis-Hastings) for Bayesian inference
-- **Gymnasium (RL):** The environment step function defines a Markov decision process
+- **PyTorch diffusion:** `DDPMScheduler` в Hugging Face `diffusers` реализует прямую и обратную марковские цепи
+- **NumPyro / PyMC:** Используют MCMC (NUTS sampler, улучшающий Metropolis-Hastings) для байесовского вывода
+- **Gymnasium (RL):** Функция environment step задает Markov decision process
 
-### Verifying Markov chain convergence
+### Проверка сходимости марковской цепи
 
 ```python
 import numpy as np
@@ -381,77 +381,77 @@ print(f"Spectral gap: {spectral_gap:.4f}")
 print(f"Approximate mixing time: {1/spectral_gap:.1f} steps")
 ```
 
-The spectral gap tells you how fast the chain forgets its initial state. A gap of 0.2 means roughly 5 steps to mix. A gap of 0.01 means roughly 100 steps. Always check this before running long simulations -- a slowly mixing chain wastes compute.
+Спектральный зазор показывает, как быстро цепь забывает начальное состояние. Зазор 0.2 означает примерно 5 шагов для перемешивания. Зазор 0.01 означает примерно 100 шагов. Всегда проверяйте это перед запуском длинных симуляций -- медленно перемешивающаяся цепь тратит вычисления впустую.
 
-## Ship It
+## Результат
 
-This lesson produces:
-- `outputs/prompt-stochastic-process-advisor.md` -- a prompt that helps identify which stochastic process framework applies to a given problem
+Этот урок создает:
+- `outputs/prompt-stochastic-process-advisor.md` -- prompt, помогающий определить, какой stochastic process framework применим к задаче
 
-## Connections
+## Связи
 
-| Concept | Where it shows up |
+| Концепция | Где встречается |
 |---------|------------------|
-| Random walk | Node2Vec graph embeddings, exploration in RL |
-| Markov chain | Token generation in LLMs, MCMC sampling |
-| Brownian motion | Forward diffusion process in DDPM, SDE-based models |
+| Случайное блуждание | Node2Vec graph embeddings, exploration in RL |
+| Марковская цепь | Генерация токенов в LLMs, MCMC sampling |
+| Броуновское движение | Forward diffusion process (прямой диффузионный процесс) in DDPM, SDE-based models |
 | Langevin dynamics | Score-based generative models, stochastic gradient Langevin dynamics (SGLD) |
-| Stationary distribution | MCMC convergence target, PageRank |
+| Стационарное распределение | MCMC convergence target (цель сходимости MCMC), PageRank |
 | Metropolis-Hastings | Bayesian posterior sampling, simulated annealing |
 | Temperature | LLM sampling, Boltzmann exploration in RL, simulated annealing |
-| Mixing time | Convergence speed of MCMC, spectral gap analysis |
-| Absorbing state | End-of-sequence token, terminal states in RL |
-| Detailed balance | Correctness guarantee for MCMC samplers |
+| Mixing time | Convergence speed of MCMC (скорость сходимости MCMC), spectral gap analysis |
+| Поглощающее состояние | End-of-sequence token, terminal states in RL |
+| Detailed balance | Correctness guarantee (гарантия корректности) for MCMC samplers |
 
-Diffusion models deserve special attention. DDPM (Ho et al., 2020) defines a forward Markov chain:
+Diffusion models заслуживают отдельного внимания. DDPM (Ho et al., 2020) задает прямую марковскую цепь:
 
 ```
 q(x_t | x_{t-1}) = N(x_t; sqrt(1-beta_t) * x_{t-1}, beta_t * I)
 ```
 
-where beta_t is a noise schedule. After T steps, x_T is approximately N(0, I). The reverse process is parameterized by a neural network that predicts the noise:
+где beta_t -- noise schedule. После T шагов x_T приблизительно имеет распределение N(0, I). Обратный процесс параметризуется нейронной сетью, которая предсказывает шум:
 
 ```
 p_theta(x_{t-1} | x_t) = N(x_{t-1}; mu_theta(x_t, t), sigma_t^2 * I)
 ```
 
-Every step of generation is a step in a learned Markov chain. Understanding Markov chains means understanding how and why diffusion models generate data.
+Каждый шаг генерации -- шаг в обученной марковской цепи. Понимание марковских цепей означает понимание того, как и почему diffusion models генерируют данные.
 
-SGLD (Stochastic Gradient Langevin Dynamics) combines mini-batch gradient descent with Langevin noise. Instead of computing the full gradient, you use a stochastic estimate and add calibrated noise. As learning rate decays, SGLD transitions from optimization to sampling -- you get approximate Bayesian posterior samples for free. This is one of the simplest ways to get uncertainty estimates from a neural network.
+SGLD (Stochastic Gradient Langevin Dynamics) объединяет mini-batch gradient descent с Langevin noise. Вместо вычисления полного градиента вы используете стохастическую оценку и добавляете калиброванный шум. По мере затухания learning rate SGLD переходит от оптимизации к сэмплированию -- вы почти бесплатно получаете приближенные байесовские posterior samples для нейронной сети. Это один из самых простых способов получать оценки неопределенности из нейронной сети.
 
-The key insight across all these connections: stochastic processes are not just theoretical tools. They are the computational mechanisms inside modern AI systems. When you tune the temperature of an LLM, you are adjusting a Markov chain. When you train a diffusion model, you are learning to reverse a Brownian-motion-like process. When you run Bayesian inference, you are constructing a chain that converges to the posterior.
+Ключевая идея во всех этих связях: стохастические процессы -- не просто теоретические инструменты. Это вычислительные механизмы внутри современных AI-систем. Когда вы настраиваете temperature в LLM, вы регулируете марковскую цепь. Когда вы обучаете diffusion model, вы учитесь обращать процесс, похожий на броуновское движение. Когда вы запускаете байесовский вывод, вы строите цепь, сходящуюся к posterior.
 
-## Exercises
+## Упражнения
 
-1. **Simulate 1000 random walks of 10000 steps.** Plot the distribution of final positions. Verify it is approximately Gaussian with mean 0 and standard deviation sqrt(10000) = 100.
+1. **Симулируйте 1000 случайных блужданий по 10000 шагов.** Постройте распределение финальных позиций. Проверьте, что оно приблизительно гауссово со средним 0 и стандартным отклонением sqrt(10000) = 100.
 
-2. **Build a text generator using a Markov chain.** Train on a small corpus: for each word, count transitions to the next word. Build the transition matrix. Generate new sentences by sampling from the chain.
+2. **Постройте генератор текста с помощью марковской цепи.** Обучите на небольшом корпусе: для каждого слова посчитайте переходы к следующему слову. Постройте матрицу переходов. Генерируйте новые предложения, сэмплируя из цепи.
 
-3. **Implement simulated annealing** using Metropolis-Hastings. Start at high temperature (accept almost everything) and gradually cool down (accept only improvements). Use it to find the minimum of a function with many local minima.
+3. **Реализуйте simulated annealing** с помощью Metropolis-Hastings. Начните с высокой temperature (принимать почти все) и постепенно охлаждайте (принимать только улучшения). Используйте это, чтобы найти минимум функции со многими локальными минимумами.
 
-4. **Compare Langevin dynamics at different temperatures.** Sample from a double-well potential U(x) = (x^2 - 1)^2. At low temperature, samples cluster in one well. At high temperature, they spread across both. Find the critical temperature where the chain mixes between wells.
+4. **Сравните Langevin dynamics при разных temperature.** Сэмплируйте из double-well potential U(x) = (x^2 - 1)^2. При низкой temperature сэмплы группируются в одной яме. При высокой temperature они распределяются по обеим. Найдите критическую temperature, при которой цепь перемешивается между ямами.
 
-5. **Implement the forward diffusion process.** Start with a 1D signal (e.g., a sine wave). Add noise progressively over 100 steps with a linear noise schedule. Show how the signal degrades to pure noise. Then implement a simple denoiser that reverses the process (even a naive one that just subtracts the estimated noise).
+5. **Реализуйте forward diffusion process.** Начните с 1D-сигнала (например, синусоиды). Постепенно добавляйте шум за 100 шагов с линейным noise schedule. Покажите, как сигнал деградирует до чистого шума. Затем реализуйте простой denoiser, который обращает процесс (даже наивный, который просто вычитает оцененный шум).
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Random walk | "Coin-flip movement" | A process where position changes by random increments at each step |
-| Markov property | "Memoryless" | The future depends only on the present state, not on the history |
-| Transition matrix | "The probability table" | P[i][j] = probability of moving from state i to state j |
-| Stationary distribution | "The long-run average" | The distribution pi where pi*P = pi -- the chain's equilibrium |
-| Brownian motion | "Random jiggling" | The continuous-time limit of a random walk, B(t) ~ N(0, t) |
-| Langevin dynamics | "Gradient descent with noise" | Update rule that combines deterministic gradient and random perturbation |
-| MCMC | "Walking toward the target" | Constructing a Markov chain whose stationary distribution is the one you want |
-| Metropolis-Hastings | "Propose and accept/reject" | MCMC algorithm that uses acceptance ratios to ensure convergence |
-| Temperature | "The randomness knob" | Parameter controlling the tradeoff between exploration and exploitation |
-| Diffusion process | "Noise in, noise out" | Forward: gradually add noise. Reverse: gradually remove it. Generates data. |
+| Случайное блуждание | "Движение по броску монеты" | Процесс, в котором позиция меняется на случайные приращения на каждом шаге |
+| Марковское свойство | "Без памяти" | Будущее зависит только от текущего состояния, а не от истории |
+| Матрица переходов | "Таблица вероятностей" | P[i][j] = probability of moving from state i to state j |
+| Стационарное распределение | "Долгосрочное среднее" | Распределение pi, где pi*P = pi -- равновесие цепи |
+| Броуновское движение | "Случайное дрожание" | Непрерывный во времени предел случайного блуждания, B(t) ~ N(0, t) |
+| Langevin dynamics | "Градиентный спуск с шумом" | Правило обновления, объединяющее детерминированный градиент и случайное возмущение |
+| MCMC | "Блуждание к цели" | Построение марковской цепи, стационарное распределение которой является нужным вам распределением |
+| Metropolis-Hastings | "Предложить и принять/отклонить" | MCMC-алгоритм, использующий отношения принятия для обеспечения сходимости |
+| Temperature | "Ручка случайности" | Параметр, управляющий компромиссом между exploration и exploitation |
+| Diffusion process | "Шум туда, шум обратно" | Forward: постепенно добавлять шум. Reverse: постепенно удалять его. Генерирует данные. |
 
-## Further Reading
+## Дополнительное чтение
 
-- **Ho, Jain, Abbeel (2020)** -- "Denoising Diffusion Probabilistic Models." The DDPM paper that launched the diffusion model revolution. Clear derivation of the forward and reverse Markov chains.
-- **Song & Ermon (2019)** -- "Generative Modeling by Estimating Gradients of the Data Distribution." Score-based approach using Langevin dynamics for sampling.
-- **Roberts & Rosenthal (2004)** -- "General state space Markov chains and MCMC algorithms." The theory behind when and why MCMC works.
-- **Norris (1997)** -- "Markov Chains." The standard textbook. Covers convergence, stationary distributions, and hitting times.
-- **Welling & Teh (2011)** -- "Bayesian Learning via Stochastic Gradient Langevin Dynamics." Combines SGD with Langevin dynamics for scalable Bayesian inference.
+- **Ho, Jain, Abbeel (2020)** -- "Denoising Diffusion Probabilistic Models." Статья DDPM, запустившая революцию diffusion models. Ясный вывод прямой и обратной марковских цепей.
+- **Song & Ermon (2019)** -- "Generative Modeling by Estimating Gradients of the Data Distribution." Score-based подход, использующий Langevin dynamics для сэмплирования.
+- **Roberts & Rosenthal (2004)** -- "General state space Markov chains and MCMC algorithms." Теория того, когда и почему работает MCMC.
+- **Norris (1997)** -- "Markov Chains." Стандартный учебник. Покрывает сходимость, стационарные распределения и hitting times.
+- **Welling & Teh (2011)** -- "Bayesian Learning via Stochastic Gradient Langevin Dynamics." Объединяет SGD с Langevin dynamics для масштабируемого байесовского вывода.

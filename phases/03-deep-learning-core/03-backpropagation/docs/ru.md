@@ -1,38 +1,38 @@
-# Backpropagation from Scratch
+# Обратное распространение с нуля
 
-> Backpropagation is the algorithm that makes learning possible. Without it, neural networks are just expensive random number generators.
+> Обратное распространение (backpropagation) - это алгоритм, который делает обучение возможным. Без него нейронные сети были бы просто дорогими генераторами случайных чисел.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Lesson 03.02 (Multi-Layer Networks)
-**Time:** ~120 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Урок 03.02 (многослойные сети, Multi-Layer Networks)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement a Value-based autograd engine that builds a computational graph and computes gradients via topological sort
-- Derive the backward pass for addition, multiplication, and sigmoid using the chain rule
-- Train a multi-layer network on XOR and circle classification using only your from-scratch backpropagation engine
-- Identify the vanishing gradient problem in deep sigmoid networks and explain why gradients shrink exponentially
+- Реализовать движок автоматического дифференцирования (autograd) на основе `Value`, который строит вычислительный граф и вычисляет градиенты через топологическую сортировку
+- Вывести обратный проход для сложения, умножения и сигмоиды с помощью правила цепочки (chain rule)
+- Обучить многослойную сеть на XOR и классификации окружности, используя только собственный движок обратного распространения
+- Распознать проблему затухающего градиента (vanishing gradient) в глубоких сигмоидальных сетях и объяснить, почему градиенты убывают экспоненциально
 
-## The Problem
+## Проблема
 
-Your network has a single hidden layer with 768 inputs and 3072 outputs. That's 2,359,296 weights. It made a wrong prediction. Which weights caused the error? Testing each weight individually means 2.3 million forward passes. Backpropagation computes all 2.3 million gradients in a single backward pass. That's not an optimization. That's the difference between trainable and impossible.
+У вашей сети один скрытый слой с 768 входами и 3072 выходами. Это 2 359 296 весов. Сеть сделала неправильное предсказание. Какие веса вызвали ошибку? Проверять каждый вес отдельно означает выполнить 2,3 миллиона прямых проходов. Обратное распространение вычисляет все 2,3 миллиона градиентов за один обратный проход. Это не оптимизация. Это разница между тем, что можно обучить, и тем, что невозможно.
 
-The naive approach: take one weight, nudge it by a tiny amount, run the forward pass again, measure whether the loss went up or down. That gives you the gradient for that weight. Now do it for every weight in the network. Multiply by thousands of training steps and millions of data points. You'd need geological time to train anything useful.
+Наивный подход: взять один вес, немного сдвинуть его, снова выполнить прямой проход и измерить, выросла или уменьшилась функция потерь. Так вы получите градиент для этого веса. Теперь сделайте это для каждого веса в сети. Умножьте на тысячи шагов обучения и миллионы точек данных. Чтобы обучить что-то полезное, понадобилось бы геологическое время.
 
-Backpropagation solves this. One forward pass, one backward pass, all gradients computed. The trick is the chain rule from calculus, applied systematically to a computational graph. This is the algorithm that made deep learning practical. Without it, we'd still be stuck on toy problems.
+Обратное распространение решает эту проблему. Один прямой проход, один обратный проход, все градиенты вычислены. Прием заключается в правиле цепочки из математического анализа, систематически примененном к вычислительному графу. Именно этот алгоритм сделал глубокое обучение практичным. Без него мы бы до сих пор застревали на игрушечных задачах.
 
-## The Concept
+## Концепция
 
-### The Chain Rule, Applied to Networks
+### Правило цепочки применительно к сетям
 
-You saw the chain rule in Phase 01, Lesson 05. Quick recap: if y = f(g(x)), then dy/dx = f'(g(x)) * g'(x). You multiply derivatives along the chain.
+Вы видели правило цепочки в Фазе 01, Уроке 05. Краткое напоминание: если y = f(g(x)), то dy/dx = f'(g(x)) * g'(x). Вы перемножаете производные вдоль цепочки.
 
-In a neural network, the "chain" is the sequence of operations from input to loss. Each layer applies weights, adds biases, passes through an activation. The loss function compares the final output to the target. Backpropagation traces this chain backward, computing how each operation contributed to the error.
+В нейронной сети «цепочка» - это последовательность операций от входа до функции потерь. Каждый слой применяет веса, добавляет смещения и пропускает результат через активацию. Функция потерь сравнивает итоговый выход с целевым значением. Обратное распространение проходит по этой цепочке назад, вычисляя, как каждая операция внесла вклад в ошибку.
 
-### Computational Graphs
+### Вычислительные графы
 
-Every forward pass builds a graph. Each node is an operation (multiply, add, sigmoid). Each edge carries a value forward and a gradient backward.
+Каждый прямой проход строит граф. Каждый узел - это операция (умножение, сложение, сигмоида). Каждое ребро переносит значение вперед и градиент назад.
 
 ```mermaid
 graph LR
@@ -45,13 +45,13 @@ graph LR
     y["target"] --> loss
 ```
 
-Forward pass: values flow left to right. x and w produce z1 = w*x. Add b to get z2. Sigmoid gives activation a. Compare a to target y using the loss function.
+Прямой проход: значения текут слева направо. x и w дают z1 = w*x. Добавляем b и получаем z2. Сигмоида дает активацию a. Сравниваем a с целью y с помощью функции потерь.
 
-Backward pass: gradients flow right to left. Start with dL/da (how loss changes with the activation). Multiply by da/dz2 (sigmoid derivative). That gives dL/dz2. Split into dL/db (which equals dL/dz2, since z2 = z1 + b) and dL/dz1. Then dL/dw = dL/dz1 * x and dL/dx = dL/dz1 * w.
+Обратный проход: градиенты текут справа налево. Начинаем с dL/da (как потери меняются при изменении активации). Умножаем на da/dz2 (производную сигмоиды). Получаем dL/dz2. Разделяем его на dL/db (он равен dL/dz2, поскольку z2 = z1 + b) и dL/dz1. Затем dL/dw = dL/dz1 * x и dL/dx = dL/dz1 * w.
 
-Every node in the graph has one job during the backward pass: take the gradient coming from above, multiply by its local derivative, and pass it down.
+У каждого узла графа в обратном проходе одна задача: взять градиент, пришедший сверху, умножить его на локальную производную и передать вниз.
 
-### Forward vs Backward
+### Прямой и обратный проход
 
 ```mermaid
 graph TB
@@ -70,11 +70,11 @@ graph TB
     Forward --> Backward
 ```
 
-The forward pass stores every intermediate value: z, a, the inputs to each layer. The backward pass needs these stored values to compute gradients. This is the memory-computation tradeoff at the heart of backprop. You trade memory (storing activations) for speed (one pass instead of millions).
+Прямой проход сохраняет каждое промежуточное значение: z, a, входы каждого слоя. Обратному проходу нужны эти сохраненные значения, чтобы вычислять градиенты. Это компромисс между памятью и вычислениями в основе backprop: вы тратите память на хранение активаций ради скорости - одного прохода вместо миллионов.
 
-### Gradient Flow Through a Network
+### Поток градиентов через сеть
 
-For a 3-layer network, gradients chain through every layer:
+Для трехслойной сети градиенты проходят цепочкой через каждый слой:
 
 ```mermaid
 graph RL
@@ -84,11 +84,11 @@ graph RL
     L1 -- "dL/dz1 = dL/da1 * sigmoid'(z1)" --> I["Input"]
 ```
 
-At each layer, the gradient gets multiplied by the sigmoid derivative. The sigmoid derivative is a * (1 - a), which maxes out at 0.25 (when a = 0.5). Three layers deep, the gradient has been multiplied by at most 0.25^3 = 0.0156. Ten layers deep: 0.25^10 = 0.000001.
+На каждом слое градиент умножается на производную сигмоиды. Производная сигмоиды равна a * (1 - a), и ее максимум 0.25 (когда a = 0.5). На глубине трех слоев градиент уже умножен максимум на 0.25^3 = 0.0156. На глубине десяти слоев: 0.25^10 = 0.000001.
 
-### Vanishing Gradients
+### Затухающие градиенты
 
-This is the vanishing gradient problem. Sigmoid squashes its output between 0 and 1. Its derivative is always less than 0.25. Stack enough sigmoid layers and gradients shrink to nothing. Early layers barely learn because they receive near-zero gradients.
+Это и есть проблема затухающего градиента. Сигмоида сжимает выход в диапазон от 0 до 1. Ее производная всегда меньше 0.25. Если сложить достаточно сигмоидальных слоев, градиенты сжимаются почти до нуля. Ранние слои почти не учатся, потому что получают почти нулевые градиенты.
 
 ```
 sigmoid(z):     Output range [0, 1]
@@ -98,13 +98,13 @@ After 5 layers:   gradient * 0.25^5 = 0.001x original
 After 10 layers:  gradient * 0.25^10 = 0.000001x original
 ```
 
-This is why deep sigmoid networks are nearly impossible to train. The fix -- ReLU and its variants -- is the subject of Lesson 04. For now, understand that backprop works perfectly. The problem is what it's working through.
+Именно поэтому глубокие сигмоидальные сети почти невозможно обучать. Исправление - ReLU и его варианты - тема Урока 04. Сейчас важно понять: backprop работает правильно. Проблема в том, через что он проходит.
 
-### Deriving Gradients for a 2-Layer Network
+### Вывод градиентов для двухслойной сети
 
-Concrete math for a network with input x, hidden layer with sigmoid, output layer with sigmoid, and MSE loss.
+Конкретная математика для сети с входом x, скрытым слоем с сигмоидой, выходным слоем с сигмоидой и MSE-потерей.
 
-Forward pass:
+Прямой проход:
 ```
 z1 = W1 * x + b1
 a1 = sigmoid(z1)
@@ -113,7 +113,7 @@ a2 = sigmoid(z2)
 L = (a2 - y)^2
 ```
 
-Backward pass (applying chain rule step by step):
+Обратный проход (пошаговое применение правила цепочки):
 ```
 dL/da2 = 2(a2 - y)
 da2/dz2 = a2 * (1 - a2)
@@ -130,13 +130,13 @@ dL/dW1 = dL/dz1 * x
 dL/db1 = dL/dz1
 ```
 
-Every gradient is a product of local derivatives traced back from the loss. That's all backpropagation is.
+Каждый градиент - это произведение локальных производных, прослеженных назад от функции потерь. Это все, чем является обратное распространение.
 
-## Build It
+## Соберите это
 
-### Step 1: The Value Node
+### Шаг 1: Узел Value
 
-Every number in our computation becomes a Value. It stores its data, its gradient, and how it was created (so it knows how to compute gradients backward).
+Каждое число в нашем вычислении становится `Value`. Оно хранит свои данные, свой градиент и то, как было создано, чтобы знать, как вычислять градиенты назад.
 
 ```python
 class Value:
@@ -151,11 +151,11 @@ class Value:
         return f"Value(data={self.data:.4f}, grad={self.grad:.4f})"
 ```
 
-No gradient yet (0.0). No backward function yet (no-op). The `_children` track which Values produced this one, so we can topologically sort the graph later.
+Градиента пока нет (0.0). Обратной функции пока нет (no-op). `_children` отслеживает, какие `Value` породили это значение, чтобы позже можно было топологически отсортировать граф.
 
-### Step 2: Operations with Backward Functions
+### Шаг 2: Операции с обратными функциями
 
-Each operation creates a new Value and defines how gradients flow backward through it.
+Каждая операция создает новое `Value` и определяет, как градиенты текут назад через нее.
 
 ```python
 def __add__(self, other):
@@ -181,13 +181,13 @@ def __mul__(self, other):
     return out
 ```
 
-For addition: d(a+b)/da = 1, d(a+b)/db = 1. So both inputs get the output's gradient directly.
+Для сложения: d(a+b)/da = 1, d(a+b)/db = 1. Поэтому оба входа напрямую получают градиент выхода.
 
-For multiplication: d(a*b)/da = b, d(a*b)/db = a. Each input gets the other's value times the output gradient.
+Для умножения: d(a*b)/da = b, d(a*b)/db = a. Каждый вход получает значение другого входа, умноженное на градиент выхода.
 
-The `+=` is critical. A Value might be used in multiple operations. Its gradient is the sum of gradients from all paths.
+`+=` критически важен. Одно `Value` может использоваться в нескольких операциях. Его градиент - сумма градиентов из всех путей.
 
-### Step 3: Sigmoid and Loss
+### Шаг 3: Сигмоида и функция потерь
 
 ```python
 import math
@@ -205,7 +205,7 @@ def sigmoid(self):
     return out
 ```
 
-Sigmoid derivative: sigmoid(x) * (1 - sigmoid(x)). We computed sigmoid(x) = s during the forward pass. Reuse it. No extra work.
+Производная сигмоиды: sigmoid(x) * (1 - sigmoid(x)). Мы вычислили sigmoid(x) = s во время прямого прохода. Переиспользуем его. Никакой лишней работы.
 
 ```python
 def mse_loss(predicted, target):
@@ -213,11 +213,11 @@ def mse_loss(predicted, target):
     return diff * diff
 ```
 
-MSE for a single output: (predicted - target)^2. We express subtraction as addition with a negated Value.
+MSE для одного выхода: (predicted - target)^2. Вычитание выражаем как сложение с отрицательным `Value`.
 
-### Step 4: Backward Pass
+### Шаг 4: Обратный проход
 
-Topological sort ensures we process nodes in the right order -- a node's gradient is fully accumulated before we propagate through it.
+Топологическая сортировка гарантирует, что мы обрабатываем узлы в правильном порядке: градиент узла полностью накоплен до того, как мы проталкиваем его дальше.
 
 ```python
 def backward(self):
@@ -237,9 +237,9 @@ def backward(self):
         v._backward()
 ```
 
-Start at the loss (gradient = 1.0, since dL/dL = 1). Walk backward through the sorted graph. Each node's `_backward` pushes gradients to its children.
+Начинаем с потерь (градиент = 1.0, потому что dL/dL = 1). Идем назад по отсортированному графу. `_backward` каждого узла проталкивает градиенты к его дочерним узлам.
 
-### Step 5: Layer and Network
+### Шаг 5: Слой и сеть
 
 ```python
 import random
@@ -297,9 +297,9 @@ class Network:
             p.grad = 0.0
 ```
 
-A Neuron takes inputs, computes weighted sum + bias, and applies sigmoid. Weight initialization scales by sqrt(2/n_inputs) to prevent sigmoid saturation in deeper networks. A Layer is a list of Neurons. A Network is a list of Layers. The `parameters()` method collects all learnable Values so we can update them.
+Нейрон принимает входы, вычисляет взвешенную сумму + смещение и применяет сигмоиду. Инициализация весов масштабируется как sqrt(2/n_inputs), чтобы предотвращать насыщение сигмоиды в более глубоких сетях. Слой - это список нейронов. Сеть - список слоев. Метод `parameters()` собирает все обучаемые `Value`, чтобы мы могли их обновлять.
 
-### Step 6: Train on XOR
+### Шаг 6: Обучение на XOR
 
 ```python
 random.seed(42)
@@ -338,11 +338,11 @@ for inputs, target in xor_data:
     print(f"  {inputs} -> {pred.data:.4f} (expected {target})")
 ```
 
-Watch the loss decrease. From random predictions to correct XOR outputs, driven entirely by backpropagation computing gradients and nudging weights in the right direction.
+Наблюдайте, как уменьшается потеря. От случайных предсказаний к правильным выходам XOR - все это происходит благодаря обратному распространению, которое вычисляет градиенты и сдвигает веса в правильном направлении.
 
-### Step 7: Circle Classification
+### Шаг 7: Классификация окружности
 
-In Lesson 02, you hand-tuned weights for circle classification. Now let the network learn them.
+В Уроке 02 вы вручную подбирали веса для классификации окружности. Теперь пусть сеть выучит их сама.
 
 ```python
 random.seed(7)
@@ -386,13 +386,13 @@ for epoch in range(2000):
         print(f"Epoch {epoch:4d} | Loss: {total_loss_val:.4f} | Accuracy: {accuracy:.1f}%")
 ```
 
-We use online SGD here -- update weights after each sample instead of accumulating the full batch. This breaks symmetry faster and avoids sigmoid saturation on the full loss landscape. Shuffling the data each epoch prevents the network from memorizing the order.
+Здесь мы используем онлайн-SGD - обновляем веса после каждого примера, а не накапливаем полный батч. Это быстрее ломает симметрию и помогает избежать насыщения сигмоиды на полном ландшафте потерь. Перемешивание данных в каждую эпоху не дает сети запоминать порядок.
 
-No hand-tuning. The network discovers the circular decision boundary on its own. That's the power of backpropagation: you define the architecture, the loss function, and the data. The algorithm figures out the weights.
+Никакой ручной настройки. Сеть сама находит круговую границу решения. В этом сила обратного распространения: вы задаете архитектуру, функцию потерь и данные. Алгоритм сам подбирает веса.
 
-## Use It
+## Используйте это
 
-PyTorch does everything above in a few lines. The core idea is identical -- autograd builds a computational graph during the forward pass and traces it backward to compute gradients.
+PyTorch делает все описанное выше в несколько строк. Основная идея та же: autograd строит вычислительный граф во время прямого прохода и проходит по нему назад, чтобы вычислить градиенты.
 
 ```python
 import torch
@@ -424,43 +424,43 @@ with torch.no_grad():
         print(f"  {X[i].tolist()} -> {pred.item():.4f} (expected {y[i].item()})")
 ```
 
-`loss.backward()` is your `total_loss.backward()`. `optimizer.step()` is your manual `p.data -= lr * p.grad`. `optimizer.zero_grad()` is your `net.zero_grad()`. Same algorithm, industrial-strength implementation. PyTorch handles GPU acceleration, mixed precision, gradient checkpointing, and hundreds of layer types. But the backward pass is the same chain rule applied to the same computational graph.
+`loss.backward()` - это ваш `total_loss.backward()`. `optimizer.step()` - ваше ручное `p.data -= lr * p.grad`. `optimizer.zero_grad()` - ваш `net.zero_grad()`. Тот же алгоритм, промышленная реализация. PyTorch берет на себя ускорение на GPU, смешанную точность (mixed precision), контрольные точки градиентов (gradient checkpointing) и сотни типов слоев. Но обратный проход - все то же правило цепочки, примененное к тому же вычислительному графу.
 
-Training runs the forward pass, then the backward pass, then updates weights. Inference runs only the forward pass. No gradients, no updates. This distinction matters because inference is what happens in production. When you call an API like Claude or GPT, you're running inference -- your prompt flows forward through the network, and tokens come out the other end. No weights change. Understanding backprop matters because it shaped every weight in that network.
+Обучение выполняет прямой проход, затем обратный проход, затем обновляет веса. Инференс выполняет только прямой проход. Без градиентов, без обновлений. Это различие важно, потому что именно инференс происходит в продакшене. Когда вы вызываете API вроде Claude или GPT, вы запускаете инференс: ваш промпт проходит вперед через сеть, а токены выходят с другой стороны. Веса не меняются. Понимание backprop важно, потому что он сформировал каждый вес в этой сети.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
-- `outputs/prompt-gradient-debugger.md` -- a reusable prompt for diagnosing gradient problems (vanishing, exploding, NaN) in any neural network
+Этот урок создает:
+- `outputs/prompt-gradient-debugger.md` - переиспользуемый промпт для диагностики проблем с градиентами (затухание, взрыв, NaN) в любой нейронной сети
 
-## Exercises
+## Упражнения
 
-1. Add a `__sub__` method to the Value class (a - b = a + (-1 * b)). Then implement a `__neg__` method. Verify that the gradients are correct by comparing with manual calculation for a simple expression like (a - b)^2.
+1. Добавьте метод `__sub__` в класс `Value` (a - b = a + (-1 * b)). Затем реализуйте метод `__neg__`. Проверьте, что градиенты корректны, сравнив их с ручным расчетом для простого выражения вроде (a - b)^2.
 
-2. Add a `relu` method to Value (output max(0, x), derivative is 1 if x > 0, else 0). Replace sigmoid with relu in the hidden layers and train on XOR again. Compare convergence speed. You should see faster training -- this previews Lesson 04.
+2. Добавьте метод `relu` в `Value` (выход max(0, x), производная равна 1, если x > 0, иначе 0). Замените сигмоиду на relu в скрытых слоях и снова обучите на XOR. Сравните скорость сходимости. Вы должны увидеть более быстрое обучение - это предварительный взгляд на Урок 04.
 
-3. Implement a `__pow__` method on Value for integer powers. Use it to replace `mse_loss` with a proper `(predicted - target) ** 2` expression. Verify gradients match the original implementation.
+3. Реализуйте метод `__pow__` для `Value` для целых степеней. Используйте его, чтобы заменить `mse_loss` на корректное выражение `(predicted - target) ** 2`. Проверьте, что градиенты совпадают с исходной реализацией.
 
-4. Add gradient clipping to the training loop: after calling `backward()`, clip all gradients to [-1, 1]. Train a deeper network (4+ layers with sigmoid) and compare loss curves with and without clipping. This is your first defense against exploding gradients.
+4. Добавьте отсечение градиентов (gradient clipping) в цикл обучения: после вызова `backward()` ограничьте все градиенты диапазоном [-1, 1]. Обучите более глубокую сеть (4+ слоя с сигмоидой) и сравните кривые потерь с отсечением и без него. Это ваша первая защита от взрывающихся градиентов.
 
-5. Build a visualization: after training on XOR, print the gradient of every parameter in the network. Identify which layer has the smallest gradients. This demonstrates the vanishing gradient problem you read about in the Concept section.
+5. Постройте визуализацию: после обучения на XOR напечатайте градиент каждого параметра в сети. Определите, в каком слое самые маленькие градиенты. Это демонстрирует проблему затухающего градиента, о которой вы читали в разделе «Концепция».
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Backpropagation | "The network learns" | An algorithm that computes dL/dw for every weight by applying the chain rule backward through the computational graph |
-| Computational graph | "The network structure" | A directed acyclic graph where nodes are operations and edges carry values (forward) and gradients (backward) |
-| Chain rule | "Multiply the derivatives" | If y = f(g(x)), then dy/dx = f'(g(x)) * g'(x) -- the mathematical foundation of backpropagation |
-| Gradient | "The direction of steepest ascent" | The partial derivative of the loss with respect to a parameter -- tells you how to change that parameter to reduce the loss |
-| Vanishing gradient | "Deep networks don't learn" | Gradients shrink exponentially as they propagate through layers with saturating activations like sigmoid |
-| Forward pass | "Running the network" | Computing the output from inputs by sequentially applying each layer's operations and storing intermediate values |
-| Backward pass | "Computing gradients" | Traversing the computational graph in reverse, accumulating gradients at each node using the chain rule |
-| Learning rate | "How fast it learns" | A scalar that controls the step size when updating weights: w_new = w_old - lr * gradient |
-| Topological sort | "The right order" | An ordering of graph nodes where each node appears after all nodes it depends on -- ensures gradients are fully accumulated before propagation |
-| Autograd | "Automatic differentiation" | A system that builds computational graphs during forward computation and automatically computes gradients -- what PyTorch's engine does |
+| Обратное распространение (Backpropagation) | «Сеть учится» | Алгоритм, который вычисляет dL/dw для каждого веса, применяя правило цепочки назад через вычислительный граф |
+| Вычислительный граф (Computational graph) | «Структура сети» | Направленный ациклический граф, где узлы - операции, а ребра переносят значения (вперед) и градиенты (назад) |
+| Правило цепочки (Chain rule) | «Перемножить производные» | Если y = f(g(x)), то dy/dx = f'(g(x)) * g'(x) - математическая основа обратного распространения |
+| Градиент (Gradient) | «Направление наискорейшего роста» | Частная производная потерь по параметру: показывает, как изменить этот параметр, чтобы уменьшить потерю |
+| Затухающий градиент (Vanishing gradient) | «Глубокие сети не учатся» | Градиенты экспоненциально уменьшаются при распространении через слои с насыщаемыми активациями вроде сигмоиды |
+| Прямой проход (Forward pass) | «Запуск сети» | Вычисление выхода из входов путем последовательного применения операций каждого слоя и сохранения промежуточных значений |
+| Обратный проход (Backward pass) | «Вычисление градиентов» | Обход вычислительного графа в обратном направлении с накоплением градиентов в каждом узле по правилу цепочки |
+| Скорость обучения (Learning rate) | «Как быстро она учится» | Скаляр, управляющий размером шага при обновлении весов: w_new = w_old - lr * gradient |
+| Топологическая сортировка (Topological sort) | «Правильный порядок» | Упорядочивание узлов графа, при котором каждый узел идет после всех узлов, от которых зависит; это гарантирует полное накопление градиентов перед распространением |
+| Автоградиент (Autograd) | «Автоматическое дифференцирование» | Система, которая строит вычислительные графы во время прямых вычислений и автоматически вычисляет градиенты; именно это делает движок PyTorch |
 
-## Further Reading
+## Дополнительное чтение
 
-- Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986) -- the paper that made backpropagation mainstream and unlocked multi-layer network training
-- 3Blue1Brown, "Neural Networks" series (https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) -- the best visual explanation of backpropagation and gradient flow through networks
+- Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986) - статья, которая сделала обратное распространение массовым подходом и открыла обучение многослойных сетей
+- 3Blue1Brown, серия "Neural Networks" (https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - лучшее визуальное объяснение обратного распространения и потока градиентов через сети

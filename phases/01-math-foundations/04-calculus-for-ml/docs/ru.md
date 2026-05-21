@@ -1,45 +1,45 @@
-# Calculus for Machine Learning
+# Математический анализ для машинного обучения
 
-> Derivatives tell you which way is downhill. That is all a neural network needs to learn.
+> Производные говорят, в какую сторону идти вниз. Это все, что нужно нейронной сети, чтобы учиться.
 
-**Type:** Learn
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01-03
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 01-03
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Compute numerical and analytical derivatives for common ML functions (x^2, sigmoid, cross-entropy)
-- Implement gradient descent from scratch to minimize a loss function in 1D and 2D
-- Derive the gradient of a linear regression model and train it via manual weight updates
-- Explain the Hessian matrix, Taylor series approximations, and their connection to optimization methods
+- Вычислять численные и аналитические производные для распространенных ML-функций (x^2, sigmoid, cross-entropy)
+- Реализовать gradient descent с нуля для минимизации функции потерь в 1D и 2D
+- Вывести градиент модели линейной регрессии и обучить ее через ручные обновления весов
+- Объяснять матрицу Гессе, аппроксимации рядом Тейлора и их связь с методами оптимизации
 
-## The Problem
+## Проблема
 
-You have a neural network with millions of weights. Each weight is a knob. You need to figure out which direction to turn every single knob to make the model slightly less wrong. Calculus gives you that direction.
+У вас есть нейронная сеть с миллионами весов. Каждый вес - это ручка настройки. Вам нужно понять, в какую сторону повернуть каждую отдельную ручку, чтобы модель стала чуть менее неправильной. Математический анализ дает это направление.
 
-Without calculus, training a neural network would mean trying random changes and hoping for the best. With derivatives, you know exactly how each weight affects the error. You turn every knob the right way, every time.
+Без математического анализа обучение нейронной сети означало бы пробовать случайные изменения и надеяться на лучшее. С производными вы точно знаете, как каждый вес влияет на ошибку. Вы каждый раз поворачиваете каждую ручку в правильную сторону.
 
-## The Concept
+## Концепция
 
-### What is a derivative?
+### Что такое производная?
 
-A derivative measures the rate of change. For a function y = f(x), the derivative f'(x) tells you: if you nudge x by a tiny amount, how much does y change?
+Производная измеряет скорость изменения. Для функции y = f(x) производная f'(x) говорит: если чуть-чуть сдвинуть x, насколько изменится y?
 
-Geometrically, the derivative is the slope of the tangent line at a point.
+Геометрически производная - это наклон касательной в точке.
 
 **f(x) = x^2:**
 
-| x | f(x) | f'(x) (slope) |
+| x | f(x) | f'(x) (наклон) |
 |---|------|---------------|
-| 0 | 0    | 0 (flat, at the bottom) |
+| 0 | 0    | 0 (плоско, внизу) |
 | 1 | 1    | 2 |
-| 2 | 4    | 4 (tangent line slope at this point) |
+| 2 | 4    | 4 (наклон касательной в этой точке) |
 | 3 | 9    | 6 |
 
-At x=2, the slope is 4. If you move x a tiny bit to the right, y increases by about 4 times that amount. At x=0, the slope is 0. You are at the bottom of the bowl.
+При x=2 наклон равен 4. Если вы чуть сдвинете x вправо, y увеличится примерно в 4 раза сильнее этого сдвига. При x=0 наклон равен 0. Вы находитесь на дне чаши.
 
-The formal definition:
+Формальное определение:
 
 ```
 f'(x) = lim   f(x + h) - f(x)
@@ -47,11 +47,11 @@ f'(x) = lim   f(x + h) - f(x)
                      h
 ```
 
-In code, you skip the limit and just use a very small h. That is the numerical derivative.
+В коде вы пропускаете предел и просто используете очень маленькое h. Это численная производная.
 
-### Partial derivatives: one variable at a time
+### Частные производные: по одной переменной за раз
 
-Real functions have many inputs. A neural network loss depends on thousands of weights. A partial derivative holds all variables constant except one, then takes the derivative with respect to that one.
+У реальных функций много входов. Потеря нейронной сети зависит от тысяч весов. Частная производная удерживает все переменные постоянными, кроме одной, а затем берет производную по этой одной переменной.
 
 ```
 f(x, y) = x^2 + 3xy + y^2
@@ -60,32 +60,32 @@ df/dx = 2x + 3y     (treat y as a constant)
 df/dy = 3x + 2y     (treat x as a constant)
 ```
 
-Each partial derivative answers: if I nudge just this one weight, how does the loss change?
+Каждая частная производная отвечает на вопрос: если я чуть изменю только этот один вес, как изменится loss?
 
-### The gradient: vector of all partial derivatives
+### Градиент: вектор всех частных производных
 
-The gradient collects every partial derivative into one vector. For a function f(x, y, z), the gradient is:
+Градиент собирает каждую частную производную в один вектор. Для функции f(x, y, z) градиент:
 
 ```
 grad f = [ df/dx, df/dy, df/dz ]
 ```
 
-The gradient points in the direction of steepest ascent. To minimize a function, go in the opposite direction.
+Градиент указывает в направлении наискорейшего возрастания. Чтобы минимизировать функцию, идите в противоположном направлении.
 
-**Contour plot of f(x,y) = x^2 + y^2:**
+**Контурный график f(x,y) = x^2 + y^2:**
 
-The function forms a bowl shape with concentric circles as contour lines. The minimum is at (0, 0).
+Функция образует чашу, а линии уровня выглядят как концентрические окружности. Минимум находится в (0, 0).
 
-| Point | grad f | -grad f (descent direction) |
+| Точка | grad f | -grad f (направление спуска) |
 |-------|--------|----------------------------|
-| (1, 1) | [2, 2] (points uphill, away from minimum) | [-2, -2] (points downhill, toward minimum) |
-| (0, 0) | [0, 0] (flat, at the minimum) | [0, 0] |
+| (1, 1) | [2, 2] (указывает вверх, от минимума) | [-2, -2] (указывает вниз, к минимуму) |
+| (0, 0) | [0, 0] (плоско, в минимуме) | [0, 0] |
 
-This is gradient descent in a picture. Compute the gradient, negate it, take a step.
+Это gradient descent в виде картинки. Вычислите градиент, смените знак, сделайте шаг.
 
-### The connection to optimization
+### Связь с оптимизацией
 
-Training a neural network is optimization. You have a loss function L(w1, w2, ..., wn) that measures how wrong the model is. You want to minimize it.
+Обучение нейронной сети - это оптимизация. У вас есть функция потерь L(w1, w2, ..., wn), которая измеряет, насколько модель ошибается. Вы хотите ее минимизировать.
 
 ```
 Gradient descent update rule:
@@ -98,27 +98,27 @@ For every weight:
   3. Repeat
 ```
 
-The learning rate controls step size. Too big and you overshoot. Too small and you crawl.
+Learning rate управляет размером шага. Слишком большой - вы перескакиваете через минимум. Слишком маленький - вы ползете.
 
-**Loss landscape (1D slice):**
+**Ландшафт функции потерь (1D-срез):**
 
-The loss function L(w) forms a curve with peaks and valleys as the weight w varies.
+Функция потерь L(w) образует кривую с пиками и долинами по мере изменения веса w.
 
-| Feature | Description |
+| Признак | Описание |
 |---------|-------------|
-| Global minimum | The lowest point on the entire curve -- the best solution |
-| Local minimum | A valley that is lower than its neighbors but not the lowest overall |
-| Slope | Gradient descent follows the slope downhill from any starting point |
+| Глобальный минимум | Самая низкая точка на всей кривой -- лучшее решение |
+| Локальный минимум | Долина, которая ниже соседних точек, но не самая низкая в целом |
+| Наклон | Gradient descent идет по наклону вниз из любой начальной точки |
 
-Gradient descent follows the slope downhill. It can get stuck in local minima, but in high-dimensional spaces (millions of weights) this is rarely a practical problem.
+Gradient descent идет по наклону вниз. Он может застрять в локальных минимумах, но в пространствах высокой размерности (миллионы весов) это редко является практической проблемой.
 
-### Numerical vs analytical derivatives
+### Численные и аналитические производные
 
-There are two ways to compute a derivative.
+Есть два способа вычислить производную.
 
-Analytical: apply calculus rules by hand. For f(x) = x^2, the derivative is f'(x) = 2x. Exact. Fast.
+Аналитический: применить правила дифференцирования вручную. Для f(x) = x^2 производная равна f'(x) = 2x. Точно. Быстро.
 
-Numerical: approximate using the definition. Compute f(x+h) and f(x-h) for a tiny h, then use the difference.
+Численный: аппроксимировать через определение. Вычислить f(x+h) и f(x-h) для крошечного h, затем взять разность.
 
 ```
 Numerical (central difference):
@@ -130,11 +130,11 @@ f'(x) ~= f(x + h) - f(x - h)
 h = 0.0001 works well in practice
 ```
 
-Numerical derivatives are slower but work for any function. Analytical derivatives are fast but require you to derive the formula. Neural network frameworks use a third approach: automatic differentiation, which computes exact derivatives mechanically. You will see that in Phase 3.
+Численные производные медленнее, но работают для любой функции. Аналитические производные быстрые, но требуют вывести формулу. Фреймворки нейронных сетей используют третий подход: automatic differentiation, который механически вычисляет точные производные. Вы увидите это в Phase 3.
 
-### Derivatives by hand for simple functions
+### Производные вручную для простых функций
 
-These are the derivatives you will see over and over in ML.
+Эти производные вы будете видеть в ML снова и снова.
 
 ```
 Function        Derivative       Used in
@@ -148,7 +148,7 @@ f(x) = ln(x)   f'(x) = 1/x     Cross-entropy loss
 f(x) = 1/(1+e^-x)  f'(x) = f(x)(1-f(x))   Sigmoid activation
 ```
 
-For f(x) = x^2:
+Для f(x) = x^2:
 
 ```
 f(x) = x^2    f'(x) = 2x
@@ -161,7 +161,7 @@ f(x) = x^2    f'(x) = 2x
    2    4       4      slope tilts right (increasing)
 ```
 
-For f(w) = wx + b with x=3, b=1:
+Для f(w) = wx + b при x=3, b=1:
 
 ```
 f(w) = 3w + 1    f'(w) = 3
@@ -170,9 +170,9 @@ The derivative with respect to w is just x.
 If x is big, a small change in w causes a big change in output.
 ```
 
-### The chain rule
+### Правило цепочки
 
-When functions are composed, the chain rule tells you how to differentiate.
+Когда функции составлены друг с другом, правило цепочки говорит, как их дифференцировать.
 
 ```
 If y = f(g(x)), then dy/dx = f'(g(x)) * g'(x)
@@ -183,34 +183,34 @@ Example: y = (3x + 1)^2
   dy/dx = 2(3x + 1) * 3 = 6(3x + 1)
 ```
 
-Neural networks are chains of functions: input -> linear -> activation -> linear -> activation -> loss. Backpropagation is the chain rule applied repeatedly from output to input. That is the entire algorithm.
+Нейронные сети - это цепочки функций: input -> linear -> activation -> linear -> activation -> loss. Backpropagation - это правило цепочки, многократно примененное от выхода к входу. В этом весь алгоритм.
 
-### The Hessian Matrix
+### Матрица Гессе
 
-The gradient tells you the slope. The Hessian tells you the curvature.
+Градиент говорит вам наклон. Матрица Гессе говорит вам кривизну.
 
-The Hessian is the matrix of second-order partial derivatives. For a function f(x1, x2, ..., xn), entry (i, j) of the Hessian is:
+Матрица Гессе - это матрица частных производных второго порядка. Для функции f(x1, x2, ..., xn) элемент (i, j) матрицы Гессе:
 
 ```
 H[i][j] = d^2f / (dx_i * dx_j)
 ```
 
-For a 2-variable function f(x, y):
+Для функции двух переменных f(x, y):
 
 ```
 H = | d^2f/dx^2    d^2f/dxdy |
     | d^2f/dydx    d^2f/dy^2 |
 ```
 
-**What the Hessian tells you at a critical point (where gradient = 0):**
+**Что матрица Гессе говорит в критической точке (где gradient = 0):**
 
-| Hessian property | Meaning | Example surface |
+| Свойство матрицы Гессе | Значение | Пример поверхности |
 |-----------------|---------|-----------------|
-| Positive definite (all eigenvalues > 0) | Local minimum | Bowl pointing up |
-| Negative definite (all eigenvalues < 0) | Local maximum | Bowl pointing down |
-| Indefinite (mixed eigenvalues) | Saddle point | Horse saddle shape |
+| Положительно определенная (все собственные значения > 0) | Локальный минимум | Чаша вверх |
+| Отрицательно определенная (все собственные значения < 0) | Локальный максимум | Чаша вниз |
+| Неопределенная (смешанные собственные значения) | Седловая точка | Форма седла |
 
-**Example:** f(x, y) = x^2 - y^2 (a saddle function)
+**Пример:** f(x, y) = x^2 - y^2 (седловая функция)
 
 ```
 df/dx = 2x       df/dy = -2y
@@ -223,7 +223,7 @@ Eigenvalues: 2 and -2 (one positive, one negative)
 --> Saddle point at (0, 0)
 ```
 
-Compare with f(x, y) = x^2 + y^2 (a bowl):
+Сравните с f(x, y) = x^2 + y^2 (чаша):
 
 ```
 H = | 2  0 |
@@ -233,46 +233,46 @@ Eigenvalues: 2 and 2 (both positive)
 --> Local minimum at (0, 0)
 ```
 
-**Why the Hessian matters in ML:**
+**Почему матрица Гессе важна в ML:**
 
-Newton's method uses the Hessian to take better optimization steps than gradient descent. Instead of just following the slope, it accounts for curvature:
+Метод Ньютона использует матрицу Гессе, чтобы делать более удачные шаги оптимизации, чем gradient descent. Вместо того чтобы просто следовать наклону, он учитывает кривизну:
 
 ```
 Newton's update:    w_new = w_old - H^(-1) * gradient
 Gradient descent:   w_new = w_old - lr * gradient
 ```
 
-Newton's method converges faster because the Hessian "rescales" the gradient -- steep directions get smaller steps, flat directions get larger steps.
+Метод Ньютона сходится быстрее, потому что матрица Гессе "перемасштабирует" градиент -- крутые направления получают меньшие шаги, плоские направления получают большие шаги.
 
-The catch: for a neural network with N parameters, the Hessian is N x N. A model with 1 million parameters would need a 1 trillion-entry matrix. That is why we use approximations.
+Проблема: для нейронной сети с N параметрами матрица Гессе имеет размер N x N. Модель с 1 миллионом параметров потребовала бы матрицу на 1 триллион элементов. Поэтому мы используем аппроксимации.
 
-| Method | What it uses | Cost | Convergence |
+| Метод | Что использует | Стоимость | Сходимость |
 |--------|-------------|------|-------------|
-| Gradient descent | First derivatives only | O(N) per step | Slow (linear) |
-| Newton's method | Full Hessian | O(N^3) per step | Fast (quadratic) |
-| L-BFGS | Approximate Hessian from gradient history | O(N) per step | Medium (superlinear) |
-| Adam | Per-parameter adaptive rates (diagonal Hessian approx) | O(N) per step | Medium |
-| Natural gradient | Fisher information matrix (statistical Hessian) | O(N^2) per step | Fast |
+| Gradient descent | Только первые производные | O(N) на шаг | Медленная (линейная) |
+| Метод Ньютона | Полная матрица Гессе | O(N^3) на шаг | Быстрая (квадратичная) |
+| L-BFGS | Приближенную матрицу Гессе из истории градиентов | O(N) на шаг | Средняя (сверхлинейная) |
+| Adam | Адаптивные скорости по параметрам (диагональная аппроксимация Гессе) | O(N) на шаг | Средняя |
+| Natural gradient | Матрица информации Фишера (статистическая матрица Гессе) | O(N^2) на шаг | Быстрая |
 
-In practice, Adam is the default optimizer for deep learning. It approximates second-order information cheaply by tracking the running mean and variance of gradients per parameter.
+На практике Adam - стандартный optimizer для deep learning. Он дешево аппроксимирует информацию второго порядка, отслеживая скользящее среднее и дисперсию градиентов для каждого параметра.
 
-### Taylor Series Approximation
+### Аппроксимация рядом Тейлора
 
-Any smooth function can be approximated locally by a polynomial:
+Любую гладкую функцию можно локально аппроксимировать полиномом:
 
 ```
 f(x + h) = f(x) + f'(x)*h + (1/2)*f''(x)*h^2 + (1/6)*f'''(x)*h^3 + ...
 ```
 
-The more terms you include, the better the approximation -- but only near the point x.
+Чем больше членов вы включаете, тем лучше аппроксимация -- но только рядом с точкой x.
 
-**Why Taylor series matter for ML:**
+**Почему ряды Тейлора важны для ML:**
 
-- **First-order Taylor = gradient descent.** When you use f(x + h) ~ f(x) + f'(x)*h, you are making a linear approximation. Gradient descent minimizes this linear model to choose h = -lr * f'(x).
+- **Первый порядок Тейлора = gradient descent.** Когда вы используете f(x + h) ~ f(x) + f'(x)*h, вы строите линейную аппроксимацию. Gradient descent минимизирует эту линейную модель, чтобы выбрать h = -lr * f'(x).
 
-- **Second-order Taylor = Newton's method.** Using f(x + h) ~ f(x) + f'(x)*h + (1/2)*f''(x)*h^2, you get a quadratic model. Minimizing it gives h = -f'(x)/f''(x) -- Newton's step.
+- **Второй порядок Тейлора = метод Ньютона.** Используя f(x + h) ~ f(x) + f'(x)*h + (1/2)*f''(x)*h^2, вы получаете квадратичную модель. Ее минимизация дает h = -f'(x)/f''(x) -- шаг Ньютона.
 
-- **Loss function design.** MSE and cross-entropy are smooth, which means their Taylor expansions are well-behaved. This is not an accident. Smooth losses make optimization predictable.
+- **Проектирование функции потерь.** MSE и cross-entropy гладкие, а значит их разложения Тейлора ведут себя хорошо. Это не случайность. Гладкие loss-функции делают оптимизацию предсказуемой.
 
 ```
 Approximation order    What it captures    Optimization method
@@ -283,49 +283,49 @@ Approximation order    What it captures    Optimization method
 Higher orders          Finer structure     Rarely used in ML
 ```
 
-The key insight: all gradient-based optimization is really about approximating the loss function locally and stepping to the minimum of that approximation.
+Ключевая идея: вся оптимизация на основе градиентов на самом деле локально аппроксимирует функцию потерь и делает шаг к минимуму этой аппроксимации.
 
-### Integrals in ML
+### Интегралы в ML
 
-Derivatives tell you rates of change. Integrals compute accumulations -- area under a curve.
+Производные говорят о скоростях изменения. Интегралы вычисляют накопления -- площадь под кривой.
 
-In ML, you rarely compute integrals by hand, but the concept is everywhere:
+В ML вы редко вычисляете интегралы вручную, но сама концепция встречается повсюду:
 
-**Probability.** For a continuous random variable with density p(x):
+**Вероятность.** Для непрерывной случайной величины с плотностью p(x):
 ```
 P(a < X < b) = integral from a to b of p(x) dx
 ```
-The area under the probability density curve between a and b is the probability of landing in that range.
+Площадь под кривой плотности вероятности между a и b - это вероятность попасть в этот диапазон.
 
-**Expected value.** The average outcome weighted by probability:
+**Математическое ожидание.** Средний результат, взвешенный по вероятности:
 ```
 E[f(X)] = integral of f(x) * p(x) dx
 ```
-The expected loss over a data distribution is an integral. Training minimizes an empirical approximation of this.
+Ожидаемая потеря по распределению данных - это интеграл. Обучение минимизирует его эмпирическую аппроксимацию.
 
-**KL divergence.** Measures how different two distributions are:
+**KL divergence.** Измеряет, насколько различаются два распределения:
 ```
 KL(p || q) = integral of p(x) * log(p(x) / q(x)) dx
 ```
-Used in VAEs, knowledge distillation, and Bayesian inference.
+Используется в VAEs, knowledge distillation и Bayesian inference.
 
-**Normalization constants.** In Bayesian inference:
+**Нормировочные константы.** В Bayesian inference:
 ```
 p(w | data) = p(data | w) * p(w) / integral of p(data | w) * p(w) dw
 ```
-The denominator is an integral over all possible parameter values. It is often intractable, which is why we use approximations like MCMC and variational inference.
+Знаменатель - это интеграл по всем возможным значениям параметров. Часто он невычислим напрямую, поэтому мы используем аппроксимации вроде MCMC и variational inference.
 
-| Integral concept | Where it appears in ML |
+| Понятие интеграла | Где появляется в ML |
 |-----------------|----------------------|
-| Area under curve | Probability from density functions |
-| Expected value | Loss functions, risk minimization |
+| Площадь под кривой | Вероятность из функций плотности |
+| Математическое ожидание | Функции потерь, risk minimization |
 | KL divergence | VAEs, policy optimization, distillation |
-| Normalization | Bayesian posteriors, softmax denominator |
-| Marginal likelihood | Model comparison, evidence lower bound (ELBO) |
+| Нормализация | Bayesian posteriors, знаменатель softmax |
+| Marginal likelihood | Сравнение моделей, evidence lower bound (ELBO) |
 
-### Multivariable Chain Rule in a Computation Graph
+### Многомерное правило цепочки в вычислительном графе
 
-The chain rule does not just apply to scalar functions in a line. In a neural network, variables fan out and merge. Here is how derivatives flow through a simple forward pass:
+Правило цепочки применимо не только к скалярным функциям в линию. В нейронной сети переменные разветвляются и сливаются. Вот как производные текут через простой forward pass:
 
 ```mermaid
 graph LR
@@ -335,7 +335,7 @@ graph LR
     a -->|"loss fn"| L["L = -(y*log(a) + (1-y)*log(1-a))"]
 ```
 
-The backward pass computes gradients right to left:
+Backward pass вычисляет градиенты справа налево:
 
 ```mermaid
 graph RL
@@ -345,15 +345,15 @@ graph RL
     dz2 -->|"dz2/db = 1"| db["dL/db = dL/dz2 * 1"]
 ```
 
-Each arrow multiplies by the local derivative. The gradient for any parameter is the product of all local derivatives along the path from loss to that parameter. When paths branch and merge, you sum the contributions (multivariate chain rule).
+Каждая стрелка умножает на локальную производную. Градиент для любого параметра - это произведение всех локальных производных вдоль пути от loss к этому параметру. Когда пути разветвляются и сливаются, вы суммируете вклады (многомерное правило цепочки).
 
-This is all backpropagation is: the chain rule applied systematically through a computation graph, from output to inputs.
+Вот и весь backpropagation: правило цепочки, систематически примененное через вычислительный граф от выходов к входам.
 
-### The Jacobian matrix
+### Матрица Якоби
 
-When a function maps a vector to a vector (like a neural network layer), its derivative is a matrix. The Jacobian contains every partial derivative of every output with respect to every input.
+Когда функция отображает вектор в вектор (как слой нейронной сети), ее производная - это матрица. Матрица Якоби содержит каждую частную производную каждого выхода по каждому входу.
 
-For f: R^n -> R^m, the Jacobian J is an m x n matrix:
+Для f: R^n -> R^m матрица Якоби J - это матрица m x n:
 
 | | x1 | x2 | ... | xn |
 |---|---|---|---|---|
@@ -362,11 +362,11 @@ For f: R^n -> R^m, the Jacobian J is an m x n matrix:
 | ... | ... | ... | ... | ... |
 | fm | dfm/dx1 | dfm/dx2 | ... | dfm/dxn |
 
-You will not compute Jacobians by hand for neural networks. PyTorch handles it. But knowing it exists helps you understand shapes in backpropagation: if a layer maps R^n to R^m, its Jacobian is m x n. The gradient flows backward through the transpose of this matrix.
+Вы не будете вычислять матрицы Якоби вручную для нейронных сетей. PyTorch делает это за вас. Но знание о том, что они существуют, помогает понимать формы в backpropagation: если слой отображает R^n в R^m, его матрица Якоби имеет размер m x n. Градиент течет назад через транспонированную матрицу.
 
-### Why this matters for neural networks
+### Почему это важно для нейронных сетей
 
-Every weight in a neural network gets a gradient. The gradient tells you how to adjust that weight to reduce the loss.
+Каждый вес в нейронной сети получает градиент. Градиент говорит, как изменить этот вес, чтобы уменьшить loss.
 
 ```mermaid
 graph LR
@@ -382,15 +382,15 @@ graph RL
     end
 ```
 
-Each weight update:
+Каждое обновление веса:
 - `W1 = W1 - lr * dL/dW1`
 - `W2 = W2 - lr * dL/dW2`
 
-The forward pass computes the prediction and loss. The backward pass computes the gradient of the loss with respect to every weight. Then every weight takes a small step downhill. Repeat for millions of steps. That is deep learning.
+Forward pass вычисляет prediction и loss. Backward pass вычисляет градиент loss по каждому весу. Затем каждый вес делает маленький шаг вниз. Повторите миллионы раз. Это и есть deep learning.
 
-## Build It
+## Соберите это
 
-### Step 1: Numerical derivative from scratch
+### Шаг 1: Численная производная с нуля
 
 ```python
 def numerical_derivative(f, x, h=1e-7):
@@ -405,9 +405,9 @@ for x in [-2, -1, 0, 1, 2]:
     print(f"x={x:2d}  f'(x) numerical={numerical:.6f}  analytical={analytical:.1f}")
 ```
 
-The numerical derivative matches the analytical one to many decimal places.
+Численная производная совпадает с аналитической до многих знаков после запятой.
 
-### Step 2: Partial derivatives and gradients
+### Шаг 2: Частные производные и градиенты
 
 ```python
 def numerical_gradient(f, point, h=1e-7):
@@ -430,7 +430,7 @@ print(f"Numerical gradient at (1,2): {[f'{g:.4f}' for g in grad]}")
 print(f"Analytical gradient at (1,2): [2*1+3*2, 3*1+2*2] = [{2*1+3*2}, {3*1+2*2}]")
 ```
 
-### Step 3: Gradient descent to find the minimum of f(x) = x^2
+### Шаг 3: Gradient descent для поиска минимума f(x) = x^2
 
 ```python
 x = 5.0
@@ -441,9 +441,9 @@ for step in range(20):
     print(f"step {step:2d}  x={x:8.4f}  f(x)={x**2:10.6f}")
 ```
 
-Starting at x=5, each step moves closer to x=0 (the minimum).
+Начиная с x=5, каждый шаг приближает к x=0 (минимуму).
 
-### Step 4: Gradient descent on a 2D function
+### Шаг 4: Gradient descent на 2D-функции
 
 ```python
 def f_2d(point):
@@ -460,7 +460,7 @@ for step in range(30):
         print(f"step {step:2d}  point=({point[0]:7.4f}, {point[1]:7.4f})  f={loss:.6f}")
 ```
 
-### Step 5: Comparing numerical and analytical derivatives
+### Шаг 5: Сравнение численных и аналитических производных
 
 ```python
 import math
@@ -483,7 +483,7 @@ for name, f, df in test_functions:
     print(f"{name:<12} {num:12.6f} {ana:12.6f} {err:12.2e}")
 ```
 
-### Step 6: Computing the Hessian numerically
+### Шаг 6: Численное вычисление матрицы Гессе
 
 ```python
 def hessian_2d(f, x, y, h=1e-5):
@@ -504,9 +504,9 @@ print(f"Saddle Hessian: {H_saddle}")  # [[2, 0], [0, -2]] -- mixed signs
 print(f"Bowl Hessian:   {H_bowl}")    # [[2, 0], [0, 2]]  -- both positive
 ```
 
-The Hessian of the saddle function has eigenvalues 2 and -2 (mixed signs, confirming a saddle point). The bowl has eigenvalues 2 and 2 (both positive, confirming a minimum).
+Матрица Гессе седловой функции имеет собственные значения 2 и -2 (смешанные знаки, что подтверждает седловую точку). У чаши собственные значения 2 и 2 (оба положительные, что подтверждает минимум).
 
-### Step 7: Taylor approximation in action
+### Шаг 7: Аппроксимация Тейлора в действии
 
 ```python
 import math
@@ -527,9 +527,9 @@ for h in [0.1, 0.5, 1.0, 2.0]:
     print(f"h={h:.1f}  sin(h)={true_val:.4f}  order1={t1:.4f}  order2={t2:.4f}")
 ```
 
-Near x0=0, sin(x) ~ x (first-order Taylor). The approximation is excellent for small h but breaks down for large h. This is why gradient descent works best with small learning rates -- each step assumes the linear approximation is accurate.
+Рядом с x0=0, sin(x) ~ x (первый порядок Тейлора). Аппроксимация отличная для малых h, но ломается для больших h. Поэтому gradient descent лучше всего работает с маленькими learning rates -- каждый шаг предполагает, что линейная аппроксимация точна.
 
-### Step 8: Why this matters for a neural network
+### Шаг 8: Почему это важно для нейронной сети
 
 ```python
 import random
@@ -565,11 +565,11 @@ print(f"\nLearned: y = {w:.2f}x + {b:.2f}")
 print(f"Actual:  y = 2x + 1")
 ```
 
-Every gradient-based training loop follows this pattern: predict, compute loss, compute gradients, update weights.
+Каждый цикл обучения на основе градиентов следует этому шаблону: prediction, вычисление loss, вычисление gradients, обновление weights.
 
-## Use It
+## Используйте это
 
-With NumPy, the same operations are faster and more concise:
+С NumPy те же операции быстрее и короче:
 
 ```python
 import numpy as np
@@ -592,32 +592,32 @@ for epoch in range(200):
 print(f"Learned: y = {w:.2f}x + {b:.2f}")
 ```
 
-You just built gradient descent from scratch. PyTorch automates the gradient computation, but the update loop is identical.
+Вы только что построили gradient descent с нуля. PyTorch автоматизирует вычисление градиентов, но цикл обновления идентичен.
 
-## Exercises
+## Упражнения
 
-1. Implement `numerical_second_derivative(f, x)` using `numerical_derivative` called twice. Verify that the second derivative of x^3 at x=2 is 12.
-2. Use gradient descent to find the minimum of f(x, y) = (x - 3)^2 + (y + 1)^2. Start from (0, 0). The answer should converge to (3, -1).
-3. Add momentum to the gradient descent loop: maintain a velocity vector that accumulates past gradients. Compare convergence speed with and without momentum on f(x) = x^4 - 3x^2.
+1. Реализуйте `numerical_second_derivative(f, x)` с помощью двух вызовов `numerical_derivative`. Проверьте, что вторая производная x^3 при x=2 равна 12.
+2. Используйте gradient descent, чтобы найти минимум f(x, y) = (x - 3)^2 + (y + 1)^2. Начните с (0, 0). Ответ должен сойтись к (3, -1).
+3. Добавьте momentum в цикл gradient descent: поддерживайте вектор скорости, который накапливает прошлые градиенты. Сравните скорость сходимости с momentum и без него на f(x) = x^4 - 3x^2.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Derivative | "The slope" | The rate of change of a function at a point. Tells you how much the output changes per unit change in input. |
-| Partial derivative | "Derivative of one variable" | The derivative with respect to one variable while all others are held constant. |
-| Gradient | "Direction of steepest ascent" | A vector of all partial derivatives. Points in the direction that increases the function fastest. |
-| Gradient descent | "Go downhill" | Subtract the gradient (times a learning rate) from the parameters to reduce the loss. The core of neural network training. |
-| Learning rate | "Step size" | A scalar that controls how big each gradient descent step is. Too large: diverge. Too small: converge slowly. |
-| Chain rule | "Multiply the derivatives" | The rule for differentiating composed functions: df/dx = df/dg * dg/dx. The mathematical basis of backpropagation. |
-| Jacobian | "Matrix of derivatives" | When a function maps vectors to vectors, the Jacobian is the matrix of all partial derivatives of outputs with respect to inputs. |
-| Numerical derivative | "Finite differences" | Approximating a derivative by evaluating the function at two nearby points and computing the slope between them. |
-| Backpropagation | "Reverse-mode autodiff" | Computing gradients layer by layer from output to input using the chain rule. How neural networks learn. |
-| Hessian | "Matrix of second derivatives" | The matrix of all second-order partial derivatives. Describes the curvature of a function. Positive definite Hessian at a critical point means local minimum. |
-| Taylor series | "Polynomial approximation" | Approximating a function near a point using its derivatives: f(x+h) ~ f(x) + f'(x)h + (1/2)f''(x)h^2 + ... The basis for understanding why gradient descent and Newton's method work. |
-| Integral | "Area under the curve" | The accumulation of a quantity over a range. In ML, integrals define probabilities, expected values, and KL divergence. |
+| Derivative | "Наклон" | Скорость изменения функции в точке. Показывает, насколько выход меняется на единицу изменения входа. |
+| Partial derivative | "Производная одной переменной" | Производная по одной переменной при фиксированных остальных. |
+| Gradient | "Направление наискорейшего возрастания" | Вектор всех частных производных. Указывает направление, в котором функция растет быстрее всего. |
+| Gradient descent | "Идти вниз" | Вычитание градиента (умноженного на learning rate) из параметров, чтобы уменьшить loss. Основа обучения нейронных сетей. |
+| Learning rate | "Размер шага" | Скаляр, который управляет величиной каждого шага gradient descent. Слишком большой: расходимость. Слишком маленький: медленная сходимость. |
+| Chain rule | "Умножить производные" | Правило дифференцирования составных функций: df/dx = df/dg * dg/dx. Математическая основа backpropagation. |
+| Jacobian | "Матрица производных" | Когда функция отображает векторы в векторы, матрица Якоби - это матрица всех частных производных выходов по входам. |
+| Numerical derivative | "Finite differences" | Аппроксимация производной через вычисление функции в двух близких точках и расчет наклона между ними. |
+| Backpropagation | "Reverse-mode autodiff" | Вычисление градиентов слой за слоем от выхода ко входу с помощью правила цепочки. Так учатся нейронные сети. |
+| Hessian | "Матрица вторых производных" | Матрица всех частных производных второго порядка. Описывает кривизну функции. Положительно определенная матрица Гессе в критической точке означает локальный минимум. |
+| Taylor series | "Полиномиальная аппроксимация" | Аппроксимация функции рядом с точкой с помощью ее производных: f(x+h) ~ f(x) + f'(x)h + (1/2)f''(x)h^2 + ... Основа понимания того, почему работают gradient descent и метод Ньютона. |
+| Integral | "Площадь под кривой" | Накопление величины на диапазоне. В ML интегралы определяют вероятности, математические ожидания и KL divergence. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [3Blue1Brown: Essence of Calculus](https://www.3blue1brown.com/topics/calculus) - visual intuition for derivatives, integrals, and the chain rule
-- [Stanford CS231n: Backpropagation](https://cs231n.github.io/optimization-2/) - how gradients flow through neural network layers
+- [3Blue1Brown: Essence of Calculus](https://www.3blue1brown.com/topics/calculus) - визуальная интуиция для производных, интегралов и правила цепочки
+- [Stanford CS231n: Backpropagation](https://cs231n.github.io/optimization-2/) - как градиенты текут через слои нейронной сети

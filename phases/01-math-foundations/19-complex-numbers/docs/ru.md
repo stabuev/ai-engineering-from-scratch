@@ -1,34 +1,34 @@
-# Complex Numbers for AI
+# Комплексные числа для AI
 
-> The square root of -1 is not imaginary. It is the key to rotations, frequencies, and half of signal processing.
+> Квадратный корень из -1 не является воображаемым. Это ключ к вращениям, частотам и половине обработки сигналов.
 
-**Type:** Learn
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01-04 (linear algebra, calculus)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 01-04 (линейная алгебра, математический анализ)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Perform complex arithmetic (add, multiply, divide, conjugate) in both rectangular and polar form
-- Apply Euler's formula to convert between complex exponentials and trigonometric functions
-- Implement the Discrete Fourier Transform using complex roots of unity
-- Explain how complex rotations underlie RoPE and sinusoidal positional encodings in transformers
+- Выполнять арифметику комплексных чисел (сложение, умножение, деление, сопряжение) как в алгебраической, так и в полярной форме
+- Применять формулу Эйлера для перехода между комплексными экспонентами и тригонометрическими функциями
+- Реализовать Discrete Fourier Transform с использованием комплексных корней из единицы
+- Объяснять, как комплексные вращения лежат в основе RoPE и синусоидальных позиционных кодировок в трансформерах
 
-## The Problem
+## Проблема
 
-You open a paper on Fourier transforms and there is `i` everywhere. You look at transformer positional encodings and see `sin` and `cos` at different frequencies -- the real and imaginary parts of complex exponentials. You read about quantum computing and find everything expressed in complex vector spaces.
+Вы открываете статью о преобразованиях Фурье, и там повсюду встречается `i`. Вы смотрите на позиционные кодировки трансформеров и видите `sin` и `cos` на разных частотах -- действительную и мнимую части комплексных экспонент. Вы читаете о квантовых вычислениях и обнаруживаете, что все выражается в комплексных векторных пространствах.
 
-Complex numbers seem abstract. A number system built on the square root of -1 feels like a mathematical trick. But it is not a trick. It is the natural language of rotations and oscillations. Every time something spins, vibrates, or oscillates, complex numbers are the right tool.
+Комплексные числа кажутся абстрактными. Система чисел, построенная на квадратном корне из -1, выглядит как математический трюк. Но это не трюк. Это естественный язык вращений и колебаний. Каждый раз, когда что-то вращается, вибрирует или осциллирует, комплексные числа оказываются правильным инструментом.
 
-Without understanding complex numbers, you cannot understand the Discrete Fourier Transform. You cannot understand FFT. You cannot understand how RoPE (Rotary Position Embedding) works in modern language models. You cannot understand why sinusoidal positional encodings in the original Transformer paper use the frequencies they do.
+Без понимания комплексных чисел нельзя понять Discrete Fourier Transform. Нельзя понять FFT. Нельзя понять, как RoPE (Rotary Position Embedding) работает в современных языковых моделях. Нельзя понять, почему синусоидальные позиционные кодировки в оригинальной статье Transformer используют именно такие частоты.
 
-This lesson builds complex arithmetic from scratch, connects it to geometry, and shows you exactly where complex numbers appear in machine learning.
+Этот урок строит арифметику комплексных чисел с нуля, связывает ее с геометрией и показывает, где именно комплексные числа появляются в машинном обучении.
 
-## The Concept
+## Концепция
 
-### What is a complex number?
+### Что такое комплексное число?
 
-A complex number has two parts: a real part and an imaginary part.
+Комплексное число состоит из двух частей: действительной части и мнимой части.
 
 ```
 z = a + bi
@@ -39,11 +39,11 @@ where:
   i is the imaginary unit, defined by i^2 = -1
 ```
 
-That is it. You extend the number line into a plane. The real numbers sit on one axis. The imaginary numbers sit on the other. Every complex number is a point in this plane.
+Вот и все. Вы расширяете числовую прямую до плоскости. Действительные числа лежат на одной оси. Мнимые числа лежат на другой. Каждое комплексное число -- это точка на этой плоскости.
 
-### Complex arithmetic
+### Арифметика комплексных чисел
 
-**Addition.** Add the real parts together, add the imaginary parts together.
+**Сложение.** Сложите действительные части и сложите мнимые части.
 
 ```
 (a + bi) + (c + di) = (a + c) + (b + d)i
@@ -51,7 +51,7 @@ That is it. You extend the number line into a plane. The real numbers sit on one
 Example: (3 + 2i) + (1 + 4i) = 4 + 6i
 ```
 
-**Multiplication.** Use the distributive law and remember that i^2 = -1.
+**Умножение.** Используйте распределительный закон и помните, что i^2 = -1.
 
 ```
 (a + bi)(c + di) = ac + adi + bci + bdi^2
@@ -63,29 +63,29 @@ Example: (3 + 2i)(1 + 4i) = 3 + 12i + 2i + 8i^2
                             = -5 + 14i
 ```
 
-**Conjugate.** Flip the sign of the imaginary part.
+**Сопряжение.** Поменяйте знак мнимой части.
 
 ```
 conjugate of (a + bi) = a - bi
 ```
 
-The product of a complex number and its conjugate is always real:
+Произведение комплексного числа и его сопряженного всегда является действительным:
 
 ```
 (a + bi)(a - bi) = a^2 + b^2
 ```
 
-**Division.** Multiply numerator and denominator by the conjugate of the denominator.
+**Деление.** Умножьте числитель и знаменатель на сопряженное к знаменателю.
 
 ```
 (a + bi) / (c + di) = (a + bi)(c - di) / (c^2 + d^2)
 ```
 
-This eliminates the imaginary part from the denominator, giving you a clean complex number.
+Так мнимая часть устраняется из знаменателя, и получается аккуратное комплексное число.
 
-### The complex plane
+### Комплексная плоскость
 
-The complex plane maps every complex number to a 2D point. The horizontal axis is the real axis, the vertical axis is the imaginary axis.
+Комплексная плоскость сопоставляет каждому комплексному числу 2D-точку. Горизонтальная ось -- действительная ось, вертикальная ось -- мнимая ось.
 
 ```
 z = 3 + 2i  corresponds to the point (3, 2)
@@ -93,11 +93,11 @@ z = -1 + 0i corresponds to the point (-1, 0) on the real axis
 z = 0 + 4i  corresponds to the point (0, 4) on the imaginary axis
 ```
 
-A complex number is simultaneously a point and a vector from the origin. This dual interpretation is what makes complex numbers useful for geometry.
+Комплексное число одновременно является точкой и вектором из начала координат. Именно эта двойная интерпретация делает комплексные числа полезными в геометрии.
 
-### Polar form
+### Полярная форма
 
-Any point in the plane can be described by its distance from the origin and its angle from the positive real axis.
+Любую точку на плоскости можно описать расстоянием от начала координат и углом относительно положительного направления действительной оси.
 
 ```
 z = r * (cos(theta) + i*sin(theta))
@@ -107,9 +107,9 @@ where:
   theta = atan2(b, a)             (phase, or argument)
 ```
 
-Rectangular form (a + bi) is good for addition. Polar form (r, theta) is good for multiplication.
+Алгебраическая форма (a + bi) удобна для сложения. Полярная форма (r, theta) удобна для умножения.
 
-**Multiplication in polar form.** Multiply the magnitudes, add the angles.
+**Умножение в полярной форме.** Умножьте модули и сложите углы.
 
 ```
 z1 = r1 * e^(i*theta1)
@@ -118,17 +118,17 @@ z2 = r2 * e^(i*theta2)
 z1 * z2 = (r1 * r2) * e^(i*(theta1 + theta2))
 ```
 
-This is why complex numbers are perfect for rotations. Multiplying by a complex number with magnitude 1 is a pure rotation.
+Именно поэтому комплексные числа идеально подходят для вращений. Умножение на комплексное число с модулем 1 -- это чистое вращение.
 
-### Euler's formula
+### Формула Эйлера
 
-The bridge between complex exponentials and trigonometry:
+Мост между комплексными экспонентами и тригонометрией:
 
 ```
 e^(i*theta) = cos(theta) + i*sin(theta)
 ```
 
-This is the most important formula in this lesson. When theta = pi:
+Это самая важная формула в этом уроке. Когда theta = pi:
 
 ```
 e^(i*pi) = cos(pi) + i*sin(pi) = -1 + 0i = -1
@@ -136,17 +136,17 @@ e^(i*pi) = cos(pi) + i*sin(pi) = -1 + 0i = -1
 Therefore: e^(i*pi) + 1 = 0
 ```
 
-Five fundamental constants (e, i, pi, 1, 0) linked in one equation.
+Пять фундаментальных констант (e, i, pi, 1, 0), связанные одним уравнением.
 
-### Why Euler's formula matters for ML
+### Почему формула Эйлера важна для ML
 
-Euler's formula says that `e^(i*theta)` traces the unit circle as theta varies. At theta = 0, you are at (1, 0). At theta = pi/2, you are at (0, 1). At theta = pi, you are at (-1, 0). At theta = 3*pi/2, you are at (0, -1). A full rotation is theta = 2*pi.
+Формула Эйлера говорит, что `e^(i*theta)` обходит единичную окружность по мере изменения theta. При theta = 0 вы находитесь в (1, 0). При theta = pi/2 -- в (0, 1). При theta = pi -- в (-1, 0). При theta = 3*pi/2 -- в (0, -1). Полный оборот соответствует theta = 2*pi.
 
-This means complex exponentials ARE rotations. And rotations are everywhere in signal processing and ML.
+Это означает, что комплексные экспоненты И ЕСТЬ вращения. А вращения повсюду встречаются в обработке сигналов и ML.
 
-### Connection to 2D rotations
+### Связь с 2D-вращениями
 
-Multiplying the complex number (x + yi) by e^(i*theta) rotates the point (x, y) by angle theta around the origin.
+Умножение комплексного числа (x + yi) на e^(i*theta) поворачивает точку (x, y) на угол theta вокруг начала координат.
 
 ```
 Rotation via complex multiplication:
@@ -158,7 +158,7 @@ Rotation via matrix multiplication:
   [sin(theta)   cos(theta)] [y] = [x*sin(theta) + y*cos(theta)]
 ```
 
-They produce identical results. Complex multiplication IS 2D rotation. The rotation matrix is just complex multiplication written in matrix notation.
+Они дают одинаковые результаты. Комплексное умножение И ЕСТЬ 2D-вращение. Матрица вращения -- это просто комплексное умножение, записанное в матричной нотации.
 
 ```mermaid
 graph TD
@@ -171,11 +171,11 @@ graph TD
     B -.->|"same result"| D
 ```
 
-### Phasors and rotating signals
+### Фазоры и вращающиеся сигналы
 
-A complex exponential e^(i*omega*t) is a point rotating around the unit circle at angular frequency omega. As t increases, the point traces the circle.
+Комплексная экспонента e^(i*omega*t) -- это точка, вращающаяся по единичной окружности с угловой частотой omega. Когда t увеличивается, точка описывает окружность.
 
-The real part of this rotating point is cos(omega*t). The imaginary part is sin(omega*t). A sinusoidal signal is the shadow of a rotating complex number.
+Действительная часть этой вращающейся точки равна cos(omega*t). Мнимая часть равна sin(omega*t). Синусоидальный сигнал -- это тень вращающегося комплексного числа.
 
 ```
 e^(i*omega*t) = cos(omega*t) + i*sin(omega*t)
@@ -184,69 +184,69 @@ Real part:      cos(omega*t)    -- a cosine wave
 Imaginary part: sin(omega*t)    -- a sine wave
 ```
 
-This is the phasor representation. Instead of tracking a wiggly sine wave, you track a smoothly rotating arrow. Phase shifts become angle offsets. Amplitude changes become magnitude changes. Addition of signals becomes vector addition.
+Это фазорное представление. Вместо отслеживания извилистой синусоиды вы отслеживаете плавно вращающуюся стрелку. Сдвиги фазы становятся угловыми смещениями. Изменения амплитуды становятся изменениями модуля. Сложение сигналов становится векторным сложением.
 
-### Roots of unity
+### Корни из единицы
 
-The N-th roots of unity are N points equally spaced on the unit circle:
+N-е корни из единицы -- это N точек, равномерно расположенных на единичной окружности:
 
 ```
 w_k = e^(2*pi*i*k/N)    for k = 0, 1, 2, ..., N-1
 ```
 
-For N = 4, the roots are: 1, i, -1, -i (the four compass points).
-For N = 8, you get the four compass points plus the four diagonals.
+Для N = 4 корни: 1, i, -1, -i (четыре стороны света).
+Для N = 8 вы получаете четыре стороны света плюс четыре диагонали.
 
-Roots of unity are the foundation of the Discrete Fourier Transform. The DFT decomposes a signal into components at these N equally-spaced frequencies.
+Корни из единицы -- основа Discrete Fourier Transform. DFT раскладывает сигнал на компоненты на этих N равномерно расположенных частотах.
 
-### Connection to the DFT
+### Связь с DFT
 
-The Discrete Fourier Transform of a signal x[0], x[1], ..., x[N-1] is:
+Discrete Fourier Transform сигнала x[0], x[1], ..., x[N-1] задается так:
 
 ```
 X[k] = sum_{n=0}^{N-1} x[n] * e^(-2*pi*i*k*n/N)
 ```
 
-Each X[k] measures how much the signal correlates with the k-th root of unity -- a complex sinusoid at frequency k. The DFT breaks a signal into N rotating phasors and tells you the amplitude and phase of each one.
+Каждый X[k] измеряет, насколько сигнал коррелирует с k-м корнем из единицы -- комплексной синусоидой на частоте k. DFT разбивает сигнал на N вращающихся фазоров и сообщает амплитуду и фазу каждого из них.
 
-### Why i is not imaginary
+### Почему i не является воображаемым
 
-The word "imaginary" is a historical accident. Descartes used it dismissively. But i is no more imaginary than negative numbers were when people first rejected them. Negative numbers answer "what do you subtract 5 from 3 to get?" The imaginary unit answers "what do you square to get -1?"
+Слово "мнимый" -- историческая случайность. Декарт использовал его пренебрежительно. Но i не более мнимое, чем отрицательные числа были мнимыми для тех, кто когда-то их отвергал. Отрицательные числа отвечают на вопрос "что нужно вычесть из 3, чтобы получить 5?" Мнимая единица отвечает на вопрос "что нужно возвести в квадрат, чтобы получить -1?"
 
-More usefully: i is a 90-degree rotation operator. Multiply a real number by i once, you rotate 90 degrees to the imaginary axis. Multiply by i again (i^2), you rotate another 90 degrees -- now you are pointing in the negative real direction. That is why i^2 = -1. It is not mysterious. It is a half-turn built from two quarter-turns.
+Практичнее думать так: i -- это оператор поворота на 90 градусов. Умножьте действительное число на i один раз, и вы повернете его на 90 градусов к мнимой оси. Умножьте на i снова (i^2), и вы повернете еще на 90 градусов -- теперь вы указываете в отрицательном действительном направлении. Поэтому i^2 = -1. В этом нет мистики. Это пол-оборота, составленные из двух четвертей оборота.
 
-This is why complex numbers are everywhere in engineering. Anything that rotates -- electromagnetic waves, quantum states, signal oscillations, positional encodings -- is naturally described by complex numbers.
+Именно поэтому комплексные числа повсюду в инженерии. Все, что вращается -- электромагнитные волны, квантовые состояния, осцилляции сигналов, позиционные кодировки -- естественно описывается комплексными числами.
 
-### Complex exponentials vs trigonometric functions
+### Комплексные экспоненты и тригонометрические функции
 
-Before Euler's formula, engineers wrote signals as A*cos(omega*t + phi) -- amplitude A, frequency omega, phase phi. This works but makes arithmetic painful. Adding two cosines with different phases requires trigonometric identities.
+До формулы Эйлера инженеры записывали сигналы как A*cos(omega*t + phi) -- амплитуда A, частота omega, фаза phi. Это работает, но делает арифметику болезненной. Сложение двух косинусов с разными фазами требует тригонометрических тождеств.
 
-With complex exponentials, the same signal is A*e^(i*(omega*t + phi)). Adding two signals is just adding two complex numbers. Multiplying (modulating) is just multiplying magnitudes and adding angles. Phase shifts become angle additions. Frequency shifts become multiplications by phasors.
+С комплексными экспонентами тот же сигнал записывается как A*e^(i*(omega*t + phi)). Сложение двух сигналов -- это просто сложение двух комплексных чисел. Умножение (модуляция) -- это просто умножение модулей и сложение углов. Сдвиги фазы становятся сложением углов. Сдвиги частоты становятся умножением на фазоры.
 
-The entire field of signal processing switched to complex exponential notation because the math is cleaner. The "real signal" is always just the real part of the complex representation. The imaginary part is carried along as bookkeeping, making all the algebra work out naturally.
+Вся область обработки сигналов перешла на нотацию комплексных экспонент, потому что математика становится чище. "Действительный сигнал" всегда является просто действительной частью комплексного представления. Мнимая часть переносится как вспомогательный учет, благодаря которому вся алгебра естественно сходится.
 
-### Connection to transformers
+### Связь с трансформерами
 
-**Sinusoidal positional encodings** (original Transformer paper):
+**Синусоидальные позиционные кодировки** (оригинальная статья Transformer):
 
 ```
 PE(pos, 2i) = sin(pos / 10000^(2i/d))
 PE(pos, 2i+1) = cos(pos / 10000^(2i/d))
 ```
 
-The sin and cos pairs are the real and imaginary parts of complex exponentials at different frequencies. Each frequency provides a different "resolution" for encoding position. Low frequencies change slowly (coarse position). High frequencies change quickly (fine position). Together they give each position a unique frequency fingerprint.
+Пары sin и cos -- это действительная и мнимая части комплексных экспонент на разных частотах. Каждая частота дает разное "разрешение" для кодирования позиции. Низкие частоты меняются медленно (грубая позиция). Высокие частоты меняются быстро (точная позиция). Вместе они дают каждой позиции уникальный частотный отпечаток.
 
-**RoPE (Rotary Position Embedding)** takes this further. It explicitly multiplies query and key vectors by complex rotation matrices. The relative position between two tokens becomes a rotation angle. Attention is computed using these rotated vectors, making the model sensitive to relative position through complex multiplication.
+**RoPE (Rotary Position Embedding)** идет дальше. Он явно умножает query- и key-векторы на комплексные матрицы вращения. Относительная позиция между двумя токенами становится углом вращения. Attention вычисляется с использованием этих повернутых векторов, что делает модель чувствительной к относительной позиции через комплексное умножение.
 
-| Operation | Algebraic Form | Geometric Meaning |
+| Операция | Алгебраическая форма | Геометрический смысл |
 |-----------|---------------|-------------------|
-| Addition | (a+c) + (b+d)i | Vector addition in the plane |
-| Multiplication | (ac-bd) + (ad+bc)i | Rotate and scale |
-| Conjugate | a - bi | Reflect over real axis |
-| Magnitude | sqrt(a^2 + b^2) | Distance from origin |
-| Phase | atan2(b, a) | Angle from positive real axis |
-| Division | multiply by conjugate | Reverse rotation and rescale |
-| Power | r^n * e^(i*n*theta) | Rotate n times, scale by r^n |
+| Сложение | (a+c) + (b+d)i | Векторное сложение на плоскости |
+| Умножение | (ac-bd) + (ad+bc)i | Поворот и масштабирование |
+| Сопряжение | a - bi | Отражение относительно действительной оси |
+| Модуль | sqrt(a^2 + b^2) | Расстояние от начала координат |
+| Фаза | atan2(b, a) | Угол от положительного направления действительной оси |
+| Деление | multiply by conjugate | Обратное вращение и перемасштабирование |
+| Степень | r^n * e^(i*n*theta) | Повернуть n раз, масштабировать на r^n |
 
 ```mermaid
 graph LR
@@ -267,11 +267,11 @@ graph LR
     U1 --> A3
 ```
 
-## Build It
+## Реализация
 
-### Step 1: Complex class
+### Шаг 1: Класс Complex
 
-Build a Complex number class that supports arithmetic, magnitude, phase, and conversion between rectangular and polar forms.
+Постройте класс комплексных чисел Complex, который поддерживает арифметику, модуль, фазу и переход между алгебраической и полярной формами.
 
 ```python
 import math
@@ -305,7 +305,7 @@ class Complex:
         return Complex(self.real, -self.imag)
 ```
 
-### Step 2: Polar conversion and Euler's formula
+### Шаг 2: Переход к полярной форме и формула Эйлера
 
 ```python
 def to_polar(z):
@@ -318,20 +318,20 @@ def euler(theta):
     return Complex(math.cos(theta), math.sin(theta))
 ```
 
-Verify: `euler(theta).magnitude()` should always be 1.0. `euler(0)` should give (1, 0). `euler(pi)` should give (-1, 0).
+Проверьте: `euler(theta).magnitude()` всегда должен быть равен 1.0. `euler(0)` должен давать (1, 0). `euler(pi)` должен давать (-1, 0).
 
-### Step 3: Rotation
+### Шаг 3: Вращение
 
-Rotating a point (x, y) by angle theta is one complex multiplication:
+Поворот точки (x, y) на угол theta -- это одно комплексное умножение:
 
 ```python
 point = Complex(3, 4)
 rotated = point * euler(math.pi / 4)
 ```
 
-The magnitude stays the same. Only the angle changes.
+Модуль остается тем же. Меняется только угол.
 
-### Step 4: DFT from complex arithmetic
+### Шаг 4: DFT через комплексную арифметику
 
 ```python
 def dft(signal):
@@ -346,11 +346,11 @@ def dft(signal):
     return result
 ```
 
-This is the O(N^2) DFT. Each output X[k] is the sum of the signal samples multiplied by roots of unity.
+Это O(N^2) DFT. Каждый выход X[k] -- сумма отсчетов сигнала, умноженных на корни из единицы.
 
-### Step 5: Inverse DFT
+### Шаг 5: Обратное DFT
 
-The inverse DFT reconstructs the original signal from its spectrum. The only changes from the forward DFT: flip the sign in the exponent and divide by N.
+Обратное DFT восстанавливает исходный сигнал из его спектра. Единственные изменения по сравнению с прямым DFT: поменять знак в экспоненте и разделить на N.
 
 ```python
 def idft(spectrum):
@@ -365,24 +365,24 @@ def idft(spectrum):
     return result
 ```
 
-This gives you perfect reconstruction. Apply DFT, then IDFT, and you get back the original signal to machine precision. No information is lost.
+Это дает точное восстановление. Примените DFT, затем IDFT, и вы получите исходный сигнал обратно с точностью до машинной погрешности. Информация не теряется.
 
-### Step 6: Roots of unity
+### Шаг 6: Корни из единицы
 
 ```python
 def roots_of_unity(N):
     return [euler(2 * math.pi * k / N) for k in range(N)]
 ```
 
-Verify two properties:
-- Every root has magnitude exactly 1.
-- The sum of all N roots is zero (they cancel out by symmetry).
+Проверьте два свойства:
+- Каждый корень имеет модуль ровно 1.
+- Сумма всех N корней равна нулю (они взаимно сокращаются из-за симметрии).
 
-These properties are what make the DFT invertible. The roots of unity form an orthogonal basis for the frequency domain.
+Именно эти свойства делают DFT обратимым. Корни из единицы образуют ортогональный базис для частотной области.
 
-## Use It
+## Применение
 
-Python has built-in complex number support. The literal `j` represents the imaginary unit.
+В Python есть встроенная поддержка комплексных чисел. Литерал `j` представляет мнимую единицу.
 
 ```python
 z = 3 + 2j
@@ -397,7 +397,7 @@ print(cmath.phase(z))
 print(cmath.exp(1j * cmath.pi))
 ```
 
-For arrays, numpy handles complex numbers natively:
+Для массивов numpy нативно обрабатывает комплексные числа:
 
 ```python
 import numpy as np
@@ -414,44 +414,44 @@ spectrum = np.fft.fft(signal)
 freqs = np.fft.fftfreq(128, d=1/128)
 ```
 
-## Ship It
+## Результат
 
-Run `code/complex_numbers.py` to generate `outputs/skill-complex-arithmetic.md`.
+Запустите `code/complex_numbers.py`, чтобы сгенерировать `outputs/skill-complex-arithmetic.md`.
 
-## Exercises
+## Упражнения
 
-1. **Complex arithmetic by hand.** Compute (2 + 3i) * (4 - i) and verify with the code. Then compute (5 + 2i) / (1 - 3i). Draw both results on the complex plane and check that multiplication rotated and scaled the first number.
+1. **Комплексная арифметика вручную.** Вычислите (2 + 3i) * (4 - i) и проверьте результат с помощью кода. Затем вычислите (5 + 2i) / (1 - 3i). Нарисуйте оба результата на комплексной плоскости и проверьте, что умножение повернуло и масштабировало первое число.
 
-2. **Rotation sequence.** Start with the point (1, 0). Multiply by e^(i*pi/6) twelve times. Verify that you return to (1, 0) after 12 multiplications. Print the coordinates at each step and confirm they trace a regular 12-gon.
+2. **Последовательность вращений.** Начните с точки (1, 0). Умножьте ее на e^(i*pi/6) двенадцать раз. Проверьте, что после 12 умножений вы вернетесь в (1, 0). Выведите координаты на каждом шаге и убедитесь, что они описывают правильный 12-угольник.
 
-3. **DFT of a known signal.** Create a signal that is the sum of sin(2*pi*3*t) and 0.5*sin(2*pi*7*t) sampled at 32 points. Run your DFT. Verify that the magnitude spectrum has peaks at frequencies 3 and 7, with the peak at 7 being half the height of the peak at 3.
+3. **DFT известного сигнала.** Создайте сигнал, являющийся суммой sin(2*pi*3*t) и 0.5*sin(2*pi*7*t), дискретизированный в 32 точках. Запустите DFT. Проверьте, что спектр модулей имеет пики на частотах 3 и 7, причем пик на 7 имеет половину высоты пика на 3.
 
-4. **Roots of unity visualization.** Compute the 8th roots of unity. Verify that they sum to zero. Verify that multiplying any root by the primitive root e^(2*pi*i/8) gives the next root.
+4. **Визуализация корней из единицы.** Вычислите 8-е корни из единицы. Проверьте, что их сумма равна нулю. Проверьте, что умножение любого корня на примитивный корень e^(2*pi*i/8) дает следующий корень.
 
-5. **Rotation matrix equivalence.** For 10 random angles and 10 random points, verify that complex multiplication gives the same result as matrix-vector multiplication with the 2x2 rotation matrix. Print the maximum numerical difference.
+5. **Эквивалентность матрицы вращения.** Для 10 случайных углов и 10 случайных точек проверьте, что комплексное умножение дает тот же результат, что и матрично-векторное умножение с 2x2 матрицей вращения. Выведите максимальную численную разницу.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что это значит |
 |------|---------------|
-| Complex number | A number a + bi where a is the real part, b is the imaginary part, and i^2 = -1 |
-| Imaginary unit | The number i, defined by i^2 = -1. Not imaginary in the philosophical sense -- it is a rotation operator |
-| Complex plane | The 2D plane where the x-axis is real and the y-axis is imaginary. Also called the Argand plane |
-| Magnitude (modulus) | The distance from the origin: sqrt(a^2 + b^2). Written as \|z\| |
-| Phase (argument) | The angle from the positive real axis: atan2(b, a). Written as arg(z) |
-| Conjugate | The mirror image across the real axis: conjugate of a + bi is a - bi |
-| Polar form | Expressing z as r * e^(i*theta) instead of a + bi. Makes multiplication easy |
-| Euler's formula | e^(i*theta) = cos(theta) + i*sin(theta). Connects exponentials to trigonometry |
-| Phasor | A rotating complex number e^(i*omega*t) representing a sinusoidal signal |
-| Roots of unity | The N complex numbers e^(2*pi*i*k/N) for k = 0 to N-1. N equally spaced points on the unit circle |
-| DFT | Discrete Fourier Transform. Decomposes a signal into complex sinusoidal components using roots of unity |
-| RoPE | Rotary Position Embedding. Uses complex multiplication to encode relative position in transformer attention |
+| Комплексное число | Число a + bi, где a -- действительная часть, b -- мнимая часть, а i^2 = -1 |
+| Мнимая единица | Число i, определенное как i^2 = -1. Оно не мнимое в философском смысле -- это оператор вращения |
+| Комплексная плоскость | 2D-плоскость, где ось x действительная, а ось y мнимая. Также называется плоскостью Аргана |
+| Модуль | Расстояние от начала координат: sqrt(a^2 + b^2). Записывается как \|z\| |
+| Фаза (аргумент) | Угол от положительного направления действительной оси: atan2(b, a). Записывается как arg(z) |
+| Сопряжение | Зеркальное отражение относительно действительной оси: сопряженное к a + bi равно a - bi |
+| Полярная форма | Представление z как r * e^(i*theta) вместо a + bi. Упрощает умножение |
+| Формула Эйлера | e^(i*theta) = cos(theta) + i*sin(theta). Связывает экспоненты с тригонометрией |
+| Фазор | Вращающееся комплексное число e^(i*omega*t), представляющее синусоидальный сигнал |
+| Корни из единицы | N комплексных чисел e^(2*pi*i*k/N) для k = 0 до N-1. N равномерно расположенных точек на единичной окружности |
+| DFT | Discrete Fourier Transform. Раскладывает сигнал на комплексные синусоидальные компоненты с помощью корней из единицы |
+| RoPE | Rotary Position Embedding. Использует комплексное умножение для кодирования относительной позиции в transformer attention |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Visual Introduction to Euler's Formula](https://betterexplained.com/articles/intuitive-understanding-of-eulers-formula/) - builds geometric intuition without heavy notation
-- [Su et al.: RoFormer (2021)](https://arxiv.org/abs/2104.09864) - the paper introducing Rotary Position Embedding using complex rotations
-- [Vaswani et al.: Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) - the original Transformer paper with sinusoidal positional encodings
-- [3Blue1Brown: Euler's formula with introductory group theory](https://www.youtube.com/watch?v=mvmuCPvRoWQ) - visual explanation of why e^(i*pi) = -1
-- [Needham: Visual Complex Analysis](https://global.oup.com/academic/product/visual-complex-analysis-9780198534464) - the best visual treatment of complex numbers, full of geometric insight
-- [Strang: Introduction to Linear Algebra, Ch. 10](https://math.mit.edu/~gs/linearalgebra/) - complex numbers in the context of linear algebra and eigenvalues
+- [Visual Introduction to Euler's Formula](https://betterexplained.com/articles/intuitive-understanding-of-eulers-formula/) - развивает геометрическую интуицию без тяжелой нотации
+- [Su et al.: RoFormer (2021)](https://arxiv.org/abs/2104.09864) - статья, вводящая Rotary Position Embedding с использованием комплексных вращений
+- [Vaswani et al.: Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) - оригинальная статья Transformer с синусоидальными позиционными кодировками
+- [3Blue1Brown: Euler's formula with introductory group theory](https://www.youtube.com/watch?v=mvmuCPvRoWQ) - визуальное объяснение того, почему e^(i*pi) = -1
+- [Needham: Visual Complex Analysis](https://global.oup.com/academic/product/visual-complex-analysis-9780198534464) - лучшая визуальная трактовка комплексных чисел, полная геометрической интуиции
+- [Strang: Introduction to Linear Algebra, Ch. 10](https://math.mit.edu/~gs/linearalgebra/) - комплексные числа в контексте линейной алгебры и собственных значений

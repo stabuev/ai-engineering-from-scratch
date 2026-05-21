@@ -1,30 +1,30 @@
-# Probability and Distributions
+# Вероятность и распределения
 
-> Probability is the language AI uses to express uncertainty.
+> Вероятность - это язык, на котором AI выражает неопределенность.
 
-**Type:** Learn
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01-04
-**Time:** ~75 minutes
+**Тип:** Изучение
+**Язык:** Python
+**Предварительные требования:** Phase 1, Lessons 01-04
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement PMFs and PDFs from scratch for Bernoulli, categorical, Poisson, uniform, and normal distributions
-- Compute expected value, variance, and use the Central Limit Theorem to explain why Gaussians dominate
-- Build softmax and log-softmax functions with the numerical stability trick (subtract max logit)
-- Calculate cross-entropy loss from logits and connect it to negative log-likelihood
+- Реализовать PMFs и PDFs с нуля для Bernoulli, categorical, Poisson, uniform и normal distributions
+- Вычислять expected value, variance и использовать Central Limit Theorem, чтобы объяснить, почему Gaussians встречаются повсюду
+- Построить функции softmax и log-softmax с приемом численной устойчивости (вычитание max logit)
+- Вычислять cross-entropy loss из logits и связывать его с negative log-likelihood
 
-## The Problem
+## Проблема
 
-A classifier outputs `[0.03, 0.91, 0.06]`. A language model picks the next word from 50,000 candidates. A diffusion model generates images by sampling from learned distributions. All of these are probability in action.
+Классификатор выдает `[0.03, 0.91, 0.06]`. Language model выбирает следующее слово из 50,000 кандидатов. Diffusion model генерирует изображения, сэмплируя из выученных распределений. Все это - вероятность в действии.
 
-Every prediction a model makes is a probability distribution. Every loss function measures how far the predicted distribution is from the true one. Every training step adjusts parameters to make one distribution look more like another. Without probability, you cannot read a single ML paper, debug a single model, or understand why your training loss is NaN.
+Каждое предсказание модели - это вероятностное распределение. Каждая loss function измеряет, насколько предсказанное распределение далеко от истинного. Каждый шаг обучения корректирует параметры, чтобы одно распределение стало больше похоже на другое. Без вероятности вы не сможете прочитать ни одной ML-статьи, отладить ни одной модели или понять, почему training loss стал NaN.
 
-## The Concept
+## Концепция
 
-### Events, Sample Spaces, and Probability
+### События, пространство элементарных исходов и вероятность
 
-The sample space S is the set of all possible outcomes. An event is a subset of the sample space. Probability maps events to numbers between 0 and 1.
+Пространство элементарных исходов S - это множество всех возможных исходов. Событие - это подмножество пространства исходов. Вероятность отображает события в числа между 0 и 1.
 
 ```
 Coin flip:
@@ -36,16 +36,16 @@ Single die roll:
   P(even) = P({2, 4, 6}) = 3/6 = 0.5
 ```
 
-Three axioms define all of probability:
-1. P(A) >= 0 for any event A
-2. P(S) = 1 (something always happens)
-3. P(A or B) = P(A) + P(B) when A and B cannot both occur
+Три аксиомы определяют всю теорию вероятностей:
+1. P(A) >= 0 для любого события A
+2. P(S) = 1 (что-то всегда происходит)
+3. P(A or B) = P(A) + P(B), когда A и B не могут произойти одновременно
 
-Everything else (Bayes' theorem, expectations, distributions) follows from these three rules.
+Все остальное (теорема Байеса, математические ожидания, распределения) следует из этих трех правил.
 
-### Conditional Probability and Independence
+### Условная вероятность и независимость
 
-P(A|B) is the probability of A given that B happened.
+P(A|B) - это вероятность A при условии, что B произошло.
 
 ```
 P(A|B) = P(A and B) / P(B)
@@ -56,18 +56,18 @@ Example: deck of cards
                       = 4/12 = 1/3
 ```
 
-Two events are independent when knowing one tells you nothing about the other:
+Два события независимы, если знание одного ничего не говорит о другом:
 
 ```
 Independent:   P(A|B) = P(A)
 Equivalent to: P(A and B) = P(A) * P(B)
 ```
 
-Coin flips are independent. Drawing cards without replacement is not.
+Подбрасывания монеты независимы. Вытягивание карт без возвращения - нет.
 
-### Probability Mass Functions vs Probability Density Functions
+### Probability Mass Functions (функции вероятности) и Probability Density Functions (функции плотности)
 
-Discrete random variables have a probability mass function (PMF). Each outcome has a specific probability that you can read off directly.
+Дискретные случайные величины имеют probability mass function (PMF). У каждого исхода есть конкретная вероятность, которую можно прочитать напрямую.
 
 ```
 PMF: P(X = k)
@@ -81,7 +81,7 @@ Fair die:
   Sum of all probabilities = 1
 ```
 
-Continuous random variables have a probability density function (PDF). The density at a single point is not a probability. Probability comes from integrating the density over an interval.
+Непрерывные случайные величины имеют probability density function (PDF). Плотность в одной точке не является вероятностью. Вероятность получается интегрированием плотности по интервалу.
 
 ```
 PDF: f(x)
@@ -92,11 +92,11 @@ f(x) can be greater than 1 (density, not probability)
 integral from -inf to +inf of f(x) dx = 1
 ```
 
-This distinction matters in ML. Classification outputs are PMFs (discrete choices). VAE latent spaces use PDFs (continuous).
+Это различие важно в ML. Выходы классификации - это PMFs (дискретные варианты). Latent spaces в VAE используют PDFs (непрерывные).
 
-### Common Distributions
+### Распространенные распределения
 
-**Bernoulli:** one trial, two outcomes. Models binary classification.
+**Bernoulli:** одно испытание, два исхода. Моделирует binary classification.
 
 ```
 P(X = 1) = p
@@ -104,21 +104,21 @@ P(X = 0) = 1 - p
 Mean = p,  Variance = p(1-p)
 ```
 
-**Categorical:** one trial, k outcomes. Models multi-class classification (softmax output).
+**Categorical:** одно испытание, k исходов. Моделирует multi-class classification (softmax output).
 
 ```
 P(X = i) = p_i,  where sum of p_i = 1
 Example: P(cat) = 0.7,  P(dog) = 0.2,  P(bird) = 0.1
 ```
 
-**Uniform:** all outcomes equally likely. Used for random initialization.
+**Uniform:** все исходы одинаково вероятны. Используется для random initialization.
 
 ```
 Discrete: P(X = k) = 1/n for k in {1, ..., n}
 Continuous: f(x) = 1/(b-a) for x in [a, b]
 ```
 
-**Normal (Gaussian):** the bell curve. Parameterized by mean (mu) and variance (sigma^2).
+**Normal (Gaussian):** колоколообразная кривая. Параметризуется средним (mu) и дисперсией (sigma^2).
 
 ```
 f(x) = (1 / sqrt(2*pi*sigma^2)) * exp(-(x - mu)^2 / (2*sigma^2))
@@ -129,36 +129,36 @@ Standard normal: mu = 0, sigma = 1
   99.7% within 3 sigma
 ```
 
-**Poisson:** counts of rare events in a fixed interval. Models event rates.
+**Poisson:** количества редких событий на фиксированном интервале. Моделирует интенсивности событий.
 
 ```
 P(X = k) = (lambda^k * e^(-lambda)) / k!
 Mean = lambda,  Variance = lambda
 ```
 
-### Expected Value and Variance
+### Математическое ожидание и дисперсия
 
-Expected value is the weighted average outcome.
+Математическое ожидание - это взвешенный средний исход.
 
 ```
 Discrete:   E[X] = sum of x_i * P(X = x_i)
 Continuous: E[X] = integral of x * f(x) dx
 ```
 
-Variance measures spread around the mean.
+Дисперсия измеряет разброс вокруг среднего.
 
 ```
 Var(X) = E[(X - E[X])^2] = E[X^2] - (E[X])^2
 Standard deviation = sqrt(Var(X))
 ```
 
-In ML, expected value appears as the loss function (average loss over the data distribution). Variance tells you about model stability. High variance in gradients means noisy training.
+В ML математическое ожидание появляется как loss function (средняя потеря по распределению данных). Дисперсия говорит об устойчивости модели. Высокая variance градиентов означает шумное обучение.
 
-### Joint and Marginal Distributions
+### Совместные и маргинальные распределения
 
-A joint distribution P(X, Y) describes two random variables together.
+Совместное распределение P(X, Y) описывает две случайные величины вместе.
 
-Joint PMF example (X = weather, Y = umbrella):
+Пример совместной PMF (X = weather, Y = umbrella):
 
 | | Y=0 (no umbrella) | Y=1 (umbrella) | Marginal P(X) |
 |---|---|---|---|
@@ -166,17 +166,17 @@ Joint PMF example (X = weather, Y = umbrella):
 | X=1 (rain) | 0.05 | 0.45 | P(X=1) = 0.50 |
 | **Marginal P(Y)** | P(Y=0) = 0.45 | P(Y=1) = 0.55 | 1.00 |
 
-The marginal distribution sums out the other variable:
+Маргинальное распределение суммирует по другой переменной:
 
 ```
 P(X = x) = sum over all y of P(X = x, Y = y)
 ```
 
-The row and column totals in the table above are the marginals.
+Суммы строк и столбцов в таблице выше - это маргиналы.
 
-### Why the Normal Distribution Shows Up Everywhere
+### Почему нормальное распределение появляется повсюду
 
-The Central Limit Theorem: the sum (or average) of many independent random variables converges to a normal distribution, regardless of the original distribution.
+Central Limit Theorem: сумма (или среднее) многих независимых случайных величин сходится к нормальному распределению независимо от исходного распределения.
 
 ```
 Roll 1 die:  uniform distribution (flat)
@@ -186,15 +186,15 @@ Average of 30 dice: nearly perfect bell curve
 This works for ANY starting distribution.
 ```
 
-This is why:
-- Measurement errors are approximately normal (many small independent sources)
-- Weight initializations in neural networks use normal distributions
-- Gradient noise in SGD is approximately normal (sum of many sample gradients)
-- The normal distribution is the maximum entropy distribution for a given mean and variance
+Вот почему:
+- Ошибки измерений примерно нормальны (много маленьких независимых источников)
+- Инициализации весов в нейронных сетях используют normal distributions
+- Шум градиентов в SGD примерно нормален (сумма многих sample gradients)
+- Нормальное распределение - это распределение с максимальной энтропией при заданных среднем и дисперсии
 
-### Log Probabilities
+### Логарифмы вероятностей
 
-Raw probabilities cause numerical problems. Multiplying many small probabilities together quickly underflows to zero.
+Сырые вероятности вызывают численные проблемы. Перемножение множества малых вероятностей быстро приводит к underflow до нуля.
 
 ```
 P(sentence) = P(word1) * P(word2) * ... * P(word_n)
@@ -202,7 +202,7 @@ P(sentence) = P(word1) * P(word2) * ... * P(word_n)
             -> 0.0 (underflow after ~30 terms)
 ```
 
-Log probabilities fix this. Multiplications become additions.
+Логарифмы вероятностей решают это. Умножения превращаются в сложения.
 
 ```
 log P(sentence) = log P(word1) + log P(word2) + ... + log P(word_n)
@@ -210,15 +210,15 @@ log P(sentence) = log P(word1) + log P(word2) + ... + log P(word_n)
                 -> finite number (no underflow)
 ```
 
-Rules:
+Правила:
 - log(a * b) = log(a) + log(b)
-- log probabilities are always <= 0 (since 0 < P <= 1)
-- More negative = less likely
-- Cross-entropy loss is the negative log probability of the correct class
+- log probabilities всегда <= 0 (так как 0 < P <= 1)
+- Более отрицательное значение = менее вероятно
+- Cross-entropy loss - это отрицательный логарифм вероятности правильного класса
 
-### Softmax as a Probability Distribution
+### Softmax как вероятностное распределение
 
-Neural networks output raw scores (logits). Softmax converts them into a valid probability distribution.
+Нейронные сети выдают сырые scores (logits). Softmax преобразует их в корректное вероятностное распределение.
 
 ```
 softmax(z_i) = exp(z_i) / sum(exp(z_j) for all j)
@@ -230,7 +230,7 @@ Properties:
   - exp() amplifies differences between logits
 ```
 
-The softmax trick: subtract the max logit before exponentiating to prevent overflow.
+Прием softmax: вычесть max logit перед возведением в экспоненту, чтобы предотвратить overflow.
 
 ```
 z = [100, 101, 102]
@@ -242,21 +242,21 @@ exp(0) = 1  (safe)
 Same result, no overflow.
 ```
 
-Log-softmax combines softmax and log for numerical stability. PyTorch uses this internally for cross-entropy loss.
+Log-softmax объединяет softmax и log для численной устойчивости. PyTorch использует это внутри для cross-entropy loss.
 
 ### Sampling
 
-Sampling means drawing random values from a distribution. In ML:
-- Dropout randomly samples which neurons to zero out
-- Data augmentation samples random transformations
-- Language models sample the next token from the predicted distribution
-- Diffusion models sample noise and progressively denoise
+Sampling означает получение случайных значений из распределения. В ML:
+- Dropout случайно выбирает, какие нейроны обнулить
+- Data augmentation сэмплирует случайные преобразования
+- Language models сэмплируют следующий token из предсказанного распределения
+- Diffusion models сэмплируют шум и постепенно denoise
 
-Sampling from arbitrary distributions requires techniques like inverse transform sampling, rejection sampling, or the reparameterization trick (used in VAEs).
+Sampling из произвольных распределений требует техник вроде inverse transform sampling, rejection sampling или reparameterization trick (используется в VAEs).
 
-## Build It
+## Соберите это
 
-### Step 1: Probability basics
+### Шаг 1: Основы вероятности
 
 ```python
 import math
@@ -278,7 +278,7 @@ p_king_given_face = conditional_probability(4/52, 12/52)
 print(f"P(King | Face card) = {p_king_given_face:.4f}")
 ```
 
-### Step 2: PMF and PDF from scratch
+### Шаг 2: PMF и PDF с нуля
 
 ```python
 def bernoulli_pmf(k, p):
@@ -301,7 +301,7 @@ def normal_pdf(x, mu, sigma):
     return coeff * math.exp(exponent)
 ```
 
-### Step 3: Expected value and variance
+### Шаг 3: Математическое ожидание и дисперсия
 
 ```python
 def expected_value(values, probabilities):
@@ -318,7 +318,7 @@ var = variance(die_values, die_probs)
 print(f"Die: E[X] = {mu:.4f}, Var(X) = {var:.4f}, SD = {var**0.5:.4f}")
 ```
 
-### Step 4: Sampling from distributions
+### Шаг 4: Sampling из распределений
 
 ```python
 def sample_bernoulli(p, n=1):
@@ -349,7 +349,7 @@ def sample_normal_box_muller(mu, sigma, n=1):
     return samples
 ```
 
-### Step 5: Softmax and log probabilities
+### Шаг 5: Softmax и log probabilities
 
 ```python
 def softmax(logits):
@@ -370,7 +370,7 @@ def cross_entropy_loss(logits, target_index):
     return -log_probs[target_index]
 ```
 
-### Step 6: Central Limit Theorem demonstration
+### Шаг 6: Демонстрация Central Limit Theorem
 
 ```python
 def demonstrate_clt(dist_fn, n_samples, n_averages):
@@ -381,7 +381,7 @@ def demonstrate_clt(dist_fn, n_samples, n_averages):
     return averages
 ```
 
-### Step 7: Visualization
+### Шаг 7: Визуализация
 
 ```python
 import matplotlib.pyplot as plt
@@ -391,11 +391,11 @@ ys = [normal_pdf(x, mu, sigma) for x, mu, sigma in ...]
 plt.plot(xs, ys)
 ```
 
-Full implementations with all visualizations are in `code/probability.py`.
+Полные реализации со всеми визуализациями находятся в `code/probability.py`.
 
-## Use It
+## Используйте это
 
-With NumPy and SciPy, everything above is one-liners:
+С NumPy и SciPy все выше сводится к one-liners:
 
 ```python
 import numpy as np
@@ -414,41 +414,41 @@ print(f"Softmax: {probs}")
 print(f"Log-softmax: {log_probs}")
 ```
 
-You built these from scratch. Now you know what the library calls are doing.
+Вы построили это с нуля. Теперь вы знаете, что делают библиотечные вызовы.
 
-## Exercises
+## Упражнения
 
-1. Implement inverse transform sampling for the exponential distribution. Verify by sampling 10,000 values and comparing the histogram to the true PDF.
+1. Реализуйте inverse transform sampling для exponential distribution. Проверьте, сэмплируя 10,000 значений и сравнивая histogram с истинной PDF.
 
-2. Build a joint distribution table for two loaded dice. Compute the marginal distributions and check whether the dice are independent.
+2. Постройте таблицу joint distribution для двух loaded dice. Вычислите marginal distributions и проверьте, независимы ли dice.
 
-3. Compute the cross-entropy loss for a 5-class classifier that outputs logits `[2.0, 0.5, -1.0, 3.0, 0.1]` when the correct class is index 3. Then verify your answer with PyTorch's `nn.CrossEntropyLoss`.
+3. Вычислите cross-entropy loss для 5-классового classifier, который выдает logits `[2.0, 0.5, -1.0, 3.0, 0.1]`, когда правильный класс имеет индекс 3. Затем проверьте ответ с `nn.CrossEntropyLoss` в PyTorch.
 
-4. Write a function that takes a list of log probabilities and returns the most likely sequence, the total log probability, and the equivalent raw probability. Test it with a sentence of 50 words where each word has probability 0.01.
+4. Напишите функцию, которая принимает список log probabilities и возвращает наиболее вероятную sequence, суммарную log probability и эквивалентную raw probability. Проверьте ее на предложении из 50 слов, где каждое слово имеет вероятность 0.01.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Sample space | "All the possibilities" | The set S of every possible outcome of an experiment |
-| PMF | "The probability function" | A function that gives the exact probability of each discrete outcome, summing to 1 |
-| PDF | "The probability curve" | A density function for continuous variables. Integrate it over an interval to get probability |
-| Conditional probability | "Probability given something" | P(A\|B) = P(A and B) / P(B). The foundation of Bayesian thinking and Bayes' theorem |
-| Independence | "They don't affect each other" | P(A and B) = P(A) * P(B). Knowing one event tells you nothing about the other |
-| Expected value | "The average" | The probability-weighted sum of all outcomes. The loss function is an expected value |
-| Variance | "How spread out" | The expected squared deviation from the mean. High variance = noisy, unstable estimates |
-| Normal distribution | "The bell curve" | f(x) = (1/sqrt(2*pi*sigma^2)) * exp(-(x-mu)^2/(2*sigma^2)). Appears everywhere due to the CLT |
-| Central Limit Theorem | "Averages become normal" | The mean of many independent samples converges to a normal distribution regardless of the source |
-| Joint distribution | "Two variables together" | P(X, Y) describes the probability of every combination of X and Y outcomes |
-| Marginal distribution | "Sum out the other variable" | P(X) = sum_y P(X, Y). Recovers one variable's distribution from the joint |
-| Log probability | "Log of the probability" | log P(x). Turns products into sums, preventing numerical underflow in long sequences |
-| Softmax | "Turn scores into probabilities" | softmax(z_i) = exp(z_i) / sum(exp(z_j)). Maps real-valued logits to a valid probability distribution |
-| Cross-entropy | "The loss function" | -sum(p_true * log(p_predicted)). Measures how different two distributions are. Lower is better |
-| Logits | "Raw model outputs" | Unnormalized scores before softmax. Named after the logistic function |
-| Sampling | "Drawing random values" | Generating values according to a probability distribution. How models generate output |
+| Sample space | "Все возможности" | Множество S всех возможных исходов эксперимента |
+| PMF | "Функция вероятности" | Функция, которая дает точную вероятность каждого дискретного исхода; сумма равна 1 |
+| PDF | "Кривая вероятности" | Функция плотности для непрерывных переменных. Интегрируйте ее по интервалу, чтобы получить вероятность |
+| Conditional probability | "Вероятность при условии чего-то" | P(A\|B) = P(A and B) / P(B). Основа Bayesian thinking и теоремы Байеса |
+| Independence | "Они не влияют друг на друга" | P(A and B) = P(A) * P(B). Знание одного события ничего не говорит о другом |
+| Expected value | "Среднее" | Сумма всех исходов, взвешенная вероятностями. Loss function является expected value |
+| Variance | "Насколько разбросано" | Ожидаемое квадратичное отклонение от среднего. High variance = шумные, нестабильные оценки |
+| Normal distribution | "Колоколообразная кривая" | f(x) = (1/sqrt(2*pi*sigma^2)) * exp(-(x-mu)^2/(2*sigma^2)). Появляется повсюду благодаря CLT |
+| Central Limit Theorem | "Средние становятся нормальными" | Среднее многих независимых samples сходится к normal distribution независимо от исходного распределения |
+| Joint distribution | "Две переменные вместе" | P(X, Y) описывает вероятность каждой комбинации исходов X и Y |
+| Marginal distribution | "Просуммировать по другой переменной" | P(X) = sum_y P(X, Y). Восстанавливает распределение одной переменной из совместного |
+| Log probability | "Логарифм вероятности" | log P(x). Превращает произведения в суммы, предотвращая numerical underflow в длинных последовательностях |
+| Softmax | "Превратить scores в вероятности" | softmax(z_i) = exp(z_i) / sum(exp(z_j)). Отображает вещественные logits в корректное вероятностное распределение |
+| Cross-entropy | "Loss function" | -sum(p_true * log(p_predicted)). Измеряет, насколько различаются два распределения. Чем ниже, тем лучше |
+| Logits | "Сырые выходы модели" | Ненормированные scores до softmax. Названы по logistic function |
+| Sampling | "Получение случайных значений" | Генерация значений согласно вероятностному распределению. Так модели генерируют output |
 
-## Further Reading
+## Дополнительное чтение
 
-- [3Blue1Brown: But what is the Central Limit Theorem?](https://www.youtube.com/watch?v=zeJD6dqJ5lo) - visual proof of why averages become normal
-- [Stanford CS229 Probability Review](https://cs229.stanford.edu/section/cs229-prob.pdf) - concise reference covering everything here and more
-- [The Log-Sum-Exp Trick](https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/) - why numerical stability matters and how to achieve it
+- [3Blue1Brown: But what is the Central Limit Theorem?](https://www.youtube.com/watch?v=zeJD6dqJ5lo) - визуальное доказательство того, почему средние становятся нормальными
+- [Stanford CS229 Probability Review](https://cs229.stanford.edu/section/cs229-prob.pdf) - краткий справочник, покрывающий все здесь и больше
+- [The Log-Sum-Exp Trick](https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/) - почему численная устойчивость важна и как ее достичь

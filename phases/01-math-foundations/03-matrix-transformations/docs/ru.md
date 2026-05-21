@@ -1,30 +1,30 @@
-# Matrix Transformations
+# Матричные преобразования
 
-> A matrix is a machine that reshapes space. Learn what it does to every point, and you understand the whole transformation.
+> Матрица - это машина, которая изменяет форму пространства. Поймите, что она делает с каждой точкой, и вы поймете все преобразование.
 
-**Type:** Build
-**Languages:** Python, Julia
-**Prerequisites:** Phase 1, Lessons 01-02 (Linear Algebra Intuition, Vectors & Matrices Operations)
-**Time:** ~75 minutes
+**Тип:** Практика
+**Языки:** Python, Julia
+**Предварительные требования:** Phase 1, Lessons 01-02 (Linear Algebra Intuition, Vectors & Matrices Operations)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Construct rotation, scaling, shearing, and reflection matrices and apply them to 2D and 3D points
-- Compose multiple transformations by matrix multiplication and verify that order matters
-- Compute eigenvalues and eigenvectors of 2x2 matrices from the characteristic equation
-- Explain why eigenvalues determine PCA directions, RNN stability, and spectral clustering behavior
+- Строить матрицы поворота, масштабирования, сдвига и отражения и применять их к 2D- и 3D-точкам
+- Составлять несколько преобразований через умножение матриц и проверять, что порядок имеет значение
+- Вычислять собственные значения и собственные векторы матриц 2x2 из характеристического уравнения
+- Объяснять, почему собственные значения определяют направления PCA, устойчивость RNN и поведение spectral clustering
 
-## The Problem
+## Проблема
 
-You read about PCA and see "find the eigenvectors of the covariance matrix." You read about model stability and see "check if all eigenvalues have magnitude less than 1." You read about data augmentation and see "apply a random rotation." None of this makes sense until you understand what matrices do to space geometrically.
+Вы читаете про PCA и видите: "find the eigenvectors of the covariance matrix." Вы читаете про устойчивость модели и видите: "check if all eigenvalues have magnitude less than 1." Вы читаете про data augmentation и видите: "apply a random rotation." Все это не будет иметь смысла, пока вы не поймете, что матрицы геометрически делают с пространством.
 
-Matrices are not just grids of numbers. They are spatial machines. A rotation matrix spins points. A scaling matrix stretches them. A shearing matrix tilts them. Every transformation a neural network applies to data is one of these operations or a composition of them. This lesson makes those operations concrete.
+Матрицы - это не просто таблицы чисел. Это пространственные машины. Матрица поворота вращает точки. Матрица масштабирования растягивает их. Матрица сдвига наклоняет их. Каждое преобразование, которое нейронная сеть применяет к данным, является одной из этих операций или их композицией. Этот урок делает эти операции конкретными.
 
-## The Concept
+## Концепция
 
-### Transformations as matrices
+### Преобразования как матрицы
 
-Every linear transformation in 2D can be written as a 2x2 matrix. The matrix tells you exactly where the basis vectors [1, 0] and [0, 1] end up. Everything else follows.
+Любое линейное преобразование в 2D можно записать как матрицу 2x2. Матрица точно показывает, куда переходят базисные векторы [1, 0] и [0, 1]. Все остальное следует из этого.
 
 ```mermaid
 graph LR
@@ -43,9 +43,9 @@ graph LR
     e2 --> M --> e2p
 ```
 
-### Rotation
+### Поворот
 
-A 2D rotation by angle theta keeps distances and angles intact. It moves every point along a circular arc.
+2D-поворот на угол theta сохраняет расстояния и углы. Он перемещает каждую точку по дуге окружности.
 
 ```mermaid
 graph LR
@@ -64,7 +64,7 @@ graph LR
     B --> R --> Bp
 ```
 
-In 3D, you rotate around an axis. Each axis has its own rotation matrix:
+В 3D вы поворачиваете вокруг оси. У каждой оси есть своя матрица поворота:
 
 ```
 Rz(theta) = | cos  -sin  0 |     Rotate around z-axis
@@ -80,9 +80,9 @@ Ry(theta) = |  cos  0  sin |     Rotate around y-axis
             | -sin  0  cos |
 ```
 
-### Scaling
+### Масштабирование
 
-Scaling stretches or compresses along each axis independently.
+Масштабирование растягивает или сжимает пространство независимо вдоль каждой оси.
 
 ```mermaid
 graph LR
@@ -101,9 +101,9 @@ graph LR
     B --> S --> Bp
 ```
 
-### Shearing
+### Сдвиг
 
-Shearing tilts one axis while keeping the other fixed. It turns rectangles into parallelograms.
+Сдвиг наклоняет одну ось, оставляя другую фиксированной. Он превращает прямоугольники в параллелограммы.
 
 ```mermaid
 graph LR
@@ -122,13 +122,13 @@ graph LR
     B --> Sh --> Bp
 ```
 
-Shear matrices:
-- `Shx = [[1, k], [0, 1]]` shifts x by k * y
-- `Shy = [[1, 0], [k, 1]]` shifts y by k * x
+Матрицы сдвига:
+- `Shx = [[1, k], [0, 1]]` сдвигает x на k * y
+- `Shy = [[1, 0], [k, 1]]` сдвигает y на k * x
 
-### Reflection
+### Отражение
 
-Reflection mirrors points across an axis or line.
+Отражение зеркально отображает точки относительно оси или прямой.
 
 ```mermaid
 graph LR
@@ -144,13 +144,13 @@ graph LR
     A --> R --> Ap
 ```
 
-Reflection matrices:
-- Reflect across y-axis: `[[-1, 0], [0, 1]]`
-- Reflect across x-axis: `[[1, 0], [0, -1]]`
+Матрицы отражения:
+- Отражение относительно y-axis: `[[-1, 0], [0, 1]]`
+- Отражение относительно x-axis: `[[1, 0], [0, -1]]`
 
-### Composition: chaining transformations
+### Композиция: цепочка преобразований
 
-Applying transformation A then B is the same as multiplying their matrices: `result = B @ A @ point`. Order matters. Rotate then scale gives different results than scale then rotate.
+Применить преобразование A, а затем B - то же самое, что умножить их матрицы: `result = B @ A @ point`. Порядок имеет значение. Сначала повернуть, затем масштабировать дает другой результат, чем сначала масштабировать, затем повернуть.
 
 ```mermaid
 graph LR
@@ -159,7 +159,7 @@ graph LR
     end
 ```
 
-Composed: `S @ R = [[0, -2], [0.5, 0]]`
+Композиция: `S @ R = [[0, -2], [0.5, 0]]`
 
 ```mermaid
 graph LR
@@ -168,13 +168,13 @@ graph LR
     end
 ```
 
-Composed: `R @ S = [[0, -0.5], [2, 0]]`
+Композиция: `R @ S = [[0, -0.5], [2, 0]]`
 
-Different results. Matrix multiplication is not commutative.
+Результаты разные. Умножение матриц не коммутативно.
 
-### Eigenvalues and eigenvectors
+### Собственные значения и собственные векторы
 
-Most vectors change direction when a matrix hits them. Eigenvectors are special: the matrix only scales them, never rotates them. The scaling factor is the eigenvalue.
+Большинство векторов меняют направление, когда на них действует матрица. Собственные векторы особые: матрица только масштабирует их и никогда не поворачивает. Коэффициент масштабирования - это собственное значение.
 
 ```
 A @ v = lambda * v
@@ -192,11 +192,11 @@ Eigenvector [1, -1] with eigenvalue 1:
   A @ [1,-1] = [1, -1] = 1 * [1, -1]  (same direction, unchanged)
 ```
 
-The matrix stretches space by 3x along [1, 1] and keeps [1, -1] unchanged. Every other direction is a mix of these two.
+Матрица растягивает пространство в 3 раза вдоль [1, 1] и оставляет [1, -1] без изменений. Любое другое направление является смесью этих двух.
 
-### Eigendecomposition
+### Собственное разложение
 
-If a matrix has n linearly independent eigenvectors, it can be decomposed:
+Если у матрицы есть n линейно независимых собственных векторов, ее можно разложить:
 
 ```
 A = V @ D @ V^(-1)
@@ -208,17 +208,17 @@ V^(-1) = inverse of V
 This says: rotate into eigenvector coordinates, scale along each axis, rotate back.
 ```
 
-### Why eigenvalues matter
+### Почему собственные значения важны
 
-**PCA.** The eigenvectors of the covariance matrix are the principal components. The eigenvalues tell you how much variance each component captures. Sort by eigenvalue, keep the top k, and you have dimensionality reduction.
+**PCA.** Собственные векторы ковариационной матрицы - это главные компоненты. Собственные значения показывают, какую долю дисперсии захватывает каждая компонента. Отсортируйте по собственному значению, оставьте top k, и вы получите снижение размерности.
 
-**Stability.** In recurrent networks and dynamical systems, eigenvalues with magnitude > 1 cause outputs to explode. Magnitude < 1 causes them to vanish. This is the vanishing/exploding gradient problem stated in one sentence.
+**Устойчивость.** В рекуррентных сетях и динамических системах собственные значения с модулем > 1 заставляют выходы взрываться. Модуль < 1 заставляет их исчезать. Это проблема vanishing/exploding gradient, сформулированная в одном предложении.
 
-**Spectral methods.** Graph neural networks use eigenvalues of the adjacency matrix. Spectral clustering uses eigenvalues of the Laplacian. The eigenvectors reveal the structure of the graph.
+**Спектральные методы.** Graph neural networks используют собственные значения матрицы смежности. Spectral clustering использует собственные значения лапласиана. Собственные векторы раскрывают структуру графа.
 
-### Determinant as volume scaling factor
+### Определитель как коэффициент масштабирования объема
 
-The determinant of a transformation matrix tells you how much it scales area (2D) or volume (3D).
+Определитель матрицы преобразования показывает, насколько она масштабирует площадь (2D) или объем (3D).
 
 ```
 det = 1:   area preserved (rotation)
@@ -232,9 +232,9 @@ det = -1:  area preserved but orientation flipped (reflection)
 | det(Reflection) | = -1     (orientation flipped)
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Transformation matrices from scratch (Python)
+### Шаг 1: Матрицы преобразований с нуля (Python)
 
 ```python
 import math
@@ -285,7 +285,7 @@ reflected = mat_vec_mul(reflection_y(), [2.0, 1.0])
 print(f"Reflect (2,1) across y: ({reflected[0]:.1f}, {reflected[1]:.1f})")
 ```
 
-### Step 2: Composition of transformations
+### Шаг 2: Композиция преобразований
 
 ```python
 R = rotation_2d(math.pi / 2)
@@ -303,9 +303,9 @@ print(f"Scale then rotate 90: ({result2[0]:.2f}, {result2[1]:.2f})")
 print(f"Same? {result1 == result2}")
 ```
 
-### Step 3: Eigenvalues from scratch (2x2)
+### Шаг 3: Собственные значения с нуля (2x2)
 
-For a 2x2 matrix `[[a, b], [c, d]]`, eigenvalues solve the characteristic equation: `lambda^2 - (a+d)*lambda + (ad - bc) = 0`.
+Для матрицы 2x2 `[[a, b], [c, d]]` собственные значения являются решениями характеристического уравнения: `lambda^2 - (a+d)*lambda + (ad - bc) = 0`.
 
 ```python
 def eigenvalues_2x2(matrix):
@@ -350,7 +350,7 @@ for val in vals:
     print(f"    l*v = {[round(x,4) for x in scaled]}")
 ```
 
-### Step 4: Determinant as volume scaling factor
+### Шаг 4: Определитель как коэффициент масштабирования объема
 
 ```python
 def det_2x2(matrix):
@@ -366,9 +366,9 @@ print(f"det(singular)     = {det_2x2(singular):.1f}")
 print("Singular: columns are proportional, space collapses to a line.")
 ```
 
-## Use It
+## Используйте это
 
-NumPy handles all of this with optimized routines.
+NumPy выполняет все это оптимизированными процедурами.
 
 ```python
 import numpy as np
@@ -407,7 +407,7 @@ print(f"Original:\n{B}")
 print(f"Reconstructed:\n{reconstructed}")
 ```
 
-### 3D rotations with NumPy
+### 3D-повороты с NumPy
 
 ```python
 def rotation_3d_z(theta):
@@ -427,35 +427,35 @@ print(f"Rotate 90 around z: {np.round(rotated_z, 4)}")
 print(f"Rotate 90 around x: {np.round(rotated_x, 4)}")
 ```
 
-## Ship It
+## Доведите до результата
 
-This lesson builds the geometric foundation for PCA (Phase 2) and neural network weight analysis. The eigenvalue/eigenvector code built here is the same algorithm that powers dimensionality reduction, spectral clustering, and stability analysis in production ML systems.
+Этот урок строит геометрическую основу для PCA (Phase 2) и анализа весов нейронных сетей. Код для собственных значений и собственных векторов, построенный здесь, - это тот же алгоритм, который лежит в основе снижения размерности, spectral clustering и анализа устойчивости в production ML-системах.
 
-## Exercises
+## Упражнения
 
-1. Apply rotation, scaling, and shearing to a unit square (corners at [0,0], [1,0], [1,1], [0,1]). Print the transformed corners for each. Verify that rotation preserves distances between corners.
+1. Примените поворот, масштабирование и сдвиг к единичному квадрату (углы в [0,0], [1,0], [1,1], [0,1]). Выведите преобразованные углы для каждого преобразования. Проверьте, что поворот сохраняет расстояния между углами.
 
-2. Find the eigenvalues of the matrix [[4, 2], [1, 3]] by hand using the characteristic equation. Then verify with your from-scratch function and with NumPy.
+2. Найдите собственные значения матрицы [[4, 2], [1, 3]] вручную с помощью характеристического уравнения. Затем проверьте результат своей функцией с нуля и с NumPy.
 
-3. Create a composition of three transformations (rotate 30 degrees, scale by [1.5, 0.8], shear with kx=0.3) and apply it to 8 points arranged in a circle. Print before and after coordinates. Compute the determinant of the composed matrix and verify it equals the product of the individual determinants.
+3. Создайте композицию трех преобразований (поворот на 30 градусов, масштабирование на [1.5, 0.8], сдвиг с kx=0.3) и примените ее к 8 точкам, расположенным на окружности. Выведите координаты до и после. Вычислите определитель составной матрицы и проверьте, что он равен произведению определителей отдельных преобразований.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Rotation matrix | "Spins things" | An orthogonal matrix that moves points along circular arcs while preserving distances and angles. Determinant is always 1. |
-| Scaling matrix | "Makes things bigger" | A diagonal matrix that stretches or compresses independently along each axis. Determinant is the product of scale factors. |
-| Shearing matrix | "Slants things" | A matrix that shifts one coordinate proportionally to another, turning rectangles into parallelograms. Determinant is 1. |
-| Reflection | "Mirrors things" | A matrix that flips space across an axis or plane. Determinant is -1. |
-| Composition | "Do two things" | Multiplying transformation matrices to chain operations. Order matters: B @ A means apply A first, then B. |
-| Eigenvector | "Special direction" | A direction that the matrix only scales, never rotates. The transformation's fingerprint. |
-| Eigenvalue | "How much it stretches" | The scalar factor by which the matrix scales its eigenvector. Can be negative (flip) or complex (rotation). |
-| Eigendecomposition | "Break the matrix apart" | Writing a matrix as V @ D @ V^(-1), separating it into its fundamental scaling directions and magnitudes. |
-| Determinant | "A single number from a matrix" | The factor by which the transformation scales area (2D) or volume (3D). Zero means the transformation is irreversible. |
-| Characteristic equation | "Where eigenvalues come from" | det(A - lambda * I) = 0. The polynomial whose roots are the eigenvalues. |
+| Rotation matrix | "Крутит объекты" | Ортогональная матрица, которая перемещает точки по дугам окружностей, сохраняя расстояния и углы. Определитель всегда равен 1. |
+| Scaling matrix | "Делает объекты больше" | Диагональная матрица, которая независимо растягивает или сжимает пространство вдоль каждой оси. Определитель равен произведению коэффициентов масштабирования. |
+| Shearing matrix | "Наклоняет объекты" | Матрица, которая сдвигает одну координату пропорционально другой, превращая прямоугольники в параллелограммы. Определитель равен 1. |
+| Reflection | "Зеркалит объекты" | Матрица, которая переворачивает пространство относительно оси или плоскости. Определитель равен -1. |
+| Composition | "Сделать две вещи" | Умножение матриц преобразований для построения цепочки операций. Порядок важен: B @ A означает сначала применить A, затем B. |
+| Eigenvector | "Особое направление" | Направление, которое матрица только масштабирует и никогда не поворачивает. Отпечаток преобразования. |
+| Eigenvalue | "Насколько растягивает" | Скалярный коэффициент, на который матрица масштабирует свой собственный вектор. Может быть отрицательным (переворот) или комплексным (поворот). |
+| Eigendecomposition | "Разобрать матрицу на части" | Запись матрицы как V @ D @ V^(-1), которая отделяет ее фундаментальные направления масштабирования от величин. |
+| Determinant | "Одно число из матрицы" | Коэффициент, на который преобразование масштабирует площадь (2D) или объем (3D). Ноль означает, что преобразование необратимо. |
+| Characteristic equation | "Откуда берутся собственные значения" | det(A - lambda * I) = 0. Многочлен, корни которого являются собственными значениями. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [3Blue1Brown: Linear Transformations](https://www.3blue1brown.com/lessons/linear-transformations) -- visual intuition for how matrices reshape space
-- [3Blue1Brown: Eigenvectors and Eigenvalues](https://www.3blue1brown.com/lessons/eigenvalues) -- the best visual explanation of what eigenvectors mean geometrically
-- [MIT 18.06 Lecture 21: Eigenvalues and Eigenvectors](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) -- Gilbert Strang's classic treatment
+- [3Blue1Brown: Linear Transformations](https://www.3blue1brown.com/lessons/linear-transformations) -- визуальная интуиция о том, как матрицы изменяют форму пространства
+- [3Blue1Brown: Eigenvectors and Eigenvalues](https://www.3blue1brown.com/lessons/eigenvalues) -- лучшее визуальное объяснение геометрического смысла собственных векторов
+- [MIT 18.06 Lecture 21: Eigenvalues and Eigenvectors](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) -- классическое изложение Гилберта Стрэнга

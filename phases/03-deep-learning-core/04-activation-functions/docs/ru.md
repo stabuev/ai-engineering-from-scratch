@@ -1,41 +1,41 @@
-# Activation Functions
+# Функции активации
 
-> Without nonlinearity, your 100-layer network is a fancy matrix multiply. Activations are the gates that let neural networks think in curves.
+> Без нелинейности ваша 100-слойная сеть - это просто изящное умножение матриц. Активации - это ворота, которые позволяют нейронным сетям мыслить кривыми.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Lesson 03.03 (Backpropagation)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Урок 03.03 (обратное распространение, Backpropagation)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement sigmoid, tanh, ReLU, Leaky ReLU, GELU, Swish, and softmax with their derivatives from scratch
-- Diagnose the vanishing gradient problem by measuring activation magnitudes through 10+ layers with different activations
-- Detect dead neurons in a ReLU network and explain why GELU avoids this failure mode
-- Select the correct activation function for a given architecture (transformer, CNN, RNN, output layer)
+- Реализовать sigmoid, tanh, ReLU, Leaky ReLU, GELU, Swish и softmax вместе с их производными с нуля
+- Диагностировать проблему затухающего градиента, измеряя величины активаций через 10+ слоев с разными активациями
+- Обнаруживать мертвые нейроны (dead neurons) в ReLU-сети и объяснять, почему GELU избегает этого режима отказа
+- Выбирать правильную функцию активации для заданной архитектуры (transformer, CNN, RNN, выходной слой)
 
-## The Problem
+## Проблема
 
-Stack two linear transformations: y = W2(W1x + b1) + b2. Expand it: y = W2W1x + W2b1 + b2. That's just y = Ax + c -- a single linear transformation. No matter how many linear layers you stack, the result collapses to one matrix multiply. Your 100-layer network has the same representational power as a single layer.
+Сложите два линейных преобразования: y = W2(W1x + b1) + b2. Раскройте скобки: y = W2W1x + W2b1 + b2. Это просто y = Ax + c - одно линейное преобразование. Сколько бы линейных слоев вы ни сложили, результат сворачивается в одно умножение на матрицу. У вашей 100-слойной сети такая же выразительная сила, как у одного слоя.
 
-This is not a theoretical curiosity. It means a deep linear network literally cannot learn XOR, cannot classify a spiral dataset, cannot recognize a face. Without activation functions, depth is an illusion.
+Это не теоретическая диковинка. Это означает, что глубокая линейная сеть буквально не может выучить XOR, не может классифицировать спиральный набор данных, не может распознать лицо. Без функций активации глубина - иллюзия.
 
-Activation functions break the linearity. They warp the output of each layer through a nonlinear function, giving the network the ability to bend decision boundaries, approximate arbitrary functions, and actually learn. But pick the wrong activation and your gradients vanish to zero (sigmoid in deep networks), explode to infinity (unbounded activations without careful initialization), or your neurons die permanently (ReLU with large negative biases). The choice of activation function directly determines whether your network learns at all.
+Функции активации ломают линейность. Они деформируют выход каждого слоя через нелинейную функцию, давая сети возможность изгибать границы решений, приближать произвольные функции и действительно учиться. Но выберите неправильную активацию - и ваши градиенты затухнут до нуля (sigmoid в глубоких сетях), взорвутся до бесконечности (неограниченные активации без аккуратной инициализации) или нейроны умрут навсегда (ReLU с большими отрицательными смещениями). Выбор функции активации напрямую определяет, будет ли сеть вообще учиться.
 
-## The Concept
+## Концепция
 
-### Why Nonlinearity Is Necessary
+### Почему нелинейность необходима
 
-Matrix multiplication is composable. Multiplying a vector by matrix A then matrix B is identical to multiplying by AB. This means stacking ten linear layers is mathematically equivalent to one linear layer with one big matrix. All those parameters, all that depth -- wasted. You need something to break the chain. That's what activation functions do.
+Умножение матриц композиционно. Умножить вектор на матрицу A, а затем на матрицу B - то же самое, что умножить на AB. Поэтому стек из десяти линейных слоев математически эквивалентен одному линейному слою с одной большой матрицей. Все эти параметры, вся эта глубина - впустую. Нужно что-то, что разорвет цепочку. Это и делают функции активации.
 
-Here is the proof. A linear layer computes f(x) = Wx + b. Stack two:
+Вот доказательство. Линейный слой вычисляет f(x) = Wx + b. Сложим два:
 
 ```
 Layer 1: h = W1 * x + b1
 Layer 2: y = W2 * h + b2
 ```
 
-Substitute:
+Подставим:
 
 ```
 y = W2 * (W1 * x + b1) + b2
@@ -43,128 +43,128 @@ y = (W2 * W1) * x + (W2 * b1 + b2)
 y = A * x + c
 ```
 
-One layer. Insert a nonlinear activation g() between layers:
+Один слой. Вставим между слоями нелинейную активацию g():
 
 ```
 h = g(W1 * x + b1)
 y = W2 * h + b2
 ```
 
-Now the substitution breaks. W2 * g(W1 * x + b1) + b2 cannot be reduced to a single linear transformation. The network can represent nonlinear functions. Each additional layer with an activation adds representational capacity.
+Теперь подстановка ломается. W2 * g(W1 * x + b1) + b2 нельзя свести к одному линейному преобразованию. Сеть может представлять нелинейные функции. Каждый дополнительный слой с активацией добавляет выразительную способность.
 
 ### Sigmoid
 
-The original activation function for neural networks.
+Изначальная функция активации для нейронных сетей.
 
 ```
 sigmoid(x) = 1 / (1 + e^(-x))
 ```
 
-Output range: (0, 1). Smooth, differentiable, maps any real number to a probability-like value.
+Диапазон выхода: (0, 1). Гладкая, дифференцируемая, отображает любое вещественное число в значение, похожее на вероятность.
 
-The derivative:
+Производная:
 
 ```
 sigmoid'(x) = sigmoid(x) * (1 - sigmoid(x))
 ```
 
-The maximum value of this derivative is 0.25, occurring at x = 0. In backpropagation, gradients multiply through layers. Ten layers of sigmoid means the gradient gets multiplied by at most 0.25 ten times:
+Максимальное значение этой производной равно 0.25 и достигается при x = 0. При обратном распространении градиенты перемножаются через слои. Десять слоев sigmoid означают, что градиент умножается максимум на 0.25 десять раз:
 
 ```
 0.25^10 = 0.000000953674
 ```
 
-Less than one millionth of the original signal. This is the vanishing gradient problem. Gradients in early layers become so small that weights barely update. The network appears to learn -- loss decreases in later layers -- but the first layers are frozen. Deep sigmoid networks simply do not train.
+Меньше одной миллионной исходного сигнала. Это проблема затухающего градиента. Градиенты в ранних слоях становятся настолько малы, что веса почти не обновляются. Кажется, что сеть учится - потеря уменьшается в поздних слоях, - но первые слои заморожены. Глубокие sigmoid-сети просто не обучаются.
 
-Additional problem: sigmoid outputs are always positive (0 to 1), which means gradients on weights are always the same sign. This causes zig-zagging during gradient descent.
+Дополнительная проблема: выходы sigmoid всегда положительны (от 0 до 1), поэтому градиенты по весам всегда имеют один и тот же знак. Это вызывает зигзагообразное движение при градиентном спуске.
 
 ### Tanh
 
-The centered version of sigmoid.
+Центрированная версия sigmoid.
 
 ```
 tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x))
 ```
 
-Output range: (-1, 1). Zero-centered, which eliminates the zig-zag problem.
+Диапазон выхода: (-1, 1). Центрирована вокруг нуля, что устраняет проблему зигзагов.
 
-The derivative:
+Производная:
 
 ```
 tanh'(x) = 1 - tanh(x)^2
 ```
 
-Maximum derivative is 1.0 at x = 0 -- four times better than sigmoid. But the vanishing gradient problem still exists. For large positive or negative inputs, the derivative approaches zero. Ten layers still crush the gradient, just less aggressively.
+Максимальная производная равна 1.0 при x = 0 - в четыре раза лучше, чем у sigmoid. Но проблема затухающего градиента все равно остается. Для больших положительных или отрицательных входов производная стремится к нулю. Десять слоев все равно раздавят градиент, просто менее агрессивно.
 
-### ReLU: The Breakthrough
+### ReLU: прорыв
 
-Rectified Linear Unit. Popularized for deep learning by Nair and Hinton in 2010 (the function itself dates to Fukushima's 1969 work), it changed everything.
+Rectified Linear Unit. Популяризирована для глубокого обучения Nair и Hinton в 2010 году (сама функция восходит к работе Fukushima 1969 года), она изменила все.
 
 ```
 relu(x) = max(0, x)
 ```
 
-Output range: [0, infinity). The derivative is trivially simple:
+Диапазон выхода: [0, infinity). Производная тривиально проста:
 
 ```
 relu'(x) = 1  if x > 0
             0  if x <= 0
 ```
 
-No vanishing gradient for positive inputs. The gradient is exactly 1, passed straight through. This is why deep networks became trainable -- ReLU preserves gradient magnitude across layers.
+Нет затухающего градиента для положительных входов. Градиент ровно 1 и проходит прямо дальше. Поэтому глубокие сети стали обучаемыми: ReLU сохраняет величину градиента между слоями.
 
-But there is a failure mode: the dead neuron problem. If a neuron's weighted input is always negative (due to a large negative bias or unfortunate weight initialization), its output is always zero, its gradient is always zero, and it never updates. It is permanently dead. In practice, 10-40% of neurons in a ReLU network can die during training.
+Но есть режим отказа: проблема мертвого нейрона. Если взвешенный вход нейрона всегда отрицателен (из-за большого отрицательного смещения или неудачной инициализации весов), его выход всегда равен нулю, его градиент всегда равен нулю, и он никогда не обновляется. Он навсегда мертв. На практике 10-40% нейронов в ReLU-сети могут умереть во время обучения.
 
 ### Leaky ReLU
 
-The simplest fix for dead neurons.
+Самое простое исправление для мертвых нейронов.
 
 ```
 leaky_relu(x) = x        if x > 0
                 alpha * x if x <= 0
 ```
 
-Where alpha is a small constant, typically 0.01. The negative side has a small slope instead of zero, so dead neurons still get a gradient signal and can recover.
+Где alpha - маленькая константа, обычно 0.01. У отрицательной стороны есть небольшой наклон вместо нуля, поэтому мертвые нейроны все еще получают градиентный сигнал и могут восстановиться.
 
-### GELU: The Modern Default
+### GELU: современный стандарт
 
-Gaussian Error Linear Unit. Introduced by Hendrycks and Gimpel in 2016. Default activation in BERT, GPT, and most modern transformers.
+Gaussian Error Linear Unit. Представлена Hendrycks и Gimpel в 2016 году. Активация по умолчанию в BERT, GPT и большинстве современных трансформеров.
 
 ```
 gelu(x) = x * Phi(x)
 ```
 
-Where Phi(x) is the cumulative distribution function of the standard normal distribution. The approximation used in practice:
+Где Phi(x) - функция распределения стандартного нормального распределения. Приближение, используемое на практике:
 
 ```
 gelu(x) ~= 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
 ```
 
-GELU is smooth everywhere, allows small negative values (unlike ReLU which hard-clips to zero), and has a probabilistic interpretation: it weights each input by how likely it is to be positive under a Gaussian distribution. This smooth gating outperforms ReLU in transformer architectures because it provides better gradient flow and avoids the dead neuron problem entirely.
+GELU гладкая везде, допускает небольшие отрицательные значения (в отличие от ReLU, которая жестко обрезает их до нуля), и имеет вероятностную интерпретацию: она взвешивает каждый вход по тому, насколько вероятно, что он положителен при гауссовом распределении. Такое гладкое управление превосходит ReLU в архитектурах трансформеров, потому что дает лучший поток градиентов и полностью избегает проблемы мертвых нейронов.
 
 ### Swish / SiLU
 
-Self-gated activation discovered by Ramachandran et al. in 2017 through automated search.
+Самоуправляемая активация, найденная Ramachandran и соавторами в 2017 году с помощью автоматического поиска.
 
 ```
 swish(x) = x * sigmoid(x)
 ```
 
-Swish is formally x * sigmoid(x). Google discovered it through automated search over activation function space -- a neural network designing parts of neural networks.
+Формально Swish - это x * sigmoid(x). Google обнаружила ее автоматическим поиском по пространству функций активации: нейронная сеть проектировала части нейронных сетей.
 
-Like GELU, it is smooth, non-monotonic, and allows small negative values. The difference is subtle: Swish uses sigmoid for gating while GELU uses the Gaussian CDF. In practice, performance is nearly identical. Swish is used in EfficientNet and some vision models. GELU dominates in language models.
+Как и GELU, она гладкая, немонотонная и допускает небольшие отрицательные значения. Разница тонкая: Swish использует sigmoid для управления, а GELU использует гауссову CDF. На практике качество почти одинаковое. Swish используется в EfficientNet и некоторых моделях компьютерного зрения. GELU доминирует в языковых моделях.
 
-### Softmax: The Output Activation
+### Softmax: выходная активация
 
-Not used in hidden layers. Softmax converts a vector of raw scores (logits) into a probability distribution.
+Не используется в скрытых слоях. Softmax превращает вектор сырых оценок (логитов) в распределение вероятностей.
 
 ```
 softmax(x_i) = e^(x_i) / sum(e^(x_j) for all j)
 ```
 
-Every output is between 0 and 1. All outputs sum to 1. This makes it the standard final activation for multi-class classification. The largest logit gets the highest probability, but unlike argmax, softmax is differentiable and preserves information about relative confidence.
+Каждый выход находится между 0 и 1. Все выходы суммируются в 1. Поэтому это стандартная финальная активация для многоклассовой классификации. Самый большой логит получает самую высокую вероятность, но в отличие от argmax, softmax дифференцируема и сохраняет информацию об относительной уверенности.
 
-### Comparison of Shapes
+### Сравнение форм
 
 ```mermaid
 graph LR
@@ -180,7 +180,7 @@ graph LR
     G -->|"Smooth gradient<br/>everywhere"| Solution
 ```
 
-### Gradient Flow Comparison
+### Сравнение потока градиентов
 
 ```mermaid
 graph TD
@@ -197,7 +197,7 @@ graph TD
     end
 ```
 
-### Which Activation When
+### Какую активацию когда использовать
 
 ```mermaid
 flowchart TD
@@ -216,11 +216,11 @@ flowchart TD
     Task -->|"Regression"| Linear["Use Linear (no activation)"]
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Implement All Activation Functions with Derivatives
+### Шаг 1: Реализуйте все функции активации с производными
 
-Each function takes a single float and returns a float. Each derivative function takes the same input and returns the gradient.
+Каждая функция принимает один `float` и возвращает `float`. Каждая функция производной принимает тот же вход и возвращает градиент.
 
 ```python
 import math
@@ -274,9 +274,9 @@ def softmax(xs):
     return [e / total for e in exps]
 ```
 
-### Step 2: Visualize Where Gradients Die
+### Шаг 2: Визуализируйте, где умирают градиенты
 
-Compute the gradient at 100 evenly-spaced points from -5 to 5. Print a text histogram showing where each activation's gradient is near-zero.
+Вычислите градиент в 100 равномерно расположенных точках от -5 до 5. Напечатайте текстовую гистограмму, показывающую, где градиент каждой активации близок к нулю.
 
 ```python
 def gradient_scan(name, derivative_fn, start=-5, end=5, n=100):
@@ -301,9 +301,9 @@ gradient_scan("GELU", gelu_derivative)
 gradient_scan("Swish", swish_derivative)
 ```
 
-### Step 3: Vanishing Gradient Experiment
+### Шаг 3: Эксперимент с затухающим градиентом
 
-Forward-pass a signal through N layers using sigmoid vs ReLU. Measure how the activation magnitude changes.
+Пропустите сигнал прямым проходом через N слоев, используя sigmoid и ReLU. Измерьте, как меняется величина активации.
 
 ```python
 import random
@@ -327,9 +327,9 @@ vanishing_gradient_experiment(relu, "ReLU")
 vanishing_gradient_experiment(gelu, "GELU")
 ```
 
-### Step 4: Dead Neuron Detector
+### Шаг 4: Детектор мертвых нейронов
 
-Create a ReLU network, pass random inputs through it, count how many neurons never fire.
+Создайте ReLU-сеть, пропустите через нее случайные входы и посчитайте, сколько нейронов ни разу не активировались.
 
 ```python
 def dead_neuron_detector(n_inputs=5, hidden_size=20, n_samples=1000):
@@ -364,9 +364,9 @@ def dead_neuron_detector(n_inputs=5, hidden_size=20, n_samples=1000):
 dead_neuron_detector()
 ```
 
-### Step 5: Training Comparison -- Sigmoid vs ReLU vs GELU
+### Шаг 5: Сравнение обучения - Sigmoid, ReLU и GELU
 
-Train the same two-layer network on the circle dataset (points inside a circle = class 1, outside = class 0) with three different activations. Compare convergence speed.
+Обучите одну и ту же двухслойную сеть на наборе данных окружности (точки внутри окружности = класс 1, снаружи = класс 0) с тремя разными активациями. Сравните скорость сходимости.
 
 ```python
 def make_circle_data(n=200, seed=42):
@@ -457,9 +457,9 @@ for name, losses in results.items():
     print(f"  {name:10s}: start={losses[0]:.4f} -> end={losses[-1]:.4f} (improvement: {(1 - losses[-1]/losses[0])*100:.1f}%)")
 ```
 
-## Use It
+## Используйте это
 
-PyTorch provides all of these as both functional and module forms:
+PyTorch предоставляет все эти функции как в функциональной форме, так и в форме модулей:
 
 ```python
 import torch
@@ -485,48 +485,48 @@ model = nn.Sequential(
 )
 ```
 
-Hidden layers in a transformer: GELU. Hidden layers in a CNN: ReLU. Output layer for classification: softmax. Output layer for regression: none (linear). Output layer for probabilities: sigmoid. That's it. Start with these defaults. Change them only when you have evidence.
+Скрытые слои в transformer: GELU. Скрытые слои в CNN: ReLU. Выходной слой для классификации: softmax. Выходной слой для регрессии: ничего (линейный). Выходной слой для вероятностей: sigmoid. Вот и все. Начинайте с этих стандартных вариантов. Меняйте их только при наличии доказательств.
 
-RNNs and LSTMs use tanh for hidden state and sigmoid for gates, but if you're building from scratch today, you're probably not using RNNs. If neurons are dying in your ReLU network, switch to GELU. Don't reach for Leaky ReLU unless you have a specific reason -- GELU solves the dead neuron problem and gives better gradient flow.
+RNN и LSTM используют tanh для скрытого состояния и sigmoid для вентилей, но если вы сегодня строите что-то с нуля, вы, вероятно, не используете RNN. Если нейроны умирают в вашей ReLU-сети, переключитесь на GELU. Не тянитесь к Leaky ReLU без конкретной причины: GELU решает проблему мертвых нейронов и дает лучший поток градиентов.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
-- `outputs/prompt-activation-selector.md` -- a reusable prompt that helps you pick the right activation function for any architecture
+Этот урок создает:
+- `outputs/prompt-activation-selector.md` - переиспользуемый промпт, который помогает выбрать правильную функцию активации для любой архитектуры
 
-## Exercises
+## Упражнения
 
-1. Implement Parametric ReLU (PReLU) where the negative slope alpha is a learnable parameter. Train it on the circle dataset and compare to fixed Leaky ReLU.
+1. Реализуйте Parametric ReLU (PReLU), где отрицательный наклон alpha является обучаемым параметром. Обучите его на наборе окружности и сравните с фиксированным Leaky ReLU.
 
-2. Run the vanishing gradient experiment with 50 layers instead of 10. Plot the magnitude at each layer for sigmoid, tanh, ReLU, and GELU. At which layer does each activation's signal effectively reach zero?
+2. Запустите эксперимент с затухающим градиентом для 50 слоев вместо 10. Постройте график величины на каждом слое для sigmoid, tanh, ReLU и GELU. На каком слое сигнал каждой активации фактически достигает нуля?
 
-3. Implement the ELU (Exponential Linear Unit): elu(x) = x if x > 0, alpha * (e^x - 1) if x <= 0. Compare its dead neuron rate to ReLU on the same network.
+3. Реализуйте ELU (Exponential Linear Unit): elu(x) = x, если x > 0, alpha * (e^x - 1), если x <= 0. Сравните долю мертвых нейронов с ReLU на той же сети.
 
-4. Build a "gradient health monitor" that runs during training: at each epoch, compute the average gradient magnitude at each layer. Print a warning when any layer's gradient drops below 0.001 or exceeds 100.
+4. Постройте «монитор здоровья градиентов», который работает во время обучения: на каждой эпохе вычисляйте среднюю величину градиента на каждом слое. Печатайте предупреждение, когда градиент любого слоя падает ниже 0.001 или превышает 100.
 
-5. Modify the training comparison to use the XOR dataset from Lesson 01 instead of circles. Which activation converges fastest on XOR? Why does this differ from the circle results?
+5. Измените сравнение обучения так, чтобы использовать набор XOR из Урока 01 вместо окружностей. Какая активация быстрее всего сходится на XOR? Почему это отличается от результатов на окружностях?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Activation function | "The nonlinear part" | A function applied to each neuron's output that breaks linearity, enabling the network to learn nonlinear mappings |
-| Vanishing gradient | "Gradients disappear in deep networks" | Gradients shrink exponentially through layers when the activation's derivative is less than 1, making early layers untrainable |
-| Exploding gradient | "Gradients blow up" | Gradients grow exponentially through layers when the effective multiplier exceeds 1, causing unstable training |
-| Dead neuron | "A neuron that stopped learning" | A ReLU neuron whose input is permanently negative, producing zero output and zero gradient |
-| Sigmoid | "Squishes values to 0-1" | The logistic function 1/(1+e^-x), historically important but causes vanishing gradients in deep networks |
-| ReLU | "Clips negatives to zero" | max(0, x) -- the activation that made deep learning practical by preserving gradient magnitude |
-| GELU | "The transformer activation" | Gaussian Error Linear Unit, a smooth activation that weights inputs by their probability of being positive |
-| Swish/SiLU | "Self-gated ReLU" | x * sigmoid(x), discovered through automated search, used in EfficientNet |
-| Softmax | "Turns scores into probabilities" | Normalizes a vector of logits into a probability distribution where all values are in (0,1) and sum to 1 |
-| Leaky ReLU | "ReLU that doesn't die" | max(alpha*x, x) where alpha is small (0.01), preventing dead neurons by allowing small negative gradients |
-| Saturation | "The flat part of sigmoid" | Regions where an activation's derivative approaches zero, blocking gradient flow |
-| Logit | "The raw score before softmax" | The unnormalized output of the final layer before applying softmax or sigmoid |
+| Функция активации (Activation function) | «Нелинейная часть» | Функция, применяемая к выходу каждого нейрона, которая ломает линейность и позволяет сети учить нелинейные отображения |
+| Затухающий градиент (Vanishing gradient) | «Градиенты исчезают в глубоких сетях» | Градиенты экспоненциально уменьшаются через слои, когда производная активации меньше 1, из-за чего ранние слои невозможно обучать |
+| Взрывающийся градиент (Exploding gradient) | «Градиенты взрываются» | Градиенты экспоненциально растут через слои, когда эффективный множитель больше 1, вызывая нестабильное обучение |
+| Мертвый нейрон (Dead neuron) | «Нейрон перестал учиться» | ReLU-нейрон, вход которого постоянно отрицателен, поэтому он дает нулевой выход и нулевой градиент |
+| Sigmoid | «Сжимает значения в 0-1» | Логистическая функция 1/(1+e^-x), исторически важная, но вызывающая затухающие градиенты в глубоких сетях |
+| ReLU | «Обрезает отрицательные значения до нуля» | max(0, x) - активация, сделавшая глубокое обучение практичным благодаря сохранению величины градиента |
+| GELU | «Активация трансформеров» | Gaussian Error Linear Unit, гладкая активация, которая взвешивает входы по вероятности быть положительными |
+| Swish/SiLU | «Самоуправляемая ReLU» | x * sigmoid(x), найдена автоматическим поиском, используется в EfficientNet |
+| Softmax | «Превращает оценки в вероятности» | Нормализует вектор логитов в распределение вероятностей, где все значения находятся в (0,1) и суммируются в 1 |
+| Leaky ReLU | «ReLU, которая не умирает» | max(alpha*x, x), где alpha мала (0.01), предотвращает мертвые нейроны, позволяя небольшие отрицательные градиенты |
+| Насыщение (Saturation) | «Плоская часть sigmoid» | Области, где производная активации стремится к нулю и блокирует поток градиентов |
+| Логит (Logit) | «Сырая оценка перед softmax» | Ненормализованный выход последнего слоя перед применением softmax или sigmoid |
 
-## Further Reading
+## Дополнительное чтение
 
-- Nair & Hinton, "Rectified Linear Units Improve Restricted Boltzmann Machines" (2010) -- the paper that introduced ReLU and enabled training of deep networks
-- Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016) -- introduced the activation function that became the default for transformers
-- Ramachandran et al., "Searching for Activation Functions" (2017) -- used automated search to discover Swish, showing that activation design can be automated
-- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) -- the paper that diagnosed vanishing/exploding gradients and proposed Xavier initialization
-- Goodfellow, Bengio, Courville, "Deep Learning" Chapter 6.3 (https://www.deeplearningbook.org/) -- rigorous treatment of hidden units and activation functions
+- Nair & Hinton, "Rectified Linear Units Improve Restricted Boltzmann Machines" (2010) - статья, которая представила ReLU и сделала возможным обучение глубоких сетей
+- Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016) - представила функцию активации, ставшую стандартом для трансформеров
+- Ramachandran et al., "Searching for Activation Functions" (2017) - использовала автоматический поиск для обнаружения Swish и показала, что дизайн активаций можно автоматизировать
+- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) - статья, которая диагностировала затухающие/взрывающиеся градиенты и предложила инициализацию Xavier
+- Goodfellow, Bengio, Courville, "Deep Learning" Chapter 6.3 (https://www.deeplearningbook.org/) - строгий разбор скрытых узлов и функций активации

@@ -1,34 +1,34 @@
-# Dimensionality Reduction
+# Снижение размерности
 
-> High-dimensional data has structure. You find it by looking from the right angle.
+> У высокоразмерных данных есть структура. Чтобы ее увидеть, нужно посмотреть под правильным углом.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01 (Linear Algebra Intuition), 02 (Vectors, Matrices & Operations), 03 (Eigenvalues & Eigenvectors), 06 (Probability & Distributions)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Пререквизиты:** Фаза 1, уроки 01 (интуиция линейной алгебры), 02 (векторы, матрицы и операции), 03 (собственные значения и собственные векторы), 06 (вероятность и распределения)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement PCA from scratch: center data, compute the covariance matrix, eigendecompose, and project
-- Use explained variance ratio and the elbow method to choose the number of principal components
-- Compare PCA, t-SNE, and UMAP for visualizing MNIST digits in 2D and explain their tradeoffs
-- Apply kernel PCA with an RBF kernel to separate nonlinear data structures that standard PCA cannot handle
+- Реализовать PCA с нуля: центрировать данные, вычислить матрицу ковариации, выполнить разложение по собственным векторам и проекцию
+- Использовать долю объясненной дисперсии и метод локтя для выбора числа главных компонент
+- Сравнить PCA, t-SNE и UMAP для визуализации цифр MNIST в 2D и объяснить компромиссы между ними
+- Применить kernel PCA с RBF kernel, чтобы разделять нелинейные структуры данных, с которыми обычный PCA не справляется
 
-## The Problem
+## Проблема
 
-You have a dataset with 784 features per sample. Maybe it is pixel values of handwritten digits. Maybe it is gene expression levels. Maybe it is user behavior signals. You cannot visualize 784 dimensions. You cannot plot them. You cannot even think about them.
+У вас есть датасет с 784 признаками на пример. Может быть, это значения пикселей рукописных цифр. Может быть, уровни экспрессии генов. Может быть, сигналы поведения пользователей. Вы не можете визуализировать 784 измерения. Не можете построить их на графике. Даже думать о них трудно.
 
-But most of those 784 features are redundant. The actual information lives on a much smaller surface. A handwritten "7" does not need 784 independent numbers to describe it. It needs a few: the angle of the stroke, the length of the crossbar, how much it leans. The rest is noise.
+Но большинство из этих 784 признаков избыточны. Реальная информация живет на намного меньшей поверхности. Рукописная "7" не требует 784 независимых чисел для описания. Достаточно нескольких: угол штриха, длина перекладины, насколько она наклонена. Остальное - шум.
 
-Dimensionality reduction finds that smaller surface. It takes your 784-dimensional data and compresses it to 2, 10, or 50 dimensions while keeping the structure that matters.
+Снижение размерности находит эту меньшую поверхность. Оно берет ваши данные размерности 784 и сжимает их до 2, 10 или 50 измерений, сохраняя важную структуру.
 
-## The Concept
+## Концепция
 
-### The curse of dimensionality
+### Проклятие размерности
 
-High-dimensional spaces are unintuitive. Three things break as dimensions grow.
+Высокоразмерные пространства неинтуитивны. С ростом размерности ломаются три вещи.
 
-**Distance becomes meaningless.** In high dimensions, the distance between any two random points converges to the same value. If every point is roughly the same distance from every other point, nearest-neighbor search stops working.
+**Расстояние теряет смысл.** В высоких размерностях расстояние между любыми двумя случайными точками сходится к одному и тому же значению. Если каждая точка примерно одинаково удалена от каждой другой, поиск ближайших соседей перестает работать.
 
 ```
 Dimension    Avg distance ratio (max/min between random points)
@@ -38,15 +38,15 @@ Dimension    Avg distance ratio (max/min between random points)
 1000         ~1.02
 ```
 
-**Volume concentrates in corners.** A unit hypercube in d dimensions has 2^d corners. In 100 dimensions, nearly all the volume is in the corners, far from the center. Data points spread to the edges and your models starve for data in the interior.
+**Объем концентрируется в углах.** Единичный гиперкуб в d измерениях имеет 2^d углов. В 100 измерениях почти весь объем находится в углах, далеко от центра. Точки данных расползаются к краям, и моделям не хватает данных внутри пространства.
 
-**You need exponentially more data.** To maintain the same density of samples in a space, going from 2D to 20D means you need 10^18 times more data. You never have enough. Reducing dimensions brings the data density back to something workable.
+**Нужно экспоненциально больше данных.** Чтобы поддерживать ту же плотность примеров в пространстве, переход от 2D к 20D требует в 10^18 раз больше данных. Столько никогда нет. Снижение размерности возвращает плотность данных к рабочему уровню.
 
-### PCA: find the directions that matter
+### PCA: найти направления, которые важны
 
-Principal Component Analysis (PCA) finds the axes along which your data varies the most. It rotates your coordinate system so the first axis captures the most variance, the second captures the next most, and so on.
+Principal Component Analysis (PCA) находит оси, вдоль которых ваши данные меняются сильнее всего. Он поворачивает систему координат так, что первая ось захватывает максимальную дисперсию, вторая — следующую по величине, и так далее.
 
-The algorithm:
+Алгоритм:
 
 ```
 1. Center the data        (subtract the mean from each feature)
@@ -56,20 +56,20 @@ The algorithm:
 5. Project               (keep top k eigenvectors, drop the rest)
 ```
 
-Why eigendecomposition? The covariance matrix is symmetric and positive semi-definite. Its eigenvectors are orthogonal directions in feature space. The eigenvalues tell you how much variance each direction captures. The eigenvector with the largest eigenvalue points along the direction of maximum variance.
+Почему разложение по собственным векторам? Матрица ковариации симметрична и положительно полуопределена. Ее собственные векторы — ортогональные направления в пространстве признаков. Собственные значения показывают, сколько дисперсии захватывает каждое направление. Собственный вектор с максимальным собственным значением указывает вдоль направления максимальной дисперсии.
 
 ```mermaid
 graph LR
     A["Original data (2D)\nData spread in both\nx and y directions"] -->|"PCA rotation"| B["After PCA\nPC1 captures the elongated spread\nPC2 captures the narrow spread\nDrop PC2 and you lose little info"]
 ```
 
-- **Before PCA:** Data cloud is spread diagonally across both x and y axes
-- **After PCA:** Coordinate system is rotated so PC1 aligns with the direction of maximum variance (elongated spread) and PC2 aligns with the direction of minimum variance (narrow spread)
-- **Dimensionality reduction:** Dropping PC2 projects the data onto PC1, losing very little information
+- **До PCA:** облако данных растянуто по диагонали относительно осей x и y
+- **После PCA:** система координат повернута так, что PC1 совпадает с направлением максимальной дисперсии (вытянутый разброс), а PC2 — с направлением минимальной дисперсии (узкий разброс)
+- **Снижение размерности:** удаление PC2 проецирует данные на PC1 с очень малой потерей информации
 
-### Explained variance ratio
+### Доля объясненной дисперсии
 
-Each principal component captures a fraction of the total variance. The explained variance ratio tells you how much.
+Каждая главная компонента захватывает долю общей дисперсии. Доля объясненной дисперсии показывает, какую именно.
 
 ```
 Component    Eigenvalue    Explained ratio    Cumulative
@@ -80,96 +80,96 @@ PC4          0.89          0.089              0.925
 ...
 ```
 
-When the cumulative explained variance reaches 0.95, you know that many components capture 95% of the information. Everything after that is mostly noise.
+Когда накопленная объясненная дисперсия достигает 0.95, вы знаете, что это число компонент захватывает 95% информации. Все после этого в основном шум.
 
-### Choosing the number of components
+### Выбор числа компонент
 
-Three strategies:
+Три стратегии:
 
-1. **Threshold.** Keep enough components to explain 90-95% of the variance.
-2. **Elbow method.** Plot explained variance per component. Look for a sharp drop-off.
-3. **Downstream performance.** Use PCA as preprocessing. Sweep k and measure your model's accuracy. The best k is wherever accuracy plateaus.
+1. **Порог.** Оставить достаточно компонент, чтобы объяснить 90-95% дисперсии.
+2. **Метод локтя.** Построить объясненную дисперсию по компонентам. Искать резкое падение.
+3. **Качество downstream-задачи.** Использовать PCA как предобработку. Перебрать k и измерить accuracy модели. Лучшее k там, где accuracy выходит на плато.
 
-### t-SNE: preserve neighborhoods
+### t-SNE: сохранять соседства
 
-t-Distributed Stochastic Neighbor Embedding (t-SNE) is designed for visualization. It maps high-dimensional data to 2D (or 3D) while preserving which points are near each other.
+t-Distributed Stochastic Neighbor Embedding (t-SNE) предназначен для визуализации. Он отображает высокоразмерные данные в 2D или 3D, сохраняя то, какие точки находятся рядом друг с другом.
 
-The intuition: in the original space, compute a probability distribution over pairs of points based on their distances. Near points get high probability. Far points get low probability. Then find a 2D arrangement where the same probability distribution holds. Points that were neighbors in 784 dimensions stay neighbors in 2D.
+Интуиция: в исходном пространстве вычислите распределение вероятностей по парам точек на основе расстояний. Близкие точки получают высокую вероятность. Далекие точки — низкую. Затем найдите 2D-расположение, где сохраняется то же распределение вероятностей. Точки, которые были соседями в 784 измерениях, остаются соседями в 2D.
 
-Key properties of t-SNE:
-- Non-linear. It can unfold complex manifolds that PCA cannot.
-- Stochastic. Different runs produce different layouts.
-- Perplexity parameter controls how many neighbors to consider (typical range: 5-50).
-- Distances between clusters in the output are not meaningful. Only the clusters themselves are.
-- Slow on large datasets. O(n^2) by default.
+Ключевые свойства t-SNE:
+- Нелинейный. Может разворачивать сложные многообразия, с которыми PCA не справляется.
+- Стохастический. Разные запуски дают разные расположения.
+- Параметр perplexity управляет тем, сколько соседей учитывать (типичный диапазон: 5-50).
+- Расстояния между кластерами на выходе не имеют смысла. Имеют смысл только сами кластеры.
+- Медленный на больших датасетах. По умолчанию O(n^2).
 
-### UMAP: faster, better global structure
+### UMAP: быстрее и лучше сохраняет глобальную структуру
 
-Uniform Manifold Approximation and Projection (UMAP) works similarly to t-SNE but with two advantages:
-- Faster. It uses approximate nearest-neighbor graphs instead of computing all pairwise distances.
-- Better global structure. The relative positions of clusters in the output tend to be more meaningful than in t-SNE.
+Uniform Manifold Approximation and Projection (UMAP) работает похоже на t-SNE, но с двумя преимуществами:
+- Быстрее. Он использует приближенные графы ближайших соседей вместо вычисления всех попарных расстояний.
+- Лучше сохраняет глобальную структуру. Относительные положения кластеров на выходе обычно более осмысленны, чем в t-SNE.
 
-UMAP builds a weighted graph in high-dimensional space (the "fuzzy topological representation") and then finds a low-dimensional layout that preserves this graph as well as possible.
+UMAP строит взвешенный граф в высокоразмерном пространстве ("нечеткое топологическое представление"), а затем находит низкоразмерное расположение, которое сохраняет этот граф настолько хорошо, насколько возможно.
 
-Key parameters:
-- `n_neighbors`: how many neighbors define local structure (similar to perplexity). Higher values preserve more global structure.
-- `min_dist`: how tightly points pack together in the output. Lower values create denser clusters.
+Ключевые параметры:
+- `n_neighbors`: сколько соседей определяют локальную структуру, похоже на perplexity. Более высокие значения сохраняют больше глобальной структуры.
+- `min_dist`: насколько плотно точки упаковываются на выходе. Более низкие значения создают более плотные кластеры.
 
-### When to use which
+### Что когда использовать
 
-| Method | Use case | Preserves | Speed |
+| Метод | Когда использовать | Что сохраняет | Скорость |
 |--------|----------|-----------|-------|
-| PCA | Preprocessing before training | Global variance | Fast (exact), works on millions of samples |
-| PCA | Quick exploratory visualization | Linear structure | Fast |
-| t-SNE | Publication-quality 2D plots | Local neighborhoods | Slow (< 10k samples ideal) |
-| UMAP | 2D visualization at scale | Local + some global structure | Medium (handles millions) |
-| PCA | Feature reduction for models | Variance-ranked features | Fast |
-| t-SNE / UMAP | Understanding cluster structure | Cluster separation | Medium to slow |
+| PCA | Предобработка перед обучением | Глобальную дисперсию | Быстрый (точный), работает на миллионах примеров |
+| PCA | Быстрая исследовательская визуализация | Линейную структуру | Быстрый |
+| t-SNE | 2D-графики для публикаций | Локальные соседства | Медленный (идеально < 10k примеров) |
+| UMAP | 2D-визуализация в масштабе | Локальную и часть глобальной структуры | Средний (обрабатывает миллионы) |
+| PCA | Сокращение признаков для моделей | Признаки, ранжированные по дисперсии | Быстрый |
+| t-SNE / UMAP | Понимание структуры кластеров | Разделение кластеров | От среднего до медленного |
 
-Rule of thumb: use PCA for preprocessing and data compression. Use t-SNE or UMAP when you need to visualize structure in 2D.
+Практическое правило: используйте PCA для предобработки и сжатия данных. Используйте t-SNE или UMAP, когда нужно визуализировать структуру в 2D.
 
 ### Kernel PCA
 
-Standard PCA finds linear subspaces. It rotates your coordinate system and drops axes. But what if the data lies on a nonlinear manifold? A circle in 2D cannot be separated by any line. Standard PCA will not help.
+Обычный PCA находит линейные подпространства. Он поворачивает систему координат и удаляет оси. Но что если данные лежат на нелинейном многообразии? Окружность в 2D невозможно разделить никакой прямой. Обычный PCA не поможет.
 
-Kernel PCA applies PCA in a high-dimensional feature space induced by a kernel function, without explicitly computing the coordinates in that space. This is the kernel trick -- the same idea behind SVMs.
+Kernel PCA применяет PCA в высокоразмерном пространстве признаков, заданном ядерной функцией, не вычисляя явно координаты в этом пространстве. Это kernel trick — та же идея, что и в SVM.
 
-The algorithm:
-1. Compute the kernel matrix K where K_ij = k(x_i, x_j)
-2. Center the kernel matrix in feature space
-3. Eigendecompose the centered kernel matrix
-4. The top eigenvectors (scaled by 1/sqrt(eigenvalue)) are the projections
+Алгоритм:
+1. Вычислить ядерную матрицу K, где K_ij = k(x_i, x_j)
+2. Центрировать ядерную матрицу в пространстве признаков
+3. Выполнить разложение по собственным векторам центрированной ядерной матрицы
+4. Верхние собственные векторы, масштабированные на 1/sqrt(eigenvalue), являются проекциями
 
-Common kernel functions:
+Распространенные ядерные функции:
 
-| Kernel | Formula | Good for |
+| Kernel | Формула | Подходит для |
 |--------|---------|----------|
-| RBF (Gaussian) | exp(-gamma * \|\|x - y\|\|^2) | Most nonlinear data, smooth manifolds |
-| Polynomial | (x . y + c)^d | Polynomial relationships |
-| Sigmoid | tanh(alpha * x . y + c) | Neural network-like mappings |
+| RBF (Gaussian) | exp(-gamma * \|\|x - y\|\|^2) | Большинство нелинейных данных, гладкие многообразия |
+| Polynomial | (x . y + c)^d | Полиномиальные зависимости |
+| Sigmoid | tanh(alpha * x . y + c) | Отображения, похожие на нейросетевые |
 
-When to use kernel PCA vs standard PCA:
+Когда использовать kernel PCA вместо обычного PCA:
 
-| Criterion | Standard PCA | Kernel PCA |
+| Критерий | Обычный PCA | Kernel PCA |
 |-----------|-------------|------------|
-| Data structure | Linear subspace | Nonlinear manifold |
-| Speed | O(min(n^2 d, d^2 n)) | O(n^2 d + n^3) |
-| Interpretability | Components are linear combinations of features | Components lack direct feature interpretation |
-| Scalability | Works on millions of samples | Kernel matrix is n x n, memory-limited |
-| Reconstruction | Direct inverse transform | Requires pre-image approximation |
+| Структура данных | Линейное подпространство | Нелинейное многообразие |
+| Скорость | O(min(n^2 d, d^2 n)) | O(n^2 d + n^3) |
+| Интерпретируемость | Компоненты являются линейными комбинациями признаков | У компонент нет прямой интерпретации через признаки |
+| Масштабируемость | Работает на миллионах примеров | Ядерная матрица имеет размер n x n и ограничена памятью |
+| Реконструкция | Прямое обратное преобразование | Требует аппроксимации прообраза |
 
-The classic example: concentric circles in 2D. Two rings of points, one inside the other. Standard PCA projects both onto the same line -- useless for classification. Kernel PCA with an RBF kernel maps the inner circle and outer circle to different regions, making them linearly separable.
+Классический пример: концентрические окружности в 2D. Два кольца точек, одно внутри другого. Обычный PCA проецирует оба на одну и ту же линию, что бесполезно для классификации. Kernel PCA с RBF kernel отображает внутреннюю и внешнюю окружности в разные области, делая их линейно разделимыми.
 
-### Reconstruction Error
+### Ошибка реконструкции
 
-How good is your dimensionality reduction? You compressed 784 dimensions to 50. What did you lose?
+Насколько хорошо сработало снижение размерности? Вы сжали 784 измерения до 50. Что потеряли?
 
-Measure reconstruction error:
-1. Project data to k dimensions: X_reduced = X @ W_k
-2. Reconstruct: X_hat = X_reduced @ W_k^T
-3. Compute MSE: mean((X - X_hat)^2)
+Измерьте ошибку реконструкции:
+1. Спроецируйте данные в k измерений: X_reduced = X @ W_k
+2. Восстановите: X_hat = X_reduced @ W_k^T
+3. Вычислите MSE: mean((X - X_hat)^2)
 
-For PCA, reconstruction error has a clean relationship to explained variance:
+Для PCA у ошибки реконструкции есть простая связь с объясненной дисперсией:
 
 ```
 Reconstruction error = sum of eigenvalues NOT included
@@ -177,22 +177,22 @@ Total variance = sum of ALL eigenvalues
 Fraction lost = (sum of dropped eigenvalues) / (sum of all eigenvalues)
 ```
 
-The explained variance ratio for each component is:
+Доля объясненной дисперсии для каждой компоненты:
 
 ```
 explained_ratio_k = eigenvalue_k / sum(all eigenvalues)
 ```
 
-Plotting cumulative explained variance against number of components gives you the "elbow" curve. The right number of components is where:
-- The curve flattens out (diminishing returns)
-- Cumulative variance crosses your threshold (usually 0.90 or 0.95)
-- Downstream task performance plateaus
+График накопленной объясненной дисперсии по числу компонент дает "кривую локтя". Правильное число компонент находится там, где:
+- Кривая выравнивается (убывающая отдача)
+- Накопленная дисперсия пересекает ваш порог, обычно 0.90 или 0.95
+- Качество downstream-задачи выходит на плато
 
-Reconstruction error is useful beyond choosing k. You can use it for anomaly detection: samples with high reconstruction error are outliers that do not fit the learned subspace. This is the basis of PCA-based anomaly detection in production systems.
+Ошибка реконструкции полезна не только для выбора k. Ее можно использовать для anomaly detection: примеры с высокой ошибкой реконструкции — outliers, которые не подходят к выученному подпространству. Это основа PCA-based anomaly detection в production-системах.
 
-## Build It
+## Соберите это
 
-### Step 1: PCA from scratch
+### Шаг 1: PCA с нуля
 
 ```python
 import numpy as np
@@ -233,7 +233,7 @@ class PCA:
         return self.transform(X)
 ```
 
-### Step 2: Test on synthetic data
+### Шаг 2: тест на синтетических данных
 
 ```python
 np.random.seed(42)
@@ -255,7 +255,7 @@ print(f"Explained variance ratios: {pca.explained_variance_ratio_}")
 print(f"Total variance captured: {sum(pca.explained_variance_ratio_):.4f}")
 ```
 
-### Step 3: MNIST digits in 2D
+### Шаг 3: цифры MNIST в 2D
 
 ```python
 from sklearn.datasets import fetch_openml
@@ -273,7 +273,7 @@ X_pca2d = pca_2d.fit_transform(X_mnist)
 print(f"2 components capture {sum(pca_2d.explained_variance_ratio_):.2%} of variance")
 ```
 
-### Step 4: Compare with sklearn
+### Шаг 4: сравните со sklearn
 
 ```python
 from sklearn.decomposition import PCA as SklearnPCA
@@ -293,7 +293,7 @@ X_tsne = tsne.fit_transform(X_mnist)
 print(f"\nt-SNE output shape: {X_tsne.shape}")
 ```
 
-### Step 5: UMAP comparison
+### Шаг 5: сравнение UMAP
 
 ```python
 try:
@@ -306,9 +306,9 @@ except ImportError:
     print("Install umap-learn: pip install umap-learn")
 ```
 
-## Use It
+## Используйте это
 
-PCA as preprocessing before a classifier:
+PCA как предобработка перед классификатором:
 
 ```python
 from sklearn.decomposition import PCA as SklearnPCA
@@ -334,37 +334,37 @@ for k in [10, 30, 50, 100, 200]:
     print(f"k={k:>3d}  accuracy={acc:.4f}  variance={var_captured:.4f}")
 ```
 
-Performance plateaus well before 784 dimensions. That plateau is your operating point.
+Качество выходит на плато задолго до 784 измерений. Это плато — ваша рабочая точка.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces:
-- `outputs/skill-dimensionality-reduction.md` - a skill for choosing the right dimensionality reduction technique for a given task
+Этот урок создает:
+- `outputs/skill-dimensionality-reduction.md` — skill для выбора правильной техники снижения размерности под конкретную задачу
 
-## Exercises
+## Упражнения
 
-1. Modify the PCA class to support `inverse_transform`. Reconstruct MNIST digits from 10, 50, and 200 components. Print the reconstruction error (mean squared difference from the original) for each.
+1. Измените класс PCA, чтобы он поддерживал `inverse_transform`. Реконструируйте цифры MNIST из 10, 50 и 200 компонент. Выведите ошибку реконструкции (средний квадрат разности с исходными данными) для каждого.
 
-2. Run t-SNE on the same MNIST subset with perplexity values of 5, 30, and 100. Describe how the output changes. Why does perplexity affect cluster tightness?
+2. Запустите t-SNE на той же подвыборке MNIST со значениями perplexity 5, 30 и 100. Опишите, как меняется результат. Почему perplexity влияет на плотность кластеров?
 
-3. Take a dataset with 50 features where only 5 are informative (generate one with `sklearn.datasets.make_classification`). Apply PCA and check whether the explained variance curve correctly identifies that the data is effectively 5-dimensional.
+3. Возьмите датасет с 50 признаками, где только 5 информативны (сгенерируйте его через `sklearn.datasets.make_classification`). Примените PCA и проверьте, правильно ли кривая объясненной дисперсии показывает, что данные фактически пятимерные.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Curse of dimensionality | "Too many features" | Distances, volumes, and data density all behave counterintuitively as dimensions grow. Models need exponentially more data to compensate. |
-| PCA | "Reduce dimensions" | Rotate your coordinate system so the axes align with the directions of maximum variance, then drop the low-variance axes. |
-| Principal component | "An important direction" | An eigenvector of the covariance matrix. The direction in feature space along which the data varies most. |
-| Explained variance ratio | "How much info this component has" | The fraction of total variance captured by one principal component. Sum the top k ratios to see how much k components preserve. |
-| Covariance matrix | "How features correlate" | A symmetric matrix where entry (i,j) measures how feature i and feature j move together. Diagonal entries are individual variances. |
-| t-SNE | "That cluster plot" | A nonlinear method that maps high-dimensional data to 2D by preserving pairwise neighborhood probabilities. Good for visualization, not for preprocessing. |
-| UMAP | "Faster t-SNE" | A nonlinear method based on topological data analysis. Preserves both local and some global structure. Scales better than t-SNE. |
-| Perplexity | "A t-SNE knob" | Controls the effective number of neighbors each point considers. Low perplexity focuses on very local structure. High perplexity captures broader patterns. |
-| Manifold | "The surface the data lives on" | A lower-dimensional surface embedded in a higher-dimensional space. A sheet of paper crumpled in 3D is a 2D manifold. |
+| Curse of dimensionality | "Слишком много признаков" | Расстояния, объемы и плотность данных ведут себя контринтуитивно при росте размерности. Моделям нужно экспоненциально больше данных для компенсации. |
+| PCA | "Снизить размерность" | Повернуть систему координат так, чтобы оси совпали с направлениями максимальной дисперсии, затем удалить оси с низкой дисперсией. |
+| Principal component | "Важное направление" | Собственный вектор матрицы ковариации. Направление в пространстве признаков, вдоль которого данные меняются сильнее всего. |
+| Explained variance ratio | "Сколько информации в этой компоненте" | Доля общей дисперсии, захваченная одной главной компонентой. Суммируйте верхние k долей, чтобы увидеть, сколько сохраняют k компонент. |
+| Covariance matrix | "Как признаки коррелируют" | Симметричная матрица, где элемент (i,j) измеряет, как признак i и признак j движутся вместе. Диагональные элементы — отдельные дисперсии. |
+| t-SNE | "Тот график кластеров" | Нелинейный метод, который отображает высокоразмерные данные в 2D, сохраняя вероятности попарного соседства. Хорош для визуализации, не для предобработки. |
+| UMAP | "Более быстрый t-SNE" | Нелинейный метод на основе топологического анализа данных. Сохраняет локальную и часть глобальной структуры. Масштабируется лучше t-SNE. |
+| Perplexity | "Ручка t-SNE" | Управляет эффективным числом соседей, которые учитывает каждая точка. Низкая perplexity фокусируется на очень локальной структуре. Высокая perplexity захватывает более широкие паттерны. |
+| Manifold | "Поверхность, на которой живут данные" | Низкоразмерная поверхность, вложенная в высокоразмерное пространство. Лист бумаги, скомканный в 3D, — это 2D manifold. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [A Tutorial on Principal Component Analysis](https://arxiv.org/abs/1404.1100) (Shlens) - clear derivation of PCA from the ground up
-- [How to Use t-SNE Effectively](https://distill.pub/2016/misread-tsne/) (Wattenberg et al.) - interactive guide to t-SNE pitfalls and parameter choices
-- [UMAP documentation](https://umap-learn.readthedocs.io/) - theory and practical guidance from the UMAP authors
+- [A Tutorial on Principal Component Analysis](https://arxiv.org/abs/1404.1100) (Shlens) — понятный вывод PCA с нуля
+- [How to Use t-SNE Effectively](https://distill.pub/2016/misread-tsne/) (Wattenberg et al.) — интерактивное руководство по типичным ошибкам t-SNE и выбору параметров
+- [UMAP documentation](https://umap-learn.readthedocs.io/) — теория и практические рекомендации от авторов UMAP

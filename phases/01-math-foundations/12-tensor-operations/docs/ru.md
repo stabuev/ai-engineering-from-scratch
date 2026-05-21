@@ -1,32 +1,32 @@
-# Tensor Operations
+# Тензорные операции
 
-> Tensors are the common language between data and deep learning. Every image, every sentence, every gradient flows through them.
+> Тензоры — общий язык данных и deep learning. Каждое изображение, каждое предложение, каждый градиент проходит через них.
 
-**Type:** Build
-**Language:** Python
-**Prerequisites:** Phase 1, Lessons 01 (Linear Algebra Intuition), 02 (Vectors, Matrices & Operations)
-**Time:** ~90 minutes
+**Тип:** Практика
+**Язык:** Python
+**Предварительные требования:** Фаза 1, уроки 01 (интуиция линейной алгебры), 02 (векторы, матрицы и операции)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement a tensor class with shape, strides, reshape, transpose, and element-wise operations from scratch
-- Apply broadcasting rules to operate on tensors of different shapes without copying data
-- Write einsum expressions for dot products, matrix multiplications, outer products, and batched operations
-- Trace the exact tensor shapes through every step of multi-head attention
+- Реализовать класс tensor с shape, strides, reshape, transpose и поэлементными операциями с нуля
+- Применять правила broadcasting для операций над тензорами разных форм без копирования данных
+- Писать einsum-выражения для скалярного произведения, матричного умножения, внешнего произведения и batch-операций
+- Проследить точные формы тензоров на каждом шаге multi-head attention
 
-## The Problem
+## Проблема
 
-You build a transformer. The forward pass looks clean. You run it and get: `RuntimeError: mat1 and mat2 shapes cannot be multiplied (32x768 and 512x768)`. You stare at the shapes. You try a transpose. Now it says `Expected 4D input (got 3D input)`. You add an unsqueeze. Something else breaks.
+Вы строите transformer. Прямой проход выглядит чисто. Вы запускаете его и получаете: `RuntimeError: mat1 and mat2 shapes cannot be multiplied (32x768 and 512x768)`. Вы смотрите на shapes. Пробуете transpose. Теперь ошибка говорит: `Expected 4D input (got 3D input)`. Вы добавляете unsqueeze. Ломается что-то еще.
 
-Shape errors are the most common bug in deep learning code. They are not hard conceptually -- each operation has a shape contract -- but they multiply fast. A transformer has dozens of reshapes, transposes, and broadcasts chained together. One wrong axis and the error cascades. Worse, some shape mistakes do not throw errors at all. They silently produce garbage by broadcasting along the wrong dimension or summing over the wrong axis.
+Ошибки форм — самая частая ошибка в коде deep learning. Концептуально они не сложны: у каждой операции есть контракт формы. Но они быстро размножаются. В transformer десятки reshape, transpose и broadcast связаны в цепочку. Одна неправильная ось — и ошибка распространяется дальше. Хуже того, некоторые ошибки форм вообще не выбрасывают исключений. Они тихо производят мусор, выполняя broadcasting по неправильному измерению или суммируя по неправильной оси.
 
-Matrices handle pairwise relationships between two sets of things. Real data does not fit into two dimensions. A batch of 32 RGB images at 224x224 is a 4D tensor: `(32, 3, 224, 224)`. Self-attention with 12 heads is also 4D: `(batch, heads, seq_len, head_dim)`. You need a data structure that generalizes to any number of dimensions, with operations that compose cleanly across all of them. That structure is the tensor. Master its operations and shape errors become trivially debuggable.
+Матрицы описывают попарные отношения между двумя наборами сущностей. Реальные данные не помещаются в два измерения. Батч из 32 RGB-изображений 224x224 — это 4D tensor: `(32, 3, 224, 224)`. Self-attention с 12 heads — тоже 4D: `(batch, heads, seq_len, head_dim)`. Вам нужна структура данных, которая обобщается на любое число измерений, с операциями, которые аккуратно композиционируются во всех этих измерениях. Эта структура — tensor. Освойте его операции, и ошибки shapes станут тривиально отлаживаемыми.
 
-## The Concept
+## Концепция
 
-### What a tensor is
+### Что такое tensor
 
-A tensor is a multi-dimensional array of numbers with a uniform data type. The number of dimensions is the **rank** (or **order**). Each dimension is an **axis**. The **shape** is a tuple listing the size along each axis.
+Tensor — это многомерный массив чисел с единым типом данных. Число измерений называется **rank** (или **order**). Каждое измерение — это **axis**. **Shape** — это кортеж, перечисляющий размер вдоль каждой axis.
 
 ```mermaid
 graph LR
@@ -36,11 +36,11 @@ graph LR
     T3 --> T4["4D Tensor<br/>rank 4<br/>shape: (B,C,H,W)"]
 ```
 
-Total elements = product of all sizes. A shape `(2, 3, 4)` holds `2 * 3 * 4 = 24` elements.
+Общее число элементов = произведение всех размеров. Shape `(2, 3, 4)` содержит `2 * 3 * 4 = 24` элемента.
 
-### Tensor shapes in deep learning
+### Формы тензоров в deep learning
 
-Different data types map to specific tensor shapes by convention.
+Разные типы данных по соглашению сопоставляются с конкретными tensor shapes.
 
 ```mermaid
 graph TD
@@ -58,11 +58,11 @@ graph TD
     end
 ```
 
-PyTorch uses NCHW (channels-first). TensorFlow defaults to NHWC (channels-last). Mismatched layouts cause silent slowdowns or errors.
+PyTorch использует NCHW (channels-first). TensorFlow по умолчанию использует NHWC (channels-last). Несовпадающие layouts вызывают незаметные замедления или ошибки.
 
-### How memory layout works
+### Как работает layout в памяти
 
-A 2D array in memory is a 1D sequence of bytes. **Strides** tell you how many elements to skip to move one step along each axis.
+2D-массив в памяти — это 1D-последовательность байтов. **Strides** говорят, сколько элементов нужно пропустить, чтобы перейти на один шаг вдоль каждой axis.
 
 ```mermaid
 graph LR
@@ -74,11 +74,11 @@ graph LR
     end
 ```
 
-Transpose does not move data. It swaps the strides, making the tensor **non-contiguous** -- the elements for a row are no longer adjacent in memory.
+Transpose не перемещает данные. Он меняет strides местами, делая tensor **non-contiguous**: элементы строки больше не лежат рядом в памяти.
 
-### Broadcasting rules
+### Правила broadcasting
 
-Broadcasting lets you operate on tensors of different shapes without copying data. Align shapes from the right. Two dimensions are compatible when they are equal or one is 1. Fewer dimensions get padded with 1s on the left.
+Broadcasting позволяет выполнять операции над тензорами разных shapes без копирования данных. Выравнивайте shapes справа. Два измерения совместимы, если они равны или одно из них равно 1. Недостающие измерения дополняются единицами слева.
 
 ```
 Tensor A:     (8, 1, 6, 1)
@@ -87,9 +87,9 @@ Padded B:     (1, 7, 1, 5)
 Result:       (8, 7, 6, 5)
 ```
 
-### Einsum: the universal tensor operation
+### Einsum: универсальная тензорная операция
 
-Einstein summation labels each axis with a letter. Axes in the input but not the output get summed. Axes in both are kept.
+Соглашение суммирования Эйнштейна помечает каждую axis буквой. Axis, которые есть во входе, но отсутствуют в выходе, суммируются. Axis, которые есть и там и там, сохраняются.
 
 ```mermaid
 graph LR
@@ -99,15 +99,15 @@ graph LR
     end
 ```
 
-Key patterns: `i,i->` (dot product), `i,j->ij` (outer product), `ii->` (trace), `ij->ji` (transpose), `bij,bjk->bik` (batch matmul), `bhtd,bhsd->bhts` (attention scores).
+Ключевые паттерны: `i,i->` (скалярное произведение), `i,j->ij` (внешнее произведение), `ii->` (след), `ij->ji` (transpose), `bij,bjk->bik` (batch matmul), `bhtd,bhsd->bhts` (attention scores).
 
-## Build It
+## Реализуйте
 
-The code lives in `code/tensors.py`. Each step references the implementation there.
+Код находится в `code/tensors.py`. Каждый шаг ссылается на реализацию там.
 
-### Step 1: Tensor storage and strides
+### Шаг 1: хранение tensor и strides
 
-A tensor stores a flat list of numbers plus shape metadata. Strides tell the indexing logic how to map multi-dimensional indices to flat positions.
+Tensor хранит плоский список чисел плюс метаданные shape. Strides говорят логике индексирования, как отображать многомерные индексы в плоские позиции.
 
 ```python
 class Tensor:
@@ -141,11 +141,11 @@ class Tensor:
         return tuple(strides)
 ```
 
-For shape `(3, 4)`, strides are `(4, 1)` -- skip 4 elements to advance one row, skip 1 element to advance one column.
+Для shape `(3, 4)` strides равны `(4, 1)`: пропустить 4 элемента, чтобы перейти на одну строку, и 1 элемент, чтобы перейти на один столбец.
 
-### Step 2: Reshape, squeeze, unsqueeze
+### Шаг 2: reshape, squeeze, unsqueeze
 
-Reshape changes the shape without changing element order. The total number of elements must stay the same. Use `-1` for one dimension to infer its size.
+Reshape меняет shape, не меняя порядок элементов. Общее число элементов должно оставаться тем же. Используйте `-1` для одного измерения, чтобы вывести его размер автоматически.
 
 ```python
 t = Tensor(list(range(12)), shape=(2, 6))
@@ -153,7 +153,7 @@ r = t.reshape((3, 4))
 r = t.reshape((-1, 3))
 ```
 
-Squeeze removes axes of size 1. Unsqueeze inserts one. Unsqueezing is critical for broadcasting -- a bias vector `(D,)` added to a batch `(B, T, D)` needs unsqueezing to `(1, 1, D)`.
+Squeeze удаляет axes размера 1. Unsqueeze вставляет одну axis. Unsqueeze критически важен для broadcasting: bias vector `(D,)`, добавляемый к batch `(B, T, D)`, нужно расширить до `(1, 1, D)`.
 
 ```python
 t = Tensor(list(range(6)), shape=(1, 3, 1, 2))
@@ -162,9 +162,9 @@ v = Tensor([1, 2, 3])
 u = v.unsqueeze(0)
 ```
 
-### Step 3: Transpose and permute
+### Шаг 3: transpose и permute
 
-Transpose swaps two axes. Permute reorders all axes. This is how you convert between NCHW and NHWC.
+Transpose меняет местами две axes. Permute переупорядочивает все axes. Так вы конвертируете NCHW в NHWC и обратно.
 
 ```python
 mat = Tensor(list(range(6)), shape=(2, 3))
@@ -174,11 +174,11 @@ t4d = Tensor(list(range(24)), shape=(1, 2, 3, 4))
 perm = t4d.permute((0, 2, 3, 1))
 ```
 
-After transpose or permute, the tensor is non-contiguous in memory. In PyTorch, `view` fails on non-contiguous tensors -- use `reshape` or call `.contiguous()` first.
+После transpose или permute tensor становится non-contiguous в памяти. В PyTorch `view` падает на non-contiguous tensors: используйте `reshape` или сначала вызовите `.contiguous()`.
 
-### Step 4: Element-wise operations and reductions
+### Шаг 4: поэлементные операции и reductions
 
-Element-wise ops (add, multiply, subtract) apply independently to each element and preserve shape. Reductions (sum, mean, max) collapse one or more axes.
+Поэлементные операции (сложение, умножение, вычитание) применяются независимо к каждому элементу и сохраняют shape. Reductions (sum, mean, max) схлопывают одну или несколько axes.
 
 ```python
 a = Tensor([[1, 2], [3, 4]])
@@ -188,11 +188,11 @@ d = a * 2
 s = a.sum(axis=0)
 ```
 
-Global average pooling in a CNN: `(B, C, H, W).mean(axis=[2, 3])` produces `(B, C)`. Sequence mean pooling in NLP: `(B, T, D).mean(axis=1)` produces `(B, D)`.
+Глобальный average pooling в CNN: `(B, C, H, W).mean(axis=[2, 3])` дает `(B, C)`. Усреднение последовательности в NLP: `(B, T, D).mean(axis=1)` дает `(B, D)`.
 
-### Step 5: Broadcasting with NumPy
+### Шаг 5: broadcasting с NumPy
 
-The `demo_broadcasting_numpy()` function in `tensors.py` shows the core patterns.
+Функция `demo_broadcasting_numpy()` в `tensors.py` показывает основные паттерны.
 
 ```python
 activations = np.random.randn(4, 3)
@@ -208,11 +208,11 @@ b = np.array([10, 20, 30, 40]).reshape(1, -1)
 outer = a * b
 ```
 
-Pairwise distance via broadcasting: reshape `(M, 2)` to `(M, 1, 2)` and `(N, 2)` to `(1, N, 2)`, subtract, square, sum along last axis, take square root. Result: `(M, N)`.
+Попарное расстояние через broadcasting: преобразуйте `(M, 2)` в `(M, 1, 2)` и `(N, 2)` в `(1, N, 2)`, вычтите, возведите в квадрат, просуммируйте по последней axis, возьмите квадратный корень. Результат: `(M, N)`.
 
-### Step 6: Einsum operations
+### Шаг 6: операции einsum
 
-The `demo_einsum()` and `demo_einsum_gallery()` functions walk through every common pattern.
+Функции `demo_einsum()` и `demo_einsum_gallery()` проходят по всем распространенным паттернам.
 
 ```python
 a = np.array([1.0, 2.0, 3.0])
@@ -228,11 +228,11 @@ batch_B = np.random.randn(4, 5, 2)
 batch_mm = np.einsum("bij,bjk->bik", batch_A, batch_B)
 ```
 
-The computational cost of a contraction is the product of all index sizes (kept and summed). For `bij,bjk->bik` with B=32, I=128, J=64, K=128: `32 * 128 * 64 * 128 = 33,554,432` multiply-adds.
+Вычислительная стоимость contraction — произведение размеров всех индексов (сохраняемых и суммируемых). Для `bij,bjk->bik` с B=32, I=128, J=64, K=128: `32 * 128 * 64 * 128 = 33,554,432` операций умножения-сложения.
 
-### Step 7: Attention mechanism via einsum
+### Шаг 7: attention mechanism через einsum
 
-The `demo_attention_einsum()` function implements multi-head attention end to end.
+Функция `demo_attention_einsum()` реализует multi-head attention от начала до конца.
 
 ```python
 B, H, T, D = 2, 4, 8, 16
@@ -252,22 +252,22 @@ concat = attn_output.transpose(0, 2, 1, 3).reshape(B, T, E)
 output = np.einsum("bte,ek->btk", concat, W_o)
 ```
 
-Every step is a tensor operation: projection (matmul via einsum), head splitting (reshape + transpose), attention scores (batch matmul via einsum), weighted sum (batch matmul via einsum), head merging (transpose + reshape), output projection (matmul via einsum).
+Каждый шаг — tensor operation: проекция (matmul через einsum), разбиение на heads (reshape + transpose), attention scores (batch matmul через einsum), взвешенная сумма (batch matmul через einsum), объединение heads (transpose + reshape), выходная проекция (matmul через einsum).
 
-## Use It
+## Используйте
 
-### Scratch vs NumPy
+### Реализация с нуля и NumPy
 
-| Operation | Scratch (Tensor class) | NumPy |
+| Операция | Реализация с нуля (класс Tensor) | NumPy |
 |---|---|---|
-| Create | `Tensor([[1,2],[3,4]])` | `np.array([[1,2],[3,4]])` |
+| Создание | `Tensor([[1,2],[3,4]])` | `np.array([[1,2],[3,4]])` |
 | Reshape | `t.reshape((3,4))` | `a.reshape(3,4)` |
-| Transpose | `t.transpose(0,1)` | `a.T` or `a.transpose(0,1)` |
+| Transpose | `t.transpose(0,1)` | `a.T` или `a.transpose(0,1)` |
 | Squeeze | `t.squeeze(0)` | `np.squeeze(a, 0)` |
-| Sum | `t.sum(axis=0)` | `a.sum(axis=0)` |
-| Einsum | N/A | `np.einsum("ij,jk->ik", a, b)` |
+| Сумма | `t.sum(axis=0)` | `a.sum(axis=0)` |
+| Einsum | Нет | `np.einsum("ij,jk->ik", a, b)` |
 
-### Scratch vs PyTorch
+### Реализация с нуля и PyTorch
 
 ```python
 import torch
@@ -285,56 +285,56 @@ t.transpose(0, 1).contiguous()
 torch.einsum("ik,kj->ij", A, B)
 ```
 
-PyTorch adds autograd, GPU support, and optimized BLAS kernels. The shape semantics are identical. If you understand the scratch version, PyTorch shape errors become readable.
+PyTorch добавляет autograd, поддержку GPU и оптимизированные BLAS kernels. Семантика shapes идентична. Если вы понимаете реализацию с нуля, ошибки shapes в PyTorch становятся читаемыми.
 
-### Every neural network layer as a tensor operation
+### Каждый слой нейронной сети как tensor operation
 
-| Operation | Tensor Form | Einsum |
+| Операция | Форма tensor | Einsum |
 |---|---|---|
-| Linear layer | `Y = X @ W.T + b` | `"bd,od->bo"` + bias |
-| Attention QKV | `Q = X @ W_q` | `"btd,dh->bth"` |
-| Attention scores | `Q @ K.T / sqrt(d)` | `"bhtd,bhsd->bhts"` |
-| Attention output | `softmax(scores) @ V` | `"bhts,bhsd->bhtd"` |
-| Batch norm | `(X - mu) / sigma * gamma` | element-wise + broadcast |
-| Softmax | `exp(x) / sum(exp(x))` | element-wise + reduction |
+| Линейный слой | `Y = X @ W.T + b` | `"bd,od->bo"` + bias |
+| QKV для attention | `Q = X @ W_q` | `"btd,dh->bth"` |
+| Attention scores (оценки внимания) | `Q @ K.T / sqrt(d)` | `"bhtd,bhsd->bhts"` |
+| Выход attention (внимания) | `softmax(scores) @ V` | `"bhts,bhsd->bhtd"` |
+| Batch norm | `(X - mu) / sigma * gamma` | поэлементно + broadcast |
+| Softmax | `exp(x) / sum(exp(x))` | поэлементно + reduction |
 
-## Ship It
+## Итоговые артефакты
 
-This lesson produces two reusable prompts:
+Этот урок создает два переиспользуемых prompts:
 
-1. **`outputs/prompt-tensor-shapes.md`** -- A systematic prompt for debugging tensor shape mismatches. Includes decision tables for every common operation (matmul, broadcast, cat, Linear, Conv2d, BatchNorm, softmax) and a fix lookup table.
+1. **`outputs/prompt-tensor-shapes.md`** — системный prompt для отладки несовпадений tensor shapes. Включает таблицы решений для каждой распространенной операции (matmul, broadcast, cat, Linear, Conv2d, BatchNorm, softmax) и таблицу поиска исправлений.
 
-2. **`outputs/prompt-tensor-debugger.md`** -- A step-by-step debugging prompt you paste into any AI assistant when a shape error is blocking you. Feed it the error message and your tensor shapes, get back the exact fix.
+2. **`outputs/prompt-tensor-debugger.md`** — пошаговый prompt для отладки, который вы вставляете в любого AI assistant, когда ошибка shape вас блокирует. Дайте ему сообщение об ошибке и ваши tensor shapes, получите точное исправление.
 
-## Exercises
+## Упражнения
 
-1. **Easy -- Reshape round-trip.** Take a tensor of shape `(2, 3, 4)`. Reshape it to `(6, 4)`, then to `(24,)`, then back to `(2, 3, 4)`. Verify element order is preserved at each step by printing the flat data.
+1. **Легко — round-trip для reshape.** Возьмите tensor shape `(2, 3, 4)`. Преобразуйте его в `(6, 4)`, затем в `(24,)`, затем обратно в `(2, 3, 4)`. Проверьте, что порядок элементов сохраняется на каждом шаге, распечатав плоские данные.
 
-2. **Medium -- Implement broadcasting.** Extend the `Tensor` class with a `broadcast_to(shape)` method that expands dimensions of size 1 to match a target shape. Then modify `_elementwise_op` to automatically broadcast before operating. Test with shapes `(3, 1)` and `(1, 4)` producing `(3, 4)`.
+2. **Средне — реализуйте broadcasting.** Расширьте класс `Tensor` методом `broadcast_to(shape)`, который расширяет измерения размера 1 до целевого shape. Затем измените `_elementwise_op`, чтобы она автоматически выполняла broadcasting перед операцией. Проверьте на shapes `(3, 1)` и `(1, 4)`, получая `(3, 4)`.
 
-3. **Hard -- Build einsum from scratch.** Implement a basic `einsum(subscripts, *tensors)` function that handles at least: dot product (`i,i->`), matrix multiply (`ij,jk->ik`), outer product (`i,j->ij`), and transpose (`ij->ji`). Parse the subscript string, identify contracted indices, and loop over all index combinations. Compare your results against `np.einsum`.
+3. **Сложно — соберите einsum с нуля.** Реализуйте базовую функцию `einsum(subscripts, *tensors)`, которая поддерживает хотя бы: скалярное произведение (`i,i->`), матричное умножение (`ij,jk->ik`), внешнее произведение (`i,j->ij`) и transpose (`ij->ji`). Разберите строку subscripts, найдите суммируемые индексы и пройдите циклом по всем комбинациям индексов. Сравните результаты с `np.einsum`.
 
-4. **Hard -- Attention shape tracker.** Write a function that takes `batch_size`, `seq_len`, `embed_dim`, and `num_heads` as inputs and prints the exact shape at every step of multi-head attention: input, Q/K/V projection, head split, attention scores, softmax weights, weighted sum, head merge, output projection. Verify against the `demo_attention_einsum()` output.
+4. **Сложно — трекер shapes для attention.** Напишите функцию, которая принимает `batch_size`, `seq_len`, `embed_dim` и `num_heads` и печатает точный shape на каждом шаге multi-head attention: вход, Q/K/V projection, разделение heads, attention scores, веса softmax, взвешенная сумма, объединение heads, выходная проекция. Сверьте с выводом `demo_attention_einsum()`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |---|---|---|
-| Tensor | "A matrix but more dimensions" | A multi-dimensional array with uniform type and defined shape, strides, and operations |
-| Rank | "The number of dimensions" | The number of axes. A matrix has rank 2, not rank equal to its matrix rank |
-| Shape | "The size of the tensor" | A tuple listing the size along each axis. `(2, 3)` means 2 rows, 3 columns |
-| Stride | "How memory is laid out" | The number of elements to skip to advance one position along each axis |
-| Broadcasting | "It just works when shapes differ" | A strict set of rules: align from right, dimensions must be equal or one must be 1 |
-| Contiguous | "The tensor is normal" | Elements stored sequentially in memory with no gaps or reordering from the logical layout |
-| Einsum | "A fancy way to write matmul" | A general notation that expresses any tensor contraction, outer product, trace, or transpose in one line |
-| View | "Same as reshape" | A tensor sharing the same memory buffer but with different shape/stride metadata. Fails on non-contiguous data |
-| Contraction | "Summing over an index" | The general operation where a shared index between tensors is multiplied and summed, producing a lower-rank result |
-| NCHW / NHWC | "PyTorch vs TensorFlow format" | Memory layout conventions for image tensors. NCHW puts channels before spatial dims, NHWC puts them after |
+| Tensor | "Матрица, но с большим числом измерений" | Многомерный массив с единым типом, заданными shape, strides и операциями |
+| Rank | "Число измерений" | Число axes. У матрицы rank 2, а не rank, равный ее matrix rank |
+| Shape | "Размер tensor" | Кортеж, перечисляющий размер вдоль каждой axis. `(2, 3)` означает 2 строки, 3 столбца |
+| Stride | "Как разложена память" | Число элементов, которые нужно пропустить, чтобы продвинуться на одну позицию вдоль каждой axis |
+| Broadcasting | "Оно просто работает, когда shapes разные" | Строгий набор правил: выравнивать справа, измерения должны быть равны или одно из них должно быть 1 |
+| Contiguous | "Tensor нормальный" | Элементы хранятся последовательно в памяти без пропусков или переупорядочивания относительно логического layout |
+| Einsum | "Модный способ написать matmul" | Общая нотация, которая выражает любую tensor contraction, внешнее произведение, след или transpose в одну строку |
+| View | "То же, что reshape" | Tensor, разделяющий тот же буфер памяти, но с другими метаданными shape/stride. Падает на non-contiguous data |
+| Contraction | "Суммирование по индексу" | Общая операция, где общий индекс между tensors перемножается и суммируется, давая результат меньшего rank |
+| NCHW / NHWC | "Формат PyTorch vs TensorFlow" | Соглашения layout памяти для image tensors. NCHW ставит channels перед пространственными измерениями, NHWC — после |
 
-## Further Reading
+## Дополнительные материалы
 
-- [NumPy Broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html) -- The canonical rules with visual examples
-- [PyTorch Tensor Views](https://pytorch.org/docs/stable/tensor_view.html) -- When views work and when they copy
-- [einops](https://github.com/arogozhnikov/einops) -- A library that makes tensor reshaping readable and safe
-- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) -- Visualizes the tensor shapes flowing through attention
-- [Einstein Summation in NumPy](https://numpy.org/doc/stable/reference/generated/numpy.einsum.html) -- Full einsum documentation with examples
+- [NumPy Broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html) — канонические правила с визуальными примерами
+- [PyTorch Tensor Views](https://pytorch.org/docs/stable/tensor_view.html) — когда views работают и когда они копируют
+- [einops](https://github.com/arogozhnikov/einops) — библиотека, которая делает tensor reshaping читаемым и безопасным
+- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — визуализирует tensor shapes, проходящие через attention
+- [Einstein Summation in NumPy](https://numpy.org/doc/stable/reference/generated/numpy.einsum.html) — полная документация einsum с примерами

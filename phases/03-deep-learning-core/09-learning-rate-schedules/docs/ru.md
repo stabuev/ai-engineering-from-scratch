@@ -1,82 +1,82 @@
-# Learning Rate Schedules and Warmup
+# Расписания скорости обучения и разогрев (Warmup)
 
-> The learning rate is the single most important hyperparameter. Not the architecture. Not the dataset size. Not the activation function. The learning rate. If you tune nothing else, tune this.
+> Скорость обучения (learning rate) - самый важный гиперпараметр. Не архитектура. Не размер датасета. Не функция активации. Скорость обучения. Если вы не настраиваете больше ничего, настройте ее.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Lesson 03.06 (Optimizers), Lesson 03.08 (Weight Initialization)
-**Time:** ~90 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Урок 03.06 (Оптимизаторы), Урок 03.08 (Инициализация весов)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement constant, step decay, cosine annealing, warmup + cosine, and 1cycle learning rate schedules from scratch
-- Demonstrate the three failure modes of learning rate selection: divergence (too high), stalling (too low), and oscillation (no decay)
-- Explain why warmup is necessary for Adam-based optimizers and how it stabilizes early training
-- Compare convergence speed across all five schedules on the same task and select the appropriate one for a given training budget
+- Реализовать с нуля расписания скорости обучения: постоянное, ступенчатое затухание, косинусный отжиг (cosine annealing), разогрев + косинус и 1cycle
+- Продемонстрировать три режима отказа при выборе скорости обучения: расходимость (слишком высокая), остановка прогресса (слишком низкая) и осцилляции (нет затухания)
+- Объяснить, почему разогрев необходим для оптимизаторов на основе Adam и как он стабилизирует раннее обучение
+- Сравнить скорость сходимости всех пяти расписаний на одной и той же задаче и выбрать подходящее для заданного бюджета обучения
 
-## The Problem
+## Проблема
 
-Set the learning rate to 0.1. Training diverges -- loss jumps to infinity in 3 steps. Set it to 0.0001. Training crawls -- after 100 epochs, the model has barely moved from random. Set it to 0.01. Training works for 50 epochs, then the loss oscillates around a minimum it can never reach because the steps are too large.
+Установите скорость обучения равной 0.1. Обучение расходится -- loss улетает в бесконечность за 3 шага. Установите 0.0001. Обучение ползет -- после 100 эпох модель почти не сдвинулась от случайного состояния. Установите 0.01. Обучение работает 50 эпох, затем loss осциллирует вокруг минимума, которого никогда не достигает, потому что шаги слишком большие.
 
-The optimal learning rate is not a constant. It changes during training. Early on, you want large steps to cover ground quickly. Late in training, you want tiny steps to settle into a sharp minimum. The difference between a 90% accurate model and a 95% accurate model is often just the schedule.
+Оптимальная скорость обучения не является константой. Она меняется во время обучения. В начале нужны большие шаги, чтобы быстро покрыть пространство. В конце обучения нужны крошечные шаги, чтобы осесть в резком минимуме. Разница между моделью с точностью 90% и 95% часто заключается только в расписании.
 
-Every major model published in the last three years uses a learning rate schedule. Llama 3 used peak lr=3e-4 with 2000 warmup steps and cosine decay to 3e-5. GPT-3 used lr=6e-4 with warmup over 375 million tokens. These are not arbitrary choices. They are the result of extensive hyperparameter sweeps that cost millions of dollars.
+Каждая крупная модель, опубликованная за последние три года, использует расписание скорости обучения. Llama 3 использовала пиковое lr=3e-4 с 2000 шагами разогрева и косинусным затуханием до 3e-5. GPT-3 использовала lr=6e-4 с разогревом на протяжении 375 миллионов токенов. Это не произвольные решения. Это результат масштабных переборов гиперпараметров, стоивших миллионы долларов.
 
-You need to understand schedules because the defaults will not work for your problem. When you fine-tune a pretrained model, the right schedule is different than training from scratch. When you increase batch size, the warmup period needs to change. When training breaks at step 10,000, you need to know whether it's a schedule problem or something else.
+Вам нужно понимать расписания, потому что значения по умолчанию не будут работать для вашей задачи. Когда вы дообучаете предобученную модель, правильное расписание отличается от обучения с нуля. Когда вы увеличиваете размер батча, период разогрева должен измениться. Когда обучение ломается на шаге 10,000, нужно понимать, проблема ли это расписания или чего-то другого.
 
-## The Concept
+## Концепция
 
-### Constant Learning Rate
+### Постоянная скорость обучения
 
-The simplest approach. Pick a number, use it for every step.
+Самый простой подход. Выберите число и используйте его на каждом шаге.
 
 ```
 lr(t) = lr_0
 ```
 
-Rarely optimal. It's either too high for the end of training (oscillation around the minimum) or too low for the beginning (wasted compute on tiny steps). Works fine for small models and debugging. A terrible choice for anything that trains for more than an hour.
+Редко бывает оптимальным. Она либо слишком высока для конца обучения (осцилляции вокруг минимума), либо слишком низка для начала (потраченные вычисления на крошечные шаги). Хорошо работает для небольших моделей и отладки. Ужасный выбор для всего, что обучается дольше часа.
 
-### Step Decay
+### Ступенчатое затухание
 
-The old-school approach from the ResNet era. Cut the learning rate by a factor (usually 10x) at fixed epochs.
+Старый подход из эпохи ResNet. Уменьшайте скорость обучения в заданное число раз (обычно 10x) на фиксированных эпохах.
 
 ```
 lr(t) = lr_0 * gamma^(floor(epoch / step_size))
 ```
 
-Where gamma = 0.1 and step_size = 30 means: lr drops by 10x every 30 epochs. ResNet-50 used this -- lr=0.1, drop by 10x at epochs 30, 60, and 90.
+Где gamma = 0.1 и step_size = 30 означает: lr падает в 10 раз каждые 30 эпох. ResNet-50 использовала это -- lr=0.1, падение в 10 раз на эпохах 30, 60 и 90.
 
-The problem: the optimal decay points depend on the dataset and architecture. Move to a different problem and you need to re-tune when to drop. The transitions are abrupt -- loss can spike when the rate suddenly changes.
+Проблема: оптимальные точки затухания зависят от датасета и архитектуры. Перейдите к другой задаче, и нужно заново настраивать, когда снижать скорость. Переходы резкие -- loss может подскочить, когда скорость внезапно меняется.
 
-### Cosine Annealing
+### Косинусный отжиг
 
-Smooth decay from the maximum learning rate to a minimum, following a cosine curve:
+Плавное затухание от максимальной скорости обучения к минимальной по косинусной кривой:
 
 ```
 lr(t) = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * t / T))
 ```
 
-Where t is the current step and T is the total number of steps.
+Где t - текущий шаг, а T - общее число шагов.
 
-At t=0, the cosine term is 1, so lr = lr_max. At t=T, the cosine term is -1, so lr = lr_min. The decay is gentle at first, accelerates in the middle, and becomes gentle again near the end.
+При t=0 косинусный член равен 1, поэтому lr = lr_max. При t=T косинусный член равен -1, поэтому lr = lr_min. Затухание сначала мягкое, ускоряется в середине и снова становится мягким ближе к концу.
 
-This is the default for most modern training runs. No hyperparameters to tune beyond lr_max and lr_min. The cosine shape matches the empirical observation that most learning happens in the middle of training -- you want reasonable step sizes during that critical period.
+Это значение по умолчанию для большинства современных запусков обучения. Нет гиперпараметров для настройки, кроме lr_max и lr_min. Косинусная форма соответствует эмпирическому наблюдению, что большая часть обучения происходит в середине -- в этот критический период нужны разумные размеры шагов.
 
-### Warmup: Why You Start Small
+### Разогрев: почему нужно начинать с малого
 
-Adam and other adaptive optimizers maintain running estimates of gradient mean and variance. At step 0, these estimates are initialized to zero. The first few gradient updates are based on garbage statistics. If your learning rate is large during this period, the model takes huge, poorly-directed steps.
+Adam и другие адаптивные оптимизаторы поддерживают скользящие оценки среднего и дисперсии градиента. На шаге 0 эти оценки инициализированы нулями. Первые несколько обновлений градиента основаны на мусорной статистике. Если в этот период скорость обучения велика, модель делает огромные, плохо направленные шаги.
 
-Warmup fixes this. Start with a tiny learning rate (often lr_max / warmup_steps or even zero) and linearly ramp up to lr_max over the first N steps. By the time you reach the full learning rate, Adam's statistics have stabilized.
+Разогрев исправляет это. Начните с крошечной скорости обучения (часто lr_max / warmup_steps или даже ноль) и линейно повышайте ее до lr_max за первые N шагов. К моменту достижения полной скорости обучения статистики Adam стабилизируются.
 
 ```
 lr(t) = lr_max * (t / warmup_steps)     for t < warmup_steps
 ```
 
-Typical warmup: 1-5% of total training steps. Llama 3 trained for ~1.8 trillion tokens and warmed up for 2000 steps. GPT-3 warmed up over 375 million tokens.
+Типичный разогрев: 1-5% от общего числа шагов обучения. Llama 3 обучалась примерно на ~1.8 триллиона токенов и разогревалась 2000 шагов. GPT-3 разогревалась на протяжении 375 миллионов токенов.
 
-### Linear Warmup + Cosine Decay
+### Линейный разогрев + косинусное затухание
 
-The modern default. Ramp up linearly, then decay with cosine:
+Современный вариант по умолчанию. Линейно поднимайте скорость, затем снижайте ее косинусом:
 
 ```
 if t < warmup_steps:
@@ -86,22 +86,22 @@ else:
     lr(t) = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * progress))
 ```
 
-This is what Llama, GPT, PaLM, and most modern transformers use. The warmup prevents early instability. The cosine decay settles the model into a good minimum.
+Именно это используют Llama, GPT, PaLM и большинство современных трансформеров. Разогрев предотвращает раннюю нестабильность. Косинусное затухание приводит модель к хорошему минимуму.
 
-### 1cycle Policy
+### Политика 1cycle
 
-Leslie Smith's discovery (2018): ramp the learning rate up from a low value to a high value in the first half of training, then ramp it back down in the second half. Counterintuitive -- why would you *increase* the learning rate midway through?
+Открытие Leslie Smith (2018): поднимайте скорость обучения от низкого значения к высокому в первой половине обучения, затем опускайте ее обратно во второй половине. Контринтуитивно -- зачем *увеличивать* скорость обучения посреди процесса?
 
-The theory: a high learning rate acts as regularization by adding noise to the optimization trajectory. The model explores more of the loss landscape during the ramp-up phase, finding better basins. The ramp-down phase then refines within the best basin found.
+Теория: высокая скорость обучения действует как регуляризация, добавляя шум в траекторию оптимизации. Модель исследует большую часть ландшафта потерь во время фазы подъема и находит лучшие бассейны. Затем фаза спуска уточняет решение внутри лучшего найденного бассейна.
 
 ```
 Phase 1 (0 to T/2):    lr ramps from lr_max/25 to lr_max
 Phase 2 (T/2 to T):    lr ramps from lr_max to lr_max/10000
 ```
 
-1cycle often trains faster than cosine annealing for a fixed compute budget. The tradeoff: you must know the total number of steps in advance.
+1cycle часто обучает быстрее, чем косинусный отжиг, при фиксированном вычислительном бюджете. Компромисс: нужно заранее знать общее число шагов.
 
-### Schedule Shapes
+### Формы расписаний
 
 ```mermaid
 graph LR
@@ -122,7 +122,7 @@ graph LR
     end
 ```
 
-### Decision Flowchart
+### Блок-схема выбора
 
 ```mermaid
 flowchart TD
@@ -140,7 +140,7 @@ flowchart TD
     Cosine --> MinLR["Set lr_min = lr_max / 10"]
 ```
 
-### Real Numbers from Published Models
+### Реальные числа из опубликованных моделей
 
 ```mermaid
 graph TD
@@ -152,11 +152,11 @@ graph TD
     end
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Schedule Functions
+### Шаг 1: функции расписаний
 
-Each function takes the current step and returns the learning rate at that step.
+Каждая функция принимает текущий шаг и возвращает скорость обучения на этом шаге.
 
 ```python
 import math
@@ -194,9 +194,9 @@ def one_cycle_schedule(step, lr=0.01, total_steps=1000, **kwargs):
         return lr * (1 - progress) + (lr / 10000) * progress
 ```
 
-### Step 2: Visualize All Schedules
+### Шаг 2: визуализируйте все расписания
 
-Print a text-based plot showing how each schedule evolves over training.
+Выведите текстовый график, показывающий, как каждое расписание меняется в ходе обучения.
 
 ```python
 def visualize_schedule(name, schedule_fn, total_steps=500, **kwargs):
@@ -214,9 +214,9 @@ def visualize_schedule(name, schedule_fn, total_steps=500, **kwargs):
         print(f"  Step {s:4d}: lr={lr_val:.6f} {bar}")
 ```
 
-### Step 3: Training Network
+### Шаг 3: обучающая сеть
 
-A simple two-layer network on the circle dataset, same as previous lessons, but now we vary the schedule.
+Простая двухслойная сеть на датасете окружности, как в предыдущих уроках, но теперь мы меняем расписание.
 
 ```python
 import random
@@ -300,9 +300,9 @@ def train_with_schedule(schedule_fn, schedule_name, data, epochs=300, base_lr=0.
     return epoch_losses
 ```
 
-### Step 4: Compare All Schedules
+### Шаг 4: сравните все расписания
 
-Train the same network with each schedule and compare final loss and convergence behavior.
+Обучите одну и ту же сеть с каждым расписанием и сравните итоговый loss и поведение сходимости.
 
 ```python
 def compare_schedules(data):
@@ -324,9 +324,9 @@ def compare_schedules(data):
         print(f"{name:<20} {losses[0]:>12.6f} {losses[mid_idx]:>12.6f} {losses[-1]:>12.6f} {best:>12.6f}")
 ```
 
-### Step 5: LR Too High vs Too Low
+### Шаг 5: LR слишком высока и слишком низка
 
-Demonstrate the three failure modes: too high (divergence), too low (crawling), and just right.
+Продемонстрируйте три режима отказа: слишком высокая (расходимость), слишком низкая (ползучее обучение) и подходящая.
 
 ```python
 def lr_sensitivity(data):
@@ -354,9 +354,9 @@ def lr_sensitivity(data):
         print(f"  {lr:>10.4f} {start:>12.6f} {end_str:>12} {status:>15}")
 ```
 
-## Use It
+## Используйте это
 
-PyTorch provides schedulers in `torch.optim.lr_scheduler`:
+PyTorch предоставляет планировщики в `torch.optim.lr_scheduler`:
 
 ```python
 import torch
@@ -373,7 +373,7 @@ for step in range(1000):
     scheduler.step()
 ```
 
-For warmup + cosine, use a lambda scheduler or the `get_cosine_schedule_with_warmup` from HuggingFace:
+Для разогрева + косинуса используйте lambda scheduler или `get_cosine_schedule_with_warmup` из HuggingFace:
 
 ```python
 from transformers import get_cosine_schedule_with_warmup
@@ -385,43 +385,43 @@ scheduler = get_cosine_schedule_with_warmup(
 )
 ```
 
-The HuggingFace function is what most Llama and GPT fine-tuning scripts use. When in doubt, use warmup + cosine with warmup = 3-5% of total steps. It works for almost everything.
+Функция HuggingFace - это то, что используют большинство скриптов дообучения Llama и GPT. Если сомневаетесь, используйте разогрев + косинус с warmup = 3-5% от общего числа шагов. Это работает почти для всего.
 
-## Ship It
+## Отправьте это
 
-This lesson produces:
-- `outputs/prompt-lr-schedule-advisor.md` -- a prompt that recommends the right learning rate schedule and hyperparameters for your training setup
+Этот урок создает:
+- `outputs/prompt-lr-schedule-advisor.md` -- промпт, который рекомендует правильное расписание скорости обучения и гиперпараметры для вашей настройки обучения
 
-## Exercises
+## Упражнения
 
-1. Implement exponential decay: lr(t) = lr_0 * gamma^t where gamma = 0.999. Compare to cosine annealing on the circle dataset.
+1. Реализуйте экспоненциальное затухание: lr(t) = lr_0 * gamma^t, где gamma = 0.999. Сравните с косинусным отжигом на датасете окружности.
 
-2. Implement the learning rate range test (Leslie Smith): train for a few hundred steps while exponentially increasing the LR from 1e-7 to 1. Plot loss vs LR. The optimal max LR is just before the loss starts increasing.
+2. Реализуйте тест диапазона скорости обучения (Leslie Smith): обучайте несколько сотен шагов, экспоненциально увеличивая LR от 1e-7 до 1. Постройте график loss vs LR. Оптимальный max LR находится прямо перед тем, как loss начинает расти.
 
-3. Train with warmup + cosine but vary the warmup length: 0%, 1%, 5%, 10%, 20% of total steps. Find the sweet spot where training is most stable.
+3. Обучайте с разогревом + косинусом, но меняйте длину разогрева: 0%, 1%, 5%, 10%, 20% от общего числа шагов. Найдите оптимальную точку, где обучение наиболее стабильно.
 
-4. Implement cosine annealing with warm restarts (SGDR): reset the learning rate to lr_max every T steps and decay again. Compare to standard cosine on a longer training run.
+4. Реализуйте косинусный отжиг с теплыми перезапусками (warm restarts, SGDR): сбрасывайте скорость обучения к lr_max каждые T шагов и снова запускайте затухание. Сравните со стандартным косинусом на более длинном запуске обучения.
 
-5. Build a "schedule surgeon" that monitors training loss and automatically switches from warmup to cosine when the loss stabilizes, and reduces lr if the loss plateaus for too long.
+5. Создайте "хирурга расписаний", который отслеживает loss при обучении и автоматически переключается с разогрева на косинус, когда loss стабилизируется, и снижает lr, если loss слишком долго выходит на плато.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Learning rate | "How fast the model learns" | The scalar that multiplies the gradient to determine the parameter update size |
-| Schedule | "Change the LR over time" | A function that maps training step to learning rate, designed to optimize convergence |
-| Warmup | "Start with a small LR" | Linearly ramping the LR from near-zero to the target value over the first N steps to stabilize optimizer statistics |
-| Cosine annealing | "Smooth LR decay" | Decreasing the LR following a cosine curve from lr_max to lr_min over training |
-| Step decay | "Drop LR at milestones" | Multiplying the LR by a factor (usually 0.1) at fixed epoch intervals |
-| 1cycle policy | "Up then down" | Leslie Smith's method of ramping LR up then down in a single cycle for faster convergence |
-| LR range test | "Find the best learning rate" | Training briefly while increasing LR to find the value where loss starts diverging |
-| Cosine with warm restarts | "Reset and repeat" | Periodically resetting the LR to lr_max and decaying again (SGDR) |
-| Eta min | "The floor for the LR" | The minimum learning rate that the schedule decays to |
-| Peak learning rate | "The maximum LR" | The highest LR reached during training, typically after warmup |
+| Скорость обучения (Learning rate) | "Насколько быстро модель учится" | Скаляр, на который умножается градиент для определения размера обновления параметров |
+| Расписание (Schedule) | "Менять LR со временем" | Функция, которая отображает шаг обучения в скорость обучения и предназначена для оптимизации сходимости |
+| Разогрев (Warmup) | "Начать с маленькой LR" | Линейное повышение LR от почти нуля до целевого значения за первые N шагов для стабилизации статистик оптимизатора |
+| Косинусный отжиг (Cosine annealing) | "Плавное затухание LR" | Уменьшение LR по косинусной кривой от lr_max до lr_min в ходе обучения |
+| Ступенчатое затухание (Step decay) | "Снижать LR на контрольных точках" | Умножение LR на коэффициент (обычно 0.1) через фиксированные интервалы эпох |
+| Политика 1cycle (1cycle policy) | "Вверх, потом вниз" | Метод Leslie Smith: поднимать LR, затем опускать ее в одном цикле для более быстрой сходимости |
+| Тест диапазона LR (LR range test) | "Найти лучшую скорость обучения" | Короткое обучение с увеличением LR, чтобы найти значение, при котором loss начинает расходиться |
+| Косинус с теплыми перезапусками (Cosine with warm restarts) | "Сбросить и повторить" | Периодический сброс LR к lr_max и повторное затухание (SGDR) |
+| Eta min | "Нижняя граница для LR" | Минимальная скорость обучения, до которой затухает расписание |
+| Пиковая скорость обучения (Peak learning rate) | "Максимальная LR" | Самая высокая LR, достигаемая во время обучения, обычно после разогрева |
 
-## Further Reading
+## Дополнительное чтение
 
-- Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017) -- introduced cosine annealing and warm restarts
-- Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018) -- the 1cycle policy paper
-- Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023) -- documents the warmup + cosine schedule used at scale
-- Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017) -- linear scaling rule and warmup for large batch training
+- Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017) -- представили косинусный отжиг и теплые перезапуски
+- Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018) -- статья о политике 1cycle
+- Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023) -- документирует расписание разогрев + косинус, используемое в масштабе
+- Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017) -- правило линейного масштабирования и разогрев для обучения с большими батчами
