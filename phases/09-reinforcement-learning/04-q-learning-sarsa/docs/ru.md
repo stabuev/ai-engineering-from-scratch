@@ -1,6 +1,6 @@
 # Temporal Difference — Q-Learning & SARSA
 
-> Monte Carlo waits until the episode ends. TD updates after every step by bootstrapping the next value estimate. Q-learning is off-policy and optimistic; SARSA is on-policy and cautious. Both are one line of code. Both underpin every deep-RL method in this phase.
+> Monte Carlo ждет конца episode. TD обновляется после каждого шага, bootstrapping следующую value estimate. Q-learning — off-policy и optimistic; SARSA — on-policy и осторожнее. Оба алгоритма — одна строка кода. Оба лежат под каждым deep-RL методом в этой фазе.
 
 **Type:** Build
 **Languages:** Python
@@ -9,13 +9,13 @@
 
 ## The Problem
 
-Monte Carlo works but it has two expensive demands. It needs episodes that terminate, and it only updates after the final return is in. If your episode is 1,000 steps, MC waits 1,000 steps to update anything. It is high-variance, low-bias, and slow in practice.
+Monte Carlo работает, но требует двух дорогих вещей. Episodes должны завершаться, и обновление возможно только после получения final return. Если episode длится 1,000 steps, MC ждет 1,000 steps, прежде чем что-либо обновить. Это high-variance, low-bias и на практике медленно.
 
-Dynamic programming has the opposite profile — zero-variance bootstrapped backups — but requires a known model.
+Dynamic programming имеет противоположный профиль — zero-variance bootstrapped backups — но требует известную model.
 
-Temporal difference (TD) learning splits the difference. From a single transition `(s, a, r, s')`, form a one-step target `r + γ V(s')` and nudge `V(s)` toward it. No model. No complete episodes. Bias from using an approximate `V` on the RHS, but dramatically lower variance than MC and online updates from step one.
+Temporal difference (TD) learning занимает середину. Из одного transition `(s, a, r, s')` формируется one-step target `r + γ V(s')`, и `V(s)` сдвигается к нему. Нет model. Нет complete episodes. Есть bias из-за approximate `V` в RHS, но variance намного ниже, чем у MC, а online updates начинаются с первого шага.
 
-This is the pivot on which all of modern RL — DQN, A2C, PPO, SAC — turns. The rest of Phase 9 is layers of function approximation and tricks built on top of the one-step TD update you will write in this lesson.
+На этом повороте стоит весь modern RL — DQN, A2C, PPO, SAC. Остальная Phase 9 — это слои function approximation и tricks поверх one-step TD update, который вы напишете здесь.
 
 ## The Concept
 
@@ -25,29 +25,29 @@ This is the pivot on which all of modern RL — DQN, A2C, PPO, SAC — turns. Th
 
 `V(s) ← V(s) + α [r + γ V(s') - V(s)]`
 
-The bracketed quantity is the TD error `δ = r + γ V(s') - V(s)`. It is the online analogue of `G_t - V(s_t)` in MC. Convergence requires `α` satisfying Robbins-Monro (`Σ α = ∞`, `Σ α² < ∞`) and all states visited infinitely often.
+Величина в скобках — TD error `δ = r + γ V(s') - V(s)`. Это online analogue of `G_t - V(s_t)` в MC. Для сходимости нужно, чтобы `α` удовлетворял Robbins-Monro (`Σ α = ∞`, `Σ α² < ∞`) и все states посещались бесконечно часто.
 
-**Q-learning.** An off-policy TD method for control:
+**Q-learning.** Off-policy TD method for control:
 
 `Q(s, a) ← Q(s, a) + α [r + γ max_{a'} Q(s', a') - Q(s, a)]`
 
-The `max` assumes the *greedy* policy will be followed from `s'` onward, regardless of what action the agent actually takes. That decoupling makes Q-learning learn `Q*` while the agent explores via ε-greedy. Mnih et al. (2015) converted this into deep Q-learning on Atari (Lesson 05).
+`max` предполагает, что от `s'` далее будет следовать *greedy* policy, независимо от того, какое действие агент реально выберет. Это разделение позволяет Q-learning учить `Q*`, пока агент explores через ε-greedy. Mnih et al. (2015) превратили это в deep Q-learning на Atari (Lesson 05).
 
-**SARSA.** An on-policy TD method:
+**SARSA.** On-policy TD method:
 
 `Q(s, a) ← Q(s, a) + α [r + γ Q(s', a') - Q(s, a)]`
 
-The name is the tuple `(s, a, r, s', a')`. SARSA uses the action `a'` the agent *actually* takes next, not the greedy `argmax`. Converges to `Q^π` for whatever ε-greedy `π` is running, which in the limit `ε → 0` becomes `Q*`.
+Название — tuple `(s, a, r, s', a')`. SARSA использует действие `a'`, которое агент *реально* выбирает следующим, а не greedy `argmax`. Сходится к `Q^π` для текущей ε-greedy `π`, которая в пределе `ε → 0` становится `Q*`.
 
-**The cliff-walking difference.** On the classic cliff-walking task (fall-off-cliff = reward -100), Q-learning learns the optimal path along the cliff edge but occasionally takes the penalty during exploration. SARSA learns a safer path one step away from the cliff because it factors exploration noise into its Q-value. With training, both reach optimal at `ε → 0`. In practice it matters: when exploration is actually happening at deployment, SARSA's behavior is more conservative.
+**The cliff-walking difference.** В classic cliff-walking task (fall-off-cliff = reward -100) Q-learning учит optimal path вдоль края cliff, но иногда получает penalty во время exploration. SARSA учит более safe path на один шаг дальше от cliff, потому что учитывает exploration noise в Q-value. При training оба достигают optimum при `ε → 0`. На практике это важно: если exploration реально происходит на deployment, поведение SARSA консервативнее.
 
-**Expected SARSA.** Replace `Q(s', a')` with its expected value under `π`:
+**Expected SARSA.** Замените `Q(s', a')` на expected value under `π`:
 
 `Q(s, a) ← Q(s, a) + α [r + γ Σ_{a'} π(a'|s') Q(s', a') - Q(s, a)]`
 
-Lower variance than SARSA (no sample of `a'`), same on-policy target. Often the default in modern textbooks.
+Variance ниже, чем у SARSA (нет sample of `a'`), target тот же on-policy. Часто это default в современных учебниках.
 
-**n-step TD and TD(λ).** Interpolate between TD(0) and MC by waiting `n` steps before bootstrapping. `n=1` is TD, `n=∞` is MC. TD(λ) averages over all `n` with geometric weights `(1-λ)λ^{n-1}`. Most deep-RL uses `n` between 3 and 20.
+**n-step TD and TD(λ).** Интерполируют между TD(0) и MC, ожидая `n` steps перед bootstrapping. `n=1` — TD, `n=∞` — MC. TD(λ) усредняет все `n` с geometric weights `(1-λ)λ^{n-1}`. Большинство deep-RL использует `n` между 3 и 20.
 
 ## Build It
 
@@ -76,7 +76,7 @@ def sarsa(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
     return Q
 ```
 
-Eight lines. The *only* difference from Q-learning is the target line.
+Восемь строк. *Единственное* отличие от Q-learning — строка target.
 
 ### Step 2: Q-learning
 
@@ -96,28 +96,28 @@ def q_learning(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
     return Q
 ```
 
-The `max` decouples target from behavior. That one symbol is the difference between on-policy and off-policy.
+`max` отделяет target от behavior. Этот один символ — разница между on-policy и off-policy.
 
 ### Step 3: learning curves
 
-Track mean return per 100 episodes. Q-learning converges faster on simple deterministic GridWorld; SARSA is more conservative on cliff-walking. On the 4×4 GridWorld in `code/main.py`, both are near-optimal after ~2,000 episodes with `α=0.1, ε=0.1`.
+Отслеживайте mean return per 100 episodes. Q-learning быстрее сходится на простом deterministic GridWorld; SARSA более консервативна на cliff-walking. На 4×4 GridWorld в `code/main.py` оба почти optimal после ~2,000 episodes при `α=0.1, ε=0.1`.
 
 ### Step 4: compare to DP truth
 
-Run value iteration (Lesson 02) to get `Q*`. Check `max_{s,a} |Q_learned(s,a) - Q*(s,a)|`. A healthy tabular TD agent lands within `~0.5` on the 4×4 GridWorld after 10,000 episodes.
+Запустите value iteration (Lesson 02), чтобы получить `Q*`. Проверьте `max_{s,a} |Q_learned(s,a) - Q*(s,a)|`. Здоровый tabular TD agent попадает в пределах `~0.5` на 4×4 GridWorld после 10,000 episodes.
 
 ## Pitfalls
 
-- **Initial Q values matter.** Optimistic init (`Q = 0` for a negative-reward task) encourages exploration. Pessimistic init can trap a greedy policy forever.
-- **α schedule.** Constant `α` is fine for non-stationary problems. Decaying `α_n = 1/n` gives convergence in theory but is too slow in practice — pin `α` in `[0.05, 0.3]` and monitor the learning curve.
-- **ε schedule.** Start high (`ε=1.0`), decay to `ε=0.05`. "GLIE" (greedy in the limit with infinite exploration) is the convergence condition.
-- **Max bias in Q-learning.** The `max` operator is biased upward when `Q` is noisy. Leads to overestimation — Hasselt's Double Q-learning (used by DDQN in Lesson 05) fixes this with two Q tables.
-- **Non-terminating episodes.** TD can learn without terminals, but you need to either cap steps or handle bootstrap correctly at the cap. Standard: treat cap as non-terminal, keep bootstrapping.
-- **State hashing.** If states are tuples/tensors, use a hashable key (tuple, not list; tuple of floats rounded, not raw).
+- **Initial Q values matter.** Optimistic init (`Q = 0` для negative-reward task) encourages exploration. Pessimistic init может навсегда запереть greedy policy.
+- **α schedule.** Constant `α` подходит для non-stationary problems. Decaying `α_n = 1/n` дает theoretical convergence, но на практике слишком медленен — держите `α` в `[0.05, 0.3]` и смотрите learning curve.
+- **ε schedule.** Начинайте высоко (`ε=1.0`), снижайте до `ε=0.05`. "GLIE" (greedy in the limit with infinite exploration) — условие сходимости.
+- **Max bias in Q-learning.** Operator `max` имеет upward bias, когда `Q` noisy. Это ведет к overestimation — Hasselt's Double Q-learning (used by DDQN in Lesson 05) чинит это двумя Q tables.
+- **Non-terminating episodes.** TD может учиться без terminals, но нужно либо cap steps, либо корректно bootstrap at cap. Standard: treat cap as non-terminal, keep bootstrapping.
+- **State hashing.** Если states — tuples/tensors, используйте hashable key (tuple, not list; tuple of floats rounded, not raw).
 
 ## Use It
 
-The 2026 TD landscape:
+TD landscape в 2026:
 
 | Task | Method | Reason |
 |------|--------|--------|
@@ -128,11 +128,11 @@ The 2026 TD landscape:
 | LLM RL (reward-model-based) | PPO / GRPO (Phase 9 · 08, 12) | Actor-critic with TD-style advantage via GAE. |
 | Offline RL | CQL / IQL (Phase 9 · 08) | Q-learning with conservative regularization. |
 
-Ninety percent of the "RL" you read about in 2026 papers is some elaboration of Q-learning or SARSA. Understand the tabular update in your fingers before reading deeper.
+Девяносто процентов "RL", о котором вы читаете в papers 2026 года, — это какая-то надстройка над Q-learning или SARSA. Поймите tabular update руками, прежде чем идти глубже.
 
 ## Ship It
 
-Save as `outputs/skill-td-agent.md`:
+Сохраните как `outputs/skill-td-agent.md`:
 
 ```markdown
 ---
@@ -157,28 +157,28 @@ Refuse to apply tabular TD to state spaces > 10⁶. Refuse to ship a Q-learning 
 
 ## Exercises
 
-1. **Easy.** Implement Q-learning and SARSA on the 4×4 GridWorld. Plot learning curves (mean return per 100 episodes) for 2,000 episodes. Who converges faster?
-2. **Medium.** Build a cliff-walking environment (4×12, last row is the cliff with reward -100 and reset to start). Compare Q-learning and SARSA final policies. Screenshot the paths each takes. Which is closer to the cliff?
-3. **Hard.** Implement Double Q-learning. On a noisy-reward GridWorld (Gaussian noise σ=5 added to per-step reward), show Q-learning overestimates `V*(0,0)` by a meaningful amount while Double Q-learning does not.
+1. **Easy.** Реализуйте Q-learning и SARSA на 4×4 GridWorld. Постройте learning curves (mean return per 100 episodes) для 2,000 episodes. Кто сходится быстрее?
+2. **Medium.** Постройте cliff-walking environment (4×12, last row is the cliff with reward -100 and reset to start). Сравните final policies Q-learning и SARSA. Сделайте screenshot путей. Кто идет ближе к cliff?
+3. **Hard.** Реализуйте Double Q-learning. На noisy-reward GridWorld (Gaussian noise σ=5 added to per-step reward) покажите, что Q-learning заметно overestimates `V*(0,0)`, а Double Q-learning — нет.
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| TD error | "The update signal" | `δ = r + γ V(s') - V(s)`, the bootstrapped residual. |
-| TD(0) | "One-step TD" | Update after every transition using only the next state's estimate. |
-| Q-learning | "Off-policy RL 101" | TD update with `max` over next-state actions; learns `Q*` regardless of behavior policy. |
-| SARSA | "On-policy Q-learning" | TD update using the actual next action; learns `Q^π` for current ε-greedy π. |
-| Expected SARSA | "The low-variance SARSA" | Replace sampled `a'` with its expectation under π. |
-| GLIE | "Correct exploration schedule" | Greedy in the Limit with Infinite Exploration; needed for Q-learning convergence. |
-| Bootstrapping | "Using current estimate in the target" | What distinguishes TD from MC. Source of bias but massive variance reduction. |
-| Maximization bias | "Q-learning overestimates" | `max` over noisy estimates is upward-biased; fixed by Double Q-learning. |
+| TD error | "The update signal" | `δ = r + γ V(s') - V(s)`, bootstrapped residual. |
+| TD(0) | "One-step TD" | Обновление после каждого transition, используя только estimate следующего state. |
+| Q-learning | "Off-policy RL 101" | TD update с `max` over next-state actions; учит `Q*` независимо от behavior policy. |
+| SARSA | "On-policy Q-learning" | TD update с actual next action; учит `Q^π` для текущей ε-greedy π. |
+| Expected SARSA | "The low-variance SARSA" | Заменяет sampled `a'` на expectation under π. |
+| GLIE | "Correct exploration schedule" | Greedy in the Limit with Infinite Exploration; нужно для convergence Q-learning. |
+| Bootstrapping | "Using current estimate in the target" | То, что отличает TD от MC. Источник bias, но огромного variance reduction. |
+| Maximization bias | "Q-learning overestimates" | `max` over noisy estimates biased upward; чинится Double Q-learning. |
 
 ## Further Reading
 
-- [Watkins & Dayan (1992). Q-learning](https://link.springer.com/article/10.1007/BF00992698) — the original paper and convergence proof.
+- [Watkins & Dayan (1992). Q-learning](https://link.springer.com/article/10.1007/BF00992698) — original paper and convergence proof.
 - [Sutton & Barto (2018). Ch. 6 — Temporal-Difference Learning](http://incompleteideas.net/book/RLbook2020.pdf) — TD(0), SARSA, Q-learning, Expected SARSA.
 - [Hasselt (2010). Double Q-learning](https://papers.nips.cc/paper_files/paper/2010/hash/091d584fced301b442654dd8c23b3fc9-Abstract.html) — fix for maximization bias.
 - [Seijen, Hasselt, Whiteson, Wiering (2009). A Theoretical and Empirical Analysis of Expected SARSA](https://ieeexplore.ieee.org/document/4927542) — expected SARSA motivation.
-- [Rummery & Niranjan (1994). On-line Q-learning using connectionist systems](https://www.researchgate.net/publication/2500611_On-Line_Q-Learning_Using_Connectionist_Systems) — the paper that coined SARSA (then called "modified connectionist Q-learning").
-- [Sutton & Barto (2018). Ch. 7 — n-step Bootstrapping](http://incompleteideas.net/book/RLbook2020.pdf) — generalizes TD(0) to TD(n), the path from Q-learning to eligibility traces and, later, GAE in PPO.
+- [Rummery & Niranjan (1994). On-line Q-learning using connectionist systems](https://www.researchgate.net/publication/2500611_On-Line_Q-Learning_Using_Connectionist_Systems) — paper, где был введен SARSA (тогда "modified connectionist Q-learning").
+- [Sutton & Barto (2018). Ch. 7 — n-step Bootstrapping](http://incompleteideas.net/book/RLbook2020.pdf) — обобщает TD(0) до TD(n), путь от Q-learning к eligibility traces и позже к GAE in PPO.
