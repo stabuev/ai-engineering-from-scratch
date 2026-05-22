@@ -1,52 +1,52 @@
-# Text Generation Before Transformers — N-gram Language Models
+# Генерация текста до трансформеров — N-граммные языковые модели
 
-> If a word is surprising, the model is bad. Perplexity makes surprise a number. Smoothing keeps it finite.
+> Если слово неожиданно, модель плоха. Perplexity превращает неожиданность в число. Сглаживание сохраняет его конечным.
 
 **Type:** Build
 **Languages:** Python
 **Prerequisites:** Phase 5 · 01 (Text Processing), Phase 2 · 14 (Naive Bayes)
 **Time:** ~45 minutes
 
-## The Problem
+## Проблема
 
-Before transformers, before RNNs, before word embeddings, a language model predicted the next word by counting how often it followed the previous `n-1` words. Count "the cat" → "sat" 47 times, "the cat" → "jumped" 12 times, "the cat" → "refrigerator" 0 times. Normalize to get a probability distribution.
+До трансформеров, до RNN, до эмбеддингов слов языковая модель предсказывала следующее слово, считая, как часто оно следовало за предыдущими `n-1` словами. Посчитать "the cat" → "sat" 47 раз, "the cat" → "jumped" 12 раз, "the cat" → "refrigerator" 0 раз. Нормализовать, чтобы получить распределение вероятностей.
 
-That is an n-gram language model. It ran every speech recognizer, every spell checker, and every phrase-based machine translation system from 1980 through 2015. It still runs when you need cheap on-device language modeling.
+Это и есть n-граммная языковая модель. Она работала в каждом распознавателе речи, каждой проверке орфографии и каждой фразовой системе машинного перевода с 1980 по 2015 год. Она все еще используется, когда нужно дешевое языковое моделирование на устройстве.
 
-The interesting problem is what to do about unseen n-grams. A raw count-based model assigns zero probability to anything it has not seen, which is catastrophic because sentences are long and almost every long sentence contains at least one unseen sequence. Fifty years of smoothing research fixed that. Kneser-Ney smoothing is the result, and modern deep learning inherited its empirical tradition.
+Интересная проблема состоит в том, что делать с невиденными n-граммами. Сырая модель на основе счетчиков назначает нулевую вероятность всему, чего не видела, а это катастрофично, потому что предложения длинные и почти каждое длинное предложение содержит хотя бы одну невиданную последовательность. Пятьдесят лет исследований сглаживания исправили это. Сглаживание Кнезера-Нея — результат этой работы, а современное глубокое обучение унаследовало ее эмпирическую традицию.
 
-## The Concept
+## Концепция
 
 ![N-gram model: count, smooth, generate](../assets/ngram.svg)
 
-**N-gram probability:** `P(w_i | w_{i-n+1}, ..., w_{i-1})`. Fix `n` (typically 3 for trigrams, 4 for 4-grams). Compute from counts:
+**N-граммная вероятность:** `P(w_i | w_{i-n+1}, ..., w_{i-1})`. Зафиксируйте `n` (обычно 3 для триграмм, 4 для 4-грамм). Вычислите по счетчикам:
 
 ```text
 P(w | context) = count(context, w) / count(context)
 ```
 
-**The zero-count problem.** Any n-gram not seen in training gets probability zero. A 2007 study on the Brown corpus found that even a 4-gram model had 30% of held-out 4-grams unseen in training. You cannot evaluate on any real text without smoothing.
+**Проблема нулевых счетчиков.** Любая n-грамма, не встречавшаяся при обучении, получает нулевую вероятность. Исследование 2007 года на корпусе Brown показало, что даже у 4-граммной модели 30% 4-грамм из отложенной выборки не встречались при обучении. Без сглаживания невозможно оценивать модель на любом реальном тексте.
 
-**Smoothing approaches, in order of sophistication:**
+**Подходы к сглаживанию, в порядке усложнения:**
 
-1. **Laplace (add-one).** Add 1 to every count. Simple, terrible on rare events.
-2. **Good-Turing.** Reallocate probability mass from higher-frequency events to unseen ones based on frequency-of-frequencies.
-3. **Interpolation.** Combine n-gram, (n-1)-gram, etc., estimates with tunable weights.
-4. **Backoff.** If n-gram has count zero, fall back to (n-1)-gram. Katz backoff normalizes this.
-5. **Absolute discounting.** Subtract a fixed discount `D` from all counts, redistribute to unseen.
-6. **Kneser-Ney.** Absolute discounting plus a clever choice for the lower-order model: use *continuation probability* (how many contexts a word appears in) instead of raw frequency.
+1. **Лапласовское (add-one).** Добавить 1 к каждому счетчику. Просто, ужасно для редких событий.
+2. **Good-Turing.** Перераспределить вероятностную массу от более частотных событий к невиданным на основе frequency-of-frequencies.
+3. **Интерполяция.** Объединить оценки n-грамм, (n-1)-грамм и т. д. с настраиваемыми весами.
+4. **Backoff.** Если счетчик n-граммы равен нулю, откатиться к (n-1)-грамме. Katz backoff нормализует это.
+5. **Absolute discounting.** Вычесть фиксированный дисконт `D` из всех счетчиков, перераспределить его к невиданным.
+6. **Kneser-Ney.** Absolute discounting плюс умный выбор модели меньшего порядка: использовать *continuation probability* (в скольких контекстах появляется слово) вместо сырой частоты.
 
-The Kneser-Ney insight is deep. "San Francisco" is a common bigram. Unigram "Francisco" appears mostly after "San." Naive absolute discounting gives "Francisco" high unigram probability (because the count is high). Kneser-Ney notices that "Francisco" appears in only one context and lowers its continuation probability accordingly. Result: a novel bigram ending in "Francisco" gets the appropriate low probability.
+Идея Kneser-Ney глубока. "San Francisco" — частая биграмма. Униграмма "Francisco" появляется в основном после "San." Наивный absolute discounting дает "Francisco" высокую униграммную вероятность (потому что счетчик высок). Kneser-Ney замечает, что "Francisco" появляется только в одном контексте, и соответственно снижает его continuation probability. Результат: новая биграмма, заканчивающаяся на "Francisco", получает подходящую низкую вероятность.
 
-**Evaluation: perplexity.** The exponent of the average negative log-likelihood per word on a held-out test set. Lower is better. A perplexity of 100 means the model is as confused as it would be choosing uniformly among 100 words.
+**Оценка: perplexity.** Экспонента средней отрицательной log-likelihood на слово на отложенном тестовом наборе. Ниже — лучше. Perplexity 100 означает, что модель так же растеряна, как если бы выбирала равномерно среди 100 слов.
 
 ```text
 perplexity = exp(- (1/N) * Σ log P(w_i | context_i))
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: trigram counts
+### Шаг 1: счетчики триграмм
 
 ```python
 from collections import Counter, defaultdict
@@ -72,9 +72,9 @@ def raw_probability(ngrams, contexts, context, word):
     return ngrams.get(ctx + (word,), 0) / contexts[ctx]
 ```
 
-Input is a list of tokenized sentences. Output is n-gram counts and context counts. `<s>` and `</s>` are sentence boundaries.
+Вход — список токенизированных предложений. Выход — счетчики n-грамм и счетчики контекстов. `<s>` и `</s>` — границы предложения.
 
-### Step 2: Laplace smoothing
+### Шаг 2: лапласовское сглаживание
 
 ```python
 def laplace_probability(ngrams, contexts, vocab_size, context, word):
@@ -84,9 +84,9 @@ def laplace_probability(ngrams, contexts, vocab_size, context, word):
     return numerator / denominator
 ```
 
-Add 1 to every count. Smooths but over-allocates mass to unseen events, hurting rare-known events too.
+Добавьте 1 к каждому счетчику. Это сглаживает, но чрезмерно выделяет массу невиданным событиям, ухудшая и редкие известные события.
 
-### Step 3: Kneser-Ney (bigram, interpolated)
+### Шаг 3: Kneser-Ney (биграммы, интерполированный)
 
 ```python
 def kneser_ney_bigram_model(corpus_tokens, discount=0.75):
@@ -128,9 +128,9 @@ def kneser_ney_bigram_model(corpus_tokens, discount=0.75):
     return prob
 ```
 
-Three moving parts. `continuation_prob` captures "how many different contexts does this word appear in?" (the Kneser-Ney innovation). `lambda_prev` is the mass freed by the discount, used to weight the backoff. The final probability is the discounted main term plus the weighted continuation term.
+Три движущиеся части. `continuation_prob` фиксирует "в скольких разных контекстах появляется это слово?" (инновация Kneser-Ney). `lambda_prev` — масса, высвобожденная дисконтом, используется как вес backoff. Итоговая вероятность — это дисконтированный основной член плюс взвешенный continuation term.
 
-### Step 4: generating text with sampling
+### Шаг 4: генерация текста с семплированием
 
 ```python
 import random
@@ -154,9 +154,9 @@ def generate(prob_fn, vocab, prefix, max_len=30, seed=0):
     return tokens
 ```
 
-Sampling proportional to probability. Always gives different output per seed. For beam-search-like output, pick the argmax at each step (greedy) and add a small randomness knob (temperature).
+Семплирование пропорционально вероятности. Всегда дает разный вывод для разных seed. Для вывода в стиле beam search выбирайте argmax на каждом шаге (greedy) и добавьте небольшую ручку случайности (temperature).
 
-### Step 5: perplexity
+### Шаг 5: perplexity
 
 ```python
 import math
@@ -174,18 +174,18 @@ def perplexity(prob_fn, sentences):
     return math.exp(-total_log_prob / total_tokens)
 ```
 
-Lower is better. For Brown corpus, a well-tuned 4-gram KN model hits perplexity around 140. A transformer LM hits 15-30 on the same test set. The gap is about 10x. That gap is why the field moved on.
+Ниже — лучше. Для корпуса Brown хорошо настроенная 4-граммная KN-модель достигает perplexity около 140. Transformer LM достигает 15-30 на том же тестовом наборе. Разрыв примерно 10x. Именно из-за этого разрыва область пошла дальше.
 
-## Use It
+## Используйте это
 
-- **Classical NLP teaching.** The clearest exposure to smoothing, MLE, and perplexity you can get.
-- **KenLM.** Production n-gram library. Used as a rescorer in speech and MT systems where low latency matters.
-- **On-device autocomplete.** Trigram models in keyboards. Still.
-- **Baselines.** Always compute an n-gram LM perplexity before declaring your neural LM good. If your transformer does not beat KN by a wide margin, something is wrong.
+- **Классическое обучение NLP.** Самое ясное знакомство со сглаживанием, MLE и perplexity, которое можно получить.
+- **KenLM.** Production-библиотека n-грамм. Используется как rescoring-модель в речевых и MT-системах, где важна низкая задержка.
+- **Автодополнение на устройстве.** Триграммные модели в клавиатурах. До сих пор.
+- **Бейзлайны.** Всегда считайте perplexity n-граммной LM, прежде чем объявлять вашу нейронную LM хорошей. Если ваш transformer не превосходит KN с большим отрывом, что-то не так.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/prompt-lm-baseline.md`:
+Сохраните как `outputs/prompt-lm-baseline.md`:
 
 ```markdown
 ---
@@ -205,26 +205,26 @@ Given a corpus and target use (next-word prediction, rescoring, perplexity basel
 Refuse to report perplexity computed with different tokenization between systems being compared — perplexity numbers are comparable only under identical tokenization. Flag OOV rate in test set; KN handles OOV poorly unless you reserve a special <UNK> token during training.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Train a trigram LM on a 1,000-sentence Shakespeare corpus. Generate 20 sentences. They will be locally plausible but globally incoherent. This is the canonical demo.
-2. **Medium.** Implement perplexity for your KN model on a held-out Shakespeare split. Compare against Laplace. You should see KN lower perplexity by 30-50%.
-3. **Hard.** Build a trigram spell corrector: given a misspelled word and its context, generate corrections and rank by context probability under the LM. Evaluate on the Birkbeck spelling corpus (public).
+1. **Easy.** Обучите триграммную LM на корпусе Shakespeare из 1,000 предложений. Сгенерируйте 20 предложений. Локально они будут правдоподобными, но глобально несвязными. Это каноническая демонстрация.
+2. **Medium.** Реализуйте perplexity для вашей KN-модели на отложенном разбиении Shakespeare. Сравните с Laplace. Вы должны увидеть, что KN снижает perplexity на 30-50%.
+3. **Hard.** Постройте триграммный корректор орфографии: по слову с ошибкой и его контексту генерируйте исправления и ранжируйте их по контекстной вероятности LM. Оцените на корпусе орфографических ошибок Birkbeck (публичный).
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| N-gram | Word sequence | Sequence of `n` consecutive tokens. |
-| Smoothing | Avoiding zeros | Reallocating probability mass so unseen events get non-zero probability. |
-| Perplexity | LM quality metric | `exp(-average log-prob)` on held-out data. Lower is better. |
-| Backoff | Fallback to shorter context | If trigram count is zero, use bigram. Katz backoff formalizes this. |
-| Kneser-Ney | Best smoothing for n-grams | Absolute discounting + continuation probability for the lower-order model. |
-| Continuation probability | KN-specific | `P(w)` weighted by number of contexts `w` appears in, not by raw count. |
+| N-gram | Последовательность слов | Последовательность из `n` подряд идущих токенов. |
+| Smoothing | Избежание нулей | Перераспределение вероятностной массы так, чтобы невиданные события получали ненулевую вероятность. |
+| Perplexity | Метрика качества LM | `exp(-average log-prob)` на отложенных данных. Ниже — лучше. |
+| Backoff | Откат к более короткому контексту | Если счетчик триграммы равен нулю, используйте биграмму. Katz backoff формализует это. |
+| Kneser-Ney | Лучшее сглаживание для n-грамм | Absolute discounting + continuation probability для модели меньшего порядка. |
+| Continuation probability | Специфично для KN | `P(w)`, взвешенная по числу контекстов, в которых появляется `w`, а не по сырому счетчику. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Jurafsky and Martin — Speech and Language Processing, Chapter 3 (2026 draft)](https://web.stanford.edu/~jurafsky/slp3/3.pdf) — the canonical treatment of n-gram LMs and smoothing.
-- [Chen and Goodman (1998). An Empirical Study of Smoothing Techniques for Language Modeling](https://dash.harvard.edu/handle/1/25104739) — the paper that settled Kneser-Ney as the best n-gram smoother.
-- [Kneser and Ney (1995). Improved Backing-off for M-gram Language Modeling](https://ieeexplore.ieee.org/document/479394) — the original KN paper.
-- [KenLM](https://kheafield.com/code/kenlm/) — fast production n-gram LM, still used in 2026 for latency-sensitive applications.
+- [Jurafsky and Martin — Speech and Language Processing, Chapter 3 (2026 draft)](https://web.stanford.edu/~jurafsky/slp3/3.pdf) — каноническое изложение n-граммных LM и сглаживания.
+- [Chen and Goodman (1998). An Empirical Study of Smoothing Techniques for Language Modeling](https://dash.harvard.edu/handle/1/25104739) — статья, закрепившая Kneser-Ney как лучший сглаживатель n-грамм.
+- [Kneser and Ney (1995). Improved Backing-off for M-gram Language Modeling](https://ieeexplore.ieee.org/document/479394) — оригинальная статья о KN.
+- [KenLM](https://kheafield.com/code/kenlm/) — быстрая production n-граммная LM, все еще используемая в 2026 году для приложений, чувствительных к задержке.

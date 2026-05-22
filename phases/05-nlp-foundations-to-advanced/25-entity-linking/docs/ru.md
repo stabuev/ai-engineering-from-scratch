@@ -1,53 +1,53 @@
-# Entity Linking & Disambiguation
+# Связывание и разрешение неоднозначности сущностей
 
-> NER found "Paris." Entity linking decides: Paris, France? Paris Hilton? Paris, Texas? Paris (the Trojan prince)? Without linking, your knowledge graph stays ambiguous.
+> NER нашел "Paris." Связывание сущностей решает: Paris, France? Paris Hilton? Paris, Texas? Paris (the Trojan prince)? Без связывания ваш граф знаний остается неоднозначным.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 06 (NER), Phase 5 · 24 (Coreference Resolution)
-**Time:** ~60 minutes
+**Тип:** Практика
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 06 (NER), Фаза 5 · 24 (Разрешение кореференции)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-A sentence reads: "Jordan beat the press." Your NER tags "Jordan" as PERSON. Good. But *which* Jordan?
+Предложение гласит: "Jordan beat the press." Ваш NER помечает "Jordan" как PERSON. Хорошо. Но *какой* Jordan?
 
-- Michael Jordan (basketball)?
-- Michael B. Jordan (actor)?
-- Michael I. Jordan (Berkeley ML professor — yes, this confusion is real in ML papers)?
-- Jordan (the country)?
-- Jordan (Hebrew first name)?
+- Michael Jordan (баскетбол)?
+- Michael B. Jordan (актер)?
+- Michael I. Jordan (профессор ML в Berkeley — да, такая путаница реальна в ML-статьях)?
+- Jordan (страна)?
+- Jordan (еврейское имя)?
 
-Entity linking (EL) resolves each mention to a unique entry in a knowledge base: Wikidata, Wikipedia, DBpedia, or your domain KB. Two subtasks:
+Связывание сущностей (Entity linking, EL) разрешает каждое упоминание в уникальную запись базы знаний: Wikidata, Wikipedia, DBpedia или вашу доменную KB. Две подзадачи:
 
-1. **Candidate generation.** Given "Jordan," which KB entries are plausible?
-2. **Disambiguation.** Given the context, which candidate is the right one?
+1. **Генерация кандидатов.** Для "Jordan," какие записи KB правдоподобны?
+2. **Разрешение неоднозначности.** С учетом контекста, какой кандидат правильный?
 
-Both steps are learnable. Both are benchmarked. The combined pipeline has been stable for a decade — what changes is the quality of the disambiguator.
+Оба шага обучаемы. Оба имеют бенчмарки. Объединенный конвейер стабилен уже десятилетие — меняется качество дизамбигуатора.
 
-## The Concept
+## Концепция
 
-![Entity linking pipeline: mention → candidates → disambiguated entity](../assets/entity-linking.svg)
+![Конвейер связывания сущностей: упоминание → кандидаты → разрешенная сущность](../assets/entity-linking.svg)
 
-**Candidate generation.** Given the mention surface form ("Jordan"), look up candidates in an alias index. Wikipedia alias dictionaries cover most named entities: "JFK" → John F. Kennedy, Jacqueline Kennedy, JFK airport, JFK (movie). Typical index returns 10-30 candidates per mention.
+**Генерация кандидатов.** По поверхностной форме упоминания ("Jordan") найдите кандидатов в индексе алиасов. Словари алиасов Wikipedia покрывают большинство именованных сущностей: "JFK" → John F. Kennedy, Jacqueline Kennedy, JFK airport, JFK (movie). Типичный индекс возвращает 10-30 кандидатов на упоминание.
 
-**Disambiguation: three approaches.**
+**Разрешение неоднозначности: три подхода.**
 
-1. **Prior + context (Milne & Witten, 2008).** `P(entity | mention) × context-similarity(entity, text)`. Works well, fast, no training.
-2. **Embedding-based (ESS / REL / Blink).** Encode mention + context. Encode each candidate's description. Pick max cosine. The 2020-2024 default.
-3. **Generative (GENRE, 2021; LLM-based, 2023+).** Decode the entity's canonical name token-by-token. Constrained to a trie of valid entity names so output is guaranteed to be a valid KB id.
+1. **Априорная вероятность + контекст (Milne & Witten, 2008).** `P(entity | mention) × context-similarity(entity, text)`. Хорошо работает, быстро, без обучения.
+2. **На эмбеддингах (ESS / REL / Blink).** Закодировать упоминание + контекст. Закодировать описание каждого кандидата. Выбрать максимум cosine. Вариант по умолчанию в 2020-2024.
+3. **Генеративный (GENRE, 2021; на основе LLM, 2023+).** Декодировать каноническое имя сущности токен за токеном. Ограничить trie допустимых имен сущностей, чтобы выход гарантированно был валидным KB id.
 
-**End-to-end vs pipeline.** Modern models (ELQ, BLINK, ExtEnD, GENRE) run NER + candidate generation + disambiguation in one pass. Pipeline systems still dominate in production because you can swap components.
+**End-to-end против конвейера.** Современные модели (ELQ, BLINK, ExtEnD, GENRE) выполняют NER + генерацию кандидатов + разрешение неоднозначности за один проход. Конвейерные системы по-прежнему доминируют в продакшене, потому что компоненты можно заменять.
 
-### The two measurements
+### Две меры
 
-- **Mention recall (candidate gen).** Fraction of gold mentions where the correct KB entry appears in the candidate list. Floor for the whole pipeline.
-- **Disambiguation accuracy / F1.** Given correct candidates, how often the top-1 is right.
+- **Recall упоминаний (candidate gen).** Доля золотых упоминаний, где правильная запись KB появляется в списке кандидатов. Нижняя граница для всего конвейера.
+- **Accuracy / F1 разрешения неоднозначности.** При правильных кандидатах, как часто top-1 верен.
 
-Always report both. A system with 99% disambiguation on 80% candidate recall is an 80% pipeline.
+Всегда сообщайте оба показателя. Система с 99% дизамбигуации при 80% candidate recall — это 80% конвейер.
 
-## Build It
+## Соберите это
 
-### Step 1: build an alias index from Wikipedia redirects
+### Шаг 1: постройте индекс алиасов из редиректов Wikipedia
 
 ```python
 alias_to_entities = {
@@ -57,9 +57,9 @@ alias_to_entities = {
 }
 ```
 
-Wikipedia alias data: ~18M (alias, entity) pairs. Download from Wikidata dumps. Store as inverted index.
+Данные алиасов Wikipedia: ~18M пар (alias, entity). Скачайте из дампов Wikidata. Храните как инвертированный индекс.
 
-### Step 2: context-based disambiguation
+### Шаг 2: разрешение неоднозначности на основе контекста
 
 ```python
 def disambiguate(mention, context, alias_index, entity_desc):
@@ -77,9 +77,9 @@ def disambiguate(mention, context, alias_index, entity_desc):
     return best, best_score
 ```
 
-The Jaccard overlap is a toy. Replace with cosine similarity on embeddings (see `code/main.py` step-2 for the transformer version).
+Jaccard overlap — игрушечный вариант. Замените на cosine similarity по эмбеддингам (см. `code/main.py` step-2 для transformer-версии).
 
-### Step 3: embedding-based (BLINK-style)
+### Шаг 3: на эмбеддингах (в стиле BLINK)
 
 ```python
 from sentence_transformers import SentenceTransformer
@@ -94,11 +94,11 @@ def embed_entity(entity_id, description):
     return encoder.encode([f"{entity_id}: {description}"], normalize_embeddings=True)[0]
 ```
 
-At index time, embed every KB entity once. At query time, embed the mention + context once, dot-product against the candidate pool, pick max.
+Во время индексации один раз создайте embedding каждой сущности KB. Во время запроса один раз создайте embedding упоминания + контекста, выполните dot-product с пулом кандидатов, выберите максимум.
 
-### Step 4: generative entity linking (concept)
+### Шаг 4: генеративное связывание сущностей (концепция)
 
-GENRE decodes the entity's Wikipedia title character-by-character. Constrained decoding (see lesson 20) ensures only valid titles can be output. Tight integration with a KB-backed trie. The modern descendant is REL-GEN and LLM-prompted EL with structured output.
+GENRE декодирует заголовок Wikipedia сущности посимвольно. Ограниченное декодирование (см. урок 20) гарантирует, что можно вывести только допустимые заголовки. Тесная интеграция с trie, подкрепленным KB. Современный наследник — REL-GEN и LLM-prompted EL со structured output.
 
 ```python
 prompt = f"""Text: {text}
@@ -107,38 +107,38 @@ List the best Wikipedia title for this mention.
 Respond with JSON: {{"title": "..."}}"""
 ```
 
-Combined with a whitelist (Outlines `choice`), this is the simplest EL pipeline to ship in 2026.
+В сочетании с whitelist (Outlines `choice`) это самый простой EL-конвейер для поставки в 2026 году.
 
-### Step 5: evaluate on AIDA-CoNLL
+### Шаг 5: оцените на AIDA-CoNLL
 
-AIDA-CoNLL is the standard EL benchmark: 1,393 Reuters articles, 34k mentions, Wikipedia entities. Report in-KB accuracy (`P@1`) and out-of-KB NIL-detection rate.
+AIDA-CoNLL — стандартный EL-бенчмарк: 1,393 статьи Reuters, 34k упоминаний, сущности Wikipedia. Сообщайте in-KB accuracy (`P@1`) и out-of-KB NIL-detection rate.
 
-## Pitfalls
+## Подводные камни
 
-- **NIL handling.** Some mentions are not in the KB (emerging entities, obscure people). Systems must predict NIL instead of guessing the wrong entity. Measured separately.
-- **Mention boundary errors.** Upstream NER misses partial spans ("Bank of America" tagged as just "Bank"). EL recall drops.
-- **Popularity bias.** Trained systems over-predict frequent entities. A mention of "Michael I. Jordan" on an ML paper often links to basketball Jordan.
-- **Cross-lingual EL.** Mapping mentions in Chinese text to English Wikipedia entities. Requires a multilingual encoder or a translation step.
-- **KB staleness.** New companies, events, people are not in last year's Wikipedia dump. Production pipelines need a refresh loop.
+- **Обработка NIL.** Некоторые упоминания отсутствуют в KB (новые сущности, малоизвестные люди). Системы должны предсказывать NIL вместо угадывания неправильной сущности. Измеряется отдельно.
+- **Ошибки границ упоминаний.** Вышестоящий NER пропускает частичные span ("Bank of America" помечен только как "Bank"). EL recall падает.
+- **Смещение популярности.** Обученные системы чрезмерно предсказывают частые сущности. Упоминание "Michael I. Jordan" в ML-статье часто связывается с баскетбольным Jordan.
+- **Кросс-языковой EL.** Сопоставление упоминаний в китайском тексте с сущностями English Wikipedia. Требует многоязычного энкодера или шага перевода.
+- **Устаревание KB.** Новых компаний, событий, людей нет в прошлогоднем дампе Wikipedia. Продакшен-конвейерам нужен цикл обновления.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| General-purpose English + Wikipedia | BLINK or REL |
-| Cross-lingual, KB = Wikipedia | mGENRE |
-| LLM-friendly, few mentions/day | Prompt Claude/GPT-4 with candidate list + constrained JSON |
-| Domain-specific KB (medical, legal) | Custom BERT with KB-aware retrieval + fine-tune on domain AIDA-style set |
-| Extremely low-latency | Exact-match prior only (Milne-Witten baseline) |
+| General-purpose English + Wikipedia | BLINK или REL |
+| Кросс-языковой, KB = Wikipedia | mGENRE |
+| LLM-friendly, несколько упоминаний/день | Prompt Claude/GPT-4 со списком кандидатов + constrained JSON |
+| Доменная KB (медицина, право) | Custom BERT с KB-aware retrieval + fine-tune на доменном AIDA-style наборе |
+| Экстремально низкая задержка | Только exact-match prior (Milne-Witten baseline) |
 | Research SOTA | GENRE / ExtEnD / generative LLM-EL |
 
-Production pattern that ships in 2026: NER → coref → EL on each mention → collapse clusters to one canonical entity per cluster. Output: one KB id per entity in the document, not one per mention.
+Продакшен-паттерн, который поставляют в 2026 году: NER → coref → EL на каждом упоминании → сворачивание кластеров к одной канонической сущности на кластер. Выход: один KB id на сущность в документе, а не один на упоминание.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-entity-linker.md`:
+Сохраните как `outputs/skill-entity-linker.md`:
 
 ```markdown
 ---
@@ -161,28 +161,28 @@ Given a use case (domain KB, language, volume, latency budget), output:
 Refuse any EL pipeline without a mention-recall baseline (you cannot evaluate a disambiguator without knowing candidate gen surfaced the right entity). Refuse any pipeline using LLM-prompted EL without constrained output to valid KB ids. Flag systems where popularity bias affects minority entities (e.g. name-clashes) without domain fine-tuning.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement the prior+context disambiguator in `code/main.py` on 10 ambiguous mentions (Paris, Jordan, Apple). Hand-label the correct entity. Measure accuracy.
-2. **Medium.** Encode 50 ambiguous mentions with a sentence transformer. Embed each candidate's description. Compare embedding-based disambiguation to Jaccard context overlap.
-3. **Hard.** Build a 1k-entity domain KB (e.g. employees + products in your company). Implement NER + EL end-to-end. Measure precision and recall on 100 held-out sentences.
+1. **Легко.** Реализуйте дизамбигуатор prior+context в `code/main.py` на 10 неоднозначных упоминаниях (Paris, Jordan, Apple). Вручную разметьте правильную сущность. Измерьте accuracy.
+2. **Средне.** Закодируйте 50 неоднозначных упоминаний с помощью sentence transformer. Создайте embedding описания каждого кандидата. Сравните разрешение неоднозначности на эмбеддингах с Jaccard context overlap.
+3. **Сложно.** Постройте доменную KB на 1k сущностей (например, сотрудники + продукты в вашей компании). Реализуйте NER + EL end-to-end. Измерьте precision и recall на 100 held-out предложениях.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| Entity linking (EL) | Link to Wikipedia | Map a mention to a unique KB entry. |
-| Candidate generation | Who could it be? | Return a shortlist of plausible KB entries for a mention. |
-| Disambiguation | Pick the right one | Score candidates using context, pick the winner. |
-| Alias index | The lookup table | Map from surface form → candidate entities. |
-| NIL | Not in KB | Explicit prediction that no KB entry matches. |
-| KB | Knowledge base | Wikidata, Wikipedia, DBpedia, or your domain KB. |
-| AIDA-CoNLL | The benchmark | 1,393 Reuters articles with gold entity links. |
+| Связывание сущностей (EL) | Ссылка на Wikipedia | Сопоставить упоминание с уникальной записью KB. |
+| Генерация кандидатов | Кто это может быть? | Вернуть короткий список правдоподобных записей KB для упоминания. |
+| Разрешение неоднозначности | Выбрать правильное | Оценить кандидатов по контексту, выбрать победителя. |
+| Индекс алиасов | Таблица поиска | Отображение поверхностная форма → кандидатные сущности. |
+| NIL | Нет в KB | Явное предсказание, что ни одна запись KB не подходит. |
+| KB | База знаний | Wikidata, Wikipedia, DBpedia или ваша доменная KB. |
+| AIDA-CoNLL | Бенчмарк | 1,393 статьи Reuters с золотыми ссылками сущностей. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Milne, Witten (2008). Learning to Link with Wikipedia](https://www.cs.waikato.ac.nz/~ihw/papers/08-DM-IHW-LearningToLinkWithWikipedia.pdf) — the foundational prior+context approach.
-- [Wu et al. (2020). Zero-shot Entity Linking with Dense Entity Retrieval (BLINK)](https://arxiv.org/abs/1911.03814) — the embedding-based workhorse.
-- [De Cao et al. (2021). Autoregressive Entity Retrieval (GENRE)](https://arxiv.org/abs/2010.00904) — generative EL with constrained decoding.
-- [Hoffart et al. (2011). Robust Disambiguation of Named Entities in Text (AIDA)](https://www.aclweb.org/anthology/D11-1072.pdf) — the benchmark paper.
-- [REL: An Entity Linker Standing on the Shoulders of Giants (2020)](https://arxiv.org/abs/2006.01969) — the open production stack.
+- [Milne, Witten (2008). Learning to Link with Wikipedia](https://www.cs.waikato.ac.nz/~ihw/papers/08-DM-IHW-LearningToLinkWithWikipedia.pdf) — основополагающий подход prior+context.
+- [Wu et al. (2020). Zero-shot Entity Linking with Dense Entity Retrieval (BLINK)](https://arxiv.org/abs/1911.03814) — рабочая лошадка на эмбеддингах.
+- [De Cao et al. (2021). Autoregressive Entity Retrieval (GENRE)](https://arxiv.org/abs/2010.00904) — генеративный EL с ограниченным декодированием.
+- [Hoffart et al. (2011). Robust Disambiguation of Named Entities in Text (AIDA)](https://www.aclweb.org/anthology/D11-1072.pdf) — статья о бенчмарке.
+- [REL: An Entity Linker Standing on the Shoulders of Giants (2020)](https://arxiv.org/abs/2006.01969) — открытый продакшен-стек.

@@ -1,58 +1,58 @@
-# LLM Evaluation — RAGAS, DeepEval, G-Eval
+# Оценивание LLM — RAGAS, DeepEval, G-Eval
 
-> Exact-match and F1 miss semantic equivalence. Human review does not scale. LLM-as-judge is the production answer — with enough calibration to trust the number.
+> Exact-match и F1 пропускают семантическую эквивалентность. Ручная проверка не масштабируется. LLM-as-judge - производственный ответ, если есть достаточная калибровка, чтобы доверять числу.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 14 (Information Retrieval)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 13 (Question Answering), Фаза 5 · 14 (Information Retrieval)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-Your RAG system answers: "June 29th, 2007."
-The gold reference is: "June 29, 2007."
-Exact Match scores 0. F1 scores ~75%. A human would score 100%.
+Ваша RAG-система отвечает: "June 29th, 2007."
+Эталонная ссылка: "June 29, 2007."
+Exact Match дает 0. F1 дает ~75%. Человек поставил бы 100%.
 
-Now multiply by 10,000 test cases. Multiply again by every change to the retriever, chunking, prompt, or model. You need an evaluator that understands meaning, runs cheaply at scale, does not lie about regressions, and surfaces the right failure modes.
+Теперь умножьте на 10 000 тестовых случаев. Еще раз умножьте на каждое изменение retriever, chunking, prompt или model. Вам нужен оценщик, который понимает смысл, дешево работает в масштабе, не лжет о регрессиях и показывает правильные режимы отказа.
 
-2026 has three frameworks that own this problem.
+В 2026 году есть три фреймворка, которые владеют этой проблемой.
 
-- **RAGAS.** Retrieval-Augmented Generation ASsessment. Four RAG metrics (faithfulness, answer-relevance, context-precision, context-recall) with NLI + LLM-judge backends. Research-backed, lightweight.
-- **DeepEval.** Pytest for LLMs. G-Eval, task-completion, hallucination, bias metrics. CI/CD-native.
-- **G-Eval.** A method (and a DeepEval metric): LLM-as-judge with chain-of-thought, custom criteria, 0-1 score.
+- **RAGAS.** Retrieval-Augmented Generation ASsessment. Четыре RAG-метрики (faithfulness, answer-relevance, context-precision, context-recall) с backend на NLI + LLM-judge. Подкреплен исследованиями, легковесен.
+- **DeepEval.** Pytest для LLM. G-Eval, task-completion, hallucination, bias metrics. Нативен для CI/CD.
+- **G-Eval.** Метод (и метрика DeepEval): LLM-as-judge с chain-of-thought, пользовательскими критериями, оценкой 0-1.
 
-All three lean on LLM-as-judge. This lesson builds intuition for the method and the trust layer around it.
+Все три опираются на LLM-as-judge. Этот урок строит интуицию для метода и слоя доверия вокруг него.
 
-## The Concept
+## Концепция
 
-![Four evaluation dimensions, LLM-as-judge architecture](../assets/llm-evaluation.svg)
+![Четыре измерения оценивания, архитектура LLM-as-judge](../assets/llm-evaluation.svg)
 
-**LLM-as-judge.** Replace a static metric with an LLM that scores outputs given a rubric. Given `(query, context, answer)`, prompt a judge LLM: "Score 0-1 on faithfulness." Return the score.
+**LLM-as-judge.** Замените статическую метрику LLM, которая оценивает выводы по рубрике. Для `(query, context, answer)` попросите judge LLM: "Score 0-1 on faithfulness." Верните оценку.
 
-Why it works: LLMs approximate human judgment at a tiny fraction of the cost. GPT-4o-mini at ~$0.003 per scored case enables 1000-sample regression eval runs for under $5.
+Почему это работает: LLM приближают человеческое суждение за крошечную долю стоимости. GPT-4o-mini примерно за ~$0.003 на оцененный случай позволяет проводить regression eval runs на 1000 примерах дешевле $5.
 
-Why it fails silently:
+Почему это тихо ломается:
 
-1. **Judge bias.** Judges prefer longer answers, answers from their own model family, answers that match the prompt style.
-2. **JSON parsing failures.** Bad JSON → NaN score → silently excluded from the aggregate. RAGAS users know this pain. Gate with try/except + explicit failure mode.
-3. **Drift over model versions.** Upgrading the judge changes every metric. Freeze judge model + version.
+1. **Смещение судьи.** Судьи предпочитают более длинные ответы, ответы из собственного семейства моделей, ответы, совпадающие со стилем prompt.
+2. **Ошибки разбора JSON.** Плохой JSON → NaN score → молча исключается из aggregate. Пользователи RAGAS знают эту боль. Ставьте gate через try/except + явный режим отказа.
+3. **Дрейф между версиями модели.** Обновление judge меняет каждую метрику. Фиксируйте judge model + version.
 
-**The RAG four.**
+**Четыре RAG-метрики.**
 
-| Metric | Question | Backend |
+| Метрика | Вопрос | Backend |
 |--------|----------|---------|
-| Faithfulness | Does each claim in the answer come from the retrieved context? | NLI-based entailment |
-| Answer relevance | Does the answer address the question? | Generate hypothetical questions from answer; compare to real question |
-| Context precision | Of retrieved chunks, what fraction were relevant? | LLM-judge |
-| Context recall | Did retrieval return everything needed? | LLM-judge against gold answer |
+| Faithfulness | Каждый ли claim в ответе происходит из извлеченного context? | NLI-based entailment |
+| Answer relevance | Отвечает ли answer на question? | Сгенерировать hypothetical questions из answer; сравнить с real question |
+| Context precision | Какая доля retrieved chunks была релевантной? | LLM-judge |
+| Context recall | Вернул ли retrieval все необходимое? | LLM-judge against gold answer |
 
-**G-Eval.** Define a custom criterion: "Did the answer cite the correct source?" The framework auto-expands into chain-of-thought evaluation steps, then scores 0-1. Good for domain-specific quality dimensions RAGAS does not cover.
+**G-Eval.** Определите пользовательский критерий: "Did the answer cite the correct source?" Фреймворк автоматически разворачивает его в шаги оценивания chain-of-thought, затем выставляет 0-1. Хорошо для предметно-специфических измерений качества, которые RAGAS не покрывает.
 
-**Calibration.** Never trust the raw judge score until you have a correlation against human labels. Run 100 hand-labeled examples. Plot judge vs human. Compute Spearman rho. If rho < 0.7, your judge rubric needs work.
+**Калибровка.** Никогда не доверяйте сырой оценке judge, пока у вас нет корреляции с человеческими метками. Запустите 100 вручную размеченных примеров. Постройте график judge vs human. Посчитайте Spearman rho. Если rho < 0.7, ваша рубрика judge требует доработки.
 
-## Build It
+## Соберите это
 
-### Step 1: faithfulness with NLI (RAGAS-style)
+### Шаг 1: faithfulness с NLI (стиль RAGAS)
 
 ```python
 from typing import Callable
@@ -87,9 +87,9 @@ def faithfulness(answer: str, context: str, llm: LLM) -> float:
     return supported / len(claims)
 ```
 
-Decompose the answer into atomic claims. NLI-check each claim against the retrieved context. Faithfulness = fraction supported.
+Разложите ответ на атомарные claims. Проверяйте каждый claim через NLI относительно извлеченного context. Faithfulness = доля подтвержденных claims.
 
-### Step 2: answer relevance
+### Шаг 2: answer relevance
 
 ```python
 import numpy as np
@@ -109,9 +109,9 @@ def answer_relevance(question: str, answer: str, encoder, llm: LLM, n: int = 3) 
     return sum(sims) / len(sims)
 ```
 
-If the answer implies different questions than the one asked, relevance drops.
+Если answer подразумевает другие questions, чем заданный, relevance падает.
 
-### Step 3: G-Eval custom metric
+### Шаг 3: пользовательская метрика G-Eval
 
 ```python
 from deepeval.metrics import GEval
@@ -137,9 +137,9 @@ metric.measure(test)
 print(metric.score, metric.reason)
 ```
 
-The evaluation steps are the rubric. Explicit steps are more stable than implicit "score 0-1" prompts.
+Шаги оценивания - это рубрика. Явные шаги стабильнее, чем неявные prompts "score 0-1".
 
-### Step 4: CI gate
+### Шаг 4: CI gate
 
 ```python
 import deepeval
@@ -157,39 +157,39 @@ def test_rag_system():
         assert rel.score >= 0.7, f"relevancy regression on {case.id}"
 ```
 
-Ship as a pytest file. Run on every PR. Block merges on regressions.
+Поставляйте как pytest-файл. Запускайте на каждом PR. Блокируйте merge при регрессиях.
 
-### Step 5: toy eval from scratch
+### Шаг 5: игрушечное eval с нуля
 
-See `code/main.py`. Stdlib-only approximations of faithfulness (overlap of answer claims with context) and relevance (overlap of answer tokens with question tokens). Not production. Shows the shape.
+См. `code/main.py`. Stdlib-only приближения faithfulness (пересечение claims ответа с context) и relevance (пересечение токенов answer с tokens question). Не production. Показывает форму.
 
-## Pitfalls
+## Подводные камни
 
-- **No calibration.** A judge with 0.3 correlation to human labels is noise. Require a calibration run before shipping.
-- **Self-evaluation.** Using the same LLM to generate and judge inflates scores by 10-20%. Use a different model family for the judge.
-- **Positional bias in pairwise judging.** Judges prefer the first option presented. Always randomize order and run both.
-- **Raw aggregate hides failures.** Mean score 0.85 often hides 5% catastrophic failures. Always inspect the bottom quantile.
-- **Golden dataset rot.** Unversioned eval sets that drift over time break longitudinal comparison. Tag the dataset with every change.
-- **LLM cost.** At scale, judge calls dominate cost. Use the cheapest model that meets calibration threshold. GPT-4o-mini, Claude Haiku, Mistral-small.
+- **Нет калибровки.** Judge с корреляцией 0.3 с человеческими метками - это шум. Требуйте calibration run перед поставкой.
+- **Самооценивание.** Использование одной и той же LLM для генерации и judging завышает оценки на 10-20%. Используйте для judge другое семейство моделей.
+- **Позиционное смещение в попарном judging.** Судьи предпочитают первый представленный вариант. Всегда рандомизируйте порядок и запускайте оба.
+- **Сырой aggregate скрывает отказы.** Mean score 0.85 часто скрывает 5% катастрофических отказов. Всегда проверяйте нижний квантиль.
+- **Гниение golden dataset.** Неверсионированные eval sets, которые дрейфуют со временем, ломают продольное сравнение. Помечайте dataset при каждом изменении.
+- **Стоимость LLM.** В масштабе judge calls доминируют в стоимости. Используйте самую дешевую модель, которая проходит calibration threshold. GPT-4o-mini, Claude Haiku, Mistral-small.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
 | Use case | Framework |
 |---------|-----------|
-| RAG quality monitoring | RAGAS (4 metrics) |
+| Мониторинг качества RAG | RAGAS (4 metrics) |
 | CI/CD regression gates | DeepEval + pytest |
-| Custom domain criteria | G-Eval within DeepEval |
+| Пользовательские критерии домена | G-Eval внутри DeepEval |
 | Online live-traffic monitoring | RAGAS with reference-free mode |
-| Human-in-the-loop spot checks | LangSmith or Phoenix with annotation UI |
+| Human-in-the-loop spot checks | LangSmith или Phoenix с annotation UI |
 | Red-teaming / safety eval | Promptfoo + DeepEval |
 
-Typical stack: RAGAS for monitoring, DeepEval for CI, G-Eval for novel dimensions. Run all three; they disagree usefully.
+Типичный стек: RAGAS для мониторинга, DeepEval для CI, G-Eval для новых измерений. Запускайте все три; они полезно расходятся.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-eval-architect.md`:
+Сохраните как `outputs/skill-eval-architect.md`:
 
 ```markdown
 ---
@@ -212,28 +212,28 @@ Given a use case (RAG / agent / generative task), output:
 Refuse to rely on a judge untested against ≥50 human-labeled examples. Refuse self-evaluation (same model generates + judges). Refuse aggregate-only reporting without bottom-10% surfacing. Flag any pipeline where judge upgrade lands without parallel baseline eval.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Use RAGAS on 10 RAG examples with known hallucinations. Verify the faithfulness metric catches each one.
-2. **Medium.** Hand-label 50 QA answers 0-1 for correctness. Score with G-Eval. Measure Spearman rho between judge and human.
-3. **Hard.** Build a pytest CI gate with DeepEval. Intentionally regress the retriever. Verify the gate fails. Add bottom-quantile alerting via threshold check on the lowest 10%.
+1. **Легко.** Используйте RAGAS на 10 RAG-примерах с известными галлюцинациями. Проверьте, что метрика faithfulness ловит каждую.
+2. **Средне.** Вручную разметьте 50 QA-ответов оценками 0-1 за correctness. Оцените через G-Eval. Измерьте Spearman rho между judge и human.
+3. **Сложно.** Постройте pytest CI gate с DeepEval. Намеренно ухудшите retriever. Проверьте, что gate падает. Добавьте bottom-quantile alerting через threshold check по нижним 10%.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| LLM-as-judge | Scoring with an LLM | Prompt a judge model to score outputs 0-1 given a rubric. |
-| RAGAS | The RAG metric library | Open-source eval framework with 4 reference-free RAG metrics. |
-| Faithfulness | Is the answer grounded? | Fraction of answer claims entailed by retrieved context. |
-| Context precision | Were retrieved chunks relevant? | Fraction of top-K chunks that actually mattered. |
-| Context recall | Did retrieval find everything? | Fraction of gold-answer claims supported by retrieved chunks. |
-| G-Eval | Custom LLM judge | Rubric + chain-of-thought eval steps + 0-1 score. |
-| Calibration | Trust but verify | Spearman correlation between judge score and human score. |
+| LLM-as-judge | Scoring with an LLM | Prompt judge model, чтобы оценить outputs 0-1 по рубрике. |
+| RAGAS | The RAG metric library | Open-source eval framework с 4 reference-free RAG metrics. |
+| Faithfulness | Is the answer grounded? | Доля claims ответа, логически следующих из retrieved context. |
+| Context precision | Were retrieved chunks relevant? | Доля top-K chunks, которые действительно имели значение. |
+| Context recall | Did retrieval find everything? | Доля gold-answer claims, поддержанных retrieved chunks. |
+| G-Eval | Custom LLM judge | Рубрика + chain-of-thought eval steps + оценка 0-1. |
+| Calibration | Trust but verify | Корреляция Spearman между judge score и human score. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Es et al. (2023). RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217) — the RAGAS paper.
-- [Liu et al. (2023). G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment](https://arxiv.org/abs/2303.16634) — the G-Eval paper.
-- [DeepEval docs](https://deepeval.com/docs/metrics-introduction) — open production stack.
-- [Zheng et al. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena](https://arxiv.org/abs/2306.05685) — biases, calibration, limits.
-- [MLflow GenAI Scorer](https://mlflow.org/blog/third-party-scorers) — unifying framework that integrates RAGAS, DeepEval, Phoenix.
+- [Es et al. (2023). RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217) — статья RAGAS.
+- [Liu et al. (2023). G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment](https://arxiv.org/abs/2303.16634) — статья G-Eval.
+- [DeepEval docs](https://deepeval.com/docs/metrics-introduction) — открытый production-стек.
+- [Zheng et al. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena](https://arxiv.org/abs/2306.05685) — смещения, калибровка, ограничения.
+- [MLflow GenAI Scorer](https://mlflow.org/blog/third-party-scorers) — объединяющий фреймворк, который интегрирует RAGAS, DeepEval, Phoenix.

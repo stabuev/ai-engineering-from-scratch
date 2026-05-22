@@ -1,42 +1,42 @@
-# Bag of Words, TF-IDF, and Text Representation
+# Bag of Words, TF-IDF и представление текста
 
-> Count first, think later. TF-IDF still beats embeddings on well-defined tasks in 2026.
+> Сначала считайте, потом думайте. В 2026 году TF-IDF все еще обходит embeddings на четко определенных задачах.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 01 (Text Processing), Phase 2 · 02 (Linear Regression from Scratch)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 01 (Text Processing), Фаза 2 · 02 (Linear Regression from Scratch)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-The model needs numbers. You have strings.
+Модели нужны числа. У вас есть строки.
 
-Every NLP pipeline has to answer the same question. How do we turn a variable-length stream of tokens into a fixed-size vector that a classifier can consume. The first answer the field landed on was the dumbest one that works. Count the words. Make a vector.
+Каждый NLP pipeline должен ответить на один и тот же вопрос. Как превратить поток токенов переменной длины в вектор фиксированного размера, который сможет принять классификатор. Первым ответом области был самый простой рабочий вариант. Посчитать слова. Сделать вектор.
 
-That vector has carried more production NLP than any embedding model. Spam filters, topic classifiers, log anomaly detection, search ranking (before BM25), the first wave of sentiment analysis, the first decade of academic NLP benchmarks. 2026 practitioners still reach for it first on narrow classification tasks. It is fast, interpretable, and often indistinguishable from a 400M-parameter embedding model on tasks where word presence is what matters.
+Этот вектор вынес на себе больше production NLP, чем любая embedding-модель. Спам-фильтры, тематические классификаторы, обнаружение аномалий в логах, ранжирование поиска (до BM25), первая волна sentiment analysis, первое десятилетие академических NLP benchmark'ов. В 2026 году практики все еще сначала берут его для узких задач классификации. Он быстрый, интерпретируемый и часто неотличим от embedding-модели на 400M параметров в задачах, где важно наличие слов.
 
-This lesson builds bag of words, then TF-IDF, from scratch. Then shows scikit-learn doing the same in three lines. Then names the failure mode that makes you reach for embeddings.
+В этом уроке мы построим bag of words, затем TF-IDF, с нуля. Затем покажем, как scikit-learn делает то же самое в три строки. Затем назовем failure mode, из-за которого приходится переходить к embeddings.
 
-## The Concept
+## Концепция
 
 ![BoW vs TF-IDF representation flow](./assets/bow-tfidf.svg)
 
-**Bag of Words (BoW)** throws away order. For each document, count how many times each vocabulary word appears. Vector length is the vocabulary size. Position `i` is the count of word `i`.
+**Bag of Words (BoW)** отбрасывает порядок. Для каждого документа посчитайте, сколько раз встречается каждое слово словаря. Длина вектора равна размеру словаря. Позиция `i` — это счетчик слова `i`.
 
-**TF-IDF** reweights BoW. A word that appears in every document is uninformative, so scale it down. A word rare across the corpus but frequent in a single document is signal, so scale it up.
+**TF-IDF** перевзвешивает BoW. Слово, которое встречается в каждом документе, малоинформативно, поэтому его вес уменьшается. Слово, редкое во всем корпусе, но частое в одном документе, является сигналом, поэтому его вес увеличивается.
 
 ```
 TF-IDF(w, d) = TF(w, d) * IDF(w)
              = count(w in d) / |d| * log(N / df(w))
 ```
 
-Where `TF` is term frequency in the document, `df` is document frequency (how many docs contain the word), `N` is total documents. The `log` keeps the weight bounded for ubiquitous words.
+Где `TF` — term frequency в документе, `df` — document frequency (сколько документов содержит слово), `N` — общее число документов. `log` удерживает вес в ограниченных пределах для повсеместных слов.
 
-Key property: both produce sparse vectors with interpretable axes. You can look at a trained classifier's weights and read which words push a document toward each class. You cannot do this with a 768-dimensional BERT embedding.
+Ключевое свойство: оба метода создают разреженные векторы с интерпретируемыми осями. Можно посмотреть на веса обученного классификатора и прочитать, какие слова толкают документ к каждому классу. С 768-мерным BERT embedding так сделать нельзя.
 
-## Build It
+## Построение
 
-### Step 1: build the vocabulary
+### Шаг 1: построить словарь
 
 ```python
 def build_vocab(docs):
@@ -48,9 +48,9 @@ def build_vocab(docs):
     return vocab
 ```
 
-Input: list of tokenized documents (any word-level tokenizer will do; the `code/main.py` in this lesson uses a simplified lowercase variant). Output: `{word: index}` dict. Stable insertion order means word index 0 is the first word seen in the first document. Convention varies; scikit-learn sorts alphabetically.
+Вход: список токенизированных документов (подойдет любой word-level tokenizer; `code/main.py` в этом уроке использует упрощенный вариант с приведением к lowercase). Выход: dict `{word: index}`. Стабильный порядок вставки означает, что слово с индексом 0 — первое слово, встреченное в первом документе. Конвенции различаются; scikit-learn сортирует по алфавиту.
 
-### Step 2: bag of words
+### Шаг 2: bag of words
 
 ```python
 def bag_of_words(docs, vocab):
@@ -69,9 +69,9 @@ def bag_of_words(docs, vocab):
 [[1, 1, 1, 1, 0], [2, 0, 0, 0, 1]]
 ```
 
-Rows are documents. Columns are vocabulary indices. Entry `[i][j]` is "how many times word `j` appears in document `i`." Doc 1 has `cat` twice because it did. Doc 0 has `ran` zero times because it did not.
+Строки — документы. Столбцы — индексы словаря. Элемент `[i][j]` означает "сколько раз слово `j` встречается в документе `i`." В Doc 1 `cat` встречается дважды, потому что так и есть. В Doc 0 `ran` встречается ноль раз, потому что его там нет.
 
-### Step 3: term frequency and document frequency
+### Шаг 3: term frequency и document frequency
 
 ```python
 import math
@@ -94,9 +94,9 @@ def inverse_document_frequency(df, n_docs):
     return [math.log((n_docs + 1) / (d + 1)) + 1 for d in df]
 ```
 
-Two smoothing tricks worth naming. The `(n+1)/(d+1)` avoids `log(x/0)`. The trailing `+1` ensures a word in every document still has IDF 1 (not 0), matching scikit-learn's default. Other implementations use raw `log(N/df)`. Both work; the smoothed version is friendlier.
+Здесь стоит назвать два приема сглаживания. `(n+1)/(d+1)` предотвращает `log(x/0)`. Завершающий `+1` гарантирует, что слово в каждом документе все еще имеет IDF 1 (а не 0), как в настройке scikit-learn по умолчанию. Другие реализации используют сырой `log(N/df)`. Оба варианта работают; сглаженная версия дружелюбнее.
 
-### Step 4: TF-IDF
+### Шаг 4: TF-IDF
 
 ```python
 def tfidf(bow_matrix):
@@ -122,9 +122,9 @@ def tfidf(bow_matrix):
 >>> tfidf(bow)
 ```
 
-Three documents, five vocab words (`the`, `cat`, `sat`, `dog`, `ran`). `the` appears in all three, so its IDF is low. `dog` appears in one, so its IDF is high. The vectors are sparse (most entries are small) and the discriminative words pop.
+Три документа, пять слов словаря (`the`, `cat`, `sat`, `dog`, `ran`). `the` встречается во всех трех, поэтому его IDF низкий. `dog` встречается в одном, поэтому его IDF высокий. Векторы разреженные (большинство элементов малы), а дискриминативные слова выделяются.
 
-### Step 5: L2-normalize rows
+### Шаг 5: L2-нормализовать строки
 
 ```python
 def l2_normalize(matrix):
@@ -135,11 +135,11 @@ def l2_normalize(matrix):
     return out
 ```
 
-Without normalization, a longer document gets a larger vector and dominates similarity scores. L2 normalization puts every document on the unit hypersphere. Cosine similarity between rows is now just a dot product.
+Без нормализации более длинный документ получает больший вектор и доминирует в оценках similarity. L2 normalization помещает каждый документ на единичную гиперсферу. Cosine similarity между строками теперь является просто dot product.
 
-## Use It
+## Использование
 
-scikit-learn ships the production version.
+В scikit-learn есть production-версия.
 
 ```python
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
@@ -156,39 +156,39 @@ tfidf = tfidf_vectorizer.fit_transform(docs)
 print(tfidf.toarray().round(3))
 ```
 
-`CountVectorizer` does tokenization, vocabulary, and BoW in one call. `TfidfVectorizer` adds IDF weighting and L2 normalization. Both return sparse matrices. For 100k documents, the dense version does not fit in memory; stay sparse until the classifier demands dense.
+`CountVectorizer` делает tokenization, vocabulary и BoW за один вызов. `TfidfVectorizer` добавляет IDF weighting и L2 normalization. Оба возвращают sparse matrices. Для 100k документов плотная версия не поместится в память; оставайтесь в sparse-представлении, пока классификатор не потребует dense.
 
-Knobs that change everything:
+Параметры, которые меняют все:
 
 | Arg | Effect |
 |-----|--------|
-| `ngram_range=(1, 2)` | Include bigrams. Usually boosts classification. |
-| `min_df=2` | Drop words in fewer than 2 docs. Trims vocabulary on noisy data. |
-| `max_df=0.95` | Drop words in more than 95% of docs. Approximates stopword removal without a hardcoded list. |
-| `stop_words="english"` | scikit-learn's builtin stopword list. Task-dependent — sentiment analysis should *not* drop negations. |
-| `sublinear_tf=True` | Use `1 + log(tf)` instead of raw `tf`. Helps when a term repeats many times in one doc. |
+| `ngram_range=(1, 2)` | Включить bigrams. Обычно улучшает классификацию. |
+| `min_df=2` | Убрать слова, встречающиеся менее чем в 2 документах. Сокращает словарь на шумных данных. |
+| `max_df=0.95` | Убрать слова, встречающиеся более чем в 95% документов. Приближает удаление stopwords без жестко заданного списка. |
+| `stop_words="english"` | Встроенный список stopwords в scikit-learn. Зависит от задачи — sentiment analysis *не должен* удалять отрицания. |
+| `sublinear_tf=True` | Использовать `1 + log(tf)` вместо сырого `tf`. Помогает, когда термин много раз повторяется в одном документе. |
 
-### When TF-IDF still wins (as of 2026)
+### Когда TF-IDF все еще выигрывает (на 2026 год)
 
-- Spam detection, topic labeling, log anomaly flagging. Word presence is what matters; semantic nuance does not.
-- Low-data regimes (hundreds of labeled examples). TF-IDF plus logistic regression has no pretraining cost.
-- Anywhere latency matters. TF-IDF plus a linear model answers in microseconds. Embedding a document through a transformer takes 10-100ms.
-- Systems that must explain their predictions. Inspect the classifier's coefficients. Top positive words are the reason.
+- Spam detection, topic labeling, log anomaly flagging. Важно наличие слова; семантические нюансы не важны.
+- Режимы с малым количеством данных (сотни размеченных примеров). TF-IDF плюс logistic regression не требует затрат на pretraining.
+- Везде, где важна latency. TF-IDF плюс linear model отвечает за микросекунды. Прогон документа через transformer для embedding занимает 10-100ms.
+- Системы, которые должны объяснять свои предсказания. Посмотрите coefficients классификатора. Главные positive words и есть причина.
 
-### When TF-IDF fails
+### Где TF-IDF ломается
 
-The semantic blindness failure. Consider these two documents:
+Failure из-за семантической слепоты. Рассмотрим два документа:
 
 - "The movie was not good at all."
 - "The movie was excellent."
 
-One is a negative review. One is positive. Their TF-IDF overlap is exactly `{the, movie, was}`. A bag-of-words classifier has to memorize that the word `not` near `good` flips the label. It can learn this on enough data, but never as gracefully as a model that understands syntax.
+Один — негативный отзыв. Другой — позитивный. Их TF-IDF overlap ровно `{the, movie, was}`. Bag-of-words classifier должен запомнить, что слово `not` рядом с `good` переворачивает метку. Он может выучить это на достаточном количестве данных, но никогда не так элегантно, как модель, понимающая синтаксис.
 
-The other failure: out-of-vocabulary words at inference. A BoW model trained on IMDb reviews has no idea what to do with `Zoomer-approved` if that token never appeared in training. Subword embeddings (lesson 04) handle this. TF-IDF cannot.
+Другая ошибка: out-of-vocabulary words при inference. BoW model, обученная на IMDb reviews, не знает, что делать с `Zoomer-approved`, если этот token никогда не встречался при обучении. Subword embeddings (урок 04) справляются с этим. TF-IDF — нет.
 
 ### Hybrid: TF-IDF weighted embeddings
 
-The 2026 pragmatic default for medium-data classification: use TF-IDF weights as attention over word embeddings.
+Прагматичный default 2026 года для medium-data classification: использовать TF-IDF weights как attention over word embeddings.
 
 ```python
 def tfidf_weighted_embedding(doc, tfidf_scores, embedding_table, dim):
@@ -207,11 +207,11 @@ def tfidf_weighted_embedding(doc, tfidf_scores, embedding_table, dim):
     return [v / total_weight for v in vec]
 ```
 
-You get semantic capacity from embeddings, and rare-word emphasis from TF-IDF. Classifier trains on the pooled vector. This outperforms either on its own for sentiment, topic, and intent classification below about 50k labeled examples.
+Вы получаете semantic capacity от embeddings и акцент на rare-word от TF-IDF. Классификатор обучается на pooled vector. Для sentiment, topic и intent classification ниже примерно 50k размеченных примеров это превосходит каждый подход по отдельности.
 
-## Ship It
+## Доставка
 
-Save as `outputs/prompt-vectorization-picker.md`:
+Сохраните как `outputs/prompt-vectorization-picker.md`:
 
 ```markdown
 ---
@@ -238,25 +238,25 @@ Example output:
 - Failure to test: verify `min_df=3` does not drop rare category keywords. Run `get_feature_names_out` filtered by class and eyeball.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement `cosine_similarity(doc_vec_a, doc_vec_b)` on the L2-normalized TF-IDF output. Verify that identical documents score 1.0 and disjoint-vocabulary documents score 0.0.
-2. **Medium.** Add `n-gram` support to `bag_of_words`. Parameter `n` produces counts over `n`-grams. Test that `n=2` on `["the", "cat", "sat"]` produces bigram counts for `["the cat", "cat sat"]`.
-3. **Hard.** Build the TF-IDF-weighted-embedding hybrid above using GloVe 100d vectors (download once, cache). Compare classification accuracy against plain TF-IDF and plain mean-pooled embeddings on the 20 Newsgroups dataset. Report which wins where.
+1. **Easy.** Реализуйте `cosine_similarity(doc_vec_a, doc_vec_b)` на L2-normalized TF-IDF output. Проверьте, что идентичные документы дают score 1.0, а документы с непересекающимся словарем дают 0.0.
+2. **Medium.** Добавьте поддержку `n-gram` в `bag_of_words`. Параметр `n` создает counts over `n`-grams. Проверьте, что `n=2` на `["the", "cat", "sat"]` создает bigram counts для `["the cat", "cat sat"]`.
+3. **Hard.** Постройте TF-IDF-weighted-embedding hybrid выше, используя GloVe 100d vectors (download once, cache). Сравните classification accuracy с plain TF-IDF и plain mean-pooled embeddings на датасете 20 Newsgroups. Сообщите, что где побеждает.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| BoW | Word frequency vector | Counts of vocabulary words in one document. Throws away order. |
-| TF | Term frequency | Count of a word in a document, optionally normalized by document length. |
-| DF | Document frequency | Count of documents containing the word at least once. |
-| IDF | Inverse document frequency | `log(N / df)` smoothed. Downweights words that appear everywhere. |
-| Sparse vector | Mostly zeros | Vocabulary is typically 10k-100k words; most are absent from any given document. |
-| Cosine similarity | Vector angle | Dot product of L2-normalized vectors. 1 is identical, 0 is orthogonal. |
+| BoW | Word frequency vector | Счетчики слов словаря в одном документе. Отбрасывает порядок. |
+| TF | Term frequency | Счетчик слова в документе, опционально нормализованный на длину документа. |
+| DF | Document frequency | Количество документов, содержащих слово хотя бы один раз. |
+| IDF | Inverse document frequency | Сглаженный `log(N / df)`. Уменьшает вес слов, которые встречаются везде. |
+| Sparse vector | Mostly zeros | Словарь обычно содержит 10k-100k слов; большинство отсутствует в конкретном документе. |
+| Cosine similarity | Vector angle | Dot product L2-normalized vectors. 1 — идентичны, 0 — ортогональны. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [scikit-learn — feature extraction from text](https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction) — the canonical API reference, plus notes on every knob.
-- [Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval](https://www.sciencedirect.com/science/article/pii/0306457388900210) — the paper that made TF-IDF the default for a decade.
-- ["Why TF-IDF Still Beats Embeddings" — Ashfaque Thonikkadavan (Medium)](https://medium.com/@cmtwskb/why-tf-idf-still-beats-embeddings-ad85c123e1b2) — 2026 take on when the old method wins and why.
+- [scikit-learn — feature extraction from text](https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction) — каноническая API reference, плюс notes on every knob.
+- [Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval](https://www.sciencedirect.com/science/article/pii/0306457388900210) — статья, которая сделала TF-IDF default на десятилетие.
+- ["Why TF-IDF Still Beats Embeddings" — Ashfaque Thonikkadavan (Medium)](https://medium.com/@cmtwskb/why-tf-idf-still-beats-embeddings-ad85c123e1b2) — взгляд 2026 года на то, когда старый метод выигрывает и почему.
