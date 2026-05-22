@@ -1,41 +1,41 @@
-# Text Processing — Tokenization, Stemming, Lemmatization
+# Обработка текста — токенизация, стемминг, лемматизация
 
-> Language is continuous. Models are discrete. Preprocessing is the bridge.
+> Язык непрерывен. Модели дискретны. Предобработка — это мост между ними.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 2 · 14 (Naive Bayes)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 2 · 14 (Naive Bayes)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-A model cannot read "The cats were running." It reads integers.
+Модель не может читать "The cats were running." Она читает целые числа.
 
-Every NLP system opens with the same three questions. Where does a word start. What is the root of the word. How do we treat "run", "running", "ran" as the same thing when it helps, and as different things when it doesn't.
+Каждая NLP-система начинается с одних и тех же трех вопросов. Где начинается слово. Какой у слова корень. Как обрабатывать "run", "running", "ran" как одно и то же, когда это помогает, и как разные вещи, когда это не помогает.
 
-Get tokenization wrong and the model learns from garbage. If your tokenizer treats `don't` as one token but `do n't` as two, the training distribution splits. If your stemmer collapses `organization` and `organ` to the same stem, topic modeling dies. If your lemmatizer needs part-of-speech context but you don't pass it, verbs get treated as nouns.
+Ошибитесь в токенизации, и модель будет учиться на мусоре. Если ваш токенизатор считает `don't` одним токеном, а `do n't` — двумя, обучающее распределение расщепляется. Если ваш стеммер сводит `organization` и `organ` к одной и той же основе, тематическое моделирование разваливается. Если вашему лемматизатору нужен контекст части речи, а вы его не передаете, глаголы обрабатываются как существительные.
 
-This lesson builds the three preprocessing primitives from scratch, then shows how NLTK and spaCy do the same work so you can see the tradeoffs.
+В этом уроке мы строим три примитива предобработки с нуля, а затем показываем, как NLTK и spaCy выполняют ту же работу, чтобы вы увидели компромиссы.
 
-## The Concept
+## Концепция
 
-Three operations. Each has a job and a failure mode.
+Три операции. У каждой есть задача и режим отказа.
 
-![Preprocessing pipeline: raw text → tokens → stems or lemmas → model](./assets/pipeline.svg)
+![Конвейер предобработки: сырой текст → токены → основы или леммы → модель](./assets/pipeline.svg)
 
-**Tokenization** splits a string into tokens. "Token" is deliberately vague because the right granularity depends on the task. Word-level for classical NLP. Subword for transformers. Character for languages without whitespace.
+**Токенизация** разбивает строку на токены. "Токен" намеренно расплывчатое понятие, потому что правильная гранулярность зависит от задачи. Уровень слов для классического NLP. Подслова для трансформеров. Символы для языков без пробелов.
 
-**Stemming** chops suffixes with rules. Fast, aggressive, dumb. `running -> run`. `organization -> organ`. That second one is the failure mode.
+**Стемминг** отрезает суффиксы по правилам. Быстро, агрессивно, грубо. `running -> run`. `organization -> organ`. Второй пример и есть режим отказа.
 
-**Lemmatization** reduces a word to its dictionary form using grammar knowledge. Slower, accurate, needs a lookup table or morphological analyzer. `ran -> run` (needs to know "ran" is past tense of "run"). `better -> good` (needs to know comparative forms).
+**Лемматизация** приводит слово к его словарной форме с использованием грамматических знаний. Медленнее, точнее, требует таблицы соответствий или морфологического анализатора. `ran -> run` (нужно знать, что "ran" — прошедшее время от "run"). `better -> good` (нужно знать сравнительные формы).
 
-Rule of thumb. Stem when speed matters and you can tolerate noise (search indexing, rough classification). Lemmatize when meaning matters (question answering, semantic search, anything the user will read).
+Практическое правило. Используйте стемминг, когда важна скорость и допустим шум (поисковая индексация, грубая классификация). Используйте лемматизацию, когда важен смысл (ответы на вопросы, семантический поиск, все, что будет читать пользователь).
 
-## Build It
+## Собираем
 
-### Step 1: a regex word tokenizer
+### Шаг 1: regex-токенизатор слов
 
-The simplest useful tokenizer splits on non-alphanumeric characters while keeping punctuation as its own tokens. Not perfect, not final, but it runs in one line.
+Самый простой полезный токенизатор разбивает текст по небуквенно-цифровым символам, сохраняя пунктуацию как отдельные токены. Не идеально, не финально, но работает в одну строку.
 
 ```python
 import re
@@ -44,18 +44,18 @@ def tokenize(text):
     return re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]", text)
 ```
 
-Three patterns in order of precedence. Words with optional inner apostrophe (`don't`, `it's`). Pure numbers. Any single non-whitespace non-alphanumeric character as a standalone token (punctuation).
+Три шаблона в порядке приоритета. Слова с необязательным внутренним апострофом (`don't`, `it's`). Чистые числа. Любой одиночный непробельный небуквенно-цифровой символ как самостоятельный токен (пунктуация).
 
 ```python
 >>> tokenize("The cats weren't running at 3pm.")
 ['The', 'cats', "weren't", 'running', 'at', '3', 'pm', '.']
 ```
 
-Failure modes to notice. `3pm` splits to `['3', 'pm']` because we alternated between letter runs and digit runs. Good enough for most tasks. URLs, emails, hashtags all break. For production, add patterns before the general ones.
+Режимы отказа, на которые стоит обратить внимание. `3pm` разбивается на `['3', 'pm']`, потому что мы чередуем последовательности букв и последовательности цифр. Достаточно хорошо для большинства задач. URL-адреса, email-адреса, хештеги — все ломается. Для production добавляйте шаблоны перед общими.
 
-### Step 2: a Porter stemmer (step 1a only)
+### Шаг 2: стеммер Портера (только шаг 1a)
 
-The full Porter algorithm has five phases of rules. Step 1a alone covers the most frequent English suffixes and teaches the pattern.
+Полный алгоритм Портера содержит пять фаз правил. Один только шаг 1a покрывает самые частотные английские суффиксы и показывает паттерн.
 
 ```python
 def stem_step_1a(word):
@@ -75,11 +75,11 @@ def stem_step_1a(word):
 ['caress', 'poni', 'caress', 'cat']
 ```
 
-Read the rules top-down. The `ies -> i` rule is why `ponies -> poni`, not `pony`. Real Porter has step 1b that would fix it. Rules compete. Earlier rules win. The order matters more than any single rule.
+Читайте правила сверху вниз. Правило `ies -> i` объясняет, почему `ponies -> poni`, а не `pony`. В настоящем Porter есть шаг 1b, который это исправил бы. Правила конкурируют. Побеждают более ранние правила. Порядок важнее любого отдельного правила.
 
-### Step 3: a lookup-based lemmatizer
+### Шаг 3: лемматизатор на основе таблицы соответствий
 
-Lemmatization proper needs morphology. A tractable teaching version uses a small lemma table and a fallback.
+Настоящей лемматизации нужна морфология. Удобная учебная версия использует небольшую таблицу лемм и fallback.
 
 ```python
 LEMMA_TABLE = {
@@ -117,9 +117,9 @@ def lemmatize(word, pos):
 'watched'
 ```
 
-The last case is the key teaching moment. `watched` is not in our table and our fallback only handles `ing`. Real lemmatization covers `ed`, irregular verbs, comparative adjectives, plurals with sound changes (`children -> child`). This is why production systems use WordNet, spaCy's morphologizer, or a full morphological analyzer.
+Последний случай — ключевой учебный момент. `watched` нет в нашей таблице, а наш fallback обрабатывает только `ing`. Настоящая лемматизация покрывает `ed`, неправильные глаголы, сравнительные прилагательные, множественное число с изменением звучания (`children -> child`). Поэтому production-системы используют WordNet, морфологизатор spaCy или полноценный морфологический анализатор.
 
-### Step 4: pipe them together
+### Шаг 4: объединяем их в конвейер
 
 ```python
 def preprocess(text, pos_tagger=None):
@@ -130,11 +130,11 @@ def preprocess(text, pos_tagger=None):
     return {"tokens": tokens, "stems": stems, "lemmas": lemmas}
 ```
 
-The missing piece is a POS tagger. Phase 5 · 07 (POS Tagging) builds one. For now, default everything to `NOUN` and acknowledge the limitation.
+Недостающая часть — POS-теггер. Фаза 5 · 07 (POS Tagging) строит такой теггер. Пока по умолчанию присваивайте всему `NOUN` и признавайте это ограничение.
 
-## Use It
+## Используем
 
-NLTK and spaCy ship the production versions. A few lines each.
+NLTK и spaCy поставляют production-версии. По нескольку строк для каждого.
 
 ### NLTK
 
@@ -168,7 +168,7 @@ def nltk_pos_to_wordnet(tag):
 lemmas = [lemmatizer.lemmatize(t, nltk_pos_to_wordnet(tag)) for t, tag in tagged]
 ```
 
-`word_tokenize` handles contractions, Unicode, edge cases your regex misses. `PorterStemmer` runs all five phases. `WordNetLemmatizer` needs the POS tag translated from NLTK's Penn Treebank scheme to WordNet's abbreviation set. The translation wiring above is the bit most tutorials skip.
+`word_tokenize` обрабатывает сокращения, Unicode и пограничные случаи, которые пропускает ваш regex. `PorterStemmer` выполняет все пять фаз. `WordNetLemmatizer` требует перевести POS-тег из схемы Penn Treebank в NLTK в набор сокращений WordNet. Связующий код перевода выше — это часть, которую большинство туториалов пропускает.
 
 ### spaCy
 
@@ -190,29 +190,29 @@ running  run     VERB
 .        .       PUNCT
 ```
 
-spaCy hides the whole pipeline behind `nlp(text)`. Tokenization, POS tagging, and lemmatization all run. Faster than NLTK at scale. More accurate out of the box. The tradeoff is that you cannot easily swap individual components.
+spaCy прячет весь конвейер за `nlp(text)`. Токенизация, POS-теггинг и лемматизация выполняются вместе. Быстрее NLTK на масштабе. Точнее из коробки. Компромисс в том, что отдельные компоненты нельзя легко заменять.
 
-### When to pick which
+### Что выбрать и когда
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Teaching, research, swapping components | NLTK |
-| Production, multi-language, speed matters | spaCy |
-| Transformer pipeline (you'll tokenize with the model's tokenizer anyway) | Use `tokenizers` / `transformers` and skip classical preprocessing |
+| Обучение, исследования, замена компонентов | NLTK |
+| Production, многоязычность, важна скорость | spaCy |
+| Конвейер трансформера (вы все равно будете токенизировать токенизатором модели) | Используйте `tokenizers` / `transformers` и пропустите классическую предобработку |
 
-### The two failure modes nobody warns you about
+### Два режима отказа, о которых никто не предупреждает
 
-Most tutorials teach the algorithms and stop. Two things will bite a real preprocessing pipeline, and they are almost never covered.
+Большинство туториалов объясняют алгоритмы и на этом останавливаются. Две вещи ударят по реальному конвейеру предобработки, и их почти никогда не разбирают.
 
-**Reproducibility drift.** NLTK and spaCy change tokenization and lemmatizer behavior between versions. What produced `['do', "n't"]` in spaCy 2.x may produce `["don't"]` in 3.x. Your model was trained on one distribution. Inference now runs on a different one. Accuracy quietly degrades and nobody knows why. Pin library versions in `requirements.txt`. Write a preprocessing regression test that freezes expected tokenization of 20 sample sentences. Run it on every upgrade.
+**Дрейф воспроизводимости.** NLTK и spaCy меняют поведение токенизации и лемматизатора между версиями. То, что давало `['do', "n't"]` в spaCy 2.x, может дать `["don't"]` в 3.x. Ваша модель была обучена на одном распределении. Инференс теперь работает на другом. Точность тихо деградирует, и никто не понимает почему. Закрепляйте версии библиотек в `requirements.txt`. Напишите регрессионный тест предобработки, который фиксирует ожидаемую токенизацию 20 примерных предложений. Запускайте его при каждом обновлении.
 
-**Training / inference mismatch.** Train with aggressive preprocessing (lowercase, stopword removal, stemming), deploy on raw user input, watch performance crater. This is the single most common production NLP failure. If you preprocess during training, you must run the identical function during inference. Ship preprocessing as a function inside the model package, not as a notebook cell the serving team rewrites.
+**Несоответствие обучения и инференса.** Обучите с агрессивной предобработкой (нижний регистр, удаление стоп-слов, стемминг), разверните на сыром пользовательском вводе и наблюдайте, как качество рушится. Это самая распространенная production-ошибка в NLP. Если вы выполняете предобработку при обучении, вы обязаны запускать идентичную функцию при инференсе. Поставляйте предобработку как функцию внутри пакета модели, а не как ячейку notebook, которую команда serving переписывает заново.
 
-## Ship It
+## Отправляем
 
-A reusable prompt that helps engineers pick a preprocessing strategy without reading three textbooks.
+Переиспользуемый промпт, который помогает инженерам выбрать стратегию предобработки без чтения трех учебников.
 
-Save as `outputs/prompt-preprocessing-advisor.md`:
+Сохраните как `outputs/prompt-preprocessing-advisor.md`:
 
 ```markdown
 ---
@@ -232,24 +232,24 @@ You advise on classical NLP preprocessing. Given a task description, you output:
 Refuse to recommend stemming for user-visible text. Refuse to recommend lemmatization without POS tags. Flag non-English input as needing a different pipeline.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Extend `tokenize` to keep URLs as single tokens. Test: `tokenize("Visit https://example.com today.")` should produce one URL token.
-2. **Medium.** Implement Porter step 1b. If a word contains a vowel and ends in `ed` or `ing`, remove it. Handle the double-consonant rule (`hopping -> hop`, not `hopp`).
-3. **Hard.** Build a lemmatizer that uses WordNet as a lookup table but falls back to your Porter stemmer when WordNet has no entry. Measure accuracy on a tagged corpus against plain WordNet and plain Porter.
+1. **Легко.** Расширьте `tokenize`, чтобы URL-адреса сохранялись как одиночные токены. Тест: `tokenize("Visit https://example.com today.")` должен создавать один URL-токен.
+2. **Средне.** Реализуйте шаг 1b алгоритма Портера. Если слово содержит гласную и заканчивается на `ed` или `ing`, удалите окончание. Обработайте правило двойной согласной (`hopping -> hop`, а не `hopp`).
+3. **Сложно.** Постройте лемматизатор, который использует WordNet как таблицу соответствий, но откатывается к вашему стеммеру Портера, когда в WordNet нет записи. Измерьте accuracy на размеченном корпусе по сравнению с чистым WordNet и чистым Porter.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят люди | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| Token | A word | Whatever unit the model consumes. Can be word, subword, character, or byte. |
-| Stem | Root of a word | Result of rule-based suffix stripping. Not always a real word. |
-| Lemma | Dictionary form | The form you'd look up. Requires grammatical context to compute correctly. |
-| POS tag | Part of speech | Category like NOUN, VERB, ADJ. Needed to lemmatize accurately. |
-| Morphology | Word shape rules | How a word changes form based on tense, number, case. Lemmatization depends on it. |
+| Токен | Слово | Любая единица, которую потребляет модель. Это может быть слово, подслово, символ или байт. |
+| Основа | Корень слова | Результат удаления суффиксов по правилам. Не всегда настоящее слово. |
+| Лемма | Словарная форма | Форма, которую вы искали бы в словаре. Для корректного вычисления требуется грамматический контекст. |
+| POS-тег | Часть речи | Категория вроде NOUN, VERB, ADJ. Нужна для точной лемматизации. |
+| Морфология | Правила формы слова | То, как слово меняет форму в зависимости от времени, числа, падежа. Лемматизация зависит от этого. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Porter, M. F. (1980). An algorithm for suffix stripping](https://tartarus.org/martin/PorterStemmer/def.txt) — the original paper, five pages, still the clearest explanation.
-- [spaCy 101 — linguistic features](https://spacy.io/usage/linguistic-features) — how a real pipeline is wired.
-- [NLTK book, chapter 3](https://www.nltk.org/book/ch03.html) — tokenization edge cases you haven't thought of yet.
+- [Porter, M. F. (1980). An algorithm for suffix stripping](https://tartarus.org/martin/PorterStemmer/def.txt) — оригинальная статья, пять страниц, все еще самое ясное объяснение.
+- [spaCy 101 — linguistic features](https://spacy.io/usage/linguistic-features) — как устроен реальный конвейер.
+- [NLTK book, chapter 3](https://www.nltk.org/book/ch03.html) — пограничные случаи токенизации, о которых вы еще не думали.

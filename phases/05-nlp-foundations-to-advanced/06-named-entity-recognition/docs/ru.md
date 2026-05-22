@@ -1,25 +1,25 @@
-# Named Entity Recognition
+# Распознавание именованных сущностей
 
-> Pull the names out. Sounds easy until you deal with ambiguous boundaries, nested entities, and domain jargon.
+> Извлечь имена. Звучит просто, пока не сталкиваешься с неоднозначными границами, вложенными сущностями и доменной терминологией.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 03 (Word Embeddings)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 03 (Word Embeddings)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-"Apple sued Google over its iPhone search deal in the US." Five entities: Apple (ORG), Google (ORG), iPhone (PRODUCT), search deal (maybe), US (GPE). A good NER system extracts all of them with correct types. A bad one misses iPhone, confuses Apple the fruit with Apple the company, and labels "US" as a PERSON.
+"Apple sued Google over its iPhone search deal in the US." Пять сущностей: Apple (ORG), Google (ORG), iPhone (PRODUCT), search deal (возможно), US (GPE). Хорошая NER-система извлекает их все с корректными типами. Плохая пропускает iPhone, путает Apple-фрукт с Apple-компанией и размечает "US" как PERSON.
 
-NER is the workhorse underneath every structured extraction pipeline. Resume parsing, compliance log scanning, medical record anonymization, search query understanding, grounding for chatbot responses, legal contract extraction. You never quite see it; you always depend on it.
+NER - рабочая лошадка под каждым пайплайном структурированного извлечения. Парсинг резюме, сканирование compliance-логов, анонимизация медицинских записей, понимание поисковых запросов, grounding для ответов чатботов, извлечение данных из юридических договоров. Вы почти никогда не видите NER напрямую, но постоянно от него зависите.
 
-This lesson walks the classical path (rule-based, HMM, CRF) into the modern one (BiLSTM-CRF, then transformers). Each step solves a specific limitation of the one before it. The pattern is the lesson.
+Этот урок проходит классический путь (rule-based, HMM, CRF) к современному (BiLSTM-CRF, затем transformers). Каждый шаг решает конкретное ограничение предыдущего. Этот шаблон и есть главный урок.
 
-## The Concept
+## Концепция
 
 ![NER tagging: BIO schema + CRF+BiLSTM pipeline](./assets/ner.svg)
 
-**BIO tagging** (or BILOU) turns entity extraction into a sequence-labeling problem. Label each token with `B-TYPE` (beginning of entity), `I-TYPE` (inside entity), or `O` (outside any entity).
+**BIO tagging** (или BILOU) превращает извлечение сущностей в задачу sequence labeling. Каждому токену назначается метка `B-TYPE` (начало сущности), `I-TYPE` (внутри сущности) или `O` (вне любой сущности).
 
 ```
 Apple    B-ORG
@@ -36,19 +36,19 @@ US       B-GPE
 .        O
 ```
 
-Multi-token entities chain: `New B-GPE`, `York I-GPE`, `City I-GPE`. A model that understands BIO can extract arbitrary spans.
+Многотокенные сущности образуют цепочку: `New B-GPE`, `York I-GPE`, `City I-GPE`. Модель, понимающая BIO, может извлекать произвольные spans.
 
-The architecture progression:
+Развитие архитектур:
 
-- **Rule-based.** Regex + gazetteer lookups. High precision on known entities, zero coverage on new ones.
-- **HMM.** Hidden Markov Model. Emission probability of token given tag, transition probability of tag-to-tag. Viterbi decode. Trained on labeled data.
-- **CRF.** Conditional Random Field. Like HMM but discriminative, so you can mix arbitrary features (word shape, capitalization, neighboring words). Still the classical production workhorse in 2026 for low-resource deployments.
-- **BiLSTM-CRF.** Neural features instead of hand-crafted. LSTM reads the sentence both directions, CRF layer on top enforces consistent tag sequences.
-- **Transformer-based.** Fine-tune BERT with a token-classification head. Best accuracy. Most compute.
+- **Rule-based.** Regex + gazetteer lookups. Высокая precision на известных сущностях, нулевое покрытие новых.
+- **HMM.** Hidden Markov Model. Вероятность эмиссии токена при заданной метке, вероятность перехода от метки к метке. Декодирование Viterbi. Обучается на размеченных данных.
+- **CRF.** Conditional Random Field. Похожа на HMM, но дискриминативная, поэтому можно смешивать произвольные признаки (форма слова, капитализация, соседние слова). В 2026 году все еще классическая production-рабочая лошадка для low-resource deployment.
+- **BiLSTM-CRF.** Нейронные признаки вместо hand-crafted. LSTM читает предложение в обоих направлениях, CRF-слой сверху обеспечивает согласованные последовательности меток.
+- **Transformer-based.** Fine-tune BERT с token-classification head. Лучшая точность. Больше всего compute.
 
-## Build It
+## Сборка
 
-### Step 1: BIO tagging helpers
+### Шаг 1: помощники для BIO tagging
 
 ```python
 def spans_to_bio(tokens, spans):
@@ -86,9 +86,9 @@ def bio_to_spans(tokens, labels):
 [(0, 1, 'ORG'), (2, 3, 'ORG'), (4, 5, 'PRODUCT')]
 ```
 
-### Step 2: hand-crafted features
+### Шаг 2: hand-crafted features
 
-For classical (non-neural) NER, features are the game. Useful ones:
+Для классического (не нейронного) NER признаки решают все. Полезные признаки:
 
 ```python
 def token_features(token, prev_token, next_token):
@@ -118,9 +118,9 @@ def word_shape(word):
     return "".join(out)
 ```
 
-`word_shape("iPhone")` returns `xXxxxx`. `word_shape("USA-2024")` returns `XXX-dddd`. Capitalization patterns are high-signal for proper nouns.
+`word_shape("iPhone")` возвращает `xXxxxx`. `word_shape("USA-2024")` возвращает `XXX-dddd`. Паттерны капитализации дают сильный сигнал для имен собственных.
 
-### Step 3: a simple rule-based + dictionary baseline
+### Шаг 3: простой rule-based + dictionary baseline
 
 ```python
 ORG_GAZETTEER = {"Apple", "Google", "Microsoft", "OpenAI", "Meta", "Amazon", "Netflix"}
@@ -142,11 +142,11 @@ def rule_based_ner(tokens):
     return labels
 ```
 
-Production gazetteers have millions of entries scraped from Wikipedia and DBpedia. Coverage is good. Disambiguation (`Apple` the company vs the fruit) is terrible. That is why statistical models won.
+Production-gazetteers содержат миллионы записей, собранных из Wikipedia и DBpedia. Покрытие хорошее. Disambiguation (`Apple` компания или фрукт) ужасен. Поэтому статистические модели победили.
 
-### Step 4: the CRF step (sketch, not full impl)
+### Шаг 4: шаг к CRF (набросок, не полная реализация)
 
-Full CRF from scratch in 50 lines is not enlightening without the probability-theory foundations. Use `sklearn-crfsuite` instead:
+Полный CRF с нуля в 50 строк не дает понимания без оснований теории вероятностей. Вместо этого используйте `sklearn-crfsuite`:
 
 ```python
 import sklearn_crfsuite
@@ -176,11 +176,11 @@ X_train = [to_features(s) for s in sentences_tokenized]
 crf.fit(X_train, bio_labels_train)
 ```
 
-`c1` and `c2` are L1 and L2 regularization. `all_possible_transitions=True` lets the model learn illegal sequences (e.g., `I-ORG` after `O`) are unlikely, which is how a CRF enforces BIO consistency without you writing the constraint.
+`c1` и `c2` - L1 и L2 regularization. `all_possible_transitions=True` позволяет модели выучить, что незаконные последовательности (например, `I-ORG` после `O`) маловероятны. Так CRF обеспечивает BIO-consistency без ручного кодирования ограничения.
 
-### Step 5: what a BiLSTM-CRF adds
+### Шаг 5: что добавляет BiLSTM-CRF
 
-Features become learned. Inputs: token embeddings (GloVe or fastText). LSTM reads left-to-right and right-to-left. Concatenated hidden states go through a CRF output layer. The CRF still enforces tag-sequence consistency; the LSTM replaces hand-crafted features with learned ones.
+Признаки становятся learned. Входы: token embeddings (GloVe или fastText). LSTM читает предложение слева направо и справа налево. Конкатенированные hidden states проходят через CRF output layer. CRF по-прежнему обеспечивает согласованность последовательности меток; LSTM заменяет hand-crafted features на learned features.
 
 ```python
 import torch
@@ -201,11 +201,11 @@ class BiLSTM_CRF_Head(nn.Module):
         return emissions
 ```
 
-For the CRF layer, use `torchcrf.CRF` (pip install pytorch-crf). The gain over hand-crafted CRF is measurable but smaller than you expect unless you have tens of thousands of labeled sentences.
+Для CRF layer используйте `torchcrf.CRF` (pip install pytorch-crf). Прирост над hand-crafted CRF измерим, но меньше, чем можно ожидать, если у вас нет десятков тысяч размеченных предложений.
 
-## Use It
+## Использование
 
-spaCy ships production-grade NER out of the box.
+spaCy поставляет production-grade NER из коробки.
 
 ```python
 import spacy
@@ -223,9 +223,9 @@ iPhone               ORG
 US                   GPE
 ```
 
-Notice `iPhone` labeled `ORG` rather than `PRODUCT` — spaCy's small model has weak product-entity coverage. The large model (`en_core_web_lg`) does better. The transformer model (`en_core_web_trf`) does better still.
+Обратите внимание: `iPhone` размечен как `ORG`, а не как `PRODUCT` - у малой модели spaCy слабое покрытие product-entities. Большая модель (`en_core_web_lg`) справляется лучше. Transformer model (`en_core_web_trf`) еще лучше.
 
-Hugging Face for BERT-based NER:
+Hugging Face для BERT-based NER:
 
 ```python
 from transformers import pipeline
@@ -241,38 +241,38 @@ print(ner("Apple sued Google over its iPhone in the US."))
  {'entity_group': 'LOC', 'word': 'US', ...}]
 ```
 
-`aggregation_strategy="simple"` merges contiguous B-X, I-X tokens into a span. Without it, you get token-level labels and have to merge yourself.
+`aggregation_strategy="simple"` объединяет соседние B-X, I-X tokens в span. Без него вы получите token-level labels и будете объединять их сами.
 
-### LLM-based NER (the 2026 option)
+### LLM-based NER (вариант 2026 года)
 
-Zero-shot and few-shot LLM NER is now competitive with fine-tuned models on many domains, and dramatically better when labeled data is scarce.
+Zero-shot и few-shot LLM NER теперь конкурентоспособны с fine-tuned models во многих доменах и значительно лучше, когда размеченных данных мало.
 
-- **Zero-shot prompting.** Give the LLM a list of entity types and an example schema. Ask for JSON output. Works out of the box; accuracy is moderate on novel domains.
-- **ZeroTuneBio-style prompting.** Decompose the task into candidate extraction → meaning explanation → judgment → re-check. A multi-stage prompt (not one-shot) lifts accuracy substantially on biomedical NER. The same pattern works for legal, financial, and scientific domains.
-- **Dynamic prompting with RAG.** Retrieve the most similar labeled examples from a small annotated seed set for every inference call; build the few-shot prompt on the fly. In 2026 benchmarks, this lifts GPT-4 biomedical NER F1 by 11-12% over static prompting.
-- **Per-entity-type decomposition.** For long documents, a single call that extracts all entity types at once loses recall as length grows. Run one extraction pass per entity type. Higher inference cost, substantially higher accuracy. This is the standard pattern for clinical notes and legal contracts.
+- **Zero-shot prompting.** Дайте LLM список типов сущностей и пример схемы. Попросите JSON output. Работает из коробки; точность на новых доменах средняя.
+- **ZeroTuneBio-style prompting.** Разложите задачу на candidate extraction -> meaning explanation -> judgment -> re-check. Многоэтапный prompt (не one-shot) заметно повышает точность на biomedical NER. Тот же паттерн работает для юридических, финансовых и научных доменов.
+- **Dynamic prompting with RAG.** Для каждого inference call извлекайте самые похожие размеченные примеры из небольшого annotated seed set; собирайте few-shot prompt на лету. В бенчмарках 2026 года это повышает biomedical NER F1 для GPT-4 на 11-12% по сравнению со static prompting.
+- **Per-entity-type decomposition.** Для длинных документов один вызов, извлекающий все типы сущностей сразу, теряет recall с ростом длины. Запускайте отдельный extraction pass для каждого типа сущности. Стоимость inference выше, точность существенно выше. Это стандартный паттерн для clinical notes и legal contracts.
 
-Production recommendation as of 2026: start with an LLM zero-shot baseline before you collect training data. Often the F1 is good enough that you never need to fine-tune.
+Production-рекомендация на 2026 год: начните с LLM zero-shot baseline до сбора training data. Часто F1 уже достаточно хорош, и fine-tune не понадобится.
 
-### Where classical NER still wins
+### Где классический NER все еще выигрывает
 
-Even with LLMs available, classical NER wins when:
+Даже при наличии LLM классический NER выигрывает, когда:
 
-- Latency budget is under 50ms.
-- You have thousands of labeled examples and need 98%+ F1.
-- The domain has a stable ontology where a pretrained CRF or BiLSTM transfers well.
-- Regulatory constraints require an on-prem, non-generative model.
+- Latency budget меньше 50ms.
+- У вас есть тысячи размеченных примеров и нужен 98%+ F1.
+- В домене стабильная онтология, где pretrained CRF или BiLSTM хорошо переносится.
+- Regulatory constraints требуют on-prem, non-generative model.
 
-### Where it falls apart
+### Где все разваливается
 
-- **Domain shift.** CoNLL-trained NER on legal contracts performs worse than a gazetteer. Fine-tune on your domain.
-- **Nested entities.** "Bank of America Tower" is simultaneously an ORG and a FACILITY. Standard BIO cannot represent overlapping spans. You need nested NER (multi-pass or span-based models).
-- **Long entities.** "United States Federal Deposit Insurance Corporation." Token-level models sometimes split this. Use `aggregation_strategy` or post-process.
-- **Sparse types.** Medical NER labels like DRUG_BRAND, ADVERSE_EVENT, DOSE. General-purpose models have no idea. Scispacy and BioBERT are the starting points there.
+- **Domain shift.** NER, обученный на CoNLL, на юридических договорах работает хуже gazetteer. Fine-tune на вашем домене.
+- **Nested entities.** "Bank of America Tower" одновременно ORG и FACILITY. Стандартный BIO не может представить overlapping spans. Нужен nested NER (multi-pass или span-based models).
+- **Long entities.** "United States Federal Deposit Insurance Corporation." Token-level models иногда разбивают это. Используйте `aggregation_strategy` или post-process.
+- **Sparse types.** Медицинские NER-метки вроде DRUG_BRAND, ADVERSE_EVENT, DOSE. General-purpose models ничего о них не знают. Scispacy и BioBERT - стартовые точки.
 
-## Ship It
+## Доставка
 
-Save as `outputs/skill-ner-picker.md`:
+Сохраните как `outputs/skill-ner-picker.md`:
 
 ```markdown
 ---
@@ -294,26 +294,26 @@ Given a task description (domain, label set, language, latency, data volume), ou
 Refuse to recommend fine-tuning a transformer for under 500 labeled examples unless the user already has a pretrained domain model. Flag nested entities as needing span-based or multi-pass models. Require a gazetteer audit if the user mentions "production scale" and labels are unchanged from CoNLL-2003.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement `bio_to_spans` (the inverse of `spans_to_bio`) and verify round-trip consistency on 10 sentences.
-2. **Medium.** Train the sklearn-crfsuite CRF above on the CoNLL-2003 English NER dataset. Report per-entity F1 using `seqeval`. Typical result: ~84 F1.
-3. **Hard.** Fine-tune `distilbert-base-cased` on a domain-specific NER dataset (medical, legal, or financial). Compare against the spaCy small model. Document data leakage checks and write up what surprised you.
+1. **Easy.** Реализуйте `bio_to_spans` (обратную функцию к `spans_to_bio`) и проверьте round-trip consistency на 10 предложениях.
+2. **Medium.** Обучите CRF из sklearn-crfsuite выше на английском NER-датасете CoNLL-2003. Сообщите per-entity F1 с помощью `seqeval`. Типичный результат: ~84 F1.
+3. **Hard.** Fine-tune `distilbert-base-cased` на domain-specific NER dataset (medical, legal или financial). Сравните с малой моделью spaCy. Задокументируйте проверки data leakage и опишите, что вас удивило.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| NER | Extract names | Label token spans with types (PERSON, ORG, GPE, DATE, ...). |
-| BIO | Tagging scheme | `B-X` begins, `I-X` continues, `O` outside. |
-| BILOU | Better BIO | Adds `L-X` (last), `U-X` (unit) for cleaner boundaries. |
-| CRF | Structured classifier | Models transitions between labels, not just emissions. Enforces valid sequences. |
-| Nested NER | Overlapping entities | One span is a different entity than a sub-span of it. BIO cannot express this. |
-| Entity-level F1 | Proper NER metric | Predicted span must match true span exactly. Token-level F1 overstates accuracy. |
+| NER | Извлекать имена | Размечать token spans типами (PERSON, ORG, GPE, DATE, ...). |
+| BIO | Схема тегирования | `B-X` начинает, `I-X` продолжает, `O` вне сущности. |
+| BILOU | Улучшенный BIO | Добавляет `L-X` (last), `U-X` (unit) для более чистых границ. |
+| CRF | Структурный классификатор | Моделирует переходы между метками, а не только эмиссии. Обеспечивает валидные последовательности. |
+| Nested NER | Перекрывающиеся сущности | Один span является другой сущностью, чем его sub-span. BIO не может это выразить. |
+| Entity-level F1 | Правильная NER-метрика | Предсказанный span должен точно совпасть с истинным span. Token-level F1 завышает точность. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Lample et al. (2016). Neural Architectures for Named Entity Recognition](https://arxiv.org/abs/1603.01360) — the BiLSTM-CRF paper. Canonical.
-- [Devlin et al. (2018). BERT: Pre-training of Deep Bidirectional Transformers](https://arxiv.org/abs/1810.04805) — introduces the token-classification pattern that became standard.
-- [spaCy linguistic features — named entities](https://spacy.io/usage/linguistic-features#named-entities) — practical reference for every attribute on `Doc.ents` and `Span`.
-- [seqeval](https://github.com/chakki-works/seqeval) — the correct metric library. Use it always.
+- [Lample et al. (2016). Neural Architectures for Named Entity Recognition](https://arxiv.org/abs/1603.01360) — статья о BiLSTM-CRF. Каноническая.
+- [Devlin et al. (2018). BERT: Pre-training of Deep Bidirectional Transformers](https://arxiv.org/abs/1810.04805) — вводит token-classification pattern, ставший стандартом.
+- [spaCy linguistic features — named entities](https://spacy.io/usage/linguistic-features#named-entities) — практический справочник по каждому атрибуту `Doc.ents` и `Span`.
+- [seqeval](https://github.com/chakki-works/seqeval) — правильная библиотека метрик. Используйте всегда.

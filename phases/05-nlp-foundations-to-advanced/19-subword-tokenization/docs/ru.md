@@ -1,45 +1,45 @@
-# Subword Tokenization — BPE, WordPiece, Unigram, SentencePiece
+# Подсловная токенизация — BPE, WordPiece, Unigram, SentencePiece
 
-> Word tokenizers choke on unseen words. Character tokenizers blow up sequence length. Subword tokenizers split the difference. Every modern LLM ships on one.
+> Словные токенизаторы давятся на невиданных словах. Символьные токенизаторы раздувают длину последовательности. Подсловные токенизаторы выбирают середину. На одном из них поставляется каждый современный LLM.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 01 (Text Processing), Phase 5 · 04 (GloVe / FastText / Subword)
-**Time:** ~60 minutes
+**Тип:** Обучение
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 01 (Обработка текста), Фаза 5 · 04 (GloVe / FastText / Subword)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Your vocabulary has 50,000 words. A user types "untokenizable". Your tokenizer returns `[UNK]`. The model now has no signal about the word. Worse: the 90th-percentile document in your corpus has 40 rare words, which means 40 bits of dropped information per document.
+В вашем словаре 50 000 слов. Пользователь вводит "untokenizable". Ваш токенизатор возвращает `[UNK]`. Теперь у модели нет никакого сигнала о слове. Хуже того: документ 90-го процентиля в вашем корпусе содержит 40 редких слов, что означает 40 бит потерянной информации на документ.
 
-Subword tokenization solves this. Common words stay single tokens. Rare words decompose into meaningful pieces: `untokenizable` → `un`, `token`, `izable`. Training data covers everything because any string is ultimately a sequence of bytes.
+Подсловная токенизация решает это. Частые слова остаются одиночными токенами. Редкие слова раскладываются на значимые части: `untokenizable` → `un`, `token`, `izable`. Обучающие данные покрывают все, потому что любая строка в конечном счете является последовательностью байтов.
 
-Every frontier LLM in 2026 ships on one of three algorithms (BPE, Unigram, WordPiece), wrapped in one of three libraries (tiktoken, SentencePiece, HF Tokenizers). You cannot ship a language model without picking one.
+Каждая передовая LLM в 2026 поставляется на одном из трех алгоритмов (BPE, Unigram, WordPiece), обернутых в одну из трех библиотек (tiktoken, SentencePiece, HF Tokenizers). Вы не можете поставить языковую модель, не выбрав один из них.
 
-## The Concept
+## Концепция
 
-![BPE vs Unigram vs WordPiece, character-by-character](../assets/subword-tokenization.svg)
+![BPE vs Unigram vs WordPiece, посимвольно](../assets/subword-tokenization.svg)
 
-**BPE (Byte-Pair Encoding).** Start with a character-level vocabulary. Count every adjacent pair. Merge the most frequent pair into a new token. Repeat until you hit the target vocabulary size. Dominant algorithm: GPT-2/3/4, Llama, Gemma, Qwen2, Mistral.
+**BPE (Byte-Pair Encoding).** Начните со словаря на уровне символов. Подсчитайте каждую соседнюю пару. Объедините самую частую пару в новый токен. Повторяйте, пока не достигнете целевого размера словаря. Доминирующий алгоритм: GPT-2/3/4, Llama, Gemma, Qwen2, Mistral.
 
-**Byte-level BPE.** Same algorithm but over raw bytes (256 base tokens) instead of Unicode characters. Guarantees zero `[UNK]` tokens — any byte sequence encodes. GPT-2 uses 50,257 tokens (256 bytes + 50,000 merges + 1 special).
+**Byte-level BPE.** Тот же алгоритм, но поверх сырых байтов (256 базовых токенов), а не Unicode-символов. Гарантирует ноль токенов `[UNK]` — любая байтовая последовательность кодируется. GPT-2 использует 50 257 токенов (256 bytes + 50,000 merges + 1 special).
 
-**Unigram.** Start with a huge vocabulary. Assign each token a unigram probability. Iteratively prune tokens whose removal least increases the corpus log-likelihood. Probabilistic at inference: can sample tokenizations (useful for data augmentation via subword regularization). Used by T5, mBART, ALBERT, XLNet, Gemma.
+**Unigram.** Начните с огромного словаря. Назначьте каждому токену unigram probability. Итеративно удаляйте токены, удаление которых меньше всего увеличивает corpus log-likelihood. Вероятностный на инференсе: можно сэмплировать токенизации (полезно для аугментации данных через subword regularization). Используется T5, mBART, ALBERT, XLNet, Gemma.
 
-**WordPiece.** Merge pairs that maximize likelihood of the training corpus rather than raw frequency. Used by BERT, DistilBERT, ELECTRA.
+**WordPiece.** Объединяет пары, которые максимизируют likelihood обучающего корпуса, а не сырую частоту. Используется BERT, DistilBERT, ELECTRA.
 
-**SentencePiece vs tiktoken.** SentencePiece is the library that *trains* vocabularies (BPE or Unigram) directly on raw Unicode text, encoding whitespace as `▁`. tiktoken is OpenAI's fast *encoder* against pre-built vocabularies; it does not train.
+**SentencePiece vs tiktoken.** SentencePiece - библиотека, которая *обучает* словари (BPE или Unigram) напрямую на сыром Unicode-тексте, кодируя пробел как `▁`. tiktoken - быстрый *encoder* OpenAI для заранее построенных словарей; он не обучает.
 
-Rule of thumb:
+Практическое правило:
 
-- **Training a new vocabulary:** SentencePiece (multilingual, no pre-tokenization) or HF Tokenizers.
-- **Fast inference against GPT vocab:** tiktoken (cl100k_base, o200k_base).
-- **Both:** HF Tokenizers — one library, training + serving.
+- **Обучение нового словаря:** SentencePiece (многоязычный, без pre-tokenization) или HF Tokenizers.
+- **Быстрый инференс с GPT vocab:** tiktoken (cl100k_base, o200k_base).
+- **И то и другое:** HF Tokenizers — одна библиотека, training + serving.
 
-## Build It
+## Соберите это
 
-### Step 1: BPE from scratch
+### Шаг 1: BPE с нуля
 
-See `code/main.py`. The loop:
+См. `code/main.py`. Цикл:
 
 ```python
 def train_bpe(corpus, num_merges):
@@ -58,9 +58,9 @@ def train_bpe(corpus, num_merges):
     return merges
 ```
 
-Three facts the algorithm encodes. `</w>` marks word end so "low" (suffix) and "lower" (prefix) stay distinct. Frequency weighting makes high-frequency pairs win early. The merge list is ordered — inference applies merges in training order.
+Три факта, которые кодирует алгоритм. `</w>` помечает конец слова, поэтому "low" (суффикс) и "lower" (префикс) остаются различимыми. Взвешивание по частоте заставляет высокочастотные пары побеждать рано. Список слияний упорядочен — инференс применяет слияния в порядке обучения.
 
-### Step 2: encode with the learned merges
+### Шаг 2: кодирование с выученными слияниями
 
 ```python
 def encode_bpe(word, merges):
@@ -75,9 +75,9 @@ def encode_bpe(word, merges):
     return symbols
 ```
 
-Naive O(n·|merges|). Production implementations (tiktoken, HF Tokenizers) use merge-rank lookup with priority queues and run in near-linear time.
+Наивная сложность O(n·|merges|). Production-реализации (tiktoken, HF Tokenizers) используют merge-rank lookup с priority queues и работают почти за линейное время.
 
-### Step 3: SentencePiece in practice
+### Шаг 3: SentencePiece на практике
 
 ```python
 import sentencepiece as spm
@@ -96,9 +96,9 @@ print(sp.encode("untokenizable", out_type=str))
 # ['▁un', 'token', 'izable']
 ```
 
-Notice: no pre-tokenization required, space encoded as `▁`, `character_coverage` controls how aggressively rare characters are preserved vs mapped to `<unk>`.
+Обратите внимание: pre-tokenization не требуется, пробел кодируется как `▁`, `character_coverage` управляет тем, насколько агрессивно редкие символы сохраняются, а не отображаются в `<unk>`.
 
-### Step 4: tiktoken for OpenAI-compatible vocabs
+### Шаг 4: tiktoken для OpenAI-совместимых словарей
 
 ```python
 import tiktoken
@@ -107,32 +107,32 @@ print(enc.encode("untokenizable"))        # [127340, 101028]
 print(len(enc.encode("Hello, world!")))   # 4
 ```
 
-Encoding-only. Fast (Rust backend). Exact match with GPT-4/5 tokenization for byte-counting, cost estimation, context-window budgeting.
+Только кодирование. Быстро (Rust backend). Точное совпадение с токенизацией GPT-4/5 для подсчета байтов, оценки стоимости и планирования context-window budgeting.
 
-## Pitfalls that still ship in 2026
+## Ловушки, которые все еще попадают в поставку в 2026
 
-- **Tokenizer drift.** Training on vocab A, deploying against vocab B. Token IDs differ; model outputs garbage. Check `tokenizer.json` hash in CI.
-- **Whitespace ambiguity.** BPE "hello" vs " hello" produce different tokens. Always specify `add_special_tokens` and `add_prefix_space` explicitly.
-- **Multilingual undertraining.** English-heavy corpora produce vocabularies that split non-Latin scripts into 5-10x more tokens. Same prompt costs 5-10x more in Japanese/Arabic on GPT-3.5. o200k_base partially fixed this.
-- **Emoji splits.** A single emoji can take 5 tokens. Checkpoint emoji handling when budgeting context.
+- **Tokenizer drift.** Обучение на vocab A, развертывание с vocab B. Token IDs отличаются; модель выдает мусор. Проверяйте hash `tokenizer.json` в CI.
+- **Неоднозначность пробелов.** BPE "hello" и " hello" дают разные токены. Всегда явно задавайте `add_special_tokens` и `add_prefix_space`.
+- **Недообучение многоязычности.** Англоцентричные корпуса создают словари, которые разбивают нелатинские письменности в 5-10x больше токенов. Один и тот же prompt стоит в 5-10x дороже на японском/арабском в GPT-3.5. o200k_base частично исправил это.
+- **Разбиение emoji.** Один emoji может занимать 5 токенов. Проверяйте обработку emoji при бюджетировании контекста.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
 | Training a monolingual model from scratch | HF Tokenizers (BPE) |
 | Training a multilingual model | SentencePiece (Unigram, `character_coverage=0.9995`) |
 | Serving an OpenAI-compatible API | tiktoken (`o200k_base` for GPT-4+) |
-| Domain-specific vocab (code, math, protein) | Train custom BPE on domain corpus, merge with base vocab |
-| Edge inference, small model | Unigram (smaller vocabularies work better) |
+| Domain-specific vocab (code, math, protein) | Обучите custom BPE на доменном корпусе, объедините с base vocab |
+| Edge inference, small model | Unigram (меньшие словари работают лучше) |
 
-Vocabulary size is a scaling decision, not a constant. Rough heuristic: 32k for <1B params, 50-100k for 1-10B, 200k+ for multilingual/frontier.
+Размер словаря - это решение о масштабировании, а не константа. Грубая эвристика: 32k для <1B params, 50-100k для 1-10B, 200k+ для multilingual/frontier.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-tokenizer-picker.md`:
+Сохраните как `outputs/skill-tokenizer-picker.md`:
 
 ```markdown
 ---
@@ -155,28 +155,28 @@ Given a corpus (size, languages, domain) and deployment target (training from sc
 Refuse to train a character-coverage <0.995 tokenizer on corpora with rare-script content. Refuse to ship a vocab without a frozen `tokenizer.json` hash check in CI. Flag any monolingual tokenizer under 16k vocab as likely under-spec.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Train a 500-merge BPE on `code/main.py`'s tiny corpus. Encode three held-out words. How many produced exactly 1 token vs >1 token?
-2. **Medium.** Compare token counts on 100 English Wikipedia sentences between `cl100k_base`, `o200k_base`, and a SentencePiece BPE you train with vocab=32k. Report the compression ratio of each.
-3. **Hard.** Train the same corpus with BPE, Unigram, and WordPiece. Measure downstream accuracy when using each on a small sentiment classifier. Does the choice move the needle by more than 1 point F1?
+1. **Easy.** Обучите BPE с 500 слияниями на маленьком корпусе из `code/main.py`. Закодируйте три отложенных слова. Сколько из них дали ровно 1 токен, а сколько >1 токена?
+2. **Medium.** Сравните число токенов на 100 английских предложениях из Wikipedia между `cl100k_base`, `o200k_base` и SentencePiece BPE, который вы обучите с vocab=32k. Сообщите compression ratio для каждого.
+3. **Hard.** Обучите один и тот же корпус с BPE, Unigram и WordPiece. Измерьте downstream accuracy при использовании каждого на небольшом классификаторе тональности. Сдвигает ли выбор результат больше чем на 1 point F1?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| BPE | Byte-Pair Encoding | Greedy merge of most-frequent character pairs until target vocab size hit. |
-| Byte-level BPE | No unknown tokens ever | BPE over raw 256 bytes; GPT-2 / Llama use this. |
-| Unigram | Probabilistic tokenizer | Prunes from a large candidate set using log-likelihood; used by T5, Gemma. |
-| SentencePiece | The whitespace one | Library that trains BPE/Unigram on raw text; space encoded as `▁`. |
-| tiktoken | The fast one | OpenAI's Rust-backed BPE encoder for pre-built vocabs. No training. |
-| Merge list | The magic numbers | Ordered list of `(a, b) → ab` merges; inference applies in order. |
-| Character coverage | How rare is too rare? | Fraction of characters in training corpus the tokenizer must cover; ~0.9995 typical. |
+| BPE | Byte-Pair Encoding | Жадное слияние самых частых пар символов до достижения целевого размера словаря. |
+| Byte-level BPE | Неизвестных токенов никогда нет | BPE поверх сырых 256 bytes; GPT-2 / Llama используют это. |
+| Unigram | Вероятностный токенизатор | Удаляет из большого набора кандидатов по log-likelihood; используется T5, Gemma. |
+| SentencePiece | Тот, что про пробелы | Библиотека, которая обучает BPE/Unigram на сыром тексте; пробел кодируется как `▁`. |
+| tiktoken | Быстрый | BPE-encoder OpenAI на Rust для заранее построенных словарей. Без обучения. |
+| Merge list | Магические числа | Упорядоченный список слияний `(a, b) → ab`; инференс применяет их по порядку. |
+| Character coverage | Насколько редкое - слишком редкое? | Доля символов в обучающем корпусе, которую токенизатор должен покрывать; типично ~0.9995. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Sennrich, Haddow, Birch (2015). Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909) — the BPE paper.
-- [Kudo (2018). Subword Regularization with Unigram Language Model](https://arxiv.org/abs/1804.10959) — the Unigram paper.
-- [Kudo, Richardson (2018). SentencePiece: A simple and language independent subword tokenizer](https://arxiv.org/abs/1808.06226) — the library.
-- [Hugging Face — Summary of the tokenizers](https://huggingface.co/docs/transformers/tokenizer_summary) — concise reference.
-- [OpenAI tiktoken repo](https://github.com/openai/tiktoken) — cookbook + encoding list.
+- [Sennrich, Haddow, Birch (2015). Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909) — статья BPE.
+- [Kudo (2018). Subword Regularization with Unigram Language Model](https://arxiv.org/abs/1804.10959) — статья Unigram.
+- [Kudo, Richardson (2018). SentencePiece: A simple and language independent subword tokenizer](https://arxiv.org/abs/1808.06226) — библиотека.
+- [Hugging Face — Summary of the tokenizers](https://huggingface.co/docs/transformers/tokenizer_summary) — краткий справочник.
+- [OpenAI tiktoken repo](https://github.com/openai/tiktoken) — cookbook + список encoding.

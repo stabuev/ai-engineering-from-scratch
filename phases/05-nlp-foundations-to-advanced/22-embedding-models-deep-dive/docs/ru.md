@@ -1,57 +1,57 @@
-# Embedding Models — The 2026 Deep Dive
+# Модели эмбеддингов — глубокий разбор 2026 года
 
-> Word2Vec gave you a vector per word. Modern embedding models give you a vector per passage, cross-lingual, with sparse, dense, and multi-vector views, sized to fit your index. Pick wrong and your RAG retrieves the wrong thing.
+> Word2Vec давал вам вектор на слово. Современные модели эмбеддингов дают вам вектор на фрагмент текста, кросс-языковой, с разреженным, плотным и мультивекторным представлениями, подобранный под размер вашего индекса. Ошибетесь с выбором — и ваш RAG будет извлекать не то.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 03 (Word2Vec), Phase 5 · 14 (Information Retrieval)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 03 (Word2Vec), Фаза 5 · 14 (Information Retrieval)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Your RAG system retrieves the wrong passage 40% of the time. The culprit is rarely the vector database or the prompt. It is the embedding model.
+Ваша RAG-система извлекает неправильный фрагмент в 40% случаев. Причина редко в векторной базе данных или промпте. Причина — модель эмбеддингов.
 
-Choosing an embedding in 2026 means picking across five axes:
+Выбор эмбеддинга в 2026 году означает выбор по пяти осям:
 
-1. **Dense vs sparse vs multi-vector.** One vector per passage, or one per token, or a sparse weighted bag of words.
-2. **Language coverage.** Monolingual English models still win on English-only tasks. Multilingual models win when corpora are mixed.
-3. **Context length.** 512 tokens vs 8,192 vs 32,768 — and real effective capacity is often 60-70% of the advertised max.
-4. **Dimension budget.** 3,072 floats at full precision = 12 KB per vector. At 100M vectors, storage is $1,300/month. Matryoshka truncation cuts this 4×.
-5. **Open vs hosted.** Open-weight means you control the stack and data. Hosted means you trade control for always-latest.
+1. **Плотные (dense) vs разреженные (sparse) vs мультивекторные (multi-vector).** Один вектор на фрагмент, или один на токен, или разреженный взвешенный мешок слов.
+2. **Языковое покрытие.** Одноязычные английские модели все еще выигрывают на задачах только на английском. Многоязычные модели выигрывают, когда корпуса смешанные.
+3. **Длина контекста.** 512 токенов vs 8,192 vs 32,768 — а реальная эффективная емкость часто составляет 60-70% от заявленного максимума.
+4. **Бюджет размерности.** 3,072 числа с плавающей точкой при полной точности = 12 KB на вектор. При 100M векторов хранение стоит $1,300/месяц. Усечение Matryoshka сокращает это в 4 раза.
+5. **Открытые веса vs hosted.** Открытые веса означают, что вы контролируете стек и данные. Hosted означает, что вы меняете контроль на always-latest.
 
-This lesson names the tradeoffs so you can pick on evidence, not on whatever was popular last quarter.
+Этот урок называет компромиссы, чтобы вы выбирали на основе доказательств, а не того, что было популярно в прошлом квартале.
 
-## The Concept
+## Концепция
 
-![Dense, sparse, and multi-vector embeddings](../assets/embedding-modes.svg)
+![Плотные, разреженные и мультивекторные эмбеддинги](../assets/embedding-modes.svg)
 
-**Dense embeddings.** One vector per passage (usually 384-3,072 dimensions). Cosine similarity ranks passages by semantic proximity. OpenAI `text-embedding-3-large`, BGE-M3 dense mode, Voyage-3. Default choice.
+**Плотные эмбеддинги (dense embeddings).** Один вектор на фрагмент (обычно 384-3,072 размерности). Косинусное сходство ранжирует фрагменты по семантической близости. OpenAI `text-embedding-3-large`, плотный режим BGE-M3, Voyage-3. Выбор по умолчанию.
 
-**Sparse embeddings.** SPLADE-style. A transformer predicts a weight for every vocab token, then zeros out most of them. Result is a sparse vector of size |vocab|. Captures lexical matching (like BM25) but with learned term weights. Strong on keyword-heavy queries.
+**Разреженные эмбеддинги (sparse embeddings).** В стиле SPLADE. Трансформер предсказывает вес для каждого токена словаря, затем обнуляет большую часть весов. Результат — разреженный вектор размера |vocab|. Улавливает лексическое совпадение (как BM25), но с обученными весами терминов. Силен на запросах с большим количеством ключевых слов.
 
-**Multi-vector (late interaction).** ColBERTv2, Jina-ColBERT. One vector per token. Scoring with MaxSim: for each query token, find the most similar document token, sum the scores. More expensive to store and score, but wins on long queries and domain-specific corpora.
+**Мультивекторные представления (multi-vector, late interaction).** ColBERTv2, Jina-ColBERT. Один вектор на токен. Скоринг через MaxSim: для каждого токена запроса найти самый похожий токен документа и суммировать оценки. Дороже в хранении и скоринге, но выигрывает на длинных запросах и доменных корпусах.
 
-**BGE-M3: all three at once.** Single model outputs dense, sparse, and multi-vector representations simultaneously. Each can be queried independently; scores fuse via weighted sum. The 2026 default when you want flexibility from one checkpoint.
+**BGE-M3: все три сразу.** Одна модель одновременно выдает плотные, разреженные и мультивекторные представления. Каждое можно запрашивать независимо; оценки объединяются взвешенной суммой. Дефолт 2026 года, когда нужна гибкость из одного checkpoint.
 
-**Matryoshka Representation Learning.** Trained so the first N dimensions of the vector form a useful standalone embedding. Truncate a 1,536-dim vector to 256 dim and pay ~1% accuracy for 6× storage savings. Supported by OpenAI text-3, Cohere v4, Voyage-4, Jina v5, Gemini Embedding 2, Nomic v1.5+.
+**Matryoshka Representation Learning.** Обучается так, чтобы первые N размерностей вектора образовывали полезный самостоятельный эмбеддинг. Усеките 1,536-мерный вектор до 256 размерностей и заплатите ~1% точности за 6-кратную экономию хранения. Поддерживается OpenAI text-3, Cohere v4, Voyage-4, Jina v5, Gemini Embedding 2, Nomic v1.5+.
 
-### The MTEB leaderboard tells a partial story
+### Лидерборд MTEB рассказывает только часть истории
 
-Massive Text Embedding Benchmark — 56 tasks across 8 task types at launch (2022), expanded to 100+ tasks in MTEB v2. In early 2026, Gemini Embedding 2 tops retrieval (67.71 MTEB-R). Cohere embed-v4 leads general (65.2 MTEB). BGE-M3 leads open-weight multilingual (63.0). The leaderboard is necessary but not sufficient — always benchmark on your domain.
+Massive Text Embedding Benchmark — 56 задач по 8 типам задач на запуске (2022), расширен до 100+ задач в MTEB v2. В начале 2026 года Gemini Embedding 2 лидирует в retrieval (67.71 MTEB-R). Cohere embed-v4 лидирует в общем зачете (65.2 MTEB). BGE-M3 лидирует среди многоязычных моделей с открытыми весами (63.0). Лидерборд необходим, но недостаточен — всегда бенчмаркайте на своем домене.
 
-### The three-tier pattern
+### Трехуровневый паттерн
 
-| Use case | Pattern |
+| Сценарий | Паттерн |
 |----------|---------|
-| Fast first-pass | Dense bi-encoder (BGE-M3, text-3-small) |
-| Recall boost | Sparse (SPLADE, BGE-M3 sparse) + RRF fuse |
-| Precision on top-50 | Multi-vector (ColBERTv2) or cross-encoder reranker |
+| Быстрый первый проход | Плотный bi-encoder (BGE-M3, text-3-small) |
+| Увеличение recall | Разреженный (SPLADE, BGE-M3 sparse) + RRF fusion |
+| Точность на top-50 | Мультивекторный (ColBERTv2) или cross-encoder reranker |
 
-Most production stacks use all three.
+Большинство production-стеков используют все три.
 
-## Build It
+## Соберите это
 
-### Step 1: baseline — dense embeddings with Sentence-BERT
+### Шаг 1: baseline — плотные эмбеддинги с Sentence-BERT
 
 ```python
 from sentence_transformers import SentenceTransformer
@@ -71,9 +71,9 @@ scores = emb @ q_emb
 print(sorted(enumerate(scores), key=lambda x: -x[1]))
 ```
 
-`normalize_embeddings=True` makes the dot product equal cosine similarity. Always set it.
+`normalize_embeddings=True` делает скалярное произведение равным косинусному сходству. Всегда устанавливайте это.
 
-### Step 2: Matryoshka truncation
+### Шаг 2: усечение Matryoshka
 
 ```python
 def truncate(vectors, dim):
@@ -84,9 +84,9 @@ emb_256 = truncate(emb, 256)
 emb_128 = truncate(emb, 128)
 ```
 
-Re-normalize after truncation. Nomic v1.5, OpenAI text-3, and Voyage-4 are trained so this is lossless for the first few levels. Non-Matryoshka models (original Sentence-BERT) degrade sharply when truncated.
+Повторно нормализуйте после усечения. Nomic v1.5, OpenAI text-3 и Voyage-4 обучены так, что это почти без потерь для первых нескольких уровней. Не-Matryoshka модели (оригинальный Sentence-BERT) резко деградируют при усечении.
 
-### Step 3: BGE-M3 multi-functionality
+### Шаг 3: многофункциональность BGE-M3
 
 ```python
 from FlagEmbedding import BGEM3FlagModel
@@ -104,7 +104,7 @@ output = model.encode(
 # output["colbert_vecs"]:  list of (n_tokens, 1024) arrays
 ```
 
-Three indexes, one inference call. Score fusion:
+Три индекса, один вызов инференса. Объединение оценок:
 
 ```python
 dense_score = ... # cosine over dense_vecs
@@ -113,9 +113,9 @@ colbert_score = model.colbert_score(q_col, d_col)
 final = 0.4 * dense_score + 0.2 * sparse_score + 0.4 * colbert_score
 ```
 
-Tune the weights on your domain.
+Настраивайте веса на своем домене.
 
-### Step 4: MTEB eval on a custom task
+### Шаг 4: MTEB eval на пользовательской задаче
 
 ```python
 from mteb import MTEB
@@ -125,39 +125,39 @@ evaluation = MTEB(tasks=tasks)
 results = evaluation.run(encoder, output_folder="./mteb-results")
 ```
 
-Run your candidate models on a *representative* subset. Do not trust leaderboard rank alone — your domain matters.
+Запускайте модели-кандидаты на *репрезентативном* подмножестве. Не доверяйте одному только месту в лидерборде — ваш домен имеет значение.
 
-### Step 5: hand-rolled cosine from scratch
+### Шаг 5: косинус вручную с нуля
 
-See `code/main.py`. Averaged Hashing Trick embeddings (stdlib-only). Not competitive with transformer embeddings, but shows the shape: tokenize → vector → normalize → dot product.
+См. `code/main.py`. Эмбеддинги на усредненном Hashing Trick (только stdlib). Неконкурентоспособны с трансформерными эмбеддингами, но показывают форму: токенизация → вектор → нормализация → скалярное произведение.
 
-## Pitfalls
+## Подводные камни
 
-- **Same model for query and doc.** Some models (Voyage, Jina-ColBERT) use asymmetric encoding — query and document pass through different paths. Always check the model card.
-- **Missing prefix.** `bge-*` models need `"Represent this sentence for searching relevant passages: "` prepended to queries. 3-5 point recall gap if you forget.
-- **Over-trimming Matryoshka.** 1,536 → 256 is usually safe. 1,536 → 64 is not. Validate on your eval set.
-- **Context truncation.** Most models silently truncate inputs over their max length. Long docs need chunking (see lesson 23).
-- **Ignoring latency tail.** MTEB scores hide p99 latency. A 600M model might beat a 335M model by 2 points but cost 3× more per query.
+- **Одна и та же модель для запроса и документа.** Некоторые модели (Voyage, Jina-ColBERT) используют асимметричное кодирование — запрос и документ проходят по разным путям. Всегда проверяйте model card.
+- **Отсутствующий prefix.** Моделям `bge-*` нужно добавлять `"Represent this sentence for searching relevant passages: "` в начало запросов. Если забыть, recall падает на 3-5 пунктов.
+- **Чрезмерное усечение Matryoshka.** 1,536 → 256 обычно безопасно. 1,536 → 64 — нет. Валидируйте на своем eval-наборе.
+- **Усечение контекста.** Большинство моделей молча обрезают входы сверх максимальной длины. Длинным документам нужен chunking (см. урок 23).
+- **Игнорирование хвоста latency.** Оценки MTEB скрывают p99 latency. Модель на 600M может обгонять модель на 335M на 2 пункта, но стоить в 3 раза дороже на запрос.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| English-only, fast, API | `text-embedding-3-large` or `voyage-3-large` |
-| Open-weight, English | `BAAI/bge-large-en-v1.5` |
-| Open-weight, multilingual | `BAAI/bge-m3` or `Qwen3-Embedding-8B` |
-| Long context (32k+) | Voyage-3-large, Cohere embed-v4, Qwen3-Embedding-8B |
+| Только английский, быстро, API | `text-embedding-3-large` или `voyage-3-large` |
+| Открытые веса, английский | `BAAI/bge-large-en-v1.5` |
+| Открытые веса, многоязычность | `BAAI/bge-m3` или `Qwen3-Embedding-8B` |
+| Длинный контекст (32k+) | Voyage-3-large, Cohere embed-v4, Qwen3-Embedding-8B |
 | CPU-only deployment | Nomic Embed v2 (137M params, MoE) |
-| Storage-constrained | Matryoshka-truncated + int8 quantization |
-| Keyword-heavy queries | Add SPLADE sparse, RRF-fuse with dense |
+| Ограничено хранение | Matryoshka-truncated + int8 quantization |
+| Запросы с большим количеством ключевых слов | Добавьте SPLADE sparse, RRF-fuse with dense |
 
-2026 pattern: start with BGE-M3 or text-3-large, evaluate on your domain with MTEB, swap if a domain-specific model wins by more than 3 points.
+Паттерн 2026 года: начните с BGE-M3 или text-3-large, оцените на своем домене с MTEB, замените, если доменная модель выигрывает больше чем на 3 пункта.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-embedding-picker.md`:
+Сохраните как `outputs/skill-embedding-picker.md`:
 
 ```markdown
 ---
@@ -180,29 +180,29 @@ Given a corpus (size, languages, domain, avg length), deployment target (cloud /
 Refuse recommendations that truncate Matryoshka to <64 dims without domain validation. Refuse ColBERTv2 for corpora under 10k passages (overhead not justified). Flag long-document corpora (>8k tokens) routed to models with 512-token windows.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Encode 100 sentences with `bge-small-en-v1.5` at full dim (384), then at Matryoshka 128. Measure MRR drop on 10 queries.
-2. **Medium.** Compare BGE-M3 dense, sparse, and colbert on 500 passages from your domain. Which wins on recall@10? Does RRF fusion beat the best single mode?
-3. **Hard.** Run MTEB on three candidate models across your top-2 domain tasks. Report MTEB score, p99 latency on a 100-query batch, and $/1M queries. Pick the Pareto-optimal one.
+1. **Легко.** Закодируйте 100 предложений с `bge-small-en-v1.5` в полной размерности (384), затем с Matryoshka 128. Измерьте падение MRR на 10 запросах.
+2. **Средне.** Сравните BGE-M3 dense, sparse и colbert на 500 фрагментах из вашего домена. Что выигрывает по recall@10? Превосходит ли RRF fusion лучший одиночный режим?
+3. **Сложно.** Запустите MTEB на трех моделях-кандидатах по двум главным доменным задачам. Сообщите MTEB score, p99 latency на батче из 100 запросов и $/1M queries. Выберите Pareto-optimal вариант.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Dense embedding | The vector | One fixed-size vector per text. Cosine similarity for ranking. |
-| Sparse embedding | Learned BM25 | One weight per vocab token; mostly zeros; trained end-to-end. |
-| Multi-vector | ColBERT-style | One vector per token; MaxSim scoring; bigger index, better recall. |
-| Matryoshka | Russian doll trick | First N dims are a valid smaller embedding on their own. |
-| MTEB | The benchmark | Massive Text Embedding Benchmark — 56 tasks at launch, 100+ in v2. |
-| BEIR | The retrieval benchmark | 18 zero-shot retrieval tasks; often cited for cross-domain robustness. |
-| Asymmetric encoding | Query ≠ doc path | Model uses different projections for queries and documents. |
+| Плотный эмбеддинг (dense embedding) | Вектор | Один вектор фиксированного размера на текст. Косинусное сходство для ранжирования. |
+| Разреженный эмбеддинг (sparse embedding) | Обученный BM25 | Один вес на токен словаря; в основном нули; обучается end-to-end. |
+| Мультивекторный (multi-vector) | В стиле ColBERT | Один вектор на токен; скоринг MaxSim; индекс больше, recall лучше. |
+| Matryoshka | Трюк с матрешкой | Первые N размерностей сами по себе являются валидным меньшим эмбеддингом. |
+| MTEB | Бенчмарк | Massive Text Embedding Benchmark — 56 задач на запуске, 100+ в v2. |
+| BEIR | Retrieval-бенчмарк | 18 zero-shot retrieval задач; часто цитируется для cross-domain устойчивости. |
+| Асимметричное кодирование (asymmetric encoding) | Query ≠ doc path | Модель использует разные проекции для запросов и документов. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Reimers, Gurevych (2019). Sentence-BERT](https://arxiv.org/abs/1908.10084) — the bi-encoder paper.
-- [Muennighoff et al. (2022). MTEB: Massive Text Embedding Benchmark](https://arxiv.org/abs/2210.07316) — the leaderboard paper.
-- [Chen et al. (2024). BGE-M3: Multi-lingual, Multi-functionality, Multi-granularity](https://arxiv.org/abs/2402.03216) — the unified three-mode model.
-- [Kusupati et al. (2022). Matryoshka Representation Learning](https://arxiv.org/abs/2205.13147) — the dimension-ladder training objective.
-- [Santhanam et al. (2022). ColBERTv2: Effective and Efficient Retrieval via Lightweight Late Interaction](https://arxiv.org/abs/2112.01488) — late interaction in production.
-- [MTEB leaderboard on Hugging Face](https://huggingface.co/spaces/mteb/leaderboard) — live rankings.
+- [Reimers, Gurevych (2019). Sentence-BERT](https://arxiv.org/abs/1908.10084) — статья о bi-encoder.
+- [Muennighoff et al. (2022). MTEB: Massive Text Embedding Benchmark](https://arxiv.org/abs/2210.07316) — статья о лидерборде.
+- [Chen et al. (2024). BGE-M3: Multi-lingual, Multi-functionality, Multi-granularity](https://arxiv.org/abs/2402.03216) — единая трехрежимная модель.
+- [Kusupati et al. (2022). Matryoshka Representation Learning](https://arxiv.org/abs/2205.13147) — training objective лестницы размерностей.
+- [Santhanam et al. (2022). ColBERTv2: Effective and Efficient Retrieval via Lightweight Late Interaction](https://arxiv.org/abs/2112.01488) — late interaction в production.
+- [MTEB leaderboard on Hugging Face](https://huggingface.co/spaces/mteb/leaderboard) — живой рейтинг.

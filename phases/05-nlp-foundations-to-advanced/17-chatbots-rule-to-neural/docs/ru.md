@@ -1,37 +1,37 @@
-# Chatbots — Rule-Based to Neural to LLM Agents
+# Чатботы — от правил к нейронным моделям и LLM-агентам
 
-> ELIZA replied with pattern matches. DialogFlow mapped intents. GPT answered from weights. Claude runs tools and verifies. Each era solved the previous one's worst failure.
+> ELIZA отвечала совпадениями шаблонов. DialogFlow сопоставлял intents. GPT отвечал из весов. Claude запускает инструменты и проверяет. Каждая эпоха решала худший провал предыдущей.
 
 **Type:** Learn
 **Languages:** Python
 **Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 14 (Information Retrieval)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
-A user says "I want to change my flight." The system has to figure out what they want, what information is missing, how to get it, and how to complete the action. Then the user says "wait, what if I cancel instead?" and the system has to remember the context, switch tasks, and preserve state.
+Пользователь говорит: "I want to change my flight." Система должна понять, чего он хочет, какой информации не хватает, как ее получить и как выполнить действие. Затем пользователь говорит: "wait, what if I cancel instead?", и система должна помнить контекст, переключить задачу и сохранить состояние.
 
-Conversation is hard for an ML system. The input is open-ended. The output has to be coherent over many turns. The system may need to act on the world (change a flight, charge a card). Every wrong step is visible to the user.
+Диалог сложен для ML-системы. Вход открыт и не ограничен. Выход должен оставаться связным на протяжении многих ходов. Системе может понадобиться действовать в мире (изменить рейс, списать деньги с карты). Каждый неверный шаг виден пользователю.
 
-Chatbot architectures have cycled through four paradigms, each introduced because the previous one failed too visibly. This lesson walks them in order. The 2026 production landscape is a hybrid of the last two.
+Архитектуры чатботов прошли через четыре парадигмы, каждая из которых появилась потому, что предыдущая слишком заметно проваливалась. Этот урок проходит по ним по порядку. Production-ландшафт 2026 года — гибрид двух последних.
 
-## The Concept
+## Концепция
 
 ![Chatbot evolution: rule-based → retrieval → neural → agent](../assets/chatbot.svg)
 
-**Rule-based (ELIZA, AIML, DialogFlow).** Hand-authored patterns match user input and produce responses. Intent classifiers route to predefined flows. Slot-filling state machines collect required info. Works brilliantly inside the narrow scope it was designed for. Fails immediately outside it. Still ships in safety-critical domains (banking authentication, airline booking) where hallucination is not tolerated.
+**На основе правил (ELIZA, AIML, DialogFlow).** Написанные вручную шаблоны сопоставляются с пользовательским вводом и порождают ответы. Классификаторы intents направляют в предопределенные flows. Конечные автоматы slot filling собирают нужную информацию. Великолепно работает внутри узкой области, для которой было спроектировано. Немедленно ломается за ее пределами. Все еще поставляется в safety-critical доменах (банковская аутентификация, бронирование авиабилетов), где галлюцинации недопустимы.
 
-**Retrieval-based.** A FAQ-style system. Encode every pair of (utterance, response). At runtime, encode the user's message and retrieve the nearest stored response. Think Zendesk's classic "similar articles" feature. Handles paraphrases better than rules. No generation, so no hallucination.
+**Retrieval-based.** Система в стиле FAQ. Кодирует каждую пару (utterance, response). Во время выполнения кодирует сообщение пользователя и извлекает ближайший сохраненный ответ. Представьте классическую функцию Zendesk "similar articles". Лучше правил обрабатывает перефразирования. Генерации нет, поэтому нет галлюцинаций.
 
-**Neural (seq2seq).** Encoder-decoder trained on conversation logs. Generates responses from scratch. Fluent but prone to generic outputs ("I don't know") and factual drift. Never reliably on topic. The reason Google, Facebook, and Microsoft all had disappointing chatbots in 2016-2019.
+**Нейронные (seq2seq).** Encoder-decoder, обученный на логах диалогов. Генерирует ответы с нуля. Беглый, но склонен к общим ответам ("I don't know") и фактическому дрейфу. Никогда не оставался надежно по теме. Причина, по которой у Google, Facebook и Microsoft были разочаровывающие чатботы в 2016-2019 годах.
 
-**LLM agents.** A language model wrapped in a loop that plans, calls tools, and verifies outcomes. Not a chatbot with a long prompt. An agent loop: plan → call tool → observe result → decide next step. Retrieval-first grounding (RAG) keeps it from hallucinating. Tool calls let it actually do things. This is the 2026 architecture.
+**LLM-агенты.** Языковая модель, обернутая в цикл, который планирует, вызывает инструменты и проверяет результаты. Это не чатбот с длинным prompt. Агентный цикл: plan → call tool → observe result → decide next step. Retrieval-first grounding (RAG) удерживает его от галлюцинаций. Tool calls позволяют ему реально что-то делать. Это архитектура 2026 года.
 
-The four paradigms are not sequential replacements. A 2026 production chatbot routes through all four: rule-based for authentication and destructive actions, retrieval for FAQ, neural generation for natural phrasing, LLM agent for ambiguous open-ended queries.
+Четыре парадигмы не являются последовательными заменами. Production-чатбот 2026 года маршрутизирует через все четыре: правила для аутентификации и разрушительных действий, retrieval для FAQ, нейронная генерация для естественных формулировок, LLM-агент для неоднозначных открытых запросов.
 
-## Build It
+## Соберите это
 
-### Step 1: rule-based pattern matching
+### Шаг 1: сопоставление шаблонов на правилах
 
 ```python
 import re
@@ -59,11 +59,11 @@ def rule_based_respond(user_input):
     return "I don't understand."
 ```
 
-ELIZA in 20 lines. The reflection trick ("I feel sad" → "Why do you feel sad") is the canonical psychotherapist demo from Weizenbaum 1966. Still instructive.
+ELIZA в 20 строк. Трюк с отражением ("I feel sad" → "Why do you feel sad") — каноническая демонстрация психотерапевта из Weizenbaum 1966. Все еще поучительно.
 
-### Step 2: retrieval-based (FAQ)
+### Шаг 2: retrieval-based (FAQ)
 
-This illustrative snippet requires `pip install sentence-transformers` (which pulls in torch). The runnable `code/main.py` for this lesson uses a stdlib Jaccard similarity instead, so the lesson runs without external dependencies.
+Этот иллюстративный фрагмент требует `pip install sentence-transformers` (что подтягивает torch). Запускаемый `code/main.py` для этого урока вместо этого использует Jaccard similarity из stdlib, поэтому урок запускается без внешних зависимостей.
 
 ```python
 from sentence_transformers import SentenceTransformer
@@ -91,11 +91,11 @@ def faq_respond(user_input, threshold=0.5):
     return FAQ[best][1]
 ```
 
-Threshold-based refusal is the key design choice. If the best match is not close enough, return `None` and let the system escalate.
+Отказ по порогу — ключевое проектное решение. Если лучшее совпадение недостаточно близко, верните `None` и позвольте системе эскалировать.
 
-### Step 3: neural generation (baseline)
+### Шаг 3: нейронная генерация (бейзлайн)
 
-Use a small instruction-tuned encoder-decoder (FLAN-T5) or a fine-tuned conversational model. Production-unusable on its own in 2026 (contradiction, off-topic drift, factual nonsense), but ships inside hybrid systems for natural phrasing. DialoGPT-style decoder-only models need explicit turn separators and EOS handling to produce coherent replies; a FLAN-T5 text2text pipeline works out of the box for a teaching example.
+Используйте небольшой instruction-tuned encoder-decoder (FLAN-T5) или дообученную разговорную модель. В 2026 году сама по себе непригодна для production (противоречия, уход с темы, фактическая бессмыслица), но поставляется внутри гибридных систем для естественных формулировок. Decoder-only модели в стиле DialoGPT требуют явных разделителей ходов и обработки EOS, чтобы давать связные ответы; pipeline FLAN-T5 text2text работает из коробки для учебного примера.
 
 ```python
 from transformers import pipeline
@@ -106,9 +106,9 @@ response = chatbot("Respond politely to: Hi there!", max_new_tokens=40)
 print(response[0]["generated_text"])
 ```
 
-### Step 4: LLM agent loop
+### Шаг 4: цикл LLM-агента
 
-The 2026 production shape:
+Production-форма 2026 года:
 
 ```python
 def agent_loop(user_message, tools, llm, max_steps=5):
@@ -135,11 +135,11 @@ def agent_loop(user_message, tools, llm, max_steps=5):
     return "I could not complete the task in the step budget."
 ```
 
-Three things to name. Tools are callable functions the LLM can invoke. The loop terminates when the LLM returns a final answer instead of a tool call. The step budget prevents infinite loops on ambiguous tasks.
+Нужно назвать три вещи. Tools — вызываемые функции, которые LLM может запускать. Цикл завершается, когда LLM возвращает финальный ответ вместо tool call. Бюджет шагов предотвращает бесконечные циклы на неоднозначных задачах.
 
-Real production adds: retrieval-first grounding (inject relevant docs before each LLM call), guardrails (refuse destructive actions without confirmation), observability (log every step), and evaluations (automated checks that agent behavior stays on-spec).
+Реальный production добавляет: retrieval-first grounding (подмешивать релевантные документы перед каждым вызовом LLM), guardrails (отказывать в разрушительных действиях без подтверждения), observability (логировать каждый шаг) и evaluations (автоматические проверки, что поведение агента остается в рамках спецификации).
 
-### Step 5: hybrid routing
+### Шаг 5: гибридная маршрутизация
 
 ```python
 def hybrid_chat(user_input):
@@ -158,39 +158,39 @@ def is_destructive_action(text):
     return any(w in text.lower() for w in danger_words)
 ```
 
-The pattern: deterministic rules for anything destructive, retrieval for canned FAQs, LLM agents for everything else. This is what ships in 2026 customer-support systems.
+Паттерн: детерминированные правила для всего разрушительного, retrieval для заготовленных FAQ, LLM-агенты для всего остального. Именно это поставляется в системах customer support в 2026 году.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
 | Use case | Architecture |
 |---------|---------------|
-| Booking, payment, authentication | Rule-based state machines + slot filling |
-| Customer support FAQs | Retrieval over curated answers |
-| Open-ended help chat | LLM agent with RAG + tool calls |
-| Internal tools / IDE assistants | LLM agent with tool calls (search, read, write) |
-| Companion / character chatbots | Tuned LLM with persona system prompt, retrieval on knowledge |
+| Бронирование, оплата, аутентификация | Rule-based state machines + slot filling |
+| FAQ поддержки клиентов | Retrieval по курируемым ответам |
+| Открытый чат помощи | LLM agent with RAG + tool calls |
+| Внутренние инструменты / IDE assistants | LLM agent with tool calls (search, read, write) |
+| Companion / character chatbots | Настроенная LLM с persona system prompt, retrieval по знаниям |
 
-Always use hybrid routing in production. No single architecture handles every request well. The routing layer itself is typically a small intent classifier.
+Всегда используйте гибридную маршрутизацию в production. Ни одна архитектура не обрабатывает хорошо каждый запрос. Сам слой маршрутизации обычно представляет собой небольшой классификатор intent.
 
-## Failure modes that still ship
+## Failure modes, которые все еще попадают в поставку
 
-- **Confident fabrication.** LLM agent claims it completed an action it did not. Mitigation: verify outcomes, log tool calls, never let the LLM claim to have done something without a successful tool return.
-- **Prompt injection.** User inserts text that overrides the system prompt. Ranked LLM01 in the OWASP Top 10 for LLM Applications 2025. Two flavors: direct injection (pasted into the chat) and indirect injection (hidden in documents, emails, or tool outputs the agent reads).
+- **Уверенная фабрикация.** LLM-агент утверждает, что выполнил действие, которого не выполнял. Митигация: проверять результаты, логировать tool calls, никогда не позволять LLM утверждать, что что-то сделано, без успешного возврата инструмента.
+- **Prompt injection.** Пользователь вставляет текст, который переопределяет system prompt. Занимает место LLM01 в OWASP Top 10 for LLM Applications 2025. Два вида: direct injection (вставлена в чат) и indirect injection (скрыта в документах, письмах или outputs инструментов, которые читает агент).
 
-  Attack rates vary by scenario. Measured success rates range ~0.5-8.5% across frontier models in general tool-use and coding benchmarks. Specific high-risk setups (adaptive attacks against AI coding agents, vulnerable orchestration) have reached ~84%. Production CVEs include EchoLeak (CVE-2025-32711, CVSS 9.3) — a zero-click data-exfiltration flaw in Microsoft 365 Copilot triggered by an attacker-controlled email.
+  Частоты атак зависят от сценария. Измеренные success rates находятся в диапазоне ~0.5-8.5% среди frontier models в общих бенчмарках tool-use и coding. Конкретные высокорисковые настройки (адаптивные атаки против AI coding agents, уязвимая orchestration) достигали ~84%. Production CVEs включают EchoLeak (CVE-2025-32711, CVSS 9.3) — zero-click data-exfiltration уязвимость в Microsoft 365 Copilot, запускаемая email под контролем атакующего.
 
-  Mitigations: treat user input as untrusted throughout the loop; sanitize before tool calls; isolate tool outputs from the main prompt; use the Plan-Verify-Execute (PVE) pattern where the agent plans first, then verifies each action against that plan before executing (this stops tool results from injecting new unplanned actions); require user confirmation for destructive actions; apply least-privilege to tool scopes.
+  Митигации: рассматривать пользовательский ввод как недоверенный на всем протяжении цикла; санитизировать перед tool calls; изолировать outputs инструментов от основного prompt; использовать паттерн Plan-Verify-Execute (PVE), где агент сначала планирует, затем проверяет каждое действие относительно этого плана перед выполнением (это останавливает внедрение новых незапланированных действий через результаты инструментов); требовать подтверждение пользователя для разрушительных действий; применять least privilege к областям доступа инструментов.
 
-  No amount of prompt engineering fully eliminates this risk. External runtime defense layers (LLM Guard, allowlist validation, semantic anomaly detection) are required.
-- **Scope creep.** Agent goes off-task because a tool call returned tangentially related info. Mitigation: narrow tool contracts; keep the system prompt focused; add evaluations for off-task rate.
-- **Infinite loops.** Agent keeps calling the same tool. Mitigation: step budget, tool-call deduplication, LLM judge on "are we making progress."
-- **Context window exhaustion.** Long conversations push the earliest turns out of context. Mitigation: summarize older turns, retrieve relevant past turns by similarity, or use a long-context model.
+  Никакое prompt engineering полностью не устраняет этот риск. Требуются внешние runtime defense layers (LLM Guard, allowlist validation, semantic anomaly detection).
+- **Scope creep.** Агент уходит с задачи, потому что tool call вернул информацию, связанную лишь косвенно. Митигация: сужать контракты инструментов; держать system prompt сфокусированным; добавить evaluations для off-task rate.
+- **Бесконечные циклы.** Агент продолжает вызывать один и тот же инструмент. Митигация: бюджет шагов, дедупликация tool calls, LLM judge на вопрос "are we making progress."
+- **Исчерпание context window.** Длинные диалоги выталкивают самые ранние ходы из контекста. Митигация: суммаризировать старые ходы, извлекать релевантные прошлые ходы по similarity или использовать long-context model.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-chatbot-architect.md`:
+Сохраните как `outputs/skill-chatbot-architect.md`:
 
 ```markdown
 ---
@@ -212,30 +212,30 @@ Given a product context (user need, compliance constraints, available tools, dat
 Refuse to recommend a pure-LLM agent for any destructive action (payments, account deletion, data modification) without a structured confirmation flow. Refuse to skip the prompt-injection audit if the agent has write access to anything.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement the rule-based respond above with 10 patterns for a coffee-shop ordering bot. Test edge cases: double orders, modifications, cancellation, unclear intent.
-2. **Medium.** Build a hybrid FAQ + LLM fallback. 50 canned FAQ entries for a SaaS product, LLM fallback with retrieval over the docs site. Measure refusal rate and accuracy on 100 real support questions.
-3. **Hard.** Implement the agent loop above with three tools (search, read-user-data, send-email). Run an evaluation with 50 test scenarios including prompt injection attempts. Report off-task rate, failed task rate, and any injection success.
+1. **Easy.** Реализуйте приведенный выше rule-based respond с 10 шаблонами для бота заказа в кофейне. Проверьте крайние случаи: двойные заказы, изменения, отмена, неясный intent.
+2. **Medium.** Постройте гибрид FAQ + LLM fallback. 50 заготовленных FAQ-записей для SaaS-продукта, LLM fallback с retrieval по сайту документации. Измерьте refusal rate и accuracy на 100 реальных вопросах поддержки.
+3. **Hard.** Реализуйте приведенный выше agent loop с тремя инструментами (search, read-user-data, send-email). Запустите evaluation с 50 тестовыми сценариями, включая попытки prompt injection. Сообщите off-task rate, failed task rate и любой успех injection.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Intent | What the user wants | Categorical label (book_flight, reset_password). Routed to a handler. |
-| Slot | A piece of info | Parameter the bot needs (date, destination). Slot filling is the sequence of asks. |
-| RAG | Retrieval plus generation | Retrieve relevant docs, then ground the LLM's response. |
-| Tool call | Function invocation | LLM emits a structured call with name + args. Runtime executes, returns result. |
-| Agent loop | Plan, act, verify | Controller that runs LLM calls interleaved with tool calls until task complete. |
-| Prompt injection | User attacks prompt | Malicious input that tries to override the system prompt. |
+| Intent | Чего хочет пользователь | Категориальная метка (book_flight, reset_password). Маршрутизируется в handler. |
+| Slot | Часть информации | Параметр, который нужен боту (date, destination). Slot filling — последовательность вопросов. |
+| RAG | Retrieval плюс generation | Извлечь релевантные документы, затем заземлить ответ LLM. |
+| Tool call | Вызов функции | LLM испускает структурированный вызов с name + args. Runtime выполняет его и возвращает результат. |
+| Agent loop | Планировать, действовать, проверять | Контроллер, который запускает вызовы LLM вперемежку с tool calls до завершения задачи. |
+| Prompt injection | Пользователь атакует prompt | Вредоносный ввод, который пытается переопределить system prompt. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Weizenbaum (1966). ELIZA — A Computer Program For the Study of Natural Language Communication](https://web.stanford.edu/class/cs124/p36-weizenabaum.pdf) — the original rule-based chatbot paper.
-- [Thoppilan et al. (2022). LaMDA: Language Models for Dialog Applications](https://arxiv.org/abs/2201.08239) — Google's late neural-chatbot paper, just before LLM agents took over.
-- [Yao et al. (2022). ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) — the paper that named the agent loop pattern.
-- [Anthropic's guide on building effective agents](https://www.anthropic.com/research/building-effective-agents) — 2024 production guidance that still holds in 2026.
-- [Greshake et al. (2023). Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection](https://arxiv.org/abs/2302.12173) — the prompt-injection paper.
-- [OWASP Top 10 for LLM Applications 2025 — LLM01 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) — the ranking that made prompt injection the top security concern.
-- [AWS — Securing Amazon Bedrock Agents against Indirect Prompt Injections](https://aws.amazon.com/blogs/machine-learning/securing-amazon-bedrock-agents-a-guide-to-safeguarding-against-indirect-prompt-injections/) — practical orchestration-layer defenses including Plan-Verify-Execute and user-confirmation flows.
-- [EchoLeak (CVE-2025-32711)](https://www.vectra.ai/topics/prompt-injection) — the canonical zero-click data-exfiltration CVE from indirect prompt injection. Reference case for why write-access agents need runtime defenses.
+- [Weizenbaum (1966). ELIZA — A Computer Program For the Study of Natural Language Communication](https://web.stanford.edu/class/cs124/p36-weizenabaum.pdf) — оригинальная статья о rule-based chatbot.
+- [Thoppilan et al. (2022). LaMDA: Language Models for Dialog Applications](https://arxiv.org/abs/2201.08239) — поздняя статья Google о neural chatbot, прямо перед тем как LLM-агенты заняли поле.
+- [Yao et al. (2022). ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) — статья, которая назвала паттерн agent loop.
+- [Anthropic's guide on building effective agents](https://www.anthropic.com/research/building-effective-agents) — production-рекомендации 2024 года, которые все еще справедливы в 2026.
+- [Greshake et al. (2023). Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection](https://arxiv.org/abs/2302.12173) — статья о prompt injection.
+- [OWASP Top 10 for LLM Applications 2025 — LLM01 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) — рейтинг, сделавший prompt injection главной проблемой безопасности.
+- [AWS — Securing Amazon Bedrock Agents against Indirect Prompt Injections](https://aws.amazon.com/blogs/machine-learning/securing-amazon-bedrock-agents-a-guide-to-safeguarding-against-indirect-prompt-injections/) — практические защиты на orchestration layer, включая Plan-Verify-Execute и user-confirmation flows.
+- [EchoLeak (CVE-2025-32711)](https://www.vectra.ai/topics/prompt-injection) — каноническая zero-click data-exfiltration CVE из indirect prompt injection. Референсный случай, показывающий, почему write-access agents требуют runtime defenses.

@@ -1,59 +1,59 @@
-# Chunking Strategies for RAG
+# Стратегии chunking для RAG
 
-> Chunking configuration influences retrieval quality as much as the choice of embedding model (Vectara NAACL 2025). Get chunking wrong and no amount of reranking saves you.
+> Конфигурация chunking влияет на качество retrieval не меньше, чем выбор модели эмбеддингов (Vectara NAACL 2025). Ошибитесь с chunking — и никакой reranking вас не спасет.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 14 (Information Retrieval), Phase 5 · 22 (Embedding Models)
-**Time:** ~60 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 14 (Information Retrieval), Фаза 5 · 22 (Embedding Models)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-You put a 50-page contract into a RAG system. User asks: "What is the termination clause?" The retriever returns the cover page. Why? Because the model was trained on 512-token chunks and the termination clause sits 20 pages in, split across a page break, with no local keywords tying it to the query.
+Вы загружаете 50-страничный контракт в RAG-систему. Пользователь спрашивает: "What is the termination clause?" Retriever возвращает титульную страницу. Почему? Потому что модель обучалась на чанках по 512 токенов, а положение о расторжении находится на 20 страницах дальше, разорвано переносом страницы и не содержит локальных ключевых слов, связывающих его с запросом.
 
-The fix is not "buy a better embedding model." The fix is chunking. How big? Overlap? Where to split? With surrounding context?
+Решение — не "купить модель эмбеддингов получше". Решение — chunking. Насколько крупные чанки? Перекрытие? Где разбивать? С окружающим контекстом?
 
-Feb 2026 benchmarks show surprising results:
+Бенчмарки февраля 2026 года показывают неожиданные результаты:
 
-- Vectara's 2026 study: recursive 512-token chunking beat semantic chunking 69% → 54% accuracy.
-- SPLADE + Mistral-8B on Natural Questions: overlap provided zero measurable benefit.
-- Context cliff: response quality drops sharply around 2,500 tokens of context.
+- Исследование Vectara 2026: recursive 512-token chunking превзошел semantic chunking по accuracy 69% → 54%.
+- SPLADE + Mistral-8B на Natural Questions: overlap не дал измеримой пользы.
+- Context cliff: качество ответов резко падает примерно на 2,500 токенах контекста.
 
-The "obvious" answer (semantic chunking, 20% overlap, 1000 tokens) is often wrong. This lesson builds intuition for six strategies and tells you when to reach for which.
+"Очевидный" ответ (semantic chunking, 20% overlap, 1000 токенов) часто неверен. Этот урок развивает интуицию для шести стратегий и объясняет, когда какую выбирать.
 
-## The Concept
+## Концепция
 
-![Six chunking strategies visualized on one passage](../assets/chunking.svg)
+![Шесть стратегий chunking, визуализированные на одном фрагменте](../assets/chunking.svg)
 
-**Fixed chunking.** Split every N characters or tokens. Simplest baseline. Breaks mid-sentence. Good compression, bad coherence.
+**Фиксированный chunking (fixed chunking).** Разбивать каждые N символов или токенов. Самый простой baseline. Рвет текст посреди предложения. Хорошее сжатие, плохая связность.
 
-**Recursive.** LangChain's `RecursiveCharacterTextSplitter`. Try splitting on `\n\n` first, then `\n`, then `.`, then space. Falls back cleanly. The 2026 default.
+**Recursive.** `RecursiveCharacterTextSplitter` из LangChain. Сначала пробует разбивать по `\n\n`, затем по `\n`, затем по `.`, затем по пробелу. Аккуратно откатывается к более грубым правилам. Дефолт 2026 года.
 
-**Semantic.** Embed each sentence. Compute cosine similarity between adjacent sentences. Split where similarity drops below a threshold. Preserves topic coherence. Slower; sometimes produces tiny 40-token fragments that hurt retrieval.
+**Семантический (semantic).** Встраивает каждое предложение. Вычисляет косинусное сходство между соседними предложениями. Разбивает там, где сходство падает ниже порога. Сохраняет тематическую связность. Медленнее; иногда создает крошечные фрагменты по 40 токенов, которые вредят retrieval.
 
-**Sentence.** Split on sentence boundaries. One sentence per chunk or a window of N sentences. Matches semantic chunking up to ~5k tokens at a fraction of the cost.
+**По предложениям (sentence).** Разбивать по границам предложений. Одно предложение на чанк или окно из N предложений. Соответствует semantic chunking примерно до ~5k токенов за долю стоимости.
 
-**Parent-document.** Store small child chunks for retrieval *and* the larger parent chunk for context. Retrieve by child; return parent. Degrades gracefully: bad child chunks still return reasonable parents.
+**Parent-document.** Хранить маленькие дочерние чанки для retrieval *и* более крупный родительский чанк для контекста. Извлекать по дочернему; возвращать родительский. Деградирует плавно: плохие дочерние чанки все равно возвращают разумных родителей.
 
-**Late chunking (2024).** Embed the whole document at the token level first, then pool token embeddings into chunk embeddings. Preserves cross-chunk context. Works with long-context embedders (BGE-M3, Jina v3). Higher compute.
+**Late chunking (2024).** Сначала встроить весь документ на уровне токенов, затем агрегировать токеновые эмбеддинги в эмбеддинги чанков. Сохраняет межчанковый контекст. Работает с long-context embedders (BGE-M3, Jina v3). Выше вычислительная стоимость.
 
-**Contextual retrieval (Anthropic, 2024).** Prepend each chunk with an LLM-generated summary of its position in the document ("This chunk is section 3.2 of the termination clauses..."). 35-50% retrieval improvement in Anthropic's own benchmark. Expensive to index.
+**Contextual retrieval (Anthropic, 2024).** Добавлять перед каждым чанком LLM-сгенерированное резюме его положения в документе ("This chunk is section 3.2 of the termination clauses..."). Улучшение retrieval на 35-50% в собственном бенчмарке Anthropic. Дорого индексировать.
 
-### The rule that beats every default
+### Правило, которое бьет любой дефолт
 
-Match the chunk size to the query type:
+Сопоставляйте размер чанка с типом запроса:
 
-| Query type | Chunk size |
+| Тип запроса | Размер чанка |
 |------------|-----------|
-| Factoid ("what is the CEO's name?") | 256-512 tokens |
-| Analytical / multi-hop | 512-1024 tokens |
-| Whole-section comprehension | 1024-2048 tokens |
+| Фактоидный ("what is the CEO's name?") | 256-512 токенов |
+| Аналитический / multi-hop | 512-1024 токена |
+| Понимание целого раздела | 1024-2048 токенов |
 
-NVIDIA's 2026 benchmark. The chunk should be big enough to contain the answer plus local context, small enough that the retriever's top-K returns focus on the answer rather than context noise.
+Бенчмарк NVIDIA 2026 года. Чанк должен быть достаточно большим, чтобы содержать ответ плюс локальный контекст, и достаточно маленьким, чтобы top-K retriever возвращал фокус на ответе, а не шум контекста.
 
-## Build It
+## Соберите это
 
-### Step 1: fixed and recursive chunking
+### Шаг 1: fixed и recursive chunking
 
 ```python
 def chunk_fixed(text, size=512, overlap=0):
@@ -90,7 +90,7 @@ def chunk_recursive(text, size=512, seps=("\n\n", "\n", ". ", " ")):
     return chunk_fixed(text, size)
 ```
 
-### Step 2: semantic chunking
+### Шаг 2: semantic chunking
 
 ```python
 def chunk_semantic(text, encoder, threshold=0.6, min_chars=200, max_chars=2048):
@@ -117,9 +117,9 @@ def chunk_semantic(text, encoder, threshold=0.6, min_chars=200, max_chars=2048):
     return result
 ```
 
-Tune `threshold` on your domain. Too high → fragments. Too low → one giant chunk.
+Настраивайте `threshold` на своем домене. Слишком высокий → фрагменты. Слишком низкий → один гигантский чанк.
 
-### Step 3: parent-document
+### Шаг 3: parent-document
 
 ```python
 def chunk_parent_child(text, parent_size=2048, child_size=256):
@@ -145,9 +145,9 @@ def retrieve_parent(child_query, mapping, encoder, top_k=3):
     return parents
 ```
 
-Key insight: dedupe parents. Multiple children can map to the same parent; returning all would waste context.
+Ключевая мысль: дедуплицируйте родителей. Несколько дочерних чанков могут ссылаться на одного родителя; возвращать все означало бы тратить контекст впустую.
 
-### Step 4: contextual retrieval (Anthropic pattern)
+### Шаг 4: contextual retrieval (паттерн Anthropic)
 
 ```python
 def contextualize_chunks(document, chunks, llm):
@@ -161,9 +161,9 @@ Write 50-100 words placing this chunk in the document's context."""
     return [f"{ctx}\n\n{c}" for ctx, c in zip(contexts, chunks)]
 ```
 
-Index the contextualized chunks. At query time, retrieval benefits from the extra surrounding signal.
+Индексируйте контекстуализированные чанки. Во время запроса retrieval выигрывает от дополнительного окружающего сигнала.
 
-### Step 5: evaluate
+### Шаг 5: оценка
 
 ```python
 def recall_at_k(queries, corpus_chunks, encoder, k=5):
@@ -177,34 +177,34 @@ def recall_at_k(queries, corpus_chunks, encoder, k=5):
     return hits / len(queries)
 ```
 
-Always benchmark. The "best" strategy for your corpus may not match any blog post.
+Всегда бенчмаркайте. "Лучшая" стратегия для вашего корпуса может не совпасть ни с одним постом в блоге.
 
-## Pitfalls
+## Подводные камни
 
-- **Chunking evaluated only on factoid queries.** Multi-hop queries reveal very different winners. Use a query-type-stratified eval set.
-- **Semantic chunking without a minimum size.** Produces 40-token fragments that hurt retrieval. Always enforce `min_tokens`.
-- **Overlap as cargo cult.** 2026 studies find overlap often provides zero benefit and doubles index cost. Measure, do not assume.
-- **No min/max enforcement.** Chunks of 5 tokens or 5000 tokens both break retrieval. Clamp.
-- **Cross-doc chunking.** Never let a chunk span two documents. Always chunk per-doc, then merge.
+- **Chunking оценивается только на фактоидных запросах.** Multi-hop запросы выявляют совсем других победителей. Используйте eval-набор, стратифицированный по типам запросов.
+- **Semantic chunking без минимального размера.** Создает фрагменты по 40 токенов, которые вредят retrieval. Всегда задавайте `min_tokens`.
+- **Overlap как cargo cult.** Исследования 2026 года показывают, что overlap часто не дает пользы и удваивает стоимость индекса. Измеряйте, не предполагайте.
+- **Нет контроля min/max.** Чанки по 5 токенов или 5000 токенов одинаково ломают retrieval. Зажимайте размер.
+- **Cross-doc chunking.** Никогда не позволяйте чанку охватывать два документа. Всегда разбивайте per-doc, затем объединяйте.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Strategy |
+| Ситуация | Стратегия |
 |-----------|----------|
-| First build, unknown corpus | Recursive, 512 tokens, no overlap |
-| Factoid QA | Recursive, 256-512 tokens |
-| Analytical / multi-hop | Recursive, 512-1024 tokens + parent-document |
-| Heavy cross-reference (contracts, papers) | Late chunking or contextual retrieval |
-| Conversational / dialog corpus | Turn-level chunks + speaker metadata |
-| Short utterances (tweets, reviews) | One document = one chunk |
+| Первая сборка, неизвестный корпус | Recursive, 512 токенов, без overlap |
+| Фактоидный QA | Recursive, 256-512 токенов |
+| Аналитический / multi-hop | Recursive, 512-1024 токена + parent-document |
+| Много cross-reference (контракты, статьи) | Late chunking или contextual retrieval |
+| Разговорный / диалоговый корпус | Чанки на уровне реплик + speaker metadata |
+| Короткие высказывания (tweets, reviews) | Один документ = один чанк |
 
-Start with recursive 512. Measure recall@5 on a 50-query eval set. Tune from there.
+Начните с recursive 512. Измерьте recall@5 на eval-наборе из 50 запросов. Настраивайте дальше оттуда.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-chunker.md`:
+Сохраните как `outputs/skill-chunker.md`:
 
 ```markdown
 ---
@@ -227,28 +227,28 @@ Given a corpus (document types, avg length, domain) and query distribution (fact
 Refuse any chunking strategy without min/max chunk size enforcement. Refuse overlap above 20% without an ablation showing it helps. Flag semantic chunking recommendations without a min-token floor.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Chunk one 20-page document with fixed(512, 0), recursive(512, 0), and recursive(512, 100). Compare chunk counts and boundary quality.
-2. **Medium.** Build a 30-query eval set over 5 documents. Measure recall@5 for recursive, semantic, and parent-document. Which wins? Does it match the blog posts?
-3. **Hard.** Implement contextual retrieval. Measure MRR improvement over baseline recursive. Report index cost (LLM calls) vs accuracy gain.
+1. **Легко.** Разбейте один 20-страничный документ с fixed(512, 0), recursive(512, 0) и recursive(512, 100). Сравните количество чанков и качество границ.
+2. **Средне.** Соберите eval-набор из 30 запросов по 5 документам. Измерьте recall@5 для recursive, semantic и parent-document. Что выигрывает? Совпадает ли это с постами в блогах?
+3. **Сложно.** Реализуйте contextual retrieval. Измерьте улучшение MRR относительно baseline recursive. Сообщите стоимость индекса (LLM calls) vs прирост accuracy.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Chunk | A piece of a doc | Sub-document unit that gets embedded, indexed, and retrieved. |
-| Overlap | Safety margin | N tokens shared between adjacent chunks; often useless in 2026 benchmarks. |
-| Semantic chunking | Smart chunking | Split where adjacent-sentence embedding similarity drops. |
-| Parent-document | Two-level retrieval | Retrieve small children, return larger parents. |
-| Late chunking | Chunk after embedding | Embed full doc at token level, pool into chunk vectors. |
-| Contextual retrieval | Anthropic's trick | LLM-generated summary prepended to each chunk before indexing. |
-| Context cliff | 2500-token wall | Quality drop observed around 2.5k context tokens in RAG (Jan 2026). |
+| Чанк (chunk) | Кусок документа | Поддокументная единица, которую встраивают, индексируют и извлекают. |
+| Overlap | Safety margin | N токенов, общих между соседними чанками; часто бесполезно в бенчмарках 2026 года. |
+| Semantic chunking | Умный chunking | Разбивать там, где падает similarity эмбеддингов соседних предложений. |
+| Parent-document | Двухуровневый retrieval | Извлекать маленьких children, возвращать более крупных parents. |
+| Late chunking | Chunk after embedding | Встроить весь документ на уровне токенов, агрегировать в chunk vectors. |
+| Contextual retrieval | Трюк Anthropic | LLM-сгенерированное резюме добавляется перед каждым чанком до индексирования. |
+| Context cliff | 2500-token wall | Падение качества, наблюдаемое примерно на 2.5k токенов контекста в RAG (Jan 2026). |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Yepes et al. / LangChain — Recursive Character Splitting docs](https://python.langchain.com/docs/how_to/recursive_text_splitter/) — the default in production.
-- [Vectara (2024, NAACL 2025). Chunking configurations analysis](https://arxiv.org/abs/2410.13070) — chunking matters as much as embedding choice.
-- [Jina AI — Late Chunking in Long-Context Embedding Models (2024)](https://jina.ai/news/late-chunking-in-long-context-embedding-models/) — the late chunking paper.
-- [Anthropic — Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) — 35-50% retrieval improvement with LLM-generated context prefixes.
-- [NVIDIA 2026 chunk-size benchmark — Premai summary](https://blog.premai.io/rag-chunking-strategies-the-2026-benchmark-guide/) — chunk size by query type.
+- [Yepes et al. / LangChain — Recursive Character Splitting docs](https://python.langchain.com/docs/how_to/recursive_text_splitter/) — дефолт в production.
+- [Vectara (2024, NAACL 2025). Chunking configurations analysis](https://arxiv.org/abs/2410.13070) — chunking важен не меньше, чем выбор эмбеддингов.
+- [Jina AI — Late Chunking in Long-Context Embedding Models (2024)](https://jina.ai/news/late-chunking-in-long-context-embedding-models/) — статья о late chunking.
+- [Anthropic — Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) — улучшение retrieval на 35-50% с LLM-сгенерированными context prefixes.
+- [NVIDIA 2026 chunk-size benchmark — Premai summary](https://blog.premai.io/rag-chunking-strategies-the-2026-benchmark-guide/) — размер чанков по типам запросов.

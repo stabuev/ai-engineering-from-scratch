@@ -1,54 +1,54 @@
-# Natural Language Inference — Textual Entailment
+# Вывод на естественном языке (Natural Language Inference) — текстовое следование (Textual Entailment)
 
-> "t entails h" means a human reading t would conclude h is true. NLI is the task of predicting entailment / contradiction / neutral. Boring on the surface, load-bearing in production.
+> "`t` entails `h`" означает, что человек, читающий `t`, заключил бы, что `h` истинно. NLI — задача предсказания entailment / contradiction / neutral. На поверхности скучно, но в продакшене это несущая конструкция.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 05 (Sentiment Analysis), Phase 5 · 13 (Question Answering)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python
+**Предварительные требования:** Phase 5 · 05 (Sentiment Analysis), Phase 5 · 13 (Question Answering)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-You built a summarizer. It produced a summary. How do you know the summary does not contain a hallucination?
+Вы построили суммаризатор. Он выдал summary. Как узнать, что summary не содержит галлюцинации?
 
-You built a chatbot. It answered "yes." How do you know the answer is supported by the retrieved passage?
+Вы построили чат-бота. Он ответил "yes." Как узнать, что ответ поддерживается извлеченным passage?
 
-You need to classify 10,000 news articles by topic. You have no training labels. Can you reuse a model?
+Вам нужно классифицировать 10 000 новостных статей по теме. У вас нет обучающих меток. Можно ли переиспользовать модель?
 
-All three problems reduce to Natural Language Inference. NLI asks: given a premise `t` and a hypothesis `h`, is `h` entailed by `t`, contradicted, or neutral (unrelated)?
+Все три проблемы сводятся к Natural Language Inference. NLI спрашивает: дана предпосылка `t` и гипотеза `h`; следует ли `h` из `t`, противоречит ей или является нейтральной (не связанной)?
 
-- **Hallucination check:** `t` = source document, `h` = summary claim. Not entailment = hallucination.
-- **Grounded QA:** `t` = retrieved passage, `h` = generated answer. Not entailment = fabrication.
-- **Zero-shot classification:** `t` = document, `h` = verbalized label ("This is about sports"). Entailment = predicted label.
+- **Проверка галлюцинаций:** `t` = исходный документ, `h` = утверждение summary. Не entailment = галлюцинация.
+- **Grounded QA:** `t` = извлеченный passage, `h` = сгенерированный ответ. Не entailment = fabrication.
+- **Zero-shot classification:** `t` = документ, `h` = вербализованная метка ("This is about sports"). Entailment = предсказанная метка.
 
-One task, three production uses. This is why every RAG evaluation framework ships an NLI model under the hood.
+Одна задача, три продакшен-применения. Поэтому каждый фреймворк оценки RAG поставляется с NLI-моделью под капотом.
 
-## The Concept
+## Концепция
 
-![NLI: three-way classification, premise vs hypothesis](../assets/nli.svg)
+![NLI: трехклассовая классификация, premise vs hypothesis](../assets/nli.svg)
 
-**The three labels.**
+**Три метки.**
 
-- **Entailment.** `t` → `h`. "The cat is on the mat" entails "There is a cat."
-- **Contradiction.** `t` → ¬`h`. "The cat is on the mat" contradicts "There is no cat."
-- **Neutral.** No inference either way. "The cat is on the mat" is neutral to "The cat is hungry."
+- **Entailment.** `t` → `h`. "The cat is on the mat" влечет "There is a cat."
+- **Contradiction.** `t` → ¬`h`. "The cat is on the mat" противоречит "There is no cat."
+- **Neutral.** Нет вывода ни в одну сторону. "The cat is on the mat" нейтрально к "The cat is hungry."
 
-**Not logical entailment.** NLI is *natural* language inference — what a typical human reader would infer, not strict logic. "John walked his dog" entails "John has a dog" in NLI, but strict first-order logic would only admit it if you axiomatize possession.
+**Не логическое следование.** NLI — это *естественно-языковой* вывод (natural language inference): то, что вывел бы типичный читатель, а не строгая логика. "John walked his dog" в NLI влечет "John has a dog", но строгая логика первого порядка допустила бы это только если аксиоматизировать владение.
 
-**Datasets.**
+**Датасеты.**
 
-- **SNLI** (2015). 570k human-annotated pairs, image captions as premises. Narrow domain.
-- **MultiNLI** (2017). 433k pairs across 10 genres. The standard training corpus in 2026.
-- **ANLI** (2019). Adversarial NLI. Humans wrote examples specifically designed to break existing models. Harder.
-- **DocNLI, ConTRoL** (2020–21). Document-length premises. Tests multi-hop and long-range inference.
+- **SNLI** (2015). 570k пар с человеческой разметкой, подписи к изображениям как предпосылки. Узкий домен.
+- **MultiNLI** (2017). 433k пар по 10 жанрам. Стандартный обучающий корпус в 2026 году.
+- **ANLI** (2019). Adversarial NLI. Люди писали примеры, специально созданные для поломки существующих моделей. Сложнее.
+- **DocNLI, ConTRoL** (2020–21). Предпосылки длиной в документ. Проверяет multi-hop и long-range inference.
 
-**The architecture.** A transformer encoder (BERT, RoBERTa, DeBERTa) reads `[CLS] premise [SEP] hypothesis [SEP]`. The `[CLS]` representation feeds a 3-way softmax. Train on MNLI, evaluate on held-out benchmarks, get 90%+ accuracy on in-distribution pairs.
+**Архитектура.** Transformer encoder (BERT, RoBERTa, DeBERTa) читает `[CLS] premise [SEP] hypothesis [SEP]`. Представление `[CLS]` подается в 3-классовый softmax. Обучите на MNLI, оцените на held-out бенчмарках, получите 90%+ accuracy на in-distribution парах.
 
-**Zero-shot via NLI.** Given a document and candidate labels, turn each label into a hypothesis ("This text is about sports"). Compute entailment probability for each. Pick the max. This is the mechanism behind Hugging Face's `zero-shot-classification` pipeline.
+**Zero-shot через NLI.** Дан документ и кандидаты-метки; превратите каждую метку в гипотезу ("This text is about sports"). Вычислите вероятность entailment для каждой. Выберите максимум. Это механизм за pipeline `zero-shot-classification` в Hugging Face.
 
-## Build It
+## Соберите это
 
-### Step 1: run a pretrained NLI model
+### Шаг 1: запустите предобученную NLI-модель
 
 ```python
 from transformers import pipeline
@@ -67,9 +67,9 @@ print(result)
 #  {'label': 'contradiction', 'score': 0.01}]
 ```
 
-For production NLI, `facebook/bart-large-mnli` and `microsoft/deberta-v3-large-mnli` are the open defaults. DeBERTa-v3 tops leaderboards.
+Для production NLI открытые варианты по умолчанию — `facebook/bart-large-mnli` и `microsoft/deberta-v3-large-mnli`. DeBERTa-v3 возглавляет leaderboard'ы.
 
-### Step 2: zero-shot classification
+### Шаг 2: zero-shot classification
 
 ```python
 zs = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
@@ -83,9 +83,9 @@ print(result)
 #  'scores': [0.92, 0.05, 0.02, 0.01]}
 ```
 
-The template is "This example is about {label}." by default. Customize with `hypothesis_template`. No training data required. No fine-tuning. Works out of the box.
+Шаблон по умолчанию — "This example is about {label}." Настройте его через `hypothesis_template`. Обучающие данные не нужны. Fine-tuning не нужен. Работает из коробки.
 
-### Step 3: faithfulness check for RAG
+### Шаг 3: проверка faithfulness для RAG
 
 ```python
 def is_faithful(answer, context, threshold=0.5):
@@ -94,25 +94,25 @@ def is_faithful(answer, context, threshold=0.5):
     return entail["score"] > threshold
 ```
 
-This is the core of RAGAS faithfulness. Split the generated answer into atomic claims. Check each claim against the retrieved context. Report the fraction that entail.
+Это ядро faithfulness в RAGAS. Разбейте сгенерированный ответ на атомарные утверждения. Проверьте каждое утверждение относительно извлеченного контекста. Сообщите долю тех, которые следуют из контекста.
 
-### Step 4: hand-rolled NLI classifier (conceptual)
+### Шаг 4: ручной NLI-классификатор (концептуально)
 
-See `code/main.py` for a stdlib-only toy: premise and hypothesis are compared via lexical overlap + negation detection. Not competitive with transformer models — but it shows the shape of the task: two texts in, 3-way label out, loss = cross-entropy over `{entail, contradict, neutral}`.
+См. `code/main.py` для stdlib-only игрушки: premise и hypothesis сравниваются через lexical overlap + negation detection. Неконкурентно с transformer-моделями — но показывает форму задачи: два текста на входе, 3-классовая метка на выходе, loss = cross-entropy over `{entail, contradict, neutral}`.
 
-## Pitfalls
+## Ловушки
 
-- **Hypothesis-only shortcuts.** Models can predict the label from the hypothesis alone at ~60% on SNLI because "not", "nobody", "never" correlate with contradiction. Strong baseline for detecting label leakage.
-- **Lexical overlap heuristic.** The subsequence heuristic ("every subsequence is entailed") passes SNLI but fails HANS/ANLI. Use adversarial benchmarks.
-- **Document-length degradation.** Single-sentence NLI models drop 20+ F1 on document-length premises. Use DocNLI-trained models for long context.
-- **Zero-shot template sensitivity.** "This example is about {label}" vs "{label}" vs "The topic is {label}" can swing accuracy by 10+ points. Tune the template.
-- **Domain mismatch.** MNLI trains on general English. Legal, medical, and scientific text need domain-specific NLI models (e.g., SciNLI, MedNLI).
+- **Hypothesis-only shortcuts.** Модели могут предсказать метку только по hypothesis примерно с 60% на SNLI, потому что "not", "nobody", "never" коррелируют с contradiction. Сильный baseline для обнаружения утечки меток.
+- **Lexical overlap heuristic.** Эвристика подпоследовательности ("every subsequence is entailed") проходит SNLI, но проваливается на HANS/ANLI. Используйте adversarial benchmarks.
+- **Деградация на document-length.** Single-sentence NLI-модели теряют 20+ F1 на предпосылках длиной в документ. Для длинного контекста используйте модели, обученные на DocNLI.
+- **Чувствительность zero-shot template.** "This example is about {label}" vs "{label}" vs "The topic is {label}" может менять accuracy на 10+ пунктов. Настраивайте шаблон.
+- **Domain mismatch.** MNLI обучается на общем английском. Юридические, медицинские и научные тексты требуют доменно-специфичных NLI-моделей (например, SciNLI, MedNLI).
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Use case | Model |
+| Сценарий | Модель |
 |---------|-------|
 | General-purpose NLI | `microsoft/deberta-v3-large-mnli` |
 | Fast / edge | `cross-encoder/nli-deberta-v3-base` |
@@ -121,11 +121,11 @@ The 2026 stack:
 | Multilingual | `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` |
 | Hallucination detection in RAG | NLI layer inside RAGAS / DeepEval |
 
-The 2026 meta-pattern: NLI is the duct tape of text understanding. Whenever you need "does A support B?" or "does A contradict B?" — reach for NLI before you reach for another LLM call.
+Мета-паттерн 2026 года: NLI — duct tape понимания текста. Когда вам нужно "does A support B?" или "does A contradict B?" — беритесь за NLI до того, как делать еще один LLM-вызов.
 
-## Ship It
+## Доведите до продакшена
 
-Save as `outputs/skill-nli-picker.md`:
+Сохраните как `outputs/skill-nli-picker.md`:
 
 ```markdown
 ---
@@ -147,28 +147,28 @@ Given a use case (faithfulness check, zero-shot classification, document-level i
 Refuse to ship zero-shot classification without a 100-example labeled sanity check. Refuse to use a sentence-level NLI model on document-length premises. Flag any claim that NLI solves hallucination — it reduces it; it does not eliminate it.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `facebook/bart-large-mnli` on 20 hand-crafted (premise, hypothesis, label) triples covering all three classes. Measure accuracy. Add adversarial "subsequence heuristic" traps ("I did not eat the cake" vs "I ate the cake") and see if it breaks.
-2. **Medium.** Compare the zero-shot template `"This text is about {label}"` against `"The topic is {label}"` and `"{label}"` on 100 AG News headlines. Report accuracy swing.
-3. **Hard.** Build a RAG faithfulness checker: atomic-claim decomposition + NLI per claim. Evaluate on 50 RAG-generated answers with gold context. Measure false-positive and false-negative rates vs hand labels.
+1. **Легко.** Запустите `facebook/bart-large-mnli` на 20 вручную составленных triples (premise, hypothesis, label), покрывающих все три класса. Измерьте accuracy. Добавьте adversarial ловушки "subsequence heuristic" ("I did not eat the cake" vs "I ate the cake") и проверьте, сломается ли модель.
+2. **Средне.** Сравните zero-shot template `"This text is about {label}"` с `"The topic is {label}"` и `"{label}"` на 100 заголовках AG News. Сообщите swing accuracy.
+3. **Сложно.** Постройте RAG faithfulness checker: декомпозиция на atomic claims + NLI для каждого claim. Оцените на 50 RAG-generated answers с gold context. Измерьте false-positive и false-negative rates относительно hand labels.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| NLI | Natural Language Inference | 3-way classification of premise-hypothesis relationship. |
-| RTE | Recognizing Textual Entailment | Older name for NLI; same task. |
-| Entailment | "t implies h" | A typical reader would conclude h is true given t. |
-| Contradiction | "t rules out h" | A typical reader would conclude h is false given t. |
-| Neutral | "undecided" | No inference from t to h either way. |
-| Zero-shot classification | NLI as classifier | Verbalize labels as hypotheses, pick max entailment. |
-| Faithfulness | Is the answer supported? | NLI over (retrieved context, generated answer). |
+| NLI | Natural Language Inference | 3-классовая классификация отношения premise-hypothesis. |
+| RTE | Recognizing Textual Entailment | Более старое название NLI; та же задача. |
+| Entailment | "t implies h" | Типичный читатель заключил бы, что h истинно, если дано t. |
+| Contradiction | "t rules out h" | Типичный читатель заключил бы, что h ложно, если дано t. |
+| Neutral | "undecided" | Нет вывода от t к h ни в одну сторону. |
+| Zero-shot classification | NLI как классификатор | Вербализовать метки как гипотезы, выбрать max entailment. |
+| Faithfulness | Поддерживается ли ответ? | NLI по (retrieved context, generated answer). |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Bowman et al. (2015). A large annotated corpus for learning natural language inference](https://arxiv.org/abs/1508.05326) — SNLI.
 - [Williams, Nangia, Bowman (2017). A Broad-Coverage Challenge Corpus for Sentence Understanding through Inference](https://arxiv.org/abs/1704.05426) — MultiNLI.
-- [Nie et al. (2019). Adversarial NLI](https://arxiv.org/abs/1910.14599) — the ANLI benchmark.
+- [Nie et al. (2019). Adversarial NLI](https://arxiv.org/abs/1910.14599) — benchmark ANLI.
 - [Yin, Hay, Roth (2019). Benchmarking Zero-shot Text Classification](https://arxiv.org/abs/1909.00161) — NLI-as-classifier.
-- [He et al. (2021). DeBERTa: Decoding-enhanced BERT with Disentangled Attention](https://arxiv.org/abs/2006.03654) — the 2026 NLI workhorse.
+- [He et al. (2021). DeBERTa: Decoding-enhanced BERT with Disentangled Attention](https://arxiv.org/abs/2006.03654) — рабочая лошадка NLI в 2026 году.

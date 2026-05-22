@@ -1,58 +1,58 @@
-# Coreference Resolution
+# Разрешение кореференции
 
-> "She called him. He did not answer. The doctor was at lunch." Three references to two people and nobody is named. Coreference resolution figures out who is who.
+> "She called him. He did not answer. The doctor was at lunch." Три отсылки к двум людям, и никто не назван по имени. Разрешение кореференции выясняет, кто есть кто.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 06 (NER), Phase 5 · 07 (POS & Parsing)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 06 (NER), Фаза 5 · 07 (POS и синтаксический анализ)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Extract every mention of Apple Inc. from a 300-word article. Easy when the article says "Apple." Hard when it says "the company," "they," "Cupertino's technology giant," or "Jobs's firm." Without resolving these mentions to the same entity, your NER pipeline misses 60-80% of the mentions.
+Извлеките каждое упоминание Apple Inc. из статьи на 300 слов. Легко, когда в статье сказано "Apple." Сложно, когда сказано "the company," "they," "Cupertino's technology giant," или "Jobs's firm." Без разрешения этих упоминаний к одной и той же сущности ваш NER-конвейер пропускает 60-80% упоминаний.
 
-Coreference resolution links every expression that refers to the same real-world entity into one cluster. It is the glue between surface-level NLP (NER, parsing) and downstream semantics (IE, QA, summarization, KG).
+Разрешение кореференции связывает каждое выражение, которое относится к одной и той же сущности реального мира, в один кластер. Это связующее звено между поверхностным NLP (NER, синтаксический анализ) и последующей семантикой (IE, QA, суммаризация, KG).
 
-Why it matters in 2026:
+Почему это важно в 2026 году:
 
-- Summarization: "The CEO announced..." vs "Tim Cook announced..." — the summary should name the CEO.
-- Question answering: "Who did she call?" requires resolving "she."
-- Information extraction: a knowledge graph with "PER1 founded Apple" and "Jobs founded Apple" as separate entries is wrong.
-- Multi-document IE: merging mentions across articles about the same event is cross-document coreference.
+- Суммаризация: "The CEO announced..." против "Tim Cook announced..." — в резюме должно быть имя CEO.
+- Вопросно-ответные системы: "Who did she call?" требует разрешить "she."
+- Извлечение информации: граф знаний с "PER1 founded Apple" и "Jobs founded Apple" как отдельными записями неверен.
+- Многодокументное IE: объединение упоминаний из разных статей об одном событии — это междокументная кореференция.
 
-## The Concept
+## Концепция
 
-![Coreference clustering: mentions → entities](../assets/coref.svg)
+![Кластеризация кореференции: упоминания → сущности](../assets/coref.svg)
 
-**The task.** Input: a document. Output: a clustering of mentions (spans) where each cluster refers to one entity.
+**Задача.** Вход: документ. Выход: кластеризация упоминаний (отрезков текста), где каждый кластер относится к одной сущности.
 
-**Mention types.**
+**Типы упоминаний.**
 
-- **Named entity.** "Tim Cook"
-- **Nominal.** "the CEO", "the company"
-- **Pronominal.** "he", "she", "they", "it"
-- **Appositive.** "Tim Cook, Apple's CEO,"
+- **Именованная сущность.** "Tim Cook"
+- **Именная группа.** "the CEO", "the company"
+- **Местоименное.** "he", "she", "they", "it"
+- **Аппозитивное.** "Tim Cook, Apple's CEO,"
 
-**Architectures.**
+**Архитектуры.**
 
-1. **Rule-based (Hobbs, 1978).** Syntactic-tree-based pronoun resolution using grammar rules. Good baseline. Surprisingly hard to beat on pronouns.
-2. **Mention-pair classifier.** For every pair of mentions (m_i, m_j), predict whether they corefer. Cluster by transitive closure. Standard pre-2016.
-3. **Mention-ranking.** For each mention, rank candidate antecedents (including "no antecedent"). Pick the top.
-4. **Span-based end-to-end (Lee et al., 2017).** Transformer encoder. Enumerate all candidate spans up to a length cap. Predict mention scores. Predict antecedent-probability for each span. Cluster greedily. The modern default.
-5. **Generative (2024+).** Prompt an LLM: "List every pronoun in this text and its antecedent." Works well on easy cases, struggles on long documents and rare referents.
+1. **На правилах (Hobbs, 1978).** Разрешение местоимений на основе синтаксического дерева с использованием грамматических правил. Хорошая базовая линия. На удивление трудно превзойти на местоимениях.
+2. **Классификатор пар упоминаний.** Для каждой пары упоминаний (m_i, m_j) предсказывать, кореферентны ли они. Кластеризовать транзитивным замыканием. Стандарт до 2016 года.
+3. **Ранжирование упоминаний.** Для каждого упоминания ранжировать кандидаты-антецеденты (включая "нет антецедента"). Выбирать лучший.
+4. **End-to-end на основе span (Lee et al., 2017).** Transformer-энкодер. Перечислить все кандидатные span до ограничения по длине. Предсказать оценки упоминаний. Предсказать вероятность антецедента для каждого span. Жадно кластеризовать. Современный вариант по умолчанию.
+5. **Генеративные (2024+).** Запросить LLM: "List every pronoun in this text and its antecedent." Хорошо работает на простых случаях, испытывает трудности на длинных документах и редких референтах.
 
-**The evaluation metrics.** Five standard metrics (MUC, B³, CEAF, BLANC, LEA) because no single metric captures clustering quality. Report the average of the first three as CoNLL F1. State-of-the-art in 2026 on CoNLL-2012: ~83 F1.
+**Метрики оценки.** Пять стандартных метрик (MUC, B³, CEAF, BLANC, LEA), потому что ни одна метрика не охватывает качество кластеризации полностью. Сообщайте среднее первых трех как CoNLL F1. State-of-the-art в 2026 году на CoNLL-2012: ~83 F1.
 
-**Known hard cases.**
+**Известные сложные случаи.**
 
-- Definite descriptions referring to entities introduced pages earlier.
-- Bridging anaphora ("the wheels" → a previously mentioned car).
-- Zero anaphora in languages like Chinese and Japanese.
-- Cataphora (pronoun before referent): "When **she** walked in, Mary smiled."
+- Определенные описания, ссылающиеся на сущности, введенные страницами ранее.
+- Бриджинговая анафора ("the wheels" → ранее упомянутая машина).
+- Нулевая анафора в языках вроде китайского и японского.
+- Катафора (местоимение перед референтом): "When **she** walked in, Mary smiled."
 
-## Build It
+## Соберите это
 
-### Step 1: pretrained neural coreference (AllenNLP / spaCy-experimental)
+### Шаг 1: предобученная нейронная кореференция (AllenNLP / spaCy-experimental)
 
 ```python
 import spacy
@@ -62,24 +62,24 @@ for cluster in doc._.coref_clusters:
     print(cluster, "->", [m.text for m in cluster])
 ```
 
-On a longer document, you get something like:
-- Cluster 1: [Apple, The company, they]
-- Cluster 2: [new products]
+На более длинном документе вы получите что-то вроде:
+- Кластер 1: [Apple, The company, they]
+- Кластер 2: [new products]
 
-### Step 2: rule-based pronoun resolver (teaching)
+### Шаг 2: разрешатель местоимений на правилах (для обучения)
 
-See `code/main.py` for a stdlib-only implementation:
+См. `code/main.py` для реализации только на stdlib:
 
-1. Extract mentions: named entities (capitalized spans), pronouns (dict lookup), definite descriptions ("the X").
-2. For each pronoun, look at the previous K mentions and score them by:
-   - gender/number agreement (heuristic)
-   - recency (closer wins)
-   - syntactic role (subjects preferred)
-3. Link the highest-scoring antecedent.
+1. Извлеките упоминания: именованные сущности (отрезки с заглавными буквами), местоимения (поиск по словарю), определенные описания ("the X").
+2. Для каждого местоимения посмотрите на предыдущие K упоминаний и оцените их по:
+   - согласованию рода/числа (эвристика)
+   - недавности (ближайшее выигрывает)
+   - синтаксической роли (предпочтение подлежащим)
+3. Свяжите антецедент с наивысшей оценкой.
 
-Not competitive with neural models. But it shows the search space and the decisions an end-to-end model must make.
+Не конкурентно с нейронными моделями. Но это показывает пространство поиска и решения, которые должна принимать end-to-end модель.
 
-### Step 3: using LLMs for coreference
+### Шаг 3: использование LLM для кореференции
 
 ```python
 prompt = f"""Text: {text}
@@ -90,36 +90,36 @@ Cluster them by what they refer to. Output JSON:
 """
 ```
 
-Two failure modes to watch. First, LLMs over-merge ("him" and "her" referring to two distinct people). Second, LLMs silently drop mentions in long documents. Always verify with span-offset checks.
+Следите за двумя режимами отказа. Во-первых, LLM чрезмерно объединяют ("him" и "her", относящиеся к двум разным людям). Во-вторых, LLM молча пропускают упоминания в длинных документах. Всегда проверяйте через span-offset проверки.
 
-### Step 4: evaluation
+### Шаг 4: оценка
 
-The standard conll-2012 script computes MUC, B³, CEAF-φ4 and reports the average. For an in-house eval, start with span-level precision and recall on your annotated test set, then add mention-linking F1.
+Стандартный скрипт conll-2012 вычисляет MUC, B³, CEAF-φ4 и сообщает среднее. Для внутренней оценки начните с precision и recall на уровне span на вашем размеченном тестовом наборе, затем добавьте F1 для связывания упоминаний.
 
-## Pitfalls
+## Подводные камни
 
-- **Singleton explosion.** Some systems report every mention as its own cluster. B³ is lenient. MUC punishes this. Always check all three metrics.
-- **Pronouns in long context.** Performance drops ~15 F1 on documents over 2,000 tokens. Chunk carefully.
-- **Gender assumptions.** Hard-coded gender rules break on non-binary referents, organizations, animals. Use learned models or neutral scoring.
-- **LLM drift on long docs.** A single API call cannot reliably cluster mentions across 50+ paragraphs. Use sliding-window + merge.
+- **Взрыв синглтонов.** Некоторые системы сообщают каждое упоминание как собственный кластер. B³ снисходительна. MUC наказывает это. Всегда проверяйте все три метрики.
+- **Местоимения в длинном контексте.** Производительность падает примерно на 15 F1 на документах свыше 2,000 токенов. Аккуратно разбивайте на чанки.
+- **Гендерные предположения.** Жестко заданные правила рода ломаются на небинарных референтах, организациях, животных. Используйте обученные модели или нейтральное скорингование.
+- **Дрейф LLM на длинных документах.** Один API-вызов не может надежно кластеризовать упоминания по 50+ абзацам. Используйте sliding-window + merge.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| English, single document | `en_coreference_web_trf` (spaCy-experimental) or AllenNLP neural coref |
-| Multilingual | SpanBERT / XLM-R trained on OntoNotes or Multilingual CoNLL |
-| Cross-document event coref | Specialized end-to-end models (2025–26 SOTA) |
-| Quick LLM baseline | GPT-4o / Claude with structured-output coref prompt |
-| Production dialog systems | Rule-based fallback + neural primary + manual review for critical slots |
+| Английский, один документ | `en_coreference_web_trf` (spaCy-experimental) или нейронная кореференция AllenNLP |
+| Многоязычный | SpanBERT / XLM-R, обученные на OntoNotes или Multilingual CoNLL |
+| Междокументная кореференция событий | Специализированные end-to-end модели (2025–26 SOTA) |
+| Быстрая LLM-базовая линия | GPT-4o / Claude со structured-output coref prompt |
+| Продакшен-диалоговые системы | Rule-based fallback + neural primary + ручная проверка критических слотов |
 
-The integration pattern that ships in 2026: run NER first, run coref, merge coref clusters into NER entities. Downstream tasks see one entity per cluster, not one entity per mention.
+Интеграционный паттерн, который поставляют в 2026 году: сначала запустить NER, затем coref, затем объединить кластеры coref в сущности NER. Нижестоящие задачи видят одну сущность на кластер, а не одну сущность на упоминание.
 
-## Ship It
+## Доведите до поставки
 
-Save as `outputs/skill-coref-picker.md`:
+Сохраните как `outputs/skill-coref-picker.md`:
 
 ```markdown
 ---
@@ -141,28 +141,28 @@ Given a use case (single-doc / multi-doc, domain, language), output:
 Refuse LLM-only coref for documents over 2,000 tokens without sliding-window merge. Refuse any pipeline that runs coref without a mention-level precision-recall report. Flag gender-heuristic systems deployed in demographically diverse text.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run the rule-based resolver in `code/main.py` on 5 hand-crafted paragraphs. Measure mention-link accuracy against ground truth.
-2. **Medium.** Use a pretrained neural coref model on a news article. Compare clusters against your own manual annotation. Where did it fail?
-3. **Hard.** Build a coref-enhanced NER pipeline: NER first, then merge via coref clusters. Measure entity-coverage improvement vs NER-only on 100 articles.
+1. **Легко.** Запустите разрешатель на правилах из `code/main.py` на 5 вручную составленных абзацах. Измерьте точность связывания упоминаний относительно ground truth.
+2. **Средне.** Используйте предобученную нейронную coref-модель на новостной статье. Сравните кластеры с вашей собственной ручной аннотацией. Где она ошиблась?
+3. **Сложно.** Постройте NER-конвейер с улучшением через coref: сначала NER, затем объединение через coref-кластеры. Измерьте улучшение покрытия сущностей по сравнению с только NER на 100 статьях.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| Mention | A reference | A span of text that refers to an entity (name, pronoun, noun phrase). |
-| Antecedent | What "it" refers to | The earlier mention a later one corefers with. |
-| Cluster | The entity's mentions | Set of mentions that all refer to the same real-world entity. |
-| Anaphora | Backward reference | Later mention refers to earlier ("he" → "John"). |
-| Cataphora | Forward reference | Earlier mention refers to later ("When he arrived, John..."). |
-| Bridging | Implicit reference | "I bought a car. The wheels were bad." (wheels of THAT car.) |
-| CoNLL F1 | The number on leaderboards | Average of MUC, B³, CEAF-φ4 F1 scores. |
+| Упоминание | Отсылка | Отрезок текста, который относится к сущности (имя, местоимение, именная группа). |
+| Антецедент | То, к чему относится "it" | Более раннее упоминание, с которым более позднее кореферентно. |
+| Кластер | Упоминания сущности | Множество упоминаний, которые все относятся к одной и той же сущности реального мира. |
+| Анафора | Обратная отсылка | Более позднее упоминание относится к более раннему ("he" → "John"). |
+| Катафора | Прямая отсылка | Более раннее упоминание относится к более позднему ("When he arrived, John..."). |
+| Бриджинг | Неявная отсылка | "I bought a car. The wheels were bad." (колеса ТОЙ машины.) |
+| CoNLL F1 | Число в лидербордах | Среднее F1-оценок MUC, B³, CEAF-φ4. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Jurafsky & Martin, SLP3 Ch. 26 — Coreference Resolution and Entity Linking](https://web.stanford.edu/~jurafsky/slp3/26.pdf) — canonical textbook chapter.
+- [Jurafsky & Martin, SLP3 Ch. 26 — Coreference Resolution and Entity Linking](https://web.stanford.edu/~jurafsky/slp3/26.pdf) — каноническая глава учебника.
 - [Lee et al. (2017). End-to-end Neural Coreference Resolution](https://arxiv.org/abs/1707.07045) — span-based end-to-end.
-- [Joshi et al. (2020). SpanBERT](https://arxiv.org/abs/1907.10529) — pretraining that improves coref.
-- [Pradhan et al. (2012). CoNLL-2012 Shared Task](https://aclanthology.org/W12-4501/) — the benchmark.
-- [Hobbs (1978). Resolving Pronoun References](https://www.sciencedirect.com/science/article/pii/0024384178900064) — the rule-based classic.
+- [Joshi et al. (2020). SpanBERT](https://arxiv.org/abs/1907.10529) — предобучение, улучшающее coref.
+- [Pradhan et al. (2012). CoNLL-2012 Shared Task](https://aclanthology.org/W12-4501/) — бенчмарк.
+- [Hobbs (1978). Resolving Pronoun References](https://www.sciencedirect.com/science/article/pii/0024384178900064) — классика на правилах.

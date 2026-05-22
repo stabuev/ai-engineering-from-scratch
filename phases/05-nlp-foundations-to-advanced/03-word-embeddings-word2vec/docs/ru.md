@@ -1,34 +1,34 @@
-# Word Embeddings — Word2Vec from Scratch
+# Word Embeddings — Word2Vec с нуля
 
-> A word is the company it keeps. Train a shallow net on that idea and geometry falls out.
+> Слово определяется окружением, в котором оно встречается. Обучите неглубокую сеть на этой идее, и геометрия появится сама.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 3 · 03 (Backpropagation from Scratch)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 02 (BoW + TF-IDF), Фаза 3 · 03 (Backpropagation from Scratch)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-TF-IDF knows `dog` and `puppy` are different words. It does not know they mean nearly the same thing. A classifier trained on `dog` cannot generalize to a review about `puppy`. You can paper over this by listing synonyms, but that fails on rare terms, domain jargon, and every language you did not anticipate.
+TF-IDF знает, что `dog` и `puppy` — разные слова. Он не знает, что они означают почти одно и то же. Классификатор, обученный на `dog`, не сможет обобщить сигнал на отзыв про `puppy`. Это можно замаскировать списками синонимов, но такой подход ломается на редких терминах, domain jargon и любом языке, который вы не предусмотрели.
 
-You want a representation where `dog` and `puppy` land close together in space. Where `king - man + woman` lands near `queen`. Where a model trained on `dog` transfers some signal to `puppy` for free.
+Нужно представление, где `dog` и `puppy` оказываются рядом в пространстве. Где `king - man + woman` попадает около `queen`. Где модель, обученная на `dog`, бесплатно переносит часть сигнала на `puppy`.
 
-Word2Vec gave us that space. Two layer neural network, trillion-token training runs, published in 2013. The architecture is almost embarrassingly simple. The results reshaped NLP for a decade.
+Word2Vec дал нам это пространство. Двухслойная neural network, training runs на триллионах токенов, публикация в 2013 году. Архитектура почти неловко проста. Результаты изменили NLP на десятилетие.
 
-## The Concept
+## Концепция
 
 ![Skip-gram window and embedding space](./assets/word2vec.svg)
 
-**Distributional hypothesis** (Firth, 1957): "You shall know a word by the company it keeps." If two words appear in similar contexts, they probably mean similar things.
+**Distributional hypothesis** (Firth, 1957): "You shall know a word by the company it keeps." Если два слова встречаются в похожих контекстах, они, вероятно, имеют похожий смысл.
 
-Word2Vec comes in two flavors, both exploiting that idea.
+Word2Vec существует в двух вариантах, оба используют эту идею.
 
-- **Skip-gram.** Given a center word, predict the surrounding words. `cat -> (the, sat, on)` with window size 2.
-- **CBOW (continuous bag of words).** Given surrounding words, predict the center. `(the, sat, on) -> cat`.
+- **Skip-gram.** По center word предсказывать surrounding words. `cat -> (the, sat, on)` с window size 2.
+- **CBOW (continuous bag of words).** По surrounding words предсказывать center. `(the, sat, on) -> cat`.
 
-Skip-gram is slower to train but handles rare words better. It became the default.
+Skip-gram обучается медленнее, но лучше работает с редкими словами. Он стал default.
 
-The network has one hidden layer with no nonlinearity. Input is a one-hot vector over the vocabulary. Output is a softmax over the vocabulary. After training, you throw away the output layer. The hidden layer weights are the embeddings.
+Сеть имеет один hidden layer без нелинейности. Вход — one-hot vector по словарю. Выход — softmax по словарю. После обучения output layer выбрасывают. Веса hidden layer и есть embeddings.
 
 ```
 one-hot(center) ── W ──▶ hidden (d-dim) ── W' ──▶ softmax(vocab)
@@ -36,11 +36,11 @@ one-hot(center) ── W ──▶ hidden (d-dim) ── W' ──▶ softmax(vo
                           this is the embedding
 ```
 
-The trick: softmax over 100k words is prohibitively expensive. Word2Vec uses **negative sampling** to turn it into a binary classification task. Predict "did this context word appear near this center word, yes or no". Sample a handful of negative (non-co-occurring) words per training pair instead of computing softmax over the whole vocabulary.
+Трюк: softmax по 100k словам запретительно дорог. Word2Vec использует **negative sampling**, чтобы превратить задачу в binary classification. Предсказать "появлялось ли это context word рядом с этим center word, да или нет". Вместо вычисления softmax по всему словарю для каждой training pair выбирается несколько negative (non-co-occurring) words.
 
-## Build It
+## Построение
 
-### Step 1: training pairs from a corpus
+### Шаг 1: training pairs из корпуса
 
 ```python
 def skipgram_pairs(docs, window=2):
@@ -62,11 +62,11 @@ def skipgram_pairs(docs, window=2):
  ...]
 ```
 
-Every (center, context) pair in a window is a positive training example.
+Каждая пара (center, context) в окне — positive training example.
 
-### Step 2: embedding tables
+### Шаг 2: embedding tables
 
-Two matrices. `W` is the center-word embedding table (the one you keep). `W'` is the context-word table (often discarded, sometimes averaged with `W`).
+Две матрицы. `W` — embedding table для center-word (та, которую оставляют). `W'` — table для context-word (часто отбрасывают, иногда усредняют с `W`).
 
 ```python
 import numpy as np
@@ -79,11 +79,11 @@ def init_embeddings(vocab_size, dim, seed=0):
     return W, W_prime
 ```
 
-Small random init. Vocab size 10k and dim 100 is realistic; for teaching, 50 vocab x 16 dim is enough to see the geometry.
+Небольшая случайная инициализация. Vocab size 10k и dim 100 — реалистично; для обучения достаточно 50 vocab x 16 dim, чтобы увидеть геометрию.
 
-### Step 3: negative sampling objective
+### Шаг 3: negative sampling objective
 
-For each positive pair `(center, context)`, sample `k` random words from the vocabulary as negatives. Train the model so the dot product `W[center] · W'[context]` is high for positives and low for negatives.
+Для каждой positive pair `(center, context)` выберите `k` случайных слов из словаря как negatives. Обучайте модель так, чтобы dot product `W[center] · W'[context]` был высоким для positives и низким для negatives.
 
 ```python
 def sigmoid(x):
@@ -109,9 +109,9 @@ def train_pair(W, W_prime, center_idx, context_idx, negative_indices, lr):
     W[center_idx] -= lr * grad_center
 ```
 
-The magic formula: logistic loss on positive pair (want sigmoid near 1) plus logistic loss on negative pairs (want sigmoid near 0). Gradients flow to both tables. Full derivation is in the original paper; walk through it once with pencil and paper if you want it to stick.
+Магическая формула: logistic loss на positive pair (хотим sigmoid около 1) плюс logistic loss на negative pairs (хотим sigmoid около 0). Gradients проходят в обе таблицы. Полный derivation есть в оригинальной статье; один раз пройдите его карандашом на бумаге, если хотите, чтобы он закрепился.
 
-### Step 4: train on a toy corpus
+### Шаг 4: обучение на toy corpus
 
 ```python
 def train(docs, dim=16, window=2, k_neg=5, epochs=100, lr=0.05, seed=0):
@@ -132,9 +132,9 @@ def train(docs, dim=16, window=2, k_neg=5, epochs=100, lr=0.05, seed=0):
     return vocab, W
 ```
 
-After enough epochs on a large corpus, words that share contexts have similar center embeddings. On a toy corpus, you see the effect faintly. On billions of tokens, you see it dramatically.
+После достаточного числа epochs на большом корпусе слова с общими контекстами имеют похожие center embeddings. На toy corpus эффект виден слабо. На миллиардах токенов — очень ясно.
 
-### Step 5: the analogy trick
+### Шаг 5: analogy trick
 
 ```python
 def nearest(vocab, W, target_vec, topk=5, exclude=None):
@@ -160,18 +160,18 @@ def analogy(vocab, W, a, b, c, topk=5):
     return nearest(vocab, W, v, topk=topk, exclude={vocab[a], vocab[b], vocab[c]})
 ```
 
-On pre-trained 300d Google News vectors:
+На pre-trained 300d Google News vectors:
 
 ```python
 >>> analogy(vocab, W, "man", "king", "woman")
 [('queen', 0.71), ('monarch', 0.62), ('princess', 0.59), ...]
 ```
 
-`king - man + woman = queen`. Not because the model knows what royalty is. Because the vector `(king - man)` captures something like "royal", and adding it to `woman` lands near the royal-female region.
+`king - man + woman = queen`. Не потому, что модель знает, что такое королевская власть. А потому, что vector `(king - man)` захватывает что-то вроде "royal", и добавление его к `woman` переносит точку в область royal-female.
 
-## Use It
+## Использование
 
-Writing Word2Vec from scratch is teaching. Production NLP uses `gensim`.
+Писать Word2Vec с нуля полезно для обучения. Production NLP использует `gensim`.
 
 ```python
 from gensim.models import Word2Vec
@@ -196,30 +196,30 @@ print(model.wv["cat"])
 print(model.wv.most_similar("cat", topn=3))
 ```
 
-For real work, you almost never train Word2Vec yourself. You download pre-trained vectors.
+В реальной работе вы почти никогда не обучаете Word2Vec самостоятельно. Вы скачиваете pre-trained vectors.
 
-- **GloVe** — Stanford's co-occurrence-matrix factorization approach. 50d, 100d, 200d, 300d checkpoints. Good general coverage. Lesson 04 covers GloVe specifically.
-- **fastText** — Facebook's Word2Vec extension that embeds character n-grams. Handles out-of-vocabulary words by composing subwords. Lesson 04.
-- **Pretrained Word2Vec on Google News** — 300d, 3M word vocabulary, published 2013. Still downloaded daily.
+- **GloVe** — подход Stanford на основе factorization of co-occurrence matrix. Checkpoints 50d, 100d, 200d, 300d. Хорошее общее покрытие. Урок 04 отдельно рассматривает GloVe.
+- **fastText** — расширение Word2Vec от Facebook, которое embedded character n-grams. Обрабатывает out-of-vocabulary words через composition of subwords. Урок 04.
+- **Pretrained Word2Vec on Google News** — 300d, словарь 3M words, опубликован в 2013. Его все еще скачивают каждый день.
 
-### When Word2Vec still wins in 2026
+### Когда Word2Vec все еще выигрывает в 2026 году
 
-- Lightweight domain-specific retrieval. Train on medical abstracts in an hour on a laptop, get specialized vectors no general model captures.
-- Analogy-style feature engineering. `gender_vector = mean(man - woman pairs)`. Subtract it from other words to get a gender-neutral axis. Still used in fairness research.
-- Interpretability. 100d is small enough to plot via PCA or t-SNE and actually see clusters form.
-- Anywhere inference has to run on-device with no GPU. Word2Vec lookup is a single row fetch.
+- Lightweight domain-specific retrieval. Обучите на медицинских abstracts за час на laptop и получите специализированные vectors, которые не захватывает general model.
+- Analogy-style feature engineering. `gender_vector = mean(man - woman pairs)`. Вычтите его из других слов, чтобы получить gender-neutral axis. Все еще используется в fairness research.
+- Interpretability. 100d достаточно мал, чтобы отобразить через PCA или t-SNE и действительно увидеть clusters.
+- Везде, где inference должен работать on-device без GPU. Word2Vec lookup — это один row fetch.
 
-### Where Word2Vec fails
+### Где Word2Vec ломается
 
-The polysemy wall. `bank` has one vector. `river bank` and `financial bank` share it. `table` (spreadsheet vs. furniture) shares it. A classifier downstream cannot distinguish the senses from the vector.
+Стена polysemy. У `bank` один vector. `river bank` и `financial bank` используют его совместно. `table` (spreadsheet vs. furniture) тоже. Последующий классификатор не может различить значения по этому vector.
 
-Contextual embeddings (ELMo, BERT, every transformer since) solved this by producing a different vector for each occurrence of the word based on surrounding context. That is the jump from Word2Vec to BERT: from static to contextual. Phase 7 covers the transformer half.
+Contextual embeddings (ELMo, BERT, каждый transformer после них) решили это, создавая отдельный vector для каждого occurrence слова на основе surrounding context. Это скачок от Word2Vec к BERT: от static к contextual. Фаза 7 разбирает transformer-часть.
 
-The out-of-vocabulary problem is the other failure. Word2Vec has never seen `Zoomer-approved` if it was not in training data. No fallback. fastText fixes this with subword composition (lesson 04).
+Проблема out-of-vocabulary — второй failure. Word2Vec никогда не видел `Zoomer-approved`, если этого не было в training data. Fallback отсутствует. fastText исправляет это через subword composition (урок 04).
 
-## Ship It
+## Доставка
 
-Save as `outputs/skill-embedding-probe.md`:
+Сохраните как `outputs/skill-embedding-probe.md`:
 
 ```markdown
 ---
@@ -241,25 +241,25 @@ You probe trained word embeddings to verify they are working. Given a `gensim.mo
 Refuse to declare a model good on analogy accuracy alone. Analogy benchmarks are gameable and do not transfer to downstream tasks. Recommend intrinsic + downstream evaluation together.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run the training loop on a tiny corpus (20 sentences about cats and dogs). After 200 epochs, verify `nearest(vocab, W, W[vocab["cat"]])` returns `dog` in its top 3. If not, increase epochs or vocabulary.
-2. **Medium.** Add subsampling of frequent words. Words with frequency above `10^-5` are dropped from training pairs with probability proportional to their frequency. Measure the effect on rare-word similarity.
-3. **Hard.** Train a model on the 20 Newsgroups corpus. Compute two bias axes: `he - she` and `doctor - nurse`. Project occupation words onto both axes. Report which occupations have the largest bias gap. This is the kind of probe fairness researchers use.
+1. **Easy.** Запустите training loop на tiny corpus (20 предложений про cats and dogs). После 200 epochs проверьте, что `nearest(vocab, W, W[vocab["cat"]])` возвращает `dog` в top 3. Если нет, увеличьте epochs или vocabulary.
+2. **Medium.** Добавьте subsampling of frequent words. Words with frequency above `10^-5` are dropped from training pairs with probability proportional to their frequency. Измерьте влияние на rare-word similarity.
+3. **Hard.** Обучите модель на корпусе 20 Newsgroups. Вычислите две bias axes: `he - she` и `doctor - nurse`. Спроецируйте occupation words на обе axes. Сообщите, у каких occupations самый большой bias gap. Это тип probe, который используют fairness researchers.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Word embedding | Word as a vector | A dense, low-dim (typically 100-300) representation learned from context. |
-| Skip-gram | Word2Vec trick | Predict context words from center word. Slower than CBOW, better for rare words. |
-| Negative sampling | Training shortcut | Replace softmax over full vocab with binary classification against `k` random words. |
-| Static embedding | One vector per word | Same vector regardless of context. Fails on polysemy. |
-| Contextual embedding | Context-sensitive vector | Different vector for each occurrence based on surrounding words. What transformers produce. |
-| OOV | Out of vocabulary | Word not seen in training. Word2Vec cannot produce a vector for these. |
+| Word embedding | Word as a vector | Плотное low-dim (обычно 100-300) представление, выученное из контекста. |
+| Skip-gram | Word2Vec trick | Предсказывать context words по center word. Медленнее CBOW, лучше для rare words. |
+| Negative sampling | Training shortcut | Заменяет softmax по полному vocab на binary classification против `k` random words. |
+| Static embedding | One vector per word | Один и тот же vector независимо от контекста. Ломается на polysemy. |
+| Contextual embedding | Context-sensitive vector | Разный vector для каждого occurrence на основе surrounding words. То, что создают transformers. |
+| OOV | Out of vocabulary | Слово, не встречавшееся при обучении. Word2Vec не может создать для него vector. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Mikolov et al. (2013). Distributed Representations of Words and Phrases and their Compositionality](https://arxiv.org/abs/1310.4546) — the negative-sampling paper. Short and readable.
-- [Rong, X. (2014). word2vec Parameter Learning Explained](https://arxiv.org/abs/1411.2738) — the clearest derivation of the gradients, if the original paper's math feels dense.
-- [gensim Word2Vec tutorial](https://radimrehurek.com/gensim/models/word2vec.html) — production training settings that actually work.
+- [Mikolov et al. (2013). Distributed Representations of Words and Phrases and their Compositionality](https://arxiv.org/abs/1310.4546) — статья о negative-sampling. Короткая и читаемая.
+- [Rong, X. (2014). word2vec Parameter Learning Explained](https://arxiv.org/abs/1411.2738) — самое ясное derivation of the gradients, если математика оригинальной статьи кажется плотной.
+- [gensim Word2Vec tutorial](https://radimrehurek.com/gensim/models/word2vec.html) — production training settings, которые действительно работают.

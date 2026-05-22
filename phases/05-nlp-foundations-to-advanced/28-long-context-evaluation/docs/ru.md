@@ -1,56 +1,56 @@
-# Long-Context Evaluation — NIAH, RULER, LongBench, MRCR
+# Оценка длинного контекста — NIAH, RULER, LongBench, MRCR
 
-> Gemini 3 Pro advertises 10M tokens of context. At 1M tokens, 8-needle MRCR drops to 26.3%. Advertised ≠ usable. Long-context evaluation tells you the actual capacity of the model you are shipping on.
+> Gemini 3 Pro заявляет 10M токенов контекста. При 1M токенов 8-needle MRCR падает до 26.3%. Заявленное ≠ пригодное. Оценка длинного контекста показывает фактическую емкость модели, которую вы выводите в продукт.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 23 (Chunking Strategies)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 13 (Question Answering), Фаза 5 · 23 (Chunking Strategies)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-You have a 200-page contract. The model claims a 1M-token context. You paste the contract in and ask: "What is the termination clause?" The model answers — but answers from the cover page because the termination clause sits at 120k tokens deep, past where the model actually attends.
+У вас есть контракт на 200 страниц. Модель заявляет контекст в 1M токенов. Вы вставляете контракт и спрашиваете: "What is the termination clause?" Модель отвечает, но берет ответ с титульной страницы, потому что пункт о расторжении находится на глубине 120k токенов, дальше той области, куда модель фактически обращает внимание.
 
-This is the 2026 context-capacity gap. Spec sheets say 1M or 10M. Reality says 60-70% of that is usable, and "usable" depends on the task.
+Это разрыв емкости контекста в 2026 году. Спецификации говорят 1M или 10M. Реальность говорит, что пригодны 60-70% от этого, а "пригодность" зависит от задачи.
 
-- **Retrieval (single needle in haystack):** near-perfect up to the advertised max on frontier models.
-- **Multi-hop / aggregation:** degrades sharply past ~128k on most models.
-- **Reasoning over dispersed facts:** the first task to fail.
+- **Извлечение (одна игла в стоге сена):** почти идеально до заявленного максимума на frontier-моделях.
+- **Многошаговые выводы / агрегация:** резко деградирует после ~128k на большинстве моделей.
+- **Рассуждение по разнесенным фактам:** первая задача, которая ломается.
 
-Long-context evaluation measures these axes. This lesson names the benchmarks, what each actually measures, and how to build a custom needle test for your domain.
+Оценка длинного контекста измеряет эти оси. Этот урок называет бенчмарки, объясняет, что именно измеряет каждый из них, и показывает, как построить кастомный needle-тест для вашей предметной области.
 
-## The Concept
+## Концепция
 
-![NIAH baseline, RULER multi-task, LongBench holistic](../assets/long-context-eval.svg)
+![Базовый NIAH, многозадачный RULER, целостный LongBench](../assets/long-context-eval.svg)
 
-**Needle-in-a-Haystack (NIAH, 2023).** Place a fact ("the magic word is pineapple") at a controlled depth in a long context. Ask the model to retrieve it. Sweep depth × length. The original long-context benchmark. Frontier models now saturate this; it is a necessary but not sufficient baseline.
+**Needle-in-a-Haystack (NIAH, 2023).** Поместите факт ("the magic word is pineapple") на контролируемую глубину в длинный контекст. Попросите модель извлечь его. Пройдитесь по сетке depth × length. Исходный бенчмарк длинного контекста. Frontier-модели теперь насыщают его; это необходимая, но недостаточная базовая проверка.
 
-**RULER (Nvidia, 2024).** 13 task types across 4 categories: retrieval (single / multi-key / multi-value), multi-hop tracing (variable tracking), aggregation (common word frequency), QA. Configurable context length (4k to 128k+). Reveals models that saturate NIAH but fail on multi-hop. In the 2024 release, only half of 17 models claiming 32k+ context maintained quality at 32k.
+**RULER (Nvidia, 2024).** 13 типов задач в 4 категориях: извлечение (single / multi-key / multi-value), многошаговое трассирование (отслеживание переменных), агрегация (частота общих слов), QA. Настраиваемая длина контекста (от 4k до 128k+). Выявляет модели, которые насыщают NIAH, но проваливаются на многошаговых задачах. В релизе 2024 года только половина из 17 моделей, заявлявших контекст 32k+, сохраняла качество на 32k.
 
-**LongBench v2 (2024).** 503 multiple-choice questions, 8k-2M word contexts, six task categories: single-doc QA, multi-doc QA, long in-context learning, long dialogue, code repo, long structured data. The production benchmark for real-world long-context behavior.
+**LongBench v2 (2024).** 503 вопроса с множественным выбором, контексты длиной 8k-2M слов, шесть категорий задач: single-doc QA, multi-doc QA, long in-context learning, long dialogue, code repo, long structured data. Производственный бенчмарк для поведения длинного контекста в реальном мире.
 
-**MRCR (Multi-Round Coreference Resolution).** Multi-turn coreference at scale. 8-needle, 24-needle, 100-needle variants. Exposes how many facts a model can juggle before attention degrades.
+**MRCR (Multi-Round Coreference Resolution).** Многоходовая кореференция в масштабе. Варианты 8-needle, 24-needle, 100-needle. Показывает, сколькими фактами модель может оперировать до деградации внимания.
 
-**NoLiMa.** "Non-lexical needle." The needle and the query share no literal overlap; retrieval requires one step of semantic reasoning. Harder than NIAH.
+**NoLiMa.** "Non-lexical needle." Игла и запрос не имеют буквального пересечения; извлечение требует одного шага семантического рассуждения. Сложнее, чем NIAH.
 
-**HELMET.** Concatenates many documents, asks a question from any one. Tests selective attention.
+**HELMET.** Конкатенирует много документов и задает вопрос по любому одному из них. Тестирует избирательное внимание.
 
-**BABILong.** Embeds bAbI reasoning chains inside irrelevant haystacks. Tests reasoning-in-a-haystack, not just retrieval.
+**BABILong.** Встраивает цепочки рассуждений bAbI в нерелевантные стоги сена. Тестирует reasoning-in-a-haystack, а не только извлечение.
 
-### What to actually report
+### Что действительно нужно отчитывать
 
-- **Advertised context window.** The spec-sheet number.
-- **Effective retrieval length.** NIAH pass at some threshold (e.g., 90%).
-- **Effective reasoning length.** Multi-hop or aggregation pass at that threshold.
-- **Degradation curve.** Accuracy vs context length, plotted per task type.
+- **Заявленное окно контекста.** Число из спецификации.
+- **Эффективная длина извлечения.** Прохождение NIAH при заданном пороге (например, 90%).
+- **Эффективная длина рассуждения.** Прохождение многошаговой задачи или агрегации при том же пороге.
+- **Кривая деградации.** Accuracy vs context length, построенная по типам задач.
 
-Two numbers for your spec sheet: retrieval-effective and reasoning-effective. Usually the reasoning-effective is 25-50% of the advertised window.
+Два числа для вашей спецификации: retrieval-effective и reasoning-effective. Обычно reasoning-effective составляет 25-50% от заявленного окна.
 
-## Build It
+## Соберите это
 
-### Step 1: a custom NIAH for your domain
+### Шаг 1: кастомный NIAH для вашей предметной области
 
-See `code/main.py`. The skeleton:
+См. `code/main.py`. Каркас:
 
 ```python
 def build_haystack(filler_text, needle, depth_ratio, total_tokens):
@@ -80,9 +80,9 @@ def score_niah(model, haystack, question, expected):
     return 1 if expected.lower() in answer.lower() else 0
 ```
 
-Sweep `depth_ratio` ∈ {0, 0.25, 0.5, 0.75, 1.0} × `total_tokens` ∈ {1k, 4k, 16k, 64k}. Plot the heatmap. That is the NIAH card for your target model.
+Пройдитесь по `depth_ratio` ∈ {0, 0.25, 0.5, 0.75, 1.0} × `total_tokens` ∈ {1k, 4k, 16k, 64k}. Постройте тепловую карту. Это NIAH-карточка для вашей целевой модели.
 
-### Step 2: a multi-needle variant
+### Шаг 2: вариант с несколькими иглами
 
 ```python
 def build_multi_needle(filler, needles, total_tokens):
@@ -95,18 +95,18 @@ def build_multi_needle(filler, needles, total_tokens):
     return " ".join(chunks)
 ```
 
-Questions like "What are the three magic words?" require retrieving all three. Single-needle success does not predict multi-needle success.
+Вопросы вроде "What are the three magic words?" требуют извлечь все три. Успех с одной иглой не предсказывает успех с несколькими иглами.
 
-### Step 3: multi-hop variable tracing (RULER-style)
+### Шаг 3: многошаговое трассирование переменных (в стиле RULER)
 
 ```python
 haystack = """X1 = 42. ... (filler) ... X2 = X1 + 10. ... (filler) ... X3 = X2 * 2."""
 question = "What is X3?"
 ```
 
-The answer requires chaining three assignments. Frontier models at 128k often drop to 50-70% accuracy here.
+Ответ требует связать цепочку из трех присваиваний. Frontier-модели на 128k здесь часто падают до 50-70% accuracy.
 
-### Step 4: LongBench v2 on your stack
+### Шаг 4: LongBench v2 на вашем стеке
 
 ```python
 from datasets import load_dataset
@@ -122,34 +122,34 @@ def eval_model_on_longbench(model, subset="single-doc-qa"):
     return correct / len(tasks)
 ```
 
-Report per-category accuracy. Aggregate scores hide big task-level differences.
+Отчитывайте accuracy по категориям. Агрегированные оценки скрывают большие различия на уровне задач.
 
-## Pitfalls
+## Подводные камни
 
-- **NIAH-only evaluation.** Passing NIAH at 1M tokens says nothing about multi-hop. Always run RULER or a custom multi-hop test.
-- **Uniform depth sampling.** Many implementations only test depth=0.5. Test depth=0, 0.25, 0.5, 0.75, 1.0 — the "lost in the middle" effect is real.
-- **Lexical overlap with filler.** If the needle shares keywords with the filler, retrieval becomes trivial. Use NoLiMa-style non-overlapping needles.
-- **Ignoring latency.** 1M-token prompts take 30-120 seconds to prefill. Measure time-to-first-token alongside accuracy.
-- **Vendor-self-reported numbers.** OpenAI, Google, Anthropic all publish their own scores. Always re-run independently on your use case.
+- **Оценка только по NIAH.** Прохождение NIAH на 1M токенов ничего не говорит о многошаговых задачах. Всегда запускайте RULER или кастомный многошаговый тест.
+- **Равномерная выборка глубины.** Многие реализации проверяют только depth=0.5. Проверяйте depth=0, 0.25, 0.5, 0.75, 1.0 — эффект "lost in the middle" реален.
+- **Лексическое пересечение с filler.** Если игла имеет общие ключевые слова с filler, извлечение становится тривиальным. Используйте NoLiMa-style иглы без пересечений.
+- **Игнорирование задержки.** Промпты на 1M токенов требуют 30-120 секунд на prefill. Измеряйте time-to-first-token вместе с accuracy.
+- **Числа, самостоятельно заявленные вендором.** OpenAI, Google, Anthropic публикуют собственные оценки. Всегда независимо перезапускайте оценку на своем use case.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Benchmark |
+| Ситуация | Бенчмарк |
 |-----------|-----------|
-| Quick sanity check | Custom NIAH at 3 depths × 3 lengths |
-| Model selection for production | RULER (13 tasks) at your target length |
-| Real-world QA quality | LongBench v2 single-doc-QA subset |
-| Multi-hop reasoning | BABILong or custom variable-tracing |
-| Conversational / dialogue | MRCR 8-needle at your target length |
-| Model upgrade regression | Fixed in-house NIAH + RULER harness, run on every new model |
+| Быстрая sanity-проверка | Кастомный NIAH на 3 глубинах × 3 длинах |
+| Выбор модели для продакшена | RULER (13 задач) на вашей целевой длине |
+| Качество QA в реальном мире | Подмножество LongBench v2 single-doc-QA |
+| Многошаговое рассуждение | BABILong или кастомное трассирование переменных |
+| Разговоры / диалог | MRCR 8-needle на вашей целевой длине |
+| Регрессия при обновлении модели | Фиксированный внутренний harness NIAH + RULER, запуск на каждой новой модели |
 
-Rule of thumb for production: never trust a context window until you have NIAH + 1 reasoning task at your intended length.
+Правило для продакшена: никогда не доверяйте окну контекста, пока не проверили NIAH + 1 задачу на рассуждение на вашей предполагаемой длине.
 
-## Ship It
+## Отгрузите это
 
-Save as `outputs/skill-long-context-eval.md`:
+Сохраните как `outputs/skill-long-context-eval.md`:
 
 ```markdown
 ---
@@ -172,29 +172,29 @@ Given a target model, target context length, and use case, output:
 Refuse to trust a context window from the model card alone. Refuse NIAH-only evaluation for any multi-hop workload. Refuse vendor self-reported long-context scores as independent evidence.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Build a NIAH with 3 depths (0.25, 0.5, 0.75) × 3 lengths (1k, 4k, 16k). Run on any model. Plot pass rate as a 3×3 heatmap.
-2. **Medium.** Add a 3-needle variant. Measure retrieval of all 3 at each length. Compare to single-needle pass rate at the same length.
-3. **Hard.** Construct a variable-tracing task (X1 → X2 → X3, with 3 hops) embedded in 64k of filler. Measure accuracy across 3 frontier models. Report effective reasoning length per model.
+1. **Легко.** Постройте NIAH с 3 глубинами (0.25, 0.5, 0.75) × 3 длинами (1k, 4k, 16k). Запустите на любой модели. Постройте pass rate в виде тепловой карты 3×3.
+2. **Средне.** Добавьте вариант с 3 иглами. Измерьте извлечение всех 3 на каждой длине. Сравните с pass rate для одной иглы на той же длине.
+3. **Сложно.** Сконструируйте задачу трассирования переменных (X1 → X2 → X3, с 3 шагами), встроенную в 64k filler. Измерьте accuracy на 3 frontier-моделях. Отчитайте effective reasoning length для каждой модели.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| NIAH | Needle in haystack | Plant a fact in filler, ask the model to retrieve it. |
-| RULER | NIAH on steroids | 13 task types across retrieval / multi-hop / aggregation / QA. |
-| Effective context | The real capacity | Length at which accuracy still holds above threshold. |
-| Lost in the middle | Depth bias | Models under-attend to content in the middle of long inputs. |
-| Multi-needle | Many facts at once | Multiple plants; tests attention juggling, not retrieval alone. |
-| MRCR | Multi-round coref | 8, 24, or 100-needle coreference; exposes attention saturation. |
-| NoLiMa | Non-lexical needle | Needle and query share no literal tokens; requires reasoning. |
+| NIAH | Needle in haystack | Поместить факт в filler и попросить модель извлечь его. |
+| RULER | NIAH на стероидах | 13 типов задач по извлечению / multi-hop / агрегации / QA. |
+| Effective context | Реальная емкость | Длина, на которой accuracy все еще держится выше порога. |
+| Lost in the middle | Смещение по глубине | Модели уделяют недостаточно внимания содержимому в середине длинных входов. |
+| Multi-needle | Много фактов сразу | Несколько вставок; тестирует удержание внимания между фактами, а не только извлечение. |
+| MRCR | Multi-round coref | Кореференция с 8, 24 или 100 иглами; выявляет насыщение внимания. |
+| NoLiMa | Non-lexical needle | Игла и запрос не имеют буквальных общих токенов; требуется рассуждение. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Kamradt (2023). Needle in a Haystack analysis](https://github.com/gkamradt/LLMTest_NeedleInAHaystack) — the original NIAH repo.
-- [Hsieh et al. (2024). RULER: What's the Real Context Size of Your Long-Context LMs?](https://arxiv.org/abs/2404.06654) — the multi-task benchmark.
-- [Bai et al. (2024). LongBench v2](https://arxiv.org/abs/2412.15204) — real-world long-context eval.
-- [Modarressi et al. (2024). NoLiMa: Non-lexical needles](https://arxiv.org/abs/2404.06666) — harder needles.
+- [Kamradt (2023). Needle in a Haystack analysis](https://github.com/gkamradt/LLMTest_NeedleInAHaystack) — исходный репозиторий NIAH.
+- [Hsieh et al. (2024). RULER: What's the Real Context Size of Your Long-Context LMs?](https://arxiv.org/abs/2404.06654) — многозадачный бенчмарк.
+- [Bai et al. (2024). LongBench v2](https://arxiv.org/abs/2412.15204) — оценка длинного контекста в реальном мире.
+- [Modarressi et al. (2024). NoLiMa: Non-lexical needles](https://arxiv.org/abs/2404.06666) — более сложные иглы.
 - [Kuratov et al. (2024). BABILong](https://arxiv.org/abs/2406.10149) — reasoning-in-haystack.
-- [Liu et al. (2024). Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172) — the depth-bias paper.
+- [Liu et al. (2024). Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172) — статья о смещении по глубине.

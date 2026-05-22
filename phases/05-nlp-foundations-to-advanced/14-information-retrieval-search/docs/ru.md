@@ -1,36 +1,36 @@
-# Information Retrieval and Search
+# Информационный поиск и Search
 
-> BM25 is precise but brittle. Dense casts a wide net but misses keywords. Hybrid is the 2026 default. Everything else is tuning.
+> BM25 точен, но хрупок. Dense охватывает широко, но пропускает ключевые слова. Hybrid — стандарт 2026 года. Все остальное — настройка.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 04 (GloVe, FastText, Subword)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 04 (GloVe, FastText, Subword)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-The user types "what happens if someone lies to get money" and expects to find the statute that actually covers that: "Section 420 IPC." A keyword search misses it entirely (no shared vocabulary). A semantic search misses it if the embeddings were not trained on legal text. Real search has to handle both.
+Пользователь вводит "what happens if someone lies to get money" и ожидает найти норму, которая действительно это покрывает: "Section 420 IPC." Поиск по ключевым словам полностью ее пропускает (нет общей лексики). Семантический поиск пропускает ее, если embeddings не обучались на юридическом тексте. Реальный поиск должен справляться с обоими случаями.
 
-IR is the pipeline under every RAG system, every search bar, every docs site's fuzzy lookup. The 2026 architecture that works in production is not a single method. It is a chain of complementary methods, each catching the failures of the one before.
+IR — это pipeline под каждой RAG-системой, каждой поисковой строкой, каждым fuzzy lookup на сайте документации. Архитектура 2026 года, работающая в продакшене, — не один метод. Это цепочка взаимодополняющих методов, где каждый ловит отказы предыдущего.
 
-This lesson builds each piece and names which failures each catches.
+В этом уроке мы строим каждую часть и называем, какие сбои она покрывает.
 
-## The Concept
+## Концепция
 
 ![Hybrid retrieval: BM25 + dense + RRF + cross-encoder rerank](../assets/retrieval.svg)
 
-Four layers. Pick the ones you need.
+Четыре слоя. Выберите те, которые нужны.
 
-1. **Sparse retrieval (BM25).** Fast, precise on exact matches, terrible on semantics. Run over an inverted index. Sub-10ms per query on millions of documents. Gets you statute references, product codes, error messages, named entities right.
-2. **Dense retrieval.** Encode query and documents into vectors. Nearest neighbor search. Captures paraphrases and semantic similarity. Misses exact keyword matches that differ by one character. 50-200ms per query with FAISS or a vector DB.
-3. **Fusion.** Merge the ranked lists from sparse and dense. Reciprocal Rank Fusion (RRF) is the easy default because it ignores raw scores (which live in different scales) and only uses rank positions. Weighted fusion is an option when you know one signal dominates for your domain.
-4. **Cross-encoder rerank.** Take the top-30 from fusion. Run a cross-encoder (query + document together, scoring each pair). Keep the top-5. Cross-encoders are slower per pair than bi-encoders but far more accurate. You amortize by only running them on the top-30.
+1. **Sparse retrieval (BM25).** Быстрый, точный на exact matches, плохой на семантике. Работает поверх инвертированного индекса. Менее 10 мс на запрос по миллионам документов. Хорошо находит ссылки на нормы, коды продуктов, сообщения об ошибках, именованные сущности.
+2. **Dense retrieval.** Кодирует запрос и документы в векторы. Поиск ближайших соседей. Улавливает перефразирования и семантическую близость. Пропускает точные совпадения ключевых слов, отличающиеся на один символ. 50-200 мс на запрос с FAISS или vector DB.
+3. **Fusion.** Объединяет ранжированные списки из sparse и dense. Reciprocal Rank Fusion (RRF) — простой вариант по умолчанию, потому что игнорирует сырые scores (они живут в разных шкалах) и использует только позиции в ранжировании. Weighted fusion — вариант, когда вы знаете, что один сигнал доминирует в вашем домене.
+4. **Cross-encoder rerank.** Возьмите top-30 после fusion. Запустите cross-encoder (query + document вместе, оценка каждой пары). Оставьте top-5. Cross-encoders медленнее на пару, чем bi-encoders, но гораздо точнее. Вы амортизируете стоимость, запуская их только на top-30.
 
-Three-way retrieval (BM25 + dense + learned-sparse like SPLADE) outperforms two-way in 2026 benchmarks but needs infrastructure for learned-sparse indexes. For most teams, two-way plus cross-encoder rerank is the sweet spot.
+Three-way retrieval (BM25 + dense + learned-sparse вроде SPLADE) превосходит two-way в бенчмарках 2026 года, но требует инфраструктуры для learned-sparse индексов. Для большинства команд two-way плюс cross-encoder rerank — оптимальная точка.
 
-## Build It
+## Собираем
 
-### Step 1: BM25 from scratch
+### Шаг 1: BM25 с нуля
 
 ```python
 import math
@@ -83,9 +83,9 @@ class BM25:
         return scored[:top_k]
 ```
 
-Two parameters worth knowing. `k1=1.5` controls term-frequency saturation; higher means more weight on term repetition. `b=0.75` controls length normalization; 0 ignores document length, 1 fully normalizes. The defaults are Robertson's recommendations from the original paper and rarely need tuning.
+Два параметра стоит знать. `k1=1.5` управляет насыщением частоты термина; большее значение означает больший вес повторения термина. `b=0.75` управляет нормализацией длины; 0 игнорирует длину документа, 1 полностью нормализует. Значения по умолчанию — рекомендации Robertson из оригинальной статьи, и их редко нужно настраивать.
 
-### Step 2: dense retrieval with a bi-encoder
+### Шаг 2: dense retrieval с bi-encoder
 
 ```python
 from sentence_transformers import SentenceTransformer
@@ -105,9 +105,9 @@ def dense_search(encoder, embeddings, query, top_k=10):
     return [(float(sims[i]), int(i)) for i in order]
 ```
 
-L2-normalize embeddings so dot product equals cosine. `all-MiniLM-L6-v2` is 384-dim, fast, and strong enough for most English retrieval. For multilingual work, use `paraphrase-multilingual-MiniLM-L12-v2`. For top accuracy, `bge-large-en-v1.5` or `e5-large-v2`.
+L2-нормализуйте embeddings, чтобы скалярное произведение равнялось cosine. `all-MiniLM-L6-v2` — 384-мерная, быстрая и достаточно сильная модель для большинства задач поиска на английском. Для многоязычной работы используйте `paraphrase-multilingual-MiniLM-L12-v2`. Для максимальной точности — `bge-large-en-v1.5` или `e5-large-v2`.
 
-### Step 3: Reciprocal Rank Fusion
+### Шаг 3: Reciprocal Rank Fusion
 
 ```python
 def reciprocal_rank_fusion(rankings, k=60):
@@ -119,9 +119,9 @@ def reciprocal_rank_fusion(rankings, k=60):
     return [(score, doc_idx) for doc_idx, score in fused]
 ```
 
-The `k=60` constant comes from the original RRF paper. Higher `k` flattens the contribution of rank differences; lower `k` makes top ranks dominate. 60 is the published default and rarely needs tuning.
+Константа `k=60` взята из оригинальной статьи RRF. Более высокое `k` сглаживает вклад различий в рангах; более низкое `k` делает верхние ранги доминирующими. 60 — опубликованное значение по умолчанию, и его редко нужно настраивать.
 
-### Step 4: hybrid search + rerank
+### Шаг 4: hybrid search + rerank
 
 ```python
 from sentence_transformers import CrossEncoder
@@ -140,49 +140,49 @@ def hybrid_search(query, bm25, encoder, dense_embeddings, corpus, top_k=5, pool_
     return reranked[:top_k]
 ```
 
-Three stages composed. BM25 finds lexical matches. Dense finds semantic matches. RRF merges the two rankings without needing score calibration. Cross-encoder rescores the top-30 using query-document pairs together, which captures fine-grained relevance the bi-encoder missed. Keep top-5.
+Три стадии соединены вместе. BM25 находит лексические совпадения. Dense находит семантические совпадения. RRF объединяет два ранжирования без калибровки scores. Cross-encoder заново оценивает top-30, используя пары query-document вместе, что улавливает тонкую релевантность, которую пропустил bi-encoder. Оставляйте top-5.
 
-### Step 5: evaluation
+### Шаг 5: оценка
 
 | Metric | Meaning |
 |--------|---------|
-| Recall@k | Of queries where the correct document exists, how often is it in the top-k? |
-| MRR (Mean Reciprocal Rank) | Average of 1/rank of first relevant document. |
-| nDCG@k | Accounts for relevance gradations, not just binary relevant/not. |
+| Recall@k | Среди запросов, где правильный документ существует, как часто он попадает в top-k? |
+| MRR (Mean Reciprocal Rank) | Среднее значение 1/rank первого релевантного документа. |
+| nDCG@k | Учитывает градации релевантности, а не только бинарное relevant/not. |
 
-For RAG specifically, **Recall@k** of the retriever is the most important number. Your reader cannot answer if the right passage is not in the retrieved set.
+Для RAG конкретно **Recall@k** retriever — самое важное число. Reader не сможет ответить, если нужный фрагмент не попал в retrieved set.
 
-Debugging tip: for failing queries, diff the sparse and dense rankings. If one finds the right document and the other does not, you have a vocabulary mismatch (fix: add the missing half) or a semantic ambiguity (fix: better embeddings or a reranker).
+Совет по отладке: для неудачных запросов сравните sparse и dense rankings. Если один находит правильный документ, а другой нет, у вас либо vocabulary mismatch (исправление: добавить недостающую половину), либо semantic ambiguity (исправление: лучшие embeddings или reranker).
 
-## Use It
+## Применение
 
-The 2026 stack:
+Стек 2026 года:
 
 | Scale | Stack |
 |-------|-------|
-| 1k-100k docs | In-memory BM25 + `all-MiniLM-L6-v2` embeddings + RRF. No separate DB. |
-| 100k-10M docs | FAISS or pgvector for dense + Elasticsearch / OpenSearch for BM25. Run in parallel. |
-| 10M+ docs | Qdrant / Weaviate / Vespa / Milvus with hybrid support. Cross-encoder rerank on top-30. |
+| 1k-100k docs | In-memory BM25 + `all-MiniLM-L6-v2` embeddings + RRF. Без отдельной DB. |
+| 100k-10M docs | FAISS или pgvector для dense + Elasticsearch / OpenSearch для BM25. Запускать параллельно. |
+| 10M+ docs | Qdrant / Weaviate / Vespa / Milvus с hybrid support. Cross-encoder rerank на top-30. |
 | Best-quality frontier | Three-way (BM25 + dense + SPLADE) + ColBERT late-interaction reranking |
 
-Whatever you pick, budget for evaluation. Benchmark retrieval recall before benchmarking end-to-end RAG accuracy. A reader cannot fix what the retriever missed.
+Что бы вы ни выбрали, заложите бюджет на оценку. Сначала бенчмарк retrieval recall, потом бенчмарк end-to-end RAG accuracy. Reader не исправит то, что retriever пропустил.
 
-### The hard-won lessons from 2026 production RAG
+### Тяжелые уроки из production RAG 2026 года
 
-- **80% of RAG failures trace to ingestion and chunking, not the model.** Teams spend weeks swapping LLMs and tuning prompts while the retrieval quietly returns the wrong context every third query. Fix chunking first.
-- **Chunking strategy matters more than chunk size.** Fixed-size splits break tables, code, and nested headers. Sentence-aware is the default; semantic or LLM-based chunking pays off for technical docs and product manuals.
-- **Parent-doc pattern.** Retrieve small "child" chunks for precision. When multiple children from the same parent section appear, swap in the parent block to preserve context. This consistently lifts answer quality without retraining.
-- **k_rerank=3 is usually optimal.** Every extra chunk past that adds token cost and generation latency without lifting answer quality. If k=8 is still better than k=3 for you, the reranker is underperforming.
-- **HyDE / query expansion.** Generate a hypothetical answer from the query, embed that, retrieve. Bridges the phrasing gap between short questions and long documents. Free precision lift with no training.
-- **Context budget under 8K tokens.** Consistent hits at that limit mean the reranker threshold is too loose.
-- **Version everything.** Prompts, chunking rules, embedding model, reranker. Any drift silently breaks answer quality. CI gates on faithfulness, context precision, and unanswered-question rate block regressions before users see them.
-- **Three-way retrieval (BM25 + dense + learned-sparse like SPLADE) outperforms two-way** on 2026 benchmarks, especially for queries mixing proper nouns with semantics. Ship it when infrastructure supports SPLADE indexes.
+- **80% отказов RAG идут от ingestion и chunking, а не от модели.** Команды неделями меняют LLM и настраивают prompts, пока retrieval тихо возвращает неправильный контекст на каждый третий запрос. Сначала исправьте chunking.
+- **Стратегия chunking важнее, чем размер chunk.** Fixed-size splits ломают таблицы, код и вложенные заголовки. Sentence-aware — вариант по умолчанию; semantic или LLM-based chunking окупается для технической документации и руководств продуктов.
+- **Parent-doc pattern.** Извлекайте маленькие "child" chunks для точности. Когда появляется несколько children из одной parent section, подставляйте parent block, чтобы сохранить контекст. Это стабильно повышает качество ответов без дообучения.
+- **k_rerank=3 обычно оптимален.** Каждый дополнительный chunk после этого добавляет token cost и generation latency без повышения качества ответа. Если k=8 у вас все еще лучше, чем k=3, reranker работает недостаточно хорошо.
+- **HyDE / query expansion.** Сгенерируйте гипотетический ответ из запроса, embed его, затем retrieve. Это закрывает разрыв формулировок между короткими вопросами и длинными документами. Бесплатный прирост precision без обучения.
+- **Context budget меньше 8K токенов.** Стабильные попадания в этот лимит означают, что threshold reranker слишком свободный.
+- **Версионируйте все.** Prompts, правила chunking, embedding model, reranker. Любой drift незаметно ломает качество ответов. CI gates по faithfulness, context precision и unanswered-question rate блокируют регрессии до того, как их увидят пользователи.
+- **Three-way retrieval (BM25 + dense + learned-sparse вроде SPLADE) превосходит two-way** в бенчмарках 2026 года, особенно для запросов, смешивающих имена собственные с семантикой. Ship it, когда инфраструктура поддерживает SPLADE indexes.
 
-Proper retrieval design reduces hallucinations by 70-90% according to 2026 industry measurements. Most RAG performance gains come from better retrieval, not model fine-tuning.
+Правильный retrieval design снижает hallucinations на 70-90% по отраслевым измерениям 2026 года. Большинство приростов RAG performance приходит от лучшего retrieval, а не от fine-tuning модели.
 
-## Ship It
+## Доставка
 
-Save as `outputs/skill-retrieval-picker.md`:
+Сохраните как `outputs/skill-retrieval-picker.md`:
 
 ```markdown
 ---
@@ -204,27 +204,27 @@ Given requirements (corpus size, query pattern, latency budget, quality bar, inf
 Refuse to recommend dense-only for corpora with named entities, error codes, or product SKUs unless the user has evidence dense handles exact matches. Refuse to skip reranking for high-stakes retrieval (legal, medical) where the final top-5 decides the user's answer.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement `hybrid_search` above on a 500-document corpus. Test 20 queries. Compare recall at 5 between BM25-only, dense-only, and hybrid.
-2. **Medium.** Add MRR calculation. For each test query with a known correct document, find the rank of the correct doc in BM25, dense, and hybrid rankings. Report the MRR for each.
-3. **Hard.** Fine-tune a dense encoder on your domain using MultipleNegativesRankingLoss (Sentence Transformers). Build a training set from 500 query-document pairs. Compare pre- and post-fine-tune recall.
+1. **Easy.** Реализуйте `hybrid_search` выше на корпусе из 500 документов. Протестируйте 20 запросов. Сравните recall at 5 между BM25-only, dense-only и hybrid.
+2. **Medium.** Добавьте расчет MRR. Для каждого тестового запроса с известным правильным документом найдите rank правильного doc в ранжированиях BM25, dense и hybrid. Сообщите MRR для каждого.
+3. **Hard.** Fine-tune dense encoder на вашем домене с MultipleNegativesRankingLoss (Sentence Transformers). Соберите training set из 500 пар query-document. Сравните recall до и после fine-tune.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| BM25 | Keyword search | Okapi BM25. Scores documents by term frequency, IDF, and length. |
-| Dense retrieval | Vector search | Encode query + doc into vectors, find nearest neighbors. |
-| Bi-encoder | Embedding model | Encodes query and doc independently. Fast at query time. |
-| Cross-encoder | Reranker model | Encodes query + doc together. Slow but accurate. |
-| RRF | Rank fusion | Combine two rankings by summing `1/(k + rank)`. |
-| Recall@k | Retrieval metric | Fraction of queries where a relevant doc is in the top-k. |
+| BM25 | Keyword search | Okapi BM25. Оценивает документы по term frequency, IDF и длине. |
+| Dense retrieval | Vector search | Кодирует query + doc в векторы, ищет ближайших соседей. |
+| Bi-encoder | Embedding model | Кодирует query и doc независимо. Быстр во время запроса. |
+| Cross-encoder | Reranker model | Кодирует query + doc вместе. Медленный, но точный. |
+| RRF | Rank fusion | Объединяет два ранжирования суммированием `1/(k + rank)`. |
+| Recall@k | Retrieval metric | Доля запросов, где релевантный doc находится в top-k. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Robertson and Zaragoza (2009). The Probabilistic Relevance Framework: BM25 and Beyond](https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf) — the definitive BM25 treatment.
-- [Karpukhin et al. (2020). Dense Passage Retrieval for Open-Domain QA](https://arxiv.org/abs/2004.04906) — DPR, the canonical bi-encoder.
-- [Formal et al. (2021). SPLADE: Sparse Lexical and Expansion Model](https://arxiv.org/abs/2107.05720) — the learned-sparse retriever that closes the gap with dense.
-- [Cormack, Clarke, Büttcher (2009). Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) — RRF paper.
+- [Robertson and Zaragoza (2009). The Probabilistic Relevance Framework: BM25 and Beyond](https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf) — исчерпывающее изложение BM25.
+- [Karpukhin et al. (2020). Dense Passage Retrieval for Open-Domain QA](https://arxiv.org/abs/2004.04906) — DPR, канонический bi-encoder.
+- [Formal et al. (2021). SPLADE: Sparse Lexical and Expansion Model](https://arxiv.org/abs/2107.05720) — learned-sparse retriever, закрывающий разрыв с dense.
+- [Cormack, Clarke, Büttcher (2009). Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) — статья RRF.
 - [Khattab and Zaharia (2020). ColBERT: Efficient and Effective Passage Search](https://arxiv.org/abs/2004.12832) — late-interaction retrieval.

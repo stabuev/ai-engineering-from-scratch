@@ -1,36 +1,36 @@
 # Sentiment Analysis
 
-> The canonical NLP task. Most of what you need to know about classical text classification shows up here.
+> Каноническая NLP-задача. Большая часть того, что нужно знать о classical text classification, проявляется именно здесь.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 2 · 14 (Naive Bayes)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 02 (BoW + TF-IDF), Фаза 2 · 14 (Naive Bayes)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-"The food was not great." Positive or negative?
+"The food was not great." Positive или negative?
 
-Sentiment sounds simple. A reviewer said they liked or did not like something. Label the sentence. The reason it became the canonical NLP task is that every easy-looking case hides a hard one. Negation flips meaning. Sarcasm inverts it. "Not bad at all" is positive despite two negative-coded words. Emojis carry more signal than surrounding text. Domain vocabulary matters (`tight` in music review versus `tight` in fashion review).
+Sentiment звучит просто. Рецензент сказал, что ему что-то понравилось или не понравилось. Поставьте sentence label. Причина, по которой это стало канонической NLP-задачей, в том, что каждый на вид простой случай скрывает сложный. Negation переворачивает смысл. Sarcasm инвертирует его. "Not bad at all" позитивно, несмотря на два слова с негативным кодом. Emojis несут больше сигнала, чем окружающий текст. Domain vocabulary важен (`tight` в music review против `tight` в fashion review).
 
-Sentiment is a working lab for classical NLP. If you understand why every naive baseline has a specific failure mode, you understand why every richer model was invented. This lesson builds a Naive Bayes baseline from scratch, adds logistic regression, and names the traps that make production sentiment a compliance-grade problem.
+Sentiment — рабочая лаборатория для classical NLP. Если вы понимаете, почему у каждого naive baseline есть конкретный failure mode, вы понимаете, зачем была изобретена каждая более богатая модель. В этом уроке мы построим Naive Bayes baseline с нуля, добавим logistic regression и назовем ловушки, которые превращают production sentiment в задачу уровня compliance.
 
-## The Concept
+## Концепция
 
 ![Sentiment pipeline: tokens → features → classifier → label](./assets/sentiment.svg)
 
-Classical sentiment is a two-step recipe.
+Classical sentiment — это рецепт из двух шагов.
 
-1. **Represent.** Turn the text into a feature vector. BoW, TF-IDF, or n-grams.
-2. **Classify.** Fit a linear model (Naive Bayes, logistic regression, SVM) on labeled examples.
+1. **Represent.** Превратить текст в feature vector. BoW, TF-IDF или n-grams.
+2. **Classify.** Обучить linear model (Naive Bayes, logistic regression, SVM) на labeled examples.
 
-Naive Bayes is the dumbest model that works. Assume every feature is independent given the label. Estimate `P(word | positive)` and `P(word | negative)` from counts. At inference, multiply the probabilities. The "naive" independence assumption is laughably wrong and yet the results are shockingly strong. The reason: with sparse text features and moderate data, the classifier cares about which side each word leans toward more than how much.
+Naive Bayes — самая простая модель, которая работает. Предположите, что каждая feature независима при условии label. Оцените `P(word | positive)` и `P(word | negative)` по counts. На inference перемножьте probabilities. "Naive" independence assumption смехотворно неверно, но результаты удивительно сильные. Причина: с sparse text features и умеренным объемом данных классификатору важнее, к какой стороне склоняется каждое слово, чем насколько сильно.
 
-Logistic regression fixes the independence assumption. It learns a weight per feature, including negative weights. `not good` as a bigram feature gets a negative weight. Naive Bayes cannot do that for bigrams it has never labeled.
+Logistic regression исправляет independence assumption. Она учит weight на feature, включая negative weights. `not good` как bigram feature получает negative weight. Naive Bayes не может сделать это для bigrams, которых он никогда не видел размеченными.
 
-## Build It
+## Построение
 
-### Step 1: a real mini-dataset
+### Шаг 1: настоящий mini-dataset
 
 ```python
 POSITIVE = [
@@ -50,9 +50,9 @@ NEGATIVE = [
 ]
 ```
 
-Small on purpose. Real work uses tens of thousands of examples (IMDb, SST-2, Yelp polarity). The math is identical.
+Маленький специально. В реальной работе используют десятки тысяч examples (IMDb, SST-2, Yelp polarity). Математика идентична.
 
-### Step 2: multinomial Naive Bayes from scratch
+### Шаг 2: multinomial Naive Bayes с нуля
 
 ```python
 import math
@@ -88,9 +88,9 @@ def predict_nb(doc, class_priors, class_word_probs):
     return max(scores, key=scores.get)
 ```
 
-Additive smoothing (alpha=1.0) is Laplace smoothing. Without it, a word unseen in a class has probability zero and the log explodes. `alpha=0.01` is common in practice. `alpha=1.0` is the teaching default.
+Additive smoothing (alpha=1.0) — это Laplace smoothing. Без него слово, не встречавшееся в классе, имеет probability zero, и log взрывается. `alpha=0.01` часто используется на практике. `alpha=1.0` — teaching default.
 
-### Step 3: logistic regression from scratch
+### Шаг 3: logistic regression с нуля
 
 ```python
 import numpy as np
@@ -119,13 +119,13 @@ def predict_lr(X, w, b):
     return (sigmoid(X @ w + b) >= 0.5).astype(int)
 ```
 
-L2 regularization matters here. Text features are sparse; without L2 the model memorizes training examples. Start at `0.01` and tune.
+L2 regularization здесь важна. Text features разреженные; без L2 модель memorizes training examples. Начните с `0.01` и настраивайте.
 
-### Step 4: handling negation (the failure mode)
+### Шаг 4: обработка negation (failure mode)
 
-Consider "not good" and "not bad". A BoW classifier sees `{not, good}` and `{not, bad}` and learns from whichever showed up more in training. A bigram classifier sees `not_good` and `not_bad` and learns them as distinct features. That is usually enough.
+Рассмотрим "not good" и "not bad". BoW classifier видит `{not, good}` и `{not, bad}` и учится по тому, что чаще встречалось при обучении. Bigram classifier видит `not_good` и `not_bad` и учит их как отдельные features. Обычно этого достаточно.
 
-A cruder fix that works when you do not have bigrams: **negation scoping**. Prefix tokens following a negation word with `NOT_` up to the next punctuation.
+Более грубое исправление, которое работает, когда нет bigrams: **negation scoping**. Добавляйте prefix к tokens после negation word до следующего punctuation.
 
 ```python
 NEGATION_WORDS = {"not", "no", "never", "nor", "none", "nothing", "neither"}
@@ -153,21 +153,21 @@ def apply_negation(tokens):
 ['not', 'NOT_good', 'NOT_at', 'NOT_all', '.', 'but', 'funny']
 ```
 
-Now `good` and `NOT_good` are different features. The classifier can weight them opposite. Three lines of preprocessing, measurable accuracy jump on sentiment benchmarks.
+Теперь `good` и `NOT_good` — разные features. Классификатор может назначить им противоположные weights. Три строки preprocessing, измеримый прирост accuracy на sentiment benchmarks.
 
-### Step 5: evaluation metrics that matter
+### Шаг 5: evaluation metrics, которые важны
 
-Accuracy alone is misleading if classes are imbalanced. Real sentiment corpora are usually 70-80% positive or 70-80% negative; a constant-majority classifier gets 80% accuracy and is worthless. Report every one of the following:
+Accuracy alone вводит в заблуждение, если classes are imbalanced. Реальные sentiment corpora обычно на 70-80% positive или на 70-80% negative; constant-majority classifier получает 80% accuracy и бесполезен. Сообщайте все следующее:
 
-- **Per-class precision and recall.** One pair per class. Macro-average them to get a single number that respects class balance.
-- **Macro-F1 (primary metric for imbalanced data).** Mean of per-class F1 scores, equally weighted. Use this instead of accuracy when classes are imbalanced.
-- **Weighted-F1 (alternative).** Same as macro but weighted by class frequency. Report alongside macro-F1 when the imbalance itself has business meaning.
-- **Confusion matrix.** Raw counts. Always inspect before trusting any scalar metric; it reveals which pair of classes the model confuses.
-- **Per-class error samples.** Pull 5 wrong predictions per class. Read them. Nothing replaces reading the actual errors.
+- **Per-class precision and recall.** Одна пара на class. Macro-average их, чтобы получить одно число, уважающее class balance.
+- **Macro-F1 (primary metric for imbalanced data).** Среднее per-class F1 scores с равным весом. Используйте это вместо accuracy, когда classes are imbalanced.
+- **Weighted-F1 (alternative).** То же, что macro, но взвешенное по class frequency. Сообщайте вместе с macro-F1, когда сам imbalance имеет business meaning.
+- **Confusion matrix.** Raw counts. Всегда смотрите перед доверием любому scalar metric; она показывает, какие пары classes модель путает.
+- **Per-class error samples.** Возьмите 5 wrong predictions на class. Прочитайте их. Ничто не заменяет чтение настоящих errors.
 
-For severely imbalanced data (> 95-5 ratio), report **AUROC** and **AUPRC** instead of accuracy. AUPRC is more sensitive to the minority class, which is what you usually care about (spam, fraud, rare sentiment).
+Для сильно imbalanced data (> 95-5 ratio) сообщайте **AUROC** и **AUPRC** вместо accuracy. AUPRC более чувствителен к minority class, который обычно и важен (spam, fraud, rare sentiment).
 
-**Common bug to avoid.** Reporting micro-F1 instead of macro-F1 on imbalanced data gives a number that looks high because it is dominated by the majority class. Macro-F1 forces you to see the minority-class performance.
+**Common bug to avoid.** Reporting micro-F1 instead of macro-F1 on imbalanced data дает число, которое выглядит высоким, потому что dominated by majority class. Macro-F1 заставляет увидеть minority-class performance.
 
 ```python
 def evaluate(y_true, y_pred):
@@ -181,9 +181,9 @@ def evaluate(y_true, y_pred):
     return {"tp": tp, "fp": fp, "tn": tn, "fn": fn, "precision": precision, "recall": recall, "f1": f1}
 ```
 
-## Use It
+## Использование
 
-scikit-learn does it in six lines, correctly.
+scikit-learn делает это правильно в шесть строк.
 
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -198,24 +198,24 @@ pipe.fit(X_train, y_train)
 print(pipe.score(X_test, y_test))
 ```
 
-Three things to notice. `stop_words=None` keeps negations. `ngram_range=(1, 2)` adds bigrams so `not_good` becomes a feature. `sublinear_tf=True` dampens repeated words. These three flags are the difference between a 75%-accurate baseline and an 85%-accurate baseline on SST-2.
+Три вещи, на которые нужно обратить внимание. `stop_words=None` сохраняет negations. `ngram_range=(1, 2)` добавляет bigrams, так что `not_good` становится feature. `sublinear_tf=True` dampens repeated words. Эти три flags — разница между 75%-accurate baseline и 85%-accurate baseline на SST-2.
 
-### When to reach for a transformer
+### Когда переходить к transformer
 
-- Sarcasm detection. Classical models fail here. Period.
-- Long reviews where sentiment shifts mid-document.
-- Aspect-based sentiment. "Camera was great but battery was terrible." You need to attribute sentiment to aspects. Transformers or structured output models only.
-- Non-English, low-resource languages. Multilingual BERT gives you a zero-shot baseline for free.
+- Sarcasm detection. Classical models здесь ломаются. Точка.
+- Long reviews, где sentiment shifts mid-document.
+- Aspect-based sentiment. "Camera was great but battery was terrible." Нужно привязать sentiment к aspects. Только transformers или structured output models.
+- Non-English, low-resource languages. Multilingual BERT бесплатно дает zero-shot baseline.
 
-If you need any of the above, skip ahead to phase 7 (transformers deep dive). Otherwise, Naive Bayes or logistic regression on TF-IDF plus bigrams plus negation handling is your 2026 production baseline.
+Если вам нужно что-то из перечисленного, переходите к фазе 7 (transformers deep dive). Иначе Naive Bayes или logistic regression на TF-IDF плюс bigrams плюс negation handling — ваш production baseline 2026 года.
 
-### The reproducibility trap (again)
+### Reproducibility trap (снова)
 
-Retraining sentiment models is routine. Re-evaluating them is not. Accuracy numbers reported in papers use specific splits, specific preprocessing, specific tokenizers. If you compare your new model to a baseline without using the identical pipeline, you will get misleading deltas. Always regenerate the baseline on your pipeline, not the paper's number.
+Retraining sentiment models — рутина. Re-evaluating them — нет. Accuracy numbers, опубликованные в статьях, используют specific splits, specific preprocessing, specific tokenizers. Если сравнивать новую модель с baseline без identical pipeline, вы получите misleading deltas. Всегда регенерируйте baseline на своем pipeline, а не берите число из статьи.
 
-## Ship It
+## Доставка
 
-Save as `outputs/prompt-sentiment-baseline.md`:
+Сохраните как `outputs/prompt-sentiment-baseline.md`:
 
 ```markdown
 ---
@@ -235,24 +235,24 @@ Given a dataset description (domain, language, size, label granularity, latency 
 Refuse to recommend dropping stopwords for sentiment tasks. Refuse to report accuracy as the sole metric when classes are imbalanced (e.g., 90% positive). Flag subword-rich languages as needing FastText or transformer embeddings over word-level TF-IDF.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Add `apply_negation` as a preprocessing step in the scikit-learn pipeline and measure the F1 delta on a small sentiment dataset.
-2. **Medium.** Implement class-weighted logistic regression (pass `class_weight="balanced"` to scikit-learn, or derive the gradient yourself). Measure the effect on a synthetic 90-10 class imbalance.
-3. **Hard.** Build a sarcasm detector by training a second classifier on the residuals of the sentiment model. Document your experimental setup. Warn the reader when your accuracy is below chance (chance-level on 2-class sarcasm is ~50%, and most first attempts land there).
+1. **Easy.** Добавьте `apply_negation` как preprocessing step в scikit-learn pipeline и измерьте F1 delta на небольшом sentiment dataset.
+2. **Medium.** Реализуйте class-weighted logistic regression (передайте `class_weight="balanced"` в scikit-learn или выведите gradient самостоятельно). Измерьте effect на synthetic 90-10 class imbalance.
+3. **Hard.** Постройте sarcasm detector, обучив второй classifier на residuals sentiment model. Задокументируйте experimental setup. Предупредите читателя, когда accuracy ниже chance (chance-level on 2-class sarcasm is ~50%, и большинство первых попыток оказываются там).
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Polarity | Positive or negative | Binary label; sometimes extended to neutral or fine-grained (5-star). |
-| Aspect-based sentiment | Per-aspect polarity | Attribute sentiment to specific entities or attributes mentioned in text. |
+| Polarity | Positive or negative | Binary label; иногда расширяется до neutral или fine-grained (5-star). |
+| Aspect-based sentiment | Per-aspect polarity | Приписывает sentiment конкретным entities или attributes, упомянутым в тексте. |
 | Negation scoping | Reversing nearby tokens | Prefix tokens after "not" with `NOT_` until punctuation. |
-| Laplace smoothing | Adding 1 to counts | Prevents zero-probability features in Naive Bayes. |
-| L2 regularization | Shrinking weights | Adds `lambda * sum(w^2)` to loss. Essential for sparse text features. |
+| Laplace smoothing | Adding 1 to counts | Предотвращает zero-probability features в Naive Bayes. |
+| L2 regularization | Shrinking weights | Добавляет `lambda * sum(w^2)` к loss. Необходима для sparse text features. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Pang and Lee (2008). Opinion Mining and Sentiment Analysis](https://www.cs.cornell.edu/home/llee/opinion-mining-sentiment-analysis-survey.html) — the foundational survey. Long, but the first four sections cover everything classical.
-- [Wang and Manning (2012). Baselines and Bigrams: Simple, Good Sentiment and Topic Classification](https://aclanthology.org/P12-2018/) — the paper that showed bigrams + Naive Bayes is hard to beat on short text.
-- [scikit-learn text feature extraction docs](https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction) — reference for `CountVectorizer`, `TfidfVectorizer`, and every knob you'll tune.
+- [Pang and Lee (2008). Opinion Mining and Sentiment Analysis](https://www.cs.cornell.edu/home/llee/opinion-mining-sentiment-analysis-survey.html) — foundational survey. Длинный, но первые четыре sections покрывают всю classical часть.
+- [Wang and Manning (2012). Baselines and Bigrams: Simple, Good Sentiment and Topic Classification](https://aclanthology.org/P12-2018/) — статья, показавшая, что bigrams + Naive Bayes трудно обойти на short text.
+- [scikit-learn text feature extraction docs](https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction) — reference для `CountVectorizer`, `TfidfVectorizer` и каждого параметра, который вы будете настраивать.
