@@ -1,47 +1,47 @@
-# Why Transformers — The Problems with RNNs
+# Why Transformers — Проблемы RNN
 
-> RNNs process tokens one at a time. Transformers process all tokens at once. That single architectural bet changed every scaling curve in deep learning after 2017.
+> RNN обрабатывают токены по одному. Transformers обрабатывают все токены сразу. Эта единственная архитектурная ставка изменила все кривые масштабирования в deep learning после 2017 года.
 
 **Type:** Learn
 **Languages:** Python
 **Prerequisites:** Phase 3 (Deep Learning Core), Phase 5 · 09 (Sequence-to-Sequence), Phase 5 · 10 (Attention Mechanism)
 **Time:** ~45 minutes
 
-## The Problem
+## Проблема
 
-Before 2017, every state-of-the-art sequence model on the planet — language, translation, speech — was a recurrent neural network. LSTMs and GRUs won ImageNet-equivalent translation benchmarks for half a decade. They were the only tool anyone had.
+До 2017 года каждая state-of-the-art модель последовательностей на планете — язык, перевод, речь — была рекуррентной нейронной сетью. LSTM и GRU полдесятилетия выигрывали в бенчмарках перевода уровня ImageNet. Это был единственный инструмент, который был у всех.
 
-They had three fatal weaknesses. Sequential computation meant you could not parallelize along the time axis: token `t+1` needs the hidden state from token `t`. A 1,024-token sequence meant 1,024 serial steps on a GPU that can do 1,000,000 floating-point ops per cycle. Training wall-clock time scaled linearly with sequence length on hardware designed for parallelism.
+У них было три критических слабых места. Последовательное вычисление означало, что нельзя распараллелить работу вдоль временной оси: токену `t+1` нужно скрытое состояние от токена `t`. Последовательность из 1,024 токенов означала 1,024 последовательных шага на GPU, который может выполнять 1,000,000 операций с плавающей точкой за цикл. Фактическое время обучения росло линейно с длиной последовательности на железе, спроектированном для параллелизма.
 
-Vanishing gradients meant information 50 tokens back was already compressed through 50 non-linearities. Gated recurrent units (LSTM, GRU) softened the crush but never eliminated it. Long-range dependencies — "the book I read last summer on a plane to Kyoto was…" — routinely failed.
+Исчезающие градиенты означали, что информация 50 токенов назад уже была сжата через 50 нелинейностей. Рекуррентные блоки с вентилями (LSTM, GRU) смягчали это сдавливание, но никогда не устраняли его. Дальние зависимости — "the book I read last summer on a plane to Kyoto was…" — регулярно ломались.
 
-Fixed-width hidden states meant the encoder squeezed the entire source sequence into a single vector before the decoder saw anything. Doesn't matter if the source is 5 tokens or 500; the bottleneck is the same shape.
+Скрытые состояния фиксированной ширины означали, что encoder сжимал всю исходную последовательность в один вектор до того, как decoder видел хоть что-то. Неважно, в источнике 5 токенов или 500; bottleneck имеет одну и ту же форму.
 
-The 2017 paper "Attention Is All You Need" proposed something radical: drop recurrence entirely. Let every position attend to every other position in parallel. Train in one big matrix multiplication instead of 1,024 sequential ones.
+Статья 2017 года "Attention Is All You Need" предложила радикальную идею: полностью отказаться от recurrence. Позволить каждой позиции attend к каждой другой позиции параллельно. Обучать одной большой матричной операцией вместо 1,024 последовательных.
 
-The result dominates every modality by 2026. Language (GPT-5, Claude 4, Llama 4), vision (ViT, DINOv2, SAM 3), audio (Whisper), biology (AlphaFold 3), robotics (RT-2). Same block, different inputs.
+К 2026 году результат доминирует во всех модальностях. Language (GPT-5, Claude 4, Llama 4), vision (ViT, DINOv2, SAM 3), audio (Whisper), biology (AlphaFold 3), robotics (RT-2). Один и тот же блок, разные входы.
 
-## The Concept
+## Концепция
 
 ![RNN sequential compute vs Transformer parallel attention](../assets/rnn-vs-transformer.svg)
 
-**Recurrence as a bottleneck.** An RNN computes `h_t = f(h_{t-1}, x_t)`. Each step depends on the previous. You cannot compute `h_5` before `h_4`. On modern GPUs with 10,000+ parallel cores, this wastes 99% of the silicon on a long sequence.
+**Recurrence как bottleneck.** RNN вычисляет `h_t = f(h_{t-1}, x_t)`. Каждый шаг зависит от предыдущего. Нельзя вычислить `h_5` до `h_4`. На современных GPU с 10,000+ параллельными ядрами это впустую тратит 99% кремния на длинной последовательности.
 
-**Attention as a broadcast.** Self-attention computes `output_i = sum_j(a_ij * v_j)` for every pair `(i, j)` simultaneously. The whole N×N attention matrix fills in one batched matmul. No step depends on another. GPUs love it.
+**Attention как широковещательная операция.** Self-attention вычисляет `output_i = sum_j(a_ij * v_j)` для каждой пары `(i, j)` одновременно. Вся N×N матрица attention заполняется одним batched matmul. Ни один шаг не зависит от другого. GPU это любят.
 
-**The speedup is not a constant.** It is the difference between `O(N)` serial depth and `O(1)` serial depth. In practice, transformers train 5–10× faster per epoch on matched hardware at N=512, and the gap widens with sequence length until you hit the `O(N²)` memory wall of attention (which Flash Attention later fixed — see Lesson 12).
+**Ускорение не является константой.** Это разница между `O(N)` последовательной глубиной и `O(1)` последовательной глубиной. На практике transformers обучаются в 5–10× быстрее за эпоху на сопоставимом железе при N=512, и разрыв растет с длиной последовательности, пока вы не упретесь в `O(N²)` стену памяти attention (которую позже исправил Flash Attention — см. Lesson 12).
 
-**What transformers cost.** Attention memory scales as `O(N²)`. For 2K context, fine. For 128K context, you need sliding windows, RoPE extrapolation, Flash Attention tiling, or linear attention variants. Recurrence was `O(N)` in both time and memory; transformers trade time for memory and then win the time back through parallelism.
+**Цена transformers.** Память attention масштабируется как `O(N²)`. Для контекста 2K это нормально. Для контекста 128K нужны sliding windows, RoPE extrapolation, Flash Attention tiling или варианты linear attention. Recurrence была `O(N)` и по времени, и по памяти; transformers меняют время на память, а затем возвращают выигрыш во времени за счет параллелизма.
 
-**The inductive bias shift.** RNNs assume locality and recency. Transformers assume nothing — every pair is a candidate for attention. That is why transformers need more data to train well but scale further once they have it. Chinchilla (2022) formalized this: given enough tokens, a transformer always beats an RNN of equal parameter count.
+**Сдвиг inductive bias.** RNN предполагают локальность и близость во времени. Transformers ничего не предполагают — каждая пара является кандидатом на attention. Поэтому transformers требуют больше данных для хорошего обучения, но масштабируются дальше, когда эти данные есть. Chinchilla (2022) формализовала это: при достаточном числе токенов transformer всегда превосходит RNN с тем же числом параметров.
 
 ## Build It
 
-No neural network here — we simulate the core bottleneck numerically so you feel the gap on your laptop.
+Никакой нейронной сети здесь нет — мы численно симулируем ключевой bottleneck, чтобы вы почувствовали разрыв на своем ноутбуке.
 
-### Step 1: measure serial depth
+### Step 1: измерьте последовательную глубину
 
-See `code/main.py`. We build two functions. One encodes a sequence as a chain of additions (serial, like an RNN). One encodes it as a parallel reduction (broadcast, like attention). Same math, different dependency graph.
+См. `code/main.py`. Мы строим две функции. Одна кодирует последовательность как цепочку сложений (последовательно, как RNN). Другая кодирует ее как параллельную редукцию (broadcast, как attention). Та же математика, другой граф зависимостей.
 
 ```python
 def rnn_style(xs):
@@ -54,19 +54,19 @@ def attention_style(xs):
     return sum(xs) / len(xs)  # every x is independent
 ```
 
-We time both on sequences up to 100,000 elements. The RNN version is O(N) and a single CPU pipeline. Even in pure Python, the attention-style reduction beats it at length ≥ 1,000 because Python's `sum()` is implemented in C and iterates without interpreter overhead per step.
+Мы замеряем время для обоих вариантов на последовательностях до 100,000 элементов. RNN-версия имеет O(N) и один CPU pipeline. Даже в чистом Python редукция в стиле attention обгоняет ее на длине ≥ 1,000, потому что Python-овский `sum()` реализован на C и итерируется без overhead интерпретатора на каждом шаге.
 
-### Step 2: count theoretical operations
+### Step 2: посчитайте теоретические операции
 
-Both algorithms do N adds. The difference is *dependency depth*: how many operations must happen sequentially before the next can start. RNN depth = N. Attention depth = log(N) with a tree reduction, or 1 with a parallel scan. Depth, not op count, decides GPU time.
+Оба алгоритма делают N сложений. Разница — в *глубине зависимостей*: сколько операций должно произойти последовательно, прежде чем следующая сможет начаться. Глубина RNN = N. Глубина attention = log(N) при tree reduction или 1 при parallel scan. GPU-время определяет глубина, а не число операций.
 
-### Step 3: empirical scaling on long sequences
+### Step 3: эмпирическое масштабирование на длинных последовательностях
 
-We print a timing table that makes the O(N) gap visible. On a 2026 Mac laptop, sequences under 1,000 elements are too fast to measure. Sequences of 100,000 show a clean linear scan. Scale that to a 16,384-token transformer with a 12-layer LSTM equivalent and you see why training wall-clock was a blocker in 2016.
+Мы печатаем таблицу timings, которая делает разрыв O(N) видимым. На ноутбуке Mac 2026 года последовательности короче 1,000 элементов слишком быстры для измерения. Последовательности из 100,000 показывают чистый линейный scan. Масштабируйте это до 16,384-token transformer с эквивалентом 12-layer LSTM, и станет понятно, почему wall-clock обучения был блокером в 2016 году.
 
 ## Use It
 
-When to still pick an RNN in 2026:
+Когда в 2026 году все еще выбирать RNN:
 
 | Situation | Pick |
 |-----------|------|
@@ -75,33 +75,33 @@ When to still pick an RNN in 2026:
 | Edge device with no matmul accelerator | Depthwise-separable RNN still wins on FLOPs/watt |
 | Anything else (training, batched inference, context up to 128K) | Transformer |
 
-State-space models (SSMs) like Mamba are essentially RNNs with structured parameterization that gives them the best of both: `O(N)` scan memory, parallel training via selective scan. They recover 90% of transformer quality with better long-context scaling. In 2026 most frontier labs train hybrid SSM+transformer models (e.g. Jamba, Samba) — recurrence is not dead, it is a component.
+State-space models (SSMs), такие как Mamba, по сути являются RNN со структурированной параметризацией, которая дает им лучшее из обоих миров: `O(N)` память scan и параллельное обучение через selective scan. Они восстанавливают 90% качества transformer при лучшем масштабировании длинного контекста. В 2026 году большинство frontier labs обучают гибридные SSM+transformer модели (например, Jamba, Samba) — recurrence не умерла, она стала компонентом.
 
 ## Ship It
 
-See `outputs/skill-architecture-picker.md`. The skill picks an architecture for a new sequence problem given length, throughput, and training-budget constraints. It should always refuse to recommend a pure RNN for training runs above 1B tokens without stating the trade-off.
+См. `outputs/skill-architecture-picker.md`. Skill выбирает архитектуру для новой задачи с последовательностями по ограничениям длины, throughput и training budget. Он всегда должен отказываться рекомендовать чистую RNN для обучающих запусков выше 1B токенов без явного указания trade-off.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Take `rnn_style` from `code/main.py` and replace the scalar hidden state with a length-64 vector of hidden states. Re-measure. How much does the serial overhead grow with hidden-state dimension?
-2. **Medium.** Implement a parallel prefix-sum (Hillis-Steele scan) in pure Python. Verify it produces the same numerical output as a serial scan on length 1024. Count the depth.
-3. **Hard.** Port the attention-style reduction to PyTorch on GPU. Time both as you sweep sequence length from 64 to 65,536. Plot and explain the curve shape.
+1. **Easy.** Возьмите `rnn_style` из `code/main.py` и замените скалярное скрытое состояние на вектор скрытых состояний длины 64. Измерьте заново. Насколько последовательный overhead растет с размерностью hidden state?
+2. **Medium.** Реализуйте parallel prefix-sum (Hillis-Steele scan) на чистом Python. Проверьте, что он дает тот же численный результат, что и serial scan на длине 1024. Посчитайте глубину.
+3. **Hard.** Перенесите редукцию в стиле attention в PyTorch на GPU. Замерьте оба варианта, перебирая длину последовательности от 64 до 65,536. Постройте график и объясните форму кривой.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Recurrence | "RNNs are sequential" | Computation where step `t` depends on step `t-1`, forcing serial execution along the time axis. |
-| Serial depth | "How deep the graph is" | Longest chain of dependent ops; bounds wall-clock even on infinite hardware. |
-| Attention | "Let tokens look at each other" | Weighted sum `sum_j a_ij v_j` where `a_ij` comes from a similarity score between positions i and j. |
-| Context window | "How much the model sees" | Number of positions an attention layer can take as input; quadratic memory cost scales here. |
-| Inductive bias | "Assumptions baked into the architecture" | Prior about what the data looks like; CNNs assume translation invariance, RNNs assume recency. |
-| State-space model | "RNN with algebra behind it" | Recurrence parameterized for parallel training via structured state-space matrices. |
-| Quadratic bottleneck | "Why context costs so much" | Attention memory = `O(N²)` in sequence length; Flash Attention hides the constants, not the scaling. |
+| Recurrence | "RNNs are sequential" | Вычисление, где шаг `t` зависит от шага `t-1`, что вынуждает последовательное выполнение вдоль временной оси. |
+| Serial depth | "How deep the graph is" | Самая длинная цепочка зависимых операций; ограничивает wall-clock даже на бесконечном железе. |
+| Attention | "Let tokens look at each other" | Взвешенная сумма `sum_j a_ij v_j`, где `a_ij` получается из score сходства между позициями i и j. |
+| Context window | "How much the model sees" | Число позиций, которое attention layer может принять на вход; квадратичная стоимость памяти масштабируется здесь. |
+| Inductive bias | "Assumptions baked into the architecture" | Априорное предположение о виде данных; CNN предполагают translation invariance, RNN предполагают recency. |
+| State-space model | "RNN with algebra behind it" | Recurrence, параметризованная для параллельного обучения через структурированные state-space matrices. |
+| Quadratic bottleneck | "Why context costs so much" | Память attention = `O(N²)` по длине последовательности; Flash Attention скрывает константы, но не scaling. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Vaswani et al. (2017). Attention Is All You Need](https://arxiv.org/abs/1706.03762) — the paper that killed recurrence in mainstream NLP.
-- [Bahdanau, Cho, Bengio (2014). Neural MT by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) — where attention was born, bolted onto an RNN.
-- [Hochreiter, Schmidhuber (1997). Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf) — the original LSTM paper, for the record.
-- [Gu, Dao (2023). Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752) — modern recurrent answer to transformers.
+- [Vaswani et al. (2017). Attention Is All You Need](https://arxiv.org/abs/1706.03762) — статья, которая убрала recurrence из mainstream NLP.
+- [Bahdanau, Cho, Bengio (2014). Neural MT by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) — где attention родился, будучи прикрученным к RNN.
+- [Hochreiter, Schmidhuber (1997). Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf) — оригинальная статья LSTM, для истории.
+- [Gu, Dao (2023). Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752) — современный рекуррентный ответ transformers.
