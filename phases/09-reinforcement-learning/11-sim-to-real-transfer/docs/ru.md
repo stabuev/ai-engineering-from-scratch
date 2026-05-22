@@ -1,56 +1,56 @@
 # Sim-to-Real Transfer
 
-> A policy trained in a simulator that fails on hardware is a policy that memorized the simulator. Domain randomization, domain adaptation, and system identification are the three tools to make learned controllers cross the reality gap.
+> Политика, обученная в симуляторе и проваливающаяся на железе, — это политика, которая запомнила симулятор. Domain randomization, domain adaptation и system identification — три инструмента, которые помогают обученным контроллерам преодолеть reality gap.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 9 · 08 (PPO), Phase 2 · 10 (Bias/Variance)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 9 · 08 (PPO), Фаза 2 · 10 (Bias/Variance)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-Training a real robot is slow, dangerous, and expensive. A biped takes millions of training episodes to learn to walk; a real biped that falls over even once breaks hardware. Simulation gives you unlimited resets, deterministic reproducibility, parallel environments, and no physical damage.
+Обучать реального робота медленно, опасно и дорого. Двуногому роботу нужны миллионы обучающих эпизодов, чтобы научиться ходить; реальный двуногий робот, упавший хотя бы один раз, ломает железо. Симуляция дает неограниченные reset-ы, детерминированную воспроизводимость, параллельные среды и отсутствие физического ущерба.
 
-But simulators are wrong. Bearings have more friction than MuJoCo models. Cameras have lens distortion the simulator does not include. Motors have delays, backlash, and saturation that 99% of sim models skip. Wind, dust, and variable lighting sabotage a policy trained on sterile rendering. The **reality gap** — systematic difference between sim distribution and real distribution — is the central problem of deployed RL for robotics.
+Но симуляторы ошибаются. В подшипниках больше трения, чем в моделях MuJoCo. У камер есть lens distortion, которого нет в симуляторе. У моторов есть задержки, backlash и saturation, которые пропускают 99% sim-моделей. Ветер, пыль и переменное освещение ломают политику, обученную на стерильном rendering. **Reality gap** — систематическое различие между sim distribution и real distribution — центральная проблема deployed RL для робототехники.
 
-You need a policy that is *robust to sim-to-real distribution shift*. Three historical approaches: randomize the simulator (domain randomization), adapt the policy with a little real data (domain adaptation / fine-tuning), or identify the real system's parameters and match them (system identification). In 2026 the dominant recipe combines all three with massive parallel simulation (Isaac Sim, Isaac Lab, Mujoco MJX on GPU).
+Вам нужна политика, *устойчивая к sim-to-real distribution shift*. Три исторических подхода: рандомизировать симулятор (domain randomization), адаптировать политику с небольшим количеством реальных данных (domain adaptation / fine-tuning) или идентифицировать параметры реальной системы и подогнать их (system identification). В 2026 году доминирующий рецепт объединяет все три подхода с массовой параллельной симуляцией (Isaac Sim, Isaac Lab, Mujoco MJX на GPU).
 
-## The Concept
+## Концепция
 
 ![Three sim-to-real regimes: domain randomization, adaptation, system identification](../assets/sim-to-real.svg)
 
-**Domain Randomization (DR).** Tobin et al. 2017, Peng et al. 2018. During training, randomize every sim parameter that might differ on the real robot: masses, friction coefficients, motor PD gains, sensor noise, camera position, lighting, textures, contact models. The policy learns a conditional distribution over "which sim it is in today" and generalizes across the full span. If the real robot falls within the training envelope, the policy works.
+**Domain Randomization (DR).** Tobin et al. 2017, Peng et al. 2018. Во время обучения рандомизируйте каждый sim-параметр, который может отличаться на реальном роботе: массы, коэффициенты трения, motor PD gains, шум сенсоров, положение камеры, освещение, текстуры, contact models. Политика учит условное распределение по тому, "в каком sim она сегодня находится", и обобщает по всему диапазону. Если реальный робот попадает внутрь training envelope, политика работает.
 
-- **Upside:** no real data needed. One recipe, many robots.
-- **Downside:** over-randomized training produces a "universal" but overly cautious policy. Too much noise ≈ too much regularization.
+- **Плюс:** реальные данные не нужны. Один рецепт, много роботов.
+- **Минус:** чрезмерно рандомизированное обучение дает "универсальную", но слишком осторожную политику. Слишком много шума ≈ слишком много regularization.
 
-**System Identification (SI).** Fit the simulator's parameters to real-world data before training. If you can measure arm-joint friction on the real robot, plug that into the sim. Then train a policy that expects those values. Needs access to the real system but reduces the reality gap directly.
+**System Identification (SI).** Подгоните параметры симулятора к real-world данным до обучения. Если вы можете измерить трение в шарнире руки на реальном роботе, подставьте его в sim. Затем обучайте политику, которая ожидает эти значения. Нужен доступ к реальной системе, зато reality gap уменьшается напрямую.
 
-- **Upside:** precise, low-noise training target.
-- **Downside:** residual model error is invisible to the policy; small un-identified effects (e.g., motor deadband) still break deployment.
+- **Плюс:** точная обучающая цель с низким уровнем шума.
+- **Минус:** остаточная ошибка модели невидима для политики; небольшие неидентифицированные эффекты (например, motor deadband) все еще ломают deployment.
 
-**Domain Adaptation.** Train in sim, fine-tune with a small amount of real data. Two flavors:
+**Domain Adaptation.** Обучите в sim, затем fine-tune с небольшим количеством реальных данных. Два варианта:
 
-- **Real2Sim2Real:** learn a residual simulator `f(s, a, z) - f_sim(s, a)` using real rollouts, train in the corrected sim. Closes the gap without much real data.
-- **Observation adaptation:** train a policy that maps real obs → sim-like obs via a learned feature extractor (e.g., GAN pixel-to-pixel). The controller stays in sim.
+- **Real2Sim2Real:** обучите residual simulator `f(s, a, z) - f_sim(s, a)` на реальных rollouts, затем обучайте в исправленном sim. Закрывает gap без большого объема реальных данных.
+- **Observation adaptation:** обучите политику, которая отображает real obs → sim-like obs через обученный feature extractor (например, GAN pixel-to-pixel). Контроллер остается в sim.
 
-**Privileged learning / teacher-student.** Miki et al. 2022 (ANYmal quadruped). Train a *teacher* in simulation that has access to privileged information (ground truth friction, terrain height, IMU drift). Distill a *student* that only sees real-sensor observations. The student learns to infer privileged features from history, robust across physical parameters.
+**Privileged learning / teacher-student.** Miki et al. 2022 (ANYmal quadruped). Обучите *teacher* в симуляции с доступом к privileged information (ground truth friction, terrain height, IMU drift). Дистиллируйте *student*, который видит только наблюдения реальных сенсоров. Student учится выводить privileged features из истории и остается устойчивым к физическим параметрам.
 
-**Massively parallel simulation.** 2024–2026. Isaac Lab, Mujoco MJX, Brax all run thousands of parallel robots on a single GPU. PPO with 4,096 parallel humanoids collects years of experience in hours. The "reality gap" shrinks as training distribution widens; DR becomes almost free when each of those 4,096 envs has different randomized parameters.
+**Massively parallel simulation.** 2024–2026. Isaac Lab, Mujoco MJX, Brax запускают тысячи параллельных роботов на одном GPU. PPO с 4,096 параллельными humanoids собирает годы опыта за часы. "Reality gap" сжимается по мере расширения training distribution; DR становится почти бесплатной, когда у каждой из этих 4,096 envs свои рандомизированные параметры.
 
-**The real-world 2026 recipe (quadruped walking example):**
+**Реальный рецепт 2026 года (пример ходьбы quadruped):**
 
-1. Massively parallel sim with domain-randomized gravity, friction, motor gains, payload.
-2. Teacher policy trained with privileged info (terrain map, body velocity ground truth).
-3. Student policy distilled from teacher using only proprioception (leg joint encoders).
-4. Optional observation adaptation via autoencoder on real IMU.
-5. Deploy. Zero-shot on 10+ environments. If it fails, do minutes of real-world fine-tuning with safety-constrained PPO.
+1. Massively parallel sim с domain-randomized gravity, friction, motor gains, payload.
+2. Teacher policy, обученная с privileged info (terrain map, body velocity ground truth).
+3. Student policy, дистиллированная из teacher только по proprioception (leg joint encoders).
+4. Опциональная observation adaptation через autoencoder на real IMU.
+5. Deploy. Zero-shot на 10+ средах. Если не сработало, сделайте минуты real-world fine-tuning с safety-constrained PPO.
 
-## Build It
+## Постройте это
 
-This lesson's code is a tiny demonstration of domain randomization on a GridWorld with *noisy* transitions. We train a policy that experiences randomized slip probabilities in "sim" and evaluate on "real" with a slip level it never saw during training. The shape maps directly to MuJoCo-to-hardware transfer.
+Код этого урока — маленькая демонстрация domain randomization в GridWorld с *шумными* переходами. Мы обучаем политику, которая сталкивается с рандомизированными вероятностями slip в "sim", и оцениваем ее в "real" с уровнем slip, которого она никогда не видела во время обучения. Эта форма напрямую соответствует переносу MuJoCo-to-hardware.
 
-### Step 1: parameterized sim
+### Шаг 1: параметризованный sim
 
 ```python
 def step(state, action, slip):
@@ -59,34 +59,34 @@ def step(state, action, slip):
     ...
 ```
 
-`slip` is a parameter the simulator exposes. In real robotics it could be friction, mass, motor gain — anything that shifts between sim and real.
+`slip` — параметр, который предоставляет симулятор. В реальной робототехнике это может быть friction, mass, motor gain — что угодно, что сдвигается между sim и real.
 
-### Step 2: train with DR
+### Шаг 2: обучение с DR
 
-At the start of each episode, sample `slip ~ Uniform[0.0, 0.4]`. Train PPO / Q-learning / anything. Do this for many episodes.
+В начале каждого эпизода сэмплируйте `slip ~ Uniform[0.0, 0.4]`. Обучайте PPO / Q-learning / что угодно. Делайте это много эпизодов.
 
-### Step 3: evaluate zero-shot on "real" slips
+### Шаг 3: zero-shot оценка на "real" slips
 
-Evaluate on `slip ∈ {0.0, 0.1, 0.2, 0.3, 0.5, 0.7}`. The first four are within training support; `0.5` and `0.7` are outside. A DR-trained policy should stay near-optimal inside support and degrade gracefully outside. A fixed-slip-trained policy will be brittle outside its training slip.
+Оценивайте на `slip ∈ {0.0, 0.1, 0.2, 0.3, 0.5, 0.7}`. Первые четыре находятся внутри training support; `0.5` и `0.7` — вне его. DR-trained policy должна оставаться почти оптимальной внутри support и деградировать плавно за его пределами. Fixed-slip-trained policy будет хрупкой вне своего training slip.
 
-### Step 4: compare to narrow training
+### Шаг 4: сравнение с узким обучением
 
-Train a second policy with `slip = 0.0` only. Evaluate on the same `slip` sweep. You should see a catastrophic drop as soon as real slip > 0.
+Обучите вторую политику только с `slip = 0.0`. Оцените на том же sweep по `slip`. Вы должны увидеть катастрофическое падение сразу после того, как real slip > 0.
 
-## Pitfalls
+## Подводные камни
 
-- **Too much randomization.** Train on `slip ∈ [0, 0.9]` and your policy is so risk-averse it never tries the optimal path. Match the *expected* real-world distribution, not "anything could happen."
-- **Too little randomization.** Train on a thin slice and the policy can't generalize at all. Use adaptive curriculum (Automatic Domain Randomization) that widens the distribution as the policy improves.
-- **Misidentified parameter space.** Randomize the wrong thing (camera hue when the real gap is motor delay) and DR does not help. Profile the real robot first.
-- **Privileged info leakage.** A teacher that uses global state for actions, not just observations, can produce a student that cannot catch up. Ensure the teacher's policy is realizable by the student given observation history.
-- **Sim-to-sim transfer failure.** If your policy is not robust to a harder sim variant, it will not be robust to the real world either. Always test on a held-out sim variant before deploying.
-- **No real-world safety envelope.** A policy that works in sim and "works in real" without a low-level safety shield can still break hardware. Add rate limits, torque limits, joint limits in a non-learned controller.
+- **Слишком много randomization.** Обучайте на `slip ∈ [0, 0.9]`, и ваша политика станет настолько risk-averse, что никогда не попробует оптимальный путь. Подгоняйте *ожидаемое* real-world распределение, а не "может случиться что угодно".
+- **Слишком мало randomization.** Обучение на тонком срезе вообще не дает политике обобщать. Используйте adaptive curriculum (Automatic Domain Randomization), который расширяет распределение по мере улучшения политики.
+- **Неверно идентифицированное пространство параметров.** Рандомизируете не то (camera hue, когда реальный gap — motor delay), и DR не помогает. Сначала профилируйте реального робота.
+- **Утечка privileged info.** Teacher, который использует global state для действий, а не только observations, может породить student, который не сможет догнать. Убедитесь, что policy teacher реализуема student-ом по истории наблюдений.
+- **Провал sim-to-sim transfer.** Если ваша политика не устойчива к более сложному варианту sim, она не будет устойчивой и к реальному миру. Всегда тестируйте на held-out sim variant перед deployment.
+- **Нет real-world safety envelope.** Политика, которая работает в sim и "работает в real" без low-level safety shield, все равно может сломать железо. Добавьте rate limits, torque limits, joint limits в не-обучаемый controller.
 
-## Use It
+## Используйте это
 
-The 2026 sim-to-real stack:
+Sim-to-real stack 2026 года:
 
-| Domain | Stack |
+| Домен | Stack |
 |--------|-------|
 | Legged locomotion (ANYmal, Spot, humanoid) | Isaac Lab + DR + privileged teacher / student |
 | Manipulation (dexterous hands, pick-and-place) | Isaac Lab + DR + DR-GAN for vision |
@@ -95,11 +95,11 @@ The 2026 sim-to-real stack:
 | Finger/in-hand manipulation | OpenAI Dactyl (DR at unprecedented scale) |
 | Industrial arms | MuJoCo-Warp + SI + small real fine-tune |
 
-For control at all scales, the workflow is consistent: fit the sim as best you can, randomize what you can't fit, train enormous policies, distill, deploy with a safety shield.
+Для control на любых масштабах workflow одинаков: подгоните sim как можно лучше, рандомизируйте то, что не можете подогнать, обучите огромные политики, дистиллируйте, deploy с safety shield.
 
 ## Ship It
 
-Save as `outputs/skill-sim2real-planner.md`:
+Сохраните как `outputs/skill-sim2real-planner.md`:
 
 ```markdown
 ---
@@ -122,32 +122,32 @@ Given a robot platform, a task, and access to real hardware time, output:
 Refuse to deploy without (a) a zero-shot sim-variant test, (b) a safety shield, (c) a rollback plan. Flag any DR range wider than 3× measured real variability as likely over-randomized.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Train a Q-learning agent on the fixed-slip GridWorld (slip=0.0). Evaluate on slip ∈ {0.0, 0.1, 0.3, 0.5}. Plot return vs slip.
-2. **Medium.** Train a DR Q-learning agent sampling `slip ~ Uniform[0, 0.3]`. Evaluate the same sweep. How much does DR buy at slip=0.5 (out-of-distribution)?
-3. **Hard.** Implement a curriculum: start with slip=0.0, widen the DR range every time the policy hits 90% of optimal. Measure total environment steps to reach slip=0.3 zero-shot vs. a fixed DR baseline.
+1. **Easy.** Обучите Q-learning agent на fixed-slip GridWorld (slip=0.0). Оцените на slip ∈ {0.0, 0.1, 0.3, 0.5}. Постройте график return vs slip.
+2. **Medium.** Обучите DR Q-learning agent, сэмплирующий `slip ~ Uniform[0, 0.3]`. Оцените тот же sweep. Сколько DR дает на slip=0.5 (out-of-distribution)?
+3. **Hard.** Реализуйте curriculum: начните со slip=0.0, расширяйте диапазон DR каждый раз, когда policy достигает 90% от optimal. Измерьте общее число environment steps, чтобы достичь slip=0.3 zero-shot, и сравните с fixed DR baseline.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| Reality gap | "Sim-to-real difference" | Distribution shift between training and deployment physics/sensing. |
-| Domain randomization (DR) | "Train across random sims" | Randomize sim parameters during training so policy generalizes. |
-| System identification (SI) | "Measure real and fit sim" | Estimate real physical parameters; set sim to match. |
-| Domain adaptation | "Fine-tune on real data" | Small real-world fine-tune after sim training; may adapt obs or dynamics. |
-| Privileged info | "Ground truth for teacher" | Information only the sim has; student must infer it from obs history. |
-| Teacher/student | "Distill privileged -> observable" | Teacher trained with shortcuts; student learns to mimic without them. |
-| ADR | "Automatic Domain Randomization" | Curriculum that widens DR ranges as the policy improves. |
-| Real2Sim | "Close the gap with real data" | Learn a residual to make the sim mimic real rollouts. |
+| Reality gap | "Sim-to-real difference" | Distribution shift между физикой/сенсорами в training и deployment. |
+| Domain randomization (DR) | "Train across random sims" | Рандомизировать sim parameters во время обучения, чтобы policy обобщала. |
+| System identification (SI) | "Measure real and fit sim" | Оценить реальные физические параметры; настроить sim под них. |
+| Domain adaptation | "Fine-tune on real data" | Небольшой real-world fine-tune после sim training; может адаптировать obs или dynamics. |
+| Privileged info | "Ground truth for teacher" | Информация, которая есть только в sim; student должен вывести ее из obs history. |
+| Teacher/student | "Distill privileged -> observable" | Teacher обучен с shortcuts; student учится имитировать без них. |
+| ADR | "Automatic Domain Randomization" | Curriculum, который расширяет DR ranges по мере улучшения policy. |
+| Real2Sim | "Close the gap with real data" | Обучить residual, чтобы sim имитировал real rollouts. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Tobin et al. (2017). Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World](https://arxiv.org/abs/1703.06907) — the original DR paper (vision for robotics).
-- [Peng et al. (2018). Sim-to-Real Transfer of Robotic Control with Dynamics Randomization](https://arxiv.org/abs/1710.06537) — DR for dynamics, quadruped locomotion.
+- [Tobin et al. (2017). Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World](https://arxiv.org/abs/1703.06907) — оригинальная статья о DR (vision for robotics).
+- [Peng et al. (2018). Sim-to-Real Transfer of Robotic Control with Dynamics Randomization](https://arxiv.org/abs/1710.06537) — DR для dynamics, quadruped locomotion.
 - [OpenAI et al. (2019). Solving Rubik's Cube with a Robot Hand](https://arxiv.org/abs/1910.07113) — Dactyl, ADR at scale.
-- [Miki et al. (2022). Learning robust perceptive locomotion for quadrupedal robots in the wild](https://www.science.org/doi/10.1126/scirobotics.abk2822) — teacher-student for ANYmal.
-- [Makoviychuk et al. (2021). Isaac Gym: High Performance GPU Based Physics Simulation for Robot Learning](https://arxiv.org/abs/2108.10470) — the massively parallel sim that drives 2025–2026 deployments.
-- [Akkaya et al. (2019). Automatic Domain Randomization](https://arxiv.org/abs/1910.07113) — ADR curriculum method.
-- [Sutton & Barto (2018). Ch. 8 — Planning and Learning with Tabular Methods](http://incompleteideas.net/book/RLbook2020.pdf) — the Dyna framing (use a model for planning + rollouts) that underpins modern sim-to-real pipelines.
-- [Zhao, Queralta & Westerlund (2020). Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey](https://arxiv.org/abs/2009.13303) — taxonomy of sim-to-real methods with benchmark results.
+- [Miki et al. (2022). Learning robust perceptive locomotion for quadrupedal robots in the wild](https://www.science.org/doi/10.1126/scirobotics.abk2822) — teacher-student для ANYmal.
+- [Makoviychuk et al. (2021). Isaac Gym: High Performance GPU Based Physics Simulation for Robot Learning](https://arxiv.org/abs/2108.10470) — massively parallel sim, который движет deployment-ами 2025–2026.
+- [Akkaya et al. (2019). Automatic Domain Randomization](https://arxiv.org/abs/1910.07113) — метод ADR curriculum.
+- [Sutton & Barto (2018). Ch. 8 — Planning and Learning with Tabular Methods](http://incompleteideas.net/book/RLbook2020.pdf) — Dyna framing (использование model для planning + rollouts), лежащий в основе современных sim-to-real pipelines.
+- [Zhao, Queralta & Westerlund (2020). Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey](https://arxiv.org/abs/2009.13303) — taxonomy методов sim-to-real с benchmark results.

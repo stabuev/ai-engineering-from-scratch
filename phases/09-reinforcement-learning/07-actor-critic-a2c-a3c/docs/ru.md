@@ -1,6 +1,6 @@
 # Actor-Critic — A2C and A3C
 
-> REINFORCE is noisy. Add a critic that learns `V̂(s)`, subtract it from the return, and you get an advantage that has the same expectation but far lower variance. That is actor-critic. A2C runs it synchronously; A3C runs it across threads. Both are the mental model for every modern deep-RL method.
+> REINFORCE шумный. Добавьте critic, который учит `V̂(s)`, вычтите его из return, и получите advantage с тем же expectation, но намного меньшей variance. Это actor-critic. A2C выполняет его synchronously; A3C — across threads. Оба являются mental model для каждого современного deep-RL метода.
 
 **Type:** Build
 **Languages:** Python
@@ -9,49 +9,49 @@
 
 ## The Problem
 
-Vanilla REINFORCE works, but its variance is terrible. Monte Carlo returns `G_t` can swing over a factor of 10 between episodes. Multiplying that noise by `∇ log π` and averaging produces a gradient estimator that takes thousands of episodes to move the policy the same distance you could move it with far fewer DQN updates.
+Vanilla REINFORCE работает, но variance ужасна. Monte Carlo returns `G_t` могут отличаться между episodes более чем в 10 раз. Умножение этого шума на `∇ log π` и усреднение дает gradient estimator, которому нужны тысячи episodes, чтобы сдвинуть policy настолько же, насколько ее можно сдвинуть намного меньшим числом DQN updates.
 
-The variance comes from using raw returns. If you subtract a baseline `b(s_t)` — any function of state, including a learned value — the expectation is unchanged and the variance drops. The best tractable baseline is `V̂(s_t)`. Now the quantity multiplying `∇ log π` is the *advantage*:
+Variance возникает из raw returns. Если вычесть baseline `b(s_t)` — любую функцию state, включая learned value — expectation не изменится, а variance снизится. Лучший tractable baseline — `V̂(s_t)`. Теперь величина, умножаемая на `∇ log π`, называется *advantage*:
 
 `A(s, a) = G - V̂(s)`
 
-An action is good if it produced above-average return; bad if below. REINFORCE with a learned critic is *actor-critic*. The critic gives the actor a low-variance teacher. This is every deep-policy method after 2015 (A2C, A3C, PPO, SAC, IMPALA).
+Action хорош, если дал return выше среднего, и плох, если ниже. REINFORCE с learned critic — это *actor-critic*. Critic дает actor low-variance teacher. Это каждый deep-policy method после 2015 (A2C, A3C, PPO, SAC, IMPALA).
 
 ## The Concept
 
 ![Actor-critic: policy net plus value net, TD residual as advantage](../assets/actor-critic.svg)
 
-**Two networks, one shared loss:**
+**Две сети, один shared loss:**
 
-- **Actor** `π_θ(a | s)`: the policy. Sampled to act. Trained with policy gradient.
-- **Critic** `V_φ(s)`: estimates expected return from state. Trained to minimize `(V_φ(s) - target)²`.
+- **Actor** `π_θ(a | s)`: policy. Sampled to act. Trained with policy gradient.
+- **Critic** `V_φ(s)`: оценивает expected return from state. Trained to minimize `(V_φ(s) - target)²`.
 
-**The advantage.** Two standard forms:
+**The advantage.** Две стандартные формы:
 
 - *MC advantage:* `A_t = G_t - V_φ(s_t)`. Unbiased, higher variance.
-- *TD advantage:* `A_t = r_{t+1} + γ V_φ(s_{t+1}) - V_φ(s_t)`. Biased (uses `V_φ`), far lower variance. Also called the *TD residual* `δ_t`.
+- *TD advantage:* `A_t = r_{t+1} + γ V_φ(s_{t+1}) - V_φ(s_t)`. Biased (uses `V_φ`), far lower variance. Также называется *TD residual* `δ_t`.
 
-**n-step advantage.** Interpolate between the two:
+**n-step advantage.** Интерполяция между ними:
 
 `A_t^{(n)} = r_{t+1} + γ r_{t+2} + … + γ^{n-1} r_{t+n} + γ^n V_φ(s_{t+n}) - V_φ(s_t)`
 
-`n = 1` is pure TD. `n = ∞` is MC. Most implementations use `n = 5` for Atari, `n = 2048` for PPO on MuJoCo.
+`n = 1` — pure TD. `n = ∞` — MC. Большинство implementations использует `n = 5` для Atari, `n = 2048` для PPO on MuJoCo.
 
-**Generalized Advantage Estimation (GAE).** Schulman et al. (2016) proposed an exponentially weighted average over all n-step advantages:
+**Generalized Advantage Estimation (GAE).** Schulman et al. (2016) предложили exponentially weighted average по всем n-step advantages:
 
 `A_t^{GAE} = Σ_{l=0}^{∞} (γλ)^l δ_{t+l}`
 
-with `λ ∈ [0, 1]`. `λ = 0` is TD (low variance, high bias). `λ = 1` is MC (high variance, unbiased). `λ = 0.95` is the 2026 default — tune until the bias/variance dial is where you want it.
+с `λ ∈ [0, 1]`. `λ = 0` — TD (low variance, high bias). `λ = 1` — MC (high variance, unbiased). `λ = 0.95` — default 2026 года; подбирайте, пока bias/variance dial не окажется в нужном месте.
 
-**A2C: synchronous advantage actor-critic.** Collect `T` steps across `N` parallel environments. Compute advantages for each step. Update actor and critic on the combined batch. Repeat. The simpler, more-scalable sibling of A3C.
+**A2C: synchronous advantage actor-critic.** Соберите `T` steps across `N` parallel environments. Посчитайте advantages для каждого step. Обновите actor и critic на combined batch. Повторите. Более простой и scalable sibling of A3C.
 
-**A3C: asynchronous advantage actor-critic.** Mnih et al. (2016). Spawn `N` worker threads, each running an env. Each worker computes gradients locally on its own rollout, then asynchronously applies them to a shared parameter server. No replay buffer needed — workers decorrelate by running different trajectories. A3C proved you could train on CPUs at scale. In 2026, GPU-based A2C (batched parallel envs) dominates because GPUs want large batches.
+**A3C: asynchronous advantage actor-critic.** Mnih et al. (2016). Запустите `N` worker threads, у каждого своя env. Каждый worker локально считает gradients на своем rollout, затем asynchronously применяет их к shared parameter server. Replay buffer не нужен — workers decorrelate за счет разных trajectories. A3C показал, что можно train on CPUs at scale. В 2026 GPU-based A2C (batched parallel envs) dominates, потому что GPUs требуют large batches.
 
 **The combined loss.**
 
 `L(θ, φ) = -E[ A_t · log π_θ(a_t | s_t) ]  +  c_v · E[(V_φ(s_t) - G_t)²]  -  c_e · E[H(π_θ(·|s_t))]`
 
-Three terms: policy-gradient loss, value regression, entropy bonus. `c_v ~ 0.5`, `c_e ~ 0.01` are canonical starting points.
+Три terms: policy-gradient loss, value regression, entropy bonus. `c_v ~ 0.5`, `c_e ~ 0.01` — canonical starting points.
 
 ## Build It
 
@@ -68,11 +68,11 @@ def critic_update(w, x, target, lr):
     return v_hat
 ```
 
-On a tabular env the critic converges in a few hundred episodes. On Atari, replace the linear critic with a shared CNN trunk + value head.
+На tabular env critic сходится за несколько сотен episodes. На Atari замените linear critic на shared CNN trunk + value head.
 
 ### Step 2: n-step advantage
 
-Given a rollout of length `T` and a bootstrapped final `V(s_T)`:
+Для rollout length `T` и bootstrapped final `V(s_T)`:
 
 ```python
 def compute_advantages(rewards, values, gamma=0.99, lam=0.95, last_value=0.0):
@@ -87,7 +87,7 @@ def compute_advantages(rewards, values, gamma=0.99, lam=0.95, last_value=0.0):
     return advantages, returns
 ```
 
-`returns` is the critic target. `advantages` is what multiplies `∇ log π`.
+`returns` — target для critic. `advantages` — то, что умножает `∇ log π`.
 
 ### Step 3: combined update
 
@@ -110,23 +110,23 @@ On-policy, one rollout per update, separate learning rates for actor and critic.
 
 ### Step 4: parallelization (A3C vs A2C)
 
-- **A3C:** spin up `N` threads. Each runs its own env and its own forward pass. Periodically push gradient updates to a shared master. No locks on the master — races are ok, they just add noise.
-- **A2C:** run `N` env instances in a single process, stack observations into a `[N, obs_dim]` batch, batched forward pass, batched backward pass. Higher GPU utilization, deterministic, easier to reason about. The default in 2026.
+- **A3C:** запустите `N` threads. Каждый выполняет свою env и forward pass. Periodically push gradient updates to a shared master. Locks на master не нужны — races are ok, они просто добавляют noise.
+- **A2C:** запустите `N` env instances в одном process, stack observations в `[N, obs_dim]` batch, batched forward pass, batched backward pass. Higher GPU utilization, deterministic, проще reasoning. Default в 2026.
 
-Our toy code is single-threaded for clarity; rewriting to batched A2C is three lines of numpy.
+Toy code single-threaded для ясности; переписать в batched A2C — три строки numpy.
 
 ## Pitfalls
 
-- **Critic bias before actor gradient.** If the critic is random, its baseline is uninformative and you are training on pure noise. Warm up the critic for a few hundred steps before turning on the policy gradient, or use a slow actor learning rate.
-- **Advantage normalization.** Normalize advantages to zero-mean/unit-std per batch. Stabilizes training massively at near-zero cost.
-- **Shared trunk.** Use a shared feature extractor for actor and critic on image inputs. Separate heads. The shared features free-ride on both losses.
-- **On-policy contract.** A2C reuses data for exactly one update. More and your gradient is biased (importance-sampling correction is what PPO adds).
-- **Entropy collapse.** Without `c_e > 0`, policy becomes near-deterministic in a few hundred updates and stops exploring.
-- **Reward scale.** Advantage magnitudes depend on reward scale. Normalize rewards (e.g., running-std dividing) for consistent gradient magnitudes across tasks.
+- **Critic bias before actor gradient.** Если critic random, baseline неинформативен, и вы train on pure noise. Warm up critic несколько сотен steps перед policy gradient или используйте slow actor learning rate.
+- **Advantage normalization.** Normalize advantages до zero-mean/unit-std per batch. Сильно стабилизирует training почти бесплатно.
+- **Shared trunk.** Для image inputs используйте shared feature extractor for actor and critic. Separate heads. Shared features получают benefit от обоих losses.
+- **On-policy contract.** A2C uses data ровно for one update. Больше — gradient biased (importance-sampling correction — то, что добавляет PPO).
+- **Entropy collapse.** Без `c_e > 0` policy становится near-deterministic за несколько сотен updates и перестает exploring.
+- **Reward scale.** Advantage magnitudes зависят от reward scale. Normalize rewards (например, running-std dividing) для consistent gradient magnitudes across tasks.
 
 ## Use It
 
-A2C/A3C are rarely the final choice in 2026 but they are the architecture everything later refines:
+A2C/A3C редко финальный выбор в 2026, но это architecture, которую уточняют все следующие методы:
 
 | Method | Relation to A2C |
 |--------|----------------|
@@ -137,11 +137,11 @@ A2C/A3C are rarely the final choice in 2026 but they are the architecture everyt
 | DPO | A2C collapsed into a preference-ranking loss, no sampling |
 | AlphaStar / OpenAI Five | A2C with league training + imitation pre-training |
 
-If you see "advantage" in a 2026 paper, think actor-critic.
+Если видите "advantage" в paper 2026 года, думайте actor-critic.
 
 ## Ship It
 
-Save as `outputs/skill-actor-critic-trainer.md`:
+Сохраните как `outputs/skill-actor-critic-trainer.md`:
 
 ```markdown
 ---
@@ -185,9 +185,9 @@ Refuse single-worker A2C on environments with horizon > 1000 (too on-policy, too
 
 ## Further Reading
 
-- [Mnih et al. (2016). Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783) — A3C, the original async actor-critic paper.
+- [Mnih et al. (2016). Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783) — A3C, original async actor-critic paper.
 - [Schulman et al. (2016). High-Dimensional Continuous Control Using Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438) — GAE.
-- [Sutton & Barto (2018). Ch. 13 — Actor-Critic Methods](http://incompleteideas.net/book/RLbook2020.pdf) — foundations; pair this with Ch. 9 on function approximation when the critic is a neural net.
+- [Sutton & Barto (2018). Ch. 13 — Actor-Critic Methods](http://incompleteideas.net/book/RLbook2020.pdf) — foundations; combine with Ch. 9 on function approximation when critic is a neural net.
 - [Espeholt et al. (2018). IMPALA](https://arxiv.org/abs/1802.01561) — scalable distributed actor-critic with V-trace off-policy correction.
 - [OpenAI Baselines / Stable-Baselines3](https://stable-baselines3.readthedocs.io/) — production A2C/PPO implementations worth reading.
-- [Konda & Tsitsiklis (2000). Actor-Critic Algorithms](https://papers.nips.cc/paper/1786-actor-critic-algorithms) — the foundational convergence result for the two-timescale actor-critic decomposition.
+- [Konda & Tsitsiklis (2000). Actor-Critic Algorithms](https://papers.nips.cc/paper/1786-actor-critic-algorithms) — foundational convergence result for two-timescale actor-critic decomposition.

@@ -1,25 +1,25 @@
-# RL for Games — AlphaZero, MuZero, and the LLM-Reasoning Era
+# RL for Games — AlphaZero, MuZero и эпоха LLM-Reasoning
 
-> 1992: TD-Gammon beat human champions at backgammon with pure TD. 2016: AlphaGo beat Lee Sedol. 2017: AlphaZero dominated chess, shogi, and Go from scratch. 2024: DeepSeek-R1 proved the same recipe, with GRPO replacing PPO, works on reasoning. Games are the benchmark that drives every breakthrough in this phase.
+> 1992: TD-Gammon победил чемпионов по backgammon с чистым TD. 2016: AlphaGo победил Lee Sedol. 2017: AlphaZero с нуля доминировал в chess, shogi и Go. 2024: DeepSeek-R1 доказал, что тот же рецепт, где GRPO заменяет PPO, работает для reasoning. Игры — benchmark, который двигает каждый прорыв в этой фазе.
 
 **Type:** Build
 **Languages:** Python
 **Prerequisites:** Phase 9 · 05 (DQN), Phase 9 · 08 (PPO), Phase 9 · 09 (RLHF), Phase 9 · 10 (MARL)
 **Time:** ~120 minutes
 
-## The Problem
+## Проблема
 
-Games have everything RL wants. Clean reward (win/loss). Infinite episodes (self-play resets). Perfect simulation (the game *is* the simulator). Discrete or small continuous action spaces. Multi-agent structure that forces adversarial robustness.
+В играх есть все, что нужно RL. Чистая reward (win/loss). Бесконечные episodes (self-play resets). Идеальная simulation (сама игра *и есть* simulator). Дискретные или небольшие continuous action spaces. Multi-agent структура, которая заставляет учиться adversarial robustness.
 
-And games are how every major RL breakthrough was tested. TD-Gammon (backgammon, 1992). Atari-DQN (2013). AlphaGo (2016). AlphaZero (2017). OpenAI Five (Dota 2, 2019). AlphaStar (StarCraft II, 2019). MuZero (learned model, 2019). AlphaTensor (matrix multiplication, 2022). AlphaDev (sorting algorithms, 2023). DeepSeek-R1 (math reasoning, 2025) — the latest demonstration that game-RL techniques work on text.
+Именно в играх проверяли каждый крупный прорыв RL. TD-Gammon (backgammon, 1992). Atari-DQN (2013). AlphaGo (2016). AlphaZero (2017). OpenAI Five (Dota 2, 2019). AlphaStar (StarCraft II, 2019). MuZero (learned model, 2019). AlphaTensor (matrix multiplication, 2022). AlphaDev (sorting algorithms, 2023). DeepSeek-R1 (math reasoning, 2025) — новейшая демонстрация того, что game-RL техники работают с текстом.
 
-This capstone surveys the three landmark architectures — AlphaZero, MuZero, and GRPO — through a single unifying lens: **self-play + search + policy improvement**. Each generalizes the previous; GRPO in particular is AlphaZero's recipe applied to LLM reasoning, with tokens as actions and mathematical verification as the win signal.
+Этот capstone рассматривает три знаковые архитектуры — AlphaZero, MuZero и GRPO — через единую призму: **self-play + search + policy improvement**. Каждая обобщает предыдущую; GRPO, в частности, — это рецепт AlphaZero, примененный к LLM reasoning, где tokens выступают actions, а математическая verification — сигналом win.
 
-## The Concept
+## Концепция
 
-![AlphaZero ↔ MuZero ↔ GRPO: same loop, different environments](../assets/rl-games.svg)
+![AlphaZero ↔ MuZero ↔ GRPO: тот же цикл, разные среды](../assets/rl-games.svg)
 
-**The unifying loop.**
+**Объединяющий цикл.**
 
 ```
 while True:
@@ -28,63 +28,63 @@ while True:
     policy_net.update(policy_target, value_target)     # supervised on search output
 ```
 
-**AlphaZero (2017).** Silver et al. Given a game (chess, shogi, Go) with known rules:
+**AlphaZero (2017).** Silver et al. Дана игра (chess, shogi, Go) с известными правилами:
 
-- Policy-value network: one tower `f_θ(s) → (p, v)`. `p` is a prior over legal moves. `v` is the expected game outcome.
-- Monte Carlo Tree Search (MCTS): at each move, expand a tree of possible continuations. Use `(p, v)` as the prior + bootstrap. Select nodes by UCB (PUCT): `a* = argmax Q(s, a) + c · p(a|s) · √N(s) / (1 + N(s, a))`.
-- Self-play: play games agent-vs-agent. At move `t`, the MCTS visit distribution `π_t` becomes the policy training target.
-- Loss: `L = (v - z)² - π · log p + c · ||θ||²`. `z` is the game outcome (+1 / 0 / -1).
+- Policy-value network: одна башня `f_θ(s) → (p, v)`. `p` — prior по legal moves. `v` — expected game outcome.
+- Monte Carlo Tree Search (MCTS): на каждом ходе разворачивает дерево возможных продолжений. Использует `(p, v)` как prior + bootstrap. Выбирает nodes по UCB (PUCT): `a* = argmax Q(s, a) + c · p(a|s) · √N(s) / (1 + N(s, a))`.
+- Self-play: игры agent-vs-agent. На ходе `t` distribution посещений MCTS `π_t` становится target для обучения policy.
+- Loss: `L = (v - z)² - π · log p + c · ||θ||²`. `z` — game outcome (+1 / 0 / -1).
 
-Zero human knowledge. Zero handcrafted heuristics. A single recipe that mastered chess, shogi, and Go after a few tens of millions of self-play games each.
+Ноль человеческих знаний. Ноль handcrafted heuristics. Один рецепт, который освоил chess, shogi и Go после нескольких десятков миллионов self-play партий в каждой игре.
 
-**MuZero (2019).** Schrittwieser et al. Removes the requirement that the rules are known.
+**MuZero (2019).** Schrittwieser et al. Убирает требование, что правила известны.
 
-- Instead of a fixed environment, learn a *latent dynamics model* `(h, g, f)`:
-  - `h(s)`: encode observation to latent state.
-  - `g(s_latent, a)`: predict next latent state + reward.
-  - `f(s_latent)`: predict policy prior + value.
-- MCTS runs in the *learned latent space*. Same search, same training loop.
-- Works on Go, chess, shogi *and* Atari — one algorithm, no rule knowledge.
+- Вместо фиксированной environment учим *latent dynamics model* `(h, g, f)`:
+  - `h(s)`: кодирует observation в latent state.
+  - `g(s_latent, a)`: предсказывает следующий latent state + reward.
+  - `f(s_latent)`: предсказывает policy prior + value.
+- MCTS работает в *learned latent space*. Тот же search, тот же training loop.
+- Работает на Go, chess, shogi *и* Atari — один algorithm, без знания правил.
 
-**Stochastic MuZero (2022).** Adds stochastic dynamics and chance nodes; extends to backgammon-class games.
+**Stochastic MuZero (2022).** Добавляет stochastic dynamics и chance nodes; расширяет подход на игры класса backgammon.
 
-**Muesli, Gumbel MuZero (2022-2024).** Improvements on sample efficiency and deterministic search.
+**Muesli, Gumbel MuZero (2022-2024).** Улучшения sample efficiency и deterministic search.
 
-**GRPO (2024-2025).** DeepSeek-R1 recipe. Same AlphaZero-shaped loop, applied to language-model reasoning:
+**GRPO (2024-2025).** Рецепт DeepSeek-R1. Тот же цикл формы AlphaZero, примененный к language-model reasoning:
 
-- "Game": answer a math / coding / reasoning problem. "Win" = verifier (test case passes, numerical answer matches) returns 1.
-- Policy: the LLM. Actions: tokens. State: prompt + response-so-far.
-- No critic (PPO-style V_φ). Instead, for each prompt, sample `G` completions from the policy. Compute reward for each. Use the **group-relative advantage** `A_i = (r_i - mean_r) / std_r` as the signal for REINFORCE-style update.
-- KL penalty to reference policy to prevent drift (like RLHF).
-- Full loss:
+- "Game": ответить на math / coding / reasoning задачу. "Win" = verifier (test case passes, numerical answer matches) возвращает 1.
+- Policy: LLM. Actions: tokens. State: prompt + response-so-far.
+- Нет critic (PPO-style V_φ). Вместо этого для каждого prompt сэмплируем `G` completions из policy. Считаем reward для каждого. Используем **group-relative advantage** `A_i = (r_i - mean_r) / std_r` как сигнал для REINFORCE-style update.
+- KL penalty к reference policy, чтобы предотвратить drift (как в RLHF).
+- Полный loss:
 
   `L_GRPO(θ) = -E_{q, {o_i}} [ (1/G) Σ_i A_i · log π_θ(o_i | q) ] + β · KL(π_θ || π_ref)`
 
-No reward model, no critic, no MCTS. Group-relative baseline replaces all three. Matches or exceeds PPO-RLHF quality on reasoning benchmarks at a fraction of the compute.
+Нет reward model, нет critic, нет MCTS. Group-relative baseline заменяет все три. Качество на reasoning benchmarks соответствует PPO-RLHF или превосходит его при доле compute.
 
-**The R1 recipe in full.** DeepSeek-R1 (DeepSeek 2025) is two models in one paper:
+**Полный рецепт R1.** DeepSeek-R1 (DeepSeek 2025) — это две модели в одной статье:
 
-- **R1-Zero.** Start from the DeepSeek-V3 base model. No SFT. Apply GRPO directly with two reward components: *accuracy reward* (rule-based — did the final answer parse to the correct number / did the code pass unit tests) and *format reward* (did the completion wrap its chain-of-thought in `<think>…</think>` tags). Over thousands of steps, average response length grows from ~100 to ~10,000 tokens and math benchmark scores climb to near-o1-preview levels. The model learns to reason from scratch. The downside: its chains of thought are often unreadable, mix languages, and lack stylistic polish.
-- **R1.** Fix R1-Zero's readability problems with a four-stage pipeline:
-  1. **Cold-start SFT.** Collect a few thousand long-CoT demonstrations with clean formatting. Supervised-finetune the base model on them. This gives a readable starting point.
-  2. **Reasoning-oriented GRPO.** Apply GRPO with the accuracy+format rewards plus a *language-consistency* reward to prevent code-switching.
-  3. **Rejection sampling + SFT round 2.** Sample ~600K reasoning trajectories from the RL checkpoint, keep only those with correct final answers and readable CoT, and combine with ~200K non-reasoning SFT examples (writing, QA, self-cognition). Fine-tune the base again.
-  4. **Full-spectrum GRPO.** One more RL round covering both reasoning (rule-based rewards) and general alignment (helpfulness/harmlessness preference-based rewards).
+- **R1-Zero.** Начать с base model DeepSeek-V3. Без SFT. Применить GRPO напрямую с двумя компонентами reward: *accuracy reward* (rule-based — распарсился ли финальный ответ в правильное число / прошел ли код unit tests) и *format reward* (обернул ли completion свой chain-of-thought в теги `<think>…</think>`). За тысячи steps средняя длина ответа растет с ~100 до ~10,000 tokens, а scores на math benchmarks поднимаются почти до уровня o1-preview. Модель учится рассуждать с нуля. Недостаток: ее chains of thought часто нечитаемы, смешивают языки и не имеют стилистической полировки.
+- **R1.** Исправляет проблемы читаемости R1-Zero четырехэтапным pipeline:
+  1. **Cold-start SFT.** Собрать несколько тысяч long-CoT demonstrations с чистым formatting. Supervised-finetune base model на них. Это дает читаемую стартовую точку.
+  2. **Reasoning-oriented GRPO.** Применить GRPO с rewards accuracy+format плюс *language-consistency* reward, чтобы предотвращать code-switching.
+  3. **Rejection sampling + SFT round 2.** Сэмплировать ~600K reasoning trajectories из RL checkpoint, оставить только те, где финальный ответ верный и CoT читаем, и объединить с ~200K non-reasoning SFT examples (writing, QA, self-cognition). Снова fine-tune base model.
+  4. **Full-spectrum GRPO.** Еще один RL round, покрывающий и reasoning (rule-based rewards), и general alignment (helpfulness/harmlessness preference-based rewards).
 
-The result matches o1 on AIME and MATH-500 at open weights, and is small enough to distill. The same paper also releases six distilled dense models (Qwen-1.5B through Llama-70B) by SFT'ing on R1's reasoning traces — no RL at the student. Distillation of a strong RL teacher consistently beats RL from scratch at the student's scale.
+Результат соответствует o1 на AIME и MATH-500 при open weights и достаточно мал для distillation. Та же статья также выпускает шесть distilled dense models (от Qwen-1.5B до Llama-70B), обученных SFT на reasoning traces R1 — без RL у student. Distillation сильного RL teacher стабильно превосходит RL с нуля в масштабе student.
 
-**Why GRPO instead of PPO for reasoning.** Three reasons in the DeepSeekMath paper (Feb 2024): (1) no value network to train, halving memory; (2) the group baseline naturally handles the sparse end-of-trajectory reward that reasoning tasks produce; (3) per-prompt normalization makes advantages comparable across problems of wildly different difficulty, which PPO's single critic cannot.
+**Почему GRPO вместо PPO для reasoning.** Три причины из статьи DeepSeekMath (Feb 2024): (1) нет value network для обучения, что вдвое снижает memory; (2) group baseline естественно работает со sparse end-of-trajectory reward, который дают reasoning tasks; (3) per-prompt normalization делает advantages сопоставимыми между задачами радикально разной сложности, чего не может один critic в PPO.
 
-**Search-free vs search-based.** Games have branched:
+**Search-free vs search-based.** Игры разделились:
 
-- *Perfect-information games with long horizons* (Go, chess): still search-based. AlphaZero / MuZero dominate.
-- *LLM reasoning*: no MCTS yet in production; GRPO on full rollouts, best-of-N for inference compute. Process reward models (PRMs) hint at step-level search being added back.
+- *Perfect-information games with long horizons* (Go, chess): все еще search-based. Доминируют AlphaZero / MuZero.
+- *LLM reasoning*: MCTS пока нет в production; GRPO на full rollouts, best-of-N для inference compute. Process reward models (PRMs) намекают, что step-level search будет добавлен обратно.
 
 ## Build It
 
-The code in `code/main.py` implements **GRPO in miniature** — a bandit with multiple groups of samples. The algorithm is the same as on an LLM; only the policy and environment are simpler. It teaches the *loss* and the *group-relative advantage*, which is the 2025 innovation.
+Код в `code/main.py` реализует **GRPO в миниатюре** — bandit с несколькими группами samples. Algorithm тот же, что и на LLM; проще только policy и environment. Он показывает *loss* и *group-relative advantage*, то есть инновацию 2025 года.
 
-### Step 1: a tiny verifier environment
+### Step 1: крошечная verifier environment
 
 ```python
 QUESTIONS = [
@@ -96,18 +96,18 @@ def verify(prompt_idx, answer_token):
     return 1.0 if answer_token == QUESTIONS[prompt_idx]["correct"] else 0.0
 ```
 
-In real GRPO the verifier runs unit tests or checks math equality.
+В настоящем GRPO verifier запускает unit tests или проверяет math equality.
 
-### Step 2: policy: softmax over K answer tokens per prompt
+### Step 2: policy: softmax по K answer tokens на prompt
 
 ```python
 def policy_probs(theta, p_idx):
     return softmax(theta[p_idx])
 ```
 
-Equivalent to the final-layer output of an LLM conditioned on a prompt.
+Эквивалент final-layer output LLM, conditioned on a prompt.
 
-### Step 3: group sampling and group-relative advantage
+### Step 3: group sampling и group-relative advantage
 
 ```python
 def grpo_step(theta, p_idx, G=8, beta=0.01, lr=0.1, rng=None):
@@ -127,29 +127,29 @@ def grpo_step(theta, p_idx, G=8, beta=0.01, lr=0.1, rng=None):
         theta[p_idx][i] -= beta * (theta[p_idx][i] - reference[p_idx][i])
 ```
 
-The group-relative advantage is the 2024 DeepSeek trick. No critic needed. The "baseline" is the group mean, and normalization uses group std.
+Group-relative advantage — прием DeepSeek 2024 года. Critic не нужен. "Baseline" — group mean, а normalization использует group std.
 
-### Step 4: compare to REINFORCE baseline (value-free)
+### Step 4: сравнить с REINFORCE baseline (value-free)
 
-Same setup, same compute, plain REINFORCE. GRPO converges faster and more stably.
+Та же setup, тот же compute, простой REINFORCE. GRPO сходится быстрее и стабильнее.
 
-### Step 5: observe entropy and KL
+### Step 5: наблюдать entropy и KL
 
-Same diagnostics as RLHF: mean KL to reference, policy entropy, reward-over-time. Once these stabilize, training is done.
+Те же diagnostics, что в RLHF: mean KL к reference, policy entropy, reward-over-time. Когда они стабилизируются, training завершен.
 
-## Pitfalls
+## Подводные камни
 
-- **Reward hacking via verifier gaming.** GRPO inherits RLHF's risk: if the verifier is wrong or exploitable, the LLM will find the exploit. Robust verifiers (multiple test cases, formal proofs) matter.
-- **Group size too small.** Variance of the group baseline goes like `1/√G`. Below `G = 4`, the advantage signal is noisy; standard choice is `G = 8` to `64`.
-- **Length bias.** LLM completions of different lengths have different log-probabilities. Normalize by token count, or use sequence-level log-prob, or truncate to max length.
-- **Pure self-play cycles.** AlphaZero-style training can get stuck in dominance loops on general-sum games. Mitigated by diverse opponent pools (league play, Lesson 10).
-- **Search-policy mismatch.** AlphaZero trains the policy to mimic search output. If the policy net is too small to represent the search's distribution, training stalls.
-- **Compute floor.** MuZero / AlphaZero need massive compute. A single ablation is often hundreds of GPU-hours. Miniature demos exist (e.g., AlphaZero on Connect Four) for learning.
-- **Verifier coverage.** Unit tests that pass for a buggy solution reinforce the bug. Design verifiers that catch edge cases.
+- **Reward hacking через verifier gaming.** GRPO наследует риск RLHF: если verifier ошибается или его можно exploit, LLM найдет exploit. Важны robust verifiers (multiple test cases, formal proofs).
+- **Слишком маленький group size.** Variance group baseline убывает как `1/√G`. Ниже `G = 4` advantage signal шумный; стандартный выбор — `G = 8` to `64`.
+- **Length bias.** LLM completions разной длины имеют разные log-probabilities. Нормализуйте по token count, используйте sequence-level log-prob или обрезайте до max length.
+- **Чистые self-play cycles.** Обучение в стиле AlphaZero может застревать в dominance loops на general-sum games. Смягчается разнообразными opponent pools (league play, Lesson 10).
+- **Search-policy mismatch.** AlphaZero учит policy имитировать search output. Если policy net слишком мала, чтобы представить distribution search, training останавливается.
+- **Compute floor.** MuZero / AlphaZero требуют огромного compute. Одна ablation часто стоит сотни GPU-hours. Для обучения есть миниатюрные demos (например, AlphaZero на Connect Four).
+- **Verifier coverage.** Unit tests, которые проходят для buggy solution, reinforce bug. Проектируйте verifiers, которые ловят edge cases.
 
 ## Use It
 
-The 2026 game-RL landscape, by domain:
+Ландшафт game-RL в 2026 году по domain:
 
 | Domain | Dominant method |
 |--------|-----------------|
@@ -162,11 +162,11 @@ The 2026 game-RL landscape, by domain:
 | Robotics | PPO + DR (not game-RL, but uses same policy-gradient tools) |
 | Combinatorial problems | AlphaZero variants (AlphaTensor, AlphaDev) |
 
-The *recipe* — self-play, search-augmented improvement, policy distillation — spans text, pixels, and physical control. GRPO is the youngest instance; more are coming.
+*Рецепт* — self-play, search-augmented improvement, policy distillation — охватывает текст, pixels и physical control. GRPO — самый молодой пример; будут и другие.
 
 ## Ship It
 
-Save as `outputs/skill-game-rl-designer.md`:
+Сохраните как `outputs/skill-game-rl-designer.md`:
 
 ```markdown
 ---
@@ -189,13 +189,13 @@ Given a target (perfect-info game / imperfect-info / Atari / LLM reasoning / com
 Refuse AlphaZero on imperfect-info games (route to CFR). Refuse GRPO without a trusted verifier. Refuse any game-RL pipeline without a fixed baseline opponent set (self-play ELO is uncalibrated otherwise).
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement the GRPO bandit in `code/main.py`. Train on 2 prompts × 4 answer tokens each. Converge in < 1,000 updates with `G=8`.
-2. **Medium.** Plug in PPO (clipped) and vanilla REINFORCE. Compare sample efficiency and reward variance to GRPO on the same bandit.
-3. **Hard.** Extend to a length-2 "reasoning chain": the agent emits two tokens and the verifier rewards the pair. Measure how GRPO handles the credit assignment across two-step sequences. (Hint: compute group advantage per *full sequence*, propagate to both token positions.)
+1. **Easy.** Реализуйте GRPO bandit в `code/main.py`. Обучите на 2 prompts × 4 answer tokens каждый. Добейтесь сходимости за < 1,000 updates с `G=8`.
+2. **Medium.** Подключите PPO (clipped) и vanilla REINFORCE. Сравните sample efficiency и reward variance с GRPO на том же bandit.
+3. **Hard.** Расширьте до length-2 "reasoning chain": agent emits two tokens, а verifier rewards the pair. Измерьте, как GRPO справляется с credit assignment across two-step sequences. (Hint: compute group advantage per *full sequence*, propagate to both token positions.)
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
@@ -209,16 +209,16 @@ Refuse AlphaZero on imperfect-info games (route to CFR). Refuse GRPO without a t
 | Verifier reward | "Verifiable RL" | Reward comes from a deterministic checker (tests pass, answer matches). |
 | Process reward | "PRM" | Scores each reasoning step, not just the final answer. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Silver et al. (2017). Mastering the game of Go without human knowledge (AlphaGo Zero)](https://www.nature.com/articles/nature24270).
 - [Silver et al. (2018). A general reinforcement learning algorithm that masters chess, shogi, and Go through self-play (AlphaZero)](https://www.science.org/doi/10.1126/science.aar6404).
 - [Schrittwieser et al. (2020). Mastering Atari, Go, chess and shogi by planning with a learned model (MuZero)](https://www.nature.com/articles/s41586-020-03051-4).
 - [Vinyals et al. (2019). Grandmaster level in StarCraft II (AlphaStar)](https://www.nature.com/articles/s41586-019-1724-z).
-- [DeepSeek-AI (2024). DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (GRPO)](https://arxiv.org/abs/2402.03300) — the paper that introduced GRPO and the group-relative baseline.
-- [DeepSeek-AI (2025). DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948) — the full four-stage R1 recipe plus the R1-Zero ablation.
-- [Brown et al. (2019). Superhuman AI for multiplayer poker (Pluribus)](https://www.science.org/doi/10.1126/science.aay2400) — CFR + deep-learning at scale.
-- [Tesauro (1995). Temporal Difference Learning and TD-Gammon](https://dl.acm.org/doi/10.1145/203330.203343) — the paper that started it all.
-- [Hugging Face TRL — GRPOTrainer](https://huggingface.co/docs/trl/main/en/grpo_trainer) — the production reference for applying GRPO with custom reward functions.
-- [Qwen Team (2024). Qwen2.5-Math — GRPO replication](https://github.com/QwenLM/Qwen2.5-Math) — open replication of the R1 recipe at multiple scales.
-- [Sutton & Barto (2018). Ch. 17 — Frontiers of Reinforcement Learning](http://incompleteideas.net/book/RLbook2020.pdf) — the textbook framing for self-play, search, and "designed reward" that R1 instantiates at LLM scale.
+- [DeepSeek-AI (2024). DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (GRPO)](https://arxiv.org/abs/2402.03300) — статья, которая ввела GRPO и group-relative baseline.
+- [DeepSeek-AI (2025). DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948) — полный четырехэтапный рецепт R1 плюс ablation R1-Zero.
+- [Brown et al. (2019). Superhuman AI for multiplayer poker (Pluribus)](https://www.science.org/doi/10.1126/science.aay2400) — CFR + deep-learning в большом масштабе.
+- [Tesauro (1995). Temporal Difference Learning and TD-Gammon](https://dl.acm.org/doi/10.1145/203330.203343) — статья, с которой все началось.
+- [Hugging Face TRL — GRPOTrainer](https://huggingface.co/docs/trl/main/en/grpo_trainer) — production reference для применения GRPO с custom reward functions.
+- [Qwen Team (2024). Qwen2.5-Math — GRPO replication](https://github.com/QwenLM/Qwen2.5-Math) — открытая replication рецепта R1 в нескольких масштабах.
+- [Sutton & Barto (2018). Ch. 17 — Frontiers of Reinforcement Learning](http://incompleteideas.net/book/RLbook2020.pdf) — textbook framing для self-play, search и "designed reward", который R1 воплощает в масштабе LLM.
