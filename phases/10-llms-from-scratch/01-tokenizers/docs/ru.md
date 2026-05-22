@@ -1,42 +1,42 @@
-# Tokenizers: BPE, WordPiece, SentencePiece
+# Токенизаторы: BPE, WordPiece, SentencePiece
 
-> Your LLM does not read English. It reads integers. The tokenizer decides whether those integers carry meaning or waste it.
+> Ваша LLM не читает английский. Она читает целые числа. Токенизатор решает, несут ли эти числа смысл или расходуют его впустую.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 05 (NLP Foundations)
-**Time:** ~90 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 05 (NLP Foundations)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement BPE, WordPiece, and Unigram tokenization algorithms from scratch and compare their merge strategies
-- Explain how vocabulary size affects model efficiency: too small creates long sequences, too large wastes embedding parameters
-- Analyze tokenization artifacts across languages and code, identifying where specific tokenizers break down
-- Use the tiktoken and sentencepiece libraries to tokenize text and inspect the resulting token IDs
+- Реализовать алгоритмы токенизации BPE, WordPiece и Unigram с нуля и сравнить их стратегии слияния
+- Объяснить, как размер словаря влияет на эффективность модели: слишком маленький создает длинные последовательности, слишком большой тратит параметры слоя эмбеддингов
+- Анализировать артефакты токенизации в разных языках и коде, находя места, где конкретные токенизаторы ломаются
+- Использовать библиотеки tiktoken и sentencepiece для токенизации текста и проверки получившихся идентификаторов токенов
 
-## The Problem
+## Проблема
 
-Your LLM does not read English. It does not read any language. It reads numbers.
+Ваша LLM не читает английский. Она не читает вообще никакой язык. Она читает числа.
 
-The gap between "Hello, world!" and [15496, 11, 995, 0] is the tokenizer. Every word, every space, every punctuation mark must be converted into an integer before a model can process it. This conversion is not neutral. It bakes assumptions into the model that cannot be undone later.
+Разрыв между "Hello, world!" и [15496, 11, 995, 0] заполняет токенизатор. Каждое слово, каждый пробел, каждый знак пунктуации нужно превратить в целое число, прежде чем модель сможет с ним работать. Это преобразование не нейтрально. Оно встраивает в модель предположения, которые потом уже нельзя отменить.
 
-Get this wrong and your model wastes capacity encoding common words with multiple tokens. "unfortunately" becomes four tokens instead of one. Your 128K context window just shrank by 75% for text heavy in multi-syllable words. Get it right and the same context window holds twice as much meaning. The difference between "this model handles code well" and "this model chokes on Python" often comes down to how the tokenizer was trained.
+Если сделать это плохо, модель будет тратить емкость, кодируя частые слова несколькими токенами. "unfortunately" станет четырьмя токенами вместо одного. Ваше контекстное окно 128K фактически сожмется на 75% для текста с большим количеством многосложных слов. Если сделать правильно, то то же контекстное окно вместит вдвое больше смысла. Разница между "эта модель хорошо работает с кодом" и "эта модель захлебывается на Python" часто сводится к тому, как был обучен токенизатор.
 
-Every API call you make to GPT-4 or Claude is priced per token. Every token your model generates costs compute. The fewer tokens required to represent an output, the faster the end-to-end inference. Tokenization is not preprocessing. It is architecture.
+Каждый API-вызов к GPT-4 или Claude тарифицируется по токенам. Каждый токен, который генерирует модель, стоит вычислений. Чем меньше токенов нужно для представления ответа, тем быстрее сквозной inference. Токенизация -- не предварительная обработка. Это архитектура.
 
-## The Concept
+## Концепция
 
-### Three Approaches That Failed (and One That Won)
+### Три подхода, которые не сработали, и один, который победил
 
-There are three obvious ways to convert text to numbers. Two of them do not work at scale.
+Есть три очевидных способа превратить текст в числа. Два из них не работают в масштабе.
 
-**Word-level tokenization** splits on spaces and punctuation. "The cat sat" becomes ["The", "cat", "sat"]. Simple. But what about "tokenization"? Or "GPT-4o"? Or a German compound word like "Geschwindigkeitsbegrenzung"? Word-level requires a massive vocabulary to cover every word in every language. Miss a word and you get the dreaded `[UNK]` token -- the model's way of saying "I have no idea what this is." English alone has over a million word forms. Add code, URLs, scientific notation, and 100 other languages and you need an infinite vocabulary.
+**Word-level tokenization** делит текст по пробелам и пунктуации. "The cat sat" превращается в ["The", "cat", "sat"]. Просто. Но что делать с "tokenization"? Или "GPT-4o"? Или с немецким составным словом вроде "Geschwindigkeitsbegrenzung"? Word-level подход требует огромного словаря, чтобы покрыть каждое слово в каждом языке. Пропустили слово, и получаете страшный токен `[UNK]` -- способ модели сказать: "Я не знаю, что это такое". Только в английском больше миллиона словоформ. Добавьте код, URLs, научную нотацию и еще 100 языков, и вам понадобится бесконечный словарь.
 
-**Character-level tokenization** goes the other direction. "hello" becomes ["h", "e", "l", "l", "o"]. Vocabulary is tiny (a few hundred characters). No unknown tokens ever. But sequences become extremely long. A sentence that would be 10 word-level tokens becomes 50 character-level tokens. The model must learn that "t", "h", "e" together mean "the" -- burning attention capacity on something a human learns at age three.
+**Character-level tokenization** идет в другую сторону. "hello" становится ["h", "e", "l", "l", "o"]. Словарь крошечный: несколько сотен символов. Неизвестных токенов нет никогда. Но последовательности становятся очень длинными. Предложение, которое было бы 10 word-level токенами, становится 50 character-level токенами. Модель должна выучить, что "t", "h", "e" вместе означают "the", расходуя attention capacity на то, что человек усваивает в три года.
 
-**Subword tokenization** finds the sweet spot. Common words stay whole: "the" is one token. Rare words decompose into meaningful pieces: "unhappiness" becomes ["un", "happi", "ness"]. Vocabulary stays manageable (30K to 128K tokens). Sequences stay short. Unknown tokens essentially disappear because any word can be built from subword pieces.
+**Subword tokenization** находит баланс. Частые слова остаются целыми: "the" это один токен. Редкие слова раскладываются на осмысленные части: "unhappiness" становится ["un", "happi", "ness"]. Словарь остается управляемым: от 30K до 128K токенов. Последовательности остаются короткими. Неизвестные токены практически исчезают, потому что любое слово можно собрать из subword-частей.
 
-Every modern LLM uses subword tokenization. GPT-2, GPT-4, BERT, Llama 3, Claude -- all of them. The question is which algorithm.
+Каждая современная LLM использует subword tokenization. GPT-2, GPT-4, BERT, Llama 3, Claude -- все они. Вопрос только в алгоритме.
 
 ```mermaid
 graph TD
@@ -52,11 +52,11 @@ graph TD
 
 ### BPE: Byte Pair Encoding
 
-BPE is a greedy compression algorithm repurposed for tokenization. The idea is simple enough to fit on an index card.
+BPE -- жадный алгоритм сжатия, переиспользованный для токенизации. Идея достаточно проста, чтобы поместиться на карточке.
 
-Start with individual characters. Count every adjacent pair in the training corpus. Merge the most frequent pair into a new token. Repeat until you reach your target vocabulary size.
+Начните с отдельных символов. Посчитайте каждую соседнюю пару в обучающем корпусе. Слейте самую частую пару в новый токен. Повторяйте, пока не достигнете целевого размера словаря.
 
-Here is BPE running on a tiny corpus with the words "lower", "lowest", and "newest":
+Вот как BPE работает на крошечном корпусе со словами "lower", "lowest" и "newest":
 
 ```
 Corpus (with word frequencies):
@@ -102,7 +102,7 @@ Step 4 -- Merge (wes,t) -> "west":
 ...continue until target vocab size reached.
 ```
 
-The merge table is the tokenizer. To encode new text, apply merges in the order they were learned. The training corpus determines which merges exist, and that choice permanently shapes what the model sees.
+Таблица слияний и есть токенизатор. Чтобы закодировать новый текст, применяйте слияния в том порядке, в котором они были выучены. Обучающий корпус определяет, какие слияния существуют, и этот выбор навсегда формирует то, что видит модель.
 
 ```mermaid
 graph LR
@@ -119,9 +119,9 @@ graph LR
 
 ### Byte-Level BPE (GPT-2, GPT-3, GPT-4)
 
-Standard BPE operates on Unicode characters. Byte-level BPE operates on raw bytes (0-255). This gives you a base vocabulary of exactly 256, handles any language or encoding, and never produces an unknown token.
+Обычный BPE работает с Unicode-символами. Byte-level BPE работает с сырыми байтами (0-255). Это дает базовый словарь ровно из 256 элементов, позволяет обрабатывать любой язык или кодировку и никогда не создает неизвестный токен.
 
-GPT-2 introduced this approach. The base vocabulary covers every possible byte. BPE merges build on top of that. OpenAI's tiktoken library implements byte-level BPE with these vocabulary sizes:
+GPT-2 ввел этот подход. Базовый словарь покрывает каждый возможный байт. BPE-слияния строятся поверх него. Библиотека OpenAI tiktoken реализует byte-level BPE с такими размерами словаря:
 
 - GPT-2: 50,257 tokens
 - GPT-3.5/GPT-4: ~100,256 tokens (cl100k_base encoding)
@@ -129,37 +129,37 @@ GPT-2 introduced this approach. The base vocabulary covers every possible byte. 
 
 ### WordPiece (BERT)
 
-WordPiece looks similar to BPE but picks merges differently. Instead of raw frequency, it maximizes the likelihood of the training data:
+WordPiece похож на BPE, но выбирает слияния иначе. Вместо сырой частоты он максимизирует likelihood обучающих данных:
 
 ```
 BPE merge criterion:      count(A, B)
 WordPiece merge criterion: count(AB) / (count(A) * count(B))
 ```
 
-BPE asks: "Which pair appears most often?" WordPiece asks: "Which pair appears together more often than you would expect by chance?" This subtle difference produces different vocabularies. WordPiece favors merges where co-occurrence is surprising, not just frequent.
+BPE спрашивает: "Какая пара встречается чаще всего?" WordPiece спрашивает: "Какая пара встречается вместе чаще, чем можно было бы ожидать случайно?" Это тонкое отличие дает разные словари. WordPiece предпочитает слияния, где совместная встречаемость неожиданна, а не просто частотна.
 
-WordPiece also uses a "##" prefix for continuation subwords:
+WordPiece также использует префикс "##" для продолжающих subword-частей:
 
 ```
 "unhappiness" -> ["un", "##happi", "##ness"]
 "embedding"   -> ["em", "##bed", "##ding"]
 ```
 
-The "##" prefix tells you this piece continues a previous token. BERT uses WordPiece with a vocabulary of 30,522 tokens. Every BERT variant -- DistilBERT, RoBERTa's tokenizer is actually BPE, but BERT itself is WordPiece.
+Префикс "##" говорит, что эта часть продолжает предыдущий токен. BERT использует WordPiece со словарем 30,522 токена. Каждый вариант BERT -- DistilBERT; токенизатор RoBERTa на самом деле BPE, но сам BERT использует WordPiece.
 
 ### SentencePiece (Llama, T5)
 
-SentencePiece treats the input as a raw stream of Unicode characters, including whitespace. No pre-tokenization step. No language-specific rules about word boundaries. This makes it genuinely language-agnostic -- it works on Chinese, Japanese, Thai, and other languages where spaces do not separate words.
+SentencePiece рассматривает вход как сырой поток Unicode-символов, включая пробелы. Нет шага pre-tokenization. Нет языково-специфичных правил о границах слов. Поэтому он действительно language-agnostic: работает с китайским, японским, тайским и другими языками, где пробелы не отделяют слова.
 
-SentencePiece supports two algorithms:
-- **BPE mode**: same merge logic as standard BPE, applied to raw character sequences
-- **Unigram mode**: starts with a large vocabulary and iteratively removes tokens that least affect the overall likelihood. The reverse of BPE -- prune instead of merge.
+SentencePiece поддерживает два алгоритма:
+- **BPE mode**: та же логика слияний, что и в стандартном BPE, примененная к сырым последовательностям символов
+- **Unigram mode**: начинается с большого словаря и итеративно удаляет токены, которые меньше всего влияют на общую likelihood. Обратный BPE: pruning вместо merge.
 
-Llama 2 uses SentencePiece BPE with a vocabulary of 32,000 tokens. T5 uses SentencePiece Unigram with 32,000 tokens. Note: Llama 3 switched to a tiktoken-based byte-level BPE tokenizer with 128,256 tokens.
+Llama 2 использует SentencePiece BPE со словарем 32,000 токенов. T5 использует SentencePiece Unigram с 32,000 токенов. Примечание: Llama 3 перешла на tiktoken-based byte-level BPE tokenizer с 128,256 токенами.
 
-### Vocabulary Size Tradeoffs
+### Компромиссы размера словаря
 
-This is a real engineering decision with measurable consequences.
+Это реальное инженерное решение с измеримыми последствиями.
 
 ```mermaid
 graph LR
@@ -177,11 +177,11 @@ graph LR
     end
 ```
 
-Concrete numbers. For a 128K vocabulary with 4,096-dimensional embeddings, the embedding matrix alone is 128,000 x 4,096 = 524 million parameters. For a 32K vocabulary, it is 131 million parameters. That is a 400M parameter difference from the tokenizer choice alone.
+Конкретные числа. Для словаря 128K с embedding-размерностью 4,096 одна только embedding matrix содержит 128,000 x 4,096 = 524 миллиона параметров. Для словаря 32K это 131 миллион параметров. Разница в 400M параметров возникает только из-за выбора токенизатора.
 
-But larger vocabularies compress text more aggressively. The same English paragraph that takes 100 tokens with a 32K vocabulary might take 70 tokens with a 128K vocabulary. That means 30% fewer forward passes during generation. For a model serving millions of requests, that is a direct reduction in compute cost.
+Но большие словари агрессивнее сжимают текст. Один и тот же английский абзац, который занимает 100 токенов со словарем 32K, может занять 70 токенов со словарем 128K. Это значит на 30% меньше forward passes во время генерации. Для модели, обслуживающей миллионы запросов, это прямое снижение compute cost.
 
-The trend is clear: vocabulary sizes are growing. GPT-2 used 50,257. GPT-4 uses ~100K. Llama 3 uses 128K. GPT-4o uses 200K.
+Тренд очевиден: размеры словарей растут. GPT-2 использовал 50,257. GPT-4 использует ~100K. Llama 3 использует 128K. GPT-4o использует 200K.
 
 | Model | Vocab Size | Tokenizer Type | Avg Tokens per English Word |
 |-------|-----------|----------------|---------------------------|
@@ -192,17 +192,17 @@ The trend is clear: vocabulary sizes are growing. GPT-2 used 50,257. GPT-4 uses 
 | Llama 3 | 128,256 | Byte-level BPE (tiktoken) | ~1.1 |
 | GPT-4o | 200,019 | Byte-level BPE | ~1.0 |
 
-### The Multilingual Tax
+### Multilingual Tax
 
-Tokenizers trained primarily on English are brutal to other languages. Korean text in GPT-2's tokenizer averages 2-3 tokens per word. Chinese can be worse. This means a Korean user effectively has a context window that is half the size of an English user's -- paying the same price for less information density.
+Токенизаторы, обученные в основном на английском, жестоки к другим языкам. Корейский текст в токенизаторе GPT-2 в среднем дает 2-3 токена на слово. Китайский может быть еще хуже. Это значит, что корейский пользователь фактически получает контекстное окно вдвое меньше, чем английский пользователь, хотя платит ту же цену за меньшую информационную плотность.
 
-This is why Llama 3 quadrupled its vocabulary from 32K to 128K. More tokens dedicated to non-English scripts means fairer compression across languages.
+Именно поэтому Llama 3 увеличила словарь с 32K до 128K. Больше токенов, выделенных под неанглийские письменности, означает более справедливое сжатие между языками.
 
-## Build It
+## Постройте это
 
-### Step 1: Character-Level Tokenizer
+### Шаг 1: Character-Level Tokenizer
 
-Start at the foundation. A character-level tokenizer maps each character to its Unicode code point. No training needed. No unknown tokens. Just a direct mapping.
+Начните с основания. Character-level tokenizer сопоставляет каждый символ с его Unicode code point. Обучение не нужно. Неизвестных токенов нет. Только прямое отображение.
 
 ```python
 class CharTokenizer:
@@ -213,11 +213,11 @@ class CharTokenizer:
         return "".join(chr(t) for t in tokens)
 ```
 
-"hello" becomes [104, 101, 108, 108, 111]. Every character is its own token. This is the baseline we improve on.
+"hello" становится [104, 101, 108, 108, 111]. Каждый символ -- собственный токен. Это baseline, который мы улучшаем.
 
-### Step 2: BPE Tokenizer from Scratch
+### Шаг 2: BPE Tokenizer from Scratch
 
-The real implementation. We train on raw bytes (like GPT-2), count pairs, merge the most frequent, and record every merge in order. The merge table is the tokenizer.
+Настоящая реализация. Мы обучаемся на сырых байтах (как GPT-2), считаем пары, сливаем самую частую и записываем каждое слияние по порядку. Таблица слияний и есть токенизатор.
 
 ```python
 from collections import Counter
@@ -272,13 +272,13 @@ class BPETokenizer:
         return byte_sequence.decode("utf-8", errors="replace")
 ```
 
-The training loop is the core of BPE: count pairs, merge the winner, repeat. Each merge reduces the total token count. After `num_merges` rounds, the vocabulary grows from 256 (base bytes) to 256 + num_merges.
+Цикл обучения -- ядро BPE: посчитать пары, слить победителя, повторить. Каждое слияние уменьшает общее число токенов. После `num_merges` раундов словарь растет с 256 (базовые байты) до 256 + num_merges.
 
-Encoding applies merges in the exact order they were learned. This matters. If merge 1 created "th" and merge 5 created "the", encoding must apply merge 1 first so that "the" can form from "th" + "e" in merge 5.
+Encoding применяет слияния ровно в том порядке, в котором они были выучены. Это важно. Если merge 1 создал "th", а merge 5 создал "the", encoding должен сначала применить merge 1, чтобы "the" мог сформироваться из "th" + "e" в merge 5.
 
-Decoding is the inverse: look up each token ID in the vocabulary, concatenate the bytes, decode to UTF-8.
+Decoding -- обратная операция: найти каждый token ID в словаре, склеить байты, декодировать в UTF-8.
 
-### Step 3: Encode and Decode Roundtrip
+### Шаг 3: Encode and Decode Roundtrip
 
 ```python
 corpus = (
@@ -309,9 +309,9 @@ for sentence in test_sentences:
     print(f"  Roundtrip: {'PASS' if decoded == sentence else 'FAIL'}")
 ```
 
-The compression ratio tells you how effective the tokenizer is. A ratio of 0.50 means the tokenizer compressed the text to half as many tokens as raw bytes. Lower is better. On the training corpus, the ratio will be good. On out-of-distribution text like "unhappiness" (which does not appear in the corpus), the ratio will be worse -- the tokenizer falls back to character-level encoding for unseen patterns.
+Compression ratio показывает, насколько эффективен токенизатор. Ratio 0.50 означает, что токенизатор сжал текст до половины числа токенов по сравнению с сырыми байтами. Чем ниже, тем лучше. На обучающем корпусе ratio будет хорошим. На out-of-distribution тексте вроде "unhappiness" (который не встречается в корпусе) ratio будет хуже: токенизатор откатится к character-level encoding для невиданных паттернов.
 
-### Step 4: Compare with tiktoken
+### Шаг 4: Compare with tiktoken
 
 ```python
 import tiktoken
@@ -335,9 +335,9 @@ for text in texts:
     print(f"  tiktoken:  {len(tiktoken_tokens)} tokens -> {tiktoken_pieces}")
 ```
 
-tiktoken uses the exact same algorithm but trained on hundreds of gigabytes of text with 100,000 merges. The algorithm is identical. The difference is the training data and the number of merges. Your tokenizer trained on a paragraph with 40 merges cannot compete with tiktoken's 100K merges on a massive corpus. But the mechanism is the same.
+tiktoken использует точно тот же алгоритм, но обучен на сотнях гигабайт текста с 100,000 слияний. Алгоритм идентичен. Разница в обучающих данных и числе слияний. Ваш токенизатор, обученный на одном абзаце с 40 слияниями, не может конкурировать со 100K слияний tiktoken на огромном корпусе. Но механизм тот же.
 
-### Step 5: Vocabulary Analysis
+### Шаг 5: Vocabulary Analysis
 
 ```python
 def analyze_vocabulary(tokenizer, test_texts):
@@ -367,11 +367,11 @@ def analyze_vocabulary(tokenizer, test_texts):
     print(f"\nUnused tokens: {len(unused)} out of {len(tokenizer.vocab)}")
 ```
 
-This reveals the Zipf distribution in your vocabulary. A few tokens dominate (spaces, "the", "e"). Most tokens are rarely used. Production tokenizers optimize for this distribution -- common patterns get short token IDs, rare patterns get longer representations.
+Это показывает Zipf distribution в вашем словаре. Несколько токенов доминируют: пробелы, "the", "e". Большинство токенов используются редко. Production tokenizers оптимизируются под это распределение: частые паттерны получают короткие token IDs, редкие паттерны получают более длинные представления.
 
-## Use It
+## Используйте это
 
-Your scratch BPE works. Now see what production tools look like.
+Ваш scratch BPE работает. Теперь посмотрите, как выглядят production tools.
 
 ### tiktoken (OpenAI)
 
@@ -387,7 +387,7 @@ print(f"Pieces: {[enc.decode([t]) for t in tokens]}")
 print(f"Roundtrip: {enc.decode(tokens)}")
 ```
 
-tiktoken is written in Rust with Python bindings. It encodes millions of tokens per second. Same BPE algorithm, industrial-strength implementation.
+tiktoken написан на Rust с Python bindings. Он кодирует миллионы токенов в секунду. Тот же BPE-алгоритм, industrial-strength реализация.
 
 ### Hugging Face tokenizers
 
@@ -408,7 +408,7 @@ print(f"Tokens: {output.tokens}")
 print(f"IDs: {output.ids}")
 ```
 
-The Hugging Face tokenizers library is also Rust under the hood. It trains BPE on gigabyte-scale corpora in seconds. This is what you use when training your own model.
+Библиотека Hugging Face tokenizers тоже использует Rust под капотом. Она обучает BPE на гигабайтных корпусах за секунды. Именно ее используют, когда обучают собственную модель.
 
 ### Loading Llama's Tokenizer
 
@@ -429,42 +429,42 @@ for text in multilingual:
     print(f"'{text}' -> {len(ids)} tokens")
 ```
 
-Llama 3's 128K vocabulary compresses non-English text significantly better than GPT-2's 50K vocabulary. You can verify this yourself -- encode the same sentence in multiple languages and count the tokens.
+Словарь Llama 3 на 128K заметно лучше сжимает неанглийский текст, чем словарь GPT-2 на 50K. Вы можете проверить это сами: закодируйте одно и то же предложение на нескольких языках и посчитайте токены.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/prompt-tokenizer-analyzer.md` -- a reusable prompt that analyzes tokenization efficiency for any text and model combination. Feed it a text sample and it tells you which model's tokenizer handles it best.
+Этот урок создает `outputs/prompt-tokenizer-analyzer.md` -- переиспользуемый prompt, который анализирует эффективность токенизации для любого сочетания текста и модели. Передайте ему текстовый sample, и он скажет, токенизатор какой модели справляется лучше всего.
 
-## Exercises
+## Упражнения
 
-1. Modify the BPE tokenizer to print the vocabulary at each merge step. Watch how "t" + "h" becomes "th", then "th" + "e" becomes "the". Track how common English words get assembled piece by piece.
+1. Измените BPE tokenizer так, чтобы он печатал словарь на каждом шаге слияния. Посмотрите, как "t" + "h" становится "th", а затем "th" + "e" становится "the". Проследите, как частые английские слова собираются часть за частью.
 
-2. Add special tokens (`<pad>`, `<eos>`, `<unk>`) to the BPE tokenizer. Assign them IDs 0, 1, 2 and shift all other tokens accordingly. Implement a pre-tokenization step that splits on whitespace before running BPE.
+2. Добавьте специальные токены (`<pad>`, `<eos>`, `<unk>`) в BPE tokenizer. Назначьте им IDs 0, 1, 2 и сдвиньте все остальные токены соответственно. Реализуйте шаг pre-tokenization, который делит по whitespace перед запуском BPE.
 
-3. Implement the WordPiece merge criterion (likelihood ratio instead of frequency). Train both BPE and WordPiece on the same corpus with the same number of merges. Compare the resulting vocabularies -- which one produces more linguistically meaningful subwords?
+3. Реализуйте критерий слияния WordPiece (likelihood ratio вместо frequency). Обучите BPE и WordPiece на одном и том же корпусе с одинаковым числом слияний. Сравните получившиеся словари: какой дает более лингвистически осмысленные subwords?
 
-4. Build a multilingual tokenizer efficiency benchmark. Take 10 sentences in English, Spanish, Chinese, Korean, and Arabic. Tokenize each with tiktoken (cl100k_base) and measure the average tokens per character. Quantify the "multilingual tax" for each language.
+4. Постройте benchmark эффективности multilingual tokenizer. Возьмите 10 предложений на английском, испанском, китайском, корейском и арабском. Токенизируйте каждое с помощью tiktoken (cl100k_base) и измерьте среднее число токенов на символ. Количественно оцените "multilingual tax" для каждого языка.
 
-5. Train your BPE tokenizer on a larger corpus (download a Wikipedia article). Tune the number of merges to achieve a compression ratio within 10% of tiktoken on that same text. This forces you to understand the relationship between corpus size, merge count, and compression quality.
+5. Обучите ваш BPE tokenizer на более крупном корпусе (скачайте статью из Wikipedia). Подберите число слияний так, чтобы добиться compression ratio в пределах 10% от tiktoken на том же тексте. Это заставит вас понять связь между размером корпуса, числом слияний и качеством сжатия.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Token | "A word" | A unit in the model's vocabulary -- could be a character, subword, word, or multi-word chunk |
-| BPE | "Some compression thing" | Byte Pair Encoding -- iteratively merge the most frequent adjacent pair of tokens until the target vocabulary size is reached |
-| WordPiece | "BERT's tokenizer" | Like BPE but merges maximize the likelihood ratio count(AB)/(count(A)*count(B)) instead of raw frequency |
-| SentencePiece | "A tokenizer library" | A language-agnostic tokenizer that operates on raw Unicode without pre-tokenization, supporting BPE and Unigram algorithms |
-| Vocabulary size | "How many words it knows" | The total number of unique tokens: GPT-2 has 50,257, BERT has 30,522, Llama 3 has 128,256 |
-| Fertility | "Not a tokenizer term" | Average number of tokens per word -- measures tokenizer efficiency across languages (1.0 is perfect, 3.0 means the model works three times harder) |
-| Byte-level BPE | "GPT's tokenizer" | BPE operating on raw bytes (0-255) instead of Unicode characters, guaranteeing no unknown tokens for any input |
-| Merge table | "The tokenizer file" | Ordered list of pair merges learned during training -- this IS the tokenizer, and order matters |
-| Pre-tokenization | "Splitting on spaces" | Rules applied before subword tokenization: whitespace splitting, digit separation, punctuation handling |
-| Compression ratio | "How efficient the tokenizer is" | Tokens produced divided by input bytes -- lower means better compression and faster inference |
+| Token | "Слово" | Единица в словаре модели: может быть символом, subword, словом или фрагментом из нескольких слов |
+| BPE | "Какая-то штука для сжатия" | Byte Pair Encoding: итеративно сливать самую частую соседнюю пару токенов, пока не достигнут целевой размер словаря |
+| WordPiece | "Токенизатор BERT" | Как BPE, но слияния максимизируют likelihood ratio count(AB)/(count(A)*count(B)) вместо сырой частоты |
+| SentencePiece | "Библиотека токенизации" | Language-agnostic токенизатор, который работает с сырым Unicode без pre-tokenization и поддерживает BPE и Unigram algorithms |
+| Vocabulary size | "Сколько слов он знает" | Общее число уникальных токенов: у GPT-2 50,257, у BERT 30,522, у Llama 3 128,256 |
+| Fertility | "Не термин токенизатора" | Среднее число токенов на слово: мера эффективности токенизатора между языками (1.0 идеально, 3.0 значит, что модель работает втрое тяжелее) |
+| Byte-level BPE | "Токенизатор GPT" | BPE, работающий с сырыми байтами (0-255), а не Unicode-символами, что гарантирует отсутствие неизвестных токенов для любого входа |
+| Merge table | "Файл токенизатора" | Упорядоченный список pair merges, выученных при обучении: это и есть токенизатор, и порядок важен |
+| Pre-tokenization | "Разбиение по пробелам" | Правила перед subword tokenization: whitespace splitting, digit separation, punctuation handling |
+| Compression ratio | "Насколько эффективен токенизатор" | Число созданных токенов, деленное на входные байты: чем ниже, тем лучше сжатие и быстрее inference |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Sennrich et al., 2016 -- "Neural Machine Translation of Rare Words with Subword Units"](https://arxiv.org/abs/1508.07909) -- the paper that introduced BPE for NLP, turning a 1994 compression algorithm into the foundation of modern tokenization
-- [Kudo & Richardson, 2018 -- "SentencePiece: A simple and language independent subword tokenizer"](https://arxiv.org/abs/1808.06226) -- language-agnostic tokenization that made multilingual models practical
-- [OpenAI tiktoken repository](https://github.com/openai/tiktoken) -- production BPE implementation in Rust with Python bindings, used by GPT-3.5/4/4o
-- [Hugging Face Tokenizers documentation](https://huggingface.co/docs/tokenizers) -- production-grade tokenizer training with Rust performance
+- [Sennrich et al., 2016 -- "Neural Machine Translation of Rare Words with Subword Units"](https://arxiv.org/abs/1508.07909) -- статья, которая ввела BPE в NLP, превратив алгоритм сжатия 1994 года в основу современной токенизации
+- [Kudo & Richardson, 2018 -- "SentencePiece: A simple and language independent subword tokenizer"](https://arxiv.org/abs/1808.06226) -- language-agnostic токенизация, сделавшая multilingual models практичными
+- [OpenAI tiktoken repository](https://github.com/openai/tiktoken) -- production BPE implementation на Rust с Python bindings, используется GPT-3.5/4/4o
+- [Hugging Face Tokenizers documentation](https://huggingface.co/docs/tokenizers) -- production-grade обучение токенизаторов с производительностью Rust

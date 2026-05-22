@@ -1,40 +1,40 @@
 # Evaluation: Benchmarks, Evals, LM Harness
 
-> Goodhart's Law: when a measure becomes a target, it ceases to be a good measure. Every frontier lab games benchmarks. MMLU scores go up while models still can't reliably count the number of R's in "strawberry." The only eval that matters is YOUR eval -- on YOUR task, with YOUR data.
+> Закон Гудхарта: когда мера становится целью, она перестает быть хорошей мерой. Каждая frontier lab играет в benchmarks. MMLU scores растут, пока модели все еще не могут надежно посчитать количество букв R в "strawberry." Единственная eval, которая имеет значение, -- ВАША eval: на ВАШЕЙ задаче, с ВАШИМИ данными.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lessons 01-05 (LLMs from Scratch)
-**Time:** ~90 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Фаза 10, уроки 01-05 (LLMs from Scratch)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a custom evaluation harness that runs multiple-choice and open-ended benchmarks against a language model
-- Explain why standard benchmarks (MMLU, HumanEval) saturate and fail to differentiate frontier models
-- Implement task-specific evals with proper metrics: exact match, F1, BLEU, and LLM-as-judge scoring
-- Design a custom evaluation suite targeting your specific use case rather than relying solely on public leaderboards
+- Построить custom evaluation harness, который запускает multiple-choice и open-ended benchmarks против language model
+- Объяснить, почему standard benchmarks (MMLU, HumanEval) saturate и перестают различать frontier models
+- Реализовать task-specific evals с правильными metrics: exact match, F1, BLEU и LLM-as-judge scoring
+- Спроектировать custom evaluation suite под ваш конкретный use case вместо опоры только на public leaderboards
 
-## The Problem
+## Проблема
 
-MMLU was published in 2020 with 15,908 questions across 57 subjects. Within three years, frontier models saturated it. GPT-4 scored 86.4%. Claude 3 Opus scored 86.8%. Llama 3 405B scored 88.6%. The leaderboard compressed into a 3-point range where differences are statistical noise, not real capability gaps.
+MMLU был опубликован в 2020 году с 15 908 вопросами по 57 subjects. За три года frontier models его saturated. GPT-4 набрал 86.4%. Claude 3 Opus набрал 86.8%. Llama 3 405B набрал 88.6%. Leaderboard сжался в 3-point range, где различия -- statistical noise, а не реальные capability gaps.
 
-Meanwhile, those same models fail at tasks that a 10-year-old handles without thinking. Claude 3.5 Sonnet, scoring 88.7% on MMLU, initially could not count the letters in "strawberry" -- a task that requires zero world knowledge and zero reasoning, just character-level iteration. HumanEval tests code generation with 164 problems. Models score 90%+ on it while still producing code that crashes on edge cases any junior developer would catch.
+Тем временем те же модели проваливают задачи, которые 10-летний ребенок решает не задумываясь. Claude 3.5 Sonnet, набравший 88.7% на MMLU, сначала не мог посчитать буквы в "strawberry" -- задачу, которая требует ноль world knowledge и ноль reasoning, только character-level iteration. HumanEval проверяет code generation на 164 problems. Модели получают 90%+ на нем, но все еще пишут код, который падает на edge cases, заметных любому junior developer.
 
-The gap between benchmark performance and real-world reliability is the central problem of LLM evaluation. Benchmarks tell you how a model performs on the benchmark. They tell you almost nothing about how that model will perform on your specific task, with your specific data, under your specific failure modes. If you are building a customer support bot, MMLU is irrelevant. If you are building a code assistant, HumanEval only covers function-level generation -- it says nothing about debugging, refactoring, or explaining code across files.
+Разрыв между benchmark performance и real-world reliability -- центральная проблема LLM evaluation. Benchmarks говорят, как модель работает на benchmark. Они почти ничего не говорят о том, как модель будет работать на вашей конкретной задаче, с вашими данными, при ваших failure modes. Если вы строите customer support bot, MMLU irrelevant. Если вы строите code assistant, HumanEval покрывает только function-level generation -- он ничего не говорит о debugging, refactoring или explaining code across files.
 
-You need custom evals. Not because benchmarks are useless -- they are useful for rough model selection -- but because the final evaluation must match your deployment conditions exactly.
+Вам нужны custom evals. Не потому, что benchmarks бесполезны -- они полезны для грубого model selection -- а потому, что финальная evaluation должна точно соответствовать deployment conditions.
 
-## The Concept
+## Концепция
 
-### The Eval Landscape
+### Eval Landscape
 
-There are three categories of evaluation, each with different cost and signal quality.
+Есть три категории evaluation, каждая с разной стоимостью и signal quality.
 
-**Benchmarks** are standardized test suites. MMLU, HumanEval, SWE-bench, MATH, ARC, HellaSwag. You run a model against the benchmark and get a score. The advantage: everyone uses the same test, so you can compare models. The disadvantage: models and training data increasingly contaminate these benchmarks. Labs train on data that includes benchmark questions. Scores go up. Capability may not.
+**Benchmarks** -- стандартизированные test suites. MMLU, HumanEval, SWE-bench, MATH, ARC, HellaSwag. Вы запускаете модель против benchmark и получаете score. Преимущество: все используют один и тот же test, поэтому модели можно сравнивать. Недостаток: models и training data все чаще contaminate эти benchmarks. Labs обучаются на данных, включающих benchmark questions. Scores растут. Capability может не расти.
 
-**Custom evals** are test suites you build for your specific use case. You define the inputs, the expected outputs, and the scoring function. A legal document summarizer gets evaluated on legal documents. A SQL generator gets evaluated on your database schema. These are expensive to create but they are the only evaluation that predicts production performance.
+**Custom evals** -- test suites, которые вы строите для своего use case. Вы задаете inputs, expected outputs и scoring function. Legal document summarizer оценивается на legal documents. SQL generator оценивается на вашей database schema. Их дорого создавать, но это единственная evaluation, которая predicts production performance.
 
-**Human evals** use paid annotators to judge model outputs on criteria like helpfulness, correctness, fluency, and safety. The gold standard for open-ended tasks where automated scoring fails. Chatbot Arena has collected over 2 million human preference votes across 100+ models. The downside: cost ($0.10-$2.00 per judgment) and speed (hours to days).
+**Human evals** используют paid annotators для оценки model outputs по критериям helpfulness, correctness, fluency и safety. Это gold standard для open-ended tasks, где automated scoring fails. Chatbot Arena собрала более 2 million human preference votes across 100+ models. Минус: cost ($0.10-$2.00 per judgment) и speed (hours to days).
 
 ```mermaid
 graph TD
@@ -53,41 +53,41 @@ graph TD
     style H fill:#1a1a2e,stroke:#e94560,color:#fff
 ```
 
-### Why Benchmarks Break
+### Почему benchmarks ломаются
 
-Three mechanisms cause benchmark scores to stop reflecting real capability.
+Три механизма заставляют benchmark scores перестать отражать real capability.
 
-**Data contamination.** Training corpora scrape the internet. Benchmark questions live on the internet. Models see the answers during training. This is not cheating in the traditional sense -- labs do not intentionally include benchmark data. But web-scale scraping makes it nearly impossible to exclude.
+**Data contamination.** Training corpora scrape the internet. Benchmark questions живут в интернете. Models видят answers during training. Это не cheating в традиционном смысле -- labs не включают benchmark data намеренно. Но web-scale scraping делает исключение почти невозможным.
 
-**Teaching to the test.** Labs optimize training mixtures for benchmark performance. If 5% of the training mix is MMLU-style multiple choice, the model learns the format and the answer distribution. MMLU is 4-way multiple choice. Models learn that the answer distribution is approximately uniform across A/B/C/D, which helps even when the model does not know the answer.
+**Teaching to the test.** Labs оптимизируют training mixtures под benchmark performance. Если 5% training mix -- MMLU-style multiple choice, модель учит format и answer distribution. MMLU -- 4-way multiple choice. Models учат, что answer distribution примерно uniform across A/B/C/D, что помогает даже когда модель не знает ответ.
 
-**Saturation.** When every frontier model scores 85-90% on a benchmark, the benchmark stops discriminating. The remaining 10-15% of questions may be ambiguous, mislabeled, or require obscure domain knowledge. Improving from 87% to 89% on MMLU may mean the model memorized two more obscure questions, not that it got smarter.
+**Saturation.** Когда каждая frontier model набирает 85-90% на benchmark, benchmark перестает discriminating. Оставшиеся 10-15% questions могут быть ambiguous, mislabeled или требовать obscure domain knowledge. Улучшение с 87% до 89% на MMLU может означать, что модель memorized еще два obscure questions, а не стала умнее.
 
-### Perplexity: A Quick Health Check
+### Perplexity: быстрый health check
 
-Perplexity measures how surprised a model is by a sequence of tokens. Formally, it is the exponentiated average negative log-likelihood:
+Perplexity измеряет, насколько модель удивлена последовательностью tokens. Формально это exponentiated average negative log-likelihood:
 
 ```
 PPL = exp(-1/N * sum(log P(token_i | context)))
 ```
 
-A perplexity of 10 means the model is, on average, as uncertain as choosing uniformly among 10 options at each token position. Lower is better. GPT-2 gets a perplexity of ~30 on WikiText-103. GPT-3 gets ~20. Llama 3 8B gets ~7.
+Perplexity 10 означает, что модель в среднем столь же uncertain, как при равномерном выборе из 10 options на каждой token position. Ниже -- лучше. GPT-2 получает perplexity ~30 на WikiText-103. GPT-3 получает ~20. Llama 3 8B получает ~7.
 
-Perplexity is useful for comparing models on the same test set, but it has blind spots. A model can have low perplexity by being good at predicting common patterns while being terrible at rare but important patterns. It also says nothing about instruction following, reasoning, or factual accuracy. Use it as a sanity check, not a final verdict.
+Perplexity полезна для сравнения моделей на одном test set, но у нее есть blind spots. Модель может иметь low perplexity, хорошо предсказывая common patterns, но быть ужасной на rare but important patterns. Она также ничего не говорит об instruction following, reasoning или factual accuracy. Используйте ее как sanity check, а не final verdict.
 
 ### LLM-as-Judge
 
-Use a strong model to evaluate a weaker model's output. The idea is simple: ask GPT-4o or Claude Sonnet to rate a response on a 1-5 scale for correctness, helpfulness, and safety. This costs about $0.01 per judgment with GPT-4o-mini and correlates surprisingly well with human judgments -- around 80% agreement on most tasks.
+Используйте сильную модель для evaluation output слабой модели. Идея проста: попросите GPT-4o или Claude Sonnet оценить response по шкале 1-5 за correctness, helpfulness и safety. Это стоит около $0.01 per judgment с GPT-4o-mini и surprisingly well correlates with human judgments -- около 80% agreement on most tasks.
 
-The scoring prompt matters more than the model. A vague prompt ("Rate this response") produces noisy scores. A structured prompt with a rubric ("Score 5 if the answer is factually correct and cites a source, 4 if correct but unsourced, 3 if partially correct...") produces consistent, reproducible scores.
+Scoring prompt важнее модели. Расплывчатый prompt ("Rate this response") дает noisy scores. Structured prompt with rubric ("Score 5 if the answer is factually correct and cites a source, 4 if correct but unsourced, 3 if partially correct...") дает consistent, reproducible scores.
 
-Failure modes: judge models exhibit position bias (prefer the first response in pairwise comparisons), verbosity bias (prefer longer responses), and self-preference (GPT-4 rates GPT-4 outputs higher than equivalent Claude outputs). Mitigations: randomize order, normalize for length, use a different judge than the model being evaluated.
+Failure modes: judge models проявляют position bias (предпочитают первый response в pairwise comparisons), verbosity bias (предпочитают longer responses) и self-preference (GPT-4 оценивает GPT-4 outputs выше, чем equivalent Claude outputs). Mitigations: randomize order, normalize for length, use a different judge than the model being evaluated.
 
 ### ELO Ratings from Pairwise Comparisons
 
-Chatbot Arena's approach. Show two responses to the same prompt from different models. A human (or LLM judge) picks the better one. From thousands of these comparisons, compute an ELO rating for each model -- the same system used in chess.
+Подход Chatbot Arena. Покажите два responses на один prompt от разных models. Human (или LLM judge) выбирает лучший. Из тысяч сравнений вычислите ELO rating для каждой модели -- ту же систему используют в chess.
 
-ELO advantages: relative ranking is more reliable than absolute scoring, handles ties gracefully, and converges with fewer comparisons than scoring every output independently. As of early 2026, Chatbot Arena ranks show GPT-4o, Claude 3.5 Sonnet, and Gemini 1.5 Pro within 20 ELO points of each other at the top.
+Преимущества ELO: relative ranking надежнее absolute scoring, gracefully handles ties и converges с меньшим числом comparisons, чем независимая scoring каждого output. По состоянию на начало 2026 года rankings Chatbot Arena показывают GPT-4o, Claude 3.5 Sonnet и Gemini 1.5 Pro within 20 ELO points of each other at the top.
 
 ```mermaid
 graph LR
@@ -108,25 +108,25 @@ graph LR
 
 ### Eval Frameworks
 
-**lm-evaluation-harness** (EleutherAI): the standard open-source eval framework. Supports 200+ benchmarks. Run any Hugging Face model against MMLU, HellaSwag, ARC, etc. with one command. Used by the Open LLM Leaderboard.
+**lm-evaluation-harness** (EleutherAI): стандартный open-source eval framework. Поддерживает 200+ benchmarks. Запускает любую Hugging Face model против MMLU, HellaSwag, ARC и т.д. одной командой. Используется Open LLM Leaderboard.
 
-**RAGAS**: evaluation framework specifically for RAG pipelines. Measures faithfulness (does the answer match the retrieved context?), relevance (is the retrieved context relevant to the question?), and answer correctness.
+**RAGAS**: evaluation framework специально для RAG pipelines. Измеряет faithfulness (соответствует ли ответ retrieved context?), relevance (релевантен ли retrieved context вопросу?) и answer correctness.
 
-**promptfoo**: config-driven eval for prompt engineering. Define test cases in YAML, run against multiple models, get a pass/fail report. Useful for regression testing prompts -- make sure a prompt change does not break existing test cases.
+**promptfoo**: config-driven eval для prompt engineering. Define test cases in YAML, run against multiple models, get a pass/fail report. Полезен для regression testing prompts -- убедиться, что prompt change не ломает existing test cases.
 
 ### Building Custom Evals
 
-The only eval that matters for production. The process:
+Единственная eval, которая важна для production. Процесс:
 
-1. **Define the task.** What exactly should the model do? Be precise. "Answer questions" is too vague. "Given a customer complaint email, extract the product name, issue category, and sentiment" is a task you can evaluate.
+1. **Define the task.** Что именно должна делать модель? Будьте точны. "Answer questions" слишком vague. "Given a customer complaint email, extract the product name, issue category, and sentiment" -- задача, которую можно evaluate.
 
-2. **Create test cases.** Minimum 50 for a prototype eval, 200+ for production. Each test case is an (input, expected_output) pair. Include edge cases: empty inputs, adversarial inputs, ambiguous inputs, inputs in other languages.
+2. **Create test cases.** Минимум 50 для prototype eval, 200+ для production. Каждый test case -- пара (input, expected_output). Включите edge cases: empty inputs, adversarial inputs, ambiguous inputs, inputs in other languages.
 
-3. **Define scoring.** Exact match for structured outputs. BLEU/ROUGE for text similarity. LLM-as-judge for open-ended quality. F1 for extraction tasks. Combine multiple metrics with weights.
+3. **Define scoring.** Exact match для structured outputs. BLEU/ROUGE для text similarity. LLM-as-judge для open-ended quality. F1 для extraction tasks. Combine multiple metrics with weights.
 
-4. **Automate.** Every eval runs with one command. No manual steps. Store results in a format that enables comparison over time.
+4. **Automate.** Каждая eval запускается одной командой. Без ручных шагов. Храните results в формате, который позволяет сравнивать их во времени.
 
-5. **Track over time.** An eval score is meaningless in isolation. You need the trendline. Did the score improve after the last prompt change? Did it regress after switching models? Version your eval alongside your prompts.
+5. **Track over time.** Eval score бессмысленен в isolation. Нужен trendline. Score вырос после последнего изменения prompt? Упал после смены models? Версионируйте eval вместе с prompts.
 
 | Eval Type | Cost per judgment | Agreement with humans | Best for |
 |-----------|------------------|----------------------|----------|
@@ -139,7 +139,7 @@ The only eval that matters for production. The process:
 
 ### Step 1: A Minimal Eval Framework
 
-Define the core abstractions. An eval case has an input, an expected output, and an optional metadata dict. A scorer takes a prediction and a reference and returns a score between 0 and 1.
+Определите core abstractions. Eval case имеет input, expected output и optional metadata dict. Scorer принимает prediction и reference и возвращает score between 0 and 1.
 
 ```python
 import json
@@ -175,7 +175,7 @@ class EvalSuite:
 
 ### Step 2: Scoring Functions
 
-Build exact match, token F1, and a simulated LLM-as-judge scorer.
+Постройте exact match, token F1 и simulated LLM-as-judge scorer.
 
 ```python
 def exact_match(prediction, expected):
@@ -205,7 +205,7 @@ def llm_judge_simulated(prediction, expected):
 
 ### Step 3: ELO Rating System
 
-Implement pairwise comparisons with ELO updates. This is exactly the system Chatbot Arena uses to rank models.
+Реализуйте pairwise comparisons with ELO updates. Это ровно та система, которую Chatbot Arena использует для ranking models.
 
 ```python
 class ELOTracker:
@@ -252,7 +252,7 @@ class ELOTracker:
 
 ### Step 4: Perplexity Calculation
 
-Compute perplexity using token probabilities. In practice you would get these from the model's logits. Here we simulate with a probability distribution.
+Вычислите perplexity по token probabilities. На практике вы получите их из logits модели. Здесь мы симулируем probability distribution.
 
 ```python
 import numpy as np
@@ -280,7 +280,7 @@ def token_log_probs_simulated(text, model_quality=0.8):
 
 ### Step 5: Aggregate Results
 
-Compute summary statistics across an eval run: mean, median, pass rate at a threshold, and per-metric breakdowns.
+Вычислите summary statistics по eval run: mean, median, pass rate at a threshold и per-metric breakdowns.
 
 ```python
 def summarize_results(results, threshold=0.8):
@@ -319,7 +319,7 @@ def print_summary(summary, suite_name="Eval"):
 
 ### Step 6: Run the Full Pipeline
 
-Wire everything together. Define a task, create test cases, simulate two models, run evals, compute ELO from pairwise comparisons, and print the leaderboard.
+Свяжите все вместе. Define a task, create test cases, simulate two models, run evals, compute ELO from pairwise comparisons и print the leaderboard.
 
 ```python
 def demo_model_good(prompt):
@@ -367,11 +367,11 @@ print_summary(summarize_results(results_good), "Model A (concise)")
 print_summary(summarize_results(results_bad), "Model B (verbose)")
 ```
 
-The "good" model gives exact answers. The "bad" model gives verbose paraphrases. Exact match punishes the verbose model severely. Token F1 and LLM-as-judge are more forgiving. This illustrates why metric choice matters: the same model looks great or terrible depending on how you score it.
+"Good" model дает exact answers. "Bad" model дает verbose paraphrases. Exact match сильно наказывает verbose model. Token F1 и LLM-as-judge более forgiving. Это показывает, почему metric choice matters: одна и та же model выглядит great или terrible в зависимости от scoring.
 
 ### Step 7: ELO Tournament
 
-Run pairwise comparisons between models across multiple rounds.
+Запустите pairwise comparisons между models across multiple rounds.
 
 ```python
 elo = ELOTracker(k=32)
@@ -399,7 +399,7 @@ for name, rating in elo.leaderboard():
 
 ### Step 8: Perplexity Comparison
 
-Compare perplexity across "models" of different quality levels.
+Сравните perplexity across "models" of different quality levels.
 
 ```python
 test_text = "The quick brown fox jumps over the lazy dog in the garden"
@@ -414,7 +414,7 @@ for quality, label in [(0.9, "Strong model"), (0.7, "Medium model"), (0.4, "Weak
 
 ### lm-evaluation-harness (EleutherAI)
 
-The standard tool for running benchmarks on any model.
+Стандартный tool для запуска benchmarks на любой model.
 
 ```python
 # pip install lm-eval
@@ -434,7 +434,7 @@ The standard tool for running benchmarks on any model.
 
 ### promptfoo
 
-Config-driven eval for prompt engineering. Define tests in YAML and run against multiple providers.
+Config-driven eval для prompt engineering. Define tests in YAML and run against multiple providers.
 
 ```yaml
 # promptfoo.yaml
@@ -472,25 +472,25 @@ tests:
 # print(result)
 ```
 
-RAGAS measures what generic evals miss: whether the model's answer is grounded in the retrieved context, not just whether the answer is "correct" in the abstract.
+RAGAS измеряет то, что generic evals пропускают: grounded ли ответ модели в retrieved context, а не просто "correct" ли answer in the abstract.
 
 ## Ship It
 
-This lesson produces `outputs/prompt-eval-designer.md` -- a reusable prompt that designs custom eval suites for any task. Give it a task description and it generates test cases, scoring functions, and a pass/fail threshold recommendation.
+Этот урок создает `outputs/prompt-eval-designer.md` -- reusable prompt, который проектирует custom eval suites для любой задачи. Дайте ему task description, и он сгенерирует test cases, scoring functions и recommendation для pass/fail threshold.
 
-It also produces `outputs/skill-evaluation.md` -- a decision framework for choosing the right evaluation strategy based on your task type, budget, and latency requirements.
+Он также создает `outputs/skill-evaluation.md` -- decision framework для выбора правильной evaluation strategy с учетом task type, budget и latency requirements.
 
 ## Exercises
 
-1. Add a "consistency" scorer that runs the same input through the model 5 times and measures how often the outputs match. Inconsistent answers on deterministic inputs reveal fragile prompts or high temperature settings.
+1. Добавьте "consistency" scorer, который прогоняет один и тот же input через model 5 раз и измеряет, как часто outputs совпадают. Inconsistent answers on deterministic inputs выявляют fragile prompts или high temperature settings.
 
-2. Extend the ELO tracker to support multiple judge functions (exact match, F1, LLM-as-judge) and weight them. Compare how the leaderboard changes when you weight exact match heavily versus F1 heavily.
+2. Расширьте ELO tracker для поддержки multiple judge functions (exact match, F1, LLM-as-judge) и weight them. Сравните, как меняется leaderboard, когда exact match weighted heavily versus F1 heavily.
 
-3. Build an eval suite for a specific task: email classification into 5 categories. Create 100 test cases with diverse examples including edge cases (emails that could belong to multiple categories, empty emails, emails in other languages). Measure how different "models" (rule-based, keyword matching, simulated LLM) perform.
+3. Постройте eval suite для конкретной задачи: email classification into 5 categories. Создайте 100 test cases с diverse examples including edge cases (emails that could belong to multiple categories, empty emails, emails in other languages). Измерьте, как разные "models" (rule-based, keyword matching, simulated LLM) perform.
 
-4. Implement contamination detection: given a set of eval questions and a training corpus, check what percentage of eval questions (or close paraphrases) appear in the training data. This is how researchers audit benchmark validity.
+4. Реализуйте contamination detection: given a set of eval questions and a training corpus, check what percentage of eval questions (or close paraphrases) appear in the training data. Так researchers audit benchmark validity.
 
-5. Build a "model diff" tool. Given eval results from two model versions, highlight which specific test cases improved, which regressed, and which stayed the same. This is the eval equivalent of a code diff -- essential for understanding whether a change helped or hurt.
+5. Постройте "model diff" tool. Имея eval results from two model versions, highlight which specific test cases improved, which regressed, and which stayed the same. Это eval equivalent of a code diff -- essential for understanding whether a change helped or hurt.
 
 ## Key Terms
 
@@ -500,16 +500,16 @@ It also produces `outputs/skill-evaluation.md` -- a decision framework for choos
 | HumanEval | "Code eval" | 164 Python function-completion problems from OpenAI, tests only isolated function generation |
 | SWE-bench | "Real coding eval" | 2,294 GitHub issues from 12 Python repos, measures end-to-end bug fixing including test generation |
 | Perplexity | "How confused the model is" | exp(-avg(log P(token_i given context))) -- lower means the model assigns higher probability to the actual tokens |
-| ELO rating | "Chess ranking for models" | A relative skill rating computed from pairwise win/loss records, used by Chatbot Arena to rank 100+ models |
-| LLM-as-judge | "Using AI to grade AI" | A strong model scores a weaker model's outputs against a rubric, ~80% agreement with human judges at ~$0.01/judgment |
+| ELO rating | "Chess ranking for models" | Relative skill rating, computed from pairwise win/loss records, used by Chatbot Arena to rank 100+ models |
+| LLM-as-judge | "Using AI to grade AI" | Strong model scores weaker model outputs against a rubric, ~80% agreement with human judges at ~$0.01/judgment |
 | Data contamination | "The model saw the test" | Training data includes benchmark questions, inflating scores without improving real capability |
-| Eval suite | "A bunch of tests" | A versioned collection of (input, expected_output, scorer) triples that measure a specific capability |
+| Eval suite | "A bunch of tests" | Versioned collection of (input, expected_output, scorer) triples that measure a specific capability |
 | Pass rate | "What percentage it gets right" | Fraction of eval cases scoring above a threshold -- more actionable than mean score because it measures reliability |
 | Chatbot Arena | "Model ranking website" | LMSYS platform with 2M+ human preference votes, producing the most trusted LLM leaderboard via ELO ratings |
 
 ## Further Reading
 
-- [Hendrycks et al., 2021 -- "Measuring Massive Multitask Language Understanding"](https://arxiv.org/abs/2009.03300) -- the MMLU paper, still the most cited LLM benchmark despite its saturation
-- [Chen et al., 2021 -- "Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374) -- the HumanEval paper from OpenAI, established code generation evaluation methodology
-- [Zheng et al., 2023 -- "Judging LLM-as-a-Judge"](https://arxiv.org/abs/2306.05685) -- systematic analysis of using LLMs to evaluate LLMs, including position bias and verbosity bias findings
-- [LMSYS Chatbot Arena](https://chat.lmsys.org/) -- crowdsourced model comparison platform with 2M+ votes, the most trusted real-world LLM ranking
+- [Hendrycks et al., 2021 -- "Measuring Massive Multitask Language Understanding"](https://arxiv.org/abs/2009.03300) -- статья MMLU, все еще самый цитируемый LLM benchmark несмотря на saturation
+- [Chen et al., 2021 -- "Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374) -- статья HumanEval от OpenAI, established code generation evaluation methodology
+- [Zheng et al., 2023 -- "Judging LLM-as-a-Judge"](https://arxiv.org/abs/2306.05685) -- systematic analysis использования LLMs для evaluation LLMs, включая findings по position bias и verbosity bias
+- [LMSYS Chatbot Arena](https://chat.lmsys.org/) -- crowdsourced model comparison platform with 2M+ votes, самый trusted real-world LLM ranking

@@ -1,49 +1,49 @@
-# Pre-Training a Mini GPT (124M Parameters)
+# Предобучение Mini GPT (124M параметров)
 
-> GPT-2 Small has 124 million parameters. That's 12 transformer layers, 12 attention heads, and 768-dimensional embeddings. You can train it from scratch on a single GPU in a few hours. Most people never do this. They use pre-trained checkpoints. But if you don't train one yourself, you don't actually understand what's happening inside the model you're building products on.
+> У GPT-2 Small 124 миллиона параметров. Это 12 слоев transformer, 12 голов attention и эмбеддинги размерности 768. Такую модель можно обучить с нуля на одном GPU за несколько часов. Большинство людей никогда этого не делает. Они используют предобученные checkpoint'ы. Но если вы не обучили такую модель сами, вы по-настоящему не понимаете, что происходит внутри модели, на которой строите продукты.
 
-**Type:** Build
-**Languages:** Python (with numpy)
-**Prerequisites:** Phase 10, Lessons 01-03 (Tokenizers, Building a Tokenizer, Data Pipelines)
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** Python (with numpy)
+**Предварительные требования:** Phase 10, Lessons 01-03 (Tokenizers, Building a Tokenizer, Data Pipelines)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement the full GPT-2 architecture (124M parameters) from scratch: token embeddings, positional embeddings, transformer blocks, and the language model head
-- Train a GPT model on a text corpus using next-token prediction with cross-entropy loss
-- Implement autoregressive text generation with temperature sampling and top-k/top-p filtering
-- Monitor training loss curves and validate that the model learns coherent language patterns
+- Реализовать полную архитектуру GPT-2 (124M параметров) с нуля: token embeddings, positional embeddings, transformer blocks и language model head
+- Обучить GPT-модель на текстовом корпусе через предсказание следующего токена с cross-entropy loss
+- Реализовать авторегрессионную генерацию текста с temperature sampling и top-k/top-p filtering
+- Отслеживать кривые training loss и проверять, что модель учит связные языковые паттерны
 
-## The Problem
+## Проблема
 
-You know what a transformer is. You have read the diagrams. You can recite "attention is all you need" and draw boxes labeled "Multi-Head Attention" on a whiteboard.
+Вы знаете, что такое transformer. Вы видели схемы. Вы можете процитировать "attention is all you need" и нарисовать на доске блоки с подписью "Multi-Head Attention".
 
-None of that means you understand what happens when a model generates text.
+Но это не означает, что вы понимаете, что происходит, когда модель генерирует текст.
 
-There are 124,438,272 parameters in GPT-2 Small (with weight tying). Every single one of them was set by running a training loop: forward pass, compute loss, backward pass, update weights. Twelve transformer blocks. Twelve attention heads per block. A 768-dimensional embedding space. A vocabulary of 50,257 tokens. Every time the model generates a token, all 124 million parameters participate in a single matrix multiplication chain that takes a sequence of token IDs and produces a probability distribution over the next token.
+В GPT-2 Small 124,438,272 параметра (с weight tying). Каждый из них был настроен запуском training loop: forward pass, вычисление loss, backward pass, обновление весов. Двенадцать transformer-блоков. Двенадцать attention heads в каждом блоке. Пространство эмбеддингов размерности 768. Словарь из 50,257 токенов. Каждый раз, когда модель генерирует токен, все 124 миллиона параметров участвуют в одной цепочке матричных умножений, которая берет последовательность token IDs и выдает распределение вероятностей для следующего токена.
 
-If you have never built this yourself, you are working with a black box. You can use the API. You can fine-tune. But when something goes wrong -- when the model hallucinates, when it repeats itself, when it refuses to follow instructions -- you have no mental model for *why*.
+Если вы никогда не строили это сами, вы работаете с черным ящиком. Вы можете использовать API. Можете делать fine-tuning. Но когда что-то идет не так -- когда модель галлюцинирует, повторяется или отказывается следовать инструкциям, -- у вас нет ментальной модели, объясняющей *почему*.
 
-This lesson builds GPT-2 Small from scratch. Not in PyTorch. In numpy. Every matrix multiplication is visible. Every gradient is computed by your code. You will see exactly how 124 million numbers conspire to predict the next word.
+В этом уроке мы строим GPT-2 Small с нуля. Не на PyTorch. На numpy. Каждое матричное умножение видно. Каждый градиент вычисляется вашим кодом. Вы увидите, как именно 124 миллиона чисел совместно предсказывают следующее слово.
 
-## The Concept
+## Концепция
 
-### The GPT Architecture
+### Архитектура GPT
 
-GPT is an autoregressive language model. "Autoregressive" means it generates one token at a time, each conditioned on all previous tokens. The architecture is a stack of transformer decoder blocks.
+GPT -- это авторегрессионная языковая модель. "Авторегрессионная" означает, что она генерирует по одному токену за раз, и каждый токен обусловлен всеми предыдущими токенами. Архитектура представляет собой стек transformer decoder blocks.
 
-Here is the full computation graph from token IDs to next-token probabilities:
+Полный граф вычислений от token IDs до вероятностей следующего токена выглядит так:
 
-1. Token IDs come in. Shape: (batch_size, seq_len).
-2. Token embedding lookup. Each ID maps to a 768-dimensional vector. Shape: (batch_size, seq_len, 768).
-3. Position embedding lookup. Each position (0, 1, 2, ...) maps to a 768-dimensional vector. Same shape.
-4. Add token embeddings + position embeddings.
-5. Pass through 12 transformer blocks.
-6. Final layer normalization.
-7. Linear projection to vocabulary size. Shape: (batch_size, seq_len, vocab_size).
-8. Softmax to get probabilities.
+1. На вход приходят Token IDs. Shape: (batch_size, seq_len).
+2. Выполняется lookup token embeddings. Каждый ID отображается в 768-мерный вектор. Shape: (batch_size, seq_len, 768).
+3. Выполняется lookup position embeddings. Каждая позиция (0, 1, 2, ...) отображается в 768-мерный вектор. Shape тот же.
+4. Складываются token embeddings + position embeddings.
+5. Результат проходит через 12 transformer blocks.
+6. Выполняется final layer normalization.
+7. Линейная проекция к размеру словаря. Shape: (batch_size, seq_len, vocab_size).
+8. Softmax дает вероятности.
 
-That is the entire model. No convolutions. No recurrence. Just embeddings, attention, feedforward networks, and layer norms stacked 12 times.
+Это вся модель. Нет convolutions. Нет recurrence. Только embeddings, attention, feedforward networks и layer norms, сложенные в стек 12 раз.
 
 ```mermaid
 graph TD
@@ -71,27 +71,27 @@ graph TD
     style K fill:#1a1a2e,stroke:#51cf66,color:#fff
 ```
 
-### The Transformer Block
+### Transformer Block
 
-Each of the 12 blocks follows the same pattern. Pre-norm architecture (GPT-2 uses pre-norm, not post-norm like the original transformer):
+Каждый из 12 блоков следует одному и тому же шаблону. Это pre-norm архитектура (GPT-2 использует pre-norm, а не post-norm, как оригинальный transformer):
 
 1. LayerNorm
 2. Multi-Head Self-Attention
-3. Residual connection (add input back)
+3. Residual connection (добавить вход обратно)
 4. LayerNorm
 5. Feed-Forward Network (MLP)
-6. Residual connection (add input back)
+6. Residual connection (добавить вход обратно)
 
-The residual connections are critical. Without them, gradients vanish by the time they reach block 1 during backpropagation. With them, gradients can flow directly from the loss to any layer through the "skip" path. This is why you can stack 12, 32, or even 96 blocks (GPT-4 is rumored to use 120).
+Residual connections критичны. Без них градиенты исчезают к тому моменту, когда при backpropagation доходят до блока 1. С ними градиенты могут идти напрямую от loss к любому слою через "skip" path. Поэтому можно складывать 12, 32 или даже 96 блоков (по слухам, GPT-4 использует 120).
 
-### Attention: The Core Mechanism
+### Attention: основной механизм
 
-Self-attention lets every token look at every previous token and decide how much to attend to each one. Here is the math.
+Self-attention позволяет каждому токену смотреть на каждый предыдущий токен и решать, сколько внимания уделить каждому из них. Математика такая.
 
-For each token position, compute three vectors from the input:
-- **Query (Q)**: "What am I looking for?"
-- **Key (K)**: "What do I contain?"
-- **Value (V)**: "What information do I carry?"
+Для каждой позиции токена из входа вычисляются три вектора:
+- **Query (Q)**: "Что я ищу?"
+- **Key (K)**: "Что во мне содержится?"
+- **Value (V)**: "Какую информацию я несу?"
 
 ```
 Q = input @ W_q    (768 -> 768)
@@ -104,9 +104,9 @@ attention_weights = softmax(attention_scores)
 output = attention_weights @ V
 ```
 
-The causal mask is what makes GPT autoregressive. Position 5 can attend to positions 0-5 but not 6, 7, 8, and so on. This prevents the model from "cheating" by looking at future tokens during training.
+Causal mask делает GPT авторегрессионной. Позиция 5 может attend to positions 0-5, но не 6, 7, 8 и так далее. Это не дает модели "жульничать", заглядывая в будущие токены во время обучения.
 
-**Multi-head attention** splits the 768-dimensional space into 12 heads of 64 dimensions each. Each head learns a different attention pattern. One head might track syntactic relationships (subject-verb agreement). Another might track semantic similarity (synonyms). Another might track positional proximity (nearby words). The outputs from all 12 heads are concatenated and projected back to 768 dimensions.
+**Multi-head attention** делит 768-мерное пространство на 12 heads по 64 измерения каждая. Каждая head учит свой attention pattern. Одна head может отслеживать синтаксические связи (согласование subject-verb). Другая -- семантическую близость (синонимы). Еще одна -- позиционную близость (соседние слова). Выходы всех 12 heads конкатенируются и проецируются обратно в 768 измерений.
 
 ```mermaid
 graph LR
@@ -141,25 +141,25 @@ graph LR
     style V fill:#1a1a2e,stroke:#0f3460,color:#fff
 ```
 
-The division by sqrt(d_k) -- sqrt(64) = 8 -- is scaling. Without it, the dot products grow large for high-dimensional vectors, pushing softmax into regions where gradients are nearly zero. This was one of the key insights in the original "Attention Is All You Need" paper.
+Деление на sqrt(d_k) -- sqrt(64) = 8 -- это scaling. Без него dot products становятся большими для высокоразмерных векторов и загоняют softmax в области, где градиенты почти нулевые. Это было одним из ключевых инсайтов в оригинальной статье "Attention Is All You Need".
 
-### KV Cache: Why Inference Is Fast
+### KV Cache: почему inference быстрый
 
-During training, you process the entire sequence at once. During inference, you generate one token at a time. Without optimization, generating token N requires recomputing attention for all N-1 previous tokens. That is O(N^2) per generated token, or O(N^3) total for a sequence of length N.
+Во время обучения вы обрабатываете всю последовательность сразу. Во время inference вы генерируете по одному токену. Без оптимизации генерация токена N требует заново вычислять attention для всех N-1 предыдущих токенов. Это O(N^2) на один сгенерированный токен, или O(N^3) суммарно для последовательности длины N.
 
-KV Cache solves this. After computing K and V for each token, store them. When generating token N+1, you only need to compute Q for the new token and look up the cached K and V from all previous tokens. This reduces per-token cost from O(N) to O(1) for the K and V computation. The attention score calculation is still O(N) because you attend to all previous positions, but you avoid redundant matrix multiplications on the input.
+KV Cache решает эту проблему. После вычисления K и V для каждого токена мы сохраняем их. Когда генерируем токен N+1, нужно вычислить только Q для нового токена и взять cached K и V для всех предыдущих токенов. Это снижает per-token cost с O(N) до O(1) для вычисления K и V. Расчет attention scores все еще O(N), потому что мы attend to all previous positions, но лишние матричные умножения над входом исчезают.
 
-For GPT-2 with 12 layers and 12 heads, the KV cache stores 2 (K + V) x 12 layers x 12 heads x 64 dims = 18,432 values per token. For a 1024-token sequence, that is about 75MB in FP32. For Llama 3 405B with 128 layers, the KV cache for a single sequence can exceed 10GB. This is why long-context inference is memory-bound.
+Для GPT-2 с 12 layers и 12 heads KV cache хранит 2 (K + V) x 12 layers x 12 heads x 64 dims = 18,432 значения на токен. Для последовательности из 1024 токенов это около 75MB в FP32. Для Llama 3 405B со 128 layers KV cache для одной последовательности может превышать 10GB. Поэтому long-context inference ограничен памятью.
 
-### Prefill vs Decode: Two Phases of Inference
+### Prefill vs Decode: две фазы inference
 
-When you send a prompt to an LLM, inference happens in two distinct phases.
+Когда вы отправляете prompt в LLM, inference проходит в две разные фазы.
 
-**Prefill** processes your entire prompt in parallel. All tokens are known, so the model can compute attention for all positions simultaneously. This phase is compute-bound -- the GPU is doing matrix multiplications at full throughput. For a 1000-token prompt on an A100, prefill takes roughly 20-50ms.
+**Prefill** обрабатывает весь prompt параллельно. Все токены известны, поэтому модель может вычислить attention для всех позиций одновременно. Эта фаза compute-bound: GPU выполняет матричные умножения на полной пропускной способности. Для prompt из 1000 токенов на A100 prefill занимает примерно 20-50ms.
 
-**Decode** generates tokens one at a time. Each new token depends on all previous tokens. This phase is memory-bound -- the bottleneck is reading the model weights and KV cache from GPU memory, not the matrix math itself. The GPU's compute cores sit mostly idle waiting for memory reads. For GPT-2, each decode step takes about the same time regardless of how many FLOPs the matmuls require, because memory bandwidth is the constraint.
+**Decode** генерирует токены по одному. Каждый новый токен зависит от всех предыдущих. Эта фаза memory-bound: bottleneck -- чтение весов модели и KV cache из памяти GPU, а не сама матричная математика. Compute cores GPU в основном простаивают в ожидании чтений из памяти. Для GPT-2 каждый decode step занимает примерно одно и то же время независимо от того, сколько FLOPs требуют matmuls, потому что ограничение -- bandwidth памяти.
 
-This distinction matters for production systems. Prefill throughput scales with GPU compute (more FLOPS = faster prefill). Decode throughput scales with memory bandwidth (faster memory = faster decode). That is why NVIDIA's H100 focused on memory bandwidth improvements over the A100 -- it directly speeds up token generation.
+Это различие важно для production systems. Prefill throughput масштабируется с GPU compute (больше FLOPS = быстрее prefill). Decode throughput масштабируется с memory bandwidth (быстрее память = быстрее decode). Поэтому NVIDIA H100 фокусировалась на улучшении bandwidth памяти относительно A100: это напрямую ускоряет генерацию токенов.
 
 ```mermaid
 graph LR
@@ -192,23 +192,23 @@ graph LR
     style D4 fill:#1a1a2e,stroke:#e94560,color:#fff
 ```
 
-### The Training Loop
+### Training Loop
 
-Training an LLM is next-token prediction. Given tokens [0, 1, 2, ..., N-1], predict tokens [1, 2, 3, ..., N]. The loss function is cross-entropy between the model's predicted probability distribution and the actual next token.
+Обучение LLM -- это предсказание следующего токена. Даны tokens [0, 1, 2, ..., N-1], нужно предсказать tokens [1, 2, 3, ..., N]. Loss function -- cross-entropy между распределением вероятностей, предсказанным моделью, и фактическим следующим токеном.
 
-One training step:
+Один training step:
 
-1. **Forward pass**: Run the batch through all 12 blocks. Get logits (pre-softmax scores) for each position.
-2. **Compute loss**: Cross-entropy between logits and target tokens (the input shifted by one position).
-3. **Backward pass**: Compute gradients for all 124M parameters using backpropagation.
-4. **Optimizer step**: Update weights. GPT-2 uses Adam with learning rate warmup and cosine decay.
+1. **Forward pass**: прогнать batch через все 12 blocks. Получить logits (scores до softmax) для каждой позиции.
+2. **Compute loss**: cross-entropy между logits и target tokens (input, сдвинутый на одну позицию).
+3. **Backward pass**: вычислить gradients для всех 124M параметров через backpropagation.
+4. **Optimizer step**: обновить веса. GPT-2 использует Adam с learning rate warmup и cosine decay.
 
-The learning rate schedule matters more than you might expect. GPT-2 warms up from 0 to the peak learning rate over the first 2,000 steps, then decays following a cosine curve. Starting with a high learning rate causes the model to diverge. Keeping a constant high rate causes oscillation in later training. The warmup-then-decay pattern is used by every major LLM.
+Learning rate schedule важнее, чем может показаться. GPT-2 разогревает learning rate от 0 до peak learning rate за первые 2,000 steps, затем уменьшает его по cosine curve. Старт с высоким learning rate приводит к divergence. Постоянно высокий rate вызывает oscillation на позднем этапе обучения. Шаблон warmup-then-decay используется каждой крупной LLM.
 
-### GPT-2 Small: The Numbers
+### GPT-2 Small: числа
 
-| Component | Shape | Parameters |
-|-----------|-------|------------|
+| Компонент | Shape | Параметры |
+|-----------|-------|-----------|
 | Token embeddings | (50257, 768) | 38,597,376 |
 | Position embeddings | (1024, 768) | 786,432 |
 | Per-block attention (W_q, W_k, W_v, W_out) | 4 x (768, 768) | 2,359,296 |
@@ -218,13 +218,13 @@ The learning rate schedule matters more than you might expect. GPT-2 warms up fr
 | **Total per block** | | **7,080,960** |
 | **Total (12 blocks)** | | **85,054,464 + 39,383,808 = 124,438,272** |
 
-The output projection (logits head) shares weights with the token embedding matrix. This is called weight tying -- it reduces the parameter count by 38M and improves performance because it forces the model to use the same representation space for input and output.
+Output projection (logits head) использует общие веса с token embedding matrix. Это называется weight tying: оно уменьшает число параметров на 38M и улучшает качество, потому что заставляет модель использовать одно и то же representation space для входа и выхода.
 
 ## Build It
 
 ### Step 1: Embedding Layer
 
-Token embeddings map each of the 50,257 possible tokens to a 768-dimensional vector. Position embeddings add information about where each token sits in the sequence. The two are summed.
+Token embeddings отображают каждый из 50,257 возможных токенов в 768-мерный вектор. Position embeddings добавляют информацию о том, где токен находится в последовательности. Эти два представления складываются.
 
 ```python
 import numpy as np
@@ -241,11 +241,11 @@ class Embedding:
         return tok_emb + pos_emb
 ```
 
-The 0.02 standard deviation for initialization comes from the GPT-2 paper. Too large and the initial forward passes produce extreme values that destabilize training. Too small and the initial outputs are nearly identical for all inputs, making early gradient signals useless.
+Standard deviation 0.02 для initialization взято из статьи GPT-2. Слишком большое значение приводит к тому, что начальные forward passes создают экстремальные значения и дестабилизируют обучение. Слишком маленькое -- к почти одинаковым начальным выходам для всех входов, из-за чего ранние gradient signals бесполезны.
 
 ### Step 2: Self-Attention with Causal Mask
 
-Single-head attention first. The causal mask sets future positions to negative infinity before softmax, ensuring each position can only attend to itself and earlier positions.
+Сначала single-head attention. Causal mask выставляет будущие позиции в negative infinity перед softmax, гарантируя, что каждая позиция может attend только к себе и более ранним позициям.
 
 ```python
 def attention(Q, K, V, mask=None):
@@ -258,11 +258,11 @@ def attention(Q, K, V, mask=None):
     return weights @ V
 ```
 
-The softmax implementation subtracts the maximum before exponentiating. Without this, exp(large_number) overflows to infinity. This is a numerical stability trick that does not change the output because softmax(x - c) = softmax(x) for any constant c.
+Реализация softmax вычитает максимум перед exponentiating. Без этого exp(large_number) переполняется до infinity. Это прием numerical stability, который не меняет результат, потому что softmax(x - c) = softmax(x) для любой константы c.
 
 ### Step 3: Multi-Head Attention
 
-Split the 768-dimensional input into 12 heads of 64 dimensions each. Each head computes attention independently. Concatenate the results and project back to 768 dimensions.
+Разделите 768-мерный вход на 12 heads по 64 измерения. Каждая head независимо вычисляет attention. Результаты конкатенируются и проецируются обратно в 768 измерений.
 
 ```python
 class MultiHeadAttention:
@@ -291,11 +291,11 @@ class MultiHeadAttention:
         return attn_out @ self.W_out
 ```
 
-The reshape-transpose-reshape dance is the most confusing part of multi-head attention. Here is what happens: the (batch, seq_len, 768) tensor becomes (batch, seq_len, 12, 64), then (batch, 12, seq_len, 64). Now each of the 12 heads has its own (seq_len, 64) matrix to run attention on. After attention, we reverse the process: (batch, 12, seq_len, 64) becomes (batch, seq_len, 12, 64) becomes (batch, seq_len, 768).
+Танец reshape-transpose-reshape -- самая запутанная часть multi-head attention. Происходит следующее: tensor (batch, seq_len, 768) становится (batch, seq_len, 12, 64), затем (batch, 12, seq_len, 64). Теперь у каждой из 12 heads есть собственная матрица (seq_len, 64), на которой она запускает attention. После attention мы обращаем процесс: (batch, 12, seq_len, 64) становится (batch, seq_len, 12, 64), затем (batch, seq_len, 768).
 
 ### Step 4: Transformer Block
 
-One complete transformer block: LayerNorm, multi-head attention with residual, LayerNorm, feedforward with residual.
+Один полный transformer block: LayerNorm, multi-head attention с residual, LayerNorm, feedforward с residual.
 
 ```python
 class LayerNorm:
@@ -336,11 +336,11 @@ class TransformerBlock:
         return x
 ```
 
-The feedforward network expands the 768-dimensional input to 3,072 dimensions (4x), applies a nonlinearity, then projects back to 768. This expansion-contraction pattern gives the model a "wider" internal representation to work with at each position. GPT-2 uses GELU activation, but we use ReLU here for simplicity -- the difference is minor for understanding the architecture.
+Feedforward network расширяет 768-мерный вход до 3,072 измерений (4x), применяет нелинейность, затем проецирует обратно в 768. Этот pattern expansion-contraction дает модели более "широкое" внутреннее представление для работы в каждой позиции. GPT-2 использует activation GELU, но здесь для простоты мы используем ReLU: для понимания архитектуры разница невелика.
 
 ### Step 5: Full GPT Model
 
-Stack 12 transformer blocks. Add the embedding layer at the front and the output projection at the back.
+Сложите 12 transformer blocks. Добавьте embedding layer в начале и output projection в конце.
 
 ```python
 class MiniGPT:
@@ -382,11 +382,11 @@ class MiniGPT:
         return total
 ```
 
-Notice the weight tying: `logits = x @ self.embedding.token_embed.T`. The output projection reuses the token embedding matrix (transposed). This is not just a parameter-saving trick. It means the model uses the same vector space for understanding tokens (embeddings) and predicting them (output).
+Обратите внимание на weight tying: `logits = x @ self.embedding.token_embed.T`. Output projection повторно использует token embedding matrix (транспонированную). Это не только прием для экономии параметров. Это означает, что модель использует одно и то же vector space для понимания токенов (embeddings) и их предсказания (output).
 
 ### Step 6: Training Loop
 
-For a real training run on 124M parameters, you would need a GPU and PyTorch. This training loop demonstrates the mechanics on a small model that runs in pure numpy. We use a tiny model (4 layers, 4 heads, 128 dims) to make it tractable.
+Для настоящего обучения 124M параметров вам понадобились бы GPU и PyTorch. Этот training loop демонстрирует механику на маленькой модели, которая запускается на чистом numpy. Мы используем крошечную модель (4 layers, 4 heads, 128 dims), чтобы вычисления были подъемными.
 
 ```python
 def cross_entropy_loss(logits, targets):
@@ -432,13 +432,13 @@ def train_mini_gpt(text, vocab_size=256, embed_dim=128, num_heads=4,
     return model
 ```
 
-The loss starts near ln(vocab_size) -- for a 256-token byte-level vocabulary, that is ln(256) = 5.55. A random model assigns equal probability to every token. As training progresses, the loss drops because the model learns to predict common patterns: "th" after "t", space after a period, and so on.
+Loss начинается около ln(vocab_size): для byte-level vocabulary из 256 токенов это ln(256) = 5.55. Случайная модель назначает всем токенам одинаковую вероятность. По мере обучения loss падает, потому что модель учится предсказывать частые паттерны: "th" после "t", пробел после точки и так далее.
 
-In production, you would use Adam optimizer with gradient accumulation, learning rate warmup, and gradient clipping. The forward-pass-loss-backward-update loop is identical. The optimizer is more sophisticated.
+В production вы использовали бы optimizer Adam с gradient accumulation, learning rate warmup и gradient clipping. Цикл forward-pass-loss-backward-update остается тем же. Optimizer просто более сложный.
 
 ### Step 7: Text Generation
 
-Generation uses the trained model to predict one token at a time. Each prediction is sampled from the output distribution (or taken greedily as the argmax).
+Generation использует обученную модель, чтобы предсказывать по одному токену. Каждое предсказание sample'ится из output distribution (или берется greedily как argmax).
 
 ```python
 def generate(model, prompt_tokens, max_new_tokens=100, temperature=0.8):
@@ -460,9 +460,9 @@ def generate(model, prompt_tokens, max_new_tokens=100, temperature=0.8):
     return tokens
 ```
 
-Temperature controls randomness. Temperature 1.0 uses the raw distribution. Temperature 0.5 sharpens it (more deterministic -- the model picks its top choices more often). Temperature 1.5 flattens it (more random -- low-probability tokens get a bigger chance). Temperature 0.0 is greedy decoding (always pick the highest probability token).
+Temperature управляет случайностью. Temperature 1.0 использует исходное распределение. Temperature 0.5 заостряет его (более deterministic: модель чаще выбирает top choices). Temperature 1.5 сглаживает его (более random: low-probability tokens получают больший шанс). Temperature 0.0 -- это greedy decoding (всегда выбирать токен с максимальной вероятностью).
 
-The `tokens[-seq_len:]` window is necessary because the model has a maximum context length (1024 for GPT-2). Once you exceed it, you must drop the oldest tokens. This is the "context window" that everyone talks about.
+Окно `tokens[-seq_len:]` необходимо, потому что у модели есть максимальная длина контекста (1024 для GPT-2). Когда вы превышаете ее, старейшие токены приходится отбрасывать. Это и есть "context window", о котором все говорят.
 
 ## Use It
 
@@ -490,42 +490,42 @@ generated_text = bytes(output_tokens).decode("utf-8", errors="replace")
 print(f"\nGenerated: {generated_text}")
 ```
 
-On a small corpus with a small model, the generated text will be semi-coherent at best. It will learn some byte-level patterns from the training text but cannot generalize the way GPT-2 does with 40GB of training data and the full 124M parameter architecture. The point is not the output quality. The point is that you can trace every step: embedding lookup, attention computation, feedforward transformation, logit projection, softmax, and sampling. Every operation is visible.
+На маленьком корпусе и маленькой модели сгенерированный текст в лучшем случае будет полусвязным. Модель выучит некоторые byte-level patterns из training text, но не сможет обобщать так, как GPT-2 с 40GB обучающих данных и полной архитектурой на 124M параметров. Цель не в качестве output. Цель в том, что вы можете проследить каждый шаг: embedding lookup, attention computation, feedforward transformation, logit projection, softmax и sampling. Каждая операция видна.
 
 ## Ship It
 
-This lesson produces `outputs/prompt-gpt-architecture-analyzer.md` -- a prompt that analyzes the architecture choices in any GPT-style model. Feed it a model card or technical report and it breaks down the parameter allocation, attention design, and scaling decisions.
+Этот урок создает `outputs/prompt-gpt-architecture-analyzer.md` -- prompt, который анализирует architectural choices в любой GPT-style model. Подайте ему model card или technical report, и он разберет parameter allocation, attention design и scaling decisions.
 
 ## Exercises
 
-1. Modify the model to use 24 layers and 16 heads instead of 12/12. Count the parameters. How does doubling the depth compare to doubling the width (embedding dimension)?
+1. Измените модель так, чтобы она использовала 24 layers и 16 heads вместо 12/12. Посчитайте параметры. Как удвоение глубины соотносится с удвоением ширины (embedding dimension)?
 
-2. Implement the GELU activation function (GELU(x) = x * 0.5 * (1 + erf(x / sqrt(2)))) and replace the ReLU in the feedforward network. Run training for 500 steps with each activation and compare the final loss.
+2. Реализуйте activation function GELU (GELU(x) = x * 0.5 * (1 + erf(x / sqrt(2)))) и замените ReLU в feedforward network. Запустите обучение на 500 steps с каждой activation и сравните final loss.
 
-3. Add a KV cache to the generation function. Store K and V tensors for each layer after the first forward pass, and reuse them for subsequent tokens. Measure the speedup: generate 200 tokens with and without the cache and compare wall-clock time.
+3. Добавьте KV cache в generation function. Сохраняйте tensors K и V для каждого layer после первого forward pass и переиспользуйте их для следующих токенов. Измерьте speedup: сгенерируйте 200 токенов с cache и без него и сравните wall-clock time.
 
-4. Implement top-k sampling (only consider the k highest-probability tokens) and top-p sampling (nucleus sampling: consider the smallest set of tokens whose cumulative probability exceeds p). Compare the output quality at temperature 0.8 with top-k=50 vs top-p=0.95.
+4. Реализуйте top-k sampling (учитывать только k токенов с наибольшей вероятностью) и top-p sampling (nucleus sampling: учитывать минимальный набор токенов, cumulative probability которого превышает p). Сравните output quality при temperature 0.8 с top-k=50 и top-p=0.95.
 
-5. Build a training loss curve plotter. Train the model for 1000 steps and plot loss vs step. Identify the three phases: rapid initial descent (learning common bytes), slower middle phase (learning byte patterns), and plateau (overfitting on the small corpus). The shape of this curve is the same whether you are training a 128-dim model or GPT-4.
+5. Постройте plotter для training loss curve. Обучайте модель 1000 steps и постройте loss vs step. Найдите три фазы: быстрый начальный descent (изучение частых bytes), более медленная middle phase (изучение byte patterns) и plateau (overfitting на маленьком corpus). Форма этой кривой одинакова независимо от того, обучаете ли вы 128-dim model или GPT-4.
 
 ## Key Terms
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Autoregressive | "It generates one word at a time" | Each output token is conditioned on all previous tokens -- the model predicts P(token_n \| token_0, ..., token_{n-1}) |
-| Causal mask | "It can't see the future" | An upper-triangular matrix of -infinity values that prevents attention to future positions during training |
-| Multi-head attention | "Multiple attention patterns" | Splitting Q, K, V into parallel heads (e.g., 12 heads of 64 dims each for GPT-2) so each head can learn different relationship types |
-| KV Cache | "Caching for speed" | Storing computed Key and Value tensors from previous tokens to avoid redundant computation during autoregressive generation |
-| Prefill | "Processing the prompt" | The first inference phase where all prompt tokens are processed in parallel -- compute-bound on GPU FLOPS |
-| Decode | "Generating tokens" | The second inference phase where tokens are generated one at a time -- memory-bound on GPU bandwidth |
-| Weight tying | "Sharing embeddings" | Using the same matrix for input token embeddings and the output projection head -- saves 38M params in GPT-2 |
-| Residual connection | "Skip connection" | Adding the input directly to the output of a sublayer (x + sublayer(x)) -- enables gradient flow in deep networks |
-| Layer normalization | "Normalizing activations" | Normalizing across the feature dimension to mean 0 and variance 1, with learnable scale and bias parameters |
-| Cross-entropy loss | "How wrong the predictions are" | -log(probability assigned to the correct next token), averaged over all positions -- the standard LLM training objective |
+| Autoregressive | "Генерирует по одному слову" | Каждый output token обусловлен всеми previous tokens -- модель предсказывает P(token_n \| token_0, ..., token_{n-1}) |
+| Causal mask | "Не видит будущее" | Upper-triangular matrix из -infinity values, которая предотвращает attention к future positions во время training |
+| Multi-head attention | "Несколько attention patterns" | Разбиение Q, K, V на parallel heads (например, 12 heads по 64 dims для GPT-2), чтобы каждая head могла учить разные types relationships |
+| KV Cache | "Кэширование для скорости" | Хранение вычисленных Key и Value tensors из previous tokens, чтобы избежать redundant computation при autoregressive generation |
+| Prefill | "Обработка prompt" | Первая фаза inference, где все prompt tokens обрабатываются параллельно -- compute-bound на GPU FLOPS |
+| Decode | "Генерация токенов" | Вторая фаза inference, где tokens генерируются по одному -- memory-bound на GPU bandwidth |
+| Weight tying | "Sharing embeddings" | Использование одной и той же matrix для input token embeddings и output projection head -- экономит 38M params в GPT-2 |
+| Residual connection | "Skip connection" | Добавление input напрямую к output sublayer (x + sublayer(x)) -- обеспечивает gradient flow в deep networks |
+| Layer normalization | "Normalizing activations" | Нормализация по feature dimension к mean 0 и variance 1, с learnable scale и bias parameters |
+| Cross-entropy loss | "Насколько ошибаются predictions" | -log(probability assigned to the correct next token), усредненный по всем positions -- стандартная LLM training objective |
 
 ## Further Reading
 
-- [Radford et al., 2019 -- "Language Models are Unsupervised Multitask Learners" (GPT-2)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) -- the GPT-2 paper that introduced the 124M to 1.5B parameter family
-- [Vaswani et al., 2017 -- "Attention Is All You Need"](https://arxiv.org/abs/1706.03762) -- the original transformer paper with scaled dot-product attention and multi-head attention
-- [Llama 3 Technical Report](https://arxiv.org/abs/2407.21783) -- how Meta scaled the GPT architecture to 405B parameters with 16K GPUs
-- [Pope et al., 2022 -- "Efficiently Scaling Transformer Inference"](https://arxiv.org/abs/2211.05102) -- the paper that formalized prefill vs decode and KV cache analysis
+- [Radford et al., 2019 -- "Language Models are Unsupervised Multitask Learners" (GPT-2)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) -- статья GPT-2, представившая семейство от 124M до 1.5B параметров
+- [Vaswani et al., 2017 -- "Attention Is All You Need"](https://arxiv.org/abs/1706.03762) -- оригинальная статья о transformer со scaled dot-product attention и multi-head attention
+- [Llama 3 Technical Report](https://arxiv.org/abs/2407.21783) -- как Meta масштабировала GPT architecture до 405B параметров на 16K GPUs
+- [Pope et al., 2022 -- "Efficiently Scaling Transformer Inference"](https://arxiv.org/abs/2211.05102) -- статья, формализовавшая prefill vs decode и анализ KV cache
