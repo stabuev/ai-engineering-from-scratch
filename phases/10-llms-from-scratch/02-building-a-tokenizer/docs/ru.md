@@ -1,36 +1,36 @@
-# Building a Tokenizer from Scratch
+# Создание токенизатора с нуля
 
-> Lesson 01 gave you a toy. This lesson gives you a weapon.
+> Урок 01 дал вам игрушку. Этот урок дает вам инструмент.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lesson 01 (Tokenizers: BPE, WordPiece, SentencePiece)
-**Time:** ~90 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 10, Lesson 01 (Tokenizers: BPE, WordPiece, SentencePiece)
+**Время:** ~90 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Build a production-grade BPE tokenizer that handles Unicode, whitespace normalization, and special tokens
-- Implement byte-level fallback so the tokenizer can encode any input (including emoji, CJK, and code) without unknown tokens
-- Add pre-tokenization regex patterns that split text at word boundaries before applying BPE merges
-- Train a custom tokenizer on a corpus and evaluate its compression ratio against tiktoken on multilingual text
+- Построить production-grade BPE tokenizer, который обрабатывает Unicode, нормализацию пробелов и специальные токены
+- Реализовать byte-level fallback, чтобы токенизатор мог кодировать любой вход (включая emoji, CJK и код) без неизвестных токенов
+- Добавить regex-паттерны pre-tokenization, которые делят текст по границам слов перед применением BPE merges
+- Обучить кастомный токенизатор на корпусе и оценить его compression ratio относительно tiktoken на multilingual тексте
 
-## The Problem
+## Проблема
 
-Your BPE tokenizer from Lesson 01 works on English text. Now throw Japanese at it. Or emoji. Or Python code with mixed tabs and spaces.
+Ваш BPE tokenizer из Lesson 01 работает на английском тексте. Теперь дайте ему японский. Или emoji. Или Python-код со смешанными tabs и spaces.
 
-It breaks.
+Он ломается.
 
-Not because BPE is wrong -- because the implementation is incomplete. A production tokenizer handles raw bytes in any encoding, normalizes Unicode before splitting, manages special tokens that never get merged, chains pre-tokenization with subword splitting, and does all of this fast enough to not bottleneck a training pipeline processing 15 trillion tokens.
+Не потому что BPE неправильный, а потому что реализация неполная. Production tokenizer обрабатывает сырые байты в любой кодировке, нормализует Unicode перед разбиением, управляет специальными токенами, которые никогда не сливаются, связывает pre-tokenization с subword splitting и делает все это достаточно быстро, чтобы не стать узким местом training pipeline, обрабатывающего 15 триллионов токенов.
 
-GPT-2's tokenizer has 50,257 tokens. Llama 3 has 128,256. GPT-4 has roughly 100,000. These are not toy numbers. The merge tables behind those vocabularies were trained on hundreds of gigabytes of text, and the surrounding machinery -- normalization, pre-tokenization, special token injection, chat template formatting -- is what separates a tokenizer that handles "hello world" from one that handles the entire internet.
+У токенизатора GPT-2 50,257 токенов. У Llama 3 -- 128,256. У GPT-4 примерно 100,000. Это не игрушечные числа. Merge tables за этими словарями обучались на сотнях гигабайт текста, а окружающая механика -- normalization, pre-tokenization, special token injection, chat template formatting -- отделяет токенизатор, который справляется с "hello world", от токенизатора, который справляется со всем интернетом.
 
-You are going to build that machinery.
+Вы построите именно эту механику.
 
-## The Concept
+## Концепция
 
-### The Full Pipeline
+### Полный pipeline
 
-A production tokenizer is not one algorithm. It is a pipeline of five stages, each solving a different problem.
+Production tokenizer -- это не один алгоритм. Это pipeline из пяти стадий, каждая из которых решает отдельную проблему.
 
 ```mermaid
 graph LR
@@ -48,45 +48,45 @@ graph LR
     style F fill:#1a1a2e,stroke:#e94560,color:#fff
 ```
 
-Each stage has a specific job:
+У каждой стадии своя задача:
 
-| Stage | What It Does | Why It Matters |
+| Стадия | Что делает | Почему это важно |
 |-------|-------------|----------------|
-| Normalize | NFKC Unicode, lowercase optional, strip accents optional | "fi" ligature (U+FB01) becomes "fi" (two chars). Without this, same word gets different tokens. |
-| Pre-Tokenize | Split text into chunks before BPE | Prevents BPE from merging across word boundaries. "the cat" should never produce a token "e c". |
-| BPE Merge | Apply learned merge rules to byte sequences | The core compression. Turns raw bytes into subword tokens. |
-| Special Tokens | Inject [BOS], [EOS], [PAD], chat template markers | These tokens have fixed IDs. They never participate in BPE merges. The model needs them for structure. |
-| ID Mapping | Convert token strings to integer IDs | The model sees integers, not strings. |
+| Normalize | NFKC Unicode, lowercase optional, strip accents optional | Лигатура "fi" (U+FB01) становится "fi" (два символа). Без этого одно и то же слово получает разные токены. |
+| Pre-Tokenize | Split text into chunks before BPE | Не дает BPE сливать через границы слов. "the cat" не должен порождать токен "e c". |
+| BPE Merge | Apply learned merge rules to byte sequences | Основное сжатие. Превращает сырые байты в subword-токены. |
+| Special Tokens | Inject [BOS], [EOS], [PAD], chat template markers | У этих токенов фиксированные IDs. Они никогда не участвуют в BPE merges. Модели они нужны для структуры. |
+| ID Mapping | Convert token strings to integer IDs | Модель видит целые числа, а не строки. |
 
 ### Byte-Level BPE
 
-Lesson 01's tokenizer operated on UTF-8 bytes. That was the right call. But we skipped something important: what happens when those bytes are not valid UTF-8?
+Токенизатор из Lesson 01 работал с UTF-8 bytes. Это было правильное решение. Но мы пропустили важный вопрос: что происходит, когда эти байты не являются валидным UTF-8?
 
-Byte-level BPE solves this by treating every possible byte value (0-255) as a valid token. Your base vocabulary is exactly 256 entries. Any file -- text, binary, corrupted -- can be tokenized without producing an unknown token.
+Byte-level BPE решает это, считая каждое возможное значение байта (0-255) допустимым токеном. Базовый словарь состоит ровно из 256 элементов. Любой файл -- текстовый, бинарный, поврежденный -- можно токенизировать без неизвестного токена.
 
-GPT-2 added a trick: map each byte to a printable Unicode character so the vocabulary stays human-readable. Byte 0x20 (space) becomes the character "G" in their mapping. This is purely cosmetic. The algorithm does not care.
+GPT-2 добавил трюк: сопоставлять каждый байт печатному Unicode-символу, чтобы словарь оставался читаемым человеком. Byte 0x20 (space) становится символом "G" в их mapping. Это чистая косметика. Алгоритму все равно.
 
-The real power: byte-level BPE handles every language on earth. Chinese characters are 3 UTF-8 bytes each. Japanese can be 3-4 bytes. Arabic, Devanagari, emoji -- all just byte sequences. The BPE algorithm finds patterns in these byte sequences exactly the same way it finds patterns in English ASCII bytes.
+Настоящая сила в другом: byte-level BPE обрабатывает каждый язык на земле. Китайские символы -- по 3 UTF-8 bytes. Японские могут занимать 3-4 bytes. Arabic, Devanagari, emoji -- все это просто byte sequences. Алгоритм BPE находит паттерны в этих byte sequences точно так же, как находит паттерны в английских ASCII bytes.
 
 ### Pre-Tokenization
 
-Before BPE touches your text, you need to split it into chunks. This prevents the merge algorithm from creating tokens that span word boundaries.
+Перед тем как BPE коснется текста, его нужно разбить на chunks. Это мешает merge algorithm создавать токены, пересекающие границы слов.
 
-GPT-2 uses a regex pattern to split text:
+GPT-2 использует regex pattern для разбиения текста:
 
 ```
 '(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
 ```
 
-This pattern splits on contractions ("don't" becomes "don" + "'t"), words with optional leading spaces, numbers, punctuation, and whitespace. The leading space is kept attached to the word -- so "the cat" becomes [" the", " cat"], not ["the", " ", "cat"].
+Этот pattern делит contractions ("don't" становится "don" + "'t"), слова с необязательным ведущим пробелом, числа, пунктуацию и whitespace. Ведущий пробел остается прикрепленным к слову, поэтому "the cat" становится [" the", " cat"], а не ["the", " ", "cat"].
 
-Llama uses SentencePiece, which skips regex entirely. It treats the raw byte stream as one long sequence and lets the BPE algorithm figure out the boundaries. This is simpler but gives BPE more freedom to create cross-word tokens.
+Llama использует SentencePiece, который полностью пропускает regex. Он рассматривает сырой byte stream как одну длинную последовательность и позволяет BPE самому выяснять границы. Это проще, но дает BPE больше свободы создавать cross-word tokens.
 
-The choice matters. GPT-2's regex prevents the tokenizer from learning that "the" at the end of one word and "the" at the start of the next should merge. SentencePiece allows it, which sometimes produces more efficient compression but less interpretable tokens.
+Выбор имеет значение. Regex GPT-2 не дает токенизатору выучить, что "the" в конце одного слова и "the" в начале следующего нужно слить. SentencePiece это допускает, что иногда дает более эффективное сжатие, но менее интерпретируемые токены.
 
-### Special Tokens
+### Специальные токены
 
-Every production tokenizer reserves token IDs for structural markers:
+Каждый production tokenizer резервирует token IDs для структурных маркеров:
 
 | Token | Purpose | Used By |
 |-------|---------|---------|
@@ -99,13 +99,13 @@ Every production tokenizer reserves token IDs for structural markers:
 | `<\|user\|>` | User turn marker | Llama 3 |
 | `<\|assistant\|>` | Assistant turn marker | Llama 3 |
 
-Special tokens are never split by BPE. They are matched exactly before the merge algorithm runs, replaced with their fixed ID, and the surrounding text is tokenized normally.
+Специальные токены никогда не делятся BPE. Они точно сопоставляются до запуска алгоритма слияний, заменяются на свой фиксированный ID, а окружающий текст токенизируется обычным образом.
 
 ### Chat Templates
 
-This is where most people get confused and most implementations break.
+Вот здесь большинство людей путается, и большинство реализаций ломается.
 
-When you send messages to a chat model, the API accepts a list of messages:
+Когда вы отправляете сообщения в чат-модель, API принимает список сообщений:
 
 ```
 [
@@ -115,7 +115,7 @@ When you send messages to a chat model, the API accepts a list of messages:
 ]
 ```
 
-The model does not see JSON. It sees a flat token sequence. The chat template converts messages into that flat sequence using special tokens. Every model does this differently:
+Модель не видит JSON. Она видит плоскую последовательность токенов. Chat template преобразует сообщения в эту плоскую последовательность с помощью специальных токенов. Каждая модель делает это по-своему:
 
 ```
 Llama 3:
@@ -136,23 +136,23 @@ Hello<|im_end|>
 Hi there!<|im_end|>
 ```
 
-Get the template wrong and the model produces garbage. It was trained on one exact format. Any deviation -- a missing newline, a swapped token, an extra space -- puts the input outside the training distribution.
+Если template неправильный, модель генерирует мусор. Она обучалась на одном точном формате. Любое отклонение -- пропущенная новая строка, перепутанный токен, лишний пробел -- помещает вход вне обучающего распределения.
 
-### Speed
+### Скорость
 
-Python is too slow for production tokenization.
+Python слишком медленный для промышленной токенизации.
 
-tiktoken (OpenAI) is written in Rust with Python bindings. HuggingFace tokenizers is also Rust. SentencePiece is C++. These achieve 10-100x speedups over pure Python.
+tiktoken (OpenAI) написан на Rust с Python bindings. HuggingFace tokenizers тоже на Rust. SentencePiece написан на C++. Они дают ускорение в 10-100x по сравнению с чистым Python.
 
-For perspective: tokenizing 15 trillion tokens for Llama 3 pre-training at 1 million tokens per second (fast Python) would take 174 days. At 100 million tokens per second (Rust), it takes 1.7 days.
+Для масштаба: токенизация 15 триллионов токенов для Llama 3 pre-training со скоростью 1 million tokens per second (быстрый Python) заняла бы 174 дня. При 100 million tokens per second (Rust) это занимает 1.7 дня.
 
-You are building in Python to understand the algorithm. In production, you would use a compiled implementation and only touch the Python wrapper.
+Вы пишете на Python, чтобы понять алгоритм. В production вы использовали бы compiled implementation и трогали бы только Python wrapper.
 
-## Build It
+## Постройте это
 
-### Step 1: Byte-Level Encoding
+### Шаг 1: Byte-Level Encoding
 
-The foundation. Convert any string into a sequence of bytes, map each byte to a printable character for display, and reverse the process.
+Основа. Преобразуйте любую строку в sequence of bytes, сопоставьте каждый byte печатному символу для отображения и выполните обратный процесс.
 
 ```python
 def bytes_to_tokens(text):
@@ -162,7 +162,7 @@ def tokens_to_text(token_bytes):
     return bytes(token_bytes).decode("utf-8", errors="replace")
 ```
 
-Test on multilingual text to see the byte counts:
+Проверьте на multilingual text, чтобы увидеть byte counts:
 
 ```python
 texts = [
@@ -177,11 +177,11 @@ for label, text in texts:
     print(f"{label}: {len(text)} chars -> {len(b)} bytes -> {b}")
 ```
 
-"hello" is 5 bytes. "你好" is 6 bytes (3 per character). The fire emoji is 4 bytes. The byte-level tokenizer does not care what language it is. Bytes are bytes.
+"hello" это 5 bytes. "你好" это 6 bytes (по 3 на символ). Fire emoji это 4 bytes. Byte-level tokenizer не волнует, какой это язык. Bytes are bytes.
 
-### Step 2: Pre-Tokenizer with Regex
+### Шаг 2: Pre-Tokenizer with Regex
 
-Split text into chunks using the GPT-2 regex pattern. Each chunk gets tokenized independently by BPE.
+Разбейте текст на chunks с помощью GPT-2 regex pattern. Каждый chunk токенизируется BPE независимо.
 
 ```python
 import re
@@ -200,20 +200,20 @@ def pre_tokenize(text):
     return [match.group() for match in GPT2_PATTERN.finditer(text)]
 ```
 
-The `regex` module supports Unicode property escapes (`\p{L}` for letters, `\p{N}` for numbers). The standard library `re` module does not, so we fall back to ASCII character classes. For production multilingual tokenizers, install `regex`.
+Модуль `regex` поддерживает Unicode property escapes (`\p{L}` для букв, `\p{N}` для чисел). Модуль standard library `re` не поддерживает их, поэтому мы откатываемся к ASCII character classes. Для production multilingual tokenizers установите `regex`.
 
-Try it:
+Попробуйте:
 
 ```python
 print(pre_tokenize("Hello, world! Don't stop."))
 # [' Hello', ',', ' world', '!', " Don", "'t", ' stop', '.']
 ```
 
-The leading space stays attached to the word. Contractions split at the apostrophe. Punctuation becomes its own chunk. BPE will never merge tokens across these boundaries.
+Ведущий пробел остается прикрепленным к слову. Contractions делятся по apostrophe. Пунктуация становится отдельным chunk. BPE никогда не сольет токены через эти границы.
 
-### Step 3: BPE on Byte Sequences
+### Шаг 3: BPE on Byte Sequences
 
-The core algorithm from Lesson 01, but now operating on pre-tokenized chunks independently.
+Основной алгоритм из Lesson 01, но теперь он работает с pre-tokenized chunks независимо.
 
 ```python
 from collections import Counter
@@ -239,9 +239,9 @@ def apply_merge(byte_seq, pair, new_id):
     return merged
 ```
 
-### Step 4: Special Token Handling
+### Шаг 4: Special Token Handling
 
-Special tokens need exact matching and fixed IDs. They bypass BPE entirely.
+Специальным токенам нужны exact matching и fixed IDs. Они полностью обходят BPE.
 
 ```python
 class SpecialTokenHandler:
@@ -269,9 +269,9 @@ class SpecialTokenHandler:
         return parts
 ```
 
-### Step 5: Full Tokenizer Class
+### Шаг 5: Full Tokenizer Class
 
-Chain everything together: normalize, split on special tokens, pre-tokenize, BPE merge, map to IDs.
+Свяжите все вместе: normalize, split on special tokens, pre-tokenize, BPE merge, map to IDs.
 
 ```python
 import unicodedata
@@ -338,9 +338,9 @@ class ProductionTokenizer:
         return len(self.vocab)
 ```
 
-### Step 6: Multilingual Test
+### Шаг 6: Multilingual Test
 
-The real test. Throw English, Chinese, emoji, and code at it.
+Настоящий тест. Дайте ему English, Chinese, emoji и code.
 
 ```python
 corpus = (
@@ -375,13 +375,13 @@ for text in test_texts:
     print()
 ```
 
-Chinese characters produce 3 bytes each. The emoji produces 4 bytes. None of these crash the tokenizer. None produce unknown tokens. That is the power of byte-level BPE.
+Китайские символы дают по 3 bytes каждый. Emoji дает 4 bytes. Ничто из этого не ломает токенизатор. Ничто не создает unknown tokens. В этом сила byte-level BPE.
 
-## Use It
+## Используйте это
 
 ### Comparing Real Tokenizers
 
-Load the actual tokenizers from Llama 3, GPT-4, and Mistral. See how each handles the same multilingual paragraph.
+Загрузите реальные токенизаторы Llama 3, GPT-4 и Mistral. Посмотрите, как каждый обрабатывает один и тот же multilingual paragraph.
 
 ```python
 import tiktoken
@@ -407,37 +407,37 @@ for name, tok in [("Llama 3", llama_tok), ("Mistral", mistral_tok)]:
     print(f"{name} ({len(tokens)} tokens): {pieces[:20]}...")
 ```
 
-You will see different token counts for the same text. Llama 3 with 128K vocabulary is more aggressive at merging common patterns. GPT-4 with 100K sits in the middle. Mistral with 32K produces more tokens but has a smaller embedding layer.
+Вы увидите разные token counts для одного и того же текста. Llama 3 со словарем 128K агрессивнее сливает частые паттерны. GPT-4 со 100K находится посередине. Mistral с 32K производит больше токенов, но имеет меньший embedding layer.
 
-The tradeoff is always the same: larger vocabulary means shorter sequences but more parameters.
+Компромисс всегда один: больший словарь означает более короткие последовательности, но больше параметров.
 
-## Ship It
+## Результат
 
-This lesson produces a prompt for building and debugging production tokenizers. See `outputs/prompt-tokenizer-builder.md`.
+Этот урок создает prompt для построения и debugging production tokenizers. См. `outputs/prompt-tokenizer-builder.md`.
 
-## Exercises
+## Упражнения
 
-1. **Easy:** Add a `get_token_bytes(id)` method that shows the raw bytes for any token ID. Use it to inspect what your most common merged tokens actually represent.
-2. **Medium:** Implement the Llama-style pre-tokenizer that splits on whitespace and digits but keeps leading spaces. Compare its vocabulary with the GPT-2 regex approach on the same corpus.
-3. **Hard:** Add a chat template method that takes a list of `{"role": ..., "content": ...}` messages and produces the correct token sequence for the Llama 3 chat format. Test it against the HuggingFace implementation.
+1. **Easy:** Добавьте метод `get_token_bytes(id)`, который показывает raw bytes для любого token ID. Используйте его, чтобы проверить, что на самом деле представляют ваши самые частые merged tokens.
+2. **Medium:** Реализуйте Llama-style pre-tokenizer, который делит по whitespace и digits, но сохраняет leading spaces. Сравните его vocabulary с подходом GPT-2 regex на одном и том же корпусе.
+3. **Hard:** Добавьте метод chat template, который принимает список сообщений `{"role": ..., "content": ...}` и создает правильную token sequence для формата Llama 3 chat. Проверьте его относительно HuggingFace implementation.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Byte-level BPE | "Tokenizer that works on bytes" | BPE with a base vocabulary of 256 byte values -- handles any input without unknown tokens |
-| Pre-tokenization | "Splitting before BPE" | Regex or rule-based splitting that prevents BPE from merging across word boundaries |
-| NFKC normalization | "Unicode cleanup" | Canonical decomposition followed by compatibility composition -- "fi" ligature becomes "fi", fullwidth "A" becomes "A" |
-| Chat template | "How messages become tokens" | The exact format for converting a list of role/content messages into a flat token sequence -- model-specific and must match training format |
-| Special tokens | "Control tokens" | Reserved token IDs that bypass BPE -- [BOS], [EOS], [PAD], chat markers -- matched exactly before merge |
-| Fertility | "Tokens per word" | Ratio of output tokens to input words -- 1.3 for English in GPT-4, 2-3 for Korean, higher means wasted context |
-| tiktoken | "OpenAI tokenizer" | Rust BPE implementation with Python bindings -- 10-100x faster than pure Python |
-| Merge table | "The vocabulary" | Ordered list of byte-pair merges learned during training -- this IS the tokenizer's learned knowledge |
+| Byte-level BPE | "Токенизатор, который работает с байтами" | BPE с базовым словарем из 256 byte values: обрабатывает любой input без unknown tokens |
+| Pre-tokenization | "Разбиение перед BPE" | Regex- или rule-based разбиение, которое мешает BPE сливать через word boundaries |
+| NFKC normalization | "Unicode cleanup" | Canonical decomposition с последующей compatibility composition: лигатура "fi" становится "fi", fullwidth "A" становится "A" |
+| Chat template | "Как messages становятся tokens" | Точный формат преобразования списка role/content messages в flat token sequence: model-specific и должен совпадать с training format |
+| Special tokens | "Control tokens" | Зарезервированные token IDs, обходящие BPE: [BOS], [EOS], [PAD], chat markers; сопоставляются точно перед merge |
+| Fertility | "Tokens per word" | Отношение output tokens к input words: 1.3 для английского в GPT-4, 2-3 для корейского; больше значит wasted context |
+| tiktoken | "OpenAI tokenizer" | Rust BPE implementation с Python bindings: в 10-100x быстрее pure Python |
+| Merge table | "The vocabulary" | Упорядоченный список byte-pair merges, выученных при обучении: это и есть выученное знание токенизатора |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI tiktoken source](https://github.com/openai/tiktoken) -- Rust BPE implementation used by GPT-3.5/4
-- [HuggingFace tokenizers](https://github.com/huggingface/tokenizers) -- Rust tokenizer library supporting BPE, WordPiece, Unigram
-- [Llama 3 paper (Meta, 2024)](https://arxiv.org/abs/2407.21783) -- details on 128K vocabulary and tokenizer training
+- [OpenAI tiktoken source](https://github.com/openai/tiktoken) -- Rust BPE implementation, используемая GPT-3.5/4
+- [HuggingFace tokenizers](https://github.com/huggingface/tokenizers) -- Rust tokenizer library с поддержкой BPE, WordPiece, Unigram
+- [Llama 3 paper (Meta, 2024)](https://arxiv.org/abs/2407.21783) -- детали о 128K vocabulary и tokenizer training
 - [SentencePiece (Kudo & Richardson, 2018)](https://arxiv.org/abs/1808.06226) -- language-agnostic tokenization
-- [GPT-2 tokenizer source](https://github.com/openai/gpt-2/blob/master/src/encoder.py) -- the original byte-to-Unicode mapping
+- [GPT-2 tokenizer source](https://github.com/openai/gpt-2/blob/master/src/encoder.py) -- original byte-to-Unicode mapping

@@ -1,38 +1,38 @@
-# Inference Optimization
+# Оптимизация инференса
 
-> Two phases define LLM inference. Prefill processes your prompt in parallel -- compute-bound. Decode generates tokens one at a time -- memory-bound. Every optimization targets one or both.
+> Инференс LLM состоит из двух фаз. Prefill обрабатывает ваш промпт параллельно и упирается в вычисления. Decode генерирует токены по одному и упирается в память. Каждая оптимизация нацелена на одну из этих фаз или на обе сразу.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lessons 01-08 (Transformer architecture, attention)
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Фаза 10, уроки 01-08 (архитектура Transformer, attention)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement KV-cache to eliminate redundant computation during autoregressive token generation
-- Explain the prefill vs decode phases of LLM inference and why each has different bottlenecks (compute-bound vs memory-bound)
-- Implement continuous batching and PagedAttention concepts to maximize GPU utilization under concurrent requests
-- Compare inference optimization techniques (KV-cache, speculative decoding, flash attention) and their throughput/latency tradeoffs
+- Реализовать KV cache, чтобы устранить избыточные вычисления при авторегрессионной генерации токенов
+- Объяснить фазы prefill и decode в инференсе LLM и почему у них разные узкие места (compute-bound против memory-bound)
+- Реализовать идеи continuous batching и PagedAttention для максимальной загрузки GPU при параллельных запросах
+- Сравнить техники оптимизации инференса (KV cache, speculative decoding, flash attention) и их компромиссы по throughput/latency
 
-## The Problem
+## Проблема
 
-You deploy Llama 3 70B on 4xA100 GPUs. A single user gets ~50 tokens per second. Feels fast. Then 100 users hit the endpoint simultaneously. Throughput drops to 3 tokens/second/user. Your $25,000/month GPU bill is serving responses slower than a human types.
+Вы разворачиваете Llama 3 70B на 4xA100 GPU. Один пользователь получает ~50 токенов в секунду. Это кажется быстрым. Затем 100 пользователей одновременно обращаются к endpoint. Пропускная способность падает до 3 токенов/секунду/пользователь. Ваш счет за GPU на $25,000 в месяц обслуживает ответы медленнее, чем человек печатает.
 
-The model itself does not change between 1 user and 100 users. Same weights, same architecture, same math. What changes is how you schedule the work. Naive inference wastes 90%+ of available GPU compute. A user waiting for token 47 holds an entire batch slot open while the GPU memory bus sits idle between matmuls. Meanwhile, a new user's 2,000-token prompt could fill that dead time with useful compute.
+Сама модель не меняется между 1 пользователем и 100 пользователями. Те же веса, та же архитектура, та же математика. Меняется то, как вы планируете работу. Наивный инференс впустую тратит 90%+ доступных вычислений GPU. Пользователь, ожидающий токен 47, удерживает целый слот батча, пока шина памяти GPU простаивает между матричными умножениями. Тем временем промпт нового пользователя на 2,000 токенов мог бы заполнить это мертвое время полезными вычислениями.
 
-This is not a scaling problem. It is a scheduling problem. The techniques in this lesson -- KV caching, continuous batching, PagedAttention, speculative decoding, prefix caching -- are what separate a $25k/month inference bill from a $5k/month one serving the same traffic.
+Это не проблема масштабирования. Это проблема планирования. Техники в этом уроке -- KV caching, continuous batching, PagedAttention, speculative decoding, prefix caching -- отделяют счет за инференс в $25k/месяц от счета в $5k/месяц при том же трафике.
 
-vLLM serving Llama 3 70B on 4xA100-80GB achieves ~50 tokens/second/user at low concurrency, and sustains 15-25 TPS/user at 100 concurrent requests through continuous batching and PagedAttention. Without these optimizations, the same hardware serves 5 TPS/user at that concurrency. Same GPUs, same model, 4x the throughput.
+vLLM при обслуживании Llama 3 70B на 4xA100-80GB достигает ~50 токенов/секунду/пользователь при низкой параллельности и удерживает 15-25 TPS/user при 100 одновременных запросах за счет continuous batching и PagedAttention. Без этих оптимизаций то же железо обслуживает 5 TPS/user при такой параллельности. Те же GPU, та же модель, в 4 раза выше throughput.
 
-## The Concept
+## Концепция
 
 ### Prefill vs Decode
 
-Every LLM inference request has two distinct phases.
+У каждого запроса инференса LLM есть две отдельные фазы.
 
-**Prefill** processes the entire input prompt. All tokens are known, so attention can be computed in parallel across the full sequence. This is a large matrix multiplication -- GPU cores stay busy. The bottleneck is compute: how many FLOPS your hardware can deliver per second. An A100 does 312 TFLOPS (BF16). Prefill for a 4,096-token prompt on a 70B model takes ~400ms on a single A100.
+**Prefill** обрабатывает весь входной prompt. Все токены известны заранее, поэтому attention можно вычислять параллельно по всей последовательности. Это большое матричное умножение -- ядра GPU остаются занятыми. Узкое место здесь вычислительное: сколько FLOPS ваше железо может выдавать в секунду. A100 выполняет 312 TFLOPS (BF16). Prefill для prompt на 4,096 токенов в модели 70B занимает ~400ms на одной A100.
 
-**Decode** generates output tokens one at a time. Each new token attends to all previous tokens, but only one token is produced per forward pass. The weight matrices are the same size as during prefill, but you are multiplying them by a single vector instead of a matrix. The GPU cores finish in microseconds, then wait for the next batch of weights to arrive from memory. The bottleneck is memory bandwidth: how fast you can stream model weights from HBM to the compute units. An A100 has 2 TB/s bandwidth. A 70B model in FP16 is 140 GB. Reading the full model once takes 70ms -- that is your floor for a single decode step.
+**Decode** генерирует выходные токены по одному. Каждый новый токен attends to все предыдущие токены, но за один forward pass производится только один токен. Матрицы весов имеют тот же размер, что и во время prefill, но вы умножаете их на один вектор вместо матрицы. Ядра GPU заканчивают за микросекунды, а затем ждут, пока из памяти придет следующий batch весов. Узкое место -- пропускная способность памяти: насколько быстро вы можете передавать веса модели из HBM к вычислительным блокам. У A100 bandwidth 2 TB/s. Модель 70B в FP16 занимает 140 GB. Одно чтение всей модели занимает 70ms -- это нижняя граница для одного decode step.
 
 ```mermaid
 graph LR
@@ -49,21 +49,21 @@ graph LR
     P3 --> D1
 ```
 
-The **ops:byte ratio** (also called arithmetic intensity) captures this tradeoff. It measures how many operations you perform per byte loaded from memory.
+**Ops:byte ratio** (его также называют arithmetic intensity) выражает этот компромисс. Он измеряет, сколько операций вы выполняете на каждый байт, загруженный из памяти.
 
 ```
 ops:byte ratio = FLOPs per token / bytes read from memory
 ```
 
-During prefill with a batch of 4,096 tokens, you perform ~4,096 multiply-accumulate operations per weight loaded. The ratio is high -- you are compute-bound. During decode with batch size 1, you perform ~1 operation per weight loaded. The ratio is low -- you are memory-bound.
+Во время prefill с batch из 4,096 токенов вы выполняете ~4,096 операций multiply-accumulate на каждый загруженный вес. Ratio высокий -- вы compute-bound. Во время decode с batch size 1 вы выполняете ~1 операцию на каждый загруженный вес. Ratio низкий -- вы memory-bound.
 
-The fundamental insight: *decode is memory-bound because you read the entire model to produce a single token*. Every optimization below either reduces what you read, increases the batch of tokens processed per read, or avoids reads entirely.
+Фундаментальное наблюдение: *decode является memory-bound, потому что вы читаете всю модель, чтобы получить один токен*. Каждая оптимизация ниже либо уменьшает объем чтения, либо увеличивает batch токенов, обрабатываемых за одно чтение, либо полностью избегает чтений.
 
 ### KV Cache
 
-During attention, each token's query attends to every previous token's key and value vectors. Without caching, generating token N requires recomputing the key and value projections for all N-1 preceding tokens. Token 1 gets projected when generating token 2, then again for token 3, then again for token 4. By token 1,000, you have projected token 1 a total of 999 times.
+Во время attention query каждого токена attends to key и value vectors всех предыдущих токенов. Без кеширования генерация токена N требует заново вычислять key и value projections для всех N-1 предшествующих токенов. Токен 1 проецируется при генерации токена 2, затем снова для токена 3, затем снова для токена 4. К токену 1,000 вы спроецировали токен 1 в общей сложности 999 раз.
 
-The KV cache stores the key and value projections from all previous tokens. When generating token N, you only compute the key and value for token N, then concatenate them with the cached K/V from tokens 1 through N-1.
+KV cache хранит key и value projections всех предыдущих токенов. При генерации токена N вы вычисляете key и value только для токена N, а затем конкатенируете их с cached K/V от токенов 1 до N-1.
 
 ```mermaid
 graph TD
@@ -80,13 +80,13 @@ graph TD
     end
 ```
 
-**Memory formula for KV cache:**
+**Формула памяти для KV cache:**
 
 ```
 KV cache size = 2 * num_layers * num_kv_heads * head_dim * seq_len * bytes_per_param
 ```
 
-For Llama 3 70B (80 layers, 8 KV heads with GQA, head_dim=128, BF16):
+Для Llama 3 70B (80 слоев, 8 KV heads с GQA, head_dim=128, BF16):
 
 ```
 per token: 2 * 80 * 8 * 128 * 2 bytes = 327,680 bytes = 320 KB
@@ -94,13 +94,13 @@ at 4,096 tokens: 320 KB * 4,096 = 1.28 GB
 at 128K tokens: 320 KB * 131,072 = 40 GB
 ```
 
-A single 128K-context conversation for Llama 3 70B consumes 40 GB of KV cache -- half an A100's memory. With 100 concurrent users at 4K tokens each, KV cache alone requires 128 GB. This is why KV cache management is the central challenge of inference optimization.
+Один разговор с контекстом 128K для Llama 3 70B потребляет 40 GB KV cache -- половину памяти A100. При 100 одновременных пользователях с 4K токенов у каждого один только KV cache требует 128 GB. Поэтому управление KV cache -- центральная задача оптимизации инференса.
 
 ### Continuous Batching
 
-Static batching waits until a batch of N requests arrives, processes them together, and waits until *all* finish before accepting new requests. If one request needs 500 tokens and another needs 10, the short request sits idle for 490 decode steps after it finishes.
+Static batching ждет, пока наберется batch из N запросов, обрабатывает их вместе и ждет, пока *все* завершатся, прежде чем принимать новые запросы. Если одному запросу нужно 500 токенов, а другому 10, короткий запрос простаивает 490 decode steps после завершения.
 
-Continuous batching (also called iteration-level batching) inserts new requests into the batch as soon as any request completes. The batch is reevaluated at every decode step. A request that finishes after 10 tokens is immediately replaced by a waiting request.
+Continuous batching (также называется iteration-level batching) вставляет новые запросы в batch сразу после завершения любого запроса. Batch пересобирается на каждом decode step. Запрос, который завершился после 10 токенов, немедленно заменяется ожидающим запросом.
 
 ```mermaid
 sequenceDiagram
@@ -125,13 +125,13 @@ sequenceDiagram
     Note over R3: R3 done at step 30
 ```
 
-The throughput improvement depends on how much output lengths vary. With uniform lengths, continuous batching matches static batching. With variable lengths (the common case), continuous batching can deliver 2-5x higher throughput because GPU slots never sit empty.
+Улучшение throughput зависит от того, насколько различаются длины выходов. При одинаковых длинах continuous batching совпадает со static batching. При переменных длинах (обычный случай) continuous batching может дать throughput в 2-5 раз выше, потому что слоты GPU никогда не пустуют.
 
 ### PagedAttention
 
-The KV cache for each request is a contiguous block of memory. As requests arrive and depart, memory fragments -- exactly like RAM fragmentation in operating systems. A 4K-token request needs 1.28 GB contiguous. Even if you have 2 GB free total, you might not have 1.28 GB *contiguous*. You either waste memory or reject the request.
+KV cache каждого запроса -- это непрерывный блок памяти. По мере прихода и ухода запросов память фрагментируется -- ровно как фрагментация RAM в операционных системах. Запрос на 4K токенов требует 1.28 GB непрерывной памяти. Даже если суммарно свободно 2 GB, у вас может не быть 1.28 GB *непрерывно*. В итоге вы либо теряете память впустую, либо отклоняете запрос.
 
-PagedAttention (from vLLM) applies OS-style virtual memory to KV cache. Instead of allocating one contiguous block per request, it allocates fixed-size "pages" (typically 16 tokens each). Pages can be anywhere in physical GPU memory. A page table maps each request's logical sequence positions to physical page locations.
+PagedAttention (из vLLM) применяет к KV cache виртуальную память в стиле ОС. Вместо выделения одного непрерывного блока на запрос он выделяет "pages" фиксированного размера (обычно по 16 токенов). Pages могут находиться где угодно в физической памяти GPU. Page table сопоставляет логические позиции последовательности каждого запроса с физическими расположениями pages.
 
 ```mermaid
 graph TD
@@ -150,15 +150,15 @@ graph TD
     end
 ```
 
-PagedAttention also enables **copy-on-write** for shared prefixes. If 50 requests share the same system prompt, the KV cache pages for that system prompt are stored once and referenced by all 50 requests. Only when a request diverges (different user messages) does it get its own pages. This cuts memory usage dramatically for applications with shared system prompts.
+PagedAttention также дает **copy-on-write** для общих префиксов. Если 50 запросов используют один и тот же system prompt, pages KV cache для этого system prompt хранятся один раз и referenced всеми 50 запросами. Только когда запрос расходится (другие сообщения пользователя), он получает собственные pages. Это резко снижает расход памяти в приложениях с общими system prompts.
 
-vLLM reports near-zero memory waste (~4% vs ~60-80% in naive allocation) through PagedAttention.
+vLLM сообщает о почти нулевых потерях памяти (~4% против ~60-80% при наивном выделении) благодаря PagedAttention.
 
 ### Speculative Decoding
 
-Decode is slow because it is sequential -- you generate one token, feed it back, generate the next. But what if you could guess the next 5 tokens cheaply, then verify them all at once?
+Decode медленный, потому что он последовательный: вы генерируете один токен, подаете его обратно, генерируете следующий. Но что если можно дешево угадать следующие 5 токенов, а затем проверить их все сразу?
 
-Speculative decoding uses a small, fast **draft model** to generate K candidate tokens. The large **target model** then processes all K candidates in a single forward pass (which looks like a prefill -- parallel, compute-bound, efficient). If the target model agrees with the draft model's predictions, you accept all K tokens in the time of one target forward pass. If it disagrees at position j, you accept tokens 1 through j-1 and discard the rest.
+Speculative decoding использует небольшую быструю **draft model**, чтобы сгенерировать K candidate tokens. Затем большая **target model** обрабатывает все K candidates за один forward pass (это похоже на prefill -- параллельно, compute-bound, эффективно). Если target model согласна с predictions draft model, вы принимаете все K токенов за время одного target forward pass. Если она не согласна в позиции j, вы принимаете токены с 1 по j-1 и отбрасываете остальные.
 
 ```mermaid
 graph LR
@@ -169,9 +169,9 @@ graph LR
     V -->|"Mismatch at pos 5"| R["Reject token 5<br/>Resample from target"]
 ```
 
-The speedup depends on the **acceptance rate** -- how often the draft model's predictions match the target. For a Llama 3 8B drafting for Llama 3 70B, acceptance rates of 70-85% are typical on natural language. This translates to 2-3x decode speedup.
+Speedup зависит от **acceptance rate** -- от того, как часто predictions draft model совпадают с target. Для Llama 3 8B в роли draft для Llama 3 70B типичны acceptance rates 70-85% на естественном языке. Это дает ускорение decode в 2-3 раза.
 
-Three approaches to speculative decoding:
+Три подхода к speculative decoding:
 
 | Method | Draft source | Acceptance rate | Overhead |
 |--------|-------------|-----------------|----------|
@@ -179,25 +179,25 @@ Three approaches to speculative decoding:
 | EAGLE (Li et al.) | Lightweight head on target | 75-90% | ~1% extra parameters |
 | N-gram lookup | Token n-gram table | 40-60% | Negligible |
 
-**EAGLE** trains a small autoregressive head on top of the target model's hidden states. It predicts the next token's embedding using the target model's second-to-last layer features. Because it operates on the target model's own representations (not a separate model's), it achieves higher acceptance rates with minimal extra memory. EAGLE-2 adds a dynamic draft tree that adjusts candidate count based on context.
+**EAGLE** обучает небольшую autoregressive head поверх hidden states target model. Она предсказывает embedding следующего токена, используя признаки предпоследнего слоя target model. Поскольку она работает на собственных representations target model (а не отдельной модели), она достигает более высоких acceptance rates при минимальной дополнительной памяти. EAGLE-2 добавляет dynamic draft tree, которое настраивает число candidates в зависимости от контекста.
 
-**N-gram speculative decoding** maintains a table of n-gram continuations from the current context or a prebuilt corpus. If the draft matches what appeared before in the same conversation (repetitive patterns, code, structured output), it fires with zero neural network overhead. Acceptance rates are lower on average but the cost per speculation is essentially free.
+**N-gram speculative decoding** поддерживает таблицу n-gram continuations из текущего контекста или заранее построенного корпуса. Если draft совпадает с тем, что уже встречалось раньше в этом же разговоре (повторяющиеся паттерны, код, структурированный output), он срабатывает без затрат на нейросеть. Средние acceptance rates ниже, но стоимость одной speculation практически нулевая.
 
-Speculative decoding is *mathematically exact* -- the output distribution is identical to the target model's distribution. It is not an approximation. The verification step ensures that every accepted token has exactly the probability the target model would have assigned.
+Speculative decoding *математически точен*: output distribution идентично распределению target model. Это не аппроксимация. Шаг verification гарантирует, что каждый принятый токен имеет ровно ту вероятность, которую назначила бы target model.
 
 ### Prefix Caching
 
-Many requests share the same prefix. A chatbot system prompt. A RAG context block. A few-shot example set. Without prefix caching, every request recomputes the KV cache for these shared tokens from scratch.
+Многие запросы имеют одинаковый prefix. System prompt чатбота. Контекстный блок RAG. Набор few-shot examples. Без prefix caching каждый запрос заново вычисляет KV cache для этих общих токенов.
 
-Prefix caching stores the KV cache for common prefixes and reuses it across requests. When a new request arrives with a known prefix, the system copies (or references) the cached KV entries and only computes the KV for the unique suffix.
+Prefix caching хранит KV cache для распространенных prefixes и переиспользует его между запросами. Когда приходит новый запрос с известным prefix, система копирует (или references) cached KV entries и вычисляет KV только для уникального suffix.
 
-For a 2,000-token system prompt shared across all requests, prefix caching eliminates ~400ms of prefill per request. At 100 requests/second, that saves 40 seconds of GPU compute per second -- more than one GPU's worth of work.
+Для system prompt на 2,000 токенов, общего для всех запросов, prefix caching устраняет ~400ms prefill на каждый запрос. При 100 requests/second это экономит 40 секунд GPU compute в секунду -- больше, чем работа одной GPU.
 
-SGLang's RadixAttention implements prefix caching with a radix tree (trie) that indexes prefixes by their token content. Any request matching a stored prefix gets its KV cache for free. The tree enables partial prefix matches -- if you share 1,500 of 2,000 prefix tokens with a cached entry, you reuse those 1,500 and recompute only 500.
+SGLang RadixAttention реализует prefix caching через radix tree (trie), которое индексирует prefixes по их token content. Любой запрос, совпавший с сохраненным prefix, получает свой KV cache бесплатно. Дерево поддерживает partial prefix matches: если у вас совпадает 1,500 из 2,000 prefix tokens с cached entry, вы переиспользуете эти 1,500 и пересчитываете только 500.
 
 ### Inference Engines
 
-Three engines dominate production LLM serving:
+В production serving LLM доминируют три движка:
 
 | Engine | Key innovation | Best for |
 |--------|---------------|----------|
@@ -205,13 +205,13 @@ Three engines dominate production LLM serving:
 | SGLang | RadixAttention (prefix caching), structured generation | Multi-turn chatbots, constrained decoding |
 | TensorRT-LLM | NVIDIA kernel fusion, FP8 quantization | Maximum single-GPU throughput on NVIDIA hardware |
 
-**vLLM** is the default starting point. It supports the widest range of models, runs on any GPU vendor (NVIDIA, AMD, Intel), and achieves strong throughput through PagedAttention + continuous batching. The OpenAI-compatible API means you can drop it in as a replacement for any OpenAI API call.
+**vLLM** -- базовая точка старта по умолчанию. Он поддерживает самый широкий набор моделей, работает на GPU любого вендора (NVIDIA, AMD, Intel) и достигает сильного throughput за счет PagedAttention + continuous batching. OpenAI-compatible API означает, что его можно подставить как замену для любого OpenAI API call.
 
-**SGLang** builds on the same foundations as vLLM but adds RadixAttention for prefix caching and a domain-specific language for structured LLM programs. If your workload involves multi-turn conversations, tool use, or constrained decoding (JSON output, regex-guided generation), SGLang often outperforms vLLM by 2-5x through prefix reuse.
+**SGLang** строится на тех же основах, что и vLLM, но добавляет RadixAttention для prefix caching и domain-specific language для структурированных LLM programs. Если ваша нагрузка включает многошаговые диалоги, tool use или constrained decoding (JSON output, regex-guided generation), SGLang часто превосходит vLLM в 2-5 раз благодаря prefix reuse.
 
-**TensorRT-LLM** compiles models into optimized NVIDIA GPU kernels. It fuses operations (attention + linear + activation in one kernel), uses FP8 on H100 GPUs, and integrates with NVIDIA Triton Inference Server for production deployment. It achieves the highest single-GPU throughput on NVIDIA hardware but requires more setup and only works on NVIDIA GPUs.
+**TensorRT-LLM** компилирует модели в оптимизированные NVIDIA GPU kernels. Он объединяет операции (attention + linear + activation в одном kernel), использует FP8 на H100 GPUs и интегрируется с NVIDIA Triton Inference Server для production deployment. Он достигает максимального single-GPU throughput на NVIDIA hardware, но требует более сложной настройки и работает только на NVIDIA GPUs.
 
-Real-world numbers for Llama 3 70B (4xA100-80GB, BF16):
+Реальные числа для Llama 3 70B (4xA100-80GB, BF16):
 
 | Metric | vLLM | SGLang | TensorRT-LLM |
 |--------|------|--------|---------------|
@@ -222,16 +222,16 @@ Real-world numbers for Llama 3 70B (4xA100-80GB, BF16):
 
 ### The Ops:Byte Framework
 
-You cannot optimize what you do not measure. The ops:byte ratio tells you whether you are compute-bound or memory-bound, which determines which optimizations matter.
+Нельзя оптимизировать то, что вы не измеряете. Ops:byte ratio показывает, ограничены ли вы вычислениями или памятью, и тем самым определяет, какие оптимизации важны.
 
 ```
 Compute roof: peak FLOPS of the GPU
 Memory roof:  peak bandwidth * ops:byte ratio
 ```
 
-When ops:byte is low (decode, small batches), you hit the memory bandwidth roof. Adding more compute (higher clock, more cores) does not help. You need to reduce memory reads (quantization, KV cache compression) or increase the batch size to amortize reads across more useful work.
+Когда ops:byte низкий (decode, small batches), вы упираетесь в roof пропускной способности памяти. Добавление вычислений (более высокая частота, больше ядер) не помогает. Нужно уменьшать чтения из памяти (quantization, KV cache compression) или увеличивать batch size, чтобы амортизировать чтения на больший объем полезной работы.
 
-When ops:byte is high (prefill, large batches), you hit the compute roof. Memory bandwidth optimization does not help. You need faster GPUs, kernel fusion, or reduced precision to squeeze more FLOPS.
+Когда ops:byte высокий (prefill, large batches), вы упираетесь в compute roof. Оптимизация bandwidth памяти не помогает. Нужны более быстрые GPU, kernel fusion или пониженная precision, чтобы выжать больше FLOPS.
 
 | Scenario | ops:byte | Bound | Optimize with |
 |----------|----------|-------|---------------|
@@ -241,13 +241,13 @@ When ops:byte is high (prefill, large batches), you hit the compute roof. Memory
 | Decode, batch=256 | ~256 | Transitioning | Both matter |
 | Decode, batch=1024 | ~1,024 | Compute | Kernel fusion, tensor parallelism |
 
-The crossover point on A100 is around ops:byte = 156 (312 TFLOPS / 2 TB/s). Below 156, you are memory-bound. Above 156, you are compute-bound. Continuous batching pushes decode toward this crossover by packing more tokens per iteration.
+Точка перехода на A100 находится около ops:byte = 156 (312 TFLOPS / 2 TB/s). Ниже 156 вы memory-bound. Выше 156 вы compute-bound. Continuous batching сдвигает decode к этой точке перехода, упаковывая больше токенов в одну iteration.
 
 ## Build It
 
 ### Step 1: KV Cache from Scratch
 
-We build a multi-head KV cache that stores key and value projections per layer, per head, and demonstrates the memory growth pattern.
+Мы построим multi-head KV cache, который хранит key и value projections по слоям и heads и демонстрирует паттерн роста памяти.
 
 ```python
 import numpy as np
@@ -291,7 +291,7 @@ class KVCache:
 
 ### Step 2: Attention with KV Cache
 
-A simplified multi-head attention that uses the KV cache for decode steps.
+Упрощенный multi-head attention, который использует KV cache для decode steps.
 
 ```python
 def scaled_dot_product_attention(query, keys, values):
@@ -338,7 +338,7 @@ class MultiHeadAttention:
 
 ### Step 3: Continuous Batching Simulator
 
-This simulates the scheduling difference between static and continuous batching.
+Здесь моделируется разница в планировании между static и continuous batching.
 
 ```python
 import heapq
@@ -439,7 +439,7 @@ def batching_stats(completed):
 
 ### Step 4: Prefix Cache
 
-A trie-based prefix cache that stores KV entries for shared prefixes.
+Prefix cache на основе trie, который хранит KV entries для общих prefixes.
 
 ```python
 class TrieNode:
@@ -505,7 +505,7 @@ class PrefixCache:
 
 ### Step 5: Speculative Decoding Simulator
 
-We simulate draft-target speculative decoding with configurable acceptance rates.
+Мы моделируем draft-target speculative decoding с настраиваемыми acceptance rates.
 
 ```python
 class DraftModel:
@@ -621,7 +621,7 @@ def compare_speculation_strategies(vocab_size=1000, num_trials=20):
 
 ### Step 6: KV Cache Memory Profiler
 
-Compute KV cache memory requirements for real model configurations.
+Вычислим требования к памяти KV cache для реальных конфигураций моделей.
 
 ```python
 MODEL_CONFIGS = {
@@ -685,7 +685,7 @@ def memory_budget(config, gpu_memory_gb, model_dtype_bytes=2, kv_dtype_bytes=2):
 
 ## Use It
 
-With vLLM:
+С vLLM:
 
 ```python
 from vllm import LLM, SamplingParams
@@ -702,7 +702,7 @@ params = SamplingParams(temperature=0.7, max_tokens=256)
 outputs = llm.generate(["Explain inference optimization in one paragraph."], params)
 ```
 
-With SGLang for prefix caching + structured output:
+С SGLang для prefix caching + structured output:
 
 ```python
 import sglang as sgl
@@ -723,7 +723,7 @@ results = classify.run_batch([
 ])
 ```
 
-With TensorRT-LLM:
+С TensorRT-LLM:
 
 ```python
 import tensorrt_llm
@@ -740,40 +740,40 @@ outputs = runner.generate(
 
 ## Ship It
 
-This lesson produces:
-- `outputs/skill-inference-optimization.md` -- a skill for diagnosing and optimizing LLM inference serving
+Этот урок создает:
+- `outputs/skill-inference-optimization.md` -- skill для диагностики и оптимизации LLM inference serving
 
-## Exercises
+## Упражнения
 
-1. Modify the KV cache profiler to compare FP16 vs FP8 vs INT4 KV cache quantization. For Llama 3 70B at 4K context, compute the max concurrent users for each on 4xA100-80GB. KV quantization to INT4 should roughly 4x the user capacity.
+1. Измените profiler KV cache, чтобы сравнить FP16, FP8 и INT4 quantization для KV cache. Для Llama 3 70B при контексте 4K вычислите максимальное число одновременных пользователей на 4xA100-80GB. KV quantization до INT4 должна примерно в 4 раза увеличить user capacity.
 
-2. Extend the continuous batching simulator to track GPU utilization (fraction of batch slots filled per step). Plot utilization over time for both static and continuous batching with 50 requests whose output lengths follow a Pareto distribution (shape=1.5, scale=20). Continuous batching should maintain >80% utilization.
+2. Расширьте continuous batching simulator так, чтобы он отслеживал GPU utilization (долю заполненных batch slots на каждом step). Постройте график utilization во времени для static и continuous batching с 50 запросами, длины output которых следуют распределению Pareto (shape=1.5, scale=20). Continuous batching должен поддерживать utilization >80%.
 
-3. Implement a grouped-query attention (GQA) version of the KV cache where `num_kv_heads < num_query_heads`. Llama 3 70B uses 64 query heads but only 8 KV heads. Compute the memory savings vs full multi-head attention (8x reduction in KV cache size).
+3. Реализуйте версию KV cache для grouped-query attention (GQA), где `num_kv_heads < num_query_heads`. Llama 3 70B использует 64 query heads, но только 8 KV heads. Вычислите экономию памяти по сравнению с full multi-head attention (8-кратное уменьшение размера KV cache).
 
-4. Build a prefix cache that uses LRU eviction. Set max_entries to 500 and generate 1,000 requests where 60% share one of 5 common prefixes. Measure hit rate and compare to unlimited cache. With good eviction, hit rate should stay above 55%.
+4. Постройте prefix cache с LRU eviction. Установите max_entries в 500 и сгенерируйте 1,000 запросов, где 60% используют один из 5 общих prefixes. Измерьте hit rate и сравните с unlimited cache. При хорошем eviction hit rate должен оставаться выше 55%.
 
-5. Extend the speculative decoding simulator to implement tree-based speculation (EAGLE-2 style). Instead of a single chain of K draft tokens, generate a tree of candidates (e.g., 2 branches at each of 3 levels = 8 leaf candidates). Compare total tokens accepted per verification round vs linear speculation.
+5. Расширьте speculative decoding simulator, реализовав tree-based speculation (в стиле EAGLE-2). Вместо одной цепочки из K draft tokens сгенерируйте дерево candidates (например, 2 branches на каждом из 3 levels = 8 leaf candidates). Сравните total tokens accepted per verification round с linear speculation.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|----------------|----------------------|
-| Prefill | "Processing the prompt" | Computing attention over all input tokens in parallel -- compute-bound because the full matrix multiplication keeps GPU cores busy |
-| Decode | "Generating tokens" | Producing one token per forward pass, reading the full model weights each time -- memory-bound because compute finishes before the next weights arrive |
-| KV cache | "Caching attention states" | Storing the key and value projections for all previous tokens so they are not recomputed at each decode step -- trades memory for compute |
-| Continuous batching | "Dynamic batching" | Inserting new requests into the running batch as soon as any request finishes, evaluated at every decode iteration rather than waiting for the whole batch |
-| PagedAttention | "Virtual memory for KV cache" | Allocating KV cache in fixed-size pages instead of contiguous blocks, eliminating memory fragmentation and enabling copy-on-write for shared prefixes |
-| Speculative decoding | "Draft and verify" | Using a fast draft model to propose multiple tokens, then verifying them all in one target model forward pass -- mathematically exact, 2-3x speedup |
-| EAGLE | "Self-speculative decoding" | A speculative decoding variant that trains a lightweight head on the target model's own hidden states, achieving higher acceptance rates than a separate draft model |
-| Prefix caching | "Reusing system prompt KV" | Storing computed KV cache entries for common prefixes (system prompts, few-shot examples) and reusing them across requests to skip redundant prefill |
-| Ops:byte ratio | "Arithmetic intensity" | The ratio of compute operations to memory bytes read -- determines whether a workload is compute-bound (high ratio) or memory-bound (low ratio) |
-| Time to first token | "TTFT" | Latency from receiving a request to producing the first output token -- dominated by prefill time for long prompts |
+| Prefill | "Processing the prompt" | Вычисление attention по всем input tokens параллельно -- compute-bound, потому что полное matrix multiplication держит ядра GPU занятыми |
+| Decode | "Generating tokens" | Производство одного токена за forward pass с чтением всех весов модели каждый раз -- memory-bound, потому что вычисления заканчиваются раньше, чем приходят следующие веса |
+| KV cache | "Caching attention states" | Хранение key и value projections для всех предыдущих токенов, чтобы не пересчитывать их на каждом decode step -- обмен памяти на вычисления |
+| Continuous batching | "Dynamic batching" | Вставка новых запросов в running batch сразу после завершения любого запроса; batch пересматривается на каждой decode iteration, а не ждет завершения всего batch |
+| PagedAttention | "Virtual memory for KV cache" | Выделение KV cache фиксированными pages вместо непрерывных блоков, что устраняет фрагментацию памяти и включает copy-on-write для общих prefixes |
+| Speculative decoding | "Draft and verify" | Использование быстрой draft model для предложения нескольких токенов с последующей проверкой всех токенов за один forward pass target model -- математически точно, ускорение 2-3x |
+| EAGLE | "Self-speculative decoding" | Вариант speculative decoding, который обучает lightweight head на собственных hidden states target model и достигает более высоких acceptance rates, чем отдельная draft model |
+| Prefix caching | "Reusing system prompt KV" | Хранение вычисленных KV cache entries для common prefixes (system prompts, few-shot examples) и их переиспользование между запросами, чтобы пропускать избыточный prefill |
+| Ops:byte ratio | "Arithmetic intensity" | Отношение вычислительных операций к байтам, прочитанным из памяти; определяет, является ли workload compute-bound (высокий ratio) или memory-bound (низкий ratio) |
+| Time to first token | "TTFT" | Latency от получения запроса до выдачи первого output token; для длинных prompts в основном определяется временем prefill |
 
-## Further Reading
+## Дополнительное чтение
 
-- Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (2023) -- the vLLM paper that introduced paged KV cache management, now the industry standard for inference serving
-- Leviathan et al., "Fast Inference from Transformers via Speculative Decoding" (2023) -- the foundational paper proving that draft-verify speculation produces exact target model distributions while achieving 2-3x speedup
-- Li et al., "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty" (2024) -- achieves higher acceptance rates by training a head on the target model's own features instead of using a separate draft model
-- Zheng et al., "SGLang: Efficient Execution of Structured Language Model Programs" (2024) -- introduces RadixAttention for prefix caching and a programming model for multi-call LLM programs
-- Williams et al., "Roofline: An Insightful Visual Performance Model for Multicore Architectures" (2009) -- the original roofline paper that formalized the ops:byte framework for reasoning about compute vs memory bottlenecks
+- Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (2023) -- статья vLLM, которая ввела paged management KV cache и стала индустриальным стандартом inference serving
+- Leviathan et al., "Fast Inference from Transformers via Speculative Decoding" (2023) -- основополагающая статья, доказывающая, что draft-verify speculation дает точные распределения target model при ускорении 2-3x
+- Li et al., "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty" (2024) -- достигает более высоких acceptance rates, обучая head на собственных features target model вместо использования отдельной draft model
+- Zheng et al., "SGLang: Efficient Execution of Structured Language Model Programs" (2024) -- вводит RadixAttention для prefix caching и programming model для multi-call LLM programs
+- Williams et al., "Roofline: An Insightful Visual Performance Model for Multicore Architectures" (2009) -- исходная статья о roofline, формализовавшая ops:byte framework для рассуждений о bottlenecks вычислений и памяти

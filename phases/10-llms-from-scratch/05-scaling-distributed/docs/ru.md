@@ -1,38 +1,38 @@
 # Scaling: Distributed Training, FSDP, DeepSpeed
 
-> Your 124M model trained on one GPU. Now try 7 billion parameters. The model doesn't fit in memory. The data takes weeks on a single machine. Distributed training isn't optional at scale. It's the only path forward.
+> Ваша модель на 124M параметров обучилась на одном GPU. Теперь попробуйте 7 миллиардов параметров. Модель не помещается в память. Данные на одной машине обучались бы неделями. Distributed training в таком масштабе не опция, а единственный путь вперед.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lesson 04 (Pre-Training a Mini GPT)
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 10, Lesson 04 (Pre-Training a Mini GPT)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the three types of parallelism (data, tensor, pipeline) and when each is necessary based on model and cluster size
-- Implement data-parallel training using PyTorch DDP with gradient synchronization across multiple GPUs
-- Calculate the memory budget for a given model size (weights + optimizer states + gradients + activations) to determine the minimum hardware
-- Configure FSDP or DeepSpeed ZeRO stages to shard model states across GPUs and fit models that exceed single-GPU memory
+- Объяснить три вида parallelism (data, tensor, pipeline) и когда каждый нужен в зависимости от размера модели и кластера
+- Реализовать data-parallel training с PyTorch DDP и synchronization gradients между несколькими GPUs
+- Рассчитать memory budget для заданного размера модели (weights + optimizer states + gradients + activations), чтобы определить минимальное hardware
+- Настроить FSDP или DeepSpeed ZeRO stages для sharding model states между GPUs и размещения моделей, которые превышают память одного GPU
 
-## The Problem
+## Проблема
 
-A 7B parameter model in FP16 needs 14GB just for the weights. Adam optimizer stores two additional copies of every parameter (first and second moment estimates). That is another 28GB. Gradients during backpropagation add 14GB more. You are at 56GB before a single activation is stored.
+Модель на 7B параметров в FP16 требует 14GB только под weights. Optimizer Adam хранит две дополнительные копии каждого параметра (оценки первого и второго момента). Это еще 28GB. Gradients во время backpropagation добавляют еще 14GB. Вы уже на 56GB еще до того, как сохранена хотя бы одна activation.
 
-An NVIDIA A100 has 80GB of memory.
+У NVIDIA A100 80GB памяти.
 
-56GB out of 80GB consumed. That leaves 24GB for activations -- the intermediate values computed during the forward pass that must be kept alive for backpropagation. For a 2048-token sequence with a 4096-dimensional model, a single layer's activations use about 64MB. With 32 layers, you need 2GB per sample. A batch size of 8 requires 16GB. You have 24GB. A batch size of 12 blows up.
+56GB из 80GB заняты. Остается 24GB под activations -- промежуточные значения, вычисляемые во время forward pass, которые нужно держать живыми для backpropagation. Для sequence из 2048 токенов с моделью размерности 4096 activations одного слоя занимают около 64MB. С 32 layers нужно 2GB на sample. Batch size 8 требует 16GB. У вас 24GB. Batch size 12 уже ломается.
 
-Now try 70B parameters. Weights alone: 140GB in FP16. Does not fit on one GPU. You need at least 2 A100s (2 x 80GB = 160GB) just to hold the weights. Add optimizer states and gradients and you need far more: 3+ GPUs minimum, and realistically 8-16 depending on sharding strategy.
+Теперь попробуйте 70B параметров. Только weights: 140GB в FP16. На один GPU не помещается. Нужно как минимум 2 A100 (2 x 80GB = 160GB), чтобы просто держать weights. Добавьте optimizer states и gradients, и потребуется намного больше: минимум 3+ GPUs, а реалистично 8-16 в зависимости от sharding strategy.
 
-Llama 3 405B was trained on 16,384 NVIDIA H100 GPUs. The training run cost an estimated $100 million in compute. DeepSeek V3 trained a comparable model for roughly $5.6 million by being clever about architecture (Mixture of Experts means only a fraction of parameters activate per token) and training efficiency.
+Llama 3 405B обучали на 16,384 NVIDIA H100 GPUs. Training run стоил примерно $100 million compute. DeepSeek V3 обучил сопоставимую модель примерно за $5.6 million благодаря более умной architecture (Mixture of Experts означает, что на один токен активируется только часть параметров) и эффективности обучения.
 
-This lesson covers the four strategies that make large-scale training possible: data parallelism, tensor parallelism, pipeline parallelism, and fully sharded data parallelism. You will simulate each one in pure Python to understand the mechanics before ever touching a distributed training framework.
+Этот урок разбирает четыре стратегии, которые делают large-scale training возможным: data parallelism, tensor parallelism, pipeline parallelism и fully sharded data parallelism. Вы смоделируете каждую на чистом Python, чтобы понять механику до работы с distributed training framework.
 
-## The Concept
+## Концепция
 
-### Why Distribution is Required
+### Почему distribution обязательна
 
-Here is the memory math for real models. Every number is calculated, not estimated.
+Вот memory math для реальных моделей. Каждое число рассчитано, а не оценено на глаз.
 
 | Model | Params | Weights (FP16) | Adam States | Gradients (FP16) | Total (no activations) |
 |-------|--------|----------------|-------------|------------------|----------------------|
@@ -41,19 +41,19 @@ Here is the memory math for real models. Every number is calculated, not estimat
 | Llama 3 70B | 70B | 140 GB | 560 GB | 140 GB | 840 GB |
 | Llama 3 405B | 405B | 810 GB | 3,240 GB | 810 GB | 4,860 GB |
 
-The "Adam States" column is the killer. Adam stores a running mean (m) and a running variance (v) for every parameter, both in FP32. For a 70B model, that is 70B x 4 bytes x 2 = 560GB. The optimizer alone needs seven A100s.
+Колонка "Adam States" -- главный убийца памяти. Adam хранит running mean (m) и running variance (v) для каждого параметра, оба в FP32. Для модели 70B это 70B x 4 bytes x 2 = 560GB. Один optimizer требует семь A100.
 
-A single H100 has 80GB. Llama 3 405B needs at least 61 H100s to hold the weights, optimizer, and gradients. Add activations and the number grows further. Meta used 16,384 GPUs not because they wanted to -- because they had to.
+У одного H100 80GB. Llama 3 405B требует как минимум 61 H100, чтобы держать weights, optimizer и gradients. Добавьте activations, и число станет еще больше. Meta использовала 16,384 GPUs не потому, что хотела, а потому, что иначе было нельзя.
 
 ### Data Parallelism
 
-The simplest distributed strategy. Copy the entire model to N GPUs. Split each training batch into N equal parts. Each GPU runs a forward and backward pass on its shard of the data. After the backward pass, average the gradients across all GPUs. Every GPU updates its copy of the weights with the same averaged gradients, keeping all copies in sync.
+Самая простая distributed strategy. Скопировать всю модель на N GPUs. Разделить каждый training batch на N равных частей. Каждый GPU выполняет forward и backward pass на своем shard данных. После backward pass gradients усредняются между всеми GPUs. Каждый GPU обновляет свою копию weights теми же averaged gradients, сохраняя все копии синхронизированными.
 
-**The good:** Linear throughput scaling. N GPUs process N times more data per step. Communication is limited to gradient averaging, which overlaps with computation.
+**Хорошо:** линейное масштабирование throughput. N GPUs обрабатывают в N раз больше данных за step. Communication ограничена gradient averaging, который перекрывается с computation.
 
-**The bad:** Every GPU holds a complete copy of the model, optimizer states, and gradients. For a 70B model, each GPU needs 840GB. Data parallelism does nothing to reduce per-GPU memory. It only reduces training time.
+**Плохо:** каждый GPU держит полную копию модели, optimizer states и gradients. Для модели 70B каждому GPU нужно 840GB. Data parallelism никак не уменьшает per-GPU memory. Он только сокращает training time.
 
-**The math:** Effective batch size = per_gpu_batch_size x N. For N=64 GPUs with per-GPU batch of 16, the effective batch is 1,024. Llama 3 used an effective batch size of 16 million tokens per step.
+**Математика:** Effective batch size = per_gpu_batch_size x N. Для N=64 GPUs с per-GPU batch 16 effective batch равен 1,024. Llama 3 использовала effective batch size 16 million tokens per step.
 
 ```mermaid
 graph TD
@@ -81,44 +81,44 @@ graph TD
 
 ### Tensor Parallelism
 
-Split individual layers across GPUs. A single matrix multiplication is divided among GPUs, each computing part of the result.
+Разделить отдельные layers между GPUs. Одно matrix multiplication делится между GPUs, и каждый вычисляет свою часть результата.
 
-Consider a weight matrix of shape (8192, 8192) in a feedforward layer. With 4-way tensor parallelism, each GPU holds a (8192, 2048) shard. Each GPU multiplies the input by its shard, producing a partial result. The partial results are combined (via all-reduce or all-gather) to produce the full output.
+Рассмотрим weight matrix формы (8192, 8192) в feedforward layer. При 4-way tensor parallelism каждый GPU хранит shard (8192, 2048). Каждый GPU умножает input на свой shard и получает partial result. Partial results объединяются (через all-reduce или all-gather), чтобы получить full output.
 
-**The good:** Reduces per-GPU memory for model weights. A 70B model split across 8 GPUs means each GPU holds ~8.75B parameters worth of weights.
+**Хорошо:** уменьшает per-GPU memory для model weights. Модель 70B, разделенная между 8 GPUs, означает, что каждый GPU держит weights примерно на 8.75B параметров.
 
-**The bad:** Requires fast inter-GPU communication after every layer. The all-reduce after each matmul adds latency. This works well with NVLink (900 GB/s between GPUs on the same node) but poorly across nodes connected by InfiniBand (400 Gb/s, about 50 GB/s). Tensor parallelism is almost always limited to within a single node (8 GPUs).
+**Плохо:** после каждого layer требуется быстрая inter-GPU communication. All-reduce после каждого matmul добавляет latency. Это хорошо работает с NVLink (900 GB/s между GPUs в одном node), но плохо между nodes через InfiniBand (400 Gb/s, около 50 GB/s). Tensor parallelism почти всегда ограничен одним node (8 GPUs).
 
-**Real usage:** Megatron-LM pioneered tensor parallelism. Llama 3 405B uses 8-way tensor parallelism within each node.
+**Реальное использование:** Megatron-LM популяризировал tensor parallelism. Llama 3 405B использует 8-way tensor parallelism внутри каждого node.
 
 ### Pipeline Parallelism
 
-Split the model by layers. GPU 1 runs layers 1-8. GPU 2 runs layers 9-16. GPU 3 runs layers 17-24. GPU 4 runs layers 25-32. Data flows through the pipeline: GPU 1 computes its layers and sends activations to GPU 2, which computes its layers and sends to GPU 3, and so on.
+Разделить модель по layers. GPU 1 выполняет layers 1-8. GPU 2 -- layers 9-16. GPU 3 -- layers 17-24. GPU 4 -- layers 25-32. Данные текут через pipeline: GPU 1 вычисляет свои layers и отправляет activations на GPU 2, тот вычисляет свои layers и отправляет на GPU 3, и так далее.
 
-**The good:** Minimal communication between GPUs -- just the activations at layer boundaries, which are small compared to gradients or weights. Works across nodes because bandwidth requirements are low.
+**Хорошо:** минимальная communication между GPUs -- только activations на границах layers, которые малы по сравнению с gradients или weights. Работает между nodes, потому что требования к bandwidth низкие.
 
-**The bad:** Pipeline bubbles. When GPU 4 is computing the forward pass on micro-batch 1, GPUs 1, 2, and 3 are idle (they have already forwarded their portion). During backward pass, the pattern reverses. With naive pipelining, GPU utilization is only 1/N for N pipeline stages.
+**Плохо:** pipeline bubbles. Когда GPU 4 вычисляет forward pass на micro-batch 1, GPUs 1, 2 и 3 простаивают (они уже передали свою часть). Во время backward pass pattern разворачивается. При naive pipelining GPU utilization равен только 1/N для N pipeline stages.
 
-**GPipe and PipeDream** solve the bubble problem by splitting the batch into micro-batches. GPU 1 starts on micro-batch 2 as soon as it finishes forwarding micro-batch 1. This overlaps computation across pipeline stages. With M micro-batches and N stages, the bubble fraction drops to (N-1)/M. Use M=16 micro-batches with N=4 stages and the bubble is 3/16 = 18.75% idle time.
+**GPipe and PipeDream** решают bubble problem, разбивая batch на micro-batches. GPU 1 начинает micro-batch 2 сразу после завершения forward для micro-batch 1. Это перекрывает computation между pipeline stages. При M micro-batches и N stages bubble fraction падает до (N-1)/M. Если M=16 micro-batches и N=4 stages, bubble равен 3/16 = 18.75% idle time.
 
 ### FSDP: Fully Sharded Data Parallel
 
-FSDP combines the scalability of data parallelism with the memory efficiency of sharding. Instead of each GPU holding a complete copy of the model, each GPU holds only 1/N of the parameters, gradients, and optimizer states.
+FSDP объединяет scalability data parallelism с memory efficiency sharding. Вместо того чтобы каждый GPU хранил полную копию модели, каждый GPU хранит только 1/N parameters, gradients и optimizer states.
 
-Before a layer's forward pass, FSDP runs an **all-gather** to collect the full parameters from all GPUs into each GPU's memory. After the forward pass, each GPU discards the non-local parameters. During backward, the all-gather runs again to reconstruct parameters for gradient computation. After the backward pass, a **reduce-scatter** distributes gradient shards so each GPU only stores 1/N of the gradients.
+Перед forward pass слоя FSDP выполняет **all-gather**, чтобы собрать полные parameters со всех GPUs в память каждого GPU. После forward pass каждый GPU отбрасывает non-local parameters. Во время backward all-gather запускается снова, чтобы восстановить параметры для gradient computation. После backward pass **reduce-scatter** распределяет gradient shards так, что каждый GPU хранит только 1/N gradients.
 
-**The math for a 70B model on 8 GPUs:**
+**Математика для модели 70B на 8 GPUs:**
 
-| Component | Without FSDP | With FSDP |
+| Компонент | Without FSDP | With FSDP |
 |-----------|-------------|-----------|
 | Weights (FP16) | 140 GB per GPU | 17.5 GB per GPU |
 | Adam States (FP32) | 560 GB per GPU | 70 GB per GPU |
 | Gradients (FP16) | 140 GB per GPU | 17.5 GB per GPU |
 | **Total** | **840 GB per GPU** | **105 GB per GPU** |
 
-Without FSDP, you cannot fit a 70B model on a single 80GB GPU. With FSDP on 8 GPUs, each GPU uses 105GB -- wait, that still does not fit. You need at least 16 GPUs to get under 80GB per GPU, or you combine FSDP with activation checkpointing (recompute activations during backward instead of storing them).
+Без FSDP модель 70B не помещается на один 80GB GPU. С FSDP на 8 GPUs каждый GPU использует 105GB -- стоп, это все еще не помещается. Нужно как минимум 16 GPUs, чтобы опуститься ниже 80GB per GPU, или нужно сочетать FSDP с activation checkpointing (перевычислять activations во время backward вместо хранения).
 
-The communication cost is higher than vanilla data parallelism because of the all-gather before each layer. But the memory savings make previously impossible training runs possible.
+Communication cost выше, чем у обычного data parallelism, из-за all-gather перед каждым layer. Но экономия памяти делает возможными training runs, которые раньше были невозможны.
 
 ```mermaid
 graph TD
@@ -166,7 +166,7 @@ graph TD
 
 ### DeepSpeed ZeRO
 
-DeepSpeed's ZeRO (Zero Redundancy Optimizer) is conceptually identical to FSDP but was developed independently by Microsoft. It defines three stages, each sharding more aggressively:
+DeepSpeed ZeRO (Zero Redundancy Optimizer) концептуально идентичен FSDP, но был независимо разработан Microsoft. Он задает три stages, каждый из которых shards более агрессивно:
 
 | Stage | Shards | Memory Savings | Communication |
 |-------|--------|---------------|---------------|
@@ -174,21 +174,21 @@ DeepSpeed's ZeRO (Zero Redundancy Optimizer) is conceptually identical to FSDP b
 | ZeRO-2 | + Gradients | ~8x reduction | Slightly more |
 | ZeRO-3 | + Parameters | ~Nx reduction (N GPUs) | All-gather per layer |
 
-ZeRO-3 is equivalent to FSDP. The naming is different, the mechanism is the same. PyTorch added FSDP as a native implementation after DeepSpeed proved the concept.
+ZeRO-3 эквивалентен FSDP. Названия разные, механизм тот же. PyTorch добавил FSDP как native implementation после того, как DeepSpeed доказал идею.
 
-DeepSpeed also introduced ZeRO-Offload (offload optimizer states to CPU RAM, which is cheaper and larger) and ZeRO-Infinity (offload to NVMe SSDs). These trade compute speed for memory capacity -- the offloaded operations are slower but free up GPU memory.
+DeepSpeed также представил ZeRO-Offload (выгружать optimizer states в CPU RAM, которая дешевле и больше) и ZeRO-Infinity (выгружать в NVMe SSDs). Это обмен compute speed на memory capacity: offloaded operations медленнее, но освобождают GPU memory.
 
 ### Mixed Precision Training
 
-Modern training uses multiple floating-point formats simultaneously:
+Современное обучение использует несколько floating-point formats одновременно:
 
-- **Forward pass**: FP16 or BF16 (16-bit). Half the memory of FP32. Matmuls run 2x faster on tensor cores.
-- **Master weights**: FP32 (32-bit). Maintained by the optimizer for numerical precision during weight updates.
-- **Loss scaling**: Multiply the loss by a large constant before backward pass to prevent FP16 gradients from underflowing to zero. Divide by the same constant before the optimizer step.
+- **Forward pass**: FP16 или BF16 (16-bit). Вдвое меньше памяти, чем FP32. Matmuls работают в 2 раза быстрее на tensor cores.
+- **Master weights**: FP32 (32-bit). Поддерживаются optimizer для numerical precision во время weight updates.
+- **Loss scaling**: умножить loss на большую константу перед backward pass, чтобы FP16 gradients не underflow до нуля. Разделить на ту же константу перед optimizer step.
 
-BF16 (Brain Float 16) has the same exponent range as FP32 (8 exponent bits) but reduced precision (7 mantissa bits vs FP32's 23). It rarely needs loss scaling because it can represent the same range of values. FP16 has 5 exponent bits and 10 mantissa bits -- it can represent fine-grained values but overflows/underflows at extreme magnitudes.
+BF16 (Brain Float 16) имеет тот же exponent range, что и FP32 (8 exponent bits), но меньшую precision (7 mantissa bits против 23 у FP32). Ему редко нужен loss scaling, потому что он представляет тот же диапазон значений. FP16 имеет 5 exponent bits и 10 mantissa bits: он может представлять более точные значения, но overflow/underflow на экстремальных величинах.
 
-Google's TPUs use BF16 natively. NVIDIA's A100 and H100 support both FP16 and BF16. The industry has largely moved to BF16 because it eliminates loss scaling headaches.
+TPUs Google используют BF16 нативно. NVIDIA A100 и H100 поддерживают и FP16, и BF16. Индустрия в основном перешла на BF16, потому что он устраняет проблемы с loss scaling.
 
 **Memory comparison for a 7B model:**
 
@@ -197,24 +197,24 @@ Google's TPUs use BF16 natively. NVIDIA's A100 and H100 support both FP16 and BF
 | FP32 everywhere | 28 GB | 56 GB | 28 GB | 112 GB |
 | Mixed (BF16 + FP32 master) | 14 GB | 56 GB | 14 GB | 84 GB |
 
-Mixed precision saves 28GB on this model. The optimizer states stay in FP32 regardless -- this is where most of the memory goes.
+Mixed precision экономит 28GB на этой модели. Optimizer states остаются в FP32 независимо от формата: именно туда уходит большая часть памяти.
 
 ### Megatron-LM and 3D Parallelism
 
-Real large-scale training combines all three parallelisms:
+Настоящее large-scale training объединяет все три parallelisms:
 
-- **Data parallelism** across groups of nodes (scale batch size)
-- **Tensor parallelism** within a node (split layers across 8 GPUs)
-- **Pipeline parallelism** across nodes (split layer groups across machines)
+- **Data parallelism** между groups of nodes (масштабировать batch size)
+- **Tensor parallelism** внутри node (разделить layers между 8 GPUs)
+- **Pipeline parallelism** между nodes (разделить groups of layers между machines)
 
-Llama 3 405B on 16,384 H100s:
-- 8-way tensor parallelism within each node (8 GPUs per node)
-- 16-way pipeline parallelism across nodes (16 pipeline stages)
-- 128-way data parallelism across the remaining dimension (16,384 / 8 / 16 = 128)
+Llama 3 405B на 16,384 H100s:
+- 8-way tensor parallelism внутри каждого node (8 GPUs per node)
+- 16-way pipeline parallelism между nodes (16 pipeline stages)
+- 128-way data parallelism по оставшемуся измерению (16,384 / 8 / 16 = 128)
 
-This 3D decomposition (8 x 16 x 128 = 16,384) is how you scale to thousands of GPUs. Each GPU sees a different data shard (data parallel), holds one slice of each layer (tensor parallel), and computes a different set of layers (pipeline parallel).
+Эта 3D decomposition (8 x 16 x 128 = 16,384) позволяет масштабироваться до тысяч GPUs. Каждый GPU видит другой data shard (data parallel), хранит один slice каждого layer (tensor parallel) и вычисляет другой набор layers (pipeline parallel).
 
-DeepSeek V3 took a different approach. Their Mixture of Experts architecture activates only 37B out of 671B parameters per token. This means each GPU only needs to compute (and store activations for) the active parameters. They trained on 2,048 H800 GPUs -- less than 1/8 of Meta's GPU count -- for $5.6M vs Meta's estimated $100M.
+DeepSeek V3 выбрал другой подход. Их Mixture of Experts architecture активирует только 37B из 671B parameters на токен. Значит, каждый GPU должен вычислять (и хранить activations для) только active parameters. Они обучали на 2,048 H800 GPUs -- меньше чем 1/8 от числа GPUs у Meta -- за $5.6M против оценочных $100M у Meta.
 
 ```mermaid
 graph TD
@@ -243,7 +243,7 @@ graph TD
 
 ### Step 1: Simulate Data Parallelism
 
-Split a batch across simulated GPUs. Each GPU computes a forward pass on its shard. Average the "gradients" (we simulate them as the loss values).
+Разделите batch между simulated GPUs. Каждый GPU вычисляет forward pass на своем shard. Усредните "gradients" (мы симулируем их как loss values).
 
 ```python
 import numpy as np
@@ -272,11 +272,11 @@ def simulate_data_parallelism(data, num_gpus, model_fn):
     return avg_loss, avg_gradient
 ```
 
-The all-reduce operation (averaging gradients) is the only communication in data parallelism. In practice, this uses the NCCL library on NVIDIA GPUs, which implements ring all-reduce: each GPU sends 1/N of its gradients to its neighbor, receives 1/N from the other neighbor, and after N-1 steps every GPU has the complete average. Total communication volume: 2 x gradient_size x (N-1)/N, approaching 2x the gradient size for large N.
+Операция all-reduce (усреднение gradients) -- единственная communication в data parallelism. На практике для NVIDIA GPUs используется библиотека NCCL, которая реализует ring all-reduce: каждый GPU отправляет 1/N своих gradients соседу, получает 1/N от другого соседа, и после N-1 steps каждый GPU имеет полный average. Total communication volume: 2 x gradient_size x (N-1)/N, что для больших N приближается к 2x gradient size.
 
 ### Step 2: Simulate Tensor Parallelism
 
-Split a weight matrix across GPUs. Each GPU computes a partial matrix multiplication. Combine the results.
+Разделите weight matrix между GPUs. Каждый GPU вычисляет partial matrix multiplication. Объедините результаты.
 
 ```python
 def simulate_tensor_parallelism(input_data, weight_matrix, num_gpus):
@@ -301,13 +301,13 @@ def simulate_tensor_parallelism(input_data, weight_matrix, num_gpus):
     return full_output, error
 ```
 
-The error should be exactly zero (or machine epsilon). Tensor parallelism is mathematically exact -- it produces the same result as computing the full matmul on one GPU. The split is along the output dimension, so each GPU produces a different chunk of columns, and concatenation reconstructs the full result.
+Error должен быть ровно ноль (или machine epsilon). Tensor parallelism математически точен: он дает тот же результат, что и full matmul на одном GPU. Split выполняется по output dimension, поэтому каждый GPU производит другой chunk columns, а concatenation восстанавливает full result.
 
-For column-parallel linear layers (splitting the output dimension), you concatenate. For row-parallel (splitting the input dimension), you sum. In a transformer FFN, the first linear (expand) uses column-parallel and the second linear (contract) uses row-parallel. This avoids an all-reduce between the two layers.
+Для column-parallel linear layers (split output dimension) вы выполняете concatenate. Для row-parallel (split input dimension) -- sum. В transformer FFN первый linear (expand) использует column-parallel, а второй linear (contract) -- row-parallel. Это позволяет избежать all-reduce между двумя layers.
 
 ### Step 3: Simulate Pipeline Parallelism
 
-Split a model's layers across virtual GPUs. Show the bubble problem where early stages sit idle while later stages compute.
+Разделите layers модели между virtual GPUs. Покажите bubble problem, где early stages простаивают, пока later stages вычисляют.
 
 ```python
 def simulate_pipeline_parallelism(num_layers, num_stages, num_microbatches):
@@ -345,11 +345,11 @@ def simulate_pipeline_parallelism(num_layers, num_stages, num_microbatches):
     return timeline, total_time, bubble_fraction
 ```
 
-With 4 stages and 1 micro-batch, the bubble fraction is 75% -- three out of four GPUs idle at any time. With 16 micro-batches, it drops to about 19%. The cost of eliminating bubbles is memory: you must store activations for all in-flight micro-batches simultaneously.
+При 4 stages и 1 micro-batch bubble fraction равен 75%: три из четырех GPUs простаивают в любой момент времени. С 16 micro-batches он падает примерно до 19%. Цена устранения bubbles -- память: нужно одновременно хранить activations для всех in-flight micro-batches.
 
 ### Step 4: Memory Calculator
 
-Compute the exact memory requirements for training any model size.
+Вычислите точные memory requirements для обучения модели любого размера.
 
 ```python
 def memory_calculator(
@@ -412,11 +412,11 @@ def memory_calculator(
     }
 ```
 
-This calculator answers the question every ML engineer asks: "How many GPUs do I need?" Feed it the model size and see whether it fits. Adjust sharding strategy until the per-GPU total drops below 80GB.
+Этот calculator отвечает на вопрос, который задает каждый ML engineer: "How many GPUs do I need?" Передайте ему model size и проверьте, помещается ли модель. Настраивайте sharding strategy, пока per-GPU total не опустится ниже 80GB.
 
 ### Step 5: Mixed Precision Simulation
 
-Compare memory usage between FP32, FP16, and mixed precision training.
+Сравните memory usage между FP32, FP16 и mixed precision training.
 
 ```python
 def mixed_precision_comparison(params_billions):
@@ -446,7 +446,7 @@ def mixed_precision_comparison(params_billions):
     }
 ```
 
-The biggest surprise for most people: mixed precision does not halve the memory. The optimizer states (Adam's m and v) stay in FP32 regardless of precision. For a 7B model, FP32 training uses 112GB. Mixed precision uses 84GB. That is a 25% reduction, not 50%. The optimizer dominates.
+Главный сюрприз для большинства: mixed precision не уменьшает память вдвое. Optimizer states (Adam's m and v) остаются в FP32 независимо от precision. Для модели 7B FP32 training использует 112GB. Mixed precision использует 84GB. Это reduction на 25%, а не на 50%. Dominates именно optimizer.
 
 ## Use It
 
@@ -529,40 +529,40 @@ def run_all_demos():
 
 ## Ship It
 
-This lesson produces `outputs/prompt-distributed-training-planner.md` -- a prompt that takes a model size and available hardware, then produces a complete distributed training plan: parallelism strategy, memory budget, communication overhead, and expected throughput.
+Этот урок создает `outputs/prompt-distributed-training-planner.md` -- prompt, который принимает model size и available hardware, а затем выдает полный distributed training plan: parallelism strategy, memory budget, communication overhead и expected throughput.
 
 ## Exercises
 
-1. Modify the memory calculator to include activation checkpointing. With checkpointing, only store activations at every K-th layer (typical K=1, meaning recompute all). Show the memory-compute tradeoff: how much memory does checkpointing save, and how much does it slow down training (roughly 33% more compute for full checkpointing)?
+1. Измените memory calculator, чтобы включить activation checkpointing. При checkpointing сохраняются activations только каждого K-го layer (typical K=1, то есть все перевычисляется). Покажите memory-compute tradeoff: сколько памяти экономит checkpointing и насколько он замедляет training (примерно 33% more compute для full checkpointing)?
 
-2. Extend the pipeline parallelism simulation to implement the 1F1B (one forward, one backward) schedule used by PipeDream. Compare the bubble fraction against the naive schedule for 4 stages and 8 micro-batches. The 1F1B schedule should have a smaller peak memory because it starts backward passes earlier.
+2. Расширьте simulation pipeline parallelism, реализовав schedule 1F1B (one forward, one backward), который использует PipeDream. Сравните bubble fraction с naive schedule для 4 stages и 8 micro-batches. Schedule 1F1B должен иметь меньшую peak memory, потому что он раньше начинает backward passes.
 
-3. Implement a gradient accumulation simulator. Instead of all-reducing after every micro-batch, accumulate gradients locally for K steps, then all-reduce. Show how this reduces communication by K times but produces identical final gradients (and thus identical training).
+3. Реализуйте simulator gradient accumulation. Вместо all-reduce после каждого micro-batch накапливайте gradients локально K steps, затем выполняйте all-reduce. Покажите, что это уменьшает communication в K раз, но дает identical final gradients (а значит, identical training).
 
-4. Build a cost estimator. Given a model size, target token count, GPU type (A100 at $2/hr, H100 at $3.50/hr), and parallelism strategy, estimate the total training cost in dollars. Validate against known costs: Llama 3 405B reportedly cost ~$100M, DeepSeek V3 cost ~$5.6M.
+4. Постройте cost estimator. По model size, target token count, GPU type (A100 at $2/hr, H100 at $3.50/hr) и parallelism strategy оцените total training cost в dollars. Проверьте на известных costs: Llama 3 405B reportedly cost ~$100M, DeepSeek V3 cost ~$5.6M.
 
-5. Add ZeRO-Offload to the memory calculator. Assume CPU RAM is 512GB per node and NVMe is 2TB. Show how offloading optimizer states to CPU allows a 70B model to train on 4 GPUs instead of 16, at the cost of 30-50% slower optimizer steps.
+5. Добавьте ZeRO-Offload в memory calculator. Предположите, что CPU RAM составляет 512GB per node, а NVMe -- 2TB. Покажите, как offloading optimizer states to CPU позволяет обучать модель 70B на 4 GPUs вместо 16 ценой 30-50% slower optimizer steps.
 
 ## Key Terms
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Data parallelism | "Copy the model to every GPU" | Each GPU processes a different data shard; gradients are averaged via all-reduce after each step |
-| Tensor parallelism | "Split a layer across GPUs" | Partition weight matrices so each GPU computes part of the matmul; requires fast NVLink interconnect |
-| Pipeline parallelism | "Split layers across GPUs" | Each GPU runs a different group of layers; data flows through the pipeline with micro-batches to reduce bubbles |
-| FSDP | "Shard everything" | Fully Sharded Data Parallel -- each GPU holds 1/N of weights, gradients, and optimizer states; all-gather before compute |
-| ZeRO | "DeepSpeed's version of FSDP" | Zero Redundancy Optimizer with 3 stages: shard optimizer (Stage 1), + gradients (Stage 2), + parameters (Stage 3) |
-| All-reduce | "Average across GPUs" | Collective operation where every GPU ends with the sum (or average) of all GPUs' inputs -- typically implemented as ring all-reduce |
-| All-gather | "Collect from all GPUs" | Collective operation where every GPU ends with the concatenation of all GPUs' data -- used in FSDP to reconstruct full parameters |
-| Reduce-scatter | "Sum and distribute" | Collective operation that reduces (sums) data and scatters different chunks to different GPUs -- used in FSDP for gradient sharding |
-| Mixed precision | "Train in half precision" | Use FP16/BF16 for forward/backward and FP32 for optimizer states -- saves ~25% memory, not 50%, because the optimizer dominates |
-| Pipeline bubble | "Idle time in the pipeline" | Fraction of time GPUs sit idle waiting for data from the previous stage -- reduced by using more micro-batches |
+| Data parallelism | "Copy the model to every GPU" | Каждый GPU обрабатывает другой data shard; gradients усредняются через all-reduce после каждого step |
+| Tensor parallelism | "Split a layer across GPUs" | Partition weight matrices так, чтобы каждый GPU вычислял часть matmul; требует быстрый NVLink interconnect |
+| Pipeline parallelism | "Split layers across GPUs" | Каждый GPU выполняет другую group of layers; данные текут через pipeline с micro-batches, чтобы уменьшить bubbles |
+| FSDP | "Shard everything" | Fully Sharded Data Parallel -- каждый GPU хранит 1/N weights, gradients и optimizer states; all-gather перед compute |
+| ZeRO | "DeepSpeed's version of FSDP" | Zero Redundancy Optimizer с 3 stages: shard optimizer (Stage 1), + gradients (Stage 2), + parameters (Stage 3) |
+| All-reduce | "Average across GPUs" | Collective operation, где каждый GPU в итоге имеет sum (или average) inputs всех GPUs -- обычно реализуется как ring all-reduce |
+| All-gather | "Collect from all GPUs" | Collective operation, где каждый GPU в итоге имеет concatenation data всех GPUs -- используется в FSDP для reconstruction full parameters |
+| Reduce-scatter | "Sum and distribute" | Collective operation, которая reduces (sums) data и scatters разные chunks на разные GPUs -- используется в FSDP для gradient sharding |
+| Mixed precision | "Train in half precision" | Использовать FP16/BF16 для forward/backward и FP32 для optimizer states -- экономит ~25% memory, а не 50%, потому что dominates optimizer |
+| Pipeline bubble | "Idle time in the pipeline" | Доля времени, когда GPUs простаивают, ожидая data from previous stage -- уменьшается при использовании большего числа micro-batches |
 
 ## Further Reading
 
-- [Rajbhandari et al., 2020 -- "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models"](https://arxiv.org/abs/1910.02054) -- the DeepSpeed ZeRO paper that defined the three sharding stages
-- [Shoeybi et al., 2020 -- "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism"](https://arxiv.org/abs/1909.08053) -- NVIDIA's tensor parallelism for transformers
-- [Narayanan et al., 2021 -- "Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM"](https://arxiv.org/abs/2104.04473) -- 3D parallelism combining data, tensor, and pipeline
-- [Zhao et al., 2023 -- "PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel"](https://arxiv.org/abs/2304.11277) -- PyTorch's native FSDP implementation
-- [Llama 3 Technical Report](https://arxiv.org/abs/2407.21783) -- 16,384 GPU training with 3D parallelism details
-- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437) -- how MoE architecture reduces training cost by an order of magnitude
+- [Rajbhandari et al., 2020 -- "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models"](https://arxiv.org/abs/1910.02054) -- статья DeepSpeed ZeRO, определившая три sharding stages
+- [Shoeybi et al., 2020 -- "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism"](https://arxiv.org/abs/1909.08053) -- tensor parallelism NVIDIA для transformers
+- [Narayanan et al., 2021 -- "Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM"](https://arxiv.org/abs/2104.04473) -- 3D parallelism, объединяющий data, tensor и pipeline
+- [Zhao et al., 2023 -- "PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel"](https://arxiv.org/abs/2304.11277) -- native implementation FSDP в PyTorch
+- [Llama 3 Technical Report](https://arxiv.org/abs/2407.21783) -- training на 16,384 GPUs с деталями 3D parallelism
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437) -- как MoE architecture снижает training cost на порядок

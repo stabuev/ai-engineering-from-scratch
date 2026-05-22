@@ -1,6 +1,6 @@
 # Async and Hogwild! Inference
 
-> Speculative decoding (Phase 10 · 15) parallelizes tokens within one sequence. Multi-agent frameworks parallelize across whole sequences but force explicit coordination (voting, sub-task splitting). Hogwild! Inference (Rodionov et al., arXiv:2504.06261) does something else: run N instances of the same LLM in parallel against a SHARED key-value cache. Each worker sees every other worker's generated tokens instantly. Modern reasoning models — QwQ, DeepSeek-R1 — can self-coordinate through that shared cache without any fine-tuning. The approach is experimental but it opens an entirely new axis of inference parallelism that sits orthogonal to spec decode. This lesson implements a two-worker Hogwild! simulator in stdlib Python and explains why the shared-cache collaboration emerges from the existing model's reasoning abilities.
+> Speculative decoding (Phase 10 · 15) parallelizes tokens within one sequence. Multi-agent frameworks parallelize across whole sequences, но требуют explicit coordination (voting, sub-task splitting). Hogwild! Inference (Rodionov et al., arXiv:2504.06261) делает другое: запускает N instances одной LLM параллельно против SHARED key-value cache. Каждый worker мгновенно видит tokens, сгенерированные другими workers. Современные reasoning models — QwQ, DeepSeek-R1 — могут self-coordinate через shared cache без fine-tuning. Подход экспериментальный, но он открывает совершенно новую ось inference parallelism, ортогональную spec decode. Этот урок реализует two-worker Hogwild! simulator на stdlib Python и объясняет, почему shared-cache collaboration возникает из уже существующих reasoning abilities модели.
 
 **Type:** Build
 **Languages:** Python (stdlib)
@@ -9,186 +9,186 @@
 
 ## Learning Objectives
 
-- Describe the three common parallel-LLM topologies (voting, sub-task, Hogwild!) and name which problems each one targets.
-- State the core Hogwild! setup: multiple workers, one shared KV cache, emergent coordination via self-prompting.
-- Compute the wall-time speedup of Hogwild! as a function of worker count `N`, task-level parallelism `p`, and coordination overhead `c`.
-- Implement a two-worker Hogwild! simulator on a toy problem and observe the emergent task division.
+- Описать три common parallel-LLM topologies (voting, sub-task, Hogwild!) и назвать, какие problems решает каждая.
+- Сформулировать core Hogwild! setup: multiple workers, one shared KV cache, emergent coordination via self-prompting.
+- Посчитать wall-time speedup Hogwild! как функцию worker count `N`, task-level parallelism `p` и coordination overhead `c`.
+- Реализовать two-worker Hogwild! simulator на toy problem и наблюдать emergent task division.
 
 ## The Problem
 
-Modern LLMs solve hard problems by producing long chains of reasoning — 5000 tokens of step-by-step logic is common, tens of thousands of tokens happens on deep math problems. At 35 tokens/sec decode on a 70B model, 50k tokens is 24 minutes. Interactive the model is not.
+Современные LLMs решают сложные problems, производя длинные chains of reasoning — 5000 tokens пошаговой логики обычны, десятки тысяч tokens встречаются на глубоких math problems. При 35 tokens/sec decode на 70B model 50k tokens — это 24 минуты. Interactive model такой не является.
 
-Speculative decoding (Phase 10 · 15) gets you a 3-5x speedup by parallelizing within one sequence. Past that the sequential dependency of autoregressive decoding is the hard ceiling. Each new token depends on every prior token.
+Speculative decoding (Phase 10 · 15) дает 3-5x speedup за счет parallelizing within one sequence. Дальше жесткий потолок — sequential dependency autoregressive decoding. Каждый новый token зависит от всех предыдущих.
 
-The obvious question: can we parallelize across sequences? Run multiple copies of the same model on the same problem, let them cooperate, have them divide the work?
+Очевидный вопрос: можно ли parallelize across sequences? Запустить несколько copies одной model на одной problem, позволить им cooperate, дать им divide the work?
 
-Prior work: voting ensembles (run N models, pick the majority answer), tree-of-thought (branch reasoning paths and recombine), and multi-agent frameworks (assign each agent a sub-task, use a coordinator). These all help in specific task domains. They all also introduce explicit coordination machinery — voting rules, branch-and-prune logic, agent-to-agent messaging protocols.
+Previous work: voting ensembles (запустить N models, выбрать majority answer), tree-of-thought (branch reasoning paths and recombine), multi-agent frameworks (назначить каждому agent sub-task, использовать coordinator). Все это помогает в specific task domains. И все это вводит explicit coordination machinery — voting rules, branch-and-prune logic, agent-to-agent messaging protocols.
 
-Hogwild! Inference takes a different approach. N workers share a single KV cache. Each worker sees every other worker's generated tokens immediately, as if they were its own context. The workers — without any training or fine-tuning — figure out how to divide the work. Modern reasoning models (QwQ, DeepSeek-R1, Claude-family reasoning mode) can read the shared cache and say things like "I see worker 2 already handled the base case, so I'll work on the inductive step."
+Hogwild! Inference выбирает другой подход. N workers разделяют один KV cache. Каждый worker мгновенно видит tokens всех остальных workers, как будто это его собственный context. Workers — без training или fine-tuning — выясняют, как divide the work. Современные reasoning models (QwQ, DeepSeek-R1, Claude-family reasoning mode) могут читать shared cache и писать вроде: "I see worker 2 already handled the base case, so I'll work on the inductive step."
 
-The speedup is workload-dependent and experimental as of April 2026. But the idea is worth knowing because it opens a new axis of inference parallelism.
+Speedup workload-dependent и экспериментальный по состоянию на апрель 2026. Но идею нужно знать, потому что она открывает новую ось inference parallelism.
 
 ## The Concept
 
 ### The setup
 
-Initialize N worker processes, all running the same LLM. Instead of per-worker KV caches, maintain ONE shared cache. When worker `i` generates token `t_j`, the token is written into the shared cache at the next position. When worker `k` takes its next step, it reads the current state of the cache (which includes everything all N workers have generated so far).
+Инициализируйте N worker processes, все запускают одну и ту же LLM. Вместо per-worker KV caches поддерживайте ONE shared cache. Когда worker `i` генерирует token `t_j`, token записывается в shared cache на следующую position. Когда worker `k` делает следующий step, он читает current state cache (включая все, что сгенерировали все N workers).
 
-At step time, workers race to write tokens. There is no per-worker position index — the cache is a single growing sequence. Order is determined by write arrival time.
+В step time workers соревнуются за запись tokens. Per-worker position index нет — cache является одной растущей sequence. Order определяется write arrival time.
 
-### Why coordination emerges
+### Почему возникает координация
 
-The workers share a prompt. Typically something like "You are one of N instances working together on this problem. Each instance reads the shared memory and can see what other instances have written. Avoid redundant work." The prompt plus the shared cache is enough. Reasoning models read the cache, notice which parts of the problem have already been attempted, and (often but not always) pivot to unexplored parts.
+Workers используют общий prompt. Обычно это что-то вроде "You are one of N instances working together on this problem. Each instance reads the shared memory and can see what other instances have written. Avoid redundant work." Prompt плюс shared cache обычно достаточно. Reasoning models читают cache, замечают, какие части задачи уже были опробованы, и часто переключаются на еще не исследованные направления.
 
-The Hogwild! paper (Rodionov et al., 2025) reports observations like:
+Hogwild! paper (Rodionov et al., 2025) сообщает observations:
 
-- Workers formulate plans and communicate them to other workers via the cache.
-- Workers notice errors in other workers' reasoning and call them out.
-- Workers adapt when a plan fails and propose alternatives.
-- When prompted to check for redundancy, workers detect it and pivot.
+- Workers формулируют plans и передают их другим workers через cache.
+- Workers замечают errors в reasoning других workers и явно указывают на них.
+- Workers adapt, когда plan fails, и предлагают alternatives.
+- Когда prompted to check for redundancy, workers detect it and pivot.
 
-None of this requires fine-tuning. The emergent behavior comes from the reasoning capabilities the model already has.
+Ничего из этого не требует fine-tuning. Emergent behavior приходит из reasoning capabilities, которые у model уже есть.
 
 ### The naming
 
-The paper's name riffs on Hogwild! SGD (Recht et al., 2011), an asynchronous-update optimizer. The analogy: SGD's asynchronous workers all write to a shared parameter vector; Hogwild! Inference's workers all write to a shared KV cache. Both rely on empirical convergence rather than synchronization guarantees.
+Название paper отсылает к Hogwild! SGD (Recht et al., 2011), asynchronous-update optimizer. Аналогия: asynchronous workers SGD все пишут в shared parameter vector; workers Hogwild! Inference все пишут в shared KV cache. Оба полагаются на empirical convergence, а не synchronization guarantees.
 
 ### RoPE makes this tractable
 
-Rotary Position Embeddings (RoPE, Su et al. 2021) encode position information via rotation in the Q and K vectors. Because positions are rotations and not baked-in offsets, a token's position can shift without recomputing the KV cache entry. When worker `i` writes into the shared cache at position `p`, other workers reading that position can use the cached entry directly — no re-rotation needed.
+Rotary Position Embeddings (RoPE, Su et al. 2021) кодируют position information через rotation в Q и K vectors. Поскольку positions — rotations, а не baked-in offsets, position token может сдвигаться без recomputing KV cache entry. Когда worker `i` пишет в shared cache на position `p`, другие workers, читающие эту position, могут использовать cached entry напрямую — re-rotation не нужна.
 
-In a learned-position or absolute-position model, Hogwild! would need cache invalidation on every concurrent write. RoPE lets the cache stay stable.
+В learned-position или absolute-position model Hogwild! требовал бы cache invalidation при каждой concurrent write. RoPE позволяет cache оставаться stable.
 
 ### Wall-time math
 
-Let `T_serial` be the time for one worker to solve the problem alone. Let `p` be the task-level parallelizable fraction. Let `c` be the per-step coordination overhead (reading the extended cache, deciding what to write).
+Пусть `T_serial` — время, за которое один worker решает problem alone. Пусть `p` — task-level parallelizable fraction. Пусть `c` — per-step coordination overhead (reading extended cache, deciding what to write).
 
 Single-worker time: `T_serial`.
-N-worker Hogwild! time, if coordination is free: `T_serial * ((1 - p) + p / N)`. Classic Amdahl.
-With coordination overhead: `T_serial * ((1 - p) + p / N) + c * steps_per_worker`.
+N-worker Hogwild! time, если coordination free: `T_serial * ((1 - p) + p / N)`. Классический Amdahl.
+С coordination overhead: `T_serial * ((1 - p) + p / N) + c * steps_per_worker`.
 
-For a worker to be productive, `c` must be small relative to the per-step decode time. On reasoning models producing 5k+ tokens, the workers can afford hundreds of tokens of coordination overhead and still come out ahead. On short chat tasks, coordination dominates and Hogwild! is worse than serial.
+Чтобы worker был productive, `c` должен быть мал относительно per-step decode time. На reasoning models, производящих 5k+ tokens, workers могут позволить себе сотни tokens coordination overhead и все равно выиграть. На short chat tasks coordination dominates, и Hogwild! хуже serial.
 
 ### Concrete example
 
-Reasoning problem: 10k tokens of chain-of-thought. Suppose the problem has `p = 0.7` parallelizable content (different proof strategies, different case analyses) and `c = 200` tokens of coordination overhead per worker. With `N = 4` workers:
+Reasoning problem: 10k tokens chain-of-thought. Пусть problem имеет `p = 0.7` parallelizable content (different proof strategies, different case analyses) и `c = 200` tokens coordination overhead на worker. С `N = 4` workers:
 
 - Serial time: 10000 decode steps.
 - Hogwild! time: 10000 * (0.3 + 0.7 / 4) + 200 * 4 = 10000 * 0.475 + 800 = 5550 decode steps.
 - Speedup: 10000 / 5550 = 1.8x.
 
-That is modest. But on longer reasoning problems (50k tokens), the coordination overhead amortizes and the speedup pushes 2.5-3x. Hogwild! is the inference equivalent of thread-level parallelism in a language that lets you write multi-threaded code naturally.
+Это умеренно. Но на более длинных reasoning problems (50k tokens) coordination overhead амортизируется, и speedup выходит к 2.5-3x. Hogwild! — inference equivalent thread-level parallelism в языке, где natural multi-threaded code пишется естественно.
 
 ### When to reach for Hogwild!
 
-- Long reasoning problems (thousands of tokens) where the task can be parallelized across independent sub-goals.
-- Reasoning models that have been trained to think step by step. Non-reasoning models do not self-coordinate well.
-- Single-node deployments with enough VRAM to hold the shared cache plus N worker processes. The cache is shared, but each worker has its own activation memory.
+- Long reasoning problems (тысячи tokens), где task можно parallelize across independent sub-goals.
+- Reasoning models, обученные think step by step. Non-reasoning models плохо self-coordinate.
+- Single-node deployments с достаточной VRAM для shared cache плюс N worker processes. Cache shared, но у каждого worker своя activation memory.
 
 ### When not to
 
 - Short interactive chat. Coordination overhead dominates.
-- Tasks that don't parallelize (single linear proof, single compilation). N=1 is the max.
-- Non-reasoning models. No coordination emerges.
-- Multi-node deployments. The shared cache needs very fast cross-worker synchronization. Intra-node is fine; cross-node is a latency disaster.
+- Tasks that don't parallelize (single linear proof, single compilation). N=1 — максимум.
+- Non-reasoning models. Coordination не возникает.
+- Multi-node deployments. Shared cache требует очень fast cross-worker synchronization. Intra-node нормально; cross-node — latency disaster.
 
 ### The experimental status
 
-As of April 2026, Hogwild! is a research method with an open-source PyTorch implementation. Production adoption has not happened. Three blockers:
+По состоянию на апрель 2026 Hogwild! — research method с open-source PyTorch implementation. Production adoption еще не случился. Три blockers:
 
-1. Shared KV cache management across concurrent processes is non-trivial engineering.
-2. Emergent coordination is task-dependent; benchmarks are still being built.
-3. The speedups are modest compared to what speculative decoding already delivers, and the two can be combined but the combined engineering is another layer.
+1. Shared KV cache management across concurrent processes — нетривиальная engineering задача.
+2. Emergent coordination task-dependent; benchmarks still being built.
+3. Speedups modest compared to what speculative decoding already delivers, and the two can be combined but the combined engineering is another layer.
 
-Worth knowing. Worth experimenting with. Not yet worth betting a product on.
+Стоит знать. Стоит экспериментировать. Пока не стоит ставить на него product.
 
 ## Build It
 
-`code/main.py` implements a toy Hogwild! simulator:
+`code/main.py` реализует toy Hogwild! simulator:
 
-- Two worker processes, each a deterministic "LLM" that produces one of several token categories (work-token, observe-token, coordinate-token) with known probabilities.
-- A shared cache (just a list of tokens) that both workers read and write.
-- A simple coordination logic: when a worker sees that the other has already produced enough work tokens in a category, it picks a different category.
+- Two worker processes, каждый deterministic "LLM", производящий одну из нескольких token categories (work-token, observe-token, coordinate-token) с известными probabilities.
+- Shared cache (просто list of tokens), который оба workers read and write.
+- Простая coordination logic: когда worker видит, что другой уже произвел достаточно work tokens в category, он выбирает другую category.
 
-The simulator runs for a fixed step budget and reports:
+Simulator runs for fixed step budget и reports:
 
 - Total work-tokens produced.
 - Total wall time (number of worker steps).
 - Effective speedup over a single worker.
-- A trace of which worker wrote which token.
+- Trace of which worker wrote which token.
 
 ### Step 1: the shared cache
 
-A list that both workers append to. Simple locking (Python `threading.Lock`) in a real implementation; we simulate with a counter.
+List, в который оба workers append. Simple locking (Python `threading.Lock`) в real implementation; здесь мы simulate with a counter.
 
 ### Step 2: the worker loop
 
-Each worker, on each step:
+Каждый worker на каждом step:
 
-- Reads the current shared cache.
+- Reads current shared cache.
 - Decides what category of token to write based on what is already there.
 - Writes one token.
 
 ### Step 3: the coordination heuristic
 
-If category X already has K tokens in the cache and worker's intended category is X, worker switches to category Y. This is a toy stand-in for the reasoning-model behavior of "notice this is already covered, do something else instead."
+Если category X уже имеет K tokens в cache и intended category worker равна X, worker switches to category Y. Это toy stand-in для behavior reasoning-model: "notice this is already covered, do something else instead."
 
 ### Step 4: measured speedup
 
-Run the simulator with N=1 worker and with N=2 workers, same total step budget. Count work-tokens produced. N=2 should produce roughly 1.5-1.8x more work-tokens because of the coordination-driven task division.
+Запустите simulator с N=1 worker и N=2 workers при том же total step budget. Посчитайте work-tokens produced. N=2 должен производить примерно в 1.5-1.8x больше work-tokens благодаря coordination-driven task division.
 
 ### Step 5: stress the coordination
 
-Reduce the coordination heuristic's sensitivity. Run again. Observe that without good coordination, N=2 redundantly produces the same tokens and the speedup drops below 1. This matches the paper's observation: the trick only works if the workers have the reasoning capacity to self-coordinate.
+Уменьшите sensitivity coordination heuristic. Запустите снова. Наблюдайте, что без хорошей coordination N=2 redundantly produces same tokens и speedup падает ниже 1. Это совпадает с observation paper: trick работает только если workers имеют reasoning capacity для self-coordinate.
 
 ## Use It
 
-Hogwild! integration in production as of April 2026 is research-grade. The reference implementation from Yandex/HSE/IST is PyTorch-based and targets single-node multi-process setups on DeepSeek-R1 and QwQ models.
+Hogwild! integration in production по состоянию на апрель 2026 — research-grade. Reference implementation от Yandex/HSE/IST основана на PyTorch и нацелена на single-node multi-process setups на DeepSeek-R1 и QwQ models.
 
-Pragmatic adoption path:
+Практичный путь внедрения:
 
-1. Profile your reasoning-task workload. Measure the fraction of tokens that are exploratory (multiple strategies, case analyses, search) vs linear.
-2. If exploration dominates, run a two-worker Hogwild! experiment. Measure wall-time improvement.
-3. If the improvement is under 1.3x, you are in the coordination-dominated regime. Revert to single-worker.
-4. If the improvement is over 1.5x, push to N=4 and measure again. Diminishing returns typically hit around N=4-8.
+1. Профилируйте workload для reasoning-задач. Измерьте долю tokens, которые являются exploratory (multiple strategies, case analyses, search), по сравнению с linear.
+2. Если exploration dominates, запустите two-worker Hogwild! experiment. Измерьте wall-time improvement.
+3. Если improvement меньше 1.3x, вы в coordination-dominated regime. Revert to single-worker.
+4. Если improvement выше 1.5x, попробуйте N=4 и измерьте снова. Diminishing returns обычно возникают около N=4-8.
 
-Combine with speculative decoding: each Hogwild! worker can independently use spec decode. The two speedups multiply (roughly), bringing a 3x spec decode and 1.8x Hogwild! to an effective 5.4x over naive single-worker decoding.
+Combine with speculative decoding: каждый Hogwild! worker может independently use spec decode. Два speedups умножаются (roughly), превращая 3x spec decode и 1.8x Hogwild! в effective 5.4x относительно naive single-worker decoding.
 
 ## Ship It
 
-This lesson produces `outputs/skill-parallel-inference-router.md`. Given a reasoning workload profile (token budget, task parallelism profile, model family, deployment target), it routes between voting, tree-of-thought, multi-agent, Hogwild!, and speculative decoding strategies.
+Этот урок создает `outputs/skill-parallel-inference-router.md`. По reasoning workload profile (token budget, task parallelism profile, model family, deployment target) он routes between voting, tree-of-thought, multi-agent, Hogwild!, and speculative decoding strategies.
 
 ## Exercises
 
-1. Run `code/main.py` with the default settings. Confirm the N=2 Hogwild! configuration produces more work-tokens than the N=1 baseline in the same wall time.
+1. Запустите `code/main.py` с default settings. Подтвердите, что N=2 Hogwild! configuration производит больше work-tokens, чем N=1 baseline за то же wall time.
 
-2. Reduce the coordination heuristic's strength (set `coordination_weight=0.1`). Re-run. Show that speedup collapses. Explain why: the workers duplicate effort when they cannot coordinate.
+2. Уменьшите strength coordination heuristic (set `coordination_weight=0.1`). Запустите заново. Покажите, что speedup collapses. Объясните почему: workers duplicate effort, когда не могут coordinate.
 
-3. Compute the expected Hogwild! speedup for a 50k-token reasoning task with `p=0.8, c=500` and N=4 workers. Do the same for a 1k-token chat task with `p=0.3, c=200` and N=4. Why is one a win and the other a loss?
+3. Посчитайте expected Hogwild! speedup для 50k-token reasoning task с `p=0.8, c=500` и N=4 workers. Сделайте то же для 1k-token chat task с `p=0.3, c=200` и N=4. Почему в одном случае win, а в другом loss?
 
-4. Read the Hogwild! paper's Section 4 (preliminary evaluation). Identify the two failure modes the authors report. Describe how a better coordination prompt might mitigate each.
+4. Прочитайте Section 4 paper Hogwild! (preliminary evaluation). Назовите два failure modes, которые report authors. Опишите, как better coordination prompt мог бы смягчить каждый.
 
-5. Combine Hogwild! with speculative decoding in the toy: each worker uses a 2-token spec-decode internally. Report the multiplicative speedup. What bookkeeping problem arises when two workers both want to extend the same shared-cache prefix?
+5. Combine Hogwild! with speculative decoding в toy: каждый worker использует 2-token spec-decode internally. Report multiplicative speedup. Какая bookkeeping problem возникает, когда два workers оба хотят extend same shared-cache prefix?
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |------|----------------|------------------------|
-| Hogwild! | "Parallel workers, shared cache" | N instances of the same LLM running concurrently with one shared KV cache; emergent coordination via self-prompting |
-| Shared KV cache | "The coordination medium" | A single growing KV buffer that all workers read and write; enables instant token visibility across workers |
-| Emergent coordination | "No training needed" | Reasoning-capable LLMs can read the shared cache and divide work without any fine-tuning or explicit protocol |
-| Coordination overhead (c) | "Tokens spent orienting" | The per-worker cost of reading the extended cache and deciding what to do; must stay small vs total decode time |
-| Parallelizable fraction (p) | "What can run in parallel" | Task-level parallelism: the fraction of the total work that is not intrinsically sequential |
-| RoPE enables Hogwild! | "Rotary positions are shift-invariant" | Because positions are rotations, writing into a shared cache does not require recomputing prior tokens |
-| Voting ensemble | "Run N, pick the majority" | The simplest parallel inference topology; useful for classification, less for long-form reasoning |
-| Tree of thought | "Branch and prune" | Reasoning strategy that explores multiple branches and prunes; explicit coordination logic |
-| Multi-agent framework | "Assign sub-tasks" | Each agent gets a role; a coordinator orchestrates; heavy protocol overhead |
+| Hogwild! | "Parallel workers, shared cache" | N instances одной LLM running concurrently с одним shared KV cache; emergent coordination via self-prompting |
+| Shared KV cache | "The coordination medium" | Один растущий KV buffer, который все workers read and write; дает instant token visibility across workers |
+| Emergent coordination | "No training needed" | Reasoning-capable LLMs могут читать shared cache и divide work без fine-tuning или explicit protocol |
+| Coordination overhead (c) | "Tokens spent orienting" | Per-worker cost чтения extended cache и решения, что делать; должен оставаться малым vs total decode time |
+| Parallelizable fraction (p) | "What can run in parallel" | Task-level parallelism: fraction total work, которая intrinsically sequential |
+| RoPE enables Hogwild! | "Rotary positions are shift-invariant" | Поскольку positions — rotations, запись в shared cache не требует recomputing prior tokens |
+| Voting ensemble | "Run N, pick the majority" | Простейшая parallel inference topology; полезна для classification, меньше для long-form reasoning |
+| Tree of thought | "Branch and prune" | Reasoning strategy, explores multiple branches and prunes; explicit coordination logic |
+| Multi-agent framework | "Assign sub-tasks" | Каждый agent получает role; coordinator orchestrates; heavy protocol overhead |
 
 ## Further Reading
 
-- [Rodionov et al. — Hogwild! Inference: Parallel LLM Generation via Concurrent Attention (arXiv:2504.06261)](https://arxiv.org/abs/2504.06261) — the Hogwild! paper, preliminary evaluation on QwQ and DeepSeek-R1
-- [Recht, Re, Wright, Niu — Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent (arXiv:1106.5730, NeurIPS 2011)](https://arxiv.org/abs/1106.5730) — the original Hogwild!, the naming origin
-- [Su et al. — RoFormer: Enhanced Transformer with Rotary Position Embedding (arXiv:2104.09864)](https://arxiv.org/abs/2104.09864) — RoPE, the property that makes shared-cache inference tractable
-- [Yao et al. — Tree of Thoughts: Deliberate Problem Solving with Large Language Models (arXiv:2305.10601)](https://arxiv.org/abs/2305.10601) — the tree-of-thought reasoning strategy Hogwild! sits orthogonal to
-- [Leviathan et al. — Fast Inference from Transformers via Speculative Decoding (arXiv:2211.17192)](https://arxiv.org/abs/2211.17192) — speculative decoding, the within-sequence parallelism Hogwild! composes with
-- [Hogwild! reference PyTorch implementation](https://github.com/eqimp/hogwild_llm) — the single source of truth for the paper's experiments
+- [Rodionov et al. — Hogwild! Inference: Parallel LLM Generation via Concurrent Attention (arXiv:2504.06261)](https://arxiv.org/abs/2504.06261) — paper Hogwild!, preliminary evaluation на QwQ и DeepSeek-R1
+- [Recht, Re, Wright, Niu — Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent (arXiv:1106.5730, NeurIPS 2011)](https://arxiv.org/abs/1106.5730) — original Hogwild!, origin naming
+- [Su et al. — RoFormer: Enhanced Transformer with Rotary Position Embedding (arXiv:2104.09864)](https://arxiv.org/abs/2104.09864) — RoPE, property that makes shared-cache inference tractable
+- [Yao et al. — Tree of Thoughts: Deliberate Problem Solving with Large Language Models (arXiv:2305.10601)](https://arxiv.org/abs/2305.10601) — tree-of-thought reasoning strategy, orthogonal to Hogwild!
+- [Leviathan et al. — Fast Inference from Transformers via Speculative Decoding (arXiv:2211.17192)](https://arxiv.org/abs/2211.17192) — speculative decoding, within-sequence parallelism, with which Hogwild! composes
+- [Hogwild! reference PyTorch implementation](https://github.com/eqimp/hogwild_llm) — single source of truth for paper experiments

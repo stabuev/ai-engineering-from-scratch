@@ -1,34 +1,34 @@
-# Building a Complete LLM Pipeline
+# Построение полного LLM-пайплайна
 
-> Everything from Lessons 01 to 12 is one stage of one pipeline. This lesson is the scaffold that turns those stages into a single end-to-end run: tokenize, pre-train, scale, SFT, align, evaluate, quantize, serve. You will not train a 70B model on a laptop. You will produce the orchestration layer, the manifest, the eval gate, and the rollback plan that a 2026 frontier team uses to decide what gets shipped. This is the capstone.
+> Все из уроков 01-12 -- это стадии одного пайплайна. Этот урок дает каркас, который превращает эти стадии в единый end-to-end run: tokenize, pre-train, scale, SFT, align, evaluate, quantize, serve. Вы не будете обучать 70B-модель на ноутбуке. Вы создадите orchestration layer, manifest, eval gate и rollback plan, которыми frontier-команда 2026 года пользуется, чтобы решить, что отправлять в production. Это capstone.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** All Phase 10 lessons 01-12
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Все уроки фазы 10, 01-12
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Compose the eleven prior lessons (tokenizer, data, pre-training, scaling, SFT, RLHF, DPO, CAI, eval, quantization, inference) into a single reproducible pipeline spec
-- Define the artifact contract between stages: what each stage consumes, what it produces, and how the next stage verifies the input
-- Build an orchestrator that tracks experiments, hashes artifacts, and gates ship decisions on eval thresholds
-- Design the rollback plan: which artifacts are cheap to re-run, which are expensive, and what a corrupted checkpoint costs
+- Сложить одиннадцать предыдущих уроков (tokenizer, data, pre-training, scaling, SFT, RLHF, DPO, CAI, eval, quantization, inference) в единую воспроизводимую спецификацию пайплайна
+- Определить artifact contract между стадиями: что каждая стадия потребляет, что производит и как следующая стадия проверяет вход
+- Построить orchestrator, который отслеживает experiments, хеширует artifacts и блокирует ship decisions на eval thresholds
+- Спроектировать rollback plan: какие artifacts дешево перезапускать, какие дороги и сколько стоит corrupted checkpoint
 
-## The Problem
+## Проблема
 
-The previous lessons each work. Tokenizer trained. Tiny GPT pre-trained. SFT dataset assembled. Reward model trained. DPO run. Evals measured. Quantized weights exported. Inference server spun up. Each one is a notebook. Each one has its own conventions, its own output paths, its own seed.
+Предыдущие уроки по отдельности работают. Tokenizer обучен. Tiny GPT предобучен. SFT dataset собран. Reward model обучена. DPO run выполнен. Evals измерены. Quantized weights экспортированы. Inference server поднят. Каждый из них -- notebook. У каждого свои соглашения, свои output paths, свой seed.
 
-A frontier training run is not a notebook. Llama 3 405B took 30 million H100 hours over roughly 54 days. DeepSeek-V3 used around 2.8 million H800 hours. During that time, one corrupted checkpoint, one data contamination, one eval regression can cost a team a week of wall-clock and a month of GPU budget. The way teams survive this is through pipeline hygiene: every stage has a deterministic input, a deterministic output, a manifest, a hash, and a gate.
+Frontier training run -- это не notebook. Llama 3 405B заняла 30 миллионов H100 hours примерно за 54 дня. DeepSeek-V3 использовала около 2,8 миллиона H800 hours. За это время один corrupted checkpoint, одно data contamination, одна eval regression могут стоить команде недели wall-clock и месяца GPU budget. Команды выживают благодаря pipeline hygiene: у каждой стадии есть deterministic input, deterministic output, manifest, hash и gate.
 
-This is the capstone. You will not run the pipeline end-to-end on a laptop. You will write the orchestrator that coordinates the stages, the manifest that describes the run, the verifier that gates ship decisions, and the replay plan that lets a third party re-run your work from a single file. The code is small; the discipline is large.
+Это capstone. Вы не запустите пайплайн end-to-end на ноутбуке. Вы напишете orchestrator, который координирует стадии, manifest, который описывает run, verifier, который gate-ит ship decisions, и replay plan, который позволяет третьей стороне воспроизвести вашу работу из одного файла. Код маленький; дисциплина большая.
 
-The pattern scales from 100M to 1T parameters unchanged. The same four components -- manifest, orchestrator, eval gate, artifact store -- run Llama 3 and also run your hobby GPT. The difference is the size of the numbers inside each stage's config, not the shape of the pipeline.
+Паттерн без изменений масштабируется от 100M до 1T parameters. Те же четыре компонента -- manifest, orchestrator, eval gate, artifact store -- запускают Llama 3 и ваш hobby GPT. Отличие в размере чисел внутри config каждой стадии, а не в форме пайплайна.
 
-## The Concept
+## Концепция
 
-### The Twelve Stages
+### Двенадцать стадий
 
-Every Phase 10 lesson is a stage. Here is the full dependency graph.
+Каждый урок фазы 10 -- это стадия. Полный dependency graph:
 
 ```mermaid
 graph TD
@@ -53,11 +53,11 @@ graph TD
     style GATE fill:#1a1a2e,stroke:#51cf66,color:#fff
 ```
 
-Stages 07 and 08 can run in parallel. Everything else is a hard dependency. A change in stage 02 (tokenizer) invalidates every downstream artifact. A change in stage 10 (eval) invalidates only the ship decision.
+Стадии 07 и 08 могут идти параллельно. Все остальное -- жесткая зависимость. Изменение в стадии 02 (tokenizer) инвалидирует каждый downstream artifact. Изменение в стадии 10 (eval) инвалидирует только ship decision.
 
-### The Manifest
+### Manifest
 
-A manifest is a single file that describes a run completely enough to replay it. Nothing the pipeline produces should depend on state that is not in the manifest. The fields are boring and mandatory.
+Manifest -- один файл, который описывает run достаточно полно, чтобы его replay. Ничто, что производит пайплайн, не должно зависеть от состояния вне manifest. Поля скучные и обязательные.
 
 ```
 pipeline_version: 1.2.3
@@ -72,13 +72,13 @@ stages:
     cost_usd: 12
 ```
 
-The output hash of stage N is the input hash of stage N+1. Any deviation and the pipeline halts. This is how you catch data corruption early. It is also how a teammate on a different continent verifies that their replay produced the same artifact as yours.
+Output hash стадии N -- это input hash стадии N+1. Любое отклонение, и пайплайн останавливается. Так вы рано ловите data corruption. Так же teammate на другом континенте проверяет, что его replay произвел тот же artifact, что и ваш.
 
-In practice teams use a small YAML schema plus a manifest checker that diffs against the previous successful run. Any delta outside the expected fields (cost, wall clock) is a red flag.
+На практике команды используют небольшую YAML schema плюс manifest checker, который diff-ит против предыдущего successful run. Любая delta вне ожидаемых полей (cost, wall clock) -- red flag.
 
 ### Artifact Typing
 
-Each stage's output is a typed artifact. Not a directory blob, not a pickle, but a named type with a known schema.
+Выход каждой стадии -- typed artifact. Не directory blob, не pickle, а named type с известной schema.
 
 | Stage | Artifact Type | Key Fields |
 |-------|--------------|-----------|
@@ -92,11 +92,11 @@ Each stage's output is a typed artifact. Not a directory blob, not a pickle, but
 | 11 | Quantized Model | quantized weights + calibration data + accuracy delta vs FP16 |
 | 12 | Server Spec | endpoint + model hash + config + observability hooks |
 
-The typing prevents the most common failure mode: using a stage 08 output as a stage 06 input, shipping a DPO-trained model through the SFT path. Typed artifacts and typed stage signatures make these errors compile-time failures, not day-five failures.
+Typing предотвращает самый частый failure mode: использовать output стадии 08 как input стадии 06, отправив DPO-trained model через SFT path. Typed artifacts и typed stage signatures превращают такие ошибки в compile-time failures, а не day-five failures.
 
-### The Eval Gate
+### Eval Gate
 
-Shipping is not "training finished." Shipping is "training finished and the eval gate passed." The gate is defined before the run starts.
+Shipping -- это не "training finished." Shipping -- это "training finished and the eval gate passed." Gate определяется до старта run.
 
 ```
 gates:
@@ -108,49 +108,49 @@ gates:
   cost_total_usd: <= 50000
 ```
 
-Every gate is a numeric threshold. No "looks good" gates. No subjective sign-offs. If every gate passes, the artifact is marked shippable. If any gate fails, the run is held pending explicit override by a named reviewer, which itself is logged in the manifest.
+Каждый gate -- числовой threshold. Никаких "looks good" gates. Никаких субъективных sign-offs. Если все gates pass, artifact помечается shippable. Если любой gate fails, run удерживается до explicit override от named reviewer, и этот override тоже логируется в manifest.
 
-Two gates catch most disasters. A *regression* gate (the new model must be at least as good as the previous on core benchmarks) catches training bugs. A *KL budget* gate (the aligned policy must not have drifted further than X from its reference) catches alignment overcooking. Every production pipeline has both.
+Два gates ловят большинство катастроф. *Regression* gate (новая модель должна быть как минимум не хуже предыдущей на core benchmarks) ловит training bugs. *KL budget* gate (aligned policy не должна уйти дальше X от reference) ловит alignment overcooking. В каждом production pipeline есть оба.
 
-### The Orchestrator
+### Orchestrator
 
-A small piece of code that reads the manifest, dispatches stages, tracks artifacts, and halts on any contract violation. This is not Airflow. This is not Kubeflow. For pipeline hygiene you want something boring that you wrote.
+Небольшой кусок кода, который читает manifest, dispatches stages, tracks artifacts и останавливается при любом contract violation. Это не Airflow. Это не Kubeflow. Для pipeline hygiene нужен скучный инструмент, который вы написали сами.
 
-The orchestrator's job is narrow:
+Задача orchestrator узкая:
 
-1. Resolve the DAG from the manifest.
+1. Resolve DAG from the manifest.
 2. For each stage, check if the expected output already exists at the correct hash (skip if so).
 3. Run the stage, capture stdout/stderr, measure wall clock and cost.
 4. Verify the output hash against the downstream stage's expected input hash.
 5. On failure, write a partial manifest with the exact failing stage and exit nonzero.
 
-That is 200 lines of Python. It will look like the file `code/main.py` in this lesson. Under the hood, the real pipeline uses `torchrun` or `ray` to execute individual stages on clusters, but the orchestrator itself runs on a single box.
+Это 200 строк Python. Он будет похож на файл `code/main.py` в этом уроке. Под капотом настоящий pipeline использует `torchrun` или `ray` для запуска отдельных стадий на clusters, но сам orchestrator работает на одной машине.
 
-### Experiment Tracking and Artifact Storage
+### Experiment Tracking и Artifact Storage
 
-Two external systems anchor the pipeline.
+Две внешние системы закрепляют пайплайн.
 
-**Experiment tracker (wandb, neptune, mlflow).** Logs loss curves, eval metrics, system telemetry per stage. The tracker is where you go when you need to compare run A against run B three weeks later. Teams almost always use a hosted tracker for this -- writing your own loses time that should go into training.
+**Experiment tracker (wandb, neptune, mlflow).** Логирует loss curves, eval metrics, system telemetry по стадиям. Tracker -- место, куда вы идете, когда через три недели нужно сравнить run A и run B. Команды почти всегда используют hosted tracker -- писать свой означает терять время, которое должно идти на training.
 
-**Artifact store (S3, R2, GCS).** Immutable object store for checkpoints, datasets, tokenizers, eval reports. Artifacts are addressed by hash, not by filename. A filename like `latest.pt` is a foot-gun; `ckpt-7b-step-20000-sha256:abc123.safetensors` is a contract.
+**Artifact store (S3, R2, GCS).** Immutable object store для checkpoints, datasets, tokenizers, eval reports. Artifacts адресуются hash, а не filename. Filename вроде `latest.pt` -- foot-gun; `ckpt-7b-step-20000-sha256:abc123.safetensors` -- contract.
 
-The orchestrator writes to both. The tracker is for humans looking at charts. The artifact store is for the next stage looking up inputs.
+Orchestrator пишет в оба. Tracker -- для людей, смотрящих на charts. Artifact store -- для следующей стадии, которая ищет inputs.
 
 ### Costing
 
-A frontier run has a dollar number attached. Budget discipline happens in two places.
+У frontier run есть долларовая стоимость. Budget discipline происходит в двух местах.
 
-**Pre-run estimate.** From the manifest, compute expected FLOPs (for pre-training: 6 x params x tokens), expected GPU hours (FLOPs / peak throughput / utilization), and dollar cost at the current rental rate. If the estimate exceeds the budget gate, the pipeline refuses to start.
+**Pre-run estimate.** Из manifest вычислите expected FLOPs (для pre-training: 6 x params x tokens), expected GPU hours (FLOPs / peak throughput / utilization) и dollar cost по текущей rental rate. Если estimate превышает budget gate, pipeline refuses to start.
 
-**In-run tracking.** Stage-by-stage wall clock and cost are logged to the manifest. After every stage, the remaining budget is checked. If a stage overran, the next stage's gate is evaluated with the new remaining budget. You do not find out you are out of money when the VC calls.
+**In-run tracking.** Stage-by-stage wall clock и cost логируются в manifest. После каждой стадии проверяется remaining budget. Если стадия overruns, gate следующей стадии оценивается с новым remaining budget. Вы не узнаете, что деньги кончились, когда звонит VC.
 
-Llama 3's reported cost was $61M. DeepSeek-V3 reported $5.6M for the main pre-training run. The ratio is mostly hardware efficiency plus mixture-of-experts -- but the specific cost is visible because both teams tracked it per stage, not per run.
+Reported cost Llama 3 был $61M. DeepSeek-V3 сообщила $5.6M за основной pre-training run. Соотношение в основном объясняется hardware efficiency плюс mixture-of-experts -- но конкретная cost видна потому, что обе команды tracked it per stage, not per run.
 
 ### Reproducibility vs Determinism
 
-These are not the same. *Reproducible* means the same manifest plus the same code plus the same infrastructure produces a checkpoint with equivalent downstream metrics. *Deterministic* means bit-identical output.
+Это не одно и то же. *Reproducible* значит, что тот же manifest плюс тот же code плюс та же infrastructure производят checkpoint с equivalent downstream metrics. *Deterministic* значит bit-identical output.
 
-Modern LLM training is reproducible but not deterministic. Distributed training's reduce-order, GPU kernel non-determinism (cuBLAS, flash-attn), and mixed precision rounding combine to produce floats that differ at the 1e-5 level between runs. This is fine for the final metrics, which do not move. It is fatal if you are trying to debug with bit-level diffs. The cure is to log every stage's input hash, output hash, and headline metrics -- if those match, the run is "reproduced" even if the weights are not bit-identical.
+Современное LLM training воспроизводимо, но не детерминировано. Reduce-order в distributed training, GPU kernel non-determinism (cuBLAS, flash-attn) и mixed precision rounding вместе дают floats, различающиеся на уровне 1e-5 между runs. Это нормально для финальных metrics, которые не двигаются. Это фатально, если вы пытаетесь debug с bit-level diffs. Лечение -- логировать input hash, output hash и headline metrics каждой стадии: если они совпадают, run "reproduced", даже если weights не bit-identical.
 
 ```mermaid
 graph LR
@@ -171,33 +171,33 @@ graph LR
 
 ### Rollback Plan
 
-Before the run starts, write down what happens on failure of each stage. Three categories.
+До старта run запишите, что происходит при failure каждой стадии. Три категории.
 
-- **Cheap to re-run** (hours): tokenizer, eval, quantization, inference server. Just re-run.
-- **Medium** (days): SFT, DPO, CAI. Keep the base model; re-run only the alignment stages.
-- **Expensive** (weeks and millions of dollars): pre-training. The rollback plan here is not "re-run." It is "use the last good checkpoint and re-run the cheaper downstream stages with revised data."
+- **Cheap to re-run** (часы): tokenizer, eval, quantization, inference server. Просто re-run.
+- **Medium** (дни): SFT, DPO, CAI. Сохраните base model; перезапустите только alignment stages.
+- **Expensive** (недели и миллионы долларов): pre-training. Rollback plan здесь не "re-run." Это "use the last good checkpoint and re-run the cheaper downstream stages with revised data."
 
-Because stage dependencies are typed and hashed, the orchestrator can compute the rollback set automatically: invalidate the failed stage plus every descendant. A failure at stage 06 (SFT) invalidates 06, 07, 08, 09, 10, 11, 12. A failure at stage 11 (quantization) invalidates only 11 and 12. Naming this up front avoids improvising while the team is exhausted at 4am.
+Поскольку stage dependencies typed и hashed, orchestrator может автоматически вычислить rollback set: invalidate failed stage плюс каждого descendant. Failure на стадии 06 (SFT) инвалидирует 06, 07, 08, 09, 10, 11, 12. Failure на стадии 11 (quantization) инвалидирует только 11 и 12. Назвать это заранее лучше, чем импровизировать, когда команда вымотана в 4am.
 
 ### Production Recipes Observed in 2026
 
-Most frontier teams converged on the same skeleton.
+Большинство frontier-команд сошлись на одном skeleton.
 
-- Tokenizer: 128k BPE with byte fallback. Trained on a small, balanced multilingual slice.
-- Pre-training: 10-20T tokens, mostly web plus code plus synthetic. Muon or AdamW optimizer. FSDP2 or DeepSpeed ZeRO-3. Gradient checkpointing. BF16 weights, FP32 master.
-- SFT: 500k-2M instruction pairs, mixed human and synthetic, with strict dedup against the eval set.
-- Alignment: DPO or CAI + GRPO. RLHF only where the preference signal is too multidimensional for DPO.
-- Eval: MMLU-Pro, MATH, HumanEval+, GPQA, SWE-Bench Verified, LiveBench, plus a private held-out set the public never sees.
-- Quantization: 4-bit GPTQ or AWQ for serving, 8-bit for safety evals where accuracy deltas matter.
-- Serving: vLLM, TensorRT-LLM, or in-house. Continuous batching. Speculative decoding. KV cache eviction.
+- Tokenizer: 128k BPE with byte fallback. Обучен на маленьком, сбалансированном multilingual slice.
+- Pre-training: 10-20T tokens, в основном web плюс code плюс synthetic. Muon или AdamW optimizer. FSDP2 или DeepSpeed ZeRO-3. Gradient checkpointing. BF16 weights, FP32 master.
+- SFT: 500k-2M instruction pairs, смесь human и synthetic, со строгим dedup against the eval set.
+- Alignment: DPO или CAI + GRPO. RLHF только там, где preference signal слишком multidimensional для DPO.
+- Eval: MMLU-Pro, MATH, HumanEval+, GPQA, SWE-Bench Verified, LiveBench, плюс private held-out set, который public никогда не видит.
+- Quantization: 4-bit GPTQ или AWQ для serving, 8-bit для safety evals, где accuracy deltas важны.
+- Serving: vLLM, TensorRT-LLM или in-house. Continuous batching. Speculative decoding. KV cache eviction.
 
-The numbers change every six months. The skeleton does not.
+Числа меняются каждые шесть месяцев. Skeleton -- нет.
 
 ## Build It
 
-The lesson's code is an orchestrator and a manifest checker, not twelve training scripts. Each stage is simulated with a placeholder that produces an output artifact with the correct shape and hash. Running the orchestrator end-to-end proves the pipeline's plumbing works before you burn GPU money on the real stages.
+Код урока -- это orchestrator и manifest checker, а не двенадцать training scripts. Каждая стадия симулируется placeholder, который создает output artifact правильной формы и hash. Запуск orchestrator end-to-end доказывает, что plumbing пайплайна работает, прежде чем вы потратите GPU money на настоящие стадии.
 
-See `code/main.py` for the full implementation. The key pieces:
+См. `code/main.py` для полной реализации. Ключевые части:
 
 - `Manifest` dataclass: pipeline version, seed, git commit, stages, gates.
 - `Stage` dataclass: name, type, inputs (hashes), output (hash), wall clock, cost.
@@ -206,11 +206,11 @@ See `code/main.py` for the full implementation. The key pieces:
 - `ArtifactStore` (in-memory stub): put/get by hash, simulates S3.
 - `CostTracker`: per-stage and cumulative, halts when cap exceeded.
 
-The pipeline in `main.py` runs twelve placeholder stages, produces a manifest, and exercises a failing eval gate to show what a held run looks like. Swap each placeholder for the real training script from the corresponding lesson and you have the skeleton a real frontier pipeline uses.
+Pipeline в `main.py` запускает двенадцать placeholder stages, создает manifest и упражняет failing eval gate, чтобы показать, как выглядит held run. Замените каждый placeholder на настоящий training script из соответствующего урока, и у вас будет skeleton, который использует реальный frontier pipeline.
 
 ## Use It
 
-The canonical workflow has three commands.
+Canonical workflow состоит из трех команд.
 
 ```
 python code/main.py plan    # validate manifest, compute cost estimate, print DAG
@@ -218,46 +218,46 @@ python code/main.py run     # execute stages, writing to manifest.out.yaml
 python code/main.py gate    # read manifest.out.yaml, apply eval gates, ship-or-hold
 ```
 
-Run `plan` first every time. Most pipeline bugs show up at plan time -- missing gate thresholds, stale hashes, budget overruns. Running `plan` is free. Running `run` is expensive. Save money by catching bugs on the cheap side.
+Запускайте `plan` первым каждый раз. Большинство pipeline bugs обнаруживается на plan time -- missing gate thresholds, stale hashes, budget overruns. Запуск `plan` бесплатен. Запуск `run` дорогой. Экономьте деньги, ловя bugs on the cheap side.
 
-The output of `gate` is either `SHIP` or `HOLD: <reason>`. A held run is not a failure; it is a decision point. A named reviewer either overrides (and the override is logged), or they approve the rollback.
+Output `gate` -- либо `SHIP`, либо `HOLD: <reason>`. Held run -- не failure; это decision point. Named reviewer либо overrides (и override логируется), либо approves rollback.
 
 ## Ship It
 
-This lesson produces `outputs/skill-llm-pipeline-reviewer.md`. Feed it a proposed pipeline manifest and it checks all the contracts: stage typing, hash chain, gates, rollback plan, cost estimate. It refuses to approve a manifest with a missing eval gate, an unbounded KL budget, or a run that mixes eval and training data.
+Этот урок создает `outputs/skill-llm-pipeline-reviewer.md`. Передайте ему proposed pipeline manifest, и он проверит все contracts: stage typing, hash chain, gates, rollback plan, cost estimate. Он отказывается approve manifest с missing eval gate, unbounded KL budget или run, который смешивает eval и training data.
 
 ## Exercises
 
-1. Extend the orchestrator to support parallel execution of stages 07 and 08. Use the stdlib `concurrent.futures` module. Confirm the final manifest records both stages' outputs and that stage 09's input hash is a deterministic combination of both.
+1. Расширьте orchestrator для поддержки parallel execution стадий 07 и 08. Используйте stdlib module `concurrent.futures`. Подтвердите, что final manifest записывает outputs обеих стадий и что input hash стадии 09 -- deterministic combination обоих.
 
-2. Add a "contamination check" gate. Given the eval dataset hash and the training dataset shards, compute the overlap (exact string match or 13-gram match). The gate fails if overlap exceeds 0.1%. Feed it a contaminated training set and confirm the gate holds the run.
+2. Добавьте gate "contamination check". Имея eval dataset hash и training dataset shards, вычислите overlap (exact string match или 13-gram match). Gate fails, если overlap превышает 0.1%. Подайте contaminated training set и подтвердите, что gate holds the run.
 
-3. Implement a cost estimator from first principles. For stage 04 (pre-training), estimate FLOPs as 6 x params x tokens, assume 40% MFU (model FLOPs utilization) on H100 at 989 TFLOPs BF16, at $2.50/GPU-hour. Report the estimate for a 7B model trained on 2T tokens. Compare to published Llama 2 numbers.
+3. Реализуйте cost estimator from first principles. Для стадии 04 (pre-training) оцените FLOPs как 6 x params x tokens, предположите 40% MFU (model FLOPs utilization) на H100 at 989 TFLOPs BF16, по $2.50/GPU-hour. Сообщите estimate для 7B model, trained on 2T tokens. Сравните с published Llama 2 numbers.
 
-4. Build a partial rollback. Simulate a failure at stage 09 (CAI), then re-run stages 09 through 12 while leaving 01-08 cached. The orchestrator should detect the cached artifacts by hash and skip them. Measure wall-clock saved versus full re-run.
+4. Постройте partial rollback. Симулируйте failure на стадии 09 (CAI), затем re-run stages 09 through 12, оставив 01-08 cached. Orchestrator должен обнаружить cached artifacts by hash и skip them. Измерьте wall-clock saved versus full re-run.
 
-5. Add observability. Emit OpenTelemetry spans for each stage, with attributes for params, tokens seen, loss, and cost. Pipe the spans to a local collector. The point is not dashboards; the point is that every stage's health is traceable from a single trace ID.
+5. Добавьте observability. Emit OpenTelemetry spans для каждой стадии, с attributes для params, tokens seen, loss и cost. Pipe spans to a local collector. Смысл не в dashboards; смысл в том, что health каждой стадии traceable из одного trace ID.
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |------|----------------|----------------------|
-| Manifest | "The recipe file" | YAML or JSON describing pipeline version, seed, per-stage config, and gate thresholds — sufficient to replay a run |
-| Content-addressed | "By hash not name" | Artifacts stored by SHA-256 of their contents, so you can never confuse version A with version B |
-| Eval gate | "The ship criteria" | Numeric thresholds on benchmark metrics and safety scores that must pass before an artifact is marked shippable |
-| KL budget | "How far alignment drifted" | A cap on cumulative KL(policy || reference) across alignment stages, enforced as a gate |
-| MFU | "How much of the GPU you used" | Model FLOPs Utilization — achieved FLOPs divided by theoretical peak. 40% is typical at 70B scale, 55% at 7B |
+| Manifest | "The recipe file" | YAML или JSON, описывающий pipeline version, seed, per-stage config и gate thresholds — достаточный для replay run |
+| Content-addressed | "By hash not name" | Artifacts хранятся по SHA-256 своего contents, поэтому нельзя спутать version A с version B |
+| Eval gate | "The ship criteria" | Numeric thresholds по benchmark metrics и safety scores, которые должны pass до того, как artifact marked shippable |
+| KL budget | "How far alignment drifted" | Cap на cumulative KL(policy || reference) across alignment stages, enforced as a gate |
+| MFU | "How much of the GPU you used" | Model FLOPs Utilization — achieved FLOPs divided by theoretical peak. 40% typical at 70B scale, 55% at 7B |
 | Rollback plan | "What we do when it breaks" | Pre-written set of actions per stage on failure: re-run, fall back, retrain with revised inputs |
-| Orchestrator | "The conductor" | The process that reads the manifest, dispatches stages, verifies hashes, halts on any contract violation |
-| Artifact store | "Versioned S3 for weights" | Immutable content-addressed object store — single source of truth for checkpoints, datasets, eval reports |
-| Reproducible | "Same metrics on replay" | Different bit-level weights but equivalent downstream metrics — the realistic target for distributed LLM training |
-| Cost gate | "You cannot exceed X" | Pre-run cost estimate plus in-run tracker — the pipeline refuses to start if the estimate exceeds budget |
+| Orchestrator | "The conductor" | Процесс, который читает manifest, запускает stages, проверяет hashes и останавливается при любом нарушении contract |
+| Artifact store | "Versioned S3 for weights" | Immutable content-addressed object store — single source of truth для checkpoints, datasets и eval reports |
+| Reproducible | "Same metrics on replay" | Bit-level weights могут отличаться, но downstream metrics эквивалентны — реалистичная цель для distributed LLM training |
+| Cost gate | "You cannot exceed X" | Pre-run cost estimate плюс in-run tracker — pipeline не стартует, если estimate превышает budget |
 
 ## Further Reading
 
-- [Dubey et al., 2024 -- "The Llama 3 Herd of Models"](https://arxiv.org/abs/2407.21783) -- the most detailed public description of a frontier pipeline including data, training, alignment, eval
-- [DeepSeek-AI, 2024 -- "DeepSeek-V3 Technical Report"](https://arxiv.org/abs/2412.19437) -- efficiency-first pipeline at roughly 1/10th the cost of Llama 3 class training
-- [Kaplan et al., 2020 -- "Scaling Laws for Neural Language Models"](https://arxiv.org/abs/2001.08361) -- the original compute-data-params scaling relationship
-- [Hoffmann et al., 2022 -- "Training Compute-Optimal Large Language Models (Chinchilla)"](https://arxiv.org/abs/2203.15556) -- the correction to Kaplan that recalibrated modern data budgets
-- [PyTorch FSDP2 documentation](https://pytorch.org/docs/stable/fsdp.html) -- the distributed training primitive replacing FSDP1 in PyTorch 2.4+
-- [Weights & Biases LLM Reports](https://wandb.ai/site/llms) -- real manifests and experiment tracker output for open-source LLM runs, useful as plagiarizable templates
+- [Dubey et al., 2024 -- "The Llama 3 Herd of Models"](https://arxiv.org/abs/2407.21783) -- самое подробное public description frontier pipeline, включая data, training, alignment, eval
+- [DeepSeek-AI, 2024 -- "DeepSeek-V3 Technical Report"](https://arxiv.org/abs/2412.19437) -- efficiency-first pipeline примерно за 1/10 стоимости training класса Llama 3
+- [Kaplan et al., 2020 -- "Scaling Laws for Neural Language Models"](https://arxiv.org/abs/2001.08361) -- исходная compute-data-params scaling relationship
+- [Hoffmann et al., 2022 -- "Training Compute-Optimal Large Language Models (Chinchilla)"](https://arxiv.org/abs/2203.15556) -- correction to Kaplan, которая recalibrated modern data budgets
+- [PyTorch FSDP2 documentation](https://pytorch.org/docs/stable/fsdp.html) -- distributed training primitive, заменяющий FSDP1 в PyTorch 2.4+
+- [Weights & Biases LLM Reports](https://wandb.ai/site/llms) -- реальные manifests и experiment tracker output для open-source LLM runs, useful as plagiarizable templates
