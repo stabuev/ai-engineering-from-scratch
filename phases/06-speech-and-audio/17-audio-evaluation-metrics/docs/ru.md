@@ -1,107 +1,107 @@
-# Audio Evaluation — WER, MOS, UTMOS, MMAU, FAD, and the Open Leaderboards
+# Оценка аудио — WER, MOS, UTMOS, MMAU, FAD и открытые лидерборды
 
-> You cannot ship what you cannot measure. This lesson names the 2026 metrics for every audio task: ASR (WER, CER, RTFx), TTS (MOS, UTMOS, SECS, WER-on-ASR-round-trip), audio-language (MMAU, LongAudioBench), music (FAD, CLAP), and speaker (EER). Plus the leaderboards where you compare.
+> Нельзя выпускать то, что нельзя измерить. Этот урок называет метрики 2026 года для каждой аудиозадачи: ASR (WER, CER, RTFx), TTS (MOS, UTMOS, SECS, WER-on-ASR-round-trip), audio-language (MMAU, LongAudioBench), music (FAD, CLAP) и speaker (EER). Плюс лидерборды, где сравниваться.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 6 · 04, 06, 07, 09, 10; Phase 2 · 09 (Model Evaluation)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 6 · 04, 06, 07, 09, 10; Фаза 2 · 09 (Model Evaluation)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Every audio task has multiple metrics, each measuring a different axis. Using the wrong metric is how you ship a model that looks great on your dashboard and terribly in production. The 2026 canonical list:
+У каждой аудиозадачи несколько метрик, и каждая измеряет свою ось. Неверная метрика — способ выпустить модель, которая отлично выглядит на dashboard и ужасно работает в production. Канонический список 2026 года:
 
-| Task | Primary | Secondary |
+| Задача | Основная | Дополнительные |
 |------|---------|-----------|
-| ASR | WER | CER · RTFx · first-token latency |
+| ASR | WER | CER · RTFx · latency первого токена |
 | TTS | MOS / UTMOS | SECS · WER-on-ASR-round-trip · CER · TTFA |
 | Voice cloning | SECS (ECAPA cosine) | MOS · CER |
-| Speaker verification | EER | minDCF · FAR / FRR at operating point |
+| Speaker verification | EER | minDCF · FAR / FRR в рабочей точке |
 | Diarization | DER | JER · speaker confusion |
-| Audio classification | top-1 · mAP | macro F1 · per-class recall |
-| Music generation | FAD | CLAP · listening panel MOS |
+| Audio classification | top-1 · mAP | macro F1 · recall по классам |
+| Music generation | FAD | CLAP · MOS слушательской панели |
 | Audio language model | MMAU-Pro | LongAudioBench · AudioCaps FENSE |
 | Streaming S2S | latency P50/P95 | WER · MOS |
 
-## The Concept
+## Концепция
 
 ![Audio evaluation matrix — metrics vs tasks vs 2026 leaderboards](../assets/eval-landscape.svg)
 
-### ASR metrics
+### Метрики ASR
 
-**WER (Word Error Rate).** `(S + D + I) / N`. Lowercase, strip punctuation, normalize numbers before scoring. Use `jiwer` or OpenAI's `whisper_normalizer`. &lt; 5% = human-parity read speech.
+**WER (Word Error Rate).** `(S + D + I) / N`. Перед подсчетом приведите к нижнему регистру, удалите пунктуацию и нормализуйте числа. Используйте `jiwer` или `whisper_normalizer` OpenAI. &lt; 5% = уровень человека для read speech.
 
-**CER (Character Error Rate).** Same formula, character-level. Used for tone languages (Mandarin, Cantonese) where word segmentation is ambiguous.
+**CER (Character Error Rate).** Та же формула на уровне символов. Используется для tone languages (Mandarin, Cantonese), где сегментация на слова неоднозначна.
 
-**RTFx (inverse real-time factor).** Audio seconds processed per wall-clock second. Higher is better. Parakeet-TDT hits 3380×. Whisper-large-v3 is ~30×.
+**RTFx (inverse real-time factor).** Сколько секунд аудио обрабатывается за одну секунду реального времени. Больше — лучше. Parakeet-TDT достигает 3380×. Whisper-large-v3 — ~30×.
 
-**First-token latency.** Wall-clock from audio input to first transcript token. Critical for streaming. Deepgram Nova-3: ~150 ms.
+**First-token latency.** Реальное время от аудиовхода до первого токена transcript. Критично для streaming. Deepgram Nova-3: ~150 ms.
 
-### TTS metrics
+### Метрики TTS
 
-**MOS (Mean Opinion Score).** 1-5 human rating. Gold standard but slow. Collect 20+ listeners per sample, 100+ samples per model.
+**MOS (Mean Opinion Score).** Человеческая оценка 1-5. Золотой стандарт, но медленный. Собирайте 20+ слушателей на sample, 100+ samples на модель.
 
-**UTMOS (2022-2026).** Learned MOS predictor. Correlates ~0.9 with human MOS on standard benchmarks. F5-TTS: UTMOS 3.95; ground truth: 4.08.
+**UTMOS (2022-2026).** Обученный MOS predictor. Коррелирует с человеческим MOS примерно на 0.9 на стандартных benchmarks. F5-TTS: UTMOS 3.95; ground truth: 4.08.
 
-**SECS (Speaker Encoder Cosine Similarity).** For voice cloning. ECAPA embedding cosine between reference and cloned output. &gt; 0.75 = recognizable clone.
+**SECS (Speaker Encoder Cosine Similarity).** Для voice cloning. Cosine similarity ECAPA embeddings между reference и cloned output. &gt; 0.75 = узнаваемый клон.
 
-**WER-on-ASR-round-trip.** Run Whisper over TTS output, compute WER against the input text. Catches intelligibility regressions. 2026 SOTA: &lt; 2% CER.
+**WER-on-ASR-round-trip.** Запустите Whisper по TTS output, посчитайте WER против входного текста. Ловит регрессии разборчивости. SOTA 2026: &lt; 2% CER.
 
-**TTFA (time-to-first-audio).** Wall-clock latency. Kokoro-82M: ~100 ms; F5-TTS: ~1 s.
+**TTFA (time-to-first-audio).** Задержка в реальном времени. Kokoro-82M: ~100 ms; F5-TTS: ~1 s.
 
-### Voice-cloning-specific
+### Специфично для voice cloning
 
-**SECS + MOS + CER** as a triple. Cloning that scores high SECS but low MOS means timbre-right-but-unnatural; the opposite means natural voice but wrong speaker.
+**SECS + MOS + CER** как тройка. Клон с высоким SECS, но низким MOS — тембр правильный, но звучание неестественное; наоборот — естественный голос, но не тот speaker.
 
 ### Speaker verification
 
-**EER (Equal Error Rate).** The threshold where False Accept Rate equals False Reject Rate. ECAPA on VoxCeleb1-O: 0.87%.
+**EER (Equal Error Rate).** Threshold, где False Accept Rate равен False Reject Rate. ECAPA на VoxCeleb1-O: 0.87%.
 
-**minDCF (min Detection Cost).** Weighted cost at a chosen operating point (often FAR=0.01). More production-relevant than EER.
+**minDCF (min Detection Cost).** Взвешенная стоимость в выбранной рабочей точке (часто FAR=0.01). Более релевантна для продакшена, чем EER.
 
 ### Diarization
 
-**DER (Diarization Error Rate).** `(FA + Miss + Confusion) / total_speaker_time`. Missed speech + false-alarm speech + speaker-confusion, each as a fraction. AMI meetings: DER ~10-20% is realistic. pyannote 3.1 + Precision-2 commercial: &lt;10% DER on well-recorded audio.
+**DER (Diarization Error Rate).** `(FA + Miss + Confusion) / total_speaker_time`. Пропущенная речь + ложная речевая активность + перепутанные говорящие как доля. AMI meetings: реалистичный DER ~10-20%. pyannote 3.1 + коммерческий Precision-2: &lt;10% DER на хорошо записанном аудио.
 
-**JER (Jaccard Error Rate).** Alternative to DER, robust to short-segment bias.
+**JER (Jaccard Error Rate).** Альтернатива DER, устойчивая к смещению из-за коротких сегментов.
 
 ### Audio classification
 
-Multi-label: **mAP (mean Average Precision)** over all classes. AudioSet: 0.548 mAP for BEATs-iter3.
+Multi-label: **mAP (mean Average Precision)** по всем классам. AudioSet: 0.548 mAP для BEATs-iter3.
 
-Multi-class exclusive: **top-1, top-5 accuracy**. Speech Commands v2: 99.0% top-1 (Audio-MAE).
+Взаимоисключающие классы: **top-1, top-5 accuracy**. Speech Commands v2: 99.0% top-1 (Audio-MAE).
 
-Imbalanced: **macro F1** + **per-class recall**. Report per-class — aggregate accuracy hides which classes fail.
+Несбалансированные классы: **macro F1** + **recall по классам**. Отчитывайтесь по классам: агрегированная accuracy скрывает, какие классы ломаются.
 
 ### Music generation
 
-**FAD (Fréchet Audio Distance).** Distance between VGGish-embedding distributions of real vs generated audio. MusicGen-small on MusicCaps: 4.5. MusicLM: 4.0. Lower better.
+**FAD (Fréchet Audio Distance).** Расстояние между распределениями VGGish embeddings для настоящего и сгенерированного аудио. MusicGen-small на MusicCaps: 4.5. MusicLM: 4.0. Ниже — лучше.
 
-**CLAP Score.** Text-audio alignment score using CLAP embeddings. &gt; 0.3 = reasonable alignment.
+**CLAP Score.** Оценка соответствия text-audio через CLAP embeddings. &gt; 0.3 = разумное соответствие.
 
-**Listening panel MOS.** Still the final word for consumer-grade music. Suno v5 ELO 1293 on TTS Arena (from paired human preferences).
+**Listening panel MOS.** Все еще решающее слово для consumer-grade music. Suno v5 ELO 1293 на TTS Arena (из парных человеческих предпочтений).
 
 ### Audio-language benchmarks
 
-**MMAU (Massive Multi-Audio Understanding).** 10k audio-QA pairs.
+**MMAU (Massive Multi-Audio Understanding).** 10k пар audio-QA.
 
-**MMAU-Pro.** 1800 hard items, four categories: speech / sound / music / multi-audio. Random chance 25% on 4-way. Gemini 2.5 Pro overall ~60%; multi-audio ~22% across all models.
+**MMAU-Pro.** 1800 сложных items, четыре категории: speech / sound / music / multi-audio. Случайный шанс 25% при 4 вариантах. Gemini 2.5 Pro overall ~60%; multi-audio ~22% по всем моделям.
 
-**LongAudioBench.** Multi-minute clips with semantic queries. Audio Flamingo Next beats Gemini 2.5 Pro.
+**LongAudioBench.** Многоминутные клипы с семантическими запросами. Audio Flamingo Next обходит Gemini 2.5 Pro.
 
 **AudioCaps / Clotho.** Captioning benchmarks. SPICE, CIDEr, FENSE metrics.
 
 ### Streaming speech-to-speech
 
-**Latency P50 / P95 / P99.** Wall-clock from end-of-user-speech to first audible response. Moshi: 200 ms; GPT-4o Realtime: 300 ms.
+**Latency P50 / P95 / P99.** Реальное время от конца речи пользователя до первого слышимого ответа. Moshi: 200 ms; GPT-4o Realtime: 300 ms.
 
-**WER / MOS** on the output.
+**WER / MOS** на выходе.
 
-**Barge-in responsiveness.** Time from user interrupt to assistant mute. Target &lt; 150 ms.
+**Barge-in responsiveness.** Время от перебивания пользователем до замолкания ассистента. Цель &lt; 150 ms.
 
-### The 2026 leaderboards
+### Leaderboards 2026
 
-| Leaderboard | Tracks | URL |
+| Лидерборд | Треки | URL |
 |------------|--------|-----|
 | Open ASR Leaderboard (HF) | English + multilingual + long-form | `huggingface.co/spaces/hf-audio/open_asr_leaderboard` |
 | TTS Arena (HF) | English TTS | `huggingface.co/spaces/TTS-AGI/TTS-Arena` |
@@ -111,9 +111,9 @@ Imbalanced: **macro F1** + **per-class recall**. Report per-class — aggregate 
 | MMAU music subset | Music LALM | (within MMAU) |
 | HEAR benchmark | Self-supervised audio | `hearbenchmark.com` |
 
-## Build It
+## Соберите это
 
-### Step 1: WER with normalization
+### Шаг 1: WER с нормализацией
 
 ```python
 from jiwer import wer, Compose, ToLowerCase, RemovePunctuation, Strip
@@ -128,7 +128,7 @@ score = wer(
 # ~0.17
 ```
 
-### Step 2: TTS round-trip WER
+### Шаг 2: TTS round-trip WER
 
 ```python
 def ttr_wer(tts_model, asr_model, texts):
@@ -140,7 +140,7 @@ def ttr_wer(tts_model, asr_model, texts):
     return sum(errors) / len(errors)
 ```
 
-### Step 3: SECS for voice cloning
+### Шаг 3: SECS для voice cloning
 
 ```python
 from speechbrain.inference.speaker import EncoderClassifier
@@ -151,7 +151,7 @@ emb_clone = sv.encode_batch(load_wav("cloned.wav"))
 secs = torch.nn.functional.cosine_similarity(emb_ref, emb_clone, dim=-1).item()
 ```
 
-### Step 4: FAD for music generation
+### Шаг 4: FAD для генерации музыки
 
 ```python
 from frechet_audio_distance import FrechetAudioDistance
@@ -159,7 +159,7 @@ fad = FrechetAudioDistance()
 score = fad.get_fad_score("generated_folder/", "reference_folder/")
 ```
 
-### Step 5: EER for speaker verification (same code as Lesson 6)
+### Шаг 5: EER для speaker verification (тот же код, что в уроке 6)
 
 ```python
 def eer(same_scores, diff_scores):
@@ -173,52 +173,52 @@ def eer(same_scores, diff_scores):
     return best[1]
 ```
 
-## Use It
+## Используйте это
 
-Pair every deploy with a fixed eval harness that runs on every model update. Three cardinal rules:
+Свяжите каждый deploy с фиксированным eval harness, который запускается при каждом обновлении модели. Три главных правила:
 
-1. **Normalize before scoring.** Lowercase, punctuation-strip, number-expand. Report the normalization rule.
-2. **Report distributions, not averages.** P50/P95/P99 for latency. Per-class recall for classification. Per-category for MMAU.
-3. **Run one canonical public benchmark.** Even if your production data differs, reporting on Open ASR / TTS Arena / MMAU lets reviewers compare apples-to-apples.
+1. **Normalize before scoring.** Нижний регистр, удаление пунктуации, разворачивание чисел. Сообщайте правило нормализации.
+2. **Report distributions, not averages.** P50/P95/P99 для latency. Recall по классам для classification. Разбивка по категориям для MMAU.
+3. **Run one canonical public benchmark.** Даже если production data отличается, Open ASR / TTS Arena / MMAU позволяют reviewers сравнивать на одной основе.
 
-## Pitfalls
+## Ловушки
 
-- **UTMOS extrapolation.** Trained on VCTK-style clean speech; scores noisy / cloned / emotional audio poorly.
-- **MOS panel bias.** 20 Amazon Mechanical Turk workers ≠ 20 target users. Pay for a domain panel if stakes are high.
-- **FAD depends on reference set.** Compare against the same reference distribution across models.
-- **Aggregate WER.** A 5% WER overall can hide 30% WER on accented speech. Report by demographic slice.
-- **Public benchmark saturation.** Most frontier models are near the ceiling on standard benchmarks. Build an in-house held-out set that reflects your traffic.
+- **UTMOS extrapolation.** Обучен на чистой речи в стиле VCTK; плохо оценивает noisy / cloned / emotional audio.
+- **MOS panel bias.** 20 работников Amazon Mechanical Turk ≠ 20 целевых пользователей. Для high-stakes платите за domain panel.
+- **FAD depends on reference set.** Сравнивайте с одним и тем же reference distribution для всех models.
+- **Aggregate WER.** 5% WER overall может скрывать 30% WER на accented speech. Отчитывайтесь по демографическим срезам.
+- **Public benchmark saturation.** Frontier models близки к потолку на стандартных benchmarks. Соберите внутренний held-out set, отражающий ваш traffic.
 
-## Ship It
+## Доведите до результата
 
-Save as `outputs/skill-audio-evaluator.md`. Pick metrics, benchmarks, and reporting format for any audio model release.
+Сохраните как `outputs/skill-audio-evaluator.md`. Выберите метрики, benchmarks и reporting format для любого release аудиомодели.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. Compute WER / CER / EER / SECS / FAD-ish / MMAU-ish on toy inputs.
-2. **Medium.** Build a TTS round-trip WER harness. Run your Kokoro or F5-TTS output through Whisper. Compute WER over 50 prompts. Flag prompts with WER &gt; 10%.
-3. **Hard.** Score your Lesson 10 LALM choice on MMAU-Pro speech + multi-audio subsets (50 items each). Report per-category accuracy and compare with the published number.
+1. **Легко.** Запустите `code/main.py`. Посчитайте WER / CER / EER / SECS / FAD-ish / MMAU-ish на toy inputs.
+2. **Средне.** Соберите TTS round-trip WER harness. Прогоните output Kokoro или F5-TTS через Whisper. Посчитайте WER по 50 prompts. Пометьте prompts с WER &gt; 10%.
+3. **Сложно.** Оцените LALM из Lesson 10 на поднаборах MMAU-Pro speech + multi-audio (по 50 items). Сообщите accuracy по категориям и сравните с опубликованным числом.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| WER | ASR score | `(S+D+I)/N` at word level after normalization. |
-| CER | Character WER | For tone languages or char-level systems. |
-| MOS | Human opinion | 1-5 rating; 20+ listeners × 100 samples. |
-| UTMOS | ML MOS predictor | Learned model; correlates ~0.9 with human MOS. |
-| SECS | Voice-clone similarity | ECAPA cosine between reference and clone. |
-| EER | Speaker verif score | Threshold where FAR = FRR. |
+| WER | ASR score | `(S+D+I)/N` на уровне слов после нормализации. |
+| CER | Character WER | Для tone languages или char-level systems. |
+| MOS | Human opinion | Оценка 1-5; 20+ слушателей × 100 samples. |
+| UTMOS | ML MOS predictor | Обученная модель; коррелирует с human MOS примерно на 0.9. |
+| SECS | Voice-clone similarity | ECAPA cosine между reference и clone. |
+| EER | Speaker verif score | Threshold, где FAR = FRR. |
 | DER | Diarization score | (FA + Miss + Confusion) / total. |
-| FAD | Music-gen quality | Fréchet distance on VGGish embeddings. |
-| RTFx | Throughput | Audio seconds per wall-clock second. |
+| FAD | Music-gen quality | Fréchet distance по VGGish embeddings. |
+| RTFx | Throughput | Секунды аудио на секунду реального времени. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [jiwer](https://github.com/jitsi/jiwer) — WER/CER library with normalization utilities.
-- [UTMOS (Saeki et al. 2022)](https://arxiv.org/abs/2204.02152) — learned MOS predictor.
-- [Fréchet Audio Distance (Kilgour et al. 2019)](https://arxiv.org/abs/1812.08466) — the music-gen standard.
-- [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) — 2026 live rankings.
-- [TTS Arena](https://huggingface.co/spaces/TTS-AGI/TTS-Arena) — human-vote TTS leaderboard.
-- [MMAU-Pro benchmark](https://mmaubenchmark.github.io/) — LALM reasoning leaderboard.
-- [HEAR benchmark](https://hearbenchmark.com/) — audio SSL benchmarks.
+- [jiwer](https://github.com/jitsi/jiwer) — библиотека WER/CER с утилитами нормализации.
+- [UTMOS (Saeki et al. 2022)](https://arxiv.org/abs/2204.02152) — обученный MOS predictor.
+- [Fréchet Audio Distance (Kilgour et al. 2019)](https://arxiv.org/abs/1812.08466) — стандарт music-gen.
+- [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) — live rankings 2026.
+- [TTS Arena](https://huggingface.co/spaces/TTS-AGI/TTS-Arena) — TTS leaderboard на человеческих голосованиях.
+- [MMAU-Pro benchmark](https://mmaubenchmark.github.io/) — leaderboard reasoning для LALM.
+- [HEAR benchmark](https://hearbenchmark.com/) — benchmarks audio SSL.
