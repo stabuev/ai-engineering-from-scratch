@@ -1,35 +1,35 @@
-# Latent Diffusion & Stable Diffusion
+# Latent Diffusion и Stable Diffusion
 
-> Pixel-space diffusion on 512×512 images is a computational war crime. Rombach et al. (2022) noticed that you do not need all 786k dimensions to generate an image — you need enough to capture semantic structure, and a separate decoder for the rest. Run diffusion inside a VAE's latent space. That one idea is Stable Diffusion.
+> Pixel-space diffusion на изображениях 512×512 — вычислительное преступление. Rombach et al. (2022) заметили, что для генерации изображения не нужны все 786k измерений: нужно достаточно измерений для semantic structure и отдельный decoder для остального. Запустите diffusion внутри latent space VAE. Эта одна идея и есть Stable Diffusion.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 8 · 02 (VAE), Phase 8 · 06 (DDPM), Phase 7 · 09 (ViT)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 8 · 02 (VAE), Фаза 8 · 06 (DDPM), Фаза 7 · 09 (ViT)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-Pixel-space diffusion at 512² means the U-Net runs on tensors of shape `[B, 3, 512, 512]`. Each sampling step is ~100 GFLOPS for a 500M-param U-Net. Fifty steps is 5 TFLOPS per image. Train on a billion images and the compute bill is absurd.
+Pixel-space diffusion на 512² означает, что U-Net работает с tensors формы `[B, 3, 512, 512]`. Каждый sampling step — примерно ~100 GFLOPS для 500M-param U-Net. Пятьдесят шагов — 5 TFLOPS на image. Обучите это на миллиарде images, и compute bill становится абсурдным.
 
-Most of those FLOPs go to pushing perceptually unimportant details through the net — the high-frequency texture that a lossy VAE could compress away. Rombach's idea: train a VAE once (the *first stage*), freeze it, and run diffusion entirely in the 4-channel 64×64 latent space (the *second stage*). Same U-Net. 1/16th the pixels. ~64x fewer FLOPs for comparable quality.
+Большая часть этих FLOPs уходит на проталкивание через net перцептивно неважных деталей — high-frequency texture, которую lossy VAE мог бы сжать. Идея Rombach: один раз обучить VAE (*first stage*), заморозить его и запускать diffusion полностью в 4-channel 64×64 latent space (*second stage*). Тот же U-Net. 1/16 пикселей. Примерно ~64x fewer FLOPs при сопоставимом качестве.
 
-This is the Stable Diffusion recipe. SD 1.x / 2.x used an 860M U-Net over `64×64×4` latents, SDXL used a 2.6B U-Net over `128×128×4`, SD3 swapped the U-Net for a Diffusion Transformer (DiT) with flow matching. Flux.1-dev (Black Forest Labs, 2024) ships a 12B-param DiT-MMDiT. All run on the same two-stage substrate.
+Это рецепт Stable Diffusion. SD 1.x / 2.x использовали 860M U-Net поверх `64×64×4` latents, SDXL — 2.6B U-Net поверх `128×128×4`, SD3 заменил U-Net на Diffusion Transformer (DiT) с flow matching. Flux.1-dev (Black Forest Labs, 2024) поставляет 12B-param DiT-MMDiT. Все работают на той же two-stage основе.
 
-## The Concept
+## Концепция
 
 ![Latent diffusion: VAE compression + diffusion in latent space](../assets/latent-diffusion.svg)
 
-**Two stages, separately trained.**
+**Две стадии, обученные отдельно.**
 
-1. **Stage 1 — VAE.** Encoder `E(x) → z`, decoder `D(z) → x`. Target compression: 8× downsample in each spatial axis + adjust channels so total latent size is ~1/16th of pixel count. Loss = reconstruction (L1 + LPIPS perceptual) + KL (small weight so `z` isn't forced too Gaussian, because we do not need exact sampling from `z`). Often trained with an adversarial loss so decoded images are sharp.
+1. **Stage 1 — VAE.** Encoder `E(x) → z`, decoder `D(z) → x`. Target compression: 8× downsample по каждой spatial axis + настройка channels так, чтобы total latent size был ~1/16th of pixel count. Loss = reconstruction (L1 + LPIPS perceptual) + KL (малый вес, чтобы `z` не принуждался быть слишком Gaussian, потому что нам не нужен exact sampling из `z`). Часто обучают с adversarial loss, чтобы decoded images были sharp.
 
-2. **Stage 2 — diffusion on `z`.** Treat `z = E(x_real)` as the data. Train a U-Net (or DiT) to denoise `z_t`. At inference: sample `z_0` via diffusion, then `x = D(z_0)`.
+2. **Stage 2 — diffusion on `z`.** Считать `z = E(x_real)` данными. Обучить U-Net (или DiT) denoise-ить `z_t`. На inference: sample `z_0` через diffusion, затем `x = D(z_0)`.
 
-**Text conditioning.** Two additional components. A frozen text encoder (CLIP-L for SD 1.x, CLIP-L+OpenCLIP-G for SD 2/XL, T5-XXL for SD3 and Flux). A cross-attention injection: every U-Net block takes `[Q = image features, K = V = text tokens]` and mixes them in. The tokens are the only way text influences the image.
+**Text conditioning.** Два дополнительных компонента. Frozen text encoder (CLIP-L для SD 1.x, CLIP-L+OpenCLIP-G для SD 2/XL, T5-XXL для SD3 и Flux). Cross-attention injection: каждый U-Net block берет `[Q = image features, K = V = text tokens]` и смешивает их. Tokens — единственный путь, которым text влияет на image.
 
-**The loss function is identical to Lesson 06.** Same DDPM / flow matching MSE on noise. You just swap the data domain.
+**Loss function идентична Lesson 06.** Та же DDPM / flow matching MSE на noise. Меняется только data domain.
 
-## Architecture variants
+## Варианты архитектуры
 
 | Model | Year | Backbone | Latent shape | Text encoder | Params |
 |-------|------|----------|--------------|--------------|--------|
@@ -41,28 +41,28 @@ This is the Stable Diffusion recipe. SD 1.x / 2.x used an 860M U-Net over `64×6
 | Flux.1-dev | 2024 | MMDiT | 128×128×16 | T5-XXL + CLIP-L | 12B |
 | Flux.1-schnell | 2024 | MMDiT distilled | 128×128×16 | T5-XXL + CLIP-L | 12B, 1-4 step |
 
-The trend: replace U-Net with DiT (transformer over latent patches), scale the text encoder (T5 beats CLIP for prompt adherence), increase latent channels (4 → 16 gives more detail headroom).
+Тренд: заменить U-Net на DiT (transformer по latent patches), масштабировать text encoder (T5 лучше CLIP по prompt adherence), увеличить latent channels (4 → 16 дает больше места для detail).
 
-## Build It
+## Практика
 
-`code/main.py` stacks a toy 1-D "VAE" (identity encoder + decoder, for demonstration; a real VAE would be a conv net) on top of the DDPM from Lesson 06 and adds class conditioning with classifier-free guidance. It shows that the same diffusion loss works whether you run on raw 1-D values or on encoded values — the key insight.
+`code/main.py` складывает toy 1-D "VAE" (identity encoder + decoder для демонстрации; настоящий VAE был бы conv net) поверх DDPM из Lesson 06 и добавляет class conditioning с classifier-free guidance. Он показывает, что та же diffusion loss работает и на raw 1-D values, и на encoded values — это ключевой insight.
 
-### Step 1: encoder/decoder
+### Шаг 1: encoder/decoder
 
 ```python
 def encode(x):    return x * 0.5          # toy "compression" to smaller scale
 def decode(z):    return z * 2.0
 ```
 
-A real VAE has trained weights. For pedagogy, this linear map is enough to show that diffusion operates on `z` without caring about the original data space.
+У настоящего VAE есть trained weights. Для педагогики этого linear map достаточно, чтобы показать: diffusion работает на `z` и не заботится об исходном data space.
 
-### Step 2: diffusion in `z`-space
+### Шаг 2: diffusion in `z`-space
 
-Same DDPM as Lesson 06. The data the net sees is `z = E(x)`. After sampling `z_0`, decode with `D(z_0)`.
+Тот же DDPM, что в Lesson 06. Данные, которые видит net, — `z = E(x)`. После sampling `z_0` декодируйте через `D(z_0)`.
 
-### Step 3: classifier-free guidance
+### Шаг 3: classifier-free guidance
 
-During training, drop the class label 10% of the time (replace with a null token). At inference, compute both `ε_cond` and `ε_uncond`, then:
+Во время training отбрасывайте class label в 10% случаев (заменяйте null token). На inference посчитайте `ε_cond` и `ε_uncond`, затем:
 
 ```python
 eps_cfg = (1 + w) * eps_cond - w * eps_uncond
@@ -70,76 +70,76 @@ eps_cfg = (1 + w) * eps_cond - w * eps_uncond
 
 `w = 0` = no guidance (full diversity), `w = 3` = default, `w = 7+` = saturated / over-sharp.
 
-### Step 4: text conditioning (concept, not code)
+### Шаг 4: text conditioning (concept, not code)
 
-Replace the class label with a frozen text encoder output. Feed the text embedding to the U-Net via cross-attention:
+Замените class label на output frozen text encoder. Подайте text embedding в U-Net через cross-attention:
 
 ```python
 h = h + CrossAttention(Q=h, K=text_embed, V=text_embed)
 ```
 
-This is the only substantive difference between a class-conditional diffusion model and Stable Diffusion.
+Это единственное существенное отличие class-conditional diffusion model от Stable Diffusion.
 
-## Pitfalls
+## Подводные камни
 
-- **VAE-scale mismatch.** SD 1.x VAEs have a scaling constant (`scaling_factor ≈ 0.18215`) applied after encoding. Forgetting this makes the U-Net train on latents with wildly wrong variance. Every checkpoint ships one.
-- **Text encoder silently wrong.** SD3 needs T5-XXL with >=128 tokens, and the fallback to CLIP-only is lossy. Always check `use_t5=True` or prompt fidelity craters.
-- **Mixing latent spaces.** SDXL, SD3, Flux all use different VAEs. A LoRA trained on SDXL latents will not work on SD3. Hugging Face diffusers 0.30+ refuses to load mismatched checkpoints.
-- **CFG too high.** `w > 10` produces saturated, oily images and over-fits the prompt at the cost of diversity. The sweet spot is `w = 3-7`.
-- **Negative prompts leaking.** Empty negative prompt becomes the null token; a filled negative prompt becomes the `ε_uncond`. These are not the same; some pipelines silently default to the null.
+- **VAE-scale mismatch.** У SD 1.x VAE есть scaling constant (`scaling_factor ≈ 0.18215`), применяемая после encoding. Если забыть ее, U-Net будет обучаться на latents с радикально неверной variance. Каждый checkpoint поставляет ее.
+- **Text encoder silently wrong.** SD3 нужен T5-XXL с >=128 tokens, и fallback на CLIP-only lossy. Всегда проверяйте `use_t5=True`, иначе prompt fidelity падает.
+- **Mixing latent spaces.** SDXL, SD3, Flux используют разные VAEs. LoRA, обученная на SDXL latents, не заработает на SD3. Hugging Face diffusers 0.30+ отказывается загружать mismatched checkpoints.
+- **CFG too high.** `w > 10` дает saturated, oily images и over-fits prompt ценой diversity. Sweet spot — `w = 3-7`.
+- **Negative prompts leaking.** Empty negative prompt становится null token; заполненный negative prompt становится `ε_uncond`. Это не одно и то же; некоторые pipelines silently default to null.
 
-## Use It
+## Применение
 
-Production stacks in 2026:
+Production stacks в 2026 году:
 
 | Target | Recommended backbone |
 |--------|----------------------|
 | Narrow domain, paired data, training a model from scratch | SDXL fine-tune (LoRA / full) — fastest to ship |
-| Open-domain text-to-image, open weights | Flux.1-dev (12B, Apache / non-commercial) or SD3.5-Large |
-| Fastest inference, open weights | Flux.1-schnell (1-4 step, Apache) or SDXL-Lightning |
+| Open-domain text-to-image, open weights | Flux.1-dev (12B, Apache / non-commercial) или SD3.5-Large |
+| Fastest inference, open weights | Flux.1-schnell (1-4 step, Apache) или SDXL-Lightning |
 | Best prompt adherence, hosted | GPT-Image / DALL-E 3 (still), Midjourney v7, Imagen 4 |
 | Edit workflows | Flux.1-Kontext (Dec 2024) — natively accepts image + text |
 | Research, baseline | SD 1.5 — ancient but well-studied |
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-sd-prompter.md`. Skill takes a text prompt + target style and outputs: model + checkpoint, CFG scale, sampler, negative prompt, resolution, optional ControlNet/IP-Adapter combo, and a per-step QA checklist.
+Сохраните `outputs/skill-sd-prompter.md`. Навык принимает text prompt + target style и выдает: model + checkpoint, CFG scale, sampler, negative prompt, resolution, optional ControlNet/IP-Adapter combo и per-step QA checklist.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py` with guidance `w ∈ {0, 1, 3, 7, 15}`. Record mean sample by class. At what `w` do the class means diverge past the real data means?
-2. **Medium.** Swap the toy linear encoder for a tanh-MLP encoder/decoder pair with a reconstruction loss. Retrain diffusion on the new latents. Does sample quality change?
-3. **Hard.** Set up a real Stable Diffusion inference with diffusers: load `sdxl-base`, run 30 Euler steps with CFG=7, time it. Now switch to `sdxl-turbo` with 4 steps and CFG=0. Same subject, different quality — describe what changed and why.
+1. **Легко.** Запустите `code/main.py` с guidance `w ∈ {0, 1, 3, 7, 15}`. Запишите mean sample by class. При каком `w` class means расходятся дальше real data means?
+2. **Средне.** Замените toy linear encoder на tanh-MLP encoder/decoder pair с reconstruction loss. Переобучите diffusion на новых latents. Меняется ли sample quality?
+3. **Сложно.** Настройте реальный Stable Diffusion inference с diffusers: загрузите `sdxl-base`, запустите 30 Euler steps с CFG=7, замерьте время. Теперь переключитесь на `sdxl-turbo` с 4 steps и CFG=0. Тот же subject, другое quality — опишите, что изменилось и почему.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| First stage | "The VAE" | Trained encoder/decoder pair; compresses 512² to 64². |
+| First stage | "The VAE" | Trained encoder/decoder pair; сжимает 512² до 64². |
 | Second stage | "The U-Net" | Diffusion model over the latent space. |
-| CFG | "Guidance scale" | `(1+w)·ε_cond - w·ε_uncond`; tunes conditioning strength. |
-| Null token | "Empty prompt embed" | Unconditional embed used for `ε_uncond`. |
-| Cross-attention | "How text gets in" | Each U-Net block attends to text tokens as K and V. |
-| DiT | "Diffusion Transformer" | Replace U-Net with a transformer over latent patches; scales better. |
-| MMDiT | "Multi-modal DiT" | SD3's architecture: text and image streams with joint attention. |
-| VAE scaling factor | "Magic number" | Divides latents by ~5.4 so diffusion operates in unit-variance space. |
+| CFG | "Guidance scale" | `(1+w)·ε_cond - w·ε_uncond`; настраивает conditioning strength. |
+| Null token | "Empty prompt embed" | Unconditional embed для `ε_uncond`. |
+| Cross-attention | "How text gets in" | Каждый U-Net block attends to text tokens as K and V. |
+| DiT | "Diffusion Transformer" | Замена U-Net на transformer over latent patches; лучше масштабируется. |
+| MMDiT | "Multi-modal DiT" | Архитектура SD3: text и image streams с joint attention. |
+| VAE scaling factor | "Magic number" | Делит latents примерно на ~5.4, чтобы diffusion работала в unit-variance space. |
 
-## Production note: running Flux-12B on an 8GB consumer GPU
+## Production note: запуск Flux-12B на consumer GPU 8GB
 
-the reference Flux integration is the canonical "I have a consumer GPU, can I ship this?" recipe. The trick is the same three-knob recipe production inference literature lists applied to a diffusion DiT:
+Reference Flux integration — canonical рецепт "у меня consumer GPU, могу ли я это поставить?" Трюк — те же три ручки из production inference literature, примененные к diffusion DiT:
 
-1. **Staggered loading.** Flux has three networks that never need to coexist in VRAM: T5-XXL text encoder (~10 GB in fp32), CLIP-L (small), the 12B MMDiT, and the VAE. Encode the prompt first, *delete* the encoders, load the DiT, denoise, *delete* the DiT, load the VAE, decode. Consumer 8GB GPUs only fit one stage at a time.
-2. **4-bit quantization via bitsandbytes.** `BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)` on both the T5 encoder and the DiT. Cuts memory 8×, quality drop is imperceptible for text-to-image per Aritra's benchmarks (linked in the notebook).
-3. **CPU offload.** `pipe.enable_model_cpu_offload()` auto-swaps modules between CPU and GPU as each forward pass advances. Adds 10-20% latency but makes the pipeline run at all.
+1. **Staggered loading.** У Flux три сети, которым не нужно одновременно жить в VRAM: T5-XXL text encoder (~10 GB in fp32), CLIP-L (small), 12B MMDiT и VAE. Сначала encode prompt, *delete* encoders, load DiT, denoise, *delete* DiT, load VAE, decode. Consumer 8GB GPUs вмещают только одну стадию за раз.
+2. **4-bit quantization via bitsandbytes.** `BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)` на T5 encoder и DiT. Срезает memory 8×, quality drop незаметен для text-to-image по benchmarks Aritra (linked in the notebook).
+3. **CPU offload.** `pipe.enable_model_cpu_offload()` auto-swaps modules между CPU и GPU по мере продвижения каждого forward pass. Добавляет 10-20% latency, но вообще позволяет pipeline запуститься.
 
-The memory accounting is: `10 GB T5 / 8 = 1.25 GB` quantized, `12 B params × 0.5 bytes = ~6 GB` quantized DiT, plus activations. In stas00's terms this is the extreme-end of TP=1 inference — no model parallelism, maximum quantization. For production you'd run TP=2 or TP=4 on H100s; for a single dev laptop, this is the recipe.
+Memory accounting: `10 GB T5 / 8 = 1.25 GB` quantized, `12 B params × 0.5 bytes = ~6 GB` quantized DiT плюс activations. В терминах stas00 это extreme-end TP=1 inference — no model parallelism, maximum quantization. Для production вы бы запускали TP=2 или TP=4 на H100; для single dev laptop это рецепт.
 
-## Further Reading
+## Дополнительное чтение
 
 - [Rombach et al. (2022). High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) — Stable Diffusion.
 - [Podell et al. (2023). SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis](https://arxiv.org/abs/2307.01952) — SDXL.
 - [Peebles & Xie (2023). Scalable Diffusion Models with Transformers (DiT)](https://arxiv.org/abs/2212.09748) — DiT.
 - [Esser et al. (2024). Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) — SD3, MMDiT.
 - [Ho & Salimans (2022). Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598) — CFG.
-- [Labs (2024). Flux.1 — Black Forest Labs announcement](https://blackforestlabs.ai/announcing-black-forest-labs/) — Flux.1 family.
-- [Hugging Face Diffusers docs](https://huggingface.co/docs/diffusers/index) — reference implementation for every checkpoint above.
+- [Labs (2024). Flux.1 — Black Forest Labs announcement](https://blackforestlabs.ai/announcing-black-forest-labs/) — семейство Flux.1.
+- [Hugging Face Diffusers docs](https://huggingface.co/docs/diffusers/index) — reference implementation для каждого checkpoint выше.

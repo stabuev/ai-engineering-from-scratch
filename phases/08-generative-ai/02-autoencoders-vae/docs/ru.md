@@ -1,48 +1,48 @@
-# Autoencoders & Variational Autoencoders (VAE)
+# Автоэнкодеры и вариационные автоэнкодеры (VAE)
 
-> A plain autoencoder compresses then reconstructs. It memorizes. It does not generate. Add one trick — force the code to look Gaussian — and you get a sampler. That single trick, the reparameterization of `z = μ + σ·ε`, is why every latent-diffusion and flow-matching image model you use in 2026 has a VAE at the input.
+> Обычный autoencoder сжимает, затем восстанавливает. Он запоминает. Он не генерирует. Добавьте один прием — заставьте код выглядеть гауссовым — и получите sampler. Именно этот прием, reparameterization `z = μ + σ·ε`, объясняет, почему у каждой image-модели на latent-diffusion и flow-matching, которой вы пользуетесь в 2026 году, на входе стоит VAE.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 3 · 02 (Backprop), Phase 3 · 07 (CNNs), Phase 8 · 01 (Taxonomy)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 3 · 02 (Backprop), Фаза 3 · 07 (CNNs), Фаза 8 · 01 (Taxonomy)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-Compress a 784-pixel MNIST digit to a 16-number code, then reconstruct. A plain autoencoder will ace reconstruction MSE but the code space is a lumpy mess. Pick a random point in the code space, decode it, and you get noise. It has no sampler. It is a compression model dressed up.
+Сжать MNIST-цифру из 784 пикселей в код из 16 чисел, затем восстановить. Обычный autoencoder отлично справится с reconstruction MSE, но пространство кодов будет комковатым хаосом. Возьмите случайную точку в пространстве кодов, декодируйте ее — и получите шум. У него нет sampler. Это compression model в генеративном костюме.
 
-What you actually want is: (a) the code space is a clean, smooth distribution you can sample from — say an isotropic Gaussian `N(0, I)`, (b) decoding any sample produces a plausible digit, and (c) the encoder and decoder still compress well. Three goals, one architecture, one loss.
+На самом деле нужно следующее: (a) пространство кодов — чистое, гладкое распределение, из которого можно sample, например isotropic Gaussian `N(0, I)`, (b) декодирование любого sample дает правдоподобную цифру, и (c) encoder и decoder все еще хорошо сжимают. Три цели, одна архитектура, одна loss.
 
-Kingma's 2013 VAE solves this by training the encoder to output a *distribution* `q(z|x) = N(μ(x), σ(x)²)`, pulling that distribution toward the prior `N(0, I)` via a KL penalty, and then sampling `z` from `q(z|x)` before decoding. At inference time, drop the encoder, sample `z ~ N(0, I)`, decode. The KL penalty is what forces the code space to be structured.
+VAE Kingma 2013 решает это так: encoder обучается выдавать *распределение* `q(z|x) = N(μ(x), σ(x)²)`, это распределение притягивается к prior `N(0, I)` через KL penalty, а затем `z` sample-ится из `q(z|x)` перед декодированием. На inference encoder отбрасывают, берут `z ~ N(0, I)` и декодируют. Именно KL penalty заставляет пространство кодов быть структурированным.
 
-In 2026 VAEs rarely ship standalone — they have been outclassed by diffusion for raw image quality — but they are the encoder of choice for every latent-diffusion model (SD 1/2/XL/3, Flux, AudioCraft). Learn the VAE and you learn the invisible first layer of every image pipeline you use.
+В 2026 году VAE редко поставляются как самостоятельные модели — diffusion обогнала их по качеству сырых изображений, — но они остаются главным encoder для каждой latent-diffusion модели (SD 1/2/XL/3, Flux, AudioCraft). Изучая VAE, вы изучаете невидимый первый слой каждой image pipeline, которой пользуетесь.
 
-## The Concept
+## Концепция
 
 ![Autoencoder vs VAE: the reparameterization trick](../assets/vae.svg)
 
-**Autoencoder.** `z = encoder(x)`, `x̂ = decoder(z)`, loss = `||x - x̂||²`. Code space unstructured.
+**Autoencoder.** `z = encoder(x)`, `x̂ = decoder(z)`, loss = `||x - x̂||²`. Пространство кодов неструктурировано.
 
-**VAE encoder.** Outputs two vectors: `μ(x)` and `log σ²(x)`. These define `q(z|x) = N(μ, diag(σ²))`.
+**VAE encoder.** Выдает два вектора: `μ(x)` и `log σ²(x)`. Они задают `q(z|x) = N(μ, diag(σ²))`.
 
-**Reparameterization trick.** Sampling from `q(z|x)` is not differentiable. Rewrite the sample as `z = μ + σ·ε` where `ε ~ N(0, I)`. Now `z` is a deterministic function of `(μ, σ)` plus a non-parameter noise — gradients flow through `μ` and `σ`.
+**Reparameterization trick.** Sampling из `q(z|x)` недифференцируем. Перепишите sample как `z = μ + σ·ε`, где `ε ~ N(0, I)`. Теперь `z` — детерминированная функция от `(μ, σ)` плюс непараметрический шум; градиенты проходят через `μ` и `σ`.
 
-**Loss.** Evidence Lower BOund (ELBO), two terms:
+**Loss.** Evidence Lower BOund (ELBO), два слагаемых:
 
 ```
 loss = reconstruction + β · KL[q(z|x) || N(0, I)]
      = ||x - x̂||²  + β · Σ_i ( σ_i² + μ_i² - log σ_i² - 1 ) / 2
 ```
 
-Reconstruction pushes `x̂` toward `x`. KL pushes `q(z|x)` toward the prior. They trade off. Small β (<1) = sharper samples, code space less Gaussian. Large β (>1) = cleaner code space, blurrier samples. β-VAE (Higgins 2017) made this knob famous and kicked off disentanglement research.
+Reconstruction тянет `x̂` к `x`. KL тянет `q(z|x)` к prior. Между ними trade-off. Малое β (<1) = более резкие samples, пространство кодов менее гауссово. Большое β (>1) = более чистое пространство кодов, более размытые samples. β-VAE (Higgins 2017) сделала эту ручку известной и запустила исследования disentanglement.
 
-**Sampling.** At inference: draw `z ~ N(0, I)`, forward through decoder. One forward pass — no iterative sampling like diffusion.
+**Sampling.** На inference: взять `z ~ N(0, I)`, прогнать через decoder. Один forward pass — без iterative sampling как в diffusion.
 
-## Build It
+## Практика
 
-`code/main.py` implements a tiny VAE without numpy or torch. Input is 8-dimensional synthetic data drawn from a 2-component Gaussian mixture in 8-D. Encoder and decoder are single hidden-layer MLPs. We implement tanh activation, forward pass, loss, and a hand-written backward pass. Not production — pedagogy.
+`code/main.py` реализует крошечный VAE без numpy или torch. Вход — 8-мерные синтетические данные из 2-component Gaussian mixture в 8-D. Encoder и decoder — MLP с одним hidden layer. Мы реализуем tanh activation, forward pass, loss и рукописный backward pass. Не production — педагогика.
 
-### Step 1: encoder forward
+### Шаг 1: encoder forward
 
 ```python
 def encode(x, enc):
@@ -52,9 +52,9 @@ def encode(x, enc):
     return mu, log_sigma2
 ```
 
-`log σ²` instead of `σ` so the network output is unconstrained (softplus of σ is a trap — gradients die at σ ≈ 0).
+`log σ²` вместо `σ`, чтобы выход сети был неограниченным (softplus от σ — ловушка: градиенты умирают при σ ≈ 0).
 
-### Step 2: reparameterize and decode
+### Шаг 2: reparameterize and decode
 
 ```python
 def reparameterize(mu, log_sigma2, rng):
@@ -67,7 +67,7 @@ def decode(z, dec):
     return add(matmul(dec["W_out"], h), dec["b_out"])
 ```
 
-### Step 3: the ELBO
+### Шаг 3: the ELBO
 
 ```python
 def elbo(x, x_hat, mu, log_sigma2, beta=1.0):
@@ -76,9 +76,9 @@ def elbo(x, x_hat, mu, log_sigma2, beta=1.0):
     return recon + beta * kl, recon, kl
 ```
 
-Exact closed-form KL because both distributions are Gaussian. Do not integrate numerically. People still ship code with monte-carlo KL estimates in 2026 — it is 3x slower for no reason.
+Точный closed-form KL, потому что оба распределения гауссовы. Не интегрируйте численно. Люди все еще поставляют код с monte-carlo KL estimates в 2026 году — это в 3x медленнее без причины.
 
-### Step 4: generate
+### Шаг 4: generate
 
 ```python
 def sample(dec, z_dim, rng):
@@ -86,67 +86,67 @@ def sample(dec, z_dim, rng):
     return decode(z, dec)
 ```
 
-That is the generative model. Five lines.
+Это и есть генеративная модель. Пять строк.
 
-## Pitfalls
+## Подводные камни
 
-- **Posterior collapse.** KL term drives `q(z|x) → N(0, I)` so aggressively that `z` carries no info about `x`. Fix: β-annealing (start β=0, ramp to 1), free bits, or skip the KL on inactive dimensions.
-- **Blurry samples.** The Gaussian decoder likelihood implies MSE reconstruction, which is Bayes-optimal for L2 (the mean) — the mean of a set of plausible digits is a fuzzy digit. Fix: discrete decoder (VQ-VAE, NVAE), or use the VAE only as an encoder and stack diffusion on the latents (this is what Stable Diffusion does).
-- **β too large, too early.** See posterior collapse. Start at β≈0.01 and ramp.
-- **Latent dim too small.** 16-D works for MNIST, 256-D for ImageNet 256², 2048-D for ImageNet 1024². Stable Diffusion's VAE compresses 512×512×3 → 64×64×4 (32x downsample factor in spatial area, 32x in channels).
+- **Posterior collapse.** KL term так агрессивно тянет `q(z|x) → N(0, I)`, что `z` не несет информации о `x`. Исправление: β-annealing (начать с β=0, поднять до 1), free bits или пропустить KL на неактивных измерениях.
+- **Blurry samples.** Gaussian decoder likelihood подразумевает MSE reconstruction, которая Bayes-optimal для L2 (среднее), а среднее набора правдоподобных цифр — размытая цифра. Исправление: discrete decoder (VQ-VAE, NVAE) или использовать VAE только как encoder и поставить diffusion поверх latents (так делает Stable Diffusion).
+- **β слишком велика и слишком рано.** См. posterior collapse. Начинайте с β≈0.01 и повышайте.
+- **Latent dim слишком мала.** 16-D работает для MNIST, 256-D для ImageNet 256², 2048-D для ImageNet 1024². VAE в Stable Diffusion сжимает 512×512×3 → 64×64×4 (32x downsample factor по площади пространства и 32x по каналам).
 
-## Use It
+## Применение
 
-The 2026 VAE stack:
+VAE stack в 2026 году:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Image-latent encoder for diffusion | Stable Diffusion VAE (`sd-vae-ft-ema`) or Flux VAE |
-| Audio-latent encoder | Encodec (Meta), SoundStream, or DAC (Descript) |
-| Video latents | Sora's spatiotemporal patches, Latte VAE, WAN VAE |
+| Image-latent encoder для diffusion | Stable Diffusion VAE (`sd-vae-ft-ema`) или Flux VAE |
+| Audio-latent encoder | Encodec (Meta), SoundStream или DAC (Descript) |
+| Video latents | Spatiotemporal patches Sora, Latte VAE, WAN VAE |
 | Disentangled representation learning | β-VAE, FactorVAE, TCVAE |
-| Discrete latents (for transformer modelling) | VQ-VAE, RVQ (ResidualVQ) |
-| Continuous latents for generation | Plain VAE, then condition a flow/diffusion model in that latent space |
+| Discrete latents (для transformer modelling) | VQ-VAE, RVQ (ResidualVQ) |
+| Continuous latents для generation | Plain VAE, затем condition flow/diffusion model в этом latent space |
 
-A latent-diffusion model is a VAE with a diffusion model living between encoder and decoder. The VAE does coarse compression, the diffusion model does the heavy lifting. Same pattern for video (VAE + video-diffusion DiT) and audio (Encodec + MusicGen transformer).
+Latent-diffusion model — это VAE с diffusion model между encoder и decoder. VAE делает грубое сжатие, diffusion model выполняет основную работу. Та же схема для видео (VAE + video-diffusion DiT) и аудио (Encodec + MusicGen transformer).
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-vae-trainer.md`.
+Сохраните `outputs/skill-vae-trainer.md`.
 
-Skill takes: dataset profile + latent-dim target + downstream use (reconstruction, sampling, or latent-diffusion input) and outputs: architecture choice (plain/β/VQ/RVQ), β schedule, latent dim, decoder likelihood (Gaussian vs categorical), and evaluation plan (recon MSE, KL per dim, Fréchet distance between `q(z|x)` and `N(0, I)`).
+Навык принимает: dataset profile + latent-dim target + downstream use (reconstruction, sampling или latent-diffusion input) и выдает: architecture choice (plain/β/VQ/RVQ), β schedule, latent dim, decoder likelihood (Gaussian vs categorical) и evaluation plan (recon MSE, KL per dim, Fréchet distance между `q(z|x)` и `N(0, I)`).
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Change `β` in `code/main.py` to `0.01`, `0.1`, `1.0`, `5.0`. Record the final reconstruction MSE and KL. Which β is Pareto-best for your synthetic data?
-2. **Medium.** Replace the Gaussian decoder likelihood with a Bernoulli likelihood (cross-entropy loss). Compare sample quality on a binarized version of the same synthetic data.
-3. **Hard.** Extend `code/main.py` into a mini VQ-VAE: replace the continuous `z` with a nearest-neighbour lookup in a codebook of K=32 entries. Compare reconstruction MSE and report how many codebook entries get used (codebook collapse is real).
+1. **Легко.** Измените `β` в `code/main.py` на `0.01`, `0.1`, `1.0`, `5.0`. Запишите итоговые reconstruction MSE и KL. Какая β Pareto-best для ваших synthetic data?
+2. **Средне.** Замените Gaussian decoder likelihood на Bernoulli likelihood (cross-entropy loss). Сравните качество samples на binarized версии тех же synthetic data.
+3. **Сложно.** Расширьте `code/main.py` до mini VQ-VAE: замените continuous `z` на nearest-neighbour lookup в codebook из K=32 entries. Сравните reconstruction MSE и сообщите, сколько codebook entries используется (codebook collapse реален).
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Autoencoder | Encode-decode network | `x → z → x̂`, learn MSE. Not generative. |
-| VAE | AE with a sampler | Encoder outputs a distribution, KL penalty shapes code space. |
-| ELBO | Evidence lower bound | `log p(x) ≥ recon - KL[q(z|x) \|\| p(z)]`; tight when `q = p(z|x)`. |
-| Reparameterization | `z = μ + σ·ε` | Rewrites stochastic node as deterministic + pure noise. Enables backprop through sampling. |
-| Prior | `p(z)` | Target distribution for the latent, typically `N(0, I)`. |
-| Posterior collapse | "KL term wins" | Encoder ignores `x`, outputs the prior; decoder must hallucinate. |
-| β-VAE | Tunable KL weight | `loss = recon + β·KL`. Higher β = more disentangled but blurrier. |
-| VQ-VAE | Discrete latent | Replace continuous `z` with nearest codebook vector; enables transformer modelling. |
+| Autoencoder | Encode-decode network | `x → z → x̂`, учит MSE. Не генеративен. |
+| VAE | AE with a sampler | Encoder выдает распределение, KL penalty формирует пространство кодов. |
+| ELBO | Evidence lower bound | `log p(x) ≥ recon - KL[q(z|x) \|\| p(z)]`; tight, когда `q = p(z|x)`. |
+| Reparameterization | `z = μ + σ·ε` | Переписывает стохастический узел как deterministic + pure noise. Позволяет backprop через sampling. |
+| Prior | `p(z)` | Целевое распределение для latent, обычно `N(0, I)`. |
+| Posterior collapse | "KL term wins" | Encoder игнорирует `x`, выдает prior; decoder вынужден hallucinate. |
+| β-VAE | Tunable KL weight | `loss = recon + β·KL`. Чем выше β, тем больше disentanglement, но сильнее blur. |
+| VQ-VAE | Discrete latent | Заменяет continuous `z` ближайшим codebook vector; включает transformer modelling. |
 
-## Production note: the VAE is the hottest path in a diffusion server
+## Production note: VAE — самая горячая часть diffusion server
 
-In a Stable Diffusion / Flux / SD3 pipeline the VAE is called twice per request — once to encode (if doing img2img / inpainting) and once to decode. At 1024² the decoder pass is often the single largest activation-memory peak in the whole pipeline because it upsamples `128×128×16` latents back to `1024×1024×3`. Two practical consequences:
+В pipeline Stable Diffusion / Flux / SD3 VAE вызывается дважды на request — один раз для encode (если это img2img / inpainting) и один раз для decode. На 1024² проход decoder часто дает самый большой пик activation-memory во всей pipeline, потому что он upsample-ит `128×128×16` latents обратно в `1024×1024×3`. Два практических следствия:
 
-- **Slice or tile the decode.** `diffusers` exposes `pipe.vae.enable_slicing()` and `pipe.vae.enable_tiling()`. Tiling trades a small seam artifact for `O(tile²)` memory instead of `O(H·W)`. Essential for 1024²+ on consumer GPUs.
-- **bf16 decoder, fp32 numerics for the final resize.** The SD 1.x VAE was released in fp32 and *silently produces NaNs* when cast to fp16 at 1024²+. SDXL ships `madebyollin/sdxl-vae-fp16-fix` — always prefer the fp16-fix variant or use bf16.
+- **Slice or tile the decode.** `diffusers` предоставляет `pipe.vae.enable_slicing()` и `pipe.vae.enable_tiling()`. Tiling меняет небольшой seam artifact на память `O(tile²)` вместо `O(H·W)`. Необходим для 1024²+ на consumer GPUs.
+- **bf16 decoder, fp32 numerics для final resize.** SD 1.x VAE был выпущен в fp32 и *тихо производит NaNs* при приведении к fp16 на 1024²+. SDXL поставляет `madebyollin/sdxl-vae-fp16-fix` — всегда предпочитайте fp16-fix variant или используйте bf16.
 
-## Further Reading
+## Дополнительное чтение
 
-- [Kingma & Welling (2013). Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114) — the VAE paper.
+- [Kingma & Welling (2013). Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114) — статья о VAE.
 - [Higgins et al. (2017). β-VAE: Learning Basic Visual Concepts with a Constrained Variational Framework](https://openreview.net/forum?id=Sy2fzU9gl) — disentangled β-VAE.
 - [van den Oord et al. (2017). Neural Discrete Representation Learning](https://arxiv.org/abs/1711.00937) — VQ-VAE.
 - [Vahdat & Kautz (2021). NVAE: A Deep Hierarchical Variational Autoencoder](https://arxiv.org/abs/2007.03898) — state-of-the-art image VAE.
-- [Rombach et al. (2022). High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) — Stable Diffusion; VAE as encoder.
-- [Défossez et al. (2022). High Fidelity Neural Audio Compression](https://arxiv.org/abs/2210.13438) — Encodec, the audio VAE standard.
+- [Rombach et al. (2022). High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752) — Stable Diffusion; VAE как encoder.
+- [Défossez et al. (2022). High Fidelity Neural Audio Compression](https://arxiv.org/abs/2210.13438) — Encodec, стандарт audio VAE.
