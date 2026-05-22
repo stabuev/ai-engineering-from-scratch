@@ -1,65 +1,65 @@
-# GANs — Generator vs Discriminator
+# GANs — генератор против дискриминатора
 
-> Goodfellow's trick in 2014 was to skip density entirely. Two networks. One makes fakes. One catches them. They fight until the fakes are indistinguishable from real. It shouldn't work. It often doesn't. When it does, the samples are still the sharpest in the literature for narrow domains.
+> Трюк Goodfellow в 2014 году состоял в том, чтобы полностью пропустить плотность. Две сети. Одна делает подделки. Другая их ловит. Они борются, пока подделки не становятся неотличимы от реальных данных. Это не должно работать. Часто и не работает. Но когда работает, samples в узких доменах все еще остаются самыми четкими в литературе.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 3 · 02 (Backprop), Phase 3 · 08 (Optimizers), Phase 8 · 02 (VAE)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 3 · 02 (Backprop), Фаза 3 · 08 (Optimizers), Фаза 8 · 02 (VAE)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-VAEs produce blurry samples because their MSE decoder loss is Bayes-optimal for the *mean* image — and the mean of many plausible digits is a fuzzy digit. You want a loss that rewards *plausibility*, not pixel-wise proximity to any one target. There is no closed-form for plausibility. You have to learn it.
+VAE производят размытые samples, потому что их MSE decoder loss Bayes-optimal для *среднего* изображения, а среднее многих правдоподобных цифр — размытая цифра. Вам нужна loss, которая вознаграждает *правдоподобие*, а не попиксельную близость к одной цели. Closed-form для правдоподобия нет. Его нужно выучить.
 
-Goodfellow's idea: train a classifier `D(x)` to distinguish real images from fakes. Train a generator `G(z)` to fool `D`. The loss signal for `G` is whatever `D` currently thinks makes something look real. This signal updates as `G` improves, chasing a moving target. If both networks converge, `G` has learned the data distribution without ever writing down `log p(x)`.
+Идея Goodfellow: обучить classifier `D(x)` отличать реальные изображения от поддельных. Обучить generator `G(z)` обманывать `D`. Сигнал loss для `G` — это то, что `D` в данный момент считает признаками реальности. Этот сигнал обновляется по мере улучшения `G`, преследуя движущуюся цель. Если обе сети сходятся, `G` выучила распределение данных, ни разу не выписав `log p(x)`.
 
-This is adversarial training. The math is a minimax game:
+Это adversarial training. Математика — minimax game:
 
 ```
 min_G max_D  E_real[log D(x)] + E_fake[log(1 - D(G(z)))]
 ```
 
-In 2026 GANs are no longer the SOTA generator (diffusion and flow matching ate that crown). But StyleGAN 2/3 remain the sharpest face models ever shipped, GAN discriminators are used as *perceptual losses* in diffusion training, and adversarial training powers the fast 1-step distillations (SDXL-Turbo, SD3-Turbo, LCM) that let you ship real-time diffusion.
+В 2026 году GAN уже не SOTA generator (diffusion и flow matching забрали корону). Но StyleGAN 2/3 остаются самыми резкими face models из когда-либо поставленных, GAN discriminators используются как *perceptual losses* в diffusion training, а adversarial training питает быстрые 1-step distillations (SDXL-Turbo, SD3-Turbo, LCM), которые позволяют поставлять real-time diffusion.
 
-## The Concept
+## Концепция
 
 ![GAN training: generator and discriminator in minimax](../assets/gan.svg)
 
-**Generator `G(z)`.** Maps a noise vector `z ~ N(0, I)` to a sample `x̂`. A decoder-shaped network (dense or transposed conv).
+**Generator `G(z)`.** Отображает noise vector `z ~ N(0, I)` в sample `x̂`. Сеть формы decoder (dense или transposed conv).
 
-**Discriminator `D(x)`.** Maps a sample to a scalar probability (or score). Real → 1, fake → 0.
+**Discriminator `D(x)`.** Отображает sample в scalar probability (или score). Real → 1, fake → 0.
 
-**Loss.** Two alternating updates:
+**Loss.** Два чередующихся обновления:
 
-- **Train `D`:** `loss_D = -[ log D(x) + log(1 - D(G(z))) ]`. Binary cross-entropy on real=1, fake=0.
-- **Train `G`:** `loss_G = -log D(G(z))`. This is the *non-saturating* form Goodfellow used (original `log(1 - D(G(z)))` saturates and kills gradients when `D` is confident).
+- **Train `D`:** `loss_D = -[ log D(x) + log(1 - D(G(z))) ]`. Binary cross-entropy для real=1, fake=0.
+- **Train `G`:** `loss_G = -log D(G(z))`. Это *non-saturating* форма, которую использовал Goodfellow (исходная `log(1 - D(G(z)))` saturates и убивает gradients, когда `D` уверен).
 
-**Training loop.** One step of `D`, one step of `G`. Repeat.
+**Training loop.** Один шаг `D`, один шаг `G`. Повторять.
 
-**Why it works.** If `G` perfectly matches `p_data`, then `D` cannot do better than chance and outputs 0.5 everywhere; `G` gets no more gradient. Equilibrium.
+**Почему это работает.** Если `G` идеально совпадает с `p_data`, то `D` не может быть лучше случайного угадывания и выдает 0.5 везде; `G` больше не получает gradient. Равновесие.
 
-**Why it breaks.** Mode collapse (`G` finds one mode `D` can't classify and mints it forever), vanishing gradient (`D` learns too fast and `log D` saturates), training instability (learning rates, batch sizes, anything).
+**Почему это ломается.** Mode collapse (`G` находит одну моду, которую `D` не может классифицировать, и штампует ее бесконечно), vanishing gradient (`D` учится слишком быстро, и `log D` saturates), training instability (learning rates, batch sizes, что угодно).
 
-## Variants that made GANs work
+## Варианты, заставившие GAN работать
 
-| Year | Innovation | Fix |
+| Год | Инновация | Что исправила |
 |------|------------|-----|
-| 2015 | DCGAN | Conv/deconv, batch norm, LeakyReLU — the first stable architecture. |
-| 2017 | WGAN, WGAN-GP | Replace BCE with Wasserstein distance + gradient penalty. Fixes vanishing gradient. |
-| 2017 | Spectral normalization | Lipschitz-bound the discriminator. Still used in 2026 discriminators. |
-| 2018 | Progressive GAN | Train low-res first, add layers. First megapixel results. |
-| 2019 | StyleGAN / StyleGAN2 | Mapping network + adaptive instance norm. State of the art for fixed-domain photorealism. |
-| 2021 | StyleGAN3 | Alias-free, translation-equivariant — still the face gold standard in 2026. |
-| 2022 | StyleGAN-XL | Conditional, class-aware, larger scale. |
-| 2024 | R3GAN | Rebrands with stronger regularization; works on 1024² without tricks. |
+| 2015 | DCGAN | Conv/deconv, batch norm, LeakyReLU — первая стабильная архитектура. |
+| 2017 | WGAN, WGAN-GP | Замена BCE на Wasserstein distance + gradient penalty. Исправляет vanishing gradient. |
+| 2017 | Spectral normalization | Lipschitz-bound для discriminator. Все еще используется в discriminators 2026 года. |
+| 2018 | Progressive GAN | Сначала low-res, затем добавлять слои. Первые мегапиксельные результаты. |
+| 2019 | StyleGAN / StyleGAN2 | Mapping network + adaptive instance norm. State of the art для fixed-domain photorealism. |
+| 2021 | StyleGAN3 | Alias-free, translation-equivariant — все еще золотой стандарт лиц в 2026 году. |
+| 2022 | StyleGAN-XL | Conditional, class-aware, больший масштаб. |
+| 2024 | R3GAN | Rebrands с более сильной regularization; работает на 1024² без tricks. |
 
-## Build It
+## Практика
 
-`code/main.py` trains a tiny GAN on 1-D data: a mixture of two Gaussians. Generator and discriminator are single-hidden-layer MLPs. We implement forward, backward, and the minimax loop by hand. The goal is to see the two key failure modes (mode collapse + vanishing gradient) as they happen.
+`code/main.py` обучает крошечный GAN на 1-D данных: mixture of two Gaussians. Generator и discriminator — MLP с одним hidden layer. Мы вручную реализуем forward, backward и minimax loop. Цель — увидеть два ключевых режима отказа (mode collapse + vanishing gradient) прямо во время их появления.
 
-### Step 1: non-saturating loss
+### Шаг 1: non-saturating loss
 
-The vanilla Goodfellow loss `log(1 - D(G(z)))` goes to 0 when D classifies G's fake as fake with high confidence. At that point the gradient for G is basically zero — G cannot improve. The non-saturating form `-log D(G(z))` has the opposite asymptote: it blows up when D is confident, giving G a strong signal.
+Vanilla Goodfellow loss `log(1 - D(G(z)))` стремится к 0, когда D с высокой уверенностью классифицирует fake от G как fake. В этот момент gradient для G почти нулевой — G не может улучшаться. Non-saturating форма `-log D(G(z))` имеет противоположную асимптоту: она взрывается, когда D уверен, давая G сильный сигнал.
 
 ```python
 def g_loss(d_fake):
@@ -67,7 +67,7 @@ def g_loss(d_fake):
     return -sum(math.log(max(p, 1e-8)) for p in d_fake) / len(d_fake)
 ```
 
-### Step 2: one discriminator step per generator step
+### Шаг 2: one discriminator step per generator step
 
 ```python
 for step in range(steps):
@@ -81,9 +81,9 @@ for step in range(steps):
     update_G(fake_batch)
 ```
 
-Fresh fakes for G, otherwise gradients are stale.
+Свежие fakes для G, иначе gradients устаревают.
 
-### Step 3: watch for mode collapse
+### Шаг 3: watch for mode collapse
 
 ```python
 if step % 200 == 0:
@@ -94,68 +94,68 @@ if step % 200 == 0:
         print("  [!] mode collapse: one mode is starved")
 ```
 
-The canonical symptom: one of the two real modes stops being generated. The discriminator stops correcting it because it's never seen as a fake.
+Канонический симптом: одна из двух реальных мод перестает генерироваться. Discriminator перестает это исправлять, потому что она никогда не видится как fake.
 
-## Pitfalls
+## Подводные камни
 
-- **Discriminator too strong.** Cut D's learning rate by 2-5x, or add instance/layer noise. If D reaches >95% accuracy, G is dead.
-- **Generator memorizes a mode.** Add noise to D inputs, use a minibatch-discriminator layer, or switch to WGAN-GP.
-- **Batch norm leaking statistics.** Real batch + fake batch flowing through the same BN layer mixes their statistics. Use instance norm or spectral norm instead.
-- **Inception-score gaming.** FID and IS are noisy at low sample counts. Use ≥10k samples at eval.
-- **One-shot sampling is a lie for conditional tasks.** You still need CFG scales, truncation tricks, and re-sampling to get usable outputs.
+- **Discriminator too strong.** Уменьшите learning rate D в 2-5x или добавьте instance/layer noise. Если D достигает >95% accuracy, G мертв.
+- **Generator memorizes a mode.** Добавьте noise на входы D, используйте minibatch-discriminator layer или перейдите на WGAN-GP.
+- **Batch norm leaking statistics.** Real batch + fake batch, проходящие через один BN layer, смешивают статистики. Вместо этого используйте instance norm или spectral norm.
+- **Inception-score gaming.** FID и IS шумные при малом числе samples. Используйте ≥10k samples на eval.
+- **One-shot sampling is a lie for conditional tasks.** Все равно нужны CFG scales, truncation tricks и re-sampling, чтобы получить пригодные outputs.
 
-## Use It
+## Применение
 
-The 2026 GAN stack:
+GAN stack в 2026 году:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Photoreal human faces, fixed pose | StyleGAN3 (sharpest, smallest) |
-| Anime / stylized faces | StyleGAN-XL or Stable Diffusion LoRA |
-| Image-to-image translation | Pix2Pix / CycleGAN (Phase 8 · 04) or ControlNet (Phase 8 · 08) |
-| Fast 1-step text-to-image | Adversarial distillation of diffusion (SDXL-Turbo, SD3-Turbo) |
-| Perceptual loss inside a diffusion trainer | Small GAN discriminator on image crops |
-| Anything multi-modal, open-ended | Don't — use diffusion or flow matching |
+| Фотореалистичные человеческие лица, fixed pose | StyleGAN3 (самый резкий, самый маленький) |
+| Anime / stylized faces | StyleGAN-XL или Stable Diffusion LoRA |
+| Image-to-image translation | Pix2Pix / CycleGAN (Фаза 8 · 04) или ControlNet (Фаза 8 · 08) |
+| Быстрый 1-step text-to-image | Adversarial distillation of diffusion (SDXL-Turbo, SD3-Turbo) |
+| Perceptual loss внутри diffusion trainer | Малый GAN discriminator на image crops |
+| Что угодно multi-modal, open-ended | Не надо — используйте diffusion или flow matching |
 
-GANs are sharp but narrow. Once your domain opens up — photos, arbitrary text prompts, video — switch to diffusion. The adversarial trick lives on as a component (perceptual losses, distillation), not a standalone generator.
+GAN резкие, но узкие. Как только домен раскрывается — photos, arbitrary text prompts, video — переходите на diffusion. Adversarial trick продолжает жить как компонент (perceptual losses, distillation), а не standalone generator.
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-gan-debugger.md`. Skill takes a failing GAN run (loss curves, sample grid, dataset size) and outputs a ranked list of likely causes, one-line fixes, and a rerun protocol.
+Сохраните `outputs/skill-gan-debugger.md`. Навык принимает failing GAN run (loss curves, sample grid, dataset size) и выдает ранжированный список вероятных причин, one-line fixes и rerun protocol.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py` with the stock settings. Then set `D_LR = 5 * G_LR` and rerun. How fast does G's loss collapse to a constant?
-2. **Medium.** Replace the Goodfellow BCE loss with the WGAN loss: `loss_D = E[D(fake)] - E[D(real)]`, `loss_G = -E[D(fake)]`, and clip D's weights to `[-0.01, 0.01]`. Is training more stable? Compare wall-clock convergence.
-3. **Hard.** Extend the 1-D example to 2-D data (mixture of 8 Gaussians on a ring). Track how many of the 8 modes the generator captures at steps 1k, 5k, 10k. Implement minibatch discrimination and re-measure.
+1. **Легко.** Запустите `code/main.py` со штатными настройками. Затем установите `D_LR = 5 * G_LR` и перезапустите. Насколько быстро loss G схлопывается в константу?
+2. **Средне.** Замените Goodfellow BCE loss на WGAN loss: `loss_D = E[D(fake)] - E[D(real)]`, `loss_G = -E[D(fake)]`, и clip weights D в `[-0.01, 0.01]`. Стало ли обучение стабильнее? Сравните wall-clock convergence.
+3. **Сложно.** Расширьте 1-D пример до 2-D данных (mixture of 8 Gaussians on a ring). Отслеживайте, сколько из 8 modes generator захватывает на шагах 1k, 5k, 10k. Реализуйте minibatch discrimination и измерьте снова.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Generator | "G" | Noise-to-sample network, `G: z → x̂`. |
+| Generator | "G" | Сеть noise-to-sample, `G: z → x̂`. |
 | Discriminator | "D" | Classifier `D: x → [0, 1]`, real vs fake. |
-| Minimax | "The game" | `min_G max_D` of a joint objective. |
-| Non-saturating loss | "The fix" | Use `-log D(G(z))` for G instead of `log(1 - D(G(z)))`. |
-| Mode collapse | "G memorized one thing" | Generator produces few distinct outputs despite diverse data. |
-| WGAN | "Wasserstein" | Replace BCE with Earth-Mover distance + gradient penalty; smoother gradient. |
-| Spectral norm | "Lipschitz trick" | Constrain D's weight norms to bound its slope; stabilizes training. |
-| StyleGAN | "The one that works" | Mapping network + AdaIN; best-in-class for faces, still in 2026. |
+| Minimax | "The game" | `min_G max_D` совместной objective. |
+| Non-saturating loss | "The fix" | Использовать `-log D(G(z))` для G вместо `log(1 - D(G(z)))`. |
+| Mode collapse | "G memorized one thing" | Generator производит мало разных outputs несмотря на разнообразные data. |
+| WGAN | "Wasserstein" | Замена BCE на Earth-Mover distance + gradient penalty; более гладкий gradient. |
+| Spectral norm | "Lipschitz trick" | Ограничивает нормы weights D, чтобы ограничить slope; стабилизирует обучение. |
+| StyleGAN | "The one that works" | Mapping network + AdaIN; best-in-class для лиц, все еще в 2026 году. |
 
-## Production note: one-shot inference is GAN's lasting advantage
+## Production note: one-shot inference — долгосрочное преимущество GAN
 
-GANs no longer win on sample quality for open-domain generation, but they still win on inference cost. In production-inference literature vocabulary a GAN has:
+GAN больше не выигрывают по sample quality для open-domain generation, но все еще выигрывают по inference cost. В словаре production-inference литературы у GAN есть:
 
-- **No prefill, no decode stages.** A single `G(z)` forward pass. TTFT ≈ total latency.
-- **No KV-cache pressure.** The only state is the weights. Batch size is bounded by activation memory, not cache.
-- **Trivial continuous batching.** Since every request takes the same fixed FLOPs, a static batch at the server's target occupancy is usually optimal. No in-flight scheduler needed.
+- **No prefill, no decode stages.** Один forward pass `G(z)`. TTFT ≈ total latency.
+- **No KV-cache pressure.** Единственное состояние — weights. Batch size ограничен activation memory, а не cache.
+- **Trivial continuous batching.** Поскольку каждый request требует одинаковых fixed FLOPs, static batch при целевой загрузке server обычно оптимален. In-flight scheduler не нужен.
 
-This is why GAN distillation (SDXL-Turbo, SD3-Turbo, ADD, LCM) is the dominant technique for fast text-to-image in 2026: it collapses a 20-50-step diffusion pipeline into 1-4 GAN-style forward passes while keeping the distribution of a diffusion base. The adversarial loss survives as a training-time knob for turning slow generators into fast ones.
+Поэтому GAN distillation (SDXL-Turbo, SD3-Turbo, ADD, LCM) — доминирующая техника для fast text-to-image в 2026 году: она схлопывает diffusion pipeline из 20-50 шагов в 1-4 GAN-style forward passes, сохраняя distribution diffusion base. Adversarial loss выживает как training-time knob для превращения медленных generators в быстрые.
 
-## Further Reading
+## Дополнительное чтение
 
-- [Goodfellow et al. (2014). Generative Adversarial Nets](https://arxiv.org/abs/1406.2661) — the original GAN paper.
-- [Radford et al. (2015). Unsupervised Representation Learning with DCGAN](https://arxiv.org/abs/1511.06434) — the first stable architecture.
+- [Goodfellow et al. (2014). Generative Adversarial Nets](https://arxiv.org/abs/1406.2661) — оригинальная статья о GAN.
+- [Radford et al. (2015). Unsupervised Representation Learning with DCGAN](https://arxiv.org/abs/1511.06434) — первая стабильная архитектура.
 - [Arjovsky, Chintala, Bottou (2017). Wasserstein GAN](https://arxiv.org/abs/1701.07875) — WGAN.
 - [Miyato et al. (2018). Spectral Normalization for GANs](https://arxiv.org/abs/1802.05957) — SN.
 - [Karras et al. (2020). Analyzing and Improving the Image Quality of StyleGAN](https://arxiv.org/abs/1912.04958) — StyleGAN2.

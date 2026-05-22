@@ -1,48 +1,48 @@
-# Video Generation
+# Генерация видео
 
-> An image is a 2-D tensor. A video is a 3-D one. The theory is the same; the compute is 10-100x harder. OpenAI's Sora (Feb 2024) proved it was possible. By 2026 Veo 2, Kling 1.5, Runway Gen-3, Pika 2.0, and WAN 2.2 ship production video from text at 1080p — and the open-weights stack (CogVideoX, HunyuanVideo, Mochi-1, WAN 2.2) is 12 months behind.
+> Изображение — это 2-D tensor. Видео — 3-D tensor. Теория та же; compute сложнее в 10-100x. Sora от OpenAI (Feb 2024) доказала, что это возможно. К 2026 году Veo 2, Kling 1.5, Runway Gen-3, Pika 2.0 и WAN 2.2 поставляют production video from text at 1080p, а open-weights stack (CogVideoX, HunyuanVideo, Mochi-1, WAN 2.2) отстает примерно на 12 месяцев.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 8 · 07 (Latent Diffusion), Phase 7 · 09 (ViT), Phase 8 · 06 (DDPM)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 8 · 07 (Latent Diffusion), Фаза 7 · 09 (ViT), Фаза 8 · 06 (DDPM)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-A 10-second 1080p video at 24fps is 240 frames of 1920×1080×3 pixels. That's ~1.5 GB of raw data per clip. Pixel-space diffusion is infeasible. You need:
+10-секундное 1080p video at 24fps — это 240 frames по 1920×1080×3 pixels. Это ~1.5 GB raw data на clip. Pixel-space diffusion infeasible. Нужно:
 
-1. **Spatiotemporal compression.** A VAE that encodes videos, not frames, into a sequence of spatial-temporal patches.
-2. **Temporal coherence.** Frames need to share content, lighting, and object identity over seconds. The net has to model motion.
-3. **Compute budget.** Video training is 10-100x more expensive than image for the same model size.
-4. **Conditioning.** Text, image (first-frame), audio, or another video. Most production models accept all four.
+1. **Spatiotemporal compression.** VAE, который encodes videos, а не frames, в sequence of spatial-temporal patches.
+2. **Temporal coherence.** Frames должны сохранять content, lighting и object identity в течение секунд. Net должна model motion.
+3. **Compute budget.** Video training в 10-100x дороже image при том же model size.
+4. **Conditioning.** Text, image (first-frame), audio или another video. Большинство production models принимают все четыре.
 
-The architecture that solved this is the **Diffusion Transformer (DiT)** applied to spatiotemporal patches, trained on huge (prompt, caption, video) datasets. Same diffusion loss as Lesson 06.
+Архитектура, решившая это, — **Diffusion Transformer (DiT)** на spatiotemporal patches, обученный на огромных (prompt, caption, video) datasets. Та же diffusion loss, что в Lesson 06.
 
-## The Concept
+## Концепция
 
 ![Video diffusion: patchify, DiT, decode](../assets/video-generation.svg)
 
 ### Patchify
 
-Encode the video with a 3D VAE (learned spatiotemporal compression). The latent is shape `[T_latent, H_latent, W_latent, C_latent]`. Split into patches of size `[t_p, h_p, w_p]`. For Sora-style models, `t_p = 1` (per-frame patches) or `t_p = 2` (every two frames). A 10-second 1080p video compresses to ~20,000-100,000 patches.
+Encode video с 3D VAE (learned spatiotemporal compression). Latent имеет форму `[T_latent, H_latent, W_latent, C_latent]`. Разбейте на patches размера `[t_p, h_p, w_p]`. Для Sora-style models `t_p = 1` (per-frame patches) или `t_p = 2` (каждые два frames). 10-секундное 1080p video сжимается примерно в ~20,000-100,000 patches.
 
 ### Spatiotemporal DiT
 
-A transformer processes the flat sequence of patches. Each patch has a 3D positional embedding (time + y + x). Attention is usually factorized:
+Transformer обрабатывает flat sequence of patches. У каждого patch есть 3D positional embedding (time + y + x). Attention обычно factorized:
 
-- **Spatial attention** within each frame's patches.
-- **Temporal attention** across frames at the same spatial location.
-- **Full 3D attention** is 16-100x more expensive; used only at low resolution or in research.
+- **Spatial attention** внутри patches каждого frame.
+- **Temporal attention** across frames в той же spatial location.
+- **Full 3D attention** дороже в 16-100x; используется только на low resolution или в research.
 
 ### Text conditioning
 
-Cross-attention with a large text encoder (T5-XXL for Sora, CogVideoX-5B uses T5-XXL). Long prompts matter — Sora's training set had GPT-generated dense re-captions averaging 200 tokens per clip.
+Cross-attention с large text encoder (T5-XXL для Sora, CogVideoX-5B использует T5-XXL). Long prompts важны — training set Sora имел GPT-generated dense re-captions в среднем 200 tokens на clip.
 
 ### Training
 
-Standard diffusion loss (ε or v prediction) over spatiotemporal latents. Data: web video + ~100M curated clips + synthetic text captions. Compute: 10,000+ GPU hours for even a small research run; Sora-scale is 100,000+.
+Standard diffusion loss (ε или v prediction) по spatiotemporal latents. Data: web video + ~100M curated clips + synthetic text captions. Compute: 10,000+ GPU hours даже для small research run; Sora-scale — 100,000+.
 
-## The 2026 production landscape
+## Производственный ландшафт 2026
 
 | Model | Date | Max duration | Max res | Open weights? | Notable |
 |-------|------|--------------|---------|---------------|---------|
@@ -58,13 +58,13 @@ Standard diffusion loss (ε or v prediction) over spatiotemporal latents. Data: 
 | Mochi-1 (Genmo) | 2024-10 | 5.4s | 480p | Yes (10B) | Most permissively licensed |
 | WAN 2.2 (Alibaba) | 2025-07 | 5s | 720p | Yes | Strongest open model mid-2025 |
 
-Open weights are closing the gap faster than in the image space: HunyuanVideo + WAN 2.2 LoRAs already power most open-source workflows by mid-2026.
+Open weights закрывают gap быстрее, чем в image space: HunyuanVideo + WAN 2.2 LoRAs уже питают большинство open-source workflows к mid-2026.
 
-## Build It
+## Практика
 
-`code/main.py` simulates the core spatiotemporal DiT idea: patchify a small synthetic video, add a per-patch position embedding, and denoise the whole sequence with a transformer-style attention over patches. No numpy; pure Python. We show that temporal coherence emerges even in 1-D when adjacent-frame patches share a denoiser and position embeddings.
+`code/main.py` симулирует core spatiotemporal DiT idea: patchify small synthetic video, добавить per-patch position embedding и denoise whole sequence с transformer-style attention over patches. Без numpy; pure Python. Мы показываем, что temporal coherence возникает даже в 1-D, когда adjacent-frame patches делят denoiser и position embeddings.
 
-### Step 1: patchify a synthetic 1-D "video"
+### Шаг 1: patchify a synthetic 1-D "video"
 
 ```python
 def make_video(T_frames=8, rng=None):
@@ -73,30 +73,30 @@ def make_video(T_frames=8, rng=None):
     return [base + 0.3 * t + rng.gauss(0, 0.1) for t in range(T_frames)]
 ```
 
-### Step 2: position embedding per frame
+### Шаг 2: position embedding per frame
 
 ```python
 def pos_embed(t, dim):
     return sinusoidal(t, dim)
 ```
 
-### Step 3: denoiser sees the whole sequence
+### Шаг 3: denoiser sees the whole sequence
 
-Instead of denoising each frame independently, our tiny net concatenates all frame values + their position embeddings and predicts the noise for all frames jointly.
+Вместо denoising each frame independently наша tiny net concatenates all frame values + their position embeddings и predicts noise for all frames jointly.
 
-### Step 4: temporal coherence test
+### Шаг 4: temporal coherence test
 
-After training, sample a video. Measure the frame-to-frame delta. If the model has learned temporal structure, the deltas stay smaller than sampling each frame independently.
+После training sample video. Измерьте frame-to-frame delta. Если model learned temporal structure, deltas остаются меньше, чем при sampling each frame independently.
 
-## Pitfalls
+## Подводные камни
 
-- **Independent per-frame sampling = flicker.** If you run image diffusion on each frame separately, the output flickers because each frame's noise is independent. Video diffusion fixes this by coupling the frames through attention or shared noise.
-- **Naive 3D attention = OOM.** Full 3D attention on a 10-second 1080p latent is hundreds of billions of operations. Factorize into spatial + temporal.
-- **Data captioning matters more than size.** Sora's main upgrade over prior work was training on ~10x more detailed captions (GPT-4 re-labelled clips). OpenAI's technical report is explicit on this.
-- **First-frame conditioning.** Most production models also accept an image as the first frame. This is "image-to-video" mode; training includes this variant.
-- **Physics drift.** Long clips (>10s) accumulate subtle inconsistencies. Sliding-window generation + keyframe anchoring helps.
+- **Independent per-frame sampling = flicker.** Если запускать image diffusion на каждом frame отдельно, output flickers, потому что noise каждого frame independent. Video diffusion исправляет это, связывая frames через attention или shared noise.
+- **Naive 3D attention = OOM.** Full 3D attention на 10-second 1080p latent — сотни миллиардов operations. Factorize into spatial + temporal.
+- **Data captioning matters more than size.** Главный upgrade Sora над prior work — training на ~10x more detailed captions (GPT-4 re-labelled clips). Technical report OpenAI говорит об этом прямо.
+- **First-frame conditioning.** Большинство production models также принимают image as first frame. Это "image-to-video" mode; training включает этот variant.
+- **Physics drift.** Long clips (>10s) накапливают subtle inconsistencies. Sliding-window generation + keyframe anchoring помогает.
 
-## Use It
+## Применение
 
 | Use case | 2026 pick |
 |----------|-----------|
@@ -108,47 +108,47 @@ After training, sample a video. Measure the frame-to-frame delta. If the model h
 | Audio-to-video lip sync | Veo 3 (native audio) or a dedicated lip-sync model |
 | Video editing | Runway Act-Two, Kling Motion Brush, Flux-Kontext (still-frame) |
 
-Cost per second of video at quality parity has dropped 20x between 2024 and 2026.
+Cost per second of video at quality parity упала в 20x между 2024 и 2026.
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-video-brief.md`. Skill takes a video brief (duration, aspect ratio, style, camera plan, subject consistency, audio) and outputs: model + hosting, prompt scaffolding (camera language, subject description, motion descriptors), seed + reproducibility protocol, and a frame-level QA checklist.
+Сохраните `outputs/skill-video-brief.md`. Навык принимает video brief (duration, aspect ratio, style, camera plan, subject consistency, audio) и выдает: model + hosting, prompt scaffolding (camera language, subject description, motion descriptors), seed + reproducibility protocol и frame-level QA checklist.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** In `code/main.py`, compare frame-to-frame delta for (a) independent per-frame sampling, (b) joint sequence sampling. Report the mean and variance of the deltas.
-2. **Medium.** Add a first-frame condition: pin frame 0 to a given value and sample the rest. Measure how the pinned value propagates.
-3. **Hard.** Use HuggingFace diffusers to run CogVideoX-2B on a local GPU. Time 20 inference steps at 720p for a 6-second clip. Profile the spatiotemporal attention to identify the bottleneck.
+1. **Легко.** В `code/main.py` сравните frame-to-frame delta для (a) independent per-frame sampling, (b) joint sequence sampling. Сообщите mean и variance deltas.
+2. **Средне.** Добавьте first-frame condition: pin frame 0 to a given value и sample rest. Измерьте, как pinned value propagates.
+3. **Сложно.** Используйте HuggingFace diffusers, чтобы запустить CogVideoX-2B на local GPU. Замерьте 20 inference steps at 720p for a 6-second clip. Profile spatiotemporal attention, чтобы найти bottleneck.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Video VAE | "3-D VAE" | Encoder that compresses `(T, H, W, C)` → spatiotemporal latent. |
-| Patches | "The tokens" | Fixed-size 3-D blocks of the latent; input to the DiT. |
-| Factorized attention | "Spatial + temporal" | Run attention over space, then over time; skip full 3-D attention. |
-| Image-to-video (I2V) | "Animate this photo" | Model takes an image + text, outputs a video that starts from it. |
-| Keyframe conditioning | "Anchor frames" | Pin specific frames to control the video's arc. |
-| Motion brush | "Directional hint" | UI input where the user paints motion vectors onto the image. |
-| Re-captioning | "Dense captions" | Using an LLM to re-label training clips with detailed prompts. |
+| Video VAE | "3-D VAE" | Encoder, который сжимает `(T, H, W, C)` → spatiotemporal latent. |
+| Patches | "The tokens" | Fixed-size 3-D blocks of latent; input to DiT. |
+| Factorized attention | "Spatial + temporal" | Attention over space, then over time; skip full 3-D attention. |
+| Image-to-video (I2V) | "Animate this photo" | Model takes image + text, outputs video that starts from it. |
+| Keyframe conditioning | "Anchor frames" | Pin specific frames to control video arc. |
+| Motion brush | "Directional hint" | UI input, где user paints motion vectors onto image. |
+| Re-captioning | "Dense captions" | Использование LLM для re-label training clips detailed prompts. |
 | Flicker | "Temporal artifact" | Frame-to-frame inconsistency; fixed with coupled denoising. |
 
-## Production note: video latents are a memory-bandwidth problem
+## Production note: video latents — проблема memory bandwidth
 
-A 10-second 1080p clip at 24 fps is 240 frames × 1920 × 1080 × 3 ≈ 1.5 GB of raw pixels. After a 4× video VAE compression (`2 × spatial × 2 × temporal`) the latent is ~100 MB per request. Run this through a spatiotemporal DiT for 30 steps at batch 1 and you are moving ~3 GB/step through HBM — memory bandwidth, not FLOPs, is the bottleneck.
+10-second 1080p clip at 24 fps — это 240 frames × 1920 × 1080 × 3 ≈ 1.5 GB raw pixels. После 4× video VAE compression (`2 × spatial × 2 × temporal`) latent ~100 MB per request. Прогоните это через spatiotemporal DiT for 30 steps at batch 1, и вы двигаете ~3 GB/step через HBM — bottleneck это memory bandwidth, не FLOPs.
 
-Three production knobs, all straight from production-inference literature inference chapter:
+Три production knobs, все напрямую из production-inference literature:
 
-- **TP across the DiT.** Text-to-video models are routinely ≥10B params. TP=4 across 4 H100s is standard; PP=2 × TP=2 for 405B-class models. Latency per step drops roughly linearly with TP up to the all-reduce wall.
-- **Frame batching = continuous batching.** At generation time, video is conceptually a batch of frames linked by attention. Continuous batching (in-flight scheduling) applies: start rendering frame `t+1` while frame `t-1` is being returned, if the model architecture allows sliding-window generation.
-- **Clip-level prefill cache.** For image-to-video, the first-frame conditioning is analogous to an LLM's prompt prefill: compute it once, reuse across the temporal decoder passes. This is effectively a KV-cache for video.
+- **TP across the DiT.** Text-to-video models routinely ≥10B params. TP=4 across 4 H100s — standard; PP=2 × TP=2 для 405B-class models. Latency per step падает почти linearly with TP до all-reduce wall.
+- **Frame batching = continuous batching.** At generation time video conceptually a batch of frames linked by attention. Continuous batching (in-flight scheduling) applies: start rendering frame `t+1` while frame `t-1` is being returned, if architecture allows sliding-window generation.
+- **Clip-level prefill cache.** Для image-to-video first-frame conditioning аналогична LLM prompt prefill: compute once, reuse across temporal decoder passes. Это фактически KV-cache for video.
 
-## Further Reading
+## Дополнительное чтение
 
 - [Brooks et al. (2024). Video generation models as world simulators](https://openai.com/index/video-generation-models-as-world-simulators/) — Sora technical report.
 - [Yang et al. (2024). CogVideoX: Text-to-Video Diffusion Models with An Expert Transformer](https://arxiv.org/abs/2408.06072) — CogVideoX.
 - [Kong et al. (2024). HunyuanVideo: A Systematic Framework for Large Video Generative Models](https://arxiv.org/abs/2412.03603) — HunyuanVideo.
 - [Genmo (2024). Mochi-1 Technical Report](https://www.genmo.ai/blog/mochi) — Mochi-1.
 - [Alibaba (2025). WAN 2.2](https://wanvideo.io/) — open SOTA mid-2025.
-- [Ho, Salimans, Gritsenko et al. (2022). Video Diffusion Models](https://arxiv.org/abs/2204.03458) — the seminal video diffusion paper.
-- [Blattmann et al. (2023). Align your Latents (Video LDM)](https://arxiv.org/abs/2304.08818) — Stable Video Diffusion's ancestor.
+- [Ho, Salimans, Gritsenko et al. (2022). Video Diffusion Models](https://arxiv.org/abs/2204.03458) — seminal video diffusion paper.
+- [Blattmann et al. (2023). Align your Latents (Video LDM)](https://arxiv.org/abs/2304.08818) — предок Stable Video Diffusion.

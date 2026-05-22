@@ -1,37 +1,37 @@
-# Diffusion Models — DDPM from Scratch
+# Диффузионные модели — DDPM с нуля
 
-> Ho, Jain, Abbeel (2020) gave the field a recipe it could not quit. Destroy the data with noise over a thousand small steps. Train one neural net to predict the noise. Reverse the process at inference. Today every mainstream image, video, 3D, and music model runs on this loop, possibly with flow matching or consistency tricks on top.
+> Ho, Jain, Abbeel (2020) дали области рецепт, от которого она уже не отказалась. Разрушайте данные шумом за тысячу малых шагов. Обучите одну нейросеть предсказывать шум. На inference обратите процесс. Сегодня каждая mainstream модель изображений, видео, 3D и музыки работает на этом цикле, возможно, с flow matching или consistency tricks сверху.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 3 · 02 (Backprop), Phase 8 · 02 (VAE)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 3 · 02 (Backprop), Фаза 8 · 02 (VAE)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-You want a sampler for `p_data(x)`. GANs play a minimax game that often diverges. VAEs produce blurry samples from a Gaussian decoder. What you really want is a training objective that is (a) a single stable loss (no saddle point, no minimax), (b) a lower bound on `log p(x)` (so you have likelihoods), and (c) samples that match SOTA quality.
+Вам нужен sampler для `p_data(x)`. GAN играют в minimax game, которая часто расходится. VAE производят размытые samples из Gaussian decoder. На самом деле нужна training objective, которая (a) является одной стабильной loss (без saddle point, без minimax), (b) дает lower bound на `log p(x)` (то есть есть likelihoods), и (c) дает samples SOTA-качества.
 
-Sohl-Dickstein et al. (2015) had a theoretical answer: define a Markov chain `q(x_t | x_{t-1})` that gradually adds Gaussian noise, and train a reverse chain `p_θ(x_{t-1} | x_t)` to denoise. Ho, Jain, Abbeel (2020) showed the loss could be simplified to one line — predict the noise — and cleaned up the math. In 2020 this was a curiosity. In 2021 it produced state-of-the-art samples. In 2022 it became Stable Diffusion. In 2026 it is the substrate.
+Sohl-Dickstein et al. (2015) дали теоретический ответ: определить Markov chain `q(x_t | x_{t-1})`, которая постепенно добавляет Gaussian noise, и обучить reverse chain `p_θ(x_{t-1} | x_t)` denoise-ить. Ho, Jain, Abbeel (2020) показали, что loss можно упростить до одной строки — предсказывать шум — и привели математику в порядок. В 2020 это было любопытством. В 2021 дало state-of-the-art samples. В 2022 стало Stable Diffusion. В 2026 это substrate.
 
-## The Concept
+## Концепция
 
 ![DDPM: forward noise, reverse denoise](../assets/ddpm.svg)
 
-**Forward process `q`.** Add Gaussian noise in `T` small steps. The closed form — the reason the math is tractable — is that the cumulative step is also Gaussian:
+**Forward process `q`.** Добавлять Gaussian noise за `T` малых шагов. Closed form — причина, по которой математика tractable, — состоит в том, что cumulative step тоже Gaussian:
 
 ```
 q(x_t | x_0) = N( sqrt(α̅_t) · x_0,  (1 - α̅_t) · I )
 ```
 
-where `α̅_t = ∏_{s=1..t} (1 - β_s)` for a schedule of `β_t`. Pick `β_t` from 1e-4 to 0.02 linearly over T=1000 steps and `x_T` is approximately `N(0, I)`.
+где `α̅_t = ∏_{s=1..t} (1 - β_s)` для schedule `β_t`. Возьмите `β_t` линейно от 1e-4 до 0.02 на T=1000 steps, и `x_T` будет примерно `N(0, I)`.
 
-**Reverse process `p_θ`.** Learn a neural net `ε_θ(x_t, t)` that predicts the noise that was added. Given `x_t`, denoise by:
+**Reverse process `p_θ`.** Обучить neural net `ε_θ(x_t, t)`, которая предсказывает добавленный шум. Имея `x_t`, denoise делается так:
 
 ```
 x_{t-1} = (1 / sqrt(α_t)) · ( x_t - (β_t / sqrt(1 - α̅_t)) · ε_θ(x_t, t) )  +  σ_t · z
 ```
 
-where `σ_t` is either `sqrt(β_t)` or a learned variance. The expression is ugly but it is just algebra — solving for `x_{t-1}` given the posterior `q(x_{t-1} | x_t, x_0)` and substituting `x_0` with its noise-predicted estimate.
+где `σ_t` — либо `sqrt(β_t)`, либо learned variance. Выражение некрасивое, но это просто алгебра: решить для `x_{t-1}` по posterior `q(x_{t-1} | x_t, x_0)` и заменить `x_0` его noise-predicted estimate.
 
 **Training loss.**
 
@@ -39,25 +39,25 @@ where `σ_t` is either `sqrt(β_t)` or a learned variance. The expression is ugl
 L_simple = E_{x_0, t, ε} [ || ε - ε_θ( sqrt(α̅_t) · x_0 + sqrt(1 - α̅_t) · ε,  t ) ||² ]
 ```
 
-Sample `x_0` from data, pick a random `t`, sample `ε ~ N(0, I)`, compute the noisy `x_t` in one shot via the closed form, and regress on the noise. One loss, no minimax, no KL, no reparameterization tricks.
+Sample `x_0` из data, выберите random `t`, sample `ε ~ N(0, I)`, посчитайте noisy `x_t` за один раз через closed form и регрессируйте шум. Одна loss, без minimax, без KL, без reparameterization tricks.
 
-**Sampling.** Start `x_T ~ N(0, I)`. Iterate the reverse step from `t = T` to `1`. Done.
+**Sampling.** Начните с `x_T ~ N(0, I)`. Итерируйте reverse step от `t = T` до `1`. Готово.
 
-## Why it works
+## Почему это работает
 
-Three intuitions:
+Три интуиции:
 
-1. **Denoising is easy; generating is hard.** At `t=T`, the data is pure noise — the net has to solve a trivial problem. At `t=0`, the net only has to clean up a few pixels. At intermediate `t`, the problem is hard but the net has many gradients flowing through the same weights from every noise level.
+1. **Denoising is easy; generating is hard.** При `t=T` данные — чистый шум, сеть решает тривиальную задачу. При `t=0` ей нужно очистить только несколько пикселей. На промежуточных `t` задача сложна, но через одни и те же weights идет много gradients со всех noise levels.
 
-2. **Score matching in disguise.** Vincent (2011) proved that predicting the noise is equivalent to estimating `∇_x log q(x_t | x_0)`, the *score*. The reverse SDE uses this score to walk up the density gradient — a guided random walk toward high-probability regions.
+2. **Score matching in disguise.** Vincent (2011) доказал, что prediction шума эквивалентен оценке `∇_x log q(x_t | x_0)`, то есть *score*. Reverse SDE использует этот score, чтобы идти вверх по density gradient — guided random walk к high-probability regions.
 
-3. **The ELBO reduces to simple MSE.** The full variational lower bound has a KL term per timestep. With DDPM's parameterization those KL terms simplify to MSE on noise prediction with specific coefficients; Ho dropped the coefficients (calling it "simple" loss) and quality *improved*.
+3. **ELBO сводится к simple MSE.** Полная variational lower bound имеет KL term на каждый timestep. С DDPM parameterization эти KL terms упрощаются до MSE на noise prediction со специальными коэффициентами; Ho отбросил коэффициенты (назвав это "simple" loss), и quality *улучшилось*.
 
-## Build It
+## Практика
 
-`code/main.py` implements a 1-D DDPM. Data is a two-mode mixture. The "net" is a tiny MLP that takes `(x_t, t)` and outputs predicted noise. Training is the one-line loss. Sampling iterates the reverse chain.
+`code/main.py` реализует 1-D DDPM. Data — two-mode mixture. "Net" — крошечный MLP, который принимает `(x_t, t)` и выдает predicted noise. Training — one-line loss. Sampling итерирует reverse chain.
 
-### Step 1: the forward schedule (closed form)
+### Шаг 1: the forward schedule (closed form)
 
 ```python
 betas = [1e-4 + (0.02 - 1e-4) * t / (T - 1) for t in range(T)]
@@ -69,7 +69,7 @@ for a in alphas:
     alpha_bars.append(cum)
 ```
 
-### Step 2: sample `x_t` in one shot
+### Шаг 2: sample `x_t` in one shot
 
 ```python
 def forward_sample(x0, t, alpha_bars, rng):
@@ -79,7 +79,7 @@ def forward_sample(x0, t, alpha_bars, rng):
     return x_t, eps
 ```
 
-### Step 3: one training step
+### Шаг 3: one training step
 
 ```python
 def train_step(x0, model, alpha_bars, rng):
@@ -90,7 +90,7 @@ def train_step(x0, model, alpha_bars, rng):
     return loss, gradient_step(model, ...)
 ```
 
-### Step 4: reverse sampling
+### Шаг 4: reverse sampling
 
 ```python
 def sample(model, alpha_bars, T, rng):
@@ -104,28 +104,28 @@ def sample(model, alpha_bars, T, rng):
     return x
 ```
 
-For a 1-D problem with 40 timesteps and a 24-unit MLP, this learns the two-mode mixture in ~200 epochs.
+Для 1-D задачи с 40 timesteps и 24-unit MLP это учит two-mode mixture примерно за ~200 epochs.
 
-## Time conditioning
+## Временное conditioning
 
-The net needs to know which timestep it is denoising. Two standard options:
+Сеть должна знать, какой timestep она denoise-ит. Два стандартных варианта:
 
-- **Sinusoidal embedding.** Like Transformer positional encoding. `embed(t) = [sin(t/ω_0), cos(t/ω_0), sin(t/ω_1), ...]`. Pass through an MLP, broadcast into the net.
-- **Film / group-norm conditioning.** Project embedding to per-channel scale/bias (FiLM) at each block.
+- **Sinusoidal embedding.** Как Transformer positional encoding. `embed(t) = [sin(t/ω_0), cos(t/ω_0), sin(t/ω_1), ...]`. Пропустить через MLP, broadcast в сеть.
+- **Film / group-norm conditioning.** Project embedding в per-channel scale/bias (FiLM) на каждом block.
 
-Our toy code uses sinusoidal → concat. Production U-Nets use FiLM.
+Наш игрушечный код использует sinusoidal → concat. Production U-Nets используют FiLM.
 
-## Pitfalls
+## Подводные камни
 
-- **Schedule matters a lot.** Linear `β` is the DDPM default but cosine schedule (Nichol & Dhariwal, 2021) gives better FID for the same compute. Switch schedules if quality plateaus.
-- **Timestep embedding is fragile.** Passing raw `t` as a float works for toy 1-D but fails for images; always use a proper embedding.
-- **V-prediction vs ε-prediction.** For narrow regimes (very small or very large t), `ε` has poor signal-to-noise. V-prediction (`v = α·ε - σ·x`) is more stable; SDXL, SD3, and Flux use it.
-- **Classifier-free guidance.** At inference, compute both conditional and unconditional `ε`, then `ε_cfg = (1 + w) · ε_cond - w · ε_uncond` with `w ≈ 3-7`. Covered in Lesson 08.
-- **1000 steps is a lot.** Production uses DDIM (20-50 steps), DPM-Solver (10-20 steps), or distillation (1-4 steps). See Lesson 12.
+- **Schedule matters a lot.** Linear `β` — DDPM default, но cosine schedule (Nichol & Dhariwal, 2021) дает лучший FID за тот же compute. Меняйте schedules, если quality вышла на плато.
+- **Timestep embedding is fragile.** Передача raw `t` как float работает для toy 1-D, но ломается на images; всегда используйте proper embedding.
+- **V-prediction vs ε-prediction.** Для узких режимов (очень малый или очень большой t) у `ε` плохой signal-to-noise. V-prediction (`v = α·ε - σ·x`) стабильнее; SDXL, SD3 и Flux используют его.
+- **Classifier-free guidance.** На inference посчитайте conditional и unconditional `ε`, затем `ε_cfg = (1 + w) · ε_cond - w · ε_uncond` с `w ≈ 3-7`. Рассматривается в Lesson 08.
+- **1000 steps is a lot.** Production использует DDIM (20-50 steps), DPM-Solver (10-20 steps) или distillation (1-4 steps). См. Lesson 12.
 
-## Use It
+## Применение
 
-| Role | Typical stack in 2026 |
+| Роль | Typical stack in 2026 |
 |------|-----------------------|
 | Image pixel-space diffusion (small, toy) | DDPM + U-Net |
 | Image latent diffusion | VAE encoder + U-Net or DiT (Lesson 07) |
@@ -133,49 +133,49 @@ Our toy code uses sinusoidal → concat. Production U-Nets use FiLM.
 | Audio latent diffusion | Encodec + diffusion transformer |
 | Science (molecules, proteins, physics) | Equivariant diffusion (EDM, RFdiffusion, AlphaFold3) |
 
-Diffusion is the universal generative backbone. Flow matching (Lesson 13) is the 2024-2026 competitor that usually wins on inference speed for the same quality.
+Diffusion — универсальный generative backbone. Flow matching (Lesson 13) — конкурент 2024-2026 годов, который обычно выигрывает по inference speed при том же quality.
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-diffusion-trainer.md`. Skill takes a dataset + compute budget and outputs: schedule (linear/cosine/sigmoid), prediction target (ε/v/x), number of steps, guidance scale, sampler family, and an eval protocol.
+Сохраните `outputs/skill-diffusion-trainer.md`. Навык принимает dataset + compute budget и выдает: schedule (linear/cosine/sigmoid), prediction target (ε/v/x), number of steps, guidance scale, sampler family и eval protocol.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Change T from 40 to 10 in `code/main.py`. How does sample quality (visual histogram of outputs) degrade? At what T does the two-mode structure collapse?
-2. **Medium.** Switch from ε-prediction to v-prediction. Re-derive the reverse step. Compare final sample quality.
-3. **Hard.** Add classifier-free guidance. Condition on a class label `c ∈ {0, 1}`, drop it 10% of the time during training, and at sampling time use `ε = (1+w)·ε_cond - w·ε_uncond`. Measure the conditional-mode-hit rate at `w = 0, 1, 3, 7`.
+1. **Легко.** Измените T с 40 на 10 в `code/main.py`. Как ухудшается sample quality (visual histogram of outputs)? При каком T two-mode structure collapse-ится?
+2. **Средне.** Перейдите с ε-prediction на v-prediction. Заново выведите reverse step. Сравните итоговое sample quality.
+3. **Сложно.** Добавьте classifier-free guidance. Condition на class label `c ∈ {0, 1}`, dropping его 10% времени при training, а на sampling используйте `ε = (1+w)·ε_cond - w·ε_uncond`. Измерьте conditional-mode-hit rate при `w = 0, 1, 3, 7`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Forward process | "Adding noise" | Fixed Markov chain `q(x_t | x_{t-1})` that destroys the data. |
-| Reverse process | "Denoising" | Learned chain `p_θ(x_{t-1} | x_t)` that reconstructs the data. |
-| β schedule | "The noise ladder" | Per-step variance; linear, cosine, or sigmoid. |
-| α̅ | "Alpha bar" | Cumulative product `∏(1 - β)`; gives closed-form `x_t` from `x_0`. |
-| Simple loss | "MSE on noise" | `||ε - ε_θ(x_t, t)||²`; all variational derivations collapse to this. |
-| ε-prediction | "Predict noise" | Output is the noise added; standard DDPM. |
-| V-prediction | "Predict velocity" | Output is `α·ε - σ·x`; better conditioning across t. |
+| Forward process | "Adding noise" | Fixed Markov chain `q(x_t | x_{t-1})`, которая разрушает данные. |
+| Reverse process | "Denoising" | Learned chain `p_θ(x_{t-1} | x_t)`, которая восстанавливает данные. |
+| β schedule | "The noise ladder" | Per-step variance; linear, cosine или sigmoid. |
+| α̅ | "Alpha bar" | Cumulative product `∏(1 - β)`; дает closed-form `x_t` из `x_0`. |
+| Simple loss | "MSE on noise" | `||ε - ε_θ(x_t, t)||²`; все variational derivations схлопываются к этому. |
+| ε-prediction | "Predict noise" | Output — добавленный шум; стандартный DDPM. |
+| V-prediction | "Predict velocity" | Output — `α·ε - σ·x`; лучшее conditioning across t. |
 | DDPM | "The paper" | Ho et al. 2020; linear β, 1000 steps, U-Net. |
-| DDIM | "Deterministic sampler" | Non-Markov sampler, 20-50 steps, same training objective. |
-| Classifier-free guidance | "CFG" | Mix conditional and unconditional noise predictions to amplify conditioning. |
+| DDIM | "Deterministic sampler" | Non-Markov sampler, 20-50 steps, та же training objective. |
+| Classifier-free guidance | "CFG" | Смешивает conditional и unconditional noise predictions, чтобы усилить conditioning. |
 
-## Production note: diffusion inference is a step-count problem
+## Production note: diffusion inference — это проблема числа шагов
 
-The DDPM paper runs T=1000 reverse steps. Nobody ships that in production. Every real inference stack picks one of three strategies — and each maps cleanly to production framing of "where is the latency coming from":
+DDPM paper запускает T=1000 reverse steps. В production так никто не поставляет. Каждый реальный inference stack выбирает одну из трех стратегий, и каждая ясно ложится на production framing "откуда берется latency":
 
-1. **Faster sampler, same model.** DDIM (20-50 steps), DPM-Solver++ (10-20), UniPC (8-16). Drop-in replacement of the reverse loop; the trained `ε_θ` weights are untouched. Cuts latency 20-50×.
-2. **Distillation.** Train a student to match the teacher in fewer steps: Progressive Distillation (2 → 1), Consistency Models (arbitrary → 1-4), LCM, SDXL-Turbo, SD3-Turbo. Cuts latency another 5-10×, requires retraining.
-3. **Caching and compilation.** `torch.compile(unet, mode="reduce-overhead")`, TensorRT-LLM's diffusion backends, `xformers`/SDPA attention, bf16 weights. Cuts per-step latency ~2×. Stacks with (1) and (2).
+1. **Faster sampler, same model.** DDIM (20-50 steps), DPM-Solver++ (10-20), UniPC (8-16). Drop-in replacement reverse loop; trained `ε_θ` weights не меняются. Срезает latency в 20-50×.
+2. **Distillation.** Обучить student совпадать с teacher за меньшее число шагов: Progressive Distillation (2 → 1), Consistency Models (arbitrary → 1-4), LCM, SDXL-Turbo, SD3-Turbo. Срезает latency еще в 5-10×, требует retraining.
+3. **Caching and compilation.** `torch.compile(unet, mode="reduce-overhead")`, diffusion backends TensorRT-LLM, `xformers`/SDPA attention, bf16 weights. Срезает per-step latency примерно в ~2×. Stack-ится с (1) и (2).
 
-For a production diffusion server the budget conversation is the same as production literature describes for LLMs: latency is `num_steps × step_cost + VAE_decode`, throughput is `batch_size × (num_steps × step_cost)^-1`. TTFT is small (one step); TPOT-equivalent is the full response time because image generation is "all-at-once" from the user's perspective.
+Для production diffusion server разговор о budget такой же, как production literature описывает для LLMs: latency = `num_steps × step_cost + VAE_decode`, throughput = `batch_size × (num_steps × step_cost)^-1`. TTFT мал (один step); TPOT-equivalent — полное response time, потому что image generation для пользователя выглядит как "all-at-once".
 
-## Further Reading
+## Дополнительное чтение
 
-- [Sohl-Dickstein et al. (2015). Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585) — the diffusion paper, ahead of its time.
+- [Sohl-Dickstein et al. (2015). Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585) — diffusion paper, опередившая время.
 - [Ho, Jain, Abbeel (2020). Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) — DDPM.
 - [Song, Meng, Ermon (2021). Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) — DDIM, fewer steps.
 - [Nichol & Dhariwal (2021). Improved DDPM](https://arxiv.org/abs/2102.09672) — cosine schedule, learned variance.
 - [Dhariwal & Nichol (2021). Diffusion Models Beat GANs on Image Synthesis](https://arxiv.org/abs/2105.05233) — classifier guidance.
 - [Ho & Salimans (2022). Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598) — CFG.
-- [Karras et al. (2022). Elucidating the Design Space of Diffusion-Based Generative Models (EDM)](https://arxiv.org/abs/2206.00364) — unified notation, cleanest recipe.
+- [Karras et al. (2022). Elucidating the Design Space of Diffusion-Based Generative Models (EDM)](https://arxiv.org/abs/2206.00364) — unified notation, самый чистый рецепт.

@@ -1,70 +1,70 @@
-# Generative Models — Taxonomy & History
+# Генеративные модели — таксономия и история
 
-> Every image model, text model, video model, and 3D model fits in one of five buckets. Pick the wrong bucket and you will fight the math for weeks. Pick the right one and the field's last twelve years of progress stacks cleanly in your head.
+> Каждая модель изображений, текста, видео и 3D попадает в одну из пяти корзин. Выберите не ту корзину — и неделями будете бороться с математикой. Выберите правильную — и прогресс последних двенадцати лет аккуратно уложится в голове.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 2 (ML Fundamentals), Phase 3 (Deep Learning Core), Phase 7 · 14 (Transformers)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 2 (ML Fundamentals), Фаза 3 (Deep Learning Core), Фаза 7 · 14 (Transformers)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-A generative model does one job: given training samples drawn from some unknown distribution `p_data(x)`, output new samples that look like they came from the same distribution. Faces, sentences, MIDI files, protein structures — all the same problem if you squint.
+Генеративная модель делает одну вещь: получив обучающие примеры из неизвестного распределения `p_data(x)`, она выдает новые примеры, похожие на взятые из того же распределения. Лица, предложения, MIDI-файлы, структуры белков — если прищуриться, это одна и та же задача.
 
-The rub is that `p_data` lives in a space with millions of dimensions (a 512x512 RGB image is ~786k dimensions), the samples sit on a thin manifold inside that space, and you only have maybe 10M examples. Brute-forcing the density is hopeless. Every generative model is a compromise that trades one hard problem for a slightly less hard one.
+Проблема в том, что `p_data` живет в пространстве с миллионами измерений (RGB-изображение 512x512 — это ~786k измерений), примеры лежат на тонком многообразии внутри этого пространства, а данных у вас, возможно, всего 10M. Перебирать плотность напрямую безнадежно. Любая генеративная модель — это компромисс: она меняет одну сложную задачу на чуть менее сложную.
 
-Five families have survived the last twelve years. Knowing which compromise each family makes tells you why it wins on some tasks and collapses on others.
+За последние двенадцать лет выжили пять семейств. Понимание компромисса каждого семейства объясняет, почему оно выигрывает на одних задачах и ломается на других.
 
-## The Concept
+## Концепция
 
 ![Five families of generative models — taxonomy by what they model](../assets/taxonomy.svg)
 
-**1. Explicit density, tractable.** Write `log p(x)` as a sum you can actually evaluate. Autoregressive models (PixelCNN, WaveNet, GPT) factorize `p(x) = ∏ p(x_i | x_<i)`. Normalizing flows (RealNVP, Glow) build `p(x)` as an invertible transform of a simple base. Pro: exact likelihood, clean training loss. Con: autoregressive inference is sequential (slow for long sequences), flows need invertible architectures (architecturally restrictive).
+**1. Явная плотность, вычислимая.** Записать `log p(x)` как сумму, которую реально можно посчитать. Авторегрессионные модели (PixelCNN, WaveNet, GPT) факторизуют `p(x) = ∏ p(x_i | x_<i)`. Нормализующие потоки (RealNVP, Glow) строят `p(x)` как обратимое преобразование простой базовой плотности. Плюс: точное правдоподобие, чистая функция потерь. Минус: авторегрессионный inference последовательный (медленный для длинных последовательностей), потокам нужны обратимые архитектуры (это жестко ограничивает дизайн).
 
-**2. Explicit density, approximate.** Bound `log p(x)` from below (ELBO) and optimize the bound. VAEs (Kingma 2013) use an encoder-decoder with a variational posterior. Diffusion models (DDPM, Ho 2020) train a denoiser that implicitly optimizes a weighted ELBO. Diffusion is the dominant image, video, and 3D backbone in 2026.
+**2. Явная плотность, приближенная.** Ограничить `log p(x)` снизу (ELBO) и оптимизировать эту границу. VAE (Kingma 2013) используют encoder-decoder с вариационным posterior. Диффузионные модели (DDPM, Ho 2020) обучают denoiser, который неявно оптимизирует взвешенный ELBO. В 2026 году diffusion — доминирующая основа для изображений, видео и 3D.
 
-**3. Implicit density.** Skip density entirely; learn a generator `G(z)` that produces samples and a discriminator `D(x)` that tells real from fake. GANs (Goodfellow 2014). Fast at inference (one forward pass) but notoriously unstable during training. StyleGAN 1/2/3 remain state of the art for fixed-domain photorealism (faces, bedrooms) even in 2026.
+**3. Неявная плотность.** Полностью пропустить плотность; выучить генератор `G(z)`, который производит примеры, и discriminator `D(x)`, который отличает реальные от поддельных. Это GANs (Goodfellow 2014). Быстрые на inference (один forward pass), но печально известны нестабильностью обучения. StyleGAN 1/2/3 даже в 2026 году остаются state of the art для фотореализма в фиксированных доменах (лица, спальни).
 
-**4. Score-based / continuous-time.** Learn the gradient of the log-density `∇_x log p(x)` (the score) directly. Song & Ermon (2019) showed score matching generalizes diffusion to an SDE. Flow matching (Lipman 2023) is the 2024-2026 hotness: simulate-free training, straighter paths, 4-10x faster sampling than DDPM. Stable Diffusion 3, Flux, AudioCraft 2 all use flow matching.
+**4. Score-based / непрерывное время.** Напрямую выучить градиент log-density `∇_x log p(x)` (score). Song & Ermon (2019) показали, что score matching обобщает diffusion до SDE. Flow matching (Lipman 2023) — горячая тема 2024-2026: обучение без симуляции, более прямые траектории, sampling в 4-10x быстрее DDPM. Stable Diffusion 3, Flux, AudioCraft 2 используют flow matching.
 
-**5. Token-based autoregressive over discrete codes.** Compress high-dim data with a VQ-VAE or residual quantizer into a short sequence of discrete tokens, then use a Transformer to model the token sequence. Parti, MuseNet, AudioLM, VALL-E, Sora's patch tokenizer all use this. This is bucket 1 plus a learned tokenizer.
+**5. Token-based autoregressive по дискретным кодам.** Сжать высокоразмерные данные с помощью VQ-VAE или residual quantizer в короткую последовательность дискретных токенов, затем использовать Transformer для моделирования последовательности токенов. Parti, MuseNet, AudioLM, VALL-E, patch tokenizer у Sora — все используют этот подход. Это корзина 1 плюс обученный tokenizer.
 
-## A brief history
+## Краткая история
 
-| Year | Model | Why it mattered |
+| Год | Модель | Почему это было важно |
 |------|-------|-----------------|
-| 2013 | VAE (Kingma) | First deep generative model with a usable training loss. |
-| 2014 | GAN (Goodfellow) | Implicit density, no likelihood — shockingly sharp samples. |
-| 2015 | DRAW, PixelCNN | Sequential image generation. |
-| 2017 | Glow, RealNVP | Invertible flows; exact likelihood with depth. |
-| 2017 | Progressive GAN | First megapixel faces. |
-| 2019 | StyleGAN / StyleGAN2 | Photorealistic faces still hard to beat for that one domain. |
-| 2020 | DDPM (Ho) | Diffusion becomes practical. |
-| 2021 | CLIP, DALL-E 1, VQGAN | Text-to-image goes mainstream. |
-| 2022 | Imagen, Stable Diffusion 1, DALL-E 2 | Latent diffusion + text conditioning = commodity. |
-| 2022 | ControlNet, LoRA | Fine control over pretrained diffusion. |
-| 2023 | SDXL, Midjourney v5, Flow matching | Scale + better training dynamics. |
-| 2024 | Sora, Stable Diffusion 3, Flux.1 | Video diffusion; flow matching wins. |
-| 2025 | Veo 2, Kling 1.5, Runway Gen-3, Nano Banana | Production-grade video. |
-| 2026 | Consistency + Rectified Flow | One-step sampling from diffusion backbones. |
+| 2013 | VAE (Kingma) | Первая глубокая генеративная модель с пригодной функцией потерь. |
+| 2014 | GAN (Goodfellow) | Неявная плотность, без likelihood — поразительно четкие примеры. |
+| 2015 | DRAW, PixelCNN | Последовательная генерация изображений. |
+| 2017 | Glow, RealNVP | Обратимые потоки; точное likelihood с глубиной. |
+| 2017 | Progressive GAN | Первые мегапиксельные лица. |
+| 2019 | StyleGAN / StyleGAN2 | Фотореалистичные лица все еще трудно превзойти в этом одном домене. |
+| 2020 | DDPM (Ho) | Diffusion становится практичной. |
+| 2021 | CLIP, DALL-E 1, VQGAN | Text-to-image выходит в мейнстрим. |
+| 2022 | Imagen, Stable Diffusion 1, DALL-E 2 | Latent diffusion + text conditioning = массовая технология. |
+| 2022 | ControlNet, LoRA | Точный контроль над pretrained diffusion. |
+| 2023 | SDXL, Midjourney v5, Flow matching | Масштаб + лучшая динамика обучения. |
+| 2024 | Sora, Stable Diffusion 3, Flux.1 | Video diffusion; flow matching выигрывает. |
+| 2025 | Veo 2, Kling 1.5, Runway Gen-3, Nano Banana | Видео production-grade. |
+| 2026 | Consistency + Rectified Flow | Одношаговый sampling из diffusion backbones. |
 
-## The five-question triage
+## Пять вопросов для triage
 
-When a new generative model paper drops, answer these five questions before reading the method section.
+Когда выходит новая статья о генеративной модели, ответьте на эти пять вопросов до чтения раздела с методом.
 
-1. **What is being modeled?** Pixels, latents, discrete tokens, 3D Gaussians, meshes, waveforms?
-2. **Is the density explicit or implicit?** Do they write down `log p(x)`?
-3. **Sampling: one-shot or iterative?** Iterative means slower inference; one-shot usually means adversarial or distilled.
-4. **Conditioning: unconditional, class, text, image, pose?** This determines the loss and architecture scaffolding.
-5. **Evaluation: FID, CLIP score, IS, human preference, task accuracy?** Each has known failure modes (see Lesson 14).
+1. **Что моделируется?** Пиксели, latents, дискретные токены, 3D Gaussians, meshes, waveforms?
+2. **Плотность явная или неявная?** Выписывают ли авторы `log p(x)`?
+3. **Sampling: one-shot или iterative?** Iterative означает более медленный inference; one-shot обычно означает adversarial или distilled.
+4. **Conditioning: unconditional, class, text, image, pose?** Это определяет loss и архитектурный каркас.
+5. **Evaluation: FID, CLIP score, IS, human preference, task accuracy?** У каждого есть известные режимы отказа (см. Lesson 14).
 
-You will re-answer these five for every lesson in this phase. By the end, they will be reflex.
+Вы будете заново отвечать на эти пять вопросов в каждом уроке этой фазы. К концу это станет рефлексом.
 
-## Build It
+## Практика
 
-The code for this lesson is a lightweight visualization: fit a 1-D mixture-of-Gaussians from samples using three toy approaches (kernel density, discrete histogram, and a nearest-sample "GAN-ish" generator) so you can see the difference between explicit vs implicit density on a problem you can print on one screen.
+Код этого урока — легкая визуализация: подогнать 1-D mixture-of-Gaussians по сэмплам тремя игрушечными подходами (kernel density, дискретная histogram и ближайший к примеру "GAN-ish" generator), чтобы увидеть разницу между explicit и implicit density на задаче, которую можно напечатать на одном экране.
 
-Run `code/main.py`. It draws 2000 samples from a two-mode Gaussian mixture, then prints:
+Запустите `code/main.py`. Он берет 2000 samples из двухмодовой Gaussian mixture, затем печатает:
 
 ```
 explicit density (histogram): p(x in [-0.5, 0.5]) ≈ 0.38
@@ -72,63 +72,63 @@ approximate density (KDE):     p(x in [-0.5, 0.5]) ≈ 0.41
 implicit (nearest-sample gen): 20 new samples printed, no p(x)
 ```
 
-Notice: the first two let you ask "how likely is this point?" The third cannot. This is the *explicit vs implicit* distinction that will matter for every future lesson.
+Заметьте: первые два позволяют спросить "насколько вероятна эта точка?" Третий — нет. Это различие *explicit vs implicit*, которое будет важно во всех следующих уроках.
 
-## Use It
+## Применение
 
-Which family, for which task, in 2026?
+Какое семейство для какой задачи в 2026 году?
 
-| Task | Best family | Why |
+| Задача | Лучшее семейство | Почему |
 |------|-------------|-----|
-| Photoreal faces, narrow domain | StyleGAN 2/3 | Still sharpest, fastest inference. |
+| Фотореалистичные лица, узкий домен | StyleGAN 2/3 | Все еще самые четкие, самый быстрый inference. |
 | General text-to-image | Latent diffusion + flow matching | SD3, Flux.1, DALL-E 3. |
-| Fast text-to-image | Rectified flow + distillation | SDXL-Turbo, SD3-Turbo, LCM. |
+| Быстрый text-to-image | Rectified flow + distillation | SDXL-Turbo, SD3-Turbo, LCM. |
 | Text-to-video | Diffusion Transformer + flow matching | Sora, Veo 2, Kling. |
-| Speech + music | Token-based AR (AudioLM, VALL-E, MusicGen) or flow matching (AudioCraft 2) | Discrete tokens scale cheaply. |
-| 3D scenes | Gaussian Splatting fit, diffusion prior | 3D-GS for reconstruction, diffusion for novel-view. |
-| Density estimation (no sampling) | Flows | Only family with exact `log p(x)`. |
-| Simulation / physics | Flow matching, score SDE | Straight-line paths, smooth vector fields. |
+| Речь + музыка | Token-based AR (AudioLM, VALL-E, MusicGen) или flow matching (AudioCraft 2) | Дискретные токены дешево масштабируются. |
+| 3D-сцены | Gaussian Splatting fit, diffusion prior | 3D-GS для реконструкции, diffusion для novel-view. |
+| Оценка плотности (без sampling) | Flows | Единственное семейство с точным `log p(x)`. |
+| Симуляция / физика | Flow matching, score SDE | Прямолинейные траектории, гладкие векторные поля. |
 
-## Ship It
+## Запуск в продукт
 
-Save as `outputs/skill-model-chooser.md`.
+Сохраните как `outputs/skill-model-chooser.md`.
 
-The skill takes a task description and outputs: (1) which family to use, (2) a ranked list of three open and three hosted options, (3) the likely failure mode you should watch for, and (4) a compute/time budget.
+Навык принимает описание задачи и выдает: (1) какое семейство использовать, (2) ранжированный список из трех open и трех hosted вариантов, (3) вероятный режим отказа, за которым нужно следить, и (4) бюджет compute/time.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** For each of these five products, identify the family and backbone: ChatGPT image, Midjourney v7, Sora, Runway Gen-3, ElevenLabs. Evidence should be from public technical reports.
-2. **Medium.** The paper you are about to read tomorrow claims 100x faster sampling than diffusion. Write down three questions to check whether the speedup survives conditioning and high resolution.
-3. **Hard.** Take one domain you care about (e.g. protein structure, CAD, molecules, trajectories). Answer the five-question triage for the current SOTA model in that domain and sketch what a better model would change.
+1. **Легко.** Для каждого из пяти продуктов определите семейство и backbone: ChatGPT image, Midjourney v7, Sora, Runway Gen-3, ElevenLabs. Доказательства должны быть из публичных технических отчетов.
+2. **Средне.** Статья, которую вы собираетесь читать завтра, заявляет sampling в 100x быстрее diffusion. Запишите три вопроса, чтобы проверить, сохраняется ли ускорение при conditioning и высоком разрешении.
+3. **Сложно.** Возьмите важный для вас домен (например, protein structure, CAD, molecules, trajectories). Ответьте на пять triage-вопросов для текущей SOTA-модели в этом домене и набросайте, что изменила бы лучшая модель.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Generative model | "It makes new stuff" | Learns a sampler for `p_data(x)`, optionally exposes `log p(x)`. |
-| Explicit density | "You can evaluate it" | Model provides a closed-form or tractable `log p(x)`. |
-| Implicit density | "GAN-style" | Only a sampler — no way to evaluate `p(x)` of a given point. |
-| ELBO | "Evidence lower bound" | A tractable lower bound on `log p(x)`; VAEs and diffusion optimize it. |
-| Score | "Gradient of log-density" | `∇_x log p(x)`; diffusion and SDE models learn this field. |
-| Manifold hypothesis | "Data lives on a surface" | High-dim data concentrates on a low-dim manifold; why dimensionality reduction works. |
-| Autoregressive | "Predict the next piece" | Factorize joint as product of conditionals. |
-| Latent | "Compressed code" | Low-dim representation from which a decoder can reconstruct the input. |
+| Generative model | "Она делает новые штуки" | Учит sampler для `p_data(x)`, опционально предоставляет `log p(x)`. |
+| Explicit density | "Ее можно вычислить" | Модель дает closed-form или tractable `log p(x)`. |
+| Implicit density | "GAN-style" | Только sampler — нет способа вычислить `p(x)` для заданной точки. |
+| ELBO | "Evidence lower bound" | Вычислимая нижняя граница для `log p(x)`; VAE и diffusion оптимизируют ее. |
+| Score | "Gradient of log-density" | `∇_x log p(x)`; diffusion и SDE-модели учат это поле. |
+| Manifold hypothesis | "Данные живут на поверхности" | Высокоразмерные данные концентрируются на низкоразмерном многообразии; поэтому работает dimensionality reduction. |
+| Autoregressive | "Предсказывает следующий кусок" | Факторизует совместное распределение как произведение условных. |
+| Latent | "Сжатый код" | Низкоразмерное представление, из которого decoder может восстановить вход. |
 
-## Production note: five families, five inference shapes
+## Production note: пять семейств, пять форм inference
 
-Each family maps to a different inference-server cost curve. production-inference literature frames LLM inference as prefill + decode; the same decomposition applies here:
+Каждое семейство соответствует другой кривой стоимости inference-server. Литература по production-inference описывает LLM inference как prefill + decode; та же декомпозиция применима здесь:
 
-- **Autoregressive (bucket 1 and 5).** Sequential decode dominates latency; KV-cache, continuous batching, and speculative decoding all apply directly.
-- **VAE / diffusion / flow-matching (buckets 2 and 4).** There is no decode in the LLM sense. Cost = `num_steps × step_cost`, and the `step_cost` is a transformer or U-Net forward at the full latent resolution. The production knobs are step count (DDIM / DPM-Solver / distillation), batch size, and precision (bf16 / fp8 / int4).
-- **GAN (bucket 3).** One forward pass. No schedule, no KV-cache. TTFT ≈ total latency. This is why StyleGAN still wins on narrow-domain UX.
+- **Autoregressive (корзины 1 и 5).** Последовательный decode доминирует latency; KV-cache, continuous batching и speculative decoding применимы напрямую.
+- **VAE / diffusion / flow-matching (корзины 2 и 4).** Decode в смысле LLM здесь отсутствует. Стоимость = `num_steps × step_cost`, а `step_cost` — forward transformer или U-Net на полном latent-разрешении. Production-ручки: число шагов (DDIM / DPM-Solver / distillation), batch size и precision (bf16 / fp8 / int4).
+- **GAN (корзина 3).** Один forward pass. Нет schedule, нет KV-cache. TTFT ≈ total latency. Поэтому StyleGAN все еще выигрывает в UX узкого домена.
 
-When you see "faster than diffusion" in a paper abstract, translate it to "fewer steps × same step cost" or "same steps × cheaper step cost". Everything else is marketing.
+Когда видите в abstract статьи "faster than diffusion", переводите это как "fewer steps × same step cost" или "same steps × cheaper step cost". Все остальное — маркетинг.
 
-## Further Reading
+## Дополнительное чтение
 
-- [Goodfellow et al. (2014). Generative Adversarial Nets](https://arxiv.org/abs/1406.2661) — the GAN paper.
-- [Kingma & Welling (2013). Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114) — the VAE paper.
-- [Ho, Jain, Abbeel (2020). Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) — the DDPM paper.
-- [Song et al. (2021). Score-Based Generative Modeling through SDEs](https://arxiv.org/abs/2011.13456) — diffusion as an SDE.
-- [Lipman et al. (2023). Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) — the flow matching paper.
+- [Goodfellow et al. (2014). Generative Adversarial Nets](https://arxiv.org/abs/1406.2661) — статья о GAN.
+- [Kingma & Welling (2013). Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114) — статья о VAE.
+- [Ho, Jain, Abbeel (2020). Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239) — статья о DDPM.
+- [Song et al. (2021). Score-Based Generative Modeling through SDEs](https://arxiv.org/abs/2011.13456) — diffusion как SDE.
+- [Lipman et al. (2023). Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747) — статья о flow matching.
 - [Esser et al. (2024). Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206) — Stable Diffusion 3.

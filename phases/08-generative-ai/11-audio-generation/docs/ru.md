@@ -1,29 +1,29 @@
-# Audio Generation
+# Генерация аудио
 
-> Audio is a 1-D signal at 16-48 kHz. A five-second clip is 80-240k samples. No transformer attends to that sequence directly. The solution for every production audio model in 2026 is the same: a neural codec (Encodec, SoundStream, DAC) compresses audio to discrete tokens at 50-75 Hz, and a transformer or diffusion model generates tokens.
+> Audio — это 1-D signal at 16-48 kHz. Пятисекундный clip — 80-240k samples. Ни один transformer не attends to такой sequence напрямую. Решение для каждой production audio model в 2026 году одно: neural codec (Encodec, SoundStream, DAC) сжимает audio в discrete tokens at 50-75 Hz, а transformer или diffusion model генерирует tokens.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 6 · 02 (Audio Features), Phase 6 · 04 (ASR), Phase 8 · 06 (DDPM)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 6 · 02 (Audio Features), Фаза 6 · 04 (ASR), Фаза 8 · 06 (DDPM)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-Three audio generation tasks:
+Три задачи audio generation:
 
-1. **Text-to-speech.** Given text, produce speech. Clean speech is narrow-band and has strong phonetic structure — solved well by transformer-over-tokens. VALL-E (Microsoft), NaturalSpeech 3, ElevenLabs, OpenAI TTS.
-2. **Music generation.** Given a prompt (text, melody, chord progression, genre), produce music. Much broader distribution. MusicGen (Meta), Stable Audio 2.5, Suno v4, Udio, Riffusion.
-3. **Audio effects / sound design.** Given a prompt, produce ambient sound or Foley. AudioGen, AudioLDM 2, Stable Audio Open.
+1. **Text-to-speech.** Дан text, нужно произвести speech. Clean speech — narrow-band и имеет сильную phonetic structure; хорошо решается transformer-over-tokens. VALL-E (Microsoft), NaturalSpeech 3, ElevenLabs, OpenAI TTS.
+2. **Music generation.** Дан prompt (text, melody, chord progression, genre), нужно произвести music. Распределение гораздо шире. MusicGen (Meta), Stable Audio 2.5, Suno v4, Udio, Riffusion.
+3. **Audio effects / sound design.** Дан prompt, нужно произвести ambient sound или Foley. AudioGen, AudioLDM 2, Stable Audio Open.
 
-All three run on the same substrate: neural audio codec + token-AR or diffusion generator.
+Все три работают на одной основе: neural audio codec + token-AR или diffusion generator.
 
-## The Concept
+## Концепция
 
 ![Audio generation: codec tokens + transformer or diffusion](../assets/audio-generation.svg)
 
 ### Neural audio codecs
 
-Encodec (Meta, 2022), SoundStream (Google, 2021), Descript Audio Codec (DAC, 2023). A convolutional encoder compresses waveform to a per-timestep vector; residual vector quantization (RVQ) converts each vector to a cascade of K codebook indices. Decoder reverses it. 24 kHz audio at 2 kbps using 8 RVQ codebooks at 75 Hz = 600 tokens/sec.
+Encodec (Meta, 2022), SoundStream (Google, 2021), Descript Audio Codec (DAC, 2023). Convolutional encoder сжимает waveform в per-timestep vector; residual vector quantization (RVQ) превращает каждый vector в cascade of K codebook indices. Decoder обращает процесс. 24 kHz audio at 2 kbps using 8 RVQ codebooks at 75 Hz = 600 tokens/sec.
 
 ```
 waveform (16000 samples/sec)
@@ -34,15 +34,15 @@ waveform (16000 samples/sec)
                      └─ RVQ layer 8
 ```
 
-### Two generative paradigms on top
+### Две generative paradigms сверху
 
-**Token-autoregressive.** Flatten RVQ tokens into a sequence, run a decoder-only transformer. MusicGen uses "delayed parallel" to emit K codebook streams in parallel with per-stream offsets. VALL-E generates speech tokens from a text prompt + 3-second voice sample.
+**Token-autoregressive.** Flatten RVQ tokens в sequence, запустить decoder-only transformer. MusicGen использует "delayed parallel", чтобы выдавать K codebook streams параллельно с per-stream offsets. VALL-E генерирует speech tokens из text prompt + 3-second voice sample.
 
-**Latent diffusion.** Pack codec tokens as continuous latents or model them with categorical diffusion. Stable Audio 2.5 uses flow matching on continuous audio latents. AudioLDM 2 uses text-to-mel-to-audio diffusion.
+**Latent diffusion.** Pack codec tokens как continuous latents или model them with categorical diffusion. Stable Audio 2.5 использует flow matching на continuous audio latents. AudioLDM 2 использует text-to-mel-to-audio diffusion.
 
-The 2024-2026 trend: flow matching is winning for music (faster inference, cleaner samples) while token-AR still dominates speech because it is naturally causal and streams well.
+Тренд 2024-2026: flow matching выигрывает для music (faster inference, cleaner samples), а token-AR все еще доминирует speech, потому что naturally causal и хорошо streams.
 
-## Production landscape
+## Производственный ландшафт
 
 | System | Task | Backbone | Latency |
 |--------|------|----------|---------|
@@ -56,11 +56,11 @@ The 2024-2026 trend: flow matching is winning for music (faster inference, clean
 | AudioCraft 2 | Music + SFX | Flow matching | ~5s for 5s clip |
 | Riffusion v2 | Music | Spectrogram diffusion | ~10s |
 
-## Build It
+## Практика
 
-`code/main.py` simulates the core idea: train a tiny next-token transformer on synthetic "audio token" sequences generated from two distinct "styles" (alternating low and high tokens for style A, monotonic ramp for style B). Condition on style and sample.
+`code/main.py` симулирует core idea: train tiny next-token transformer на synthetic "audio token" sequences из двух разных "styles" (alternating low and high tokens for style A, monotonic ramp for style B). Condition on style and sample.
 
-### Step 1: synthetic audio tokens
+### Шаг 1: synthetic audio tokens
 
 ```python
 def make_tokens(style, length, vocab_size, rng):
@@ -70,24 +70,24 @@ def make_tokens(style, length, vocab_size, rng):
     return [(i * 3) % vocab_size for i in range(length)]
 ```
 
-### Step 2: train a tiny token predictor
+### Шаг 2: train a tiny token predictor
 
-A bigram-style predictor conditioned on style. The point is the pattern: codec tokens → cross-entropy training → autoregressive sampling.
+Bigram-style predictor conditioned on style. Суть паттерна: codec tokens → cross-entropy training → autoregressive sampling.
 
-### Step 3: sample conditionally
+### Шаг 3: sample conditionally
 
-Given the style token and a starting token, sample the next token from the predicted distribution. Continue for 20-40 tokens.
+Имея style token и starting token, sample следующий token из predicted distribution. Продолжать 20-40 tokens.
 
-## Pitfalls
+## Подводные камни
 
-- **Codec quality caps output quality.** If the codec can't represent a sound faithfully, no amount of generator quality helps. DAC is the current open best.
-- **RVQ error accumulation.** Each RVQ layer models the residual of the previous. Errors on layer 1 propagate. Sampling with temperature 0 on higher layers helps.
-- **Musical structure.** 30 seconds of tokens is 20k+ tokens at 75 Hz. Hard for transformers. MusicGen uses sliding window + prompt continuation; Stable Audio uses shorter clips + crossfading.
-- **Artifacts at boundaries.** Crossfading between generated clips needs careful overlap-add.
-- **Clean-data appetite.** Music generators need tens of thousands of hours of licensed music. The Suno / Udio RIAA lawsuit (2024) brought this to the surface.
-- **Voice cloning ethics.** A 3-second sample plus a text prompt is enough for VALL-E / XTTS / ElevenLabs to clone a voice. Every production model needs abuse detection + opt-out lists.
+- **Codec quality caps output quality.** Если codec не может faithfully represent sound, качество generator не поможет. DAC — текущий open best.
+- **RVQ error accumulation.** Каждый RVQ layer моделирует residual предыдущего. Ошибки layer 1 propagate. Sampling with temperature 0 on higher layers помогает.
+- **Musical structure.** 30 seconds of tokens — это 20k+ tokens at 75 Hz. Сложно для transformers. MusicGen использует sliding window + prompt continuation; Stable Audio — shorter clips + crossfading.
+- **Artifacts at boundaries.** Crossfading между generated clips требует аккуратного overlap-add.
+- **Clean-data appetite.** Music generators нужны десятки тысяч часов licensed music. Suno / Udio RIAA lawsuit (2024) вынес это на поверхность.
+- **Voice cloning ethics.** 3-second sample plus text prompt достаточно, чтобы VALL-E / XTTS / ElevenLabs клонировали voice. Каждой production model нужны abuse detection + opt-out lists.
 
-## Use It
+## Применение
 
 | Task | 2026 stack |
 |------|------------|
@@ -100,45 +100,45 @@ Given the style token and a starting token, sample the next token from the predi
 | Open-weights music research | MusicGen 3.3B, Stable Audio Open 1.0, AudioLDM 2 |
 | Dubbing / translation | HeyGen, ElevenLabs Dubbing |
 
-## Ship It
+## Запуск в продукт
 
-Save `outputs/skill-audio-brief.md`. Skill takes an audio brief (task, duration, style, voice, license) and outputs: model + hosting, prompt format (genre tags, style descriptors, structural markers), codec + generator + vocoder chain, seed protocol, and eval plan (MOS / CLAP score / CER for TTS / user A/B).
+Сохраните `outputs/skill-audio-brief.md`. Навык принимает audio brief (task, duration, style, voice, license) и выдает: model + hosting, prompt format (genre tags, style descriptors, structural markers), codec + generator + vocoder chain, seed protocol и eval plan (MOS / CLAP score / CER for TTS / user A/B).
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py` and set style explicitly. Verify the generated sequences match the style's pattern.
-2. **Medium.** Add delayed parallel decoding: simulate 2 streams of tokens that must stay offset by 1 step. Train a joint predictor.
-3. **Hard.** Use HuggingFace transformers to run MusicGen-small locally. Generate a 10-second clip with three different prompts; A/B for style adherence.
+1. **Легко.** Запустите `code/main.py` и явно задайте style. Проверьте, что generated sequences match style pattern.
+2. **Средне.** Добавьте delayed parallel decoding: симулируйте 2 streams of tokens, которые должны оставаться offset by 1 step. Обучите joint predictor.
+3. **Сложно.** Используйте HuggingFace transformers для запуска MusicGen-small локально. Generate 10-second clip с тремя different prompts; A/B for style adherence.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Codec | "Neural compression" | Encoder / decoder for audio; typical output is 50-75 Hz tokens. |
-| RVQ | "Residual VQ" | Cascade of K quantizers; each models the residual of the previous. |
-| Token | "One codec symbol" | Discrete index into a codebook; 1024 or 2048 typical. |
-| Delayed parallel | "Offset codebooks" | Emit K token streams with staggered offsets to reduce sequence length. |
+| Codec | "Neural compression" | Encoder / decoder для audio; typical output — 50-75 Hz tokens. |
+| RVQ | "Residual VQ" | Cascade of K quantizers; каждый моделирует residual предыдущего. |
+| Token | "One codec symbol" | Discrete index into codebook; 1024 или 2048 typical. |
+| Delayed parallel | "Offset codebooks" | Emit K token streams со staggered offsets, чтобы сократить sequence length. |
 | Flow matching | "The 2024 win for audio" | Straighter-path alternative to diffusion; faster sampling. |
-| Voice prompt | "3-second sample" | Speaker embedding or token prefix that steers the cloned voice. |
-| Mel spectrogram | "The visual" | Log-magnitude perceptual spectrogram; used by many TTS systems. |
-| Vocoder | "Mel to wave" | Neural component that converts mel spectrograms back to audio. |
+| Voice prompt | "3-second sample" | Speaker embedding или token prefix, который steers cloned voice. |
+| Mel spectrogram | "The visual" | Log-magnitude perceptual spectrogram; используется многими TTS systems. |
+| Vocoder | "Mel to wave" | Neural component, converting mel spectrograms back to audio. |
 
-## Production note: audio is a streaming problem
+## Production note: audio — streaming problem
 
-Audio is the one output modality users expect to arrive *as it is generated*, not all-at-once. In production terms this means TPOT matters (Time Per Output Token) because the user's listening speed is the target throughput — not their reading speed. For 16kHz audio tokenized at ~75 tokens/second (Encodec), the server must generate ≥75 tokens/sec per user to keep playback smooth.
+Audio — единственная output modality, которую пользователи ожидают получать *по мере generation*, а не all-at-once. В production terms это означает, что важен TPOT (Time Per Output Token), потому что target throughput — скорость listening, а не reading. Для 16kHz audio tokenized at ~75 tokens/second (Encodec) server должен генерировать ≥75 tokens/sec per user, чтобы playback был smooth.
 
-Two architectural consequences:
+Два architectural consequences:
 
-- **Flow-matching audio models cannot stream trivially.** Stable Audio 2.5 and AudioCraft 2 render a fixed clip length in one pass. To stream, you chunk the clip and overlap boundaries — think sliding-window diffusion — adding 100-300ms of latency overhead vs a codec AR model.
+- **Flow-matching audio models cannot stream trivially.** Stable Audio 2.5 и AudioCraft 2 render fixed clip length in one pass. Для stream нужно chunk clip и overlap boundaries — sliding-window diffusion — добавляя 100-300ms latency overhead против codec AR model.
 
-If the product is "live voice chat" or "real-time music continuation", pick the codec AR path. If it is "render a 30-second clip on submit", flow-matching wins on quality and total latency.
+Если product — "live voice chat" или "real-time music continuation", выбирайте codec AR path. Если это "render a 30-second clip on submit", flow-matching выигрывает по quality и total latency.
 
-## Further Reading
+## Дополнительное чтение
 
-- [Défossez et al. (2022). Encodec: High Fidelity Neural Audio Compression](https://arxiv.org/abs/2210.13438) — the codec standard.
-- [Zeghidour et al. (2021). SoundStream](https://arxiv.org/abs/2107.03312) — the first widely used neural audio codec.
+- [Défossez et al. (2022). Encodec: High Fidelity Neural Audio Compression](https://arxiv.org/abs/2210.13438) — codec standard.
+- [Zeghidour et al. (2021). SoundStream](https://arxiv.org/abs/2107.03312) — первый широко используемый neural audio codec.
 - [Kumar et al. (2023). High-Fidelity Audio Compression with Improved RVQGAN (DAC)](https://arxiv.org/abs/2306.06546) — DAC.
 - [Wang et al. (2023). Neural Codec Language Models are Zero-Shot Text to Speech Synthesizers (VALL-E)](https://arxiv.org/abs/2301.02111) — VALL-E.
 - [Copet et al. (2023). Simple and Controllable Music Generation (MusicGen)](https://arxiv.org/abs/2306.05284) — MusicGen.
 - [Liu et al. (2023). AudioLDM 2: Learning Holistic Audio Generation with Self-supervised Pretraining](https://arxiv.org/abs/2308.05734) — AudioLDM 2.
-- [Stability AI (2024). Stable Audio 2.5](https://stability.ai/news/introducing-stable-audio-2-5) — 2025 text-to-music with flow matching.
+- [Stability AI (2024). Stable Audio 2.5](https://stability.ai/news/introducing-stable-audio-2-5) — text-to-music 2025 with flow matching.
