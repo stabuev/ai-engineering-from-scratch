@@ -1,41 +1,41 @@
-# Spectrograms, Mel Scale & Audio Features
+# Спектрограммы, mel-шкала и аудиопризнаки
 
-> Neural nets do not consume raw waveforms well. They consume spectrograms. They consume mel spectrograms even better. Every ASR, TTS, and audio classifier in 2026 lives or dies by this single preprocessing choice.
+> Нейросети плохо потребляют сырые формы волны. Они потребляют спектрограммы. Mel-спектрограммы они потребляют еще лучше. Каждый ASR, TTS и аудиоклассификатор в 2026 году зависит от этого одного выбора препроцессинга.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 6 · 01 (Audio Fundamentals)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 6 · 01 (основы аудио)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-Take a 10-second 16 kHz clip. That is 160,000 floats, all in `[-1, 1]`, almost perfectly uncorrelated with the label "dog barking" or "the word cat". The raw waveform has the information but in a form the model cannot easily extract. Two identical phonemes spoken 100 ms apart have completely different raw samples.
+Возьмите 10-секундный клип 16 kHz. Это 160,000 чисел в `[-1, 1]`, почти никак напрямую не связанных с меткой "dog barking" или "the word cat". Сырая форма волны содержит информацию, но в виде, из которого модели трудно ее извлечь. Две одинаковые фонемы, произнесенные с разницей 100 ms, имеют совершенно разные сырые отсчеты.
 
-A spectrogram fixes this. It collapses the temporal detail where human perception ignores it (microsecond jitter) and preserves the structure where perception attends (which frequencies are energetic, over time windows of ~10–25 ms).
+Спектрограмма исправляет это. Она сворачивает временные детали там, где человеческое восприятие их игнорирует (микросекундный джиттер), и сохраняет структуру там, где восприятие сосредоточено (какие частоты энергичны в окнах ~10–25 ms).
 
-Mel spectrograms push further. Humans perceive pitch logarithmically: 100 Hz vs 200 Hz sounds "the same distance apart" as 1000 Hz vs 2000 Hz. The mel scale warps the frequency axis to match. A mel-scaled spectrogram is the single most important feature in speech ML from 2010 through 2026.
+Mel-спектрограммы идут дальше. Люди воспринимают высоту тона логарифмически: 100 Hz против 200 Hz звучит как «такое же расстояние», как 1000 Hz против 2000 Hz. Mel-шкала деформирует частотную ось под это восприятие. Спектрограмма в mel-шкале — самый важный признак в речевом ML с 2010 по 2026 год.
 
-## The Concept
+## Концепция
 
 ![Waveform to STFT to mel spectrogram to MFCC ladder](../assets/mel-features.svg)
 
-**STFT (Short-Time Fourier Transform).** Slice the waveform into overlapping frames (typical: 25 ms window, 10 ms hop = 400 samples / 160 samples at 16 kHz). Multiply each frame by a window function (Hann is the default; Hamming slightly different tradeoff). FFT each frame. Stack the magnitude spectra into a matrix of shape `(n_frames, n_freq_bins)`. That is your spectrogram.
+**STFT (Short-Time Fourier Transform).** Разрежьте форму волны на перекрывающиеся фреймы (типично: окно 25 ms, hop 10 ms = 400 отсчетов / 160 отсчетов при 16 kHz). Умножьте каждый фрейм на оконную функцию (Hann по умолчанию; Hamming дает немного иной компромисс). Примените FFT к каждому фрейму. Сложите спектры модулей в матрицу формы `(n_frames, n_freq_bins)`. Это ваша спектрограмма.
 
-**Log-magnitude.** Raw magnitudes span 5-6 orders of magnitude. Take `log(|X| + 1e-6)` or `20 * log10(|X|)` to compress dynamic range. Every production pipeline uses log-magnitude, not raw magnitude.
+**Логарифм модуля.** Сырые модули покрывают 5-6 порядков величины. Берите `log(|X| + 1e-6)` или `20 * log10(|X|)`, чтобы сжать динамический диапазон. Каждый продакшен-пайплайн использует логарифм модуля, а не сырой модуль.
 
-**Mel scale.** Frequency `f` in Hz maps to mel `m` by `m = 2595 * log10(1 + f / 700)`. The mapping is roughly linear below 1 kHz and roughly logarithmic above. 80 mel bins covering 0–8 kHz is the standard ASR input.
+**Mel-шкала.** Частота `f` в Hz переходит в mel `m` по формуле `m = 2595 * log10(1 + f / 700)`. Отображение примерно линейно ниже 1 kHz и примерно логарифмично выше. 80 mel-бинов, покрывающих 0–8 kHz, — стандартный вход ASR.
 
-**Mel filterbank.** A set of triangular filters spaced equally on the mel scale. Each filter is a weighted sum of adjacent FFT bins. Multiplying the STFT magnitude by the filterbank matrix gives the mel spectrogram in one matmul.
+**Mel filterbank.** Набор треугольных фильтров, равномерно расположенных на mel-шкале. Каждый фильтр — взвешенная сумма соседних FFT-бинов. Умножение модуля STFT на матрицу filterbank дает mel-спектрограмму одной матричной операцией.
 
-**Log-mel spectrogram.** `log(mel_spec + 1e-10)`. Whisper's input. Parakeet's input. SeamlessM4T's input. The universal 2026 audio frontend.
+**Log-mel спектрограмма.** `log(mel_spec + 1e-10)`. Вход Whisper. Вход Parakeet. Вход SeamlessM4T. Универсальный аудиофронтенд 2026 года.
 
-**MFCCs.** Take the log-mel spectrogram, apply a DCT (type II), keep the first 13 coefficients. Decorrelates the features and compresses further. Dominant feature until about 2015 when CNNs/Transformers on raw log-mels caught up. Still used in speaker recognition (x-vectors, ECAPA).
+**MFCC.** Возьмите log-mel спектрограмму, примените DCT (type II), оставьте первые 13 коэффициентов. Это декоррелирует признаки и дополнительно сжимает их. Доминировали примерно до 2015 года, пока CNN/Transformers на сырых log-mels не догнали. Все еще используются в распознавании говорящего (x-vectors, ECAPA).
 
-**Resolution trade.** Larger FFT = better frequency resolution but worse time resolution. 25 ms / 10 ms is the audio-ML default; 50 ms / 12.5 ms for music; 5 ms / 2 ms for transient detection (drum hits, plosives).
+**Компромисс разрешения.** Большее FFT = лучшее частотное разрешение, но худшее временное. 25 ms / 10 ms — дефолт audio-ML; 50 ms / 12.5 ms для музыки; 5 ms / 2 ms для детекции транзиентов (удары барабана, взрывные согласные).
 
-## Build It
+## Соберите это
 
-### Step 1: frame the waveform
+### Шаг 1: разбейте форму волны на фреймы
 
 ```python
 def frame(signal, frame_len, hop):
@@ -43,9 +43,9 @@ def frame(signal, frame_len, hop):
     return [signal[i * hop : i * hop + frame_len] for i in range(n)]
 ```
 
-A 10-second 16 kHz clip with `frame_len=400, hop=160` yields 998 frames.
+10-секундный клип 16 kHz с `frame_len=400, hop=160` дает 998 фреймов.
 
-### Step 2: Hann window
+### Шаг 2: окно Hann
 
 ```python
 import math
@@ -54,9 +54,9 @@ def hann(N):
     return [0.5 * (1 - math.cos(2 * math.pi * n / (N - 1))) for n in range(N)]
 ```
 
-Multiply element-wise before the FFT. Removes spectral leakage caused by truncating at non-zero endpoints.
+Умножайте поэлементно перед FFT. Это убирает спектральную утечку, вызванную обрезкой в ненулевых конечных точках.
 
-### Step 3: STFT magnitude
+### Шаг 3: модуль STFT
 
 ```python
 def stft_magnitude(signal, frame_len=400, hop=160):
@@ -65,9 +65,9 @@ def stft_magnitude(signal, frame_len=400, hop=160):
     return [magnitudes(dft([w * s for w, s in zip(win, f)])) for f in frames]
 ```
 
-Production uses `torch.stft` or `librosa.stft` (FFT-backed, vectorized). The loop here is pedagogical; it runs on short clips in `code/main.py`.
+В продакшене используют `torch.stft` или `librosa.stft` (на FFT, векторизованные). Цикл здесь педагогический; он работает на коротких клипах в `code/main.py`.
 
-### Step 4: mel filterbank
+### Шаг 4: mel filterbank
 
 ```python
 def hz_to_mel(f):
@@ -91,18 +91,18 @@ def mel_filterbank(n_mels, n_fft, sr, fmin=0, fmax=None):
     return fb
 ```
 
-80 mels covering 0–8 kHz with `n_fft=400` gives an `(80, 201)` matrix. Multiply the `(n_frames, 201)` STFT magnitude by the transpose to get `(n_frames, 80)` mel spectrogram.
+80 mel-бинов для 0–8 kHz при `n_fft=400` дают матрицу `(80, 201)`. Умножьте модуль STFT `(n_frames, 201)` на транспонированную матрицу, чтобы получить mel-спектрограмму `(n_frames, 80)`.
 
-### Step 5: log-mel
+### Шаг 5: log-mel
 
 ```python
 def log_mel(mel_spec, eps=1e-10):
     return [[math.log(max(v, eps)) for v in frame] for frame in mel_spec]
 ```
 
-Common alternatives: `librosa.power_to_db` (reference-normalized dB), `10 * log10(power + eps)`. Whisper uses a more involved clip + normalize routine (see Whisper's `log_mel_spectrogram`).
+Обычные альтернативы: `librosa.power_to_db` (dB с нормализацией по reference), `10 * log10(power + eps)`. Whisper использует более сложную процедуру clip + normalize (см. `log_mel_spectrogram` в Whisper).
 
-### Step 6: MFCCs
+### Шаг 6: MFCC
 
 ```python
 def dct_ii(x, n_coeffs):
@@ -113,58 +113,58 @@ def dct_ii(x, n_coeffs):
     ]
 ```
 
-Apply DCT to each log-mel frame, keep the first 13 coefficients. That is your MFCC matrix. The first coefficient is usually dropped (it encodes overall energy).
+Примените DCT к каждому log-mel фрейму и оставьте первые 13 коэффициентов. Это ваша матрица MFCC. Первый коэффициент обычно отбрасывают (он кодирует общую энергию).
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Task | Features |
+| Задача | Признаки |
 |------|----------|
-| ASR (Whisper, Parakeet, SeamlessM4T) | 80 log-mels, 10 ms hop, 25 ms window |
-| TTS acoustic model (VITS, F5-TTS, Kokoro) | 80 mels, 5–12 ms hop for fine temporal control |
-| Audio classification (AST, PANNs, BEATs) | 128 log-mels, 10 ms hop |
-| Speaker embedding (ECAPA-TDNN, WavLM) | 80 log-mels or raw-waveform SSL |
-| Music (MusicGen, Stable Audio 2) | EnCodec discrete tokens (not mels) |
-| Keyword spotting | 40 MFCCs for tiny devices |
+| ASR (Whisper, Parakeet, SeamlessM4T) | 80 log-mels, hop 10 ms, окно 25 ms |
+| Акустическая модель TTS (VITS, F5-TTS, Kokoro) | 80 mels, hop 5–12 ms для точного временного контроля |
+| Аудиоклассификация (AST, PANNs, BEATs) | 128 log-mels, hop 10 ms |
+| Эмбеддинг говорящего (ECAPA-TDNN, WavLM) | 80 log-mels или SSL по сырой форме волны |
+| Музыка (MusicGen, Stable Audio 2) | Дискретные токены EnCodec (не mels) |
+| Keyword spotting | 40 MFCC для маленьких устройств |
 
-Rule of thumb: **if you are not working on music, start with 80 log-mels.** The burden of proof is on any deviation.
+Практическое правило: **если вы не работаете с музыкой, начинайте с 80 log-mels.** Любое отклонение должно быть обосновано.
 
-## Pitfalls that still ship in 2026
+## Ловушки, которые все еще попадают в продакшен в 2026 году
 
-- **Mel count mismatch.** Training with 80 mels, inference with 128 mels. Silent failure. Log the feature shape at both ends.
-- **Sample-rate mismatch upstream.** Mels computed at 22.05 kHz look different from 16 kHz. Fix SR *before* featurization.
-- **dB vs log.** Whisper expects log-mel, not dB-mel. Some HF pipelines autodetect; your custom code will not.
-- **Normalization drift.** Per-utterance normalization during training, global normalization during inference. Production bug that doubles WER.
-- **Leakage from padding.** Zero-padding the end of a clip produces a flat spectrum in the trailing frames. Pad symmetrically or replicate.
+- **Несовпадение числа mel-бинов.** Обучение с 80 mels, инференс со 128 mels. Тихий отказ. Логируйте форму признаков на обоих концах.
+- **Несовпадение частоты дискретизации выше по пайплайну.** Mels, вычисленные при 22.05 kHz, выглядят иначе, чем при 16 kHz. Исправляйте SR *до* извлечения признаков.
+- **dB против log.** Whisper ожидает log-mel, а не dB-mel. Некоторые HF-пайплайны определяют это автоматически; ваш кастомный код — нет.
+- **Дрейф нормализации.** Per-utterance нормализация при обучении, глобальная нормализация при инференсе. Продакшен-баг, удваивающий WER.
+- **Утечка от padding.** Дополнение нулями в конце клипа дает плоский спектр в хвостовых фреймах. Дополняйте симметрично или реплицируйте.
 
-## Ship It
+## Доведите до результата
 
-Save as `outputs/skill-feature-extractor.md`. The skill picks feature type, mel count, frame/hop, and normalization for a given model target.
+Сохраните как `outputs/skill-feature-extractor.md`. Навык выбирает тип признаков, число mel-бинов, frame/hop и нормализацию для заданной целевой модели.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. It synthesizes a chirp (frequency swept 200 → 4000 Hz) and prints the argmax mel bin per frame. Plot (optional) and confirm it matches the sweep.
-2. **Medium.** Re-run with `n_mels` in `{40, 80, 128}` and `frame_len` in `{200, 400, 800}`. Measure sharp-peak bandwidth across the time axis. Which combo resolves the chirp the best?
-3. **Hard.** Implement `power_to_db` and compare ASR accuracy of a tiny CNN classifier on AudioMNIST using (a) raw log-mel, (b) dB-mel with `ref=max`, (c) MFCC-13 + delta + delta-delta. Report top-1 accuracy.
+1. **Легко.** Запустите `code/main.py`. Он синтезирует chirp (частота меняется 200 → 4000 Hz) и печатает argmax mel-бин для каждого фрейма. Постройте график (опционально) и подтвердите, что он соответствует sweep.
+2. **Средне.** Повторите запуск с `n_mels` из `{40, 80, 128}` и `frame_len` из `{200, 400, 800}`. Измерьте ширину резкого пика по временной оси. Какая комбинация лучше всего разрешает chirp?
+3. **Сложно.** Реализуйте `power_to_db` и сравните ASR-точность маленького CNN-классификатора на AudioMNIST при (a) raw log-mel, (b) dB-mel с `ref=max`, (c) MFCC-13 + delta + delta-delta. Сообщите top-1 accuracy.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| Frame | A slice | 25 ms chunk of waveform fed to one FFT. |
-| Hop | Stride | Samples between consecutive frames; 10 ms is ASR default. |
-| Window | Hann/Hamming thing | Point-wise multiplier that tapers the frame edges to zero. |
-| STFT | Spectrogram generator | Framed + windowed FFT; yields time × frequency matrix. |
-| Mel | Warped frequency | Log-perception scale; `m = 2595·log10(1 + f/700)`. |
-| Filterbank | The matrix | Triangular filters that project STFT onto mel bins. |
-| Log-mel | Whisper's input | `log(mel_spec + eps)`; standardized in 2026. |
-| MFCC | Old-school feature | DCT of log-mel; 13 coeffs, decorrelated. |
+| Frame | Срез | 25 ms фрагмент формы волны, подаваемый в одно FFT. |
+| Hop | Шаг | Отсчеты между соседними фреймами; 10 ms — дефолт ASR. |
+| Window | Та штука Hann/Hamming | Поточечный множитель, сводящий края фрейма к нулю. |
+| STFT | Генератор спектрограммы | FFT по фреймам с окнами; дает матрицу время × частота. |
+| Mel | Деформированная частота | Логарифмическая шкала восприятия; `m = 2595·log10(1 + f/700)`. |
+| Filterbank | Матрица | Треугольные фильтры, проецирующие STFT на mel-бины. |
+| Log-mel | Вход Whisper | `log(mel_spec + eps)`; стандартизован в 2026 году. |
+| MFCC | Признак старой школы | DCT от log-mel; 13 коэффициентов, декоррелированы. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Davis, Mermelstein (1980). Comparison of parametric representations for monosyllabic word recognition](https://ieeexplore.ieee.org/document/1163420) — the MFCC paper.
-- [Stevens, Volkmann, Newman (1937). A Scale for the Measurement of the Psychological Magnitude Pitch](https://pubs.aip.org/asa/jasa/article-abstract/8/3/185/735757/) — the original mel scale.
-- [OpenAI — Whisper source, log_mel_spectrogram](https://github.com/openai/whisper/blob/main/whisper/audio.py) — read the reference implementation.
-- [librosa feature extraction docs](https://librosa.org/doc/main/feature.html) — reference for `mfcc`, `melspectrogram`, and hop/window.
-- [NVIDIA NeMo — audio preprocessing](https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/asr_all.html#featurizers) — production-scale pipeline for Parakeet + Canary models.
+- [Davis, Mermelstein (1980). Comparison of parametric representations for monosyllabic word recognition](https://ieeexplore.ieee.org/document/1163420) — статья про MFCC.
+- [Stevens, Volkmann, Newman (1937). A Scale for the Measurement of the Psychological Magnitude Pitch](https://pubs.aip.org/asa/jasa/article-abstract/8/3/185/735757/) — исходная mel-шкала.
+- [OpenAI — Whisper source, log_mel_spectrogram](https://github.com/openai/whisper/blob/main/whisper/audio.py) — прочитайте эталонную реализацию.
+- [librosa feature extraction docs](https://librosa.org/doc/main/feature.html) — справочник по `mfcc`, `melspectrogram` и hop/window.
+- [NVIDIA NeMo — audio preprocessing](https://docs.nvidia.com/deeplearning/nemo/user-guide/docs/en/main/asr/asr_all.html#featurizers) — продакшен-пайплайн для моделей Parakeet + Canary.

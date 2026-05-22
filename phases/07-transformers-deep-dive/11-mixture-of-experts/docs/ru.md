@@ -1,27 +1,27 @@
 # Mixture of Experts (MoE)
 
-> A dense 70B transformer activates every parameter for every token. A 671B MoE activates only 37B per token and beats it on every benchmark. Sparsity is the most important scaling idea of the decade.
+> Плотный transformer на 70B активирует каждый параметр для каждого токена. MoE на 671B активирует только 37B на токен и обходит его на каждом benchmark. Разреженность — самая важная идея масштабирования десятилетия.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 07 (GPT)
-**Time:** ~45 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 7 · 05 (Full Transformer), Фаза 7 · 07 (GPT)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-A dense transformer's FLOPs at inference equal its parameter count (times 2 for forward pass). Scale up a dense model and every token pays the full bill. By 2024 the frontier was hitting a compute wall: to be meaningfully smarter, you needed exponentially more FLOPs per token.
+FLOPs плотного transformer при inference равны числу его параметров (умножить на 2 для forward pass). Масштабируйте плотную модель, и каждый токен оплачивает полный счет. К 2024 году frontier уперся в compute wall: чтобы стать заметно умнее, нужны были экспоненциально большие FLOPs на токен.
 
-Mixture of Experts breaks this link. Replace each FFN with `E` independent experts + a router that picks `k` experts per token. Total parameters = `E × FFN_size`. Active parameters per token = `k × FFN_size`. Typical 2026 configuration: `E=256`, `k=8`. Storage scales with `E`, compute scales with `k`.
+Mixture of Experts разрывает эту связь. Замените каждый FFN на `E` независимых experts + router, который выбирает `k` experts на токен. Total parameters = `E × FFN_size`. Active parameters per token = `k × FFN_size`. Типичная конфигурация 2026 года: `E=256`, `k=8`. Storage масштабируется с `E`, compute масштабируется с `k`.
 
-The 2026 frontier is almost entirely MoE: DeepSeek-V3 (671B total / 37B active), Mixtral 8×22B, Qwen2.5-MoE, Llama 4, Kimi K2, gpt-oss. On Artificial Analysis's independent leaderboard, the top 10 open-source models are all MoE.
+Frontier 2026 года почти полностью MoE: DeepSeek-V3 (671B total / 37B active), Mixtral 8×22B, Qwen2.5-MoE, Llama 4, Kimi K2, gpt-oss. В независимом leaderboard Artificial Analysis все top 10 open-source models — MoE.
 
-## The Concept
+## Концепция
 
 ![MoE layer: router selects k of E experts per token](../assets/moe.svg)
 
-### The FFN swap
+### Замена FFN
 
-Dense transformer block:
+Плотный transformer block:
 
 ```
 h = x + attn(norm(x))
@@ -39,31 +39,31 @@ h = h + sum_{e in top_k}(
     )
 ```
 
-Every expert is an independent FFN (typically SwiGLU). The router is a single linear layer. Each token picks its own `k` experts and gets a gated mixture of their outputs.
+Каждый expert — независимый FFN (обычно SwiGLU). Router — один линейный слой. Каждый токен выбирает свои `k` experts и получает gated mixture их выходов.
 
-### The load-balancing problem
+### Проблема балансировки нагрузки
 
-If the router puts 90% of tokens through expert 3, the other experts starve. Three fixes have been tried:
+Если router отправляет 90% токенов через expert 3, остальные experts голодают. Пробовали три исправления:
 
-1. **Auxiliary load-balancing loss** (Switch Transformer, Mixtral). Add a penalty proportional to the variance in expert usage. Works, but adds a hyperparameter and a second gradient signal.
-2. **Expert capacity + token dropping** (early Switch). Each expert processes at most `C × N/E` tokens; overflow tokens skip the layer. Hurts quality.
-3. **Auxiliary-loss-free balancing** (DeepSeek-V3). Add a learned per-expert bias that shifts the router's top-k selection. Bias is updated outside the training loss. No penalty on the main objective. 2024's big unlock.
+1. **Auxiliary load-balancing loss** (Switch Transformer, Mixtral). Добавить штраф, пропорциональный variance использования experts. Работает, но добавляет hyperparameter и второй gradient signal.
+2. **Expert capacity + token dropping** (ранний Switch). Каждый expert обрабатывает не больше `C × N/E` токенов; overflow tokens пропускают слой. Вредит качеству.
+3. **Auxiliary-loss-free balancing** (DeepSeek-V3). Добавить обучаемый per-expert bias, который сдвигает top-k selection router. Bias обновляется вне training loss. Без штрафа на main objective. Большой unlock 2024 года.
 
-DeepSeek-V3's approach: after each training step, for every expert, check if its usage is above or below the target. Nudge the bias by `±γ`. Selection uses `scores + bias`. Expert probabilities used for gating are the raw `scores` unchanged. Decouples routing from expression.
+Подход DeepSeek-V3: после каждого training step для каждого expert проверить, выше или ниже его usage целевого значения. Сдвинуть bias на `±γ`. Selection использует `scores + bias`. Expert probabilities, используемые для gating, — это исходные `scores` без изменений. Это отделяет routing от expression.
 
 ### Shared experts
 
-DeepSeek-V2/V3 also split experts into *shared* and *routed*. Every token passes through all shared experts. Routed experts are picked via top-k. Shared experts capture common knowledge; routed experts specialize. V3 runs 1 shared expert plus top-8 of 256 routed.
+DeepSeek-V2/V3 также делят experts на *shared* и *routed*. Каждый токен проходит через все shared experts. Routed experts выбираются через top-k. Shared experts захватывают общие знания; routed experts специализируются. V3 использует 1 shared expert плюс top-8 из 256 routed.
 
 ### Fine-grained experts
 
-Classic MoE (GShard, Switch): each expert is as wide as a full FFN. `E` is small (8–64), `k` is small (1–2).
+Классический MoE (GShard, Switch): каждый expert такой же широкий, как полный FFN. `E` мал (8–64), `k` мал (1–2).
 
-Modern fine-grained MoE (DeepSeek-V3, Qwen-MoE): each expert is narrower (1/8 FFN size). `E` is large (256+), `k` is larger (8+). Same total parameters, but combinations scale much faster. `C(256, 8) = 400 trillion` possible "experts" per token. Quality goes up, latency stays flat.
+Современный fine-grained MoE (DeepSeek-V3, Qwen-MoE): каждый expert уже (1/8 размера FFN). `E` велик (256+), `k` больше (8+). Total parameters те же, но combinations масштабируются намного быстрее. `C(256, 8) = 400 trillion` возможных "experts" на токен. Качество растет, latency остается плоской.
 
-### The cost profile
+### Профиль стоимости
 
-Per token, per layer:
+На токен, на слой:
 
 | Config | Active params / token | Total params |
 |--------|-----------------------|--------------|
@@ -72,22 +72,22 @@ Per token, per layer:
 | DeepSeek-V3 | 37B | 671B |
 | Kimi K2 (MoE) | ~32B | 1T |
 
-DeepSeek-V3 beats Llama 3 70B (dense) on almost every benchmark while doing **fewer active FLOPs per token**. More parameters = more knowledge. More active FLOPs = more compute per token. MoE decouples them.
+DeepSeek-V3 обходит Llama 3 70B (dense) почти на каждом benchmark, выполняя **меньше active FLOPs per token**. More parameters = more knowledge. More active FLOPs = more compute per token. MoE разделяет эти величины.
 
-### The catch: memory
+### Подвох: память
 
-All experts live on GPU regardless of which ones fire. A 671B model needs ~1.3 TB of VRAM for fp16 weights. Frontier MoE deployment requires expert parallelism — shard experts across GPUs, route tokens across the network. Latency is dominated by the all-to-all communication, not the matmul.
+Все experts находятся на GPU независимо от того, какие срабатывают. Модель 671B требует ~1.3 TB VRAM для fp16 weights. Frontier MoE deployment требует expert parallelism — shard experts across GPUs, route tokens across the network. Latency определяется all-to-all communication, а не matmul.
 
-## Build It
+## Соберите это
 
-See `code/main.py`. A compact MoE layer in pure stdlib with:
+См. `code/main.py`. Компактный MoE layer на чистой stdlib с:
 
-- `n_experts=8` SwiGLU-ish experts (one linear each, for illustration)
+- `n_experts=8` SwiGLU-ish experts (по одному linear для иллюстрации)
 - top-k=2 routing
 - softmax-normalized gating weights
-- auxiliary-loss-free balancing via per-expert bias
+- auxiliary-loss-free balancing через per-expert bias
 
-### Step 1: the router
+### Шаг 1: router
 
 ```python
 def route(hidden, W_router, top_k, bias):
@@ -103,17 +103,17 @@ def route(hidden, W_router, top_k, bias):
     return top_idx, gates
 ```
 
-Bias affects selection, not gate weight. That is the DeepSeek-V3 trick — bias corrects load imbalance without steering the model's predictions.
+Bias влияет на selection, а не на gate weight. Это трюк DeepSeek-V3 — bias исправляет load imbalance, не направляя predictions модели.
 
-### Step 2: run 100 tokens through the router
+### Шаг 2: пропустить 100 токенов через router
 
-Track which experts fire how often. Without the bias, usage is skewed. With a bias update loop (`-γ` for over-used experts, `+γ` for under-used), usage converges to a uniform distribution over a few iterations.
+Отслеживайте, какие experts срабатывают и как часто. Без bias usage перекошен. С циклом обновления bias (`-γ` для over-used experts, `+γ` для under-used) usage сходится к uniform distribution за несколько итераций.
 
-### Step 3: param count comparison
+### Шаг 3: сравнение числа параметров
 
-Print the "dense equivalent" of an MoE config. DeepSeek-V3-shaped: 256 routed + 1 shared, 8 active, d_model=7168. The total parameter count is eye-watering. The active count is a seventh of a dense Llama 3 70B.
+Напечатайте "dense equivalent" MoE-конфигурации. DeepSeek-V3-shaped: 256 routed + 1 shared, 8 active, d_model=7168. Total parameter count огромен. Active count — седьмая часть плотной Llama 3 70B.
 
-## Use It
+## Используйте это
 
 HuggingFace loading:
 
@@ -122,47 +122,47 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 model = AutoModelForCausalLM.from_pretrained("mistralai/Mixtral-8x22B-v0.1")
 ```
 
-2026 production inference: vLLM supports MoE routing natively. SGLang has the fastest expert-parallel path. Both automatically handle top-k selection and expert parallelism.
+Production inference 2026 года: vLLM нативно поддерживает MoE routing. SGLang имеет самый быстрый expert-parallel path. Оба автоматически обрабатывают top-k selection и expert parallelism.
 
-**When to pick MoE:**
-- You want frontier quality at lower inference cost per token.
-- You have the VRAM / expert-parallel infrastructure.
-- Your workload is token-heavy (chat, code) not context-heavy (long docs).
+**Когда выбирать MoE:**
+- Вам нужно frontier quality при меньшей inference cost per token.
+- У вас есть VRAM / expert-parallel infrastructure.
+- Ваша workload token-heavy (chat, code), а не context-heavy (long docs).
 
-**When NOT to pick MoE:**
-- Edge deployment — you pay full storage for any active FLOP.
-- Latency-critical single-user serving — expert routing adds overhead.
-- Small models (<7B) — MoE's quality advantage only appears above a compute threshold (~6B active params).
+**Когда НЕ выбирать MoE:**
+- Edge deployment — вы платите full storage за любой active FLOP.
+- Latency-critical single-user serving — expert routing добавляет overhead.
+- Малые модели (<7B) — преимущество MoE по качеству появляется только выше compute threshold (~6B active params).
 
-## Ship It
+## Доведите до поставки
 
-See `outputs/skill-moe-configurator.md`. The skill picks E, k, and shared-expert layout for a new MoE given parameter budget, training tokens, and deployment target.
+См. `outputs/skill-moe-configurator.md`. Skill выбирает E, k и layout shared-expert для нового MoE по parameter budget, training tokens и deployment target.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. Watch how the auxiliary-loss-free bias update evens out expert usage over 50 iterations.
-2. **Medium.** Replace the learned router with a hash-based router (deterministic, no learning). Compare quality and balance. Why is the learned router better?
-3. **Hard.** Implement GRPO-style "rollout-matched routing" (DeepSeek-V3.2 trick): log which experts fire during inference, force the same routing during gradient computation. Measure the effect on a toy policy-gradient setup.
+1. **Легко.** Запустите `code/main.py`. Посмотрите, как auxiliary-loss-free bias update выравнивает expert usage за 50 iterations.
+2. **Средне.** Замените learned router на hash-based router (deterministic, no learning). Сравните качество и баланс. Почему learned router лучше?
+3. **Сложно.** Реализуйте GRPO-style "rollout-matched routing" (трюк DeepSeek-V3.2): логируйте, какие experts срабатывают во время inference, и принудительно используйте тот же routing во время gradient computation. Измерьте эффект на toy policy-gradient setup.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Expert | "One FFN among many" | An independent feed-forward network; parameters dedicated to a sparse slice of the FFN computation. |
-| Router | "The gate" | A tiny linear layer that scores each token against each expert; top-k selection. |
-| Top-k routing | "k active experts per token" | Each token's FFN computation goes through exactly k experts, weighted by gate. |
-| Auxiliary loss | "Load-balance penalty" | Extra loss term that penalizes skewed expert usage. |
-| Auxiliary-loss-free | "DeepSeek-V3's trick" | Balance via per-expert bias on the router's selection only; no extra gradient. |
-| Shared expert | "Always on" | Extra expert through which every token passes; captures common knowledge. |
-| Expert parallelism | "Shard by expert" | Distribute different experts to different GPUs; route tokens across the network. |
-| Sparsity | "Active params < total params" | The ratio `k × expert_size / (E × expert_size)`; 37/671 ≈ 5.5% for DeepSeek-V3. |
+| Expert | "One FFN among many" | Независимая feed-forward network; параметры, выделенные для sparse slice FFN-вычисления. |
+| Router | "The gate" | Крошечный linear layer, который оценивает каждый токен относительно каждого expert; top-k selection. |
+| Top-k routing | "k active experts per token" | FFN-вычисление каждого токена проходит ровно через k experts, взвешенных gate. |
+| Auxiliary loss | "Load-balance penalty" | Дополнительный loss term, который штрафует перекошенное expert usage. |
+| Auxiliary-loss-free | "DeepSeek-V3's trick" | Баланс через per-expert bias только на selection router; без extra gradient. |
+| Shared expert | "Always on" | Дополнительный expert, через который проходит каждый токен; захватывает common knowledge. |
+| Expert parallelism | "Shard by expert" | Распределить разных experts по разным GPUs; route tokens across the network. |
+| Sparsity | "Active params < total params" | Ratio `k × expert_size / (E × expert_size)`; 37/671 ≈ 5.5% для DeepSeek-V3. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Shazeer et al. (2017). Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://arxiv.org/abs/1701.06538) — the idea.
-- [Fedus, Zoph, Shazeer (2022). Switch Transformer: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961) — Switch, the classic MoE.
+- [Shazeer et al. (2017). Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://arxiv.org/abs/1701.06538) — идея.
+- [Fedus, Zoph, Shazeer (2022). Switch Transformer: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961) — Switch, классический MoE.
 - [Jiang et al. (2024). Mixtral of Experts](https://arxiv.org/abs/2401.04088) — Mixtral 8×7B.
 - [DeepSeek-AI (2024). DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437) — MLA + auxiliary-loss-free MoE + MTP.
-- [Wang et al. (2024). Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts](https://arxiv.org/abs/2408.15664) — the bias-based balancing paper.
-- [Dai et al. (2024). DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066) — the fine-grained + shared-expert split this lesson's router uses.
-- [Kim et al. (2022). DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training](https://arxiv.org/abs/2201.05596) — original shared-expert paper.
+- [Wang et al. (2024). Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts](https://arxiv.org/abs/2408.15664) — статья о bias-based balancing.
+- [Dai et al. (2024). DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066) — fine-grained + shared-expert split, который использует router этого урока.
+- [Kim et al. (2022). DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training](https://arxiv.org/abs/2201.05596) — оригинальная статья о shared-expert.

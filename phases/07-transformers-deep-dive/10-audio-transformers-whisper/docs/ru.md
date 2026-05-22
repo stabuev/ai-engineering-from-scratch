@@ -1,65 +1,65 @@
-# Audio Transformers — Whisper Architecture
+# Аудиотрансформеры — архитектура Whisper
 
-> Audio is an image of frequency over time. Whisper is a ViT that eats mel spectrograms and speaks back.
+> Аудио — это изображение частот во времени. Whisper — это ViT, который ест mel-спектрограммы и отвечает речью в виде текста.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 08 (Encoder-Decoder), Phase 7 · 09 (ViT)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 7 · 05 (Full Transformer), Фаза 7 · 08 (Encoder-Decoder), Фаза 7 · 09 (ViT)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-Before Whisper (OpenAI, Radford et al. 2022), state-of-the-art automatic speech recognition (ASR) meant wav2vec 2.0 and HuBERT — self-supervised feature extractors plus a fine-tuned head. High quality, expensive data pipelines, domain-brittle. Multilingual speech recognition needed separate models per language family.
+До Whisper (OpenAI, Radford et al. 2022) передовое автоматическое распознавание речи (ASR) означало wav2vec 2.0 и HuBERT — самообучаемые извлекатели признаков плюс дообученная голова. Высокое качество, дорогие конвейеры данных, хрупкость при смене домена. Для многоязычного распознавания речи нужны были отдельные модели для каждой языковой семьи.
 
-Whisper made three bets:
+Whisper сделал три ставки:
 
-1. **Train on everything.** 680,000 hours of weakly-labeled audio scraped from the internet across 97 languages. No clean academic corpus. No phoneme labels.
-2. **Multi-task single model.** One decoder trained jointly on transcription, translation, voice activity detection, language ID, and timestamping via task tokens.
-3. **Standard encoder-decoder transformer.** Encoder consumes log-mel spectrograms. Decoder produces text tokens autoregressively. No vocoder, no CTC, no HMM.
+1. **Обучаться на всем.** 680 000 часов слабо размеченного аудио, собранного из интернета, на 97 языках. Без чистого академического корпуса. Без меток фонем.
+2. **Одна многозадачная модель.** Один декодер, совместно обученный транскрипции, переводу, обнаружению речевой активности, определению языка и расстановке временных меток через task tokens.
+3. **Стандартный encoder-decoder transformer.** Энкодер принимает log-mel-спектрограммы. Декодер авторегрессионно производит текстовые токены. Без vocoder, без CTC, без HMM.
 
-The result: Whisper large-v3 is robust across accents, noise, and languages that have zero clean labeled data. It is the default speech front-end for every open-source voice assistant and most commercial ones in 2026.
+Результат: Whisper large-v3 устойчив к акцентам, шуму и языкам, для которых нет чистых размеченных данных. В 2026 году это стандартный речевой front-end для каждого open-source голосового ассистента и большинства коммерческих.
 
-## The Concept
+## Концепция
 
 ![Whisper pipeline: audio → mel → encoder → decoder → text](../assets/whisper.svg)
 
-### Step 1 — resample + window
+### Шаг 1 — resample + window
 
-Audio at 16 kHz. Clip/pad to 30 seconds. Compute log-mel spectrogram: 80 mel bins, 10 ms stride → ~3,000 frames × 80 features. This is the "input image" that Whisper sees.
+Аудио с частотой 16 kHz. Обрезать/дополнить до 30 секунд. Вычислить log-mel-спектрограмму: 80 mel bins, stride 10 ms → ~3 000 кадров × 80 признаков. Это "входное изображение", которое видит Whisper.
 
-### Step 2 — convolutional stem
+### Шаг 2 — convolutional stem
 
-Two Conv1D layers with kernel 3 and stride 2 reduce the 3,000 frames to 1,500. Halves sequence length without adding a lot of parameters.
+Два слоя Conv1D с kernel 3 и stride 2 уменьшают 3 000 кадров до 1 500. Это вдвое сокращает длину последовательности без большого добавления параметров.
 
-### Step 3 — encoder
+### Шаг 3 — encoder
 
-A 24-layer (for large) transformer encoder over 1,500 timesteps. Sinusoidal positional encoding, self-attention, GELU FFN. Produces 1,500 × 1,280 hidden states.
+24-слойный (для large) transformer encoder по 1 500 временным шагам. Синусоидальное позиционное кодирование, self-attention, GELU FFN. Производит скрытые состояния размером 1 500 × 1 280.
 
-### Step 4 — decoder
+### Шаг 4 — decoder
 
-A 24-layer transformer decoder. It autoregressively produces tokens from a BPE vocabulary that is a superset of GPT-2's with a few audio-specific special tokens.
+24-слойный transformer decoder. Он авторегрессионно производит токены из BPE-словаря, который является надмножеством GPT-2 с несколькими специальными токенами для аудио.
 
-### Step 5 — task tokens
+### Шаг 5 — task tokens
 
-The decoder prompt starts with control tokens that tell the model what to do:
+Промпт декодера начинается с управляющих токенов, которые говорят модели, что делать:
 
 ```
 <|startoftranscript|>  <|en|>  <|transcribe|>  <|0.00|>
 ```
 
-or
+или
 
 ```
 <|startoftranscript|>  <|fr|>  <|translate|>   <|0.00|>
 ```
 
-The model was trained on this convention. You control task by prefix. The 2026 equivalent of instruction-tuning, but applied to speech.
+Модель обучалась на этой конвенции. Вы управляете задачей через префикс. Эквивалент instruction-tuning 2026 года, но примененный к речи.
 
-### Step 6 — output
+### Шаг 6 — output
 
-Beam search (width 5) with a log-prob threshold. Timestamps are predicted every 0.02 seconds of audio when the `<|notimestamps|>` token is absent.
+Beam search (width 5) с порогом log-prob. Временные метки предсказываются каждые 0.02 секунды аудио, когда токен `<|notimestamps|>` отсутствует.
 
-### Whisper sizes
+### Размеры Whisper
 
 | Model | Params | Layers | d_model | Heads | VRAM (fp16) |
 |-------|--------|--------|---------|-------|-------------|
@@ -71,35 +71,35 @@ Beam search (width 5) with a log-prob threshold. Timestamps are predicted every 
 | Large-v3 | 1550M | 32 | 1280 | 20 | ~10 GB |
 | Large-v3-turbo | 809M | 32 | 1280 | 20 | ~6 GB (4-layer decoder) |
 
-Large-v3-turbo (2024) cut the decoder from 32 layers to 4. 8× faster decoding with <1 WER point regression. That decode speed unlock is why Whisper-turbo is the default for real-time voice agents in 2026.
+Large-v3-turbo (2024) сократил декодер с 32 слоев до 4. Декодирование стало в 8× быстрее при регрессии меньше 1 WER point. Именно это ускорение декодирования делает Whisper-turbo стандартом для real-time voice agents в 2026 году.
 
-### What Whisper does not do
+### Чего Whisper не делает
 
-- No diarization (who is speaking). Pair with pyannote for that.
-- No real-time streaming natively — the 30-second window is fixed. Modern wrappers (`faster-whisper`, `WhisperX`) bolt on streaming via VAD + overlap.
-- No long-form context beyond 30 s without external chunking. Works well in practice because human speech rarely needs long-range context for transcription.
+- Нет diarization (кто говорит). Для этого сочетайте с pyannote.
+- Нет нативного real-time streaming — 30-секундное окно фиксировано. Современные обертки (`faster-whisper`, `WhisperX`) добавляют streaming через VAD + overlap.
+- Нет long-form context за пределами 30 s без внешнего разбиения на chunks. На практике работает хорошо, потому что человеческой речи редко нужен дальний контекст для транскрипции.
 
-### 2026 landscape
+### Ландшафт 2026
 
 | Task | Model | Notes |
 |------|-------|-------|
-| English ASR | Whisper-turbo, Moonshine | Moonshine is 4× faster on edge |
+| English ASR | Whisper-turbo, Moonshine | Moonshine в 4× быстрее на edge |
 | Multilingual ASR | Whisper-large-v3 | 97 languages |
-| Streaming ASR | faster-whisper + VAD | 150 ms latency targets achievable |
-| TTS | Piper, XTTS-v2, Kokoro | Encoder-decoder pattern, but Whisper-shaped |
+| Streaming ASR | faster-whisper + VAD | достижимы цели latency 150 ms |
+| TTS | Piper, XTTS-v2, Kokoro | Encoder-decoder pattern, но Whisper-shaped |
 | Audio + language | AudioLM, SeamlessM4T | Text tokens + audio tokens in one transformer |
 
-## Build It
+## Соберите это
 
-See `code/main.py`. We don't train Whisper — we build the log-mel spectrogram pipeline + task-token prompt formatter. Those are the parts you actually touch in production.
+См. `code/main.py`. Мы не обучаем Whisper — мы строим конвейер log-mel-спектрограмм + форматтер промпта с task-token. Это те части, с которыми вы действительно работаете в production.
 
-### Step 1: synthesize audio
+### Шаг 1: синтезировать аудио
 
-Generate a 1-second sine wave at 440 Hz sampled at 16 kHz. 16,000 samples.
+Сгенерируйте 1-секундную синусоиду на 440 Hz с частотой дискретизации 16 kHz. 16 000 samples.
 
-### Step 2: log-mel spectrogram (simplified)
+### Шаг 2: log-mel spectrogram (упрощенно)
 
-Full mel spectrogram needs FFT. We do a simplified framing + per-frame energy version that shows the pipeline without requiring `librosa`:
+Полная mel-спектрограмма требует FFT. Мы делаем упрощенную версию с разбиением на кадры + энергией по кадру, которая показывает конвейер без необходимости в `librosa`:
 
 ```python
 def frame_signal(x, frame_size=400, hop=160):
@@ -109,13 +109,13 @@ def frame_signal(x, frame_size=400, hop=160):
     return frames
 ```
 
-Frame = 25 ms, hop = 10 ms. Matches Whisper's windowing. Per-frame energy stands in for mel bins for pedagogy.
+Frame = 25 ms, hop = 10 ms. Совпадает с windowing в Whisper. Энергия по кадру заменяет mel bins в учебных целях.
 
-### Step 3: pad to 30 s
+### Шаг 3: дополнить до 30 s
 
-Whisper always processes 30-second chunks. Pad (or clip) the spectrogram to 3,000 frames.
+Whisper всегда обрабатывает 30-секундные chunks. Дополните (или обрежьте) спектрограмму до 3 000 кадров.
 
-### Step 4: build the prompt tokens
+### Шаг 4: построить prompt tokens
 
 ```python
 def whisper_prompt(lang="en", task="transcribe", timestamps=True):
@@ -125,9 +125,9 @@ def whisper_prompt(lang="en", task="transcribe", timestamps=True):
     return tokens
 ```
 
-That is the whole task-control surface. A 4-token prefix.
+Это вся поверхность управления задачей. 4-токенный префикс.
 
-## Use It
+## Используйте это
 
 ```python
 import whisper
@@ -137,7 +137,7 @@ print(result["text"])
 print(result["segments"][0]["start"], result["segments"][0]["end"])
 ```
 
-Faster, OpenAI-compatible:
+Быстрее, OpenAI-compatible:
 
 ```python
 from faster_whisper import WhisperModel
@@ -147,48 +147,48 @@ for s in segments:
     print(f"{s.start:.2f} - {s.end:.2f}: {s.text}")
 ```
 
-**When to pick Whisper in 2026:**
+**Когда выбирать Whisper в 2026:**
 
-- Multilingual ASR with one model.
-- Robust transcription of noisy, diverse audio.
-- Research / prototype ASR — fastest starting point.
+- Многоязычный ASR одной моделью.
+- Устойчивая транскрипция шумного, разнообразного аудио.
+- Research / prototype ASR — самая быстрая стартовая точка.
 
-**When to pick something else:**
+**Когда выбирать что-то другое:**
 
-- Ultra-low latency streaming on edge — Moonshine beats Whisper at matched quality.
-- Real-time conversational AI needing <200 ms — dedicated streaming ASR.
-- Speaker diarization — Whisper does not do this; bolt on pyannote.
+- Ultra-low latency streaming on edge — Moonshine обгоняет Whisper при сопоставимом качестве.
+- Real-time conversational AI, которому нужно <200 ms — специализированный streaming ASR.
+- Speaker diarization — Whisper этого не делает; подключайте pyannote.
 
-## Ship It
+## Доведите до поставки
 
-See `outputs/skill-asr-configurator.md`. The skill picks an ASR model, decoding parameters, and preprocessing pipeline for a new speech application.
+См. `outputs/skill-asr-configurator.md`. Skill выбирает ASR-модель, параметры декодирования и preprocessing pipeline для нового речевого приложения.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. Confirm the frame count for a 1-second signal at 16 kHz with 10 ms hop is ~100 frames. For 30 seconds: ~3,000 frames.
-2. **Medium.** Build the full log-mel spectrogram using `numpy.fft`. Verify 80 mel bins match `librosa.feature.melspectrogram(n_mels=80)` within numerical error.
-3. **Hard.** Implement streaming inference: chunk audio into 10 s windows with 2 s overlap, run Whisper on each chunk, merge transcripts. Measure word-error rate vs single-pass on a 5-minute podcast sample.
+1. **Легко.** Запустите `code/main.py`. Подтвердите, что число кадров для 1-секундного сигнала при 16 kHz с hop 10 ms составляет ~100 кадров. Для 30 секунд: ~3 000 кадров.
+2. **Средне.** Постройте полную log-mel-спектрограмму с помощью `numpy.fft`. Проверьте, что 80 mel bins совпадают с `librosa.feature.melspectrogram(n_mels=80)` в пределах численной ошибки.
+3. **Сложно.** Реализуйте streaming inference: разбейте аудио на 10 s windows с overlap 2 s, запустите Whisper на каждом chunk, объедините transcripts. Измерьте word-error rate относительно single-pass на 5-минутном фрагменте подкаста.
 
-## Key Terms
+## Ключевые термины
 
 | Term | What people say | What it actually means |
 |------|-----------------|-----------------------|
-| Mel spectrogram | "Audio image" | 2D representation: frequency bins on one axis, time frames on the other; log-scaled energy per cell. |
-| Log-mel | "What Whisper sees" | Mel spectrogram passed through log; approximates human perception of loudness. |
-| Frame | "One time slice" | A 25 ms window of samples; overlapping at 10 ms stride. |
-| Task token | "Prompt prefix for speech" | Special tokens like `<|transcribe|>` / `<|translate|>` in the decoder prompt. |
-| Voice activity detection (VAD) | "Find the speech" | Gate that removes silence before ASR; cuts cost massively. |
-| CTC | "Connectionist Temporal Classification" | Classic ASR loss for alignment-free training; Whisper does NOT use it. |
-| Whisper-turbo | "Small decoder, full encoder" | large-v3 encoder + 4-layer decoder; 8× faster decoding. |
-| Faster-whisper | "The production wrapper" | CTranslate2 reimplementation; int8 quantization; 4× faster than OpenAI's reference. |
+| Mel spectrogram | "Audio image" | 2D-представление: frequency bins по одной оси, time frames по другой; log-scaled energy в каждой ячейке. |
+| Log-mel | "What Whisper sees" | Mel spectrogram, пропущенная через log; приближает человеческое восприятие громкости. |
+| Frame | "One time slice" | Окно samples длиной 25 ms; перекрывается со stride 10 ms. |
+| Task token | "Prompt prefix for speech" | Специальные токены вроде `<|transcribe|>` / `<|translate|>` в prompt декодера. |
+| Voice activity detection (VAD) | "Find the speech" | Gate, который удаляет тишину перед ASR; резко снижает cost. |
+| CTC | "Connectionist Temporal Classification" | Классический ASR loss для обучения без alignment; Whisper его НЕ использует. |
+| Whisper-turbo | "Small decoder, full encoder" | large-v3 encoder + 4-layer decoder; декодирование в 8× быстрее. |
+| Faster-whisper | "The production wrapper" | Реализация на CTranslate2; int8 quantization; в 4× быстрее reference OpenAI. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Radford et al. (2022). Robust Speech Recognition via Large-Scale Weak Supervision](https://arxiv.org/abs/2212.04356) — Whisper paper.
-- [OpenAI Whisper repo](https://github.com/openai/whisper) — reference code + model weights. Read `whisper/model.py` to see the Conv1D stem + encoder + decoder top-to-bottom in ~400 lines.
-- [OpenAI Whisper — `whisper/decoding.py`](https://github.com/openai/whisper/blob/main/whisper/decoding.py) — the beam-search + task-token logic described in Steps 5–6 is here; 500 lines, fully readable.
-- [Baevski et al. (2020). wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations](https://arxiv.org/abs/2006.11477) — precursor; still SOTA features in some settings.
-- [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) — production wrapper, 4× faster than reference.
-- [Jia et al. (2024). Moonshine: Speech Recognition for Live Transcription and Voice Commands](https://arxiv.org/abs/2410.15608) — 2024 edge-friendly ASR, Whisper-shaped but smaller.
-- [HuggingFace blog — "Fine-Tune Whisper For Multilingual ASR with 🤗 Transformers"](https://huggingface.co/blog/fine-tune-whisper) — canonical fine-tuning recipe including mel spectrogram preprocessor and token-timestamp handling.
-- [HuggingFace `modeling_whisper.py`](https://github.com/huggingface/transformers/blob/main/src/transformers/models/whisper/modeling_whisper.py) — full implementation (encoder, decoder, cross-attention, generation) that mirrors the lesson's architecture diagram.
+- [Radford et al. (2022). Robust Speech Recognition via Large-Scale Weak Supervision](https://arxiv.org/abs/2212.04356) — статья Whisper.
+- [OpenAI Whisper repo](https://github.com/openai/whisper) — reference code + model weights. Прочитайте `whisper/model.py`, чтобы увидеть Conv1D stem + encoder + decoder сверху донизу примерно в 400 строк.
+- [OpenAI Whisper — `whisper/decoding.py`](https://github.com/openai/whisper/blob/main/whisper/decoding.py) — здесь находится логика beam-search + task-token, описанная в шагах 5–6; 500 строк, полностью читаемо.
+- [Baevski et al. (2020). wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations](https://arxiv.org/abs/2006.11477) — предшественник; все еще SOTA-признаки в некоторых условиях.
+- [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) — production wrapper, в 4× быстрее reference.
+- [Jia et al. (2024). Moonshine: Speech Recognition for Live Transcription and Voice Commands](https://arxiv.org/abs/2410.15608) — edge-friendly ASR 2024 года, Whisper-shaped, но меньше.
+- [HuggingFace blog — "Fine-Tune Whisper For Multilingual ASR with 🤗 Transformers"](https://huggingface.co/blog/fine-tune-whisper) — канонический рецепт fine-tuning, включая preprocessor mel-спектрограмм и обработку token-timestamp.
+- [HuggingFace `modeling_whisper.py`](https://github.com/huggingface/transformers/blob/main/src/transformers/models/whisper/modeling_whisper.py) — полная реализация (encoder, decoder, cross-attention, generation), которая повторяет архитектурную диаграмму урока.

@@ -1,47 +1,47 @@
-# Audio Classification — From k-NN on MFCCs to AST and BEATs
+# Аудиоклассификация — от k-NN на MFCC до AST и BEATs
 
-> Everything from "dog barking vs siren" to "which language is this" is audio classification. The features are mels. The architecture moves each decade. The evaluation stays AUC, F1, and per-class recall.
+> Все от «лай собаки против сирены» до «какой это язык» — аудиоклассификация. Признаки — mels. Архитектура меняется каждое десятилетие. Оценка остается AUC, F1 и recall по классам.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 6 · 02 (Spectrograms & Mel), Phase 3 · 06 (CNNs), Phase 5 · 08 (CNNs & RNNs for Text)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 6 · 02 (спектрограммы и Mel), Фаза 3 · 06 (CNN), Фаза 5 · 08 (CNN и RNN для текста)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-You get a 10-second clip. You want to know: "what is it?" Urban sound (siren, drill, dog), speech command (yes/no/stop), language ID (en/es/ar), speaker emotion (angry/neutral), or environmental sound (indoor/outdoor, babble). All of these are *audio classification*, and in 2026 the baseline architecture is mature: log-mel → CNN or Transformer → softmax.
+У вас есть 10-секундный клип. Вы хотите знать: «что это?» Городской звук (сирена, дрель, собака), речевая команда (yes/no/stop), идентификация языка (en/es/ar), эмоция говорящего (angry/neutral) или звук окружения (indoor/outdoor, babble). Все это — *аудиоклассификация*, и в 2026 году базовая архитектура зрелая: log-mel → CNN или Transformer → softmax.
 
-The core difficulty is not the network. It is data. Audio datasets have brutal class imbalance, strong domain shift (clean vs noisy), and label noise (who decided "urban babble" vs "restaurant noise"?). The 80% of the problem is curation, augmentation, and evaluation, not swapping CNN for Transformer.
+Главная сложность — не сеть. Это данные. В аудиодатасетах жесткий дисбаланс классов, сильный domain shift (чистое против шумного) и шумные метки (кто решил, что это «городской гул», а не «шум ресторана»?). 80% задачи — кураторство, аугментация и оценка, а не замена CNN на Transformer.
 
-## The Concept
+## Концепция
 
 ![Audio classification ladder: k-NN on MFCCs to AST to BEATs](../assets/audio-classification.svg)
 
-**k-NN on MFCCs (the 1990s baseline).** Flatten MFCCs per clip, compute cosine similarity to a labeled bank, return majority vote of the top K. Surprisingly strong on clean, small datasets (Speech Commands, ESC-50). Runs with no GPU.
+**k-NN на MFCC (бейзлайн 1990-х).** Сплющите MFCC по клипу, посчитайте cosine similarity к размеченному банку и верните majority vote по top K. Неожиданно силен на чистых маленьких датасетах (Speech Commands, ESC-50). Работает без GPU.
 
-**2D CNN on log-mels (2015-2019).** Treat the `(T, n_mels)` log-mel as an image. Apply ResNet-18 or VGG-style. Global mean pool the time axis. Softmax over classes. Still the baseline in most 2026 kaggle competitions.
+**2D CNN на log-mels (2015-2019).** Рассматривайте `(T, n_mels)` log-mel как изображение. Примените ResNet-18 или VGG-style. Сделайте global mean pool по временной оси. Softmax по классам. Это все еще бейзлайн в большинстве kaggle-соревнований 2026 года.
 
-**Audio Spectrogram Transformer, AST (2021-2024).** Patchify the log-mel (e.g. 16×16 patches), add position embeddings, feed to a ViT. State of the art on AudioSet (mAP 0.485) for supervised learning.
+**Audio Spectrogram Transformer, AST (2021-2024).** Разбейте log-mel на патчи (например, 16×16), добавьте position embeddings, подайте в ViT. State of the art на AudioSet (mAP 0.485) для supervised learning.
 
-**BEATs and WavLM-base (2024-2026).** Self-supervised pretraining on millions of hours. Fine-tune on your task with 1-10% of the supervised data you would have needed. In 2026 this is the default starting point for non-speech audio. BEATs-iter3 beats AST by 1-2 mAP on AudioSet while using 1/4 the compute.
+**BEATs и WavLM-base (2024-2026).** Self-supervised pretraining на миллионах часов. Дообучение под вашу задачу требует 1-10% тех supervised данных, которые понадобились бы раньше. В 2026 году это дефолтная стартовая точка для неречевого аудио. BEATs-iter3 обходит AST на 1-2 mAP на AudioSet при четверти compute.
 
-**Whisper-encoder as a frozen backbone (2024).** Take Whisper's encoder, drop the decoder, attach a linear classifier. Near-SOTA on language ID and simple event classification with zero audio augmentation. The "free lunch" baseline.
+**Whisper-encoder как замороженный backbone (2024).** Возьмите encoder Whisper, уберите decoder, подключите линейный классификатор. Почти SOTA на language ID и простой классификации событий без аудиоаугментации. Бейзлайн «бесплатного обеда».
 
-### Class imbalance is the real challenge
+### Дисбаланс классов — настоящая проблема
 
-ESC-50: 50 classes, 40 clips each — balanced, easy. UrbanSound8K: 10 classes, imbalanced 10:1. AudioSet: 632 classes with a 100,000:1 long tail. Techniques that work:
+ESC-50: 50 классов, по 40 клипов — сбалансированно, легко. UrbanSound8K: 10 классов, дисбаланс 10:1. AudioSet: 632 класса с long tail 100,000:1. Рабочие техники:
 
-- Balanced sampling during training (not in evaluation).
-- Mixup: linearly interpolate two clips (and their labels) as augmentation.
-- SpecAugment: mask random time and frequency bands. Simple; critical.
+- Balanced sampling при обучении (не при оценке).
+- Mixup: линейно интерполируйте два клипа и их метки как аугментацию.
+- SpecAugment: маскируйте случайные полосы времени и частоты. Просто и критично.
 
-### Evaluation
+### Оценка
 
-- Multiclass exclusive (Speech Commands): top-1 accuracy, top-5 accuracy.
+- Взаимоисключающая multiclass (Speech Commands): top-1 accuracy, top-5 accuracy.
 - Multiclass multi-label (AudioSet, UrbanSound-style): mean average precision (mAP).
-- Heavily imbalanced: per-class recall + macro F1.
+- Сильный дисбаланс: recall по классам + macro F1.
 
-2026 numbers you should know:
+Числа 2026 года, которые нужно знать:
 
 | Benchmark | Baseline | SOTA 2026 | Source |
 |-----------|----------|-----------|--------|
@@ -49,9 +49,9 @@ ESC-50: 50 classes, 40 clips each — balanced, easy. UrbanSound8K: 10 classes, 
 | AudioSet mAP | 0.485 (AST) | 0.548 (BEATs-iter3) | HEAR leaderboard 2026 |
 | Speech Commands v2 | 98% (CNN) | 99.0% (Audio-MAE) | HEAR v2 results |
 
-## Build It
+## Соберите это
 
-### Step 1: featurize
+### Шаг 1: извлеките признаки
 
 ```python
 def featurize_mfcc(signal, sr, n_mfcc=13, n_mels=40, frame_len=400, hop=160):
@@ -62,7 +62,7 @@ def featurize_mfcc(signal, sr, n_mfcc=13, n_mels=40, frame_len=400, hop=160):
     return [dct_ii(frame, n_mfcc) for frame in log]
 ```
 
-### Step 2: fixed-length summary
+### Шаг 2: фиксированное summary
 
 ```python
 def summarize(mfcc_frames):
@@ -74,9 +74,9 @@ def summarize(mfcc_frames):
     return mean + var
 ```
 
-Simple but strong: mean + variance across time gives a 26-dim fixed embedding for a 13-coef MFCC. Runs instantly. Beat state-of-the-art NN baselines on ESC-50 as recently as 2017.
+Просто, но сильно: mean + variance по времени дают 26-мерный фиксированный эмбеддинг для 13-coef MFCC. Работает мгновенно. Побеждало state-of-the-art NN-бейзлайны на ESC-50 еще в 2017 году.
 
-### Step 3: k-NN
+### Шаг 3: k-NN
 
 ```python
 def cosine(a, b):
@@ -91,9 +91,9 @@ def knn_classify(q, bank, labels, k=5):
     return votes.most_common(1)[0][0]
 ```
 
-### Step 4: upgrade to CNN on log-mels
+### Шаг 4: перейдите к CNN на log-mels
 
-In PyTorch:
+В PyTorch:
 
 ```python
 import torch.nn as nn
@@ -113,9 +113,9 @@ class AudioCNN(nn.Module):
         return self.head(self.body(x).flatten(1))
 ```
 
-3M parameters. Trains in ~10 min on ESC-50 with a single RTX 4090. 80%+ accuracy.
+3M параметров. Обучается за ~10 min на ESC-50 на одной RTX 4090. Точность 80%+.
 
-### Step 5: the 2026 default — fine-tune BEATs
+### Шаг 5: дефолт 2026 года — дообучите BEATs
 
 ```python
 from transformers import ASTFeatureExtractor, ASTForAudioClassification
@@ -131,49 +131,49 @@ inputs = ext(audio, sampling_rate=16000, return_tensors="pt")
 logits = model(**inputs).logits
 ```
 
-For BEATs, use `microsoft/BEATs-base` via the `beats` library; the transformers API is the same shape.
+Для BEATs используйте `microsoft/BEATs-base` через библиотеку `beats`; transformers API имеет ту же форму.
 
-## Use It
+## Используйте это
 
-The 2026 stack:
+Стек 2026 года:
 
-| Situation | Start with |
+| Ситуация | Начните с |
 |-----------|-----------|
-| Tiny dataset (<1000 clips) | k-NN on MFCC means (your baseline) + audio augmentation |
-| Medium dataset (1K–100K) | BEATs or AST fine-tune |
-| Large dataset (>100K) | Train from scratch or fine-tune Whisper-encoder |
-| Real-time, edge | 40-MFCC CNN, quantized to int8 (KWS-style) |
-| Multi-label (AudioSet) | BEATs-iter3 with BCE loss + mixup + SpecAugment |
-| Language ID | MMS-LID, SpeechBrain VoxLingua107 baseline |
+| Маленький датасет (<1000 клипов) | k-NN на средних MFCC (ваш бейзлайн) + аудиоаугментация |
+| Средний датасет (1K–100K) | Дообучение BEATs или AST |
+| Большой датасет (>100K) | Обучение с нуля или дообучение Whisper-encoder |
+| Real-time, edge | 40-MFCC CNN, квантованный в int8 (KWS-style) |
+| Multi-label (AudioSet) | BEATs-iter3 с BCE loss + mixup + SpecAugment |
+| Language ID | MMS-LID, бейзлайн SpeechBrain VoxLingua107 |
 
-Decision rule: **start with a frozen backbone, not a fresh model**. Fine-tuning a BEATs head gets you 95% of SOTA in hours, not weeks.
+Правило решения: **начинайте с замороженного backbone, а не со свежей модели**. Дообучение головы BEATs дает 95% SOTA за часы, а не недели.
 
-## Ship It
+## Доведите до результата
 
-Save as `outputs/skill-classifier-designer.md`. Pick architecture, augmentations, class-balance strategy, and eval metric for a given audio classification task.
+Сохраните как `outputs/skill-classifier-designer.md`. Выберите архитектуру, аугментации, стратегию баланса классов и метрику оценки для заданной задачи аудиоклассификации.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. It trains the k-NN MFCC baseline on a 4-class synthetic dataset (pure tones at different pitches). Report confusion matrix.
-2. **Medium.** Replace `summarize` with [mean, var, skew, kurtosis]. Does 4-moment pooling beat mean+var on the same synthetic dataset?
-3. **Hard.** Using `torchaudio`, train a 2D CNN on ESC-50 fold 1. Report 5-fold cross-validation accuracy. Add SpecAugment (time mask = 20, freq mask = 10) and report the delta.
+1. **Легко.** Запустите `code/main.py`. Он обучает k-NN MFCC-бейзлайн на синтетическом датасете из 4 классов (чистые тоны разной высоты). Сообщите confusion matrix.
+2. **Средне.** Замените `summarize` на [mean, var, skew, kurtosis]. Побеждает ли 4-moment pooling mean+var на том же синтетическом датасете?
+3. **Сложно.** Используя `torchaudio`, обучите 2D CNN на ESC-50 fold 1. Сообщите accuracy для 5-fold cross-validation. Добавьте SpecAugment (time mask = 20, freq mask = 10) и сообщите delta.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| AudioSet | The ImageNet of audio | Google's 2M-clip, 632-class weakly-labeled YouTube dataset. |
-| ESC-50 | Small classification benchmark | 50 classes × 40 clips of environmental sounds. |
-| AST | Audio Spectrogram Transformer | ViT on log-mel patches; 2021 SOTA. |
-| BEATs | Self-supervised audio | Microsoft model, iter3 leads AudioSet as of 2026. |
-| Mixup | Pair augmentation | `x = λ·x1 + (1-λ)·x2; y = λ·y1 + (1-λ)·y2`. |
-| SpecAugment | Mask-based augmentation | Zero-out random time and frequency bands of the spectrogram. |
-| mAP | Main multi-label metric | Mean average precision across classes and thresholds. |
+| AudioSet | ImageNet для аудио | Датасет Google: 2M клипов, 632 класса, слабые метки YouTube. |
+| ESC-50 | Маленький benchmark классификации | 50 классов × 40 клипов звуков окружения. |
+| AST | Audio Spectrogram Transformer | ViT на log-mel патчах; SOTA 2021 года. |
+| BEATs | Self-supervised аудио | Модель Microsoft, iter3 лидирует AudioSet на 2026 год. |
+| Mixup | Парная аугментация | `x = λ·x1 + (1-λ)·x2; y = λ·y1 + (1-λ)·y2`. |
+| SpecAugment | Аугментация масками | Обнуление случайных временных и частотных полос спектрограммы. |
+| mAP | Главная multi-label метрика | Mean average precision по классам и порогам. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Gong, Chung, Glass (2021). AST: Audio Spectrogram Transformer](https://arxiv.org/abs/2104.01778) — the architecture of record from 2021–2024.
-- [Chen et al. (2022, rev. 2024). BEATs: Audio Pre-Training with Acoustic Tokenizers](https://arxiv.org/abs/2212.09058) — the 2024+ default.
-- [Park et al. (2019). SpecAugment](https://arxiv.org/abs/1904.08779) — the dominant audio augmentation.
-- [Piczak (2015). ESC-50 dataset](https://github.com/karolpiczak/ESC-50) — 50-class benchmark that lives on.
-- [Gemmeke et al. (2017). AudioSet](https://research.google.com/audioset/) — 632-class YouTube taxonomy; still the gold standard.
+- [Gong, Chung, Glass (2021). AST: Audio Spectrogram Transformer](https://arxiv.org/abs/2104.01778) — эталонная архитектура 2021–2024.
+- [Chen et al. (2022, rev. 2024). BEATs: Audio Pre-Training with Acoustic Tokenizers](https://arxiv.org/abs/2212.09058) — дефолт 2024+.
+- [Park et al. (2019). SpecAugment](https://arxiv.org/abs/1904.08779) — доминирующая аудиоаугментация.
+- [Piczak (2015). ESC-50 dataset](https://github.com/karolpiczak/ESC-50) — живущий benchmark на 50 классов.
+- [Gemmeke et al. (2017). AudioSet](https://research.google.com/audioset/) — таксономия YouTube на 632 класса; все еще золотой стандарт.

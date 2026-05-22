@@ -1,48 +1,48 @@
-# Music Generation — MusicGen, Stable Audio, Suno, and the Licensing Earthquake
+# Генерация музыки — MusicGen, Stable Audio, Suno и лицензионное землетрясение
 
-> 2026 music generation: Suno v5 and Udio v4 dominate commercial; MusicGen, Stable Audio Open, and ACE-Step lead open-source. The technical problem is mostly solved. The legal problem (Warner Music $500M settlement, UMG settlement) reshaped the field in 2025-2026.
+> Генерация музыки в 2026: Suno v5 и Udio v4 доминируют коммерчески; MusicGen, Stable Audio Open и ACE-Step лидируют в open-source. Техническая проблема почти решена. Юридическая проблема (settlement Warner Music на $500M, settlement UMG) перестроила область в 2025-2026.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 6 · 02 (Spectrograms), Phase 4 · 10 (Diffusion Models)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 6 · 02 (спектрограммы), Фаза 4 · 10 (Diffusion Models)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-Text → a 30-second to 4-minute music clip, with lyrics, vocals, and structure. Three sub-problems:
+Text → музыкальный клип от 30 секунд до 4 минут, с lyrics, vocals и structure. Три подзадачи:
 
-1. **Instrumental generation.** Text like "lo-fi hip-hop drums with warm keys" → audio. MusicGen, Stable Audio, AudioLDM.
-2. **Song generation (with vocals + lyrics).** "Country song about rainy Texas nights" → full song. Suno, Udio, YuE, ACE-Step.
-3. **Conditional / controllable.** Extend an existing clip, regenerate a bridge, swap genre, stem-separate, or inpaint. Udio's inpainting + stem separation is the 2026 feature to match.
+1. **Instrumental generation.** Текст вроде «lo-fi hip-hop drums with warm keys» → audio. MusicGen, Stable Audio, AudioLDM.
+2. **Song generation (with vocals + lyrics).** «Country song about rainy Texas nights» → полная песня. Suno, Udio, YuE, ACE-Step.
+3. **Conditional / controllable.** Продлить существующий clip, перегенерировать bridge, сменить genre, stem-separate или inpaint. Inpainting + stem separation у Udio — функция 2026 года, которую нужно догонять.
 
-## The Concept
+## Концепция
 
 ![Music generation: token-LM vs diffusion, the 2026 model map](../assets/music-generation.svg)
 
-### Token LM over neural-codec tokens
+### Token LM поверх neural-codec tokens
 
-Meta's **MusicGen** (2023, MIT) and many derivatives: condition on text/melody embeddings, autoregressively predict EnCodec tokens (32 kHz, 4 codebooks), decode with EnCodec. 300M - 3.3B params. Strong baseline; struggles past 30 seconds.
+**MusicGen** от Meta (2023, MIT) и многие производные: condition on text/melody embeddings, autoregressively predict EnCodec tokens (32 kHz, 4 codebooks), decode with EnCodec. 300M - 3.3B params. Сильный бейзлайн; испытывает трудности после 30 секунд.
 
-**ACE-Step** (open-source, 4B XL released April 2026) extends this for full-song lyric-conditioned generation. The open community's closest thing to Suno.
+**ACE-Step** (open-source, 4B XL выпущен в апреле 2026) расширяет это до full-song lyric-conditioned generation. Ближайший open community аналог Suno.
 
-### Diffusion over mels or latents
+### Diffusion по mels или latents
 
-**Stable Audio (2023)** and **Stable Audio Open (2024)**: latent diffusion on compressed audio. Excels at loops, sound design, ambient textures. Not great at structured full songs.
+**Stable Audio (2023)** и **Stable Audio Open (2024)**: latent diffusion на compressed audio. Сильны в loops, sound design, ambient textures. Слабы в structured full songs.
 
-**AudioLDM / AudioLDM2**: text-to-audio via T2I-style latent diffusion, generalized to music, sound effects, speech.
+**AudioLDM / AudioLDM2**: text-to-audio через T2I-style latent diffusion, обобщенный на music, sound effects, speech.
 
 ### Hybrid (production) — Suno, Udio, Lyria
 
-Closed weights. Likely AR codec LM + diffusion-based vocoder with specialized voice / drum / melody heads. Suno v5 (2026) is the ELO 1293 quality leader. Udio v4 adds inpainting + stem separation (bass, drums, vocals separate downloads).
+Закрытые веса. Вероятно, AR codec LM + diffusion-based vocoder со specialized voice / drum / melody heads. Suno v5 (2026) — лидер качества ELO 1293. Udio v4 добавляет inpainting + stem separation (bass, drums, vocals отдельными downloads).
 
-### Evaluation
+### Оценка
 
-- **FAD (Fréchet Audio Distance).** Embedding-level distance between generated vs real audio distribution using VGGish or PANNs features. Lower is better. MusicGen small: 4.5 FAD on MusicCaps; SOTA ~3.0.
-- **Musicality (subjective).** Human preference. Suno v5 ELO 1293 leads.
-- **Text-audio alignment.** CLAP score between prompt and output.
-- **Musicality artifacts.** Off-beat transitions, vocal-phrase drift, loss of structure past 30 s.
+- **FAD (Fréchet Audio Distance).** Расстояние на уровне embeddings между generated и real audio distribution с VGGish или PANNs features. Ниже лучше. MusicGen small: 4.5 FAD на MusicCaps; SOTA ~3.0.
+- **Musicality (subjective).** Человеческие предпочтения. Suno v5 ELO 1293 лидирует.
+- **Text-audio alignment.** CLAP score между prompt и output.
+- **Musicality artifacts.** Сбитые переходы, дрейф вокальных фраз, потеря structure после 30 s.
 
-## 2026 model map
+## Карта моделей 2026 года
 
 | Model | Params | Length | Vocals | License |
 |-------|--------|--------|--------|---------|
@@ -55,22 +55,22 @@ Closed weights. Likely AR codec LM + diffusion-based vocoder with specialized vo
 | Google Lyria 3 (closed) | ? | real-time | yes | commercial |
 | MiniMax Music 2.5 | ? | 4 min | yes | commercial API |
 
-## The legal landscape (2025-2026)
+## Юридический ландшафт (2025-2026)
 
-- **Warner Music vs Suno settlement.** $500M. WMG now has oversight of AI-likeness, music rights, and user-generated tracks on Suno. Similar UMG settlement on Udio.
-- **EU AI Act** + **California SB 942**: AI-generated music must be disclosed.
-- **Riffusion / MusicGen** under MIT have no compliance baggage but also no commercial vocals.
+- **Warner Music vs Suno settlement.** $500M. WMG теперь контролирует AI-likeness, music rights и user-generated tracks на Suno. Похожий UMG settlement по Udio.
+- **EU AI Act** + **California SB 942**: AI-generated music должна маркироваться.
+- **Riffusion / MusicGen** под MIT не несут compliance baggage, но и не дают коммерческих vocals.
 
 Safe-to-ship patterns:
 
-1. Generate instrumental only (MusicGen, Stable Audio Open, MIT/CC0 outputs).
-2. Use commercial APIs (Suno, Udio, ElevenLabs Music) with per-generation license.
-3. Train on owned or licensed catalog (most enterprises end up here).
-4. Tag generations with watermarks + metadata.
+1. Генерировать только instrumental (MusicGen, Stable Audio Open, MIT/CC0 outputs).
+2. Использовать commercial APIs (Suno, Udio, ElevenLabs Music) с per-generation license.
+3. Обучаться на owned или licensed catalog (к этому приходит большинство enterprises).
+4. Маркировать generations watermarks + metadata.
 
-## Build It
+## Соберите это
 
-### Step 1: generate with MusicGen
+### Шаг 1: сгенерируйте через MusicGen
 
 ```python
 from audiocraft.models import MusicGen
@@ -82,9 +82,9 @@ wav = model.generate(["upbeat synthwave with driving drums, 128 BPM"])
 torchaudio.save("out.wav", wav[0].cpu(), 32000)
 ```
 
-Three sizes: `small` (300M, fast), `medium` (1.5B), `large` (3.3B). Small is enough for "does the idea land."
+Три размера: `small` (300M, fast), `medium` (1.5B), `large` (3.3B). Small достаточно, чтобы понять, «попала ли идея».
 
-### Step 2: melody conditioning
+### Шаг 2: melody conditioning
 
 ```python
 melody, sr = torchaudio.load("humming.wav")
@@ -95,9 +95,9 @@ wav = model.generate_with_chroma(
 )
 ```
 
-MusicGen-melody takes a chromagram and preserves the tune while swapping timbre. Useful for "give me this melody as a string quartet."
+MusicGen-melody принимает chromagram и сохраняет мелодию, меняя timbre. Полезно для «сделай эту мелодию струнным квартетом».
 
-### Step 3: FAD evaluation
+### Шаг 3: оценка FAD
 
 ```python
 from frechet_audio_distance import FrechetAudioDistance
@@ -106,11 +106,11 @@ fad = FrechetAudioDistance()
 fad.get_fad_score("generated_folder/", "reference_folder/")
 ```
 
-Computes VGGish-embedding distance. Useful for genre-level regression tests; not a substitute for human listeners.
+Считает VGGish-embedding distance. Полезно для genre-level regression tests; не заменяет human listeners.
 
-### Step 4: adding to the LLM-music workflow
+### Шаг 4: добавление в LLM-music workflow
 
-Combine with the ideas from Lessons 7-8:
+Объедините с идеями из Lessons 7-8:
 
 ```python
 prompt = "Write a 30-second jazz loop. Describe the drums, bass, and piano voicing."
@@ -118,51 +118,51 @@ description = llm.complete(prompt)
 music = musicgen.generate([description], duration=30)
 ```
 
-## Use It
+## Используйте это
 
-| Goal | Stack |
+| Цель | Стек |
 |------|-------|
 | Instrumental sound design | Stable Audio Open |
 | Game / adaptive music | Google Lyria RealTime (closed) |
-| Full songs with vocals (commercial) | Suno v5 or Udio v4 with explicit license |
-| Full songs with vocals (open) | ACE-Step XL or YuE |
-| Short ad jingle | MusicGen melody-conditioned on a hummed reference |
+| Full songs with vocals (commercial) | Suno v5 или Udio v4 с explicit license |
+| Full songs with vocals (open) | ACE-Step XL или YuE |
+| Short ad jingle | MusicGen melody-conditioned на hummed reference |
 | Music-video background | MusicGen + Stable Video Diffusion |
 
-## Pitfalls that still ship in 2026
+## Ловушки, которые все еще попадают в продакшен в 2026 году
 
-- **Copyright-laundering prompts.** "Song in the style of Taylor Swift" — commercial Suno/Udio filter these now, open models do not. Add your own filter list.
-- **Repetition / drift past 30 s.** AR models loop. Crossfade multiple generations, or use ACE-Step for structural coherence.
-- **Tempo drift.** Models wander off the BPM. Use BPM tags in the prompt and post-filter with librosa's `beat_track`.
-- **Vocal intelligibility.** Suno is excellent; open models are often mushy on words. If lyrics matter, use a commercial API or fine-tune.
-- **Mono output.** Open models generate mono or fake-stereo. Upgrade with a proper stereo reconstruction (ezst, Cartesia's stereo diffusion).
+- **Copyright-laundering prompts.** "Song in the style of Taylor Swift" — commercial Suno/Udio теперь это фильтруют, open models нет. Добавьте свой filter list.
+- **Repetition / drift past 30 s.** AR models зацикливаются. Склеивайте несколько generations через crossfade или используйте ACE-Step для structural coherence.
+- **Tempo drift.** Модели уходят от BPM. Используйте BPM tags в prompt и post-filter через `beat_track` из librosa.
+- **Vocal intelligibility.** Suno отличен; open models часто мажут слова. Если lyrics важны, используйте commercial API или fine-tune.
+- **Mono output.** Open models генерируют mono или fake-stereo. Улучшайте proper stereo reconstruction (ezst, stereo diffusion Cartesia).
 
-## Ship It
+## Доведите до результата
 
-Save as `outputs/skill-music-designer.md`. Pick model, license strategy, length / structure plan, and disclosure metadata for a music-gen deployment.
+Сохраните как `outputs/skill-music-designer.md`. Выберите модель, license strategy, length / structure plan и disclosure metadata для music-gen deployment.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Run `code/main.py`. It produces a "generative" chord progression + drum pattern as ASCII symbols — a music-gen cartoon. Play it back via any MIDI renderer if you want.
-2. **Medium.** Install `audiocraft`, generate 10-second clips across 4 genre prompts with MusicGen-small, measure FAD against a reference genre set.
-3. **Hard.** Using ACE-Step (or MusicGen-melody), generate three variations of the same tune with different timbre prompts. Compute CLAP similarity to the prompt to verify alignment.
+1. **Легко.** Запустите `code/main.py`. Он создает "generative" chord progression + drum pattern как ASCII symbols — карикатуру на music-gen. При желании воспроизведите через любой MIDI renderer.
+2. **Средне.** Установите `audiocraft`, сгенерируйте 10-секундные clips по 4 genre prompts с MusicGen-small, измерьте FAD против reference genre set.
+3. **Сложно.** Используя ACE-Step (или MusicGen-melody), сгенерируйте три вариации одной мелодии с разными timbre prompts. Посчитайте CLAP similarity к prompt, чтобы проверить alignment.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|-----------------------|
-| FAD | Audio FID | Fréchet distance between embedding distributions of real vs generated. |
-| Chromagram | Melody as pitches | 12-dim per-frame vector; input to melody conditioning. |
-| Stems | Instrument tracks | Separated bass / drums / vocals / melody as WAV. |
-| Inpainting | Regen a section | Mask a time window; model regenerates just that. |
+| FAD | Audio FID | Fréchet distance между embedding distributions real vs generated. |
+| Chromagram | Melody как pitches | 12-dim per-frame vector; вход для melody conditioning. |
+| Stems | Instrument tracks | Разделенные bass / drums / vocals / melody как WAV. |
+| Inpainting | Перегенерация секции | Mask time window; model regenerates just that. |
 | CLAP | Text-audio CLIP | Contrastive audio-text embedding; eval text-audio alignment. |
-| EnCodec | Music codec | Meta's neural codec used by MusicGen; 32 kHz, 4 codebooks. |
+| EnCodec | Music codec | Neural codec Meta, используемый MusicGen; 32 kHz, 4 codebooks. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Copet et al. (2023). MusicGen](https://arxiv.org/abs/2306.05284) — the open autoregressive benchmark.
-- [Evans et al. (2024). Stable Audio Open](https://arxiv.org/abs/2407.14358) — the sound-design default.
+- [Copet et al. (2023). MusicGen](https://arxiv.org/abs/2306.05284) — open autoregressive benchmark.
+- [Evans et al. (2024). Stable Audio Open](https://arxiv.org/abs/2407.14358) — дефолт для sound design.
 - [ACE-Step](https://github.com/ace-step/ACE-Step) — open 4B full-song generator, April 2026.
-- [Suno v5 platform docs](https://suno.com) — the commercial quality leader.
-- [AudioLDM2](https://arxiv.org/abs/2308.05734) — latent diffusion for music + sound effects.
-- [WMG-Suno settlement coverage](https://www.musicbusinessworldwide.com/suno-warner-music-settlement/) — Nov 2025 precedent.
+- [Suno v5 platform docs](https://suno.com) — коммерческий лидер качества.
+- [AudioLDM2](https://arxiv.org/abs/2308.05734) — latent diffusion для music + sound effects.
+- [WMG-Suno settlement coverage](https://www.musicbusinessworldwide.com/suno-warner-music-settlement/) — прецедент Nov 2025.
