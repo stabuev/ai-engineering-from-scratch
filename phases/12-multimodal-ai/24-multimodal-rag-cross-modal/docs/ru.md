@@ -1,81 +1,81 @@
-# Multimodal RAG and Cross-Modal Retrieval
+# Мультимодальный RAG и cross-modal retrieval
 
-> Vision-native document RAG is one slice. Production multimodal RAG goes wider — retrieving across text, images, audio, and video for workflows like trip planning ("find me a quiet vegan brunch with natural light"), medical triage ("what injury matches this photo + these notes"), e-commerce ("outfits similar to this selfie, in my size"), and field service ("diagnose this engine sound plus photo of the part"). Three 2025 surveys — Abootorabi et al., Mei et al., Zhao et al. — codified the sub-problems: cross-modal retrieval, retrieval fusion, generation grounding, multimodal evaluation. This lesson reads the surveys and designs a production pipeline.
+> Vision-native document RAG — это один срез. Production multimodal RAG шире — он извлекает по text, images, audio и video для workflows вроде trip planning ("find me a quiet vegan brunch with natural light"), medical triage ("what injury matches this photo + these notes"), e-commerce ("outfits similar to this selfie, in my size") и field service ("diagnose this engine sound plus photo of the part"). Три обзора 2025 — Abootorabi et al., Mei et al., Zhao et al. — закрепили подпроблемы: cross-modal retrieval, retrieval fusion, generation grounding, multimodal evaluation. Этот урок разбирает обзоры и проектирует production pipeline.
 
-**Type:** Build
-**Languages:** Python (stdlib, cross-modal retriever with fusion + grounded generator)
-**Prerequisites:** Phase 12 · 23 (ColPali), Phase 11 (RAG basics)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, cross-modal retriever with fusion + grounded generator)
+**Предварительные требования:** Phase 12 · 23 (ColPali), Phase 11 (RAG basics)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Design cross-modal retrieval: text → image, image → text, audio → video, etc.
-- Compare three fusion strategies: score fusion, attention-based fusion, MoE fusion.
-- Explain generation grounding: what "cite your sources" looks like when sources are a mix of modalities.
-- Name the three canonical multimodal RAG surveys of 2025 and their sub-problem taxonomy.
+- Спроектировать cross-modal retrieval: text → image, image → text, audio → video и т.д.
+- Сравнить три стратегии fusion: score fusion, attention-based fusion, MoE fusion.
+- Объяснить generation grounding: как выглядит "cite your sources", когда источники — смесь модальностей.
+- Назвать три канонических обзора multimodal RAG 2025 года и их taxonomy sub-problems.
 
-## The Problem
+## Проблема
 
-Single-modality RAG is a solved pattern: embed query, embed chunks, retrieve, stuff into LLM. Multimodal RAG requires:
+Single-modality RAG — решенный паттерн: embed query, embed chunks, retrieve, stuff into LLM. Multimodal RAG требует:
 
-1. Multiple retrieval heads (each modality needs embeddings in a compatible space).
-2. Fusion of retrieval results across modalities.
-3. Generation grounding that cites sources across modalities.
-4. Evaluation metrics that cover cross-modal signal.
+1. Нескольких retrieval heads (каждой модальности нужны embeddings в совместимом пространстве).
+2. Fusion результатов retrieval across modalities.
+3. Generation grounding, который цитирует sources across modalities.
+4. Evaluation metrics, покрывающих cross-modal signal.
 
-The 2025 surveys all arrive at the same taxonomy.
+Все обзоры 2025 приходят к одной taxonomy.
 
-## The Concept
+## Концепция
 
 ### Cross-modal retrieval
 
-Retrieve documents of modality B given a query of modality A. Three patterns:
+Извлечь документы модальности B по query модальности A. Три паттерна:
 
-1. Shared embedding space. CLIP and CLAP produce text + image / text + audio embeddings in a shared space. Cosine similarity across modalities works directly. Limited to CLIP-trained pairs.
+1. Shared embedding space. CLIP и CLAP создают text + image / text + audio embeddings в общем пространстве. Cosine similarity across modalities работает напрямую. Ограничено CLIP-trained pairs.
 
-2. Per-modality encoder + translation. Text encoder + image encoder + a small translator module mapping between spaces. Sen2Sen by Gupta et al. and other 2024 designs. Flexible but adds complexity.
+2. Per-modality encoder + translation. Text encoder + image encoder + небольшой translator module, отображающий между пространствами. Sen2Sen by Gupta et al. и другие дизайны 2024. Гибко, но добавляет сложность.
 
-3. VLM as encoder. Use a VLM's hidden states as the retrieval representation. Any modality the VLM supports works. Higher quality, more expensive.
+3. VLM as encoder. Использовать hidden states VLM как retrieval representation. Работает любая модальность, которую поддерживает VLM. Выше качество, выше стоимость.
 
-Choice: CLIP / SigLIP 2 for text+image; CLAP for text+audio; VLM-hidden-states for cross-modal at frontier quality.
+Выбор: CLIP / SigLIP 2 для text+image; CLAP для text+audio; VLM-hidden-states для cross-modal с frontier quality.
 
 ### Fusion strategies
 
-You retrieved 10 results: 5 images, 3 text passages, 2 audio clips. How do you merge?
+Вы извлекли 10 результатов: 5 images, 3 text passages, 2 audio clips. Как объединить?
 
-Score fusion (cheapest). Each modality has its own retriever, each returns scores. Normalize scores within-modality then sum. Simple, often works.
+Score fusion (самая дешевая). У каждой модальности свой retriever, каждый возвращает scores. Нормализовать scores within-modality, затем суммировать. Просто и часто работает.
 
-Attention-based fusion. Concatenate all retrieved items, let a small attention network weight them. Needs training.
+Attention-based fusion. Конкатенировать все retrieved items, дать небольшой attention network взвесить их. Требует обучения.
 
-MoE fusion. Gating network routes to modality-specific experts. Different query types route differently — a visual question weights images higher.
+MoE fusion. Gating network маршрутизирует к modality-specific experts. Разные query types маршрутизируются по-разному — visual question сильнее взвешивает images.
 
-Production default: score fusion with a slight bias toward the query's dominant modality. Upgrade to MoE if A/B shows clear wins on your domain.
+Production default: score fusion с небольшим bias к доминирующей модальности query. Переходите на MoE, если A/B показывает явные выигрыши в вашем domain.
 
 ### Generation grounding
 
-The LLM should cite which retrieved item drove each claim. For multi-modal:
+LLM должен цитировать, какой retrieved item поддержал каждое утверждение. Для multi-modal:
 
-- Text source: standard citation `[1]`.
-- Image source: `[img 3]` with a short caption.
+- Text source: стандартная citation `[1]`.
+- Image source: `[img 3]` с short caption.
 - Audio: `[audio 2 at 0:34]`.
 
-Train the generator with grounding-aware data: each claim in the training target is tagged with the source index. At inference, the model naturally emits citations.
+Обучайте generator на grounding-aware data: каждое утверждение в training target помечено source index. На inference модель естественно выводит citations.
 
-### The 2025 surveys
+### Обзоры 2025
 
-Abootorabi et al. (arXiv:2502.08826, "Ask in Any Modality"): taxonomy for multimodal RAG. Covers retrieval, fusion, generation. Broadest coverage.
+Abootorabi et al. (arXiv:2502.08826, "Ask in Any Modality"): taxonomy для multimodal RAG. Покрывает retrieval, fusion, generation. Самое широкое покрытие.
 
-Mei et al. (arXiv:2504.08748, "A Survey of Multimodal RAG"): focuses on sub-task benchmarks and failure modes. Useful for evaluation design.
+Mei et al. (arXiv:2504.08748, "A Survey of Multimodal RAG"): фокусируется на sub-task benchmarks и failure modes. Полезно для evaluation design.
 
-Zhao et al. (arXiv:2503.18016): vision-focused survey. Strong on ColPali-family work.
+Zhao et al. (arXiv:2503.18016): vision-focused survey. Сильный разбор работ семейства ColPali.
 
-Reading all three gives you the state of the art as of spring 2025. Most of the sub-problems are still open.
+Чтение всех трех дает state of the art на весну 2025. Большинство sub-problems все еще открыты.
 
-### MuRAG — the foundational paper
+### MuRAG — основополагающая статья
 
-MuRAG (Chen et al., 2022) was the first multimodal RAG. Retrieved image + text from a multimodal KB, generated answers. Showed feasibility before the VLM wave. Modern systems (REACT, VisRAG, M3DocRAG) build on it.
+MuRAG (Chen et al., 2022) был первым multimodal RAG. Он извлекал image + text из multimodal KB и генерировал answers. Показал реализуемость до волны VLM. Современные системы (REACT, VisRAG, M3DocRAG) строятся на нем.
 
-### A production trip-planner example
+### Production-пример trip-planner
 
 Query: "find me a quiet vegan brunch with natural light."
 
@@ -86,68 +86,68 @@ Pipeline:
    - Text retrieval on reviews: "vegan brunch, quiet ambiance."
    - Image retrieval on restaurant photos: "natural light, airy."
    - Audio retrieval on ambient-sound clips: "low decibel, no music."
-3. Fuse scores. Each restaurant has a composite score.
+3. Fuse scores. У каждого ресторана есть composite score.
 4. Top-k restaurants → VLM generator with all evidence → answer with citations.
 
-This is well beyond text-RAG. Each modality adds signal that text alone misses.
+Это намного дальше text-RAG. Каждая модальность добавляет сигнал, который текст в одиночку пропускает.
 
 ### Agentic multimodal RAG
 
-Multi-hop: if the first retrieval does not return high-confidence answers, the LLM reformulates and retrieves again. Agentic RAG patterns from Phase 14 apply here. Examples:
+Multi-hop: если первый retrieval не возвращает high-confidence answers, LLM переформулирует и извлекает снова. Паттерны Agentic RAG из Phase 14 применимы здесь. Примеры:
 
 - Retrieve initial top-10 → LLM asks "too noisy, filter for <40 dB" → re-retrieve.
 - Retrieve images → LLM sees one has a menu → retrieve the menu text → answer.
 
-Adds complexity but handles queries that single-shot retrieval cannot.
+Добавляет сложность, но обрабатывает queries, с которыми single-shot retrieval не справляется.
 
 ### Evaluation
 
-Cross-modal evaluation is still immature. Common proxies:
+Cross-modal evaluation все еще незрелая. Распространенные proxy:
 
 - Recall@k per modality.
 - Fused top-k accuracy.
 - Human-judged end-to-end satisfaction.
 - Task-specific (bookings completed, purchases made).
 
-No standard benchmark spans all modalities. Most papers evaluate on domain-specific tasks.
+Нет стандартного benchmark, охватывающего все модальности. Большинство статей оцениваются на domain-specific tasks.
 
-## Use It
+## Применение
 
 `code/main.py`:
 
-- Three mock retrievers (text, image, audio) operating on a shared corpus of restaurants.
-- Score fusion that combines modality scores with configurable weights.
-- A generator stub that emits a final answer with citations.
-- A simple agentic loop that reformulates the query if confidence is low.
+- Три mock retrievers (text, image, audio), работающих на общем corpus of restaurants.
+- Score fusion, который объединяет modality scores с настраиваемыми weights.
+- Generator stub, который выдает final answer with citations.
+- Простой agentic loop, который переформулирует query, если confidence низкий.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-multimodal-rag-designer.md`. Given a product spec with a multimodal query flow, designs retrievers, fusion, generator, and evaluation.
+Этот урок создает `outputs/skill-multimodal-rag-designer.md`. По product spec с multimodal query flow проектирует retrievers, fusion, generator и evaluation.
 
-## Exercises
+## Упражнения
 
-1. Propose a medical-triage multimodal RAG: query = photo of injury + text symptoms. What modalities retrieve from what KB?
+1. Предложите medical-triage multimodal RAG: query = photo of injury + text symptoms. Какие modalities извлекаются из какой KB?
 
-2. Score fusion is a simple weighted sum. What failure mode does it have that MoE fusion avoids?
+2. Score fusion — простая weighted sum. Какой failure mode у нее есть, которого избегает MoE fusion?
 
-3. Read Abootorabi et al.'s taxonomy (Section 3). What are the three canonical sub-problems and how do they map to your chosen product?
+3. Прочитайте taxonomy Abootorabi et al. (Section 3). Какие три canonical sub-problems там есть и как они отображаются на выбранный вами product?
 
-4. Design an eval spec for a trip-planner multimodal RAG. What metrics cover image recall, audio recall, and composite correctness?
+4. Спроектируйте eval spec для trip-planner multimodal RAG. Какие metrics покрывают image recall, audio recall и composite correctness?
 
-5. Agentic multi-hop RAG has a latency tax per round-trip. At what query difficulty does the accuracy gain justify the latency?
+5. Agentic multi-hop RAG имеет latency tax на каждый round-trip. При какой query difficulty прирост accuracy оправдывает latency?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Cross-modal retrieval | "Query one modality, retrieve another" | Text query retrieves images; image query retrieves text; requires a shared space or translator |
+| Cross-modal retrieval | "Query one modality, retrieve another" | Text query извлекает images; image query извлекает text; требует shared space или translator |
 | Score fusion | "Combine scores" | Weighted sum of per-modality retrieval scores; simplest fusion |
-| MoE fusion | "Modality-routed experts" | Gating network picks which modality's scores to trust per query |
-| Grounded generation | "Cite your sources" | Each claim in the answer tagged with the source index |
-| MuRAG | "First multimodal RAG" | 2022 paper that established the multimodal RAG pattern |
-| Agentic multi-hop | "Reformulate and retry" | LLM re-queries retrievers when first-pass confidence is low |
+| MoE fusion | "Modality-routed experts" | Gating network выбирает, scores какой модальности доверять для каждого query |
+| Grounded generation | "Cite your sources" | Каждое утверждение в answer помечено source index |
+| MuRAG | "First multimodal RAG" | Статья 2022, установившая паттерн multimodal RAG |
+| Agentic multi-hop | "Reformulate and retry" | LLM заново обращается к retrievers, когда first-pass confidence низкий |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Abootorabi et al. — Ask in Any Modality (arXiv:2502.08826)](https://arxiv.org/abs/2502.08826)
 - [Mei et al. — A Survey of Multimodal RAG (arXiv:2504.08748)](https://arxiv.org/abs/2504.08748)

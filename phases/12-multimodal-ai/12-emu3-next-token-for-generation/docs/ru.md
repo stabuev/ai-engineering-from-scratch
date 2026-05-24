@@ -1,127 +1,127 @@
-# Emu3: Next-Token Prediction for Image and Video Generation
+# Emu3: предсказание следующего токена для генерации изображений и видео
 
-> BAAI's Emu3 (Wang et al., September 2024) is the 2024 result that should have ended the diffusion-versus-autoregressive debate. A single Llama-style decoder-only transformer, trained only on the next-token-prediction objective, across a unified vocabulary of text + VQ image tokens + 3D VQ video tokens, beats SDXL on image generation and LLaVA-1.6 on perception. No CLIP loss. No diffusion schedule. Classifier-free guidance is used at inference for quality, but the core training objective is next-token prediction with teacher forcing. Published in Nature. This lesson reads the Emu3 thesis — why a better tokenizer plus scale is all you need — and contrasts with diffusion approaches.
+> Emu3 от BAAI (Wang et al., сентябрь 2024) — результат 2024 года, который должен был закрыть спор diffusion-versus-autoregressive. Один Llama-style decoder-only transformer, обученный только на next-token-prediction objective, по единому словарю из текста + VQ-токенов изображений + 3D VQ-токенов видео, превосходит SDXL в генерации изображений и LLaVA-1.6 в perception. Без CLIP loss. Без diffusion schedule. Classifier-free guidance используется на инференсе для качества, но базовая цель обучения — next-token prediction с teacher forcing. Опубликовано в Nature. Этот урок разбирает тезис Emu3 — почему лучшего токенизатора плюс масштаба достаточно — и противопоставляет его diffusion-подходам.
 
-**Type:** Learn
-**Languages:** Python (stdlib, 3D video tokenizer math + autoregressive sampler skeleton)
-**Prerequisites:** Phase 12 · 11 (Chameleon)
-**Time:** ~120 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, 3D video tokenizer math + autoregressive sampler skeleton)
+**Предварительные требования:** Phase 12 · 11 (Chameleon)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain why Emu3's single-loss next-token objective works despite the long-held assumption that diffusion is required for image quality.
-- Describe the 3D video tokenizer: what a spatiotemporal VQ codebook looks like, why patches span time.
-- Compare Emu3 vs Stable Diffusion XL on (training compute, inference cost, quality ceiling).
-- Name the three roles the same Emu3 model plays: Emu3-Gen (image gen), Emu3-Chat (perception), Emu3-Stage2 (video gen).
+- Объяснить, почему единая next-token objective в Emu3 работает, несмотря на долгое предположение, что для качества изображений необходима diffusion.
+- Описать 3D video tokenizer: как выглядит spatiotemporal VQ codebook и почему patches охватывают время.
+- Сравнить Emu3 и Stable Diffusion XL по (training compute, inference cost, quality ceiling).
+- Назвать три роли одной и той же модели Emu3: Emu3-Gen (image gen), Emu3-Chat (perception), Emu3-Stage2 (video gen).
 
-## The Problem
+## Проблема
 
-The conventional wisdom through 2024: image generation needs diffusion. The argument: discrete image tokens lose too much information to reconstruct detail, and autoregressive sampling accumulates error across thousands of tokens. Stable Diffusion, DALL-E 3, Imagen, Midjourney all use some form of diffusion. Chameleon (Lesson 12.11) partially disproved this at small scale but did not match SDXL on quality.
+Общепринятое мнение до 2024 года: генерации изображений нужна diffusion. Аргумент: дискретные токены изображения теряют слишком много информации для реконструкции деталей, а авторегрессионный sampling накапливает ошибку на тысячах токенов. Stable Diffusion, DALL-E 3, Imagen, Midjourney все используют ту или иную форму diffusion. Chameleon (Lesson 12.11) частично опроверг это в малом масштабе, но не сравнялся с SDXL по качеству.
 
-Emu3 attacked the argument head-on. The claim: better visual tokenizer + enough scale + next-token loss = diffusion-beating image generation in the same model that also does perception.
+Emu3 атаковал этот аргумент напрямую. Утверждение: лучший визуальный токенизатор + достаточный масштаб + next-token loss = генерация изображений, превосходящая diffusion, в той же модели, которая также умеет perception.
 
-The bet was controversial when it published. Two years on, the open-source unified-generation family (Emu3, Show-o, Janus-Pro, Transfusion) is the default path for research; production frontier models appear to use some variant.
+Когда работа вышла, ставка была спорной. Спустя два года open-source семейство unified-generation (Emu3, Show-o, Janus-Pro, Transfusion) стало стандартным путем для исследований; production frontier models, по-видимому, используют какую-то вариацию.
 
-## The Concept
+## Концепция
 
-### The Emu3 tokenizer
+### Токенизатор Emu3
 
-The key ingredient is the visual tokenizer. Emu3 trains a custom IBQ-class tokenizer (Inverse Bottleneck Quantizer, SBER-MoVQGAN family) at 8x8 resolution-reduction per token. A 512x512 image becomes 64x64 = 4096 tokens at codebook size 32768.
+Ключевой компонент — визуальный токенизатор. Emu3 обучает кастомный IBQ-class tokenizer (Inverse Bottleneck Quantizer, семейство SBER-MoVQGAN) с 8x8 уменьшением разрешения на токен. Изображение 512x512 становится 64x64 = 4096 токенами при размере codebook 32768.
 
-This is larger than Chameleon's 1024 tokens per 512x512 at K=8192 but cheaper per token (smaller codebook lookups, simpler codec). The key metric: reconstruction PSNR at 30.5 dB, competitive with Stable Diffusion's continuous latent space at 32 dB.
+Это больше, чем 1024 токена Chameleon на 512x512 при K=8192, но дешевле на токен (меньшие codebook lookups, более простой codec). Ключевая метрика: reconstruction PSNR 30.5 dB, конкурентный с continuous latent space Stable Diffusion на 32 dB.
 
-For video: a 3D VQ tokenizer encodes a spatiotemporal patch (4x4x4 pixels) to one integer. A 4s clip at 8 FPS has 32 frames; at 256x256 with 4x spatial and 4x temporal reduction, the token count is (256/4) * (256/4) * (32/4) = 64 * 64 * 8 = 32,768 tokens.
+Для видео: 3D VQ tokenizer кодирует spatiotemporal patch (4x4x4 pixels) в одно целое число. Клип 4s при 8 FPS имеет 32 frames; при 256x256 с 4x spatial и 4x temporal reduction число токенов равно (256/4) * (256/4) * (32/4) = 64 * 64 * 8 = 32,768 tokens.
 
-Tokenizer quality is the ceiling. Emu3's contribution is partly "we trained a very good tokenizer."
+Качество токенизатора — потолок. Вклад Emu3 отчасти состоит в том, что "мы обучили очень хороший токенизатор".
 
-### Single-loss training
+### Обучение с единой функцией потерь
 
-Emu3 uses one objective: next-token prediction on a shared vocabulary across text tokens, 2D image tokens, and 3D video tokens. Weights are multiplied by modality-specific factors during training to balance contribution, but the loss function is identical.
+Emu3 использует одну цель: next-token prediction на общем словаре текстовых токенов, 2D image tokens и 3D video tokens. Во время обучения веса умножаются на modality-specific factors, чтобы сбалансировать вклад, но функция потерь идентична.
 
-Train on a mix of:
+Обучение идет на смеси:
 - Image gen: `<text caption> <image> image_tokens </image>`
 - Image perception: `<image> image_tokens </image> <question> text_tokens`
 - Video gen: `<text caption> <video> video_tokens </video>`
-- Video perception: analogous.
-- Text only: standard NTP.
+- Video perception: аналогично.
+- Text only: стандартный NTP.
 
-The model learns when to emit image tokens vs text tokens from the data distribution. Generation emerges from the model predicting image tokens after the `<image>` tag.
+Модель учится из распределения данных, когда выдавать токены изображения, а когда текстовые токены. Генерация возникает из того, что модель предсказывает токены изображения после тега `<image>`.
 
-### Classifier-free guidance and temperature
+### Classifier-free guidance и temperature
 
-Autoregressive image generation gets much better with classifier-free guidance (CFG) at inference. Emu3 uses it: generate twice, once with the full caption, once with an empty caption, mix the logits with a guidance weight (typical 3.0-7.0). This is the same CFG trick diffusion uses, borrowed to the autoregressive setting.
+Авторегрессионная генерация изображений становится значительно лучше с classifier-free guidance (CFG) на инференсе. Emu3 использует его: сгенерировать дважды, один раз с полной caption, один раз с пустой caption, смешать логиты с guidance weight (типично 3.0-7.0). Это тот же прием CFG, который использует diffusion, перенесенный в авторегрессионную постановку.
 
-Temperature matters: too high, artifacts; too low, mode collapse. Emu3's recommended temperature is 1.0 for perception, 0.8 for image generation.
+Temperature важна: слишком высокая — artifacts; слишком низкая — mode collapse. Рекомендованная temperature в Emu3: 1.0 для perception, 0.8 для генерации изображений.
 
-### Three roles, one model
+### Три роли, одна модель
 
-Emu3 ships as three functionally distinct APIs but one underlying weight set:
+Emu3 поставляется как три функционально разные API, но с одним базовым набором весов:
 
-- Emu3-Gen. Image generation. Input text, output image tokens.
-- Emu3-Chat. VQA and captioning. Input image (tokens), output text.
-- Emu3-Stage2. Video generation and video VQA. Input text or video, output text or video.
+- Emu3-Gen. Генерация изображений. Вход — текст, выход — токены изображения.
+- Emu3-Chat. VQA и captioning. Вход — изображение (токены), выход — текст.
+- Emu3-Stage2. Генерация видео и video VQA. Вход — текст или видео, выход — текст или видео.
 
-No task-specific heads. Just different prompt templates. Same checkpoint.
+Без task-specific heads. Только разные prompt templates. Один и тот же checkpoint.
 
 ### Benchmarks
 
-From Emu3 paper (September 2024):
+Из статьи Emu3 (сентябрь 2024):
 
-- Image generation: beats SDXL on MJHQ-30K FID (5.4 vs 5.6), GenEval overall (0.54 vs 0.55 — statistical tie), and Deep-Eval's composite on-par.
-- Image perception: beats LLaVA-1.6 on VQAv2 (75.1 vs 72.4) and roughly matches on MMMU.
-- Video generation: 4-second-clip quality at competitive FVD with Sora-era publicly benchmarked models.
+- Генерация изображений: превосходит SDXL на MJHQ-30K FID (5.4 vs 5.6), GenEval overall (0.54 vs 0.55 — статистическая ничья), и примерно на уровне Deep-Eval composite.
+- Image perception: превосходит LLaVA-1.6 на VQAv2 (75.1 vs 72.4) и примерно совпадает на MMMU.
+- Генерация видео: качество 4-second-clip при конкурентном FVD с публично бенчмаркированными моделями эпохи Sora.
 
-The numbers are not always winning — Emu3 trades a point here for a point there — but the claim "next-token prediction is all you need" is defensible across modalities.
+Цифры не всегда победные — Emu3 меняет один пункт здесь на один пункт там — но утверждение "next-token prediction is all you need" защищаемо по модальностям.
 
 ### Compute cost
 
-Emu3 was trained on ~300 billion multimodal tokens with a 7B-parameter model. GPU-hours roughly comparable to Llama-2-7B pretraining (2k-4k GPU-years on A100-class silicon). Diffusion models like Stable Diffusion 3 train in similar budgets but need separate text encoders and more complex pipelines.
+Emu3 обучали примерно на 300 billion multimodal tokens с моделью 7B-parameter. GPU-hours грубо сопоставимы с pretraining Llama-2-7B (2k-4k GPU-years на A100-class silicon). Diffusion models вроде Stable Diffusion 3 обучаются в похожих бюджетах, но требуют отдельных text encoders и более сложных pipelines.
 
-At inference, Emu3 is slower than SDXL per image: 4096 image tokens at 30 tok/s is ~2 minutes per 512x512 image, vs 2-5 seconds for SDXL. Speculative decoding and KV-cache optimization narrow the gap but do not close it. Autoregressive image gen is compute-heavy; this is the standing trade-off.
+На инференсе Emu3 медленнее SDXL на изображение: 4096 image tokens при 30 tok/s — это около 2 минут на изображение 512x512, против 2-5 секунд для SDXL. Speculative decoding и оптимизация KV-cache сокращают разрыв, но не закрывают его. Авторегрессионная генерация изображений вычислительно тяжелая; это устойчивый trade-off.
 
-### Why it matters
+### Почему это важно
 
-Emu3's deep contribution is conceptual. If next-token prediction scales to match diffusion on image generation, the unified-model path (one loss, one backbone, any modality) is viable. Future models do not need separate text encoders, separate diffusion schedulers, separate VAEs. One transformer, one tokenizer per modality, scale.
+Глубокий вклад Emu3 концептуален. Если next-token prediction масштабируется до уровня diffusion в генерации изображений, путь unified-model (одна функция потерь, один backbone, любая модальность) жизнеспособен. Будущим моделям не нужны отдельные text encoders, отдельные diffusion schedulers, отдельные VAE. Один трансформер, один токенизатор на модальность, масштаб.
 
-Show-o, Janus-Pro, and InternVL-U all build on or challenge this thesis. Chinese labs (BAAI, DeepSeek) publish more aggressively in this direction than US labs through 2025.
+Show-o, Janus-Pro и InternVL-U все опираются на этот тезис или оспаривают его. Китайские лаборатории (BAAI, DeepSeek) до 2025 года публикуют в этом направлении активнее, чем американские.
 
-## Use It
+## Использование
 
-`code/main.py` builds two toy pieces:
+`code/main.py` строит две игрушечные части:
 
-- A 2D vs 3D VQ tokenizer count calculator: given (resolution, patch, clip_length, FPS), compute token counts for image vs video.
-- An autoregressive image-token sampler with classifier-free guidance at temperature.
+- Калькулятор числа токенов 2D vs 3D VQ tokenizer: по (resolution, patch, clip_length, FPS) вычисляет число токенов для изображения и видео.
+- Авторегрессионный sampler токенов изображения с classifier-free guidance при temperature.
 
-The CFG implementation matches Emu3's recipe — mix conditional and unconditional logits with a guidance weight.
+Реализация CFG соответствует рецепту Emu3 — смешать conditional и unconditional logits с guidance weight.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-token-gen-cost-analyzer.md`. Given a generation product spec (image or video, target resolution, quality tier, latency budget), it computes token counts, inference cost, and picks Emu3-family vs diffusion.
+Этот урок создает `outputs/skill-token-gen-cost-analyzer.md`. По product spec для генерации (изображение или видео, целевое разрешение, уровень качества, latency budget) он вычисляет число токенов, inference cost и выбирает Emu3-family vs diffusion.
 
-## Exercises
+## Упражнения
 
-1. Emu3 produces 4096 tokens per 512x512 image at 8x8 reduction. Compute the equivalent for 1024x1024 and 2048x2048. What happens to inference latency?
+1. Emu3 создает 4096 токенов на изображение 512x512 при 8x8 reduction. Посчитайте эквивалент для 1024x1024 и 2048x2048. Что происходит с задержкой инференса?
 
-2. Read Emu3 Section 3.3 on the video tokenizer. Describe the 3D VQ patch shape and why it is 4x4x4 not 8x8x1.
+2. Прочитайте Emu3 Section 3.3 о video tokenizer. Опишите форму 3D VQ patch и почему она 4x4x4, а не 8x8x1.
 
-3. Classifier-free guidance weight 5.0 vs 3.0: what visual effect? Trace the math in `code/main.py`.
+3. Classifier-free guidance weight 5.0 vs 3.0: какой визуальный эффект? Проследите математику в `code/main.py`.
 
-4. Compute training FLOPs for Emu3-7B at 300B tokens and compare to Stable Diffusion 3. Which was more expensive to train?
+4. Посчитайте training FLOPs для Emu3-7B на 300B tokens и сравните со Stable Diffusion 3. Что было дороже обучать?
 
-5. Emu3 beats SDXL on FID but not on VQAv2 vs specialized VLMs. Explain why the unified-loss approach shows different strengths vs specialists on different benchmarks.
+5. Emu3 превосходит SDXL на FID, но не на VQAv2 против специализированных VLM. Объясните, почему unified-loss approach показывает разные сильные стороны против специалистов на разных benchmarks.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Next-token prediction | "NTP" | Standard autoregressive loss: predict token[i+1] given token[0..i]; works for every modality when tokenized |
-| IBQ tokenizer | "Inverse bottleneck quantizer" | A class of VQ-VAE with larger codebooks (32768+) and better reconstruction than Chameleon's |
-| 3D VQ | "Spatiotemporal quantizer" | Codebook indexed by (time, row, col); one token covers a 4x4x4 pixel cube |
-| Classifier-free guidance | "CFG" | Mix conditional and unconditional logits with weight gamma; boosts image quality at inference |
-| Unified vocabulary | "Shared tokens" | Text + image + video all draw from the same integer space; model predicts whichever modality comes next |
-| MJHQ-30K | "Image gen benchmark" | Midjourney-quality benchmark with 30k prompts; Emu3 reports FID here |
+| Next-token prediction | "NTP" | Стандартная авторегрессионная loss: предсказать token[i+1] по token[0..i]; работает для каждой модальности после токенизации |
+| IBQ tokenizer | "Inverse bottleneck quantizer" | Класс VQ-VAE с более крупными codebooks (32768+) и лучшей реконструкцией, чем у Chameleon |
+| 3D VQ | "Spatiotemporal quantizer" | Codebook, индексируемый по (time, row, col); один токен покрывает куб 4x4x4 pixels |
+| Classifier-free guidance | "CFG" | Смешивание conditional и unconditional logits с весом gamma; повышает качество изображения на инференсе |
+| Unified vocabulary | "Shared tokens" | Текст + изображение + видео берутся из одного integer space; модель предсказывает ту модальность, которая идет следующей |
+| MJHQ-30K | "Image gen benchmark" | Benchmark качества Midjourney с 30k prompts; Emu3 сообщает здесь FID |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Wang et al. — Emu3: Next-Token Prediction is All You Need (arXiv:2409.18869)](https://arxiv.org/abs/2409.18869)
 - [Sun et al. — Emu: Generative Pretraining in Multimodality (arXiv:2307.05222)](https://arxiv.org/abs/2307.05222)

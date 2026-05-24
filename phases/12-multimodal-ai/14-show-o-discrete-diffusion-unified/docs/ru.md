@@ -1,134 +1,134 @@
-# Show-o and Discrete-Diffusion Unified Models
+# Show-o и unified-модели с дискретной diffusion
 
-> Transfusion mixes continuous and discrete representations. Show-o (Xie et al., August 2024) goes the other way: text tokens use causal next-token prediction, image tokens use masked discrete diffusion in the spirit of MaskGIT. Both sit inside one transformer with a hybrid attention mask. The result unifies VQA, text-to-image, inpainting, and mixed-modality generation on one backbone, one tokenizer per modality, one loss formulation (next-token extended to masked prediction). This lesson walks the Show-o design — why masked discrete diffusion is a parallel, few-step image generator — and contrasts with Transfusion and Emu3.
+> Transfusion смешивает непрерывные и дискретные представления. Show-o (Xie et al., август 2024) идет другим путем: текстовые токены используют causal next-token prediction, токены изображения используют masked discrete diffusion в духе MaskGIT. Оба находятся внутри одного трансформера с hybrid attention mask. Результат объединяет VQA, text-to-image, inpainting и генерацию смешанной модальности на одном backbone, одном токенизаторе на модальность и одной формулировке loss (next-token, расширенный до masked prediction). Этот урок проходит по дизайну Show-o — почему masked discrete diffusion является параллельным, few-step генератором изображений — и сравнивает его с Transfusion и Emu3.
 
-**Type:** Learn
-**Languages:** Python (stdlib, masked-discrete-diffusion sampler)
-**Prerequisites:** Phase 12 · 13 (Transfusion)
-**Time:** ~120 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, masked-discrete-diffusion sampler)
+**Предварительные требования:** Phase 12 · 13 (Transfusion)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain masked discrete diffusion: the schedule that masks tokens uniformly then asks the transformer to recover them.
-- Compare parallel image decoding (Show-o, MaskGIT) to autoregressive image decoding (Chameleon, Emu3) on speed and quality.
-- Name the three tasks Show-o handles in one checkpoint: T2I, VQA, image inpainting.
-- Pick a masking schedule (cosine, linear, truncated) and reason about its effect on sample quality.
+- Объяснить masked discrete diffusion: schedule, который равномерно маскирует токены, а затем просит трансформер восстановить их.
+- Сравнить parallel image decoding (Show-o, MaskGIT) с autoregressive image decoding (Chameleon, Emu3) по скорости и качеству.
+- Назвать три задачи, которые Show-o решает в одном checkpoint: T2I, VQA, image inpainting.
+- Выбрать masking schedule (cosine, linear, truncated) и рассуждать о его влиянии на качество samples.
 
-## The Problem
+## Проблема
 
-Transfusion's two-loss training works but has trickier dynamics — the continuous diffusion loss lives on a different numerical scale from the discrete NTP loss. Balancing loss weights is a hyperparameter search. The architecture is effective but complex.
+Two-loss training в Transfusion работает, но имеет более сложную динамику — continuous diffusion loss живет в другой числовой шкале, чем discrete NTP loss. Балансировка loss weights превращается в hyperparameter search. Архитектура эффективна, но сложна.
 
-Show-o's answer: keep both modalities discrete (like Chameleon), but generate images in parallel via masked discrete diffusion instead of sequentially. The training objective becomes a single masked-token-prediction that generalizes next-token-prediction naturally.
+Ответ Show-o: оставить обе модальности дискретными (как Chameleon), но генерировать изображения параллельно через masked discrete diffusion вместо последовательной генерации. Training objective становится единым masked-token-prediction, которое естественно обобщает next-token-prediction.
 
-## The Concept
+## Концепция
 
 ### Masked discrete diffusion (MaskGIT)
 
-The original Chang et al. (2022) MaskGIT trick is elegant. Start from a fully-masked image (every token is the special `<MASK>` id). At each step, predict all masked tokens in parallel, then keep the top-K most confident predictions and re-mask the rest. After ~8-16 iterations, all tokens are filled in. The schedule of how many tokens to unmask per step is tuned — cosine schedules work well.
+Оригинальный прием Chang et al. (2022) MaskGIT элегантен. Начните с полностью замаскированного изображения (каждый токен — специальный `<MASK>` id). На каждом шаге предскажите все masked tokens параллельно, затем сохраните top-K самых confident predictions и снова замаскируйте остальные. После ~8-16 iterations все токены заполнены. Schedule того, сколько токенов unmask на каждом шаге, настраивается — cosine schedules работают хорошо.
 
-Training is simple: sample a masking ratio uniformly from [0, 1], apply it to the image's VQ tokens, train the transformer to recover the masked ones. Exactly what BERT did for text, scaled to image generation.
+Обучение простое: sample a masking ratio uniformly from [0, 1], применить его к VQ tokens изображения, обучить трансформер восстанавливать замаскированные. Ровно то, что BERT делал для текста, масштабированное на генерацию изображений.
 
-### Show-o: one transformer, hybrid mask
+### Show-o: один трансформер, hybrid mask
 
-Show-o puts MaskGIT inside a causal-language-model transformer. The attention mask is:
+Show-o помещает MaskGIT внутрь causal-language-model transformer. Attention mask:
 
-- Text tokens: causal (standard LLM).
-- Image tokens: full bidirectional within the image block (so the masked tokens can see every other image token during prediction).
-- Text-to-image: text attends to prior images, image attends to prior text.
+- Текстовые токены: causal (стандартная LLM).
+- Токены изображения: full bidirectional внутри image block (чтобы masked tokens могли видеть все остальные токены изображения во время prediction).
+- Text-to-image: текст attends to prior images, image attends to prior text.
 
-Training alternates between:
+Обучение чередует:
 1. Standard NTP on text sequences.
 2. T2I samples: text → image with masked image tokens, masked-token-prediction loss.
 3. VQA samples: image → text with masked text tokens (really just NTP).
 
-The unified loss is cross-entropy on `<MASK>` tokens, which covers both text NTP (only the last token is "masked") and image masked-diffusion (random subset is masked).
+Unified loss — это cross-entropy на `<MASK>` tokens, которая покрывает и text NTP (только последний токен "masked"), и image masked-diffusion (случайное подмножество masked).
 
 ### Parallel sampling
 
-Show-o generates an image in ~16 steps instead of ~1000 (autoregressive per token) or ~20 (diffusion). At each step, predict all masked tokens in parallel; commit the top-K confident; repeat.
+Show-o генерирует изображение примерно за ~16 steps вместо ~1000 (autoregressive per token) или ~20 (diffusion). На каждом шаге предсказывает все masked tokens параллельно; фиксирует top-K confident; повторяет.
 
-Compare:
-- Chameleon / Emu3 (autoregressive over tokens): N_tokens forward passes, typically 1024-4096 per image.
-- Transfusion (continuous diffusion): ~20 steps, each a full transformer pass.
-- Show-o (masked discrete diffusion): ~16 steps, each a full transformer pass.
+Сравнение:
+- Chameleon / Emu3 (autoregressive over tokens): N_tokens forward passes, обычно 1024-4096 на изображение.
+- Transfusion (continuous diffusion): ~20 steps, каждый — полный transformer pass.
+- Show-o (masked discrete diffusion): ~16 steps, каждый — полный transformer pass.
 
-Show-o is faster than Chameleon at similar-scale models, roughly matches Transfusion step count with lower per-step cost (discrete vocab logits vs continuous MSE loss).
+Show-o быстрее Chameleon при моделях похожего масштаба и примерно соответствует Transfusion по числу шагов с меньшей стоимостью каждого шага (discrete vocab logits vs continuous MSE loss).
 
-### Tasks in one checkpoint
+### Задачи в одном checkpoint
 
-Show-o supports four tasks at inference, selected by prompt format:
+Show-o поддерживает четыре задачи на инференсе, выбранные форматом prompt:
 
-- Text generation: standard autoregressive text output.
+- Text generation: стандартный autoregressive text output.
 - VQA: image in, text out.
-- T2I: text in, image out via masked discrete diffusion.
-- Inpainting: image with some tokens masked, fill in.
+- T2I: text in, image out через masked discrete diffusion.
+- Inpainting: image с некоторыми masked tokens, fill in.
 
-The inpainting capability comes for free from the masked-prediction training. Mask a region of the VQ-token grid, feed the rest plus a text prompt, predict the masked tokens.
+Возможность inpainting появляется бесплатно из masked-prediction training. Замаскируйте область VQ-token grid, подайте остальное плюс text prompt, предскажите masked tokens.
 
 ### Masking schedule
 
-The schedule of how many tokens to unmask per step shapes quality. Show-o recommends cosine:
+Schedule того, сколько токенов unmask на каждом шаге, формирует качество. Show-o рекомендует cosine:
 
 ```
 mask_ratio(t) = cos(pi * t / (2 * T))   # t = 0..T
 ```
 
-At step 0, all tokens masked (ratio 1.0). At step T, none masked. Cosine concentrates mass on mid-range ratios where prediction is most informative. Linear schedules also work but plateau faster.
+На step 0 все токены masked (ratio 1.0). На step T ни один не masked. Cosine концентрирует массу на mid-range ratios, где prediction наиболее информативен. Linear schedules тоже работают, но быстрее выходят на плато.
 
 ### Show-o2
 
-Show-o2 (2025 follow-up, arXiv 2506.15564) scales Show-o: larger LLM base, better tokenizer, improved mask schedule. Same architectural pattern.
+Show-o2 (follow-up 2025, arXiv 2506.15564) масштабирует Show-o: larger LLM base, better tokenizer, improved mask schedule. Тот же architectural pattern.
 
-### Where Show-o sits
+### Где находится Show-o
 
-In the 2026 taxonomy:
+В taxonomy 2026 года:
 
-- Discrete tokens + NTP: Chameleon, Emu3. Simple but slow inference.
-- Discrete tokens + masked diffusion: Show-o, MaskGIT, LlamaGen, Muse. Parallel sampling, still lossy by tokenizer.
-- Continuous + diffusion: Transfusion, MMDiT, DiT. Highest quality, more complex training.
-- Continuous + flow matching in a VLM: JanusFlow, InternVL-U. Newest.
+- Discrete tokens + NTP: Chameleon, Emu3. Просто, но медленный инференс.
+- Discrete tokens + masked diffusion: Show-o, MaskGIT, LlamaGen, Muse. Parallel sampling, все еще lossy из-за токенизатора.
+- Continuous + diffusion: Transfusion, MMDiT, DiT. Максимальное качество, более сложное обучение.
+- Continuous + flow matching in a VLM: JanusFlow, InternVL-U. Самые новые.
 
-Pick by task: Show-o when you want T2I + inpainting + VQA in one open model with reasonable speed; Transfusion when quality is paramount and you can afford the two-loss plumbing.
+Выбирайте по задаче: Show-o, когда нужны T2I + inpainting + VQA в одной open model с разумной скоростью; Transfusion, когда качество первично и вы можете позволить себе two-loss plumbing.
 
-## Use It
+## Использование
 
-`code/main.py` simulates Show-o sampling:
+`code/main.py` симулирует Show-o sampling:
 
-- A toy grid of 16 VQ tokens.
-- A mock "transformer" that predicts logits based on a prompt and the currently-unmasked tokens.
-- Parallel masked sampling over 8 steps with cosine schedule.
-- Prints the intermediate states (mask pattern evolution) and the final tokens.
+- Игрушечная grid из 16 VQ tokens.
+- Mock "transformer", который предсказывает logits на основе prompt и currently-unmasked tokens.
+- Parallel masked sampling за 8 steps с cosine schedule.
+- Печатает intermediate states (эволюцию mask pattern) и final tokens.
 
-Run it, watch the mask dissolve step by step.
+Запустите его и наблюдайте, как mask растворяется шаг за шагом.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-unified-gen-model-picker.md`. Given a product that needs both understanding (VQA, captioning) and generation (T2I, inpainting) with an open-weights constraint, picks between Show-o family, Transfusion/MMDiT family, and Emu3 / Chameleon family with concrete trade-offs.
+Этот урок создает `outputs/skill-unified-gen-model-picker.md`. Для продукта, которому нужны и understanding (VQA, captioning), и generation (T2I, inpainting) с ограничением open-weights, он выбирает между Show-o family, Transfusion/MMDiT family и Emu3 / Chameleon family с конкретными trade-offs.
 
-## Exercises
+## Упражнения
 
-1. Masked discrete diffusion samples in ~16 steps. Why not 1? What breaks if you unmask everything at step 0?
+1. Masked discrete diffusion делает samples примерно за ~16 steps. Почему не за 1? Что ломается, если unmask everything на step 0?
 
-2. Inpainting is free with masked diffusion. Propose a product use case (real or hypothetical) where Show-o's inpainting beats a specialist model.
+2. Inpainting бесплатен с masked diffusion. Предложите product use case (реальный или гипотетический), где inpainting Show-o превосходит specialist model.
 
-3. Cosine schedule vs linear schedule: trace the number of unmasked tokens per step for T=8. Which is more balanced?
+3. Cosine schedule vs linear schedule: проследите число unmasked tokens на каждом step для T=8. Какой более сбалансирован?
 
-4. A 512x512 Show-o image is 1024 tokens. At vocab K=16384, the model emits 1024 * log2(16384) = 14,336 bits (~1.75 KiB) of data. Stable Diffusion outputs 512*512*24 bits = 6,291,456 bits (~768 KiB) of raw pixels. What is the compression ratio and what quality does it buy?
+4. 512x512 Show-o image — это 1024 tokens. При vocab K=16384 модель выдает 1024 * log2(16384) = 14,336 bits (~1.75 KiB) данных. Stable Diffusion выдает 512*512*24 bits = 6,291,456 bits (~768 KiB) сырых пикселей. Какова compression ratio и какое качество она покупает?
 
-5. Read LlamaGen (arXiv:2406.06525). How is LlamaGen's class-conditional autoregressive image model different from Show-o's masked approach?
+5. Прочитайте LlamaGen (arXiv:2406.06525). Чем class-conditional autoregressive image model LlamaGen отличается от masked approach Show-o?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Masked discrete diffusion | "MaskGIT-style" | Training to predict masked tokens; at inference, iteratively unmask the most-confident predictions |
-| Cosine schedule | "Unmask schedule" | Decay of mask ratio over inference steps; concentrates confidence growth at mid-range |
-| Parallel decoding | "All tokens at once" | Every step predicts the full sequence of masked tokens in one forward pass, then commits top-K |
-| Hybrid attention | "Causal + bidirectional" | Mask that is causal over text tokens and bidirectional within image blocks |
-| Inpainting | "Fill-in generation" | Condition on an image with some tokens masked, predict the missing ones; free from the training objective |
-| Commitment rate | "Top-K per step" | How many tokens are declared "done" per iteration; controls inference vs quality trade-off |
+| Masked discrete diffusion | "MaskGIT-style" | Обучение предсказывать masked tokens; на инференсе итеративно unmask самые confident predictions |
+| Cosine schedule | "Unmask schedule" | Убывание mask ratio по inference steps; концентрирует рост уверенности в mid-range |
+| Parallel decoding | "All tokens at once" | Каждый step предсказывает полную последовательность masked tokens за один forward pass, затем фиксирует top-K |
+| Hybrid attention | "Causal + bidirectional" | Mask, causal по текстовым токенам и bidirectional внутри image blocks |
+| Inpainting | "Fill-in generation" | Condition on an image with some tokens masked, predict the missing ones; появляется бесплатно из training objective |
+| Commitment rate | "Top-K per step" | Сколько токенов объявляется "done" за iteration; управляет trade-off между inference и quality |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Xie et al. — Show-o (arXiv:2408.12528)](https://arxiv.org/abs/2408.12528)
 - [Show-o2 (arXiv:2506.15564)](https://arxiv.org/abs/2506.15564)

@@ -1,24 +1,24 @@
-# ColPali and Vision-Native Document RAG
+# ColPali и vision-native document RAG
 
-> Traditional RAG parses PDFs into text, splits into chunks, embeds chunks, stores vectors. Every step loses signal: OCR drops chart data, chunking breaks table rows, text embeddings ignore figures. ColPali (Faysse et al., July 2024) asked the simpler question: why extract text at all? Embed the page image directly via PaliGemma, use ColBERT-style late interaction for retrieval, and keep all the layout, figures, fonts, and formatting signal the document carries. Published benchmarks: 20-40% better end-to-end accuracy than text-RAG on visually-rich documents. ColQwen2, ColSmol, and VisRAG extended the pattern. This lesson reads the vision-native RAG thesis and builds a tiny ColPali-like indexer.
+> Традиционный RAG разбирает PDF в текст, делит на chunks, встраивает chunks, хранит vectors. Каждый шаг теряет сигнал: OCR теряет данные диаграмм, chunking ломает строки таблиц, text embeddings игнорируют figures. ColPali (Faysse et al., июль 2024) задал более простой вопрос: зачем вообще извлекать текст? Встраивайте изображение страницы напрямую через PaliGemma, используйте late interaction в стиле ColBERT для retrieval и сохраняйте весь сигнал layout, figures, fonts и formatting, который несет документ. Опубликованные бенчмарки: на visually-rich documents end-to-end accuracy лучше text-RAG на 20-40%. ColQwen2, ColSmol и VisRAG расширили этот паттерн. Этот урок разбирает тезис vision-native RAG и строит маленький индексатор в стиле ColPali.
 
-**Type:** Build
-**Languages:** Python (stdlib, multi-vector indexer + MaxSim scorer)
-**Prerequisites:** Phase 11 (LLM Engineering — RAG basics), Phase 12 · 05 (LLaVA)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, multi-vector indexer + MaxSim scorer)
+**Предварительные требования:** Phase 11 (LLM Engineering — RAG basics), Phase 12 · 05 (LLaVA)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the difference between bi-encoder retrieval (one vector per document) and late-interaction retrieval (many vectors per document).
-- Describe ColBERT's MaxSim operation and how ColPali generalizes it from text tokens to image patches.
-- Build a tiny ColPali-like indexer: page → patch embeddings → MaxSim over query-term embeddings → top-k pages.
-- Compare ColPali + Qwen2.5-VL generator vs text-RAG + GPT-4 on an invoices / financial reports use case.
+- Объяснить разницу между bi-encoder retrieval (один vector на document) и late-interaction retrieval (много vectors на document).
+- Описать операцию MaxSim в ColBERT и то, как ColPali обобщает ее с text tokens на image patches.
+- Построить маленький индексатор в стиле ColPali: page → patch embeddings → MaxSim over query-term embeddings → top-k pages.
+- Сравнить ColPali + Qwen2.5-VL generator с text-RAG + GPT-4 на use case invoices / financial reports.
 
-## The Problem
+## Проблема
 
-Text-RAG on PDFs throws away most of the document. A financial report's Q3 revenue growth is usually in a chart; a medical report's findings are in annotated images; a legal contract's signature block is a layout fact, not a text fact.
+Text-RAG на PDF выбрасывает большую часть документа. Рост выручки Q3 в финансовом отчете обычно находится на chart; findings в medical report — в annotated images; signature block в legal contract — это layout fact, а не text fact.
 
-The text-RAG pipeline:
+Pipeline text-RAG:
 
 1. PDF → text via OCR / pdftotext.
 2. Text → 300-500 token chunks.
@@ -26,125 +26,125 @@ The text-RAG pipeline:
 4. User query → embedding → cosine similarity → top-k chunks.
 5. Chunks + query → LLM.
 
-Five lossy steps. Charts not captured. Tables broken across chunks. Multi-column layout flattens. Figure annotations disappear.
+Пять шагов с потерями. Charts не захвачены. Tables разорваны между chunks. Multi-column layout сплющивается. Figure annotations исчезают.
 
-ColPali's fix: skip OCR, embed the page image directly. Use ColBERT-style late interaction for retrieval so the model can attend to fine-grained patches at query time.
+Исправление ColPali: пропустить OCR, встроить изображение страницы напрямую. Использовать late interaction в стиле ColBERT для retrieval, чтобы модель могла учитывать fine-grained patches во время query.
 
-## The Concept
+## Концепция
 
 ### ColBERT (2020)
 
-ColBERT (Khattab & Zaharia, arXiv:2004.12832) is a text retrieval method. Instead of one vector per document, it produces one vector per token. At query time:
+ColBERT (Khattab & Zaharia, arXiv:2004.12832) — метод text retrieval. Вместо одного vector на document он создает один vector на token. Во время query:
 
-- Query tokens get their own embeddings (N_q vectors).
-- Document tokens get embeddings (N_d vectors, typically cached).
+- Query tokens получают собственные embeddings (N_q vectors).
+- Document tokens получают embeddings (N_d vectors, usually cached).
 - Score = sum over query tokens of max over document tokens of cosine similarity: Σ_i max_j cos(q_i, d_j).
 
-This is the MaxSim operation. Each query token "picks" its best-matching document token. The final score is the sum.
+Это операция MaxSim. Каждый query token "выбирает" лучший matching document token. Финальный score — сумма.
 
-Pros: strong recall, handles term-level semantics. Cons: N_d vectors per document, storage expensive.
+Плюсы: сильный recall, обрабатывает term-level semantics. Минусы: N_d vectors per document, storage expensive.
 
 ### ColPali
 
-ColPali (Faysse et al., arXiv:2407.01449) applies the ColBERT pattern to images.
+ColPali (Faysse et al., arXiv:2407.01449) применяет паттерн ColBERT к изображениям.
 
-- Each page is encoded by PaliGemma (ViT + language) into patch embeddings: N_p vectors per page.
-- Each user query (text) is encoded into query-token embeddings: N_q vectors.
-- Score = Σ_i max_j cos(q_i, p_j), i.e., MaxSim over query-text-tokens and page-image-patches.
-- Retrieve top-k pages by total score.
+- Каждая page кодируется PaliGemma (ViT + language) в patch embeddings: N_p vectors per page.
+- Каждый user query (text) кодируется в query-token embeddings: N_q vectors.
+- Score = Σ_i max_j cos(q_i, p_j), то есть MaxSim по query-text-tokens и page-image-patches.
+- Top-k pages извлекаются по total score.
 
-At document-ingestion time: embed every page with PaliGemma, store all patch embeddings. At query time: embed the query tokens, compute MaxSim against all stored page embeddings, return top-k pages.
+Во время document-ingestion: встроить каждую page через PaliGemma, сохранить все patch embeddings. Во время query: встроить query tokens, вычислить MaxSim против всех сохраненных page embeddings, вернуть top-k pages.
 
-Pros: end-to-end beats text-RAG by 20-40% on visually rich documents. Each patch-vector captures local layout and content.
+Плюсы: end-to-end превосходит text-RAG на 20-40% на visually rich documents. Каждый patch-vector захватывает локальный layout и content.
 
-Cons: N_p patches × 4-byte floats × D-dim vectors per page = storage grows fast. Mitigated by PQ / OPQ quantization.
+Минусы: N_p patches × 4-byte floats × D-dim vectors per page = storage быстро растет. Смягчается через PQ / OPQ quantization.
 
-### ColQwen2 and ColSmol
+### ColQwen2 и ColSmol
 
-ColQwen2 (illuin-tech, 2024-2025) swaps PaliGemma for Qwen2-VL. Better base encoder, better retrieval.
+ColQwen2 (illuin-tech, 2024-2025) заменяет PaliGemma на Qwen2-VL. Лучше base encoder, лучше retrieval.
 
-ColSmol is the smaller-scale variant for local / edge use. A ColSmol retriever at ~1B params runs on consumer GPU.
+ColSmol — smaller-scale variant для local / edge use. ColSmol retriever на ~1B params работает на consumer GPU.
 
 ### VisRAG
 
-VisRAG (Yu et al., arXiv:2410.10594) is a different variant: instead of MaxSim on patches, pool each page into a single vector with a VLM then bi-encoder retrieve. Faster indexing + smaller storage, weaker recall.
+VisRAG (Yu et al., arXiv:2410.10594) — другой вариант: вместо MaxSim на patches он сворачивает каждую page в single vector через VLM, затем выполняет bi-encoder retrieve. Быстрее indexing + меньше storage, слабее recall.
 
-The quality-vs-cost trade-off: ColPali for quality, VisRAG for scale.
+Компромисс quality-vs-cost: ColPali для качества, VisRAG для масштаба.
 
 ### M3DocRAG
 
-M3DocRAG (Cho et al., arXiv:2411.04952) extends multi-modal retrieval to multi-page multi-document reasoning. Retrieves pages across documents, composes a multi-page context for the VLM.
+M3DocRAG (Cho et al., arXiv:2411.04952) расширяет multi-modal retrieval до multi-page multi-document reasoning. Извлекает pages across documents, составляет multi-page context для VLM.
 
-### ViDoRe — the benchmark
+### ViDoRe — бенчмарк
 
-ColPali's companion benchmark. Visual Document Retrieval Evaluation. Tasks include financial reports, scientific papers, administrative documents, medical records, manuals. Metric: nDCG@5.
+Сопутствующий бенчмарк ColPali. Visual Document Retrieval Evaluation. Задачи включают financial reports, scientific papers, administrative documents, medical records, manuals. Метрика: nDCG@5.
 
-ColPali-v1 scores ~80% nDCG@5 on ViDoRe; text-RAG on the same documents scores ~50-60%.
+ColPali-v1 набирает ~80% nDCG@5 на ViDoRe; text-RAG на тех же документах набирает ~50-60%.
 
-### The end-to-end RAG pipeline
+### End-to-end RAG pipeline
 
-For a vision-native RAG:
+Для vision-native RAG:
 
 1. Ingest: PDF → page images → PaliGemma encoding → store all patch embeddings.
 2. Query: user text → query-token embeddings → MaxSim against all indexed pages → top-k pages.
 3. Generate: top-k page images + query → VLM (Qwen2.5-VL or Claude) → answer.
 
-No OCR anywhere. Figures, charts, fonts, layout all flow into the answer.
+Никакого OCR нигде. Figures, charts, fonts, layout — все попадает в ответ.
 
-### Storage math
+### Математика хранения
 
-A 50-page financial report with 729 patches per page and 128-dim embeddings:
+Финансовый отчет на 50 страниц с 729 patches per page и 128-dim embeddings:
 
 - ColPali: 50 * 729 * 128 * 4 bytes = ~18 MB raw, ~4 MB after PQ.
 - Text-RAG: 50 chunks * 768-dim * 4 bytes = ~150 kB.
 
-ColPali is ~30x more storage per document. At scale, OPQ / PQ brings it down to ~5-10x, usually tolerable.
+ColPali требует примерно ~30x больше storage per document. В масштабе OPQ / PQ снижает это до ~5-10x, обычно терпимо.
 
-### When text-RAG still wins
+### Когда text-RAG все еще выигрывает
 
-- Pure-text documents with no layout signal (wiki articles, chat logs). Text-RAG is simpler and storage-cheaper.
-- Multi-million-page archives where storage dominates cost.
-- Strict regulatory requirements demanding extractable OCR text alongside the retrieval.
+- Pure-text documents без layout signal (wiki articles, chat logs). Text-RAG проще и дешевле по storage.
+- Multi-million-page archives, где storage доминирует в стоимости.
+- Строгие regulatory requirements, требующие extractable OCR text alongside the retrieval.
 
-For everything else in 2026 — financial reports, scientific papers, legal contracts, medical records, UX documentation — vision-native RAG wins.
+Для всего остального в 2026 — financial reports, scientific papers, legal contracts, medical records, UX documentation — vision-native RAG выигрывает.
 
-## Use It
+## Применение
 
 `code/main.py`:
 
-- Toy patch encoder: maps a "page" (small grid of feature vectors) to an array of patch embeddings.
-- MaxSim scorer: computes the ColBERT-style score between a query token embedding set and a page patch set.
-- Indexes 5 toy pages, runs 3 queries, returns top-k with scores.
+- Toy patch encoder: отображает "page" (small grid of feature vectors) в array of patch embeddings.
+- MaxSim scorer: вычисляет score в стиле ColBERT между query token embedding set и page patch set.
+- Индексирует 5 toy pages, запускает 3 queries, возвращает top-k with scores.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-vision-rag-designer.md`. Given a document-RAG project, picks ColPali / ColQwen2 / VisRAG / text-RAG and sizes the storage.
+Этот урок создает `outputs/skill-vision-rag-designer.md`. По document-RAG project выбирает ColPali / ColQwen2 / VisRAG / text-RAG и рассчитывает storage.
 
-## Exercises
+## Упражнения
 
-1. A 200-page annual report at 729 patches per page, 128-dim emb, 4-byte floats. Compute raw storage and PQ-compressed (8x) storage.
+1. Annual report на 200 страниц при 729 patches per page, 128-dim emb, 4-byte floats. Посчитайте raw storage и PQ-compressed (8x) storage.
 
-2. MaxSim is Σ_i max_j cos(q_i, p_j). What does this sum capture that a simple mean similarity does not?
+2. MaxSim — это Σ_i max_j cos(q_i, p_j). Что эта сумма захватывает такого, чего не захватывает simple mean similarity?
 
-3. ColPali indexes pages as patch sets. What changes if we instead index at the word level (as ColBERT does)? Trade-offs?
+3. ColPali индексирует pages как patch sets. Что изменится, если вместо этого индексировать на word level (как ColBERT)? Trade-offs?
 
-4. Design the end-to-end pipeline for a 1M-page corpus with a latency budget of 500ms per query. Pick ColQwen2 / VisRAG and justify.
+4. Спроектируйте end-to-end pipeline для корпуса на 1M-page с latency budget 500ms per query. Выберите ColQwen2 / VisRAG и обоснуйте.
 
-5. Read M3DocRAG (arXiv:2411.04952). Describe the multi-page attention pattern and how it differs from single-page ColPali retrieval.
+5. Прочитайте M3DocRAG (arXiv:2411.04952). Опишите multi-page attention pattern и чем он отличается от single-page ColPali retrieval.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Late interaction | "ColBERT-style" | Retrieval using per-token or per-patch embeddings + MaxSim, not a single doc vector |
-| MaxSim | "Max-over-patches" | For each query token, pick the highest-similarity document token; sum across query |
-| Bi-encoder | "Single-vector" | One vector per document; faster but loses granularity |
-| Multi-vector | "Many-vectors-per-doc" | Store N_p vectors per document / page; storage cost grows but recall improves |
-| Patch embedding | "Page feature" | One vector per image patch from a VLM encoder, cached per page |
-| ViDoRe | "Vision doc bench" | ColPali's benchmark suite for visual document retrieval |
-| PQ quantization | "Product quantization" | Compression that maintains vector similarity while shrinking storage ~8x |
+| Late interaction | "ColBERT-style" | Retrieval с per-token или per-patch embeddings + MaxSim, а не single doc vector |
+| MaxSim | "Max-over-patches" | Для каждого query token выбрать document token с максимальной similarity; суммировать по query |
+| Bi-encoder | "Single-vector" | Один vector на document; быстрее, но теряет granularity |
+| Multi-vector | "Many-vectors-per-doc" | Хранить N_p vectors per document / page; storage cost растет, но recall улучшается |
+| Patch embedding | "Page feature" | Один vector на image patch из VLM encoder, cached per page |
+| ViDoRe | "Vision doc bench" | Benchmark suite ColPali для visual document retrieval |
+| PQ quantization | "Product quantization" | Сжатие, сохраняющее vector similarity при уменьшении storage примерно ~8x |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Faysse et al. — ColPali (arXiv:2407.01449)](https://arxiv.org/abs/2407.01449)
 - [Khattab & Zaharia — ColBERT (arXiv:2004.12832)](https://arxiv.org/abs/2004.12832)

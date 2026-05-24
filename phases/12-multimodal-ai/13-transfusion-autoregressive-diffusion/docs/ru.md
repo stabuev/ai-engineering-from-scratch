@@ -1,51 +1,51 @@
-# Transfusion: Autoregressive Text + Diffusion Image in One Transformer
+# Transfusion: авторегрессионный текст + diffusion-изображение в одном трансформере
 
-> Chameleon and Emu3 bet everything on discrete tokens. They work, but the quantization bottleneck is visible — the image quality plateaus below continuous-space diffusion models. Transfusion (Meta, Zhou et al., August 2024) takes the opposite bet: keep images continuous, drop the VQ-VAE entirely, and train one transformer with two losses. Text tokens get next-token-prediction. Image patches get a flow-matching / diffusion loss. Both objectives optimize the same weights. The architecture underlying Stable Diffusion 3 (MMDiT) is a close cousin. This lesson reads the Transfusion thesis, builds a toy two-loss trainer, and traces the attention mask that lets one transformer do both jobs.
+> Chameleon и Emu3 ставят все на дискретные токены. Они работают, но bottleneck квантования заметен — качество изображений выходит на плато ниже continuous-space diffusion models. Transfusion (Meta, Zhou et al., август 2024) делает противоположную ставку: оставить изображения непрерывными, полностью убрать VQ-VAE и обучать один трансформер с двумя функциями потерь. Текстовые токены получают next-token-prediction. Image patches получают flow-matching / diffusion loss. Обе цели оптимизируют одни и те же веса. Архитектура, лежащая в основе Stable Diffusion 3 (MMDiT), является близким родственником. Этот урок разбирает тезис Transfusion, строит игрушечный trainer с двумя loss и прослеживает attention mask, который позволяет одному трансформеру делать обе задачи.
 
-**Type:** Build
-**Languages:** Python (stdlib, two-loss trainer on MNIST-scale toy)
-**Prerequisites:** Phase 12 · 11 (Chameleon), Phase 8 (Generative AI)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, two-loss trainer on MNIST-scale toy)
+**Предварительные требования:** Phase 12 · 11 (Chameleon), Phase 8 (Generative AI)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Wire a transformer that runs two losses (NTP on text tokens, diffusion MSE on image patches) on one backbone.
-- Explain why bidirectional attention across image patches plus causal attention over text tokens is the right mask choice.
-- Compare Transfusion-style (continuous images, diffusion loss) to Chameleon-style (discrete images, NTP) on compute, quality, and code complexity.
-- Name MMDiT's contribution: modality-specific weights at each block, joint attention at the residual stream.
+- Собрать трансформер, который запускает две функции потерь (NTP на текстовых токенах, diffusion MSE на image patches) на одном backbone.
+- Объяснить, почему bidirectional attention по image patches плюс causal attention по текстовым токенам — правильный выбор mask.
+- Сравнить Transfusion-style (continuous images, diffusion loss) с Chameleon-style (discrete images, NTP) по compute, quality и code complexity.
+- Назвать вклад MMDiT: modality-specific weights в каждом блоке, joint attention на residual stream.
 
-## The Problem
+## Проблема
 
-The discrete vs continuous image tokens debate is older than LLMs. Continuous representations (raw pixels, VAE latents) preserve detail. Discrete tokens (VQ indices) fit the transformer's native vocabulary but lose detail at the quantization step.
+Спор о дискретных и непрерывных токенах изображения старше LLM. Непрерывные представления (raw pixels, VAE latents) сохраняют детали. Дискретные токены (VQ indices) подходят родному словарю трансформера, но теряют детали на этапе квантования.
 
-Chameleon / Emu3 went discrete: one loss, one architecture, but image fidelity capped by tokenizer quality.
+Chameleon / Emu3 пошли по дискретному пути: одна loss, одна архитектура, но fidelity изображений ограничена качеством токенизатора.
 
-Diffusion models went continuous: exceptional image quality, but a separate model from the LLM, complex noise-schedule engineering, and no clean integration with text generation.
+Diffusion models пошли по непрерывному пути: исключительное качество изображений, но отдельная от LLM модель, сложная инженерия noise-schedule и отсутствие чистой интеграции с генерацией текста.
 
-Transfusion asks: can we have both? Keep images continuous, still train one model, use two losses stitched into one gradient step.
+Transfusion спрашивает: можем ли мы получить оба преимущества? Оставить изображения непрерывными, все равно обучать одну модель и использовать две loss, сшитые в один gradient step.
 
-## The Concept
+## Концепция
 
-### The two-loss architecture
+### Архитектура с двумя loss
 
-A single decoder-only transformer processes a sequence that contains:
+Один decoder-only transformer обрабатывает последовательность, содержащую:
 
-- Text tokens (discrete, from BPE vocab).
-- Image patches (continuous, 16x16 pixel blocks projected into hidden dim via linear embedding — same as a ViT encoder's input).
-- `<image>` and `</image>` tags marking where continuous patches live.
+- Текстовые токены (дискретные, из BPE vocab).
+- Image patches (непрерывные, 16x16 pixel blocks, спроецированные в hidden dim через linear embedding — как вход ViT encoder).
+- Теги `<image>` и `</image>`, отмечающие, где находятся continuous patches.
 
-Forward pass runs once. The loss picks one of two heads per token:
+Forward pass выполняется один раз. Loss выбирает одну из двух heads для каждого токена:
 
-- For text tokens: standard cross-entropy on the vocab-logits head.
-- For image patches: diffusion loss on continuous patches — predict the noise that was added to each patch.
+- Для текстовых токенов: стандартная cross-entropy на vocab-logits head.
+- Для image patches: diffusion loss на continuous patches — предсказать шум, добавленный к каждому patch.
 
-The gradient flows through the shared transformer body. Both losses improve the shared weights simultaneously.
+Градиент проходит через общий transformer body. Обе loss одновременно улучшают общие веса.
 
 ### Attention mask: causal text + bidirectional image
 
-Text tokens must be causal — you cannot let a text token attend to future text, or teacher forcing breaks. Image patches, however, represent one snapshot; they should attend to each other bidirectionally within the same image block.
+Текстовые токены должны быть causal — нельзя позволять текстовому токену смотреть на будущий текст, иначе teacher forcing ломается. Image patches, однако, представляют один snapshot; они должны bidirectionally attend друг к другу внутри одного image block.
 
-The mask:
+Маска:
 
 ```
 M[i, j] = 1 if:
@@ -55,90 +55,90 @@ M[i, j] = 1 if:
   OR (i is image and j is text and j < i_image_start)   # image attends to preceding text
 ```
 
-Implemented as a block-triangular mask at training and inference.
+Реализуется как block-triangular mask при обучении и инференсе.
 
-### Diffusion loss inside the transformer
+### Diffusion loss внутри трансформера
 
-The diffusion loss is standard: add noise to an image patch, ask the model to predict the noise (or the clean patch, equivalently). Transfusion's version uses flow matching — predict the velocity field from noisy to clean.
+Diffusion loss стандартная: добавить шум к image patch и попросить модель предсказать шум (или clean patch, эквивалентно). Версия Transfusion использует flow matching — предсказывает velocity field от noisy к clean.
 
-During training:
-1. For each image patch x0, sample a random timestep t.
+Во время обучения:
+1. Для каждого image patch x0, sample a random timestep t.
 2. Sample noise ε, compute xt = (1-t) * x0 + t * ε (linear interpolation for flow matching).
 3. The transformer predicts v_theta(xt, t); loss = MSE(v_theta(xt, t), ε - x0).
 4. Backprop alongside text NTP losses from the same sequence.
 
-At inference, generation is:
-- Text tokens: standard autoregressive sampling.
-- Image patches: diffusion sampling loop (10-30 steps typical) conditioned on the prior text tokens.
+На инференсе генерация:
+- Текстовые токены: стандартный autoregressive sampling.
+- Image patches: diffusion sampling loop (обычно 10-30 steps), conditioned on the prior text tokens.
 
-### MMDiT: Stable Diffusion 3's variant
+### MMDiT: вариант Stable Diffusion 3
 
-Stable Diffusion 3 (Esser et al., March 2024) shipped MMDiT (Multimodal Diffusion Transformer) around the same time as Transfusion. The architectures are siblings.
+Stable Diffusion 3 (Esser et al., март 2024) выпустил MMDiT (Multimodal Diffusion Transformer) примерно в то же время, что и Transfusion. Эти архитектуры — родственные.
 
-MMDiT's key differences:
+Ключевые отличия MMDiT:
 
-- Modality-specific weights per block. Each transformer block has separate Q, K, V, and MLP weights for text tokens vs image patches. Attention is joint (cross-modality); everything else is modality-specific.
-- Rectified flow training. A specific flow-matching variant with known sampling and simpler math than DDPM.
-- Scale. MMDiT is the backbone for SD3 (2B and 8B param variants). Transfusion's paper scales to 7B.
+- Modality-specific weights per block. У каждого transformer block есть отдельные Q, K, V и MLP weights для текстовых токенов и image patches. Attention общий (cross-modality); все остальное modality-specific.
+- Rectified flow training. Специальный вариант flow-matching с известным sampling и более простой математикой, чем DDPM.
+- Масштаб. MMDiT — backbone для SD3 (варианты 2B и 8B параметров). Статья Transfusion масштабируется до 7B.
 
-Both converge on the same core idea: one transformer runs NTP on text and diffusion on continuous image representations.
+Оба сходятся к одной основной идее: один трансформер запускает NTP на тексте и diffusion на continuous image representations.
 
-### Why this beats Chameleon-style
+### Почему это превосходит Chameleon-style
 
-The quality gap between continuous-diffusion and discrete-NTP on image generation is measurable. Transfusion paper reports:
+Разрыв качества между continuous-diffusion и discrete-NTP в генерации изображений измерим. Статья Transfusion сообщает:
 
-- At 7B params, beats a same-size Chameleon-style model on FID by 3-5 points.
-- No tokenizer training required — the image encoder is simpler (Linear projection to hidden, same as a ViT's input layer).
-- Inference can parallelize image patch denoising, unlike autoregressive image tokens.
+- При 7B params превосходит same-size Chameleon-style model на FID на 3-5 пунктов.
+- Не требуется обучение токенизатора — image encoder проще (Linear projection to hidden, как input layer у ViT).
+- Инференс может parallelize image patch denoising, в отличие от autoregressive image tokens.
 
-Downside: Transfusion is a dual-loss model, making training dynamics trickier. Loss weights need tuning. Schedule mismatch between NTP and diffusion can cause one head to dominate.
+Минус: Transfusion — dual-loss model, что делает динамику обучения сложнее. Loss weights нужно настраивать. Schedule mismatch между NTP и diffusion может привести к доминированию одной head.
 
-### What sits downstream
+### Что находится downstream
 
-Janus-Pro (Lesson 12.15) refines Transfusion's idea by decoupling the vision encoder for understanding and generation — SigLIP for one, VQ for the other — while sharing the transformer body. Show-o (Lesson 12.14) swaps diffusion for discrete-diffusion (masked prediction). The unified-generation family branches rapidly after Transfusion.
+Janus-Pro (Lesson 12.15) уточняет идею Transfusion, decoupling vision encoder для понимания и генерации — SigLIP для одного, VQ для другого — при общем transformer body. Show-o (Lesson 12.14) заменяет diffusion на discrete-diffusion (masked prediction). Семейство unified-generation быстро ветвится после Transfusion.
 
-2026 production VLMs that emit images — Gemini 3 Pro, GPT-5, Claude Opus 4.7's image generation path — almost certainly use some descendant of this family. Details are proprietary.
+Production VLM 2026 года, которые выдают изображения — Gemini 3 Pro, GPT-5, путь генерации изображений Claude Opus 4.7 — почти наверняка используют какого-то потомка этого семейства. Детали proprietary.
 
-## Use It
+## Использование
 
-`code/main.py` builds a toy Transfusion on a tiny MNIST-like problem:
+`code/main.py` строит игрушечный Transfusion на маленькой MNIST-like задаче:
 
-- Text captions are short integer sequences describing a digit (0-9).
-- Images are 4x4 grids of bytes.
-- A pair of shared-weight linear projections acts as the transformer stand-in; NTP loss on text, MSE loss on noisy patches.
-- Training loop alternates the two losses, attention mask is explicit.
-- Generation produces a text caption and a 4x4 image in one forward pass.
+- Text captions — короткие integer sequences, описывающие digit (0-9).
+- Images — 4x4 grids of bytes.
+- Пара shared-weight linear projections выступает как stand-in трансформера; NTP loss на тексте, MSE loss на noisy patches.
+- Training loop чередует две loss, attention mask явно задана.
+- Generation создает text caption и 4x4 image за один forward pass.
 
-The transformer is a toy. The two-loss plumbing, attention mask construction, and inference loop are the real artifacts.
+Трансформер игрушечный. Реальные артефакты — two-loss plumbing, построение attention mask и inference loop.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-two-loss-trainer-designer.md`. Given a new multimodal training task (text + image, text + audio, text + video), it designs the two-loss schedule (loss weights, mask shape, shared vs modality-specific blocks) and flags implementation risks.
+Этот урок создает `outputs/skill-two-loss-trainer-designer.md`. Для новой multimodal training task (text + image, text + audio, text + video) он проектирует two-loss schedule (loss weights, mask shape, shared vs modality-specific blocks) и отмечает implementation risks.
 
-## Exercises
+## Упражнения
 
-1. A Transfusion-style model trains 70% text tokens and 30% image patches. The image diffusion loss is ~10x the text NTP loss in magnitude. What loss weights balance them?
+1. Модель Transfusion-style обучается на 70% text tokens и 30% image patches. Image diffusion loss примерно в 10x больше text NTP loss по величине. Какие loss weights их сбалансируют?
 
-2. Implement the block-triangular mask for a sequence: `[T, T, <image>, P, P, P, P, </image>, T]`. Mark each entry 0 or 1.
+2. Реализуйте block-triangular mask для последовательности: `[T, T, <image>, P, P, P, P, </image>, T]`. Отметьте каждый entry 0 или 1.
 
-3. MMDiT has modality-specific QKV weights. What parameter count overhead does this add vs Transfusion's fully-shared transformer? At 7B params, is it worth it?
+3. У MMDiT есть modality-specific QKV weights. Какой overhead по числу параметров это добавляет по сравнению с fully-shared transformer у Transfusion? При 7B params это стоит того?
 
-4. Generation: given a text prompt, the model runs NTP for 50 tokens, then hits `<image>`, then runs diffusion on 256 patches over 20 denoise steps. How many forward passes total?
+4. Generation: по text prompt модель запускает NTP на 50 tokens, затем встречает `<image>`, затем запускает diffusion на 256 patches за 20 denoise steps. Сколько всего forward passes?
 
-5. Read SD3 paper Section 3. Describe rectified flow and why it converges in fewer inference steps than DDPM.
+5. Прочитайте SD3 paper Section 3. Опишите rectified flow и почему он сходится за меньшее число inference steps, чем DDPM.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Two-loss training | "NTP + diffusion" | A single transformer optimizes both cross-entropy on text tokens and MSE on continuous image patches in the same gradient step |
-| Flow matching | "Rectified flow" | Diffusion variant that predicts a velocity field from noise to clean data; simpler math than DDPM |
-| MMDiT | "Multimodal DiT" | Stable Diffusion 3's architecture: joint attention, modality-specific MLPs and norms |
-| Block-triangular mask | "Causal text + bidirectional image" | Attention mask that is causal across text but bidirectional within image regions |
-| Continuous image representation | "No VQ" | Image patches as real-valued vectors, not integer codebook indices |
-| Velocity prediction | "v-parameterization" | Network output is the velocity field between noise and data, not the noise itself |
+| Two-loss training | "NTP + diffusion" | Один трансформер оптимизирует и cross-entropy на текстовых токенах, и MSE на continuous image patches в одном gradient step |
+| Flow matching | "Rectified flow" | Вариант diffusion, который предсказывает velocity field от шума к clean data; математика проще, чем DDPM |
+| MMDiT | "Multimodal DiT" | Архитектура Stable Diffusion 3: joint attention, modality-specific MLPs и norms |
+| Block-triangular mask | "Causal text + bidirectional image" | Attention mask, causal по тексту, но bidirectional внутри image regions |
+| Continuous image representation | "No VQ" | Image patches как real-valued vectors, а не integer codebook indices |
+| Velocity prediction | "v-parameterization" | Выход сети — velocity field между шумом и данными, а не сам шум |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Zhou et al. — Transfusion (arXiv:2408.11039)](https://arxiv.org/abs/2408.11039)
 - [Esser et al. — Stable Diffusion 3 / MMDiT (arXiv:2403.03206)](https://arxiv.org/abs/2403.03206)
