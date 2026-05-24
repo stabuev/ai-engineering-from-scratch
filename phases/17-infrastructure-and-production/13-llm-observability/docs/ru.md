@@ -1,67 +1,67 @@
 # LLM Observability Stack Selection
 
-> The 2026 observability market splits into two categories. Development platforms (LangSmith, Langfuse, Comet Opik) bundle monitoring with evals, prompt management, session replays. Gateway/instrumentation tools (Helicone, SigNoz, OpenLLMetry, Phoenix) focus on telemetry. Langfuse is MIT-licensed core with strong OSS balance (50K events/month free cloud). Phoenix is OpenTelemetry-native under Elastic License 2.0 — excellent for drift/RAG visualization, not a persistent production backend. Arize AX uses zero-copy Iceberg/Parquet integration claiming 100x cheaper than monolithic observability. LangSmith leads for LangChain/LangGraph, $39/user/mo, self-host in Enterprise only. Helicone is proxy-based with 15-30 min setup, 100K req/mo free, but less depth on agent traces. Common production pattern: Gateway (Helicone/Portkey) + eval platform (Phoenix/TruLens) glued by OpenTelemetry.
+> Рынок observability 2026 делится на две категории. Development platforms (LangSmith, Langfuse, Comet Opik) объединяют monitoring с evals, prompt management, session replays. Gateway/instrumentation tools (Helicone, SigNoz, OpenLLMetry, Phoenix) фокусируются на telemetry. Langfuse — MIT-licensed core с сильным OSS balance (50K events/month free cloud). Phoenix — OpenTelemetry-native под Elastic License 2.0, отличный для drift/RAG visualization, но не persistent production backend. Arize AX использует zero-copy Iceberg/Parquet integration и заявляет 100x cheaper than monolithic observability. LangSmith лидирует для LangChain/LangGraph, $39/user/mo, self-host только в Enterprise. Helicone proxy-based с 15-30 min setup, 100K req/mo free, но меньше глубины по agent traces. Частый production pattern: Gateway (Helicone/Portkey) + eval platform (Phoenix/TruLens), склеенные OpenTelemetry.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy trace-sampling simulator)
-**Prerequisites:** Phase 17 · 08 (Inference Metrics), Phase 14 (Agent Engineering)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy trace-sampling simulator)
+**Предварительные требования:** Phase 17 · 08 (Inference Metrics), Phase 14 (Agent Engineering)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish development platforms (bundled: evals + prompts + sessions) from gateway/telemetry tools (traces + metrics only).
-- Map six major tools (Langfuse, LangSmith, Phoenix, Arize AX, Helicone, Opik) to their licensing, pricing, and sweet-spot use cases.
-- Explain the OpenTelemetry-glue pattern that lets you combine a gateway tool with a separate eval platform.
-- Name the 2026 cost differentiator (Arize AX's zero-copy approach vs monolithic ingest) and state the rough 100x multiplier.
+- Отличить development platforms (bundled: evals + prompts + sessions) от gateway/telemetry tools (traces + metrics only).
+- Сопоставить шесть major tools (Langfuse, LangSmith, Phoenix, Arize AX, Helicone, Opik) с их licensing, pricing и sweet-spot use cases.
+- Объяснить OpenTelemetry-glue pattern, который позволяет сочетать gateway tool с отдельной eval platform.
+- Назвать cost differentiator 2026 (zero-copy approach Arize AX vs monolithic ingest) и указать примерный multiplier 100x.
 
-## The Problem
+## Проблема
 
-You shipped an LLM feature. It works. You have no visibility into prompt failures, tool loops, latency regressions, cost spikes, or prompt-cache hit rate. You Google "LLM observability" and get eight tools all claiming they solve the same problem at three different price points.
+Вы ship LLM feature. Он работает. У вас нет видимости в prompt failures, tool loops, latency regressions, cost spikes или prompt-cache hit rate. Вы гуглите "LLM observability" и получаете восемь tools, каждый утверждает, что решает ту же проблему, но в трех разных price points.
 
-They don't solve the same problem. LangSmith answers "why did this LangGraph run fail?" Phoenix answers "is my RAG pipeline drifting?" Helicone answers "which app is burning tokens?" Langfuse answers "can I self-host the whole thing?" Different tools, different audiences.
+Они не решают одну и ту же проблему. LangSmith отвечает на "why did this LangGraph run fail?" Phoenix отвечает на "is my RAG pipeline drifting?" Helicone отвечает на "which app is burning tokens?" Langfuse отвечает на "can I self-host the whole thing?" Разные tools, разные audiences.
 
-Picking involves four axes: stack (LangChain? raw SDK? multi-vendor?), license tolerance (MIT only? Elastic OK? commercial fine?), budget (free tier? $100/mo? $1000/mo?), and self-host (must? nice-to-have? never?).
+Выбор включает четыре оси: stack (LangChain? raw SDK? multi-vendor?), license tolerance (MIT only? Elastic OK? commercial fine?), budget (free tier? $100/mo? $1000/mo?) и self-host (must? nice-to-have? never?).
 
-## The Concept
+## Концепция
 
-### Two categories
+### Две категории
 
-**Development platforms** bundle observability with evals, prompt management, dataset versioning, session replay. You run experiments, see which prompt worked, dataset-regression a new prompt against old winners. LangSmith, Langfuse, Comet Opik.
+**Development platforms** объединяют observability с evals, prompt management, dataset versioning, session replay. Вы запускаете experiments, видите, какой prompt сработал, dataset-regression нового prompt против old winners. LangSmith, Langfuse, Comet Opik.
 
-**Gateway/telemetry tools** instrument inference calls — prompt, response, tokens, latency, model, cost. Helicone, SigNoz, OpenLLMetry, Phoenix. Minimalist. Can be combined with a separate eval tool via OpenTelemetry.
+**Gateway/telemetry tools** инструментируют inference calls — prompt, response, tokens, latency, model, cost. Helicone, SigNoz, OpenLLMetry, Phoenix. Минималистично. Можно сочетать с отдельным eval tool через OpenTelemetry.
 
 ### Langfuse — OSS balance
 
 - Core Apache / MIT licensed; self-host via Docker.
 - Cloud free tier: 50K events/month. Paid: $29/mo for team.
 - Evals, prompt management, traces, datasets. Reasonable coverage of all four dev-platform features.
-- Sweet spot: you want LangSmith-class features but must self-host or stay on OSS license.
+- Sweet spot: нужны LangSmith-class features, но требуется self-host или OSS license.
 
 ### Phoenix (Arize) — telemetry-first, OpenTelemetry-native
 
 - Elastic License 2.0; self-host trivial.
-- Excellent at RAG and drift visualization. Embedding-space scatter plots shipped as first-class.
-- Not designed as persistent production backend — primarily development-time observability.
-- Sweet spot: RAG pipeline development, drift debugging, pairs with a separate gateway for production.
+- Отличен для RAG и drift visualization. Embedding-space scatter plots поставляются как first-class.
+- Не спроектирован как persistent production backend — прежде всего development-time observability.
+- Sweet spot: RAG pipeline development, drift debugging, работает в паре с separate gateway for production.
 
-### Arize AX — the scale play
+### Arize AX — ставка на scale
 
 - Commercial. Zero-copy data lake integration via Iceberg/Parquet.
-- Claims ~100x cheaper than monolithic observability (Datadog-class) at scale. The math: you store traces in your own Parquet on S3; Arize reads directly.
-- Sweet spot: >10M traces/day, existing data lake, want LLM-specific dashboards without Datadog pricing.
+- Заявляет ~100x cheaper than monolithic observability (Datadog-class) at scale. Математика: traces хранятся в вашем Parquet on S3; Arize читает напрямую.
+- Sweet spot: >10M traces/day, existing data lake, нужны LLM-specific dashboards без Datadog pricing.
 
 ### LangSmith — LangChain/LangGraph first
 
 - Commercial, $39/user/month. Self-host only on Enterprise.
-- Best-in-class for LangChain and LangGraph stacks. If you are not on either, it is less compelling.
-- Sweet spot: team committed to LangChain, willing to pay.
+- Best-in-class для LangChain и LangGraph stacks. Если вы не на них, менее compelling.
+- Sweet spot: команда committed to LangChain, willing to pay.
 
 ### Helicone — proxy-based minimum viable
 
-- 15-30 minute setup by swapping your `OPENAI_API_BASE` to Helicone proxy.
+- 15-30 minute setup через замену `OPENAI_API_BASE` на Helicone proxy.
 - MIT licensed; 100K req/mo free, paid $20/mo+.
-- Includes failover, caching, rate limits — acts as a gateway too.
-- Less depth on agent / multi-step traces.
+- Includes failover, caching, rate limits — also acts as gateway.
+- Меньше глубины по agent / multi-step traces.
 - Sweet spot: quick start, single-stack app, need gateway + observability in one.
 
 ### Opik (Comet) — OSS dev platform
@@ -75,24 +75,24 @@ Picking involves four axes: stack (LangChain? raw SDK? multi-vendor?), license t
 - Apache 2.0. Handles general APM plus LLM via OpenTelemetry.
 - Sweet spot: unified observability across services and LLM calls.
 
-### The glue: OpenTelemetry + GenAI semantic conventions
+### Glue: OpenTelemetry + GenAI semantic conventions
 
-OpenTelemetry published GenAI semantic conventions in late 2025 (`gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`). Tools that consume OTel can interoperate. The production pattern emerging:
+OpenTelemetry published GenAI semantic conventions в late 2025 (`gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`). Tools, которые consume OTel, могут interoperate. Emerging production pattern:
 
 1. Emit OTel with GenAI conventions from every LLM call.
 2. Route to gateway (Helicone / Portkey) for day-to-day.
 3. Dual-ship to eval platform (Phoenix / Langfuse) for regressions.
 4. Archive in data lake (Iceberg) for long-term analysis via Arize AX or DuckDB.
 
-### The trap: instrumenting at the wrong layer
+### Ловушка: instrumentation на неправильном layer
 
-Instrumenting inside your agent framework (e.g., adding LangSmith traces) couples you to that framework. Instrumenting at the HTTP/OpenAI-SDK layer (via OpenLLMetry or your gateway) is portable.
+Instrumentation внутри agent framework (например, adding LangSmith traces) связывает вас с этим framework. Instrumenting at the HTTP/OpenAI-SDK layer (через OpenLLMetry или gateway) portable.
 
-### Sampling — you can't keep everything
+### Sampling — нельзя хранить все
 
-At >1M requests/day, full-trace retention costs more than the LLM calls. Sample by rules: 100% errors, 100% high-cost, 5% success. Keep aggregates always; keep raw for the long tail.
+При >1M requests/day full-trace retention стоит дороже, чем LLM calls. Sample by rules: 100% errors, 100% high-cost, 5% success. Keep aggregates always; keep raw for the long tail.
 
-### Numbers you should remember
+### Числа, которые нужно помнить
 
 - Langfuse free cloud: 50K events/month.
 - LangSmith: $39/user/month.
@@ -100,25 +100,25 @@ At >1M requests/day, full-trace retention costs more than the LLM calls. Sample 
 - Arize AX claim: ~100x cheaper than monolithic at scale.
 - OpenTelemetry GenAI conventions: 2025 shipping, 2026 widely adopted.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates a 1M-trace day across retention strategies (100% ingest, sampling, sampling + errors). Reports storage cost and what's lost under each.
+`code/main.py` симулирует 1M-trace day across retention strategies (100% ingest, sampling, sampling + errors). Сообщает storage cost и что теряется в каждом варианте.
 
-## Ship It
+## Отправьте в прод
 
-This lesson produces `outputs/skill-observability-stack.md`. Given stack, scale, budget, license posture, picks the tool(s).
+Этот урок создает `outputs/skill-observability-stack.md`. По stack, scale, budget и license posture выбирает tool(s).
 
-## Exercises
+## Упражнения
 
-1. Your team on LangChain wants OSS self-hosted observability. Pick Langfuse or Opik and justify.
-2. At 5M traces/day with Datadog quotes $150K/month, compute break-even for Arize AX.
-3. Design an OpenTelemetry GenAI attribute set your org's guideline should mandate on every LLM call.
-4. Argue whether Phoenix alone is sufficient for production. When does it not suffice?
-5. Helicone is 20ms proxy overhead. At P99 TTFT 300 ms, is that acceptable? What if SLA is 100 ms?
+1. Ваша команда на LangChain хочет OSS self-hosted observability. Выберите Langfuse или Opik и обоснуйте.
+2. При 5M traces/day и Datadog quotes $150K/month вычислите break-even для Arize AX.
+3. Спроектируйте OpenTelemetry GenAI attribute set, который guideline вашей org должен требовать для каждого LLM call.
+4. Аргументируйте, достаточно ли Phoenix alone для production. Когда его недостаточно?
+5. Helicone adds 20ms proxy overhead. При P99 TTFT 300 ms это приемлемо? А если SLA is 100 ms?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | OpenLLMetry | "OTel for LLMs" | Open-source OpenTelemetry instrumentation for LLMs |
 | GenAI conventions | "OTel attributes" | Standard OTel attribute names for LLM calls |
@@ -131,7 +131,7 @@ This lesson produces `outputs/skill-observability-stack.md`. Given stack, scale,
 | Session replay | "trace rerun" | Replay a full agent session with tool calls |
 | Eval | "offline test" | Running candidate model/prompt over labeled dataset |
 
-## Further Reading
+## Дополнительное чтение
 
 - [SigNoz — Top LLM Observability Tools 2026](https://signoz.io/comparisons/llm-observability-tools/)
 - [Langfuse — Arize AX Alternative analysis](https://langfuse.com/faq/all/best-phoenix-arize-alternatives)

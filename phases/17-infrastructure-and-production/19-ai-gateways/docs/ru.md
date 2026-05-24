@@ -1,62 +1,62 @@
 # AI Gateways — LiteLLM, Portkey, Kong AI Gateway, Bifrost
 
-> A gateway sits between your apps and model providers. Core features are provider routing, fallback, retries, rate limiting, secret references, observability, guardrails. Market split in 2026: **LiteLLM** is MIT OSS with 100+ providers, OpenAI-compatible, but breaks down around ~2000 RPS (8 GB memory, cascading failures in published benchmarks); best for Python, <500 RPS, dev/prototyping. **Portkey** is control-plane-positioned (guardrails, PII redaction, jailbreak detection, audit trails), went Apache 2.0 open-source March 2026, 20-40 ms latency overhead, $49/mo production tier. **Kong AI Gateway** built on Kong Gateway — Kong's own benchmark on same 12 CPUs: 228% faster than Portkey, 859% faster than LiteLLM; $100/model/month pricing (max 5 on Plus tier); enterprise-fit if you're already on Kong. **Bifrost** (Maxim AI) — automatic retries with configurable backoff, fallback to Anthropic on OpenAI 429. **Cloudflare / Vercel AI Gateways** — managed, zero-ops, basic retry. Data residency drives the self-host decision; Portkey and Kong sit in the middle with OSS + optional managed.
+> Gateway находится между вашими apps и model providers. Core features: provider routing, fallback, retries, rate limiting, secret references, observability, guardrails. Market split in 2026: **LiteLLM** — MIT OSS с 100+ providers, OpenAI-compatible, но ломается около ~2000 RPS (8 GB memory, cascading failures в published benchmarks); лучше всего для Python, <500 RPS, dev/prototyping. **Portkey** позиционируется как control plane (guardrails, PII redaction, jailbreak detection, audit trails), стал Apache 2.0 open-source в March 2026, 20-40 ms latency overhead, production tier за $49/mo. **Kong AI Gateway** построен на Kong Gateway — собственный benchmark Kong на тех же 12 CPUs: на 228% быстрее Portkey, на 859% быстрее LiteLLM; pricing $100/model/month (max 5 на Plus tier); enterprise-fit, если вы уже на Kong. **Bifrost** (Maxim AI) — automatic retries with configurable backoff, fallback to Anthropic on OpenAI 429. **Cloudflare / Vercel AI Gateways** — managed, zero-ops, basic retry. Data residency определяет self-host decision; Portkey и Kong находятся посередине с OSS + optional managed.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy gateway-routing simulator)
-**Prerequisites:** Phase 17 · 01 (Managed LLM Platforms), Phase 17 · 16 (Model Routing)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy gateway-routing simulator)
+**Предварительные требования:** Phase 17 · 01 (Managed LLM Platforms), Phase 17 · 16 (Model Routing)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Enumerate the six core gateway features (routing, fallback, retries, rate limits, secrets, observability, guardrails).
-- Map four 2026 gateways (LiteLLM, Portkey, Kong AI, Bifrost) to scale ceilings and use cases.
-- Cite the Kong benchmark (228% vs Portkey, 859% vs LiteLLM) and explain why it matters for >500 RPS.
-- Choose self-hosted vs managed given data residency and ops budget.
+- Перечислить шесть core gateway features (routing, fallback, retries, rate limits, secrets, observability, guardrails).
+- Сопоставить четыре gateways 2026 года (LiteLLM, Portkey, Kong AI, Bifrost) с scale ceilings и use cases.
+- Процитировать Kong benchmark (228% vs Portkey, 859% vs LiteLLM) и объяснить, почему это важно для >500 RPS.
+- Выбрать self-hosted vs managed с учетом data residency и ops budget.
 
-## The Problem
+## Проблема
 
-Your product calls OpenAI, Anthropic, and a self-hosted Llama. Each provider has a different SDK, error model, rate limit, and auth scheme. You want failover (if OpenAI 429s, try Anthropic), a single credential store, unified observability, and rate limits per tenant.
+Ваш продукт вызывает OpenAI, Anthropic и self-hosted Llama. У каждого провайдера свой SDK, error model, rate limit и auth scheme. Вам нужны failover (если OpenAI возвращает 429, попробовать Anthropic), единое credential store, unified observability и rate limits per tenant.
 
-Reinventing this at the app layer couples every service to every provider. A gateway layer consolidates it into one process with one API (typically OpenAI-compatible) that fans out to providers.
+Изобретать это на app layer означает связать каждый service с каждым provider. Gateway layer консолидирует это в одном process с одним API (обычно OpenAI-compatible), который fan out к providers.
 
-## The Concept
+## Концепция
 
 ### Six core features
 
-1. **Provider routing** — OpenAI, Anthropic, Gemini, self-hosted, etc. behind one API.
-2. **Fallback** — on 429, 5xx, or quality failure, retry elsewhere.
+1. **Provider routing** — OpenAI, Anthropic, Gemini, self-hosted и т.д. за одним API.
+2. **Fallback** — при 429, 5xx или quality failure повторить elsewhere.
 3. **Retries** — exponential backoff, bounded attempts.
 4. **Rate limits** — per-tenant, per-key, per-model.
-5. **Secret references** — pull credentials from vault at runtime (never in app).
+5. **Secret references** — получать credentials из vault at runtime (никогда в app).
 6. **Observability** — OTel + GenAI attributes (Phase 17 · 13) + cost attribution.
 7. **Guardrails** — PII redaction, jailbreak detection, allowed-topics filters.
 
 ### LiteLLM — MIT OSS, Python
 
 - 100+ providers, OpenAI-compatible, router config, fallback, basic observability.
-- Breaks down around 2000 RPS in Kong's benchmark; 8 GB memory footprint, cascading failures under sustained load.
+- Ломается около 2000 RPS в benchmark Kong; 8 GB memory footprint, cascading failures under sustained load.
 - Best fit: Python app, <500 RPS, dev/staging gateways, experimental routing.
 - Cost: $0 for OSS; cloud free tier exists.
 
 ### Portkey — control plane positioning
 
-- Apache 2.0 OSS as of March 2026. Guardrails, PII redaction, jailbreak detection, audit trails.
+- Apache 2.0 OSS с March 2026. Guardrails, PII redaction, jailbreak detection, audit trails.
 - 20-40 ms per-request latency overhead.
 - $49/mo for production tier with retention + SLA.
 - Best fit: regulated industries needing guardrails + observability bundled.
 
 ### Kong AI Gateway — the scale play
 
-- Built on Kong Gateway (mature API gateway product, lua+OpenResty).
-- Kong's own benchmark on 12-CPU equivalent: 228% faster than Portkey, 859% faster than LiteLLM.
+- Построен на Kong Gateway (mature API gateway product, lua+OpenResty).
+- Собственный benchmark Kong на 12-CPU equivalent: 228% быстрее Portkey, 859% быстрее LiteLLM.
 - Pricing: $100/model/month, max 5 on Plus tier.
 - Best fit: already on Kong; >1000 RPS; willing to license.
 
 ### Bifrost (Maxim AI)
 
 - Automatic retries with configurable backoff.
-- Fallback to Anthropic on OpenAI 429 is a canonical recipe.
+- Fallback to Anthropic on OpenAI 429 — canonical recipe.
 - Newer entrant; commercial.
 
 ### Cloudflare AI Gateway / Vercel AI Gateway
@@ -67,7 +67,7 @@ Reinventing this at the app layer couples every service to every provider. A gat
 
 ### Self-hosted vs managed
 
-Data residency is the forcing function. Healthcare and finance default self-host (LiteLLM or Portkey OSS or Kong). Consumer products default managed (Cloudflare AI Gateway) or middle-tier (Portkey managed). Hybrid: self-hosted for regulated tenant, managed for others.
+Data residency — forcing function. Healthcare and finance default self-host (LiteLLM or Portkey OSS or Kong). Consumer products default managed (Cloudflare AI Gateway) или middle-tier (Portkey managed). Hybrid: self-hosted for regulated tenant, managed for others.
 
 ### Latency budget
 
@@ -76,15 +76,15 @@ Data residency is the forcing function. Healthcare and finance default self-host
 - Kong: 3-8 ms overhead.
 - Cloudflare/Vercel: 1-3 ms overhead (edge advantage).
 
-Gateway latency directly adds to TTFT. For TTFT P99 < 100 ms SLA, Kong or Cloudflare. For P99 < 500 ms, any.
+Gateway latency напрямую добавляется к TTFT. Для TTFT P99 < 100 ms SLA — Kong или Cloudflare. Для P99 < 500 ms — любой.
 
 ### Rate-limit semantics matter
 
-Simple token-bucket works up to moderate scale. Multi-tenant requires sliding-window + burst allowance + per-tenant tiering. LiteLLM ships token-bucket; Kong ships sliding-window; Portkey ships tiered.
+Simple token-bucket работает до moderate scale. Multi-tenant требует sliding-window + burst allowance + per-tenant tiering. LiteLLM поставляет token-bucket; Kong — sliding-window; Portkey — tiered.
 
 ### Gateway + observability + routing compose
 
-Phase 17 · 13 (observability) + 16 (model routing) + 19 (gateways) are the same layer in production. Pick one tool that covers all three or wire them carefully: most 2026 deployments combine Helicone (observability) or Portkey (guardrails) with Kong (scale) for split roles.
+Phase 17 · 13 (observability) + 16 (model routing) + 19 (gateways) — это один слой в production. Выберите один tool, который покрывает все три, или аккуратно соедините их: большинство deployments 2026 года объединяют Helicone (observability) или Portkey (guardrails) с Kong (scale) для split roles.
 
 ### Numbers you should remember
 
@@ -94,39 +94,39 @@ Phase 17 · 13 (observability) + 16 (model routing) + 19 (gateways) are the same
 - Kong pricing: $100/model/month, 5 max on Plus tier.
 - Cloudflare/Vercel: 1-3 ms overhead at the edge.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates gateway routing with fallback across 3 providers under 429/5xx injection. Reports latency, retry rate, and fallback hit rate.
+`code/main.py` симулирует gateway routing с fallback по 3 providers при injection 429/5xx. Показывает latency, retry rate и fallback hit rate.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/skill-gateway-picker.md`. Given scale, ops posture, compliance, latency budget, picks a gateway.
+Этот урок создает `outputs/skill-gateway-picker.md`. По scale, ops posture, compliance и latency budget он выбирает gateway.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Configure fallback from OpenAI→Anthropic→self-hosted. What's the expected hit rate at 5% provider error rate?
-2. Your SLA is TTFT P99 < 200 ms on a 300 ms baseline. Which gateways stay within budget?
-3. A healthcare customer requires self-hosted + PII redaction + audit. Pick Portkey OSS or Kong.
-4. Compare LiteLLM vs Kong: at what RPS ceiling should a team migrate?
-5. Design a rate-limit policy for a multi-tenant SaaS: free tier, trial tier, paid tier. Token-bucket or sliding-window?
+1. Запустите `code/main.py`. Configure fallback from OpenAI→Anthropic→self-hosted. Какой expected hit rate при 5% provider error rate?
+2. Ваш SLA — TTFT P99 < 200 ms на baseline 300 ms. Какие gateways остаются within budget?
+3. Healthcare customer требует self-hosted + PII redaction + audit. Выберите Portkey OSS или Kong.
+4. Сравните LiteLLM vs Kong: при каком RPS ceiling команде стоит migrate?
+5. Спроектируйте rate-limit policy для multi-tenant SaaS: free tier, trial tier, paid tier. Token-bucket или sliding-window?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Gateway | "API broker" | Process sitting between apps and providers |
-| LiteLLM | "the MIT one" | Python OSS, 100+ providers, breaks at 2K RPS |
-| Portkey | "guardrails gateway" | Control plane + observability, Apache 2.0 |
-| Kong AI Gateway | "the scale one" | Built on Kong Gateway, benchmark leader |
-| Bifrost | "Maxim's gateway" | Retries + Anthropic fallback recipe |
-| Cloudflare AI Gateway | "edge managed" | Edge-deployed managed gateway, zero-ops |
-| PII redaction | "data scrub" | Regex + NER mask before sending to model |
-| Jailbreak detection | "prompt injection guard" | Classifier on user input |
-| Audit trail | "regulated log" | Immutable record of every LLM call |
-| Token-bucket | "simple rate limit" | Refill-based rate limiter |
-| Sliding-window | "precise rate limit" | Time-windowed rate limiter; better fairness |
+| Gateway | "API broker" | process между apps и providers |
+| LiteLLM | "the MIT one" | Python OSS, 100+ providers, ломается на 2K RPS |
+| Portkey | "guardrails gateway" | control plane + observability, Apache 2.0 |
+| Kong AI Gateway | "the scale one" | построен на Kong Gateway, benchmark leader |
+| Bifrost | "Maxim's gateway" | retries + Anthropic fallback recipe |
+| Cloudflare AI Gateway | "edge managed" | edge-deployed managed gateway, zero-ops |
+| PII redaction | "data scrub" | Regex + NER mask перед отправкой в model |
+| Jailbreak detection | "prompt injection guard" | classifier on user input |
+| Audit trail | "regulated log" | immutable record каждого LLM call |
+| Token-bucket | "simple rate limit" | refill-based rate limiter |
+| Sliding-window | "precise rate limit" | time-windowed rate limiter; better fairness |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Kong AI Gateway Benchmark](https://konghq.com/blog/engineering/ai-gateway-benchmark-kong-ai-gateway-portkey-litellm)
 - [TrueFoundry — AI Gateways 2026 Comparison](https://www.truefoundry.com/blog/a-definitive-guide-to-ai-gateways-in-2026-competitive-landscape-comparison)

@@ -1,114 +1,114 @@
-# Batch APIs — the 50% Discount as Industry Standard
+# Batch APIs — скидка 50% как отраслевой стандарт
 
-> Every major provider ships an async batch API with a 50% discount and ~24-hour turnaround. OpenAI, Anthropic, Google, and most of the inference platforms (Fireworks batch tier, Together batch) implement the same pattern. Stack batch with prompt caching and overnight pipelines drop to ~10% of synchronous-uncached cost. The rule is brutally simple: if it is not interactive, it belongs on batch. Content generation pipelines, document classification, data extraction, report generation, bulk labeling, catalog tagging — anything tolerant of 24-hour latency is money left on the table until it moves to batch. The 2026 production pattern is to triage every new LLM workload into three lanes: interactive (synchronous with caching), semi-interactive (async queue with fallback), batch (overnight, cached input stacked). Workloads that pretend to be interactive but tolerate minutes of latency waste most.
+> Каждый крупный провайдер предоставляет асинхронный batch API со скидкой 50% и временем выполнения около 24 часов. OpenAI, Anthropic, Google и большинство inference-платформ (Fireworks batch tier, Together batch) реализуют один и тот же паттерн. Совместите batch с prompt caching, и ночные пайплайны опустятся примерно до 10% стоимости синхронного запуска без кэша. Правило предельно простое: если задача не интерактивная, ей место в batch. Пайплайны генерации контента, классификация документов, извлечение данных, генерация отчетов, массовая разметка, тегирование каталогов — все, что допускает задержку до 24 часов, оставляет деньги на столе, пока не переведено в batch. Производственный паттерн 2026 года — распределять каждую новую LLM-нагрузку по трем полосам: interactive (синхронно с кэшированием), semi-interactive (асинхронная очередь с fallback), batch (ночной запуск, с кэшированным входом). Нагрузки, которые притворяются интерактивными, но допускают задержку в минуты, тратят больше всего.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy batch-vs-sync cost simulator)
-**Prerequisites:** Phase 17 · 14 (Prompt & Semantic Caching)
-**Time:** ~45 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy batch-vs-sync cost simulator)
+**Предварительные требования:** Phase 17 · 14 (Prompt & Semantic Caching)
+**Время:** ~45 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Name the three provider batch APIs (OpenAI, Anthropic, Google) and the common 50% discount + 24h turnaround guarantees.
-- Compute the cost for stacking batch + cached-input on an overnight classification workload and compare to synchronous-uncached baseline.
-- Triage a workload into interactive / semi-interactive / batch and justify the lane.
-- Name the two traps: partial interactivity (user expects faster than 24h) and output-schema drift (batch file format differs per provider).
+- Назвать три provider batch API (OpenAI, Anthropic, Google) и общие гарантии: скидка 50% + выполнение за 24h.
+- Посчитать стоимость комбинации batch + cached-input для ночной классификационной нагрузки и сравнить с синхронным baseline без кэша.
+- Отнести workload к interactive / semi-interactive / batch и обосновать выбор полосы.
+- Назвать две ловушки: partial interactivity (пользователь ожидает быстрее, чем 24h) и output-schema drift (batch file format различается у провайдеров).
 
-## The Problem
+## Проблема
 
-Your team ships a nightly report generation pipeline. 50,000 documents, summarize each, cluster the summaries, draft an executive brief. Running synchronously it takes 4 hours at $2,000/night. You hear about batch APIs.
+Ваша команда поставляет ночной пайплайн генерации отчетов. 50 000 документов: кратко пересказать каждый, кластеризовать summary, подготовить executive brief. При синхронном запуске это занимает 4 часа и стоит $2,000 за ночь. Вы узнаете про batch APIs.
 
-The batch gets you 50% off. You also enable prompt caching on the system prompt (shared across all 50k calls). Stacked, the bill drops to $180/night — ~9% of baseline. Same pipeline, three config changes.
+Batch дает скидку 50%. Вы также включаете prompt caching для system prompt (общего для всех 50k вызовов). В сумме счет падает до $180 за ночь — примерно 9% от baseline. Тот же пайплайн, три изменения конфигурации.
 
-Batch is the cheapest lever in the LLM cost toolkit that nobody pulls. The reason is mostly organizational: teams think "real-time" when the SLA actually is "by morning." This lesson is about not leaving 90% of the bill on the table.
+Batch — самый дешевый рычаг в наборе инструментов снижения LLM-стоимости, которым почти никто не пользуется. Причина в основном организационная: команды думают "real-time", хотя фактический SLA — "к утру". Этот урок о том, как не оставлять 90% счета на столе.
 
-## The Concept
+## Концепция
 
 ### The three batch APIs
 
-**OpenAI Batch API**: JSONL file upload with a list of requests. Promised 24-hour turnaround (usually ~2-8 hours in practice). 50% discount on input and output tokens. `/v1/batches` endpoint. Cache-eligible inputs also get cached-input pricing on top.
+**OpenAI Batch API**: загрузка JSONL-файла со списком запросов. Обещанный turnaround — 24 часа (на практике обычно ~2-8 часов). Скидка 50% на input и output tokens. Endpoint `/v1/batches`. Cache-eligible inputs также получают cached-input pricing сверху.
 
-**Anthropic Message Batches**: JSONL upload. 24-hour turnaround. 50% discount. Supports `cache_control` — cache writes are explicit, reads happen automatically within the batch.
+**Anthropic Message Batches**: загрузка JSONL. Turnaround 24 часа. Скидка 50%. Поддерживает `cache_control` — записи в кэш явные, чтения внутри batch происходят автоматически.
 
-**Google Vertex AI Batch Prediction**: BigQuery or GCS input. Similar 50% discount for Gemini. Integrates with Vertex pipelines.
+**Google Vertex AI Batch Prediction**: вход из BigQuery или GCS. Похожая скидка 50% для Gemini. Интегрируется с Vertex pipelines.
 
 ### Semantic: asynchronous, not slow
 
-Batch is "I promise to return within 24 hours" — not "this will take 24 hours." Typical P50 is 2-6 hours. Provider schedules your batch during off-peak windows when GPU inventory is underutilized.
+Batch означает "я обещаю вернуть результат в течение 24 часов", а не "это займет 24 часа". Типичный P50 — 2-6 часов. Провайдер планирует ваш batch на непиковые окна, когда GPU-инвентарь недоиспользован.
 
 ### Stack with caching
 
-A 50k-document summarization with the same 4K-token system prompt:
+Summarization 50k документов с одинаковым system prompt на 4K токенов:
 
-- Synchronous uncached: 50000 × ($input × 4000 + $output × 200) at full rates.
-- Synchronous cached: system prompt cached after first write; remaining 49999 get 10x cheaper input.
-- Batch cached: all of the above plus 50% discount on both read and write.
+- Synchronous uncached: 50000 × ($input × 4000 + $output × 200) по полным тарифам.
+- Synchronous cached: system prompt кэшируется после первой записи; оставшиеся 49999 получают input в 10x дешевле.
+- Batch cached: все выше плюс скидка 50% и на read, и на write.
 
-The stack: batch + cache = ~10% of sync uncached bill. Any workload that runs overnight and has a shared system prompt should use this.
+Комбинация: batch + cache = примерно 10% от sync uncached bill. Любая нагрузка, которая выполняется ночью и имеет общий system prompt, должна использовать это.
 
 ### Workload triage
 
-**Interactive** — user waits for the response. TTFT matters. Synchronous call with prompt caching. Cannot batch.
+**Interactive** — пользователь ждет ответ. TTFT важен. Синхронный вызов с prompt caching. Batch нельзя.
 
-**Semi-interactive** — user submits a task, checks back in minutes. Async queue with fallback to sync if batch not available. Think moderate-volume RAG indexing.
+**Semi-interactive** — пользователь отправляет задачу и возвращается через минуты. Асинхронная очередь с fallback на sync, если batch недоступен. Пример: RAG indexing среднего объема.
 
-**Batch** — user expects results "by morning" or "next hour." Content pipelines, classification at scale, offline analysis. Always batch, always stack caching.
+**Batch** — пользователь ожидает результат "к утру" или "через час". Content pipelines, classification at scale, offline analysis. Всегда batch, всегда вместе с caching.
 
-Common mistake: classifying everything as interactive because the pipeline is production. Production is not a latency spec — SLA is.
+Частая ошибка: считать все interactive, потому что пайплайн production. Production — это не latency spec; важен SLA.
 
 ### The partial-interactivity trap
 
-Some features look interactive but tolerate 5-10 minutes. Example: a nightly customer health report with "refresh" button. User clicks refresh; wait 10 minutes is fine. Team ships it as synchronous. 50 concurrent refreshes cost 10x what batched-and-delivered-via-email would cost.
+Некоторые функции выглядят интерактивными, но допускают 5-10 минут. Пример: ночной отчет о здоровье клиента с кнопкой "refresh". Пользователь нажимает refresh; подождать 10 минут нормально. Команда делает синхронную реализацию. 50 одновременных refresh стоят в 10x дороже, чем batched-and-delivered-via-email.
 
-The question to ask: "What does 24-hour mean for this user?" If the answer is "they wouldn't notice," batch it.
+Вопрос, который нужно задать: "Что значит 24 часа для этого пользователя?" Если ответ "он бы не заметил", отправляйте в batch.
 
 ### The output-schema trap
 
-Batch file formats differ per provider:
+Форматы batch-файлов различаются по провайдерам:
 
-- OpenAI: JSONL, one request per line.
-- Anthropic: JSONL, one message per line; response format embedded.
-- Vertex: BigQuery table or GCS prefix with TFRecord.
+- OpenAI: JSONL, один request на строку.
+- Anthropic: JSONL, одно message на строку; response format встроен.
+- Vertex: BigQuery table или GCS prefix с TFRecord.
 
-Writing "one batch client" across providers means adapter code per provider. Gateways that advertise multi-provider batch (Portkey, LiteLLM some tiers) still thin-wrap the raw format.
+Написать "one batch client" для разных провайдеров означает adapter code для каждого провайдера. Gateways, которые заявляют multi-provider batch (Portkey, LiteLLM some tiers), все равно тонко оборачивают raw format.
 
 ### Numbers you should remember
 
-- Batch discount across providers: 50% flat on input + output.
-- Turnaround SLA: 24 hours guaranteed, 2-6 hours typical P50.
-- Stacked batch + cached input: ~10% of sync uncached cost.
-- Workload triage rule: if 24h latency acceptable, always batch.
+- Batch discount across providers: фиксированные 50% на input + output.
+- Turnaround SLA: гарантия 24 часа, типичный P50 — 2-6 часов.
+- Stacked batch + cached input: ~10% стоимости sync uncached.
+- Workload triage rule: если задержка 24h приемлема, всегда batch.
 
-## Use It
+## Используйте это
 
-`code/main.py` computes costs across sync, sync+cache, batch, and batch+cache for a 50k-document workload. Reports savings in $ and percent.
+`code/main.py` считает стоимость для sync, sync+cache, batch и batch+cache на workload из 50k документов. Показывает экономию в $ и процентах.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/skill-batch-triager.md`. Given workload characteristics, triages into interactive/semi/batch and estimates savings.
+Этот урок создает `outputs/skill-batch-triager.md`. По характеристикам workload он относит его к interactive/semi/batch и оценивает экономию.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. For a 100k-doc pipeline with 3K-token system prompt and 500-token output, compute the savings of full stack (batch + cache) vs sync baseline.
-2. Pick three features in a real product you know. Triage each into interactive/semi/batch.
-3. A user complains their report took 3 hours. Was that a batch mis-triage or a legitimate interactive? Write the decision criterion.
-4. Your batch API return SLA is 24h but P99 is 20 hours. How do you communicate this to the user — what is the downstream system behavior on the edge case?
-5. Compute break-even: at what shared-prefix length does batch + cache become cheaper than running overnight on your own reserved GPU?
+1. Запустите `code/main.py`. Для пайплайна на 100k документов с system prompt на 3K токенов и output на 500 токенов посчитайте экономию полного стека (batch + cache) относительно sync baseline.
+2. Выберите три функции в реальном продукте, который вы знаете. Отнесите каждую к interactive/semi/batch.
+3. Пользователь жалуется, что отчет занял 3 часа. Это batch mis-triage или действительно interactive? Запишите критерий решения.
+4. SLA возврата вашего batch API — 24h, но P99 равен 20 часам. Как вы сообщаете это пользователю — как ведет себя downstream-система в edge case?
+5. Посчитайте break-even: при какой длине shared-prefix batch + cache становится дешевле, чем ночной запуск на собственном reserved GPU?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Batch API | "async discount" | 50% off with 24h turnaround |
-| JSONL | "batch format" | One JSON request per line; OpenAI/Anthropic standard |
-| Message Batches | "Anthropic batch" | Anthropic's batch API product name |
-| Batch prediction | "Vertex batch" | Vertex AI's batch API product |
-| Turnaround SLA | "24h promise" | Guarantee, not typical; typical is 2-6h |
-| Workload triage | "interactivity decision" | Interactive / semi / batch routing decision |
-| Output schema | "response format" | Per-provider JSONL layout; not portable |
-| Stacked discount | "batch + cache" | ~10% of uncached sync bill when both apply |
+| Batch API | "async discount" | скидка 50% с turnaround 24h |
+| JSONL | "batch format" | один JSON request на строку; стандарт OpenAI/Anthropic |
+| Message Batches | "Anthropic batch" | название batch API продукта Anthropic |
+| Batch prediction | "Vertex batch" | batch API продукт Vertex AI |
+| Turnaround SLA | "24h promise" | гарантия, не типичное значение; обычно 2-6h |
+| Workload triage | "interactivity decision" | решение о маршрутизации Interactive / semi / batch |
+| Output schema | "response format" | JSONL layout на стороне провайдера; непереносим |
+| Stacked discount | "batch + cache" | ~10% от uncached sync bill, когда применимы оба |
 
-## Further Reading
+## Дополнительное чтение
 
 - [OpenAI Batch API](https://platform.openai.com/docs/guides/batch) — JSONL format and `/v1/batches` semantics.
 - [Anthropic Message Batches](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing) — batch format and `cache_control` interaction.

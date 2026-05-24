@@ -1,28 +1,28 @@
 # Production Quantization — AWQ, GPTQ, GGUF K-quants, FP8, MXFP4/NVFP4
 
-> Quantization format is not a universal choice — it is a function of hardware, serving engine, and workload. GGUF Q4_K_M or Q5_K_M owns CPU and edge, delivered through llama.cpp and Ollama. GPTQ wins inside vLLM when you need multi-LoRA on the same base. AWQ with Marlin-AWQ kernels delivers ~741 tok/s on a 7B class model with the best Pass@1 at INT4 — the 2026 default for datacenter production. FP8 stays the middle ground on Hopper, Ada, and Blackwell — near-lossless and widely supported. NVFP4 and MXFP4 (Blackwell microscaling) are aggressive and require per-block validation. Two traps bite teams: calibration dataset must match deployment domain, and KV cache is separate from weight quantization — the AWQ lesson "my model is 4 GB now" forgets the 10-30 GB KV cache at production batch sizes.
+> Формат quantization — не универсальный выбор: он является функцией hardware, serving engine и workload. GGUF Q4_K_M или Q5_K_M доминирует на CPU и edge, поставляется через llama.cpp и Ollama. GPTQ выигрывает внутри vLLM, когда нужен multi-LoRA на одной base model. AWQ с kernels Marlin-AWQ дает ~741 tok/s на модели класса 7B с лучшим Pass@1 при INT4 — default 2026 для datacenter production. FP8 остается серединой на Hopper, Ada и Blackwell — почти без потерь качества и широко поддерживается. NVFP4 и MXFP4 (Blackwell microscaling) агрессивны и требуют per-block validation. Две ловушки кусают команды: calibration dataset должен совпадать с deployment domain, а KV cache отделен от weight quantization — урок AWQ "my model is 4 GB now" забывает про 10-30 GB KV cache при production batch sizes.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy memory and throughput comparison across formats)
-**Prerequisites:** Phase 10 · 13 (Quantization foundations), Phase 17 · 04 (vLLM Serving Internals)
-**Time:** ~75 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy memory and throughput comparison across formats)
+**Предварительные требования:** Phase 10 · 13 (Quantization foundations), Phase 17 · 04 (vLLM Serving Internals)
+**Время:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Name the six production quantization formats and their sweet spots in 2026.
-- Pick a format given hardware (CPU vs GPU, Hopper vs Blackwell), engine (vLLM, TRT-LLM, llama.cpp), and workload (routine chat, reasoning, multi-LoRA).
-- Compute the weight memory saved and the KV cache left untouched for a chosen format.
-- Name the calibration-dataset pitfall that degrades quantized models on domain traffic.
+- Назвать шесть production quantization formats и их sweet spots в 2026.
+- Выбрать формат по hardware (CPU vs GPU, Hopper vs Blackwell), engine (vLLM, TRT-LLM, llama.cpp) и workload (routine chat, reasoning, multi-LoRA).
+- Вычислить сэкономленную память weights и нетронутый KV cache для выбранного формата.
+- Назвать ловушку calibration dataset, которая ухудшает quantized models на domain traffic.
 
-## The Problem
+## Проблема
 
-Quantization reduces memory and HBM bandwidth, which is exactly what decode needs. An FP16 70B model is 140 GB of weights. Quantize weights to INT4 (AWQ or GPTQ) and the model is 35 GB — fits in one H100 with room for KV cache, which matters because at 128 concurrent sequences with 2k context, KV cache alone is 20-30 GB.
+Quantization уменьшает memory и HBM bandwidth, что именно нужно decode. FP16 70B model — это 140 GB weights. Quantize weights до INT4 (AWQ или GPTQ), и модель становится 35 GB — помещается в один H100 с запасом для KV cache, что важно, потому что при 128 concurrent sequences с 2k context один KV cache занимает 20-30 GB.
 
-But quantization is not free. Aggressive quantization degrades quality, especially on reasoning-heavy tasks. Different formats work with different engines. Different hardware supports different precisions natively. The 2026 format zoo is real and you cannot copy someone else's choice — you have to pick based on your stack.
+Но quantization не бесплатна. Агрессивная quantization ухудшает качество, особенно на reasoning-heavy tasks. Разные форматы работают с разными engines. Разное hardware нативно поддерживает разные precisions. Зоопарк форматов 2026 реален, и нельзя копировать чужой выбор — нужно выбирать под свой stack.
 
-## The Concept
+## Концепция
 
-### The six formats
+### Шесть форматов
 
 | Format | Bits | Sweet spot | Engines |
 |--------|------|-----------|---------|
@@ -33,61 +33,61 @@ But quantization is not free. Aggressive quantization degrades quality, especial
 | MXFP4 | 4 | Blackwell multi-user | TRT-LLM |
 | NVFP4 | 4 | Blackwell multi-user | TRT-LLM |
 
-### GGUF — the CPU/edge default
+### GGUF — default для CPU/edge
 
-GGUF is a file format, not a quantization scheme per se — it bundles K-quant variants (Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q6_K, Q8_0) in one container. Q4_K_M and Q5_K_M are the production defaults — near-BF16 quality at 4-5 bits. Best choice for CPU or edge serving because llama.cpp is by far the fastest CPU inference engine.
+GGUF — file format, а не схема quantization сама по себе: он упаковывает K-quant variants (Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q6_K, Q8_0) в один container. Q4_K_M и Q5_K_M — production defaults, качество близко к BF16 при 4-5 bits. Лучший выбор для CPU или edge serving, потому что llama.cpp с большим отрывом самый быстрый CPU inference engine.
 
-Throughput penalty in vLLM: ~93 tok/s on 7B — the format is not optimized for GPU kernels. Use GGUF when the deployment target is CPU/edge. Not otherwise.
+Штраф throughput в vLLM: ~93 tok/s на 7B — формат не оптимизирован под GPU kernels. Используйте GGUF, когда deployment target — CPU/edge. В остальных случаях нет.
 
-### GPTQ — multi-LoRA in vLLM
+### GPTQ — multi-LoRA во vLLM
 
-GPTQ is a post-training quantization algorithm with a calibration pass. Marlin kernels make it fast on GPU (2.6x speedup vs non-Marlin GPTQ). ~712 tok/s on 7B.
+GPTQ — post-training quantization algorithm с calibration pass. Marlin kernels делают его быстрым на GPU (2.6x speedup vs non-Marlin GPTQ). ~712 tok/s на 7B.
 
-The unique win: GPTQ-Int4 supports LoRA adapters in vLLM. If you are serving a base model plus 10-50 fine-tuned variants (each as a LoRA), GPTQ is your path. NVFP4 does not support LoRA yet as of early 2026.
+Уникальная победа: GPTQ-Int4 поддерживает LoRA adapters во vLLM. Если вы serving base model плюс 10-50 fine-tuned variants (каждый как LoRA), GPTQ — ваш путь. NVFP4 пока не поддерживает LoRA по состоянию на early 2026.
 
-### AWQ — the datacenter GPU default
+### AWQ — default для datacenter GPU
 
-Activation-aware Weight Quantization. Protects the ~1% most-salient weights during quantization. Marlin-AWQ kernels: 10.9x speedup vs naive. ~741 tok/s on 7B, best Pass@1 among INT4 formats.
+Activation-aware Weight Quantization. Защищает ~1% наиболее salient weights во время quantization. Marlin-AWQ kernels: 10.9x speedup vs naive. ~741 tok/s на 7B, лучший Pass@1 среди INT4 formats.
 
-Pick AWQ for new GPU serving unless you need multi-LoRA (GPTQ) or aggressive Blackwell FP4 (NVFP4).
+Выбирайте AWQ для нового GPU serving, если вам не нужен multi-LoRA (GPTQ) или агрессивный Blackwell FP4 (NVFP4).
 
-### FP8 — the reliable middle
+### FP8 — надежная середина
 
-8-bit floating point. Near-lossless. Widely supported. Hopper Tensor Cores accelerate FP8 natively. Blackwell inherits. FP8 is the safe 2026 default when quality is non-negotiable (reasoning, medical, code-gen). Memory savings are half of INT4 but quality risk is far lower.
+8-bit floating point. Почти без потерь. Широкая поддержка. Hopper Tensor Cores нативно ускоряют FP8. Blackwell наследует это. FP8 — safe default 2026, когда качество не обсуждается (reasoning, medical, code-gen). Экономия памяти вдвое меньше, чем у INT4, но риск для качества намного ниже.
 
-### MXFP4 / NVFP4 — Blackwell aggressive
+### MXFP4 / NVFP4 — агрессивный Blackwell
 
-Microscaling FP4. Each block of weights has its own scale factor. Aggressive but hardware-accelerated on Blackwell Tensor Cores. Halve the bytes per token versus FP8 — the economic win in Phase 17 · 07.
+Microscaling FP4. У каждого block of weights есть собственный scale factor. Агрессивно, но аппаратно ускорено на Blackwell Tensor Cores. Вдвое меньше bytes per token по сравнению с FP8 — экономический выигрыш из Phase 17 · 07.
 
-Caveats:
-- No LoRA support yet (early 2026).
-- Quality drop visible on reasoning-heavy workloads.
-- Validate on your eval set per model.
+Ограничения:
+- Пока нет поддержки LoRA (early 2026).
+- Quality drop заметен на reasoning-heavy workloads.
+- Валидируйте на своем eval set для каждой model.
 
-### The calibration trap
+### Ловушка calibration
 
-AWQ and GPTQ require a calibration dataset — typically C4 or WikiText. For domain models (code, medical, legal), calibrating on generic web text lets the algorithm make wrong decisions about which weights to protect. Pass@1 on HumanEval can drop several points.
+AWQ и GPTQ требуют calibration dataset — обычно C4 или WikiText. Для domain models (code, medical, legal) calibration на generic web text позволяет алгоритму принять неверные решения о том, какие weights защищать. Pass@1 на HumanEval может упасть на несколько points.
 
-The fix: calibrate on in-domain data. Hundreds of domain samples is usually enough. Test on the eval set before shipping.
+Исправление: calibrate на in-domain data. Обычно достаточно сотен domain samples. Перед shipping тестируйте на eval set.
 
-### The KV cache trap
+### Ловушка KV cache
 
-AWQ shrinks weights to 4 bits. KV cache is separate and stays at FP16/FP8. For a 70B model with AWQ:
+AWQ сжимает weights до 4 bits. KV cache отделен и остается FP16/FP8. Для 70B model с AWQ:
 
 - Weights: ~35 GB (INT4 from 140 GB).
 - KV cache at 128 concurrent × 2k context: ~20 GB.
 - Activations: ~5 GB.
 - Total: ~60 GB — fits on H100 80GB.
 
-Naively "I quantized my model to 4 GB" forgets the other 30-50 GB. Budget HBM holistically.
+Наивное "I quantized my model to 4 GB" забывает остальные 30-50 GB. Планируйте HBM целиком.
 
-Separately, KV cache quantization (FP8 KV or INT8 KV) is a different choice with its own tradeoffs — it affects attention accuracy directly and is not a free win.
+Отдельно, KV cache quantization (FP8 KV или INT8 KV) — другой выбор со своими tradeoffs: он напрямую влияет на attention accuracy и не является бесплатной победой.
 
-### AWQ INT4 is hazardous for reasoning
+### AWQ INT4 опасен для reasoning
 
-Chain-of-thought, math, code-gen with long context — these suffer visibly from aggressive quantization. AWQ INT4 loses ~3-5 points on MATH. For reasoning-heavy workloads, ship FP8 or BF16; accept the memory cost.
+Chain-of-thought, math, code-gen с long context — они заметно страдают от aggressive quantization. AWQ INT4 теряет ~3-5 points на MATH. Для reasoning-heavy workloads отправляйте FP8 или BF16; принимайте memory cost.
 
-### 2026 picking guide
+### Руководство выбора 2026
 
 - CPU/edge serve: GGUF Q4_K_M. Done.
 - GPU serve, routine chat, no LoRA: AWQ.
@@ -96,25 +96,25 @@ Chain-of-thought, math, code-gen with long context — these suffer visibly from
 - Blackwell datacenter, validated quality: NVFP4 + FP8 KV.
 - Ambiguous: run a 1,000-sample eval on each candidate format.
 
-## Use It
+## Используйте это
 
-`code/main.py` computes memory footprint (weights + KV + activations) and relative throughput across the six formats for a range of model sizes. Shows where KV cache dominates, where weight compression pays, and where FP8 is the safe pick.
+`code/main.py` вычисляет memory footprint (weights + KV + activations) и относительный throughput по шести форматам для диапазона model sizes. Показывает, где доминирует KV cache, где окупается weight compression и где FP8 — safe pick.
 
-## Ship It
+## Отправьте в прод
 
-This lesson produces `outputs/skill-quantization-picker.md`. Given hardware, model size, workload type, and quality tolerance, picks a format and produces a calibration/validation plan.
+Этот урок создает `outputs/skill-quantization-picker.md`. По hardware, model size, workload type и quality tolerance он выбирает формат и создает calibration/validation plan.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. For a 70B model at 128 concurrent with 2k context, compute the total HBM for each format. Which format lets you fit on one H100 80GB?
-2. You have a 7B coding model. Pick a format and justify. If you were wrong about quality tolerance, what is the recovery path?
-3. Compute the calibration-dataset size needed to calibrate AWQ for a medical domain model. Why is more data not always better?
-4. Read the Marlin-AWQ kernel paper or release notes. Explain in three sentences why AWQ hits 741 tok/s on 7B while raw GPTQ hits ~712.
-5. When does it make sense to combine AWQ weights with FP8 KV cache vs keeping KV at BF16?
+1. Запустите `code/main.py`. Для 70B model при 128 concurrent с 2k context вычислите total HBM для каждого формата. Какой формат позволяет поместиться на один H100 80GB?
+2. У вас 7B coding model. Выберите формат и обоснуйте. Если вы ошиблись с quality tolerance, каков recovery path?
+3. Вычислите размер calibration dataset, нужный для calibration AWQ для medical domain model. Почему больше данных не всегда лучше?
+4. Прочитайте paper или release notes Marlin-AWQ kernel. Объясните в трех предложениях, почему AWQ достигает 741 tok/s на 7B, а raw GPTQ — ~712.
+5. Когда имеет смысл сочетать AWQ weights с FP8 KV cache, а когда оставить KV в BF16?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | GGUF | "llama.cpp format" | File format bundling K-quant variants; CPU/edge default |
 | Q4_K_M | "Q4 K M" | 4-bit K-quant medium; the production GGUF default |
@@ -126,11 +126,11 @@ This lesson produces `outputs/skill-quantization-picker.md`. Given hardware, mod
 | Calibration dataset | "cal data" | Input text used to pick quantization parameters; must match domain |
 | KV cache quantization | "KV INT8" | Separate choice from weights; affects attention accuracy |
 
-## Further Reading
+## Дополнительное чтение
 
-- [VRLA Tech — LLM Quantization 2026](https://vrlatech.com/llm-quantization-explained-int4-int8-fp8-awq-and-gptq-in-2026/) — comparative benchmarks.
+- [VRLA Tech — LLM Quantization 2026](https://vrlatech.com/llm-quantization-explained-int4-int8-fp8-awq-and-gptq-in-2026/) — сравнительные benchmarks.
 - [Jarvis Labs — vLLM Quantization Complete Guide](https://jarvislabs.ai/blog/vllm-quantization-complete-guide-benchmarks) — throughput numbers by format.
-- [PremAI — GGUF vs AWQ vs GPTQ vs bitsandbytes 2026](https://blog.premai.io/llm-quantization-guide-gguf-vs-awq-vs-gptq-vs-bitsandbytes-compared-2026/) — format-by-format picking.
-- [vLLM docs — Quantization](https://docs.vllm.ai/en/latest/features/quantization/index.html) — supported formats and flags.
-- [AWQ paper (arXiv:2306.00978)](https://arxiv.org/abs/2306.00978) — original AWQ formulation.
-- [GPTQ paper (arXiv:2210.17323)](https://arxiv.org/abs/2210.17323) — original GPTQ formulation.
+- [PremAI — GGUF vs AWQ vs GPTQ vs bitsandbytes 2026](https://blog.premai.io/llm-quantization-guide-gguf-vs-awq-vs-gptq-vs-bitsandbytes-compared-2026/) — выбор по форматам.
+- [vLLM docs — Quantization](https://docs.vllm.ai/en/latest/features/quantization/index.html) — поддерживаемые formats and flags.
+- [AWQ paper (arXiv:2306.00978)](https://arxiv.org/abs/2306.00978) — исходная формулировка AWQ.
+- [GPTQ paper (arXiv:2210.17323)](https://arxiv.org/abs/2210.17323) — исходная формулировка GPTQ.

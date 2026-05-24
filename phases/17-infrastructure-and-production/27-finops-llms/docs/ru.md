@@ -1,42 +1,42 @@
 # FinOps for LLMs — Unit Economics and Multi-Tenant Attribution
 
-> Traditional FinOps breaks on LLM spend. Costs are token-transactions, not resource-uptime. Tags don't map — an API call is a transaction, not an asset. Engineering decisions (prompt design, context window, output length) are financial decisions. The 2026 playbook has three attribution dimensions to instrument on day one: per-user (`user_id`) for seat pricing and expansion, per-task (`task_id` + `route`) for product surface cost and prioritization, per-tenant (`tenant_id`) for unit economics and renewal. Four token layers — prompt, tool, memory, response — one bucket hides spend. Enforcement ladder for multi-tenant products: rate limits per tenant (2-3x expected peak, clear 429 + retry-after); daily spend cap (1.5-3x contracted ceiling; triggers rate tightening + alert); kill switches on spend z-score > 4 (auto-pause + page on-call). Attribution patterns: tag-and-aggregate, telemetry-joiner (trace-ID → billing; highest accuracy), sampling-and-extrapolation, model-based allocation, event-sourced, real-time streaming. Unit metric: cost per resolved query, cost per generated artifact — not $/M tokens. Retroactive tagging always misses; instrument at request creation.
+> Traditional FinOps ломается на LLM spend. Costs — это token-transactions, а не resource-uptime. Tags не мапятся — API call является transaction, не asset. Engineering decisions (prompt design, context window, output length) являются financial decisions. Playbook 2026 имеет три attribution dimensions, которые нужно instrument on day one: per-user (`user_id`) для seat pricing and expansion, per-task (`task_id` + `route`) для product surface cost and prioritization, per-tenant (`tenant_id`) для unit economics and renewal. Четыре token layers — prompt, tool, memory, response — один bucket скрывает spend. Enforcement ladder для multi-tenant products: rate limits per tenant (2-3x expected peak, clear 429 + retry-after); daily spend cap (1.5-3x contracted ceiling; triggers rate tightening + alert); kill switches при spend z-score > 4 (auto-pause + page on-call). Attribution patterns: tag-and-aggregate, telemetry-joiner (trace-ID → billing; highest accuracy), sampling-and-extrapolation, model-based allocation, event-sourced, real-time streaming. Unit metric: cost per resolved query, cost per generated artifact — not $/M tokens. Retroactive tagging always misses; instrument at request creation.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy cost-attribution simulator with kill switch)
-**Prerequisites:** Phase 17 · 13 (Observability), Phase 17 · 14 (Caching)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy cost-attribution simulator with kill switch)
+**Предварительные требования:** Phase 17 · 13 (Observability), Phase 17 · 14 (Caching)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Explain why traditional FinOps (tags + tiers) breaks on LLM spend and name the three new attribution dimensions.
-- Enumerate the four token layers (prompt, tool, memory, response) and why single-bucket billing hides cost.
-- Design an enforcement ladder (rate → spend cap → kill switch) for a multi-tenant product.
-- Pick a unit metric (cost per resolved query / artifact) instead of $/M tokens.
+- Объяснить, почему traditional FinOps (tags + tiers) ломается на LLM spend, и назвать три new attribution dimensions.
+- Перечислить четыре token layers (prompt, tool, memory, response) и почему single-bucket billing скрывает cost.
+- Спроектировать enforcement ladder (rate → spend cap → kill switch) для multi-tenant product.
+- Выбрать unit metric (cost per resolved query / artifact) вместо $/M tokens.
 
-## The Problem
+## Проблема
 
-Your bill says $40,000. You don't know:
-- Which tenant spent it.
-- Which product feature drove it.
-- Whether any individual user was abusive.
-- Whether prompt bloat, tool calls, or memory amplification was the culprit.
+Ваш bill показывает $40,000. Вы не знаете:
+- Какой tenant их потратил.
+- Какая product feature это вызвала.
+- Был ли какой-то individual user abusive.
+- Был ли culprit prompt bloat, tool calls или memory amplification.
 
-Tag-and-aggregate on provider-side works for cloud resources (EC2, S3) where tags propagate to line items. LLM API calls do not auto-tag — you have to stamp user/task/tenant at the call site and carry through. Retroactive attribution always misses edge cases.
+Tag-and-aggregate на provider-side работает для cloud resources (EC2, S3), где tags проходят в line items. LLM API calls не auto-tag — вам нужно проставлять user/task/tenant в call site и протаскивать дальше. Retroactive attribution always misses edge cases.
 
-## The Concept
+## Концепция
 
-### Three attribution dimensions
+### Три attribution dimensions
 
-**Per-user** (`user_id`): who is costing what. Drives seat pricing, expansion conversations, identifies power users.
+**Per-user** (`user_id`): кто сколько стоит. Драйвит seat pricing, expansion conversations, выявляет power users.
 
-**Per-task** (`task_id` + `route`): which product surface costs what. Drives feature prioritization, kill-expensive-features decisions.
+**Per-task** (`task_id` + `route`): какая product surface сколько стоит. Драйвит feature prioritization, решения kill-expensive-features.
 
-**Per-tenant** (`tenant_id`): which customer is profitable. Drives unit economics, renewal pricing, tier thresholds.
+**Per-tenant** (`tenant_id`): какой customer profitable. Драйвит unit economics, renewal pricing, tier thresholds.
 
 Instrument all three at call site on day one. Retroactive is always worse.
 
-### Four token layers
+### Четыре token layers
 
 | Layer | Example | Typical % of total |
 |-------|---------|---------------------|
@@ -45,15 +45,15 @@ Instrument all three at call site on day one. Retroactive is always worse.
 | Memory | prior conversation / retrieved docs | 10-30% |
 | Response | model output | 10-30% |
 
-Bucketing all four together makes optimization blind. Break them out in your attribution schema.
+Сведение всех четырех в один bucket делает optimization слепой. Разделяйте их в attribution schema.
 
 ### Enforcement ladder
 
-1. **Rate limit** per tenant. 2-3x expected peak. Return 429 with `Retry-After`. Tenant sees friction; no surprise bill.
+1. **Rate limit** per tenant. 2-3x expected peak. Возвращайте 429 с `Retry-After`. Tenant видит friction; surprise bill не возникает.
 
 2. **Daily spend cap** per tenant. 1.5-3x contracted ceiling. Trigger: tighten rate limit + alert customer-success.
 
-3. **Kill switch** on spend z-score > 4 relative to tenant baseline. Auto-pause tenant; page on-call; escalate to ops + CS.
+3. **Kill switch** на spend z-score > 4 относительно tenant baseline. Auto-pause tenant; page on-call; escalate to ops + CS.
 
 ### Attribution patterns
 
@@ -64,16 +64,16 @@ Bucketing all four together makes optimization blind. Break them out in your att
 - **Event-sourced**: cost as events in a stream (Kafka / Kinesis). Real-time.
 - **Real-time streaming**: dashboard updates sub-second.
 
-### Cost per X is the unit metric
+### Cost per X — unit metric
 
-$/M tokens is vendor speak. Product metrics:
+$/M tokens — язык vendors. Product metrics:
 
 - Cost per resolved support ticket.
 - Cost per generated article.
 - Cost per successful agent task.
 - Cost per user-session-minute.
 
-Tie cost to a product outcome. Otherwise optimization is unanchored.
+Привязывайте cost к product outcome. Иначе optimization не имеет якоря.
 
 ### Cost attribution trace shape
 
@@ -93,7 +93,7 @@ trace_id: abc123
   batch: false
 ```
 
-Emit on every call. Store in data lake. Aggregate per dimension. Phase 17 · 13 observability stack is where this lives.
+Emit on every call. Store in data lake. Aggregate per dimension. Phase 17 · 13 observability stack — место, где это живет.
 
 ### The compounded-savings stack
 
@@ -103,9 +103,9 @@ Stack: cache + batch + route + gateway. With all four:
 - Route to cheap model (Phase 17 · 16): 60% cost reduction.
 - Gateway efficiency (Phase 17 · 19): redundancy + retries.
 
-Best-case stacked: ~5-10% of naive baseline. Most teams have 2-3 levers engaged; few stack all four.
+Best-case stacked: ~5-10% of naive baseline. У большинства команд включены 2-3 levers; немногие складывают все четыре.
 
-### Numbers you should remember
+### Числа, которые стоит запомнить
 
 - Attribution dimensions: per-user, per-task, per-tenant.
 - Four token layers: prompt, tool, memory, response.
@@ -113,25 +113,25 @@ Best-case stacked: ~5-10% of naive baseline. Most teams have 2-3 levers engaged;
 - Unit metric: cost per resolved query, not $/M tokens.
 - Stacked optimizations: ~5-10% of baseline possible.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates a multi-tenant LLM service with the three-tier enforcement ladder. Injects an abusive tenant and demonstrates the kill switch firing.
+`code/main.py` симулирует multi-tenant LLM service с three-tier enforcement ladder. Внедряет abusive tenant и демонстрирует срабатывание kill switch.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/skill-finops-plan.md`. Given product and scale, designs the attribution schema and enforcement ladder.
+Этот урок создает `outputs/skill-finops-plan.md`. По product and scale проектирует attribution schema и enforcement ladder.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. At what z-score does the kill switch fire? How do you pick the threshold?
-2. Design a per-tenant, per-task cost dashboard. What are the 5 views you build first?
-3. Your largest tenant is unit-economics-negative. Propose three interventions ordered by customer impact.
-4. Compute cost per resolved ticket for a support product: 3M tokens/ticket, ~800 tickets/day, GPT-5 cached rate.
-5. Argue whether retroactive tagging can ever work. When is it acceptable?
+1. Запустите `code/main.py`. При каком z-score срабатывает kill switch? Как выбрать threshold?
+2. Спроектируйте per-tenant, per-task cost dashboard. Какие 5 views построите первыми?
+3. Ваш largest tenant unit-economics-negative. Предложите три interventions, ordered by customer impact.
+4. Посчитайте cost per resolved ticket для support product: 3M tokens/ticket, ~800 tickets/day, GPT-5 cached rate.
+5. Аргументируйте, может ли retroactive tagging когда-либо работать. Когда он приемлем?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Per-user attribution | "user-level cost" | `user_id` stamped on every call |
 | Per-task attribution | "feature cost" | `task_id` + `route` identify product surface |
@@ -144,7 +144,7 @@ This lesson produces `outputs/skill-finops-plan.md`. Given product and scale, de
 | Telemetry joiner | "trace-to-billing" | Highest-accuracy attribution pattern |
 | Stacked optimization | "cache+batch+route+gateway" | Compounding savings to ~5-10% baseline |
 
-## Further Reading
+## Дополнительное чтение
 
 - [FinOps Foundation — FinOps for AI Overview](https://www.finops.org/wg/finops-for-ai-overview/)
 - [FinOps School — Cost per Unit 2026 Guide](https://finopsschool.com/blog/cost-per-unit/)
