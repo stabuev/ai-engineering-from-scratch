@@ -1,85 +1,85 @@
-# MCP Gateways and Registries — Enterprise Control Planes
+# MCP Gateways and Registries — корпоративные control planes
 
-> Enterprises cannot let every dev install random MCP servers. A gateway centralizes auth, RBAC, audit, rate limiting, caching, and tool-poisoning detection, then exposes the merged tool surface as a single MCP endpoint. The Official MCP Registry (Anthropic + GitHub + PulseMCP + Microsoft, namespace-verified) is the canonical upstream. This lesson names where a gateway fits, walks a minimal implementation, and surveys the 2026 vendor landscape.
+> Корпоративные организации не могут позволить каждому developer устанавливать случайные MCP servers. Gateway централизует auth, RBAC, audit, rate limiting, caching и detection tool-poisoning, затем предоставляет объединенную поверхность инструментов как единый MCP endpoint. Official MCP Registry (Anthropic + GitHub + PulseMCP + Microsoft, namespace-verified) — canonical upstream. Этот урок показывает, где находится gateway, проходит minimal implementation и обозревает landscape vendors на 2026.
 
-**Type:** Learn
-**Languages:** Python (stdlib, minimal gateway)
-**Prerequisites:** Phase 13 · 15 (tool poisoning), Phase 13 · 16 (OAuth 2.1)
-**Time:** ~45 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, минимальный gateway)
+**Предварительные требования:** Phase 13 · 15 (tool poisoning), Phase 13 · 16 (OAuth 2.1)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain where an MCP gateway sits (between MCP clients and multiple backend MCP servers).
-- Implement the five gateway responsibilities: auth, RBAC, audit, rate limit, policy.
-- Enforce a pinned-tool-hash manifest at the gateway layer.
-- Differentiate the Official MCP Registry from metaregistries (Glama, MCPMarket, MCP.so, Smithery, LobeHub).
+- Объяснить, где находится MCP gateway (между MCP clients и несколькими backend MCP servers).
+- Реализовать пять обязанностей gateway: auth, RBAC, audit, rate limit, policy.
+- Принудительно применять pinned-tool-hash manifest на слое gateway.
+- Отличать Official MCP Registry от metaregistries (Glama, MCPMarket, MCP.so, Smithery, LobeHub).
 
-## The Problem
+## Проблема
 
-A Fortune 500 has 30 approved MCP servers, 5000 developers, compliance and audit requirements, and a security team that wants centralized policy. Letting every developer install arbitrary servers in their IDEs is a non-starter.
+У компании из Fortune 500 есть 30 approved MCP servers, 5000 developers, требования compliance and audit и security team, которая хочет centralized policy. Разрешить каждому developer устанавливать произвольные servers в IDE — неприемлемый вариант.
 
-The gateway pattern:
+Gateway pattern:
 
-1. Gateway runs as a single Streamable HTTP endpoint developers connect to.
-2. Gateway holds credentials for each backend MCP server.
-3. Every developer request is authenticated and scoped via the gateway's own OAuth.
-4. Gateway routes the call to the backend server, applying policy.
-5. All calls logged for audit.
+1. Gateway запускается как единый Streamable HTTP endpoint, к которому подключаются developers.
+2. Gateway хранит credentials для каждого backend MCP server.
+3. Каждый developer request проходит authentication и получает scopes через собственный OAuth gateway.
+4. Gateway направляет вызов к backend server, применяя policy.
+5. Все calls записываются в audit log.
 
-Cloudflare MCP Portals, Kong AI Gateway, IBM ContextForge, MintMCP, TrueFoundry, Envoy AI Gateway — all shipped gateways or gateway features in 2025-2026.
+Cloudflare MCP Portals, Kong AI Gateway, IBM ContextForge, MintMCP, TrueFoundry, Envoy AI Gateway — все поставили gateways или gateway features в 2025-2026.
 
-Meanwhile, the Official MCP Registry launched as the canonical upstream: curated, namespace-verified, reverse-DNS-named servers the gateway can pull from. Metaregistries (Glama, MCPMarket, MCP.so, Smithery, LobeHub) aggregate servers across multiple sources.
+Тем временем Official MCP Registry запущен как canonical upstream: curated, namespace-verified, reverse-DNS-named servers, из которых gateway can pull. Metaregistries (Glama, MCPMarket, MCP.so, Smithery, LobeHub) агрегируют servers из нескольких источников.
 
-## The Concept
+## Концепция
 
-### Five gateway responsibilities
+### Пять обязанностей gateway
 
-1. **Auth.** OAuth 2.1 to identify the developer; maps to user roles.
-2. **RBAC.** Per-user policy: which servers, which tools, which scopes.
-3. **Audit.** Every call logged with who, what, when, result.
-4. **Rate limit.** Per-user / per-tool / per-server caps to prevent abuse.
-5. **Policy.** Reject poisoned descriptions, enforce Rule of Two, redact PII.
+1. **Auth.** OAuth 2.1 для идентификации developer; сопоставляет его с ролями пользователя.
+2. **RBAC.** Per-user policy: какие servers, какие tools, какие scopes.
+3. **Audit.** Каждый call записывается с указанием кто, что, когда и с каким результатом вызвал.
+4. **Rate limit.** Per-user / per-tool / per-server caps для предотвращения abuse.
+5. **Policy.** Отклонять poisoned descriptions, применять Rule of Two, редактировать PII.
 
-### Gateway as a single endpoint
+### Gateway как единый endpoint
 
-To developers, the gateway looks like one MCP server. Internally it routes to N backends. Session ids (Phase 13 · 09) are rewritten at the boundary.
+Для developers gateway выглядит как один MCP server. Внутри он маршрутизирует к N backends. Session ids (Phase 13 · 09) переписываются на boundary.
 
 ### Credential vaulting
 
-Developers never see backend tokens. The gateway holds them (or proxies to an identity provider that does). A developer with `notes:read` on the gateway may transitively access the notes MCP server with the gateway's own backend credentials — but only under policy that binds the transitive access.
+Developers никогда не видят backend tokens. Gateway хранит их (или проксирует в identity provider, который это делает). Developer с `notes:read` на gateway может транзитивно получить доступ к notes MCP server с собственными backend credentials gateway — но только under policy, которая связывает транзитивный доступ.
 
-### Tool-hash pinning at the gateway
+### Tool-hash pinning на gateway
 
-The gateway holds a manifest of approved tool descriptions (SHA256 hashes). At discovery time, it fetches each backend's `tools/list`, compares hashes to the manifest, and removes any tool whose description has mutated. This is the rug-pull defense from Phase 13 · 15 applied centrally.
+Gateway хранит manifest approved tool descriptions (SHA256 hashes). Во время discovery он получает `tools/list` каждого backend, сравнивает hashes с manifest и удаляет любой tool, whose description has mutated. Это rug-pull defense из Phase 13 · 15, примененная централизованно.
 
 ### Policy-as-code
 
-Advanced gateways express policy in OPA/Rego, Kyverno, or Styra. Rules like "user `alice` may call `github.open_pr` only on repos in org `acme`" are encoded declaratively. Simple gateways use hand-coded Python. Both shapes are valid.
+Advanced gateways выражают policy в OPA/Rego, Kyverno или Styra. Правила вроде "user `alice` may call `github.open_pr` only on repos in org `acme`" кодируются декларативно. Simple gateways используют hand-coded Python. Обе формы valid.
 
 ### Session-aware routing
 
-When a user's session includes a mix of servers, the gateway multiplexes: the developer's single MCP session holds N backend sessions, one per server. Notifications from any backend route through the gateway to the developer's session.
+Когда user session включает mix servers, gateway multiplexes: single MCP session developer содержит N backend sessions, по одной на server. Notifications из любого backend проходят через gateway в session developer.
 
 ### Namespace merging
 
-Gateways merge tool namespaces from all backends, typically with prefix-on-collision. `github.open_pr`, `notes.search`. This makes routing unambiguous.
+Gateways merge tool namespaces from all backends, typically with prefix-on-collision. `github.open_pr`, `notes.search`. Это делает routing однозначным.
 
 ### Registries
 
-- **Official MCP Registry (`registry.modelcontextprotocol.io`).** Launched under Anthropic, GitHub, PulseMCP, Microsoft stewardship. Namespace-verified (reverse-DNS: `io.github.user/server`). Pre-filtered for basic quality.
-- **Glama.** Search-centric metaregistry aggregating many sources.
-- **MCPMarket.** Commercial-leaning directory with vendor listings.
-- **MCP.so.** Community directory; open submissions.
-- **Smithery.** Package-manager-style installation flow.
-- **LobeHub.** UI-integrated registry in their LobeChat app.
+- **Official MCP Registry (`registry.modelcontextprotocol.io`).** Запущен под stewardship Anthropic, GitHub, PulseMCP и Microsoft. Namespace-verified (reverse-DNS: `io.github.user/server`). Предварительно фильтруется по базовому качеству.
+- **Glama.** Metaregistry с фокусом на search, агрегирующий много источников.
+- **MCPMarket.** Directory с коммерческим уклоном и vendor listings.
+- **MCP.so.** Community directory с открытыми submissions.
+- **Smithery.** Installation flow в стиле package manager.
+- **LobeHub.** Registry, интегрированный в UI их LobeChat app.
 
-Enterprise gateways pull from the Official Registry by default, allow admin-curated additions from metaregistries, and reject anything unpinned.
+Enterprise gateways по умолчанию pull from the Official Registry, разрешают admin-curated additions из metaregistries и отклоняют все unpinned.
 
 ### Reverse-DNS naming
 
-Official Registry mandates reverse-DNS names for public servers: `io.github.alice/notes`. Namespaces prevent squatting and make trust delegation clearer.
+Official Registry mandates reverse-DNS names для public servers: `io.github.alice/notes`. Namespaces prevent squatting и делают trust delegation clearer.
 
-### Vendor survey, April 2026
+### Обзор vendors, апрель 2026
 
 | Vendor | Strength |
 |--------|----------|
@@ -92,49 +92,49 @@ Official Registry mandates reverse-DNS names for public servers: `io.github.alic
 
 Phase 17 (production infrastructure) dives deeper on gateway operations.
 
-## Use It
+## Использование
 
-`code/main.py` ships a minimal gateway in ~150 lines: authenticates users by a fake Bearer token, holds a per-user RBAC policy, routes requests to two backend MCP servers, writes every call to an audit log, enforces a rate limit, and rejects any backend tool whose description hash does not match a pinned manifest.
+`code/main.py` поставляет minimal gateway примерно в 150 строк: authenticates users through fake Bearer token, хранит per-user RBAC policy, routes requests to two backend MCP servers, writes every call to audit log, enforces rate limit и rejects any backend tool, whose description hash does not match pinned manifest.
 
-What to look at:
+На что смотреть:
 
-- `RBAC` dict keyed by `user_id` with allowed `server_tool` entries.
-- `AUDIT_LOG` is an append-only list of events.
+- `RBAC` — dict, keyed by `user_id`, with allowed `server_tool` entries.
+- `AUDIT_LOG` — append-only list of events.
 - Rate limit uses a token bucket per user.
-- Pinned manifest is a dict of `server::tool -> hash`.
+- Pinned manifest — dict of `server::tool -> hash`.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-gateway-bootstrap.md`. Given an enterprise MCP plan (users, backends, compliance), the skill produces a gateway configuration spec.
+Этот урок создает `outputs/skill-gateway-bootstrap.md`. Для enterprise MCP plan (users, backends, compliance) skill produces gateway configuration spec.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Make a call as an allowed user; then as a disallowed user; then a rate-limit-exceeded burst. Verify all three flows.
+1. Запустите `code/main.py`. Сделайте call как allowed user; затем как disallowed user; затем burst, превышающий rate limit. Проверьте все три flows.
 
-2. Add a policy that redacts PII from results before returning to the client. Use a simple regex pass for SSN-shaped strings; note the gap (emails, phone numbers).
+2. Добавьте policy, которая redacts PII from results перед возвратом client. Используйте простой regex pass для строк, похожих на SSN; отметьте gap (emails, phone numbers).
 
-3. Extend the audit log to emit OpenTelemetry GenAI spans. Phase 13 · 20 covers the exact attributes.
+3. Расширьте audit log, чтобы emit OpenTelemetry GenAI spans. Phase 13 · 20 covers exact attributes.
 
-4. Design an RBAC policy for a 50-developer team with five backends (notes, github, postgres, jira, slack). Who gets read-only on each? Who gets write?
+4. Спроектируйте RBAC policy для команды из 50 developers с пятью backends (notes, github, postgres, jira, slack). Кто получает read-only на каждом? Кто получает write?
 
-5. Read the Cloudflare enterprise MCP post top to bottom. Identify one feature Cloudflare ships that this stdlib gateway does not.
+5. Прочитайте Cloudflare enterprise MCP post от начала до конца. Определите одну feature, которую ships Cloudflare и которой нет у этого stdlib gateway.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Gateway | "MCP proxy" | Centralizing server between clients and backends |
+| Gateway | "MCP proxy" | Централизующий server между clients and backends |
 | Credential vaulting | "Backend tokens stay server-side" | Developers never see upstream tokens |
 | Session-aware routing | "Multi-backend session" | Gateway multiplexes N backend sessions per developer session |
-| Tool-hash pinning | "Approved manifest" | SHA256 of every approved tool description; blocks rug-pulls centrally |
-| RBAC | "Per-user policy" | Role-based access control for tools and servers |
+| Tool-hash pinning | "Approved manifest" | SHA256 каждого approved tool description; centrally blocks rug-pulls |
+| RBAC | "Per-user policy" | Role-based access control для tools and servers |
 | Policy-as-code | "Declarative rules" | OPA/Rego, Kyverno, Styra policies enforced at gateway |
-| Audit log | "Who, what, when" | Append-only event log for compliance |
-| Rate limit | "Per-user token bucket" | Per-minute caps to prevent abuse |
+| Audit log | "Who, what, when" | Append-only event log для compliance |
+| Rate limit | "Per-user token bucket" | Per-minute caps для предотвращения abuse |
 | Official MCP Registry | "Canonical upstream" | `registry.modelcontextprotocol.io`, namespace-verified |
-| Reverse-DNS naming | "Registry namespace" | `io.github.user/server` convention |
+| Reverse-DNS naming | "Registry namespace" | Конвенция `io.github.user/server` |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Official MCP Registry](https://registry.modelcontextprotocol.io/) — canonical upstream, namespace-verified
 - [Cloudflare — Enterprise MCP](https://blog.cloudflare.com/enterprise-mcp/) — gateway pattern with OAuth and policy

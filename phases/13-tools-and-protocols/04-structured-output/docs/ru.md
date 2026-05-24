@@ -1,58 +1,58 @@
 # Structured Output — JSON Schema, Pydantic, Zod, Constrained Decoding
 
-> "Ask the model nicely to return JSON" fails 5 to 15 percent of the time, even on frontier models. Structured outputs close that gap with constrained decoding: the model is literally prevented from emitting a token that would violate the schema. OpenAI's strict mode, Anthropic's schema-typed tool use, Gemini's `responseSchema`, Pydantic AI's `output_type`, and Zod's `.parse` are five surface forms of the same idea. This lesson builds the schema validator and the strict-mode contract learners will use for every production extraction pipeline.
+> "Вежливо попросить модель вернуть JSON" ломается в 5-15 процентах случаев даже на frontier models. Structured outputs закрывают этот разрыв через constrained decoding: модели буквально запрещено выдавать token, который нарушил бы schema. OpenAI strict mode, schema-typed tool use Anthropic, `responseSchema` Gemini, `output_type` Pydantic AI и `.parse` Zod — пять поверхностных форм одной идеи. Этот урок строит schema validator и strict-mode contract, которые учащиеся будут использовать для каждого production extraction pipeline.
 
-**Type:** Build
-**Languages:** Python (stdlib, JSON Schema 2020-12 subset)
-**Prerequisites:** Phase 13 · 02 (function calling deep dive)
-**Time:** ~75 minutes
+**Тип:** практика
+**Языки:** Python (stdlib, подмножество JSON Schema 2020-12)
+**Предварительные знания:** Phase 13 · 02 (глубокий разбор function calling)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Write a JSON Schema 2020-12 for an extraction target using the right constraints (enum, min/max, required, pattern).
-- Explain why strict mode and constrained decoding give different guarantees from "validate after generation".
-- Distinguish the three failure modes: parse error, schema violation, model refusal.
-- Ship an extraction pipeline with typed repair and typed refusal handling.
+- Написать JSON Schema 2020-12 для extraction target с правильными constraints (enum, min/max, required, pattern).
+- Объяснить, почему strict mode и constrained decoding дают другие гарантии, чем "валидация после генерации".
+- Различать три failure modes: parse error, schema violation, model refusal.
+- Ship-ить extraction pipeline с typed repair и typed refusal handling.
 
-## The Problem
+## Проблема
 
-An agent reading a purchase-order email needs to turn free text into `{customer, line_items, total_usd}`. Three approaches.
+Агент, читающий purchase-order email, должен превратить свободный текст в `{customer, line_items, total_usd}`. Есть три подхода.
 
-**Approach one: prompt for JSON.** "Reply in JSON with fields customer, line_items, total_usd." Works 85 to 95 percent of the time on frontier models. Fails in six ways: missing brace, trailing comma, wrong types, hallucinated fields, truncated at token limit, leaked prose like "Here is your JSON:".
+**Подход первый: попросить JSON в prompt.** "Ответь JSON с полями customer, line_items, total_usd." Работает 85-95 процентов времени на frontier models. Ломается шестью способами: отсутствующая скобка, trailing comma, неправильные типы, сгаллюцинированные fields, обрезание на token limit, leaked prose вроде "Here is your JSON:".
 
-**Approach two: validate after generation.** Generate freely, parse, validate against schema, retry on failure. Reliable but expensive — you pay for every retry, and truncation bugs cost one extra turn per occurrence.
+**Подход второй: валидировать после генерации.** Сгенерировать свободно, распарсить, проверить по schema, сделать retry при failure. Надежно, но дорого: вы платите за каждый retry, а truncation bugs стоят одного extra turn на occurrence.
 
-**Approach three: constrained decoding.** The provider enforces the schema at decode time. Invalid tokens are masked out of the sampling distribution. The output is guaranteed to parse and guaranteed to validate. Failure collapses to one mode: refusal (the model decides the input does not fit the schema).
+**Подход третий: constrained decoding.** Provider обеспечивает schema во время decoding. Невалидные tokens маскируются из sampling distribution. Output гарантированно парсится и гарантированно валидируется. Failure схлопывается в один mode: refusal (модель решает, что input не подходит под schema).
 
-Every 2026 frontier provider ships some form of approach three.
+Каждый frontier provider 2026 года поставляет какую-то форму третьего подхода.
 
-- **OpenAI.** `response_format: {type: "json_schema", strict: true}` plus `refusal` in the response if the model declines.
-- **Anthropic.** Schema enforcement on `tool_use` inputs; `stop_reason: "refusal"` is not a thing, but `end_turn` with no tool call is the signal.
-- **Gemini.** `responseSchema` at request level; in 2026 Gemini ships token-level grammar constraints for selected types.
-- **Pydantic AI.** `output_type=InvoiceModel` emits a structured `RunResult` typed to `InvoiceModel`.
-- **Zod (TypeScript).** Runtime parser that validates provider output against a Zod schema; pairs with OpenAI's `beta.chat.completions.parse`.
+- **OpenAI.** `response_format: {type: "json_schema", strict: true}` плюс `refusal` в response, если модель отказывается.
+- **Anthropic.** Schema enforcement на inputs `tool_use`; `stop_reason: "refusal"` не существует, но `end_turn` без tool call является signal.
+- **Gemini.** `responseSchema` на request level; в 2026 Gemini ship-ит token-level grammar constraints для selected types.
+- **Pydantic AI.** `output_type=InvoiceModel` выдает structured `RunResult`, типизированный как `InvoiceModel`.
+- **Zod (TypeScript).** Runtime parser, который валидирует output provider по Zod schema; сочетается с `beta.chat.completions.parse` OpenAI.
 
-The common thread: declare the schema once, enforce it end to end.
+Общая нить: объявить schema один раз и enforce ее end to end.
 
-## The Concept
+## Концепция
 
-### JSON Schema 2020-12 — the lingua franca
+### JSON Schema 2020-12 — lingua franca
 
-Every provider accepts JSON Schema 2020-12. The constructs you use most:
+Каждый provider принимает JSON Schema 2020-12. Конструкции, которые вы используете чаще всего:
 
-- `type`: one of `object`, `array`, `string`, `number`, `integer`, `boolean`, `null`.
-- `properties`: map of field name to subschema.
-- `required`: list of field names that must appear.
-- `enum`: closed set of allowed values.
+- `type`: одно из `object`, `array`, `string`, `number`, `integer`, `boolean`, `null`.
+- `properties`: map от имени field к subschema.
+- `required`: list имен fields, которые обязаны присутствовать.
+- `enum`: закрытый набор разрешенных значений.
 - `minimum` / `maximum` (numbers), `minLength` / `maxLength` / `pattern` (strings).
-- `items`: subschema applied to every array element.
-- `additionalProperties`: `false` forbids extra fields (default varies by mode).
+- `items`: subschema, применяемая к каждому элементу array.
+- `additionalProperties`: `false` запрещает лишние fields (default varies by mode).
 
-OpenAI strict mode adds three requirements: every property must be listed in `required`, `additionalProperties: false` everywhere, and no unresolved `$ref`. If you break these, the API returns 400 at request time.
+OpenAI strict mode добавляет три требования: каждое property должно быть перечислено в `required`, `additionalProperties: false` должен стоять везде, и не должно быть unresolved `$ref`. Если нарушить их, API вернет 400 во время request.
 
-### Pydantic, the Python binding
+### Pydantic, Python binding
 
-Pydantic v2 generates JSON Schema from dataclass-shaped models via `model_json_schema()`. Pydantic AI wraps this so you write:
+Pydantic v2 генерирует JSON Schema из dataclass-shaped models через `model_json_schema()`. Pydantic AI оборачивает это, чтобы вы писали:
 
 ```python
 class Invoice(BaseModel):
@@ -61,91 +61,91 @@ class Invoice(BaseModel):
     total_usd: Decimal
 ```
 
-and the agent framework translates the schema into OpenAI strict mode, Anthropic `input_schema`, or Gemini `responseSchema` at the edge. The model's output comes back as a typed `Invoice` instance. Validation errors raise `ValidationError` with typed error paths.
+а agent framework переводил schema в OpenAI strict mode, Anthropic `input_schema` или Gemini `responseSchema` на границе. Output модели возвращается как typed instance `Invoice`. Validation errors вызывают `ValidationError` с типизированными путями ошибок.
 
-### Zod, the TypeScript binding
+### Zod, TypeScript binding
 
-Zod (`z.object({customer: z.string(), ...})`) is the TS equivalent. OpenAI's Node SDK exposes `zodResponseFormat(Invoice)` which translates to the API's JSON Schema payload.
+Zod (`z.object({customer: z.string(), ...})`) — TS-эквивалент. Node SDK OpenAI предоставляет `zodResponseFormat(Invoice)`, который переводит это в JSON Schema payload API.
 
 ### Refusals
 
-Strict mode cannot force the model to answer. If the input cannot fit the schema ("the email was a poem, not an invoice"), the model emits a `refusal` field containing the reason. Your code must handle this as a first-class outcome, not a failure. The refusal is also useful as a safety signal: a model asked to extract a credit card number from a protected-content email returns a refusal with the safety reason attached.
+Strict mode не может заставить модель ответить. Если input не помещается в schema ("email был стихотворением, а не invoice"), модель выдает поле `refusal` с reason. Ваш код должен обрабатывать это как first-class outcome, а не failure. Refusal также полезен как safety signal: модель, которую попросили извлечь credit card number из protected-content email, возвращает refusal with safety reason attached.
 
-### Constrained decoding in the open
+### Constrained decoding в open
 
-Open-weights implementations use three techniques.
+Open-weights implementations используют три техники.
 
-1. **Grammar-based decoding** (`outlines`, `guidance`, `lm-format-enforcer`): build a deterministic finite automaton from the schema; at every step, mask the logits of tokens that would violate the FSM.
-2. **Logit masking with a JSON parser**: run a streaming JSON parser in lockstep with the model; at every step, compute the valid-next-token set.
-3. **Speculative decoding with a verifier**: cheap draft model proposes tokens, verifier enforces the schema.
+1. **Grammar-based decoding** (`outlines`, `guidance`, `lm-format-enforcer`): строит deterministic finite automaton из schema; на каждом step маскирует logits tokens, которые нарушили бы FSM.
+2. **Logit masking with a JSON parser**: запускает streaming JSON parser синхронно с model; на каждом step вычисляет valid-next-token set.
+3. **Speculative decoding with a verifier**: дешевый draft model proposes tokens, verifier enforces schema.
 
-Commercial providers pick one of these behind the scenes. The 2026 state of the art is faster than plain generation for short structured outputs and roughly the same speed for long ones.
+Commercial providers выбирают одну из них behind the scenes. State of the art 2026 года быстрее plain generation для коротких structured outputs и примерно той же скорости для длинных.
 
-### The three failure modes
+### Три failure modes
 
-1. **Parse error.** The output is not valid JSON. Cannot happen under strict mode. Can still happen on non-strict providers.
-2. **Schema violation.** The output parses but violates the schema. Cannot happen under strict mode. Common outside it.
-3. **Refusal.** The model declines. Must be handled as a typed outcome.
+1. **Parse error.** Output не является valid JSON. Не может случиться в strict mode. Все еще может случаться на non-strict providers.
+2. **Schema violation.** Output парсится, но нарушает schema. Не может случиться в strict mode. Часто вне него.
+3. **Refusal.** Модель отказывается. Должен обрабатываться как typed outcome.
 
 ### Retry strategy
 
-When you are outside strict mode (Anthropic tool use, non-strict OpenAI, older Gemini), the recovery pattern is:
+Когда вы вне strict mode (Anthropic tool use, non-strict OpenAI, older Gemini), recovery pattern:
 
 ```
 generate -> parse -> validate -> if fail, inject error and retry, max 3x
 ```
 
-One retry is usually enough. Three retries catches weak-model flakes. Beyond three is a sign of a bad schema: the model cannot satisfy it for some inputs, and the prompt or the schema needs fixing.
+Одного retry обычно достаточно. Три retries ловят flakes слабых моделей. Больше трех — признак плохой schema: модель не может удовлетворить ее на некоторых inputs, и prompt или schema нужно чинить.
 
 ### Small-model support
 
-Constrained decoding works on small models. A 3B-parameter open model with grammar enforcement out-performs a 70B-parameter model with raw prompting on structured tasks. This is the main reason structured outputs matter for production: it decouples reliability from model size.
+Constrained decoding работает на small models. Open model на 3B parameters с grammar enforcement превосходит 70B-parameter model with raw prompting на structured tasks. Это главная причина, почему structured outputs важны для production: они отделяют reliability от model size.
 
-## Use It
+## Используйте
 
-`code/main.py` ships a minimal JSON Schema 2020-12 validator in stdlib (types, required, enum, min/max, pattern, items, additionalProperties). It wraps an `Invoice` schema and runs a fake LLM output through the validator, demonstrating parse error, schema violation, and refusal paths. Swap the fake output for any provider's real response in production.
+`code/main.py` поставляет minimal JSON Schema 2020-12 validator на stdlib (types, required, enum, min/max, pattern, items, additionalProperties). Он оборачивает schema `Invoice` и прогоняет fake LLM output через validator, демонстрируя parse error, schema violation и refusal paths. В production замените fake output на real response любого provider.
 
-What to look at:
+На что смотреть:
 
-- The validator returns a typed `[ValidationError]` list with path and message. That is the shape you want surfaced to the retry prompt.
-- The refusal branch does NOT retry. It logs and returns a typed refusal. Phase 14 · 09 uses refusals as a safety signal.
-- The `additionalProperties: false` check fires on the adversarial test input, showing why strict mode shuts the door on hallucinated fields.
+- Validator возвращает typed list `[ValidationError]` с path и message. Именно эту форму нужно передавать в retry prompt.
+- Refusal branch НЕ делает retry. Он логирует и возвращает typed refusal. Phase 14 · 09 использует refusals как safety signal.
+- Проверка `additionalProperties: false` срабатывает на adversarial test input, показывая, почему strict mode закрывает дверь hallucinated fields.
 
-## Ship It
+## Отправьте
 
-This lesson produces `outputs/skill-structured-output-designer.md`. Given a free-text extraction target (invoices, support tickets, resumes, etc.), the skill produces a JSON Schema 2020-12 that is strict-mode-compatible and a Pydantic model that mirrors it, with typed refusal and retry handling stubbed in.
+Этот урок создает `outputs/skill-structured-output-designer.md`. Получив free-text extraction target (invoices, support tickets, resumes, etc.), skill создает JSON Schema 2020-12, совместимую со strict mode, и Pydantic model, которая mirrors it, со stub-ами typed refusal и retry handling.
 
 ## Exercises
 
-1. Run `code/main.py`. Add a fourth test case whose `total_usd` is a negative number. Confirm the validator rejects it with the `minimum` constraint path.
+1. Запустите `code/main.py`. Добавьте четвертый test case, где `total_usd` является negative number. Подтвердите, что validator отклоняет его с path constraint `minimum`.
 
-2. Extend the validator to support `oneOf` with a discriminator. The common case: `line_item` is either a product or a service, tagged by `kind`. Strict mode has subtle rules here; check OpenAI's structured outputs guide.
+2. Расширьте validator для поддержки `oneOf` with a discriminator. Common case: `line_item` либо product, либо service, tagged by `kind`. Strict mode имеет subtle rules; проверьте руководство OpenAI по structured outputs.
 
-3. Write the same Invoice schema as a Pydantic BaseModel and compare `model_json_schema()` output to your hand-rolled schema. Identify the one field Pydantic sets by default that the hand-rolled version omits.
+3. Напишите ту же Invoice schema как Pydantic BaseModel и сравните output `model_json_schema()` с hand-rolled schema. Найдите одно поле, которое Pydantic sets by default, а hand-rolled version omits.
 
-4. Measure refusal rates. Construct ten inputs that should not be extractable (a song lyric, a math proof, a blank email) and run them through a real provider with strict mode. Count refusals vs hallucinated outputs. This is your ground truth for refusal-aware retries.
+4. Измерьте refusal rates. Сконструируйте десять inputs, которые не должны быть extractable (song lyric, math proof, blank email), и прогоните через real provider со strict mode. Посчитайте refusals vs hallucinated outputs. Это ваш ground truth для refusal-aware retries.
 
-5. Read OpenAI's structured outputs guide top to bottom. Identify the one construct it explicitly forbids in strict mode that plain JSON Schema allows. Then design a schema that uses the forbidden construct non-essentially and refactor it to be strict-compatible.
+5. Прочитайте руководство OpenAI по structured outputs от начала до конца. Найдите одну construct, которую он явно forbids in strict mode, хотя plain JSON Schema allows. Затем спроектируйте schema, которая uses forbidden construct non-essentially, и refactor it to be strict-compatible.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| JSON Schema 2020-12 | "The schema spec" | IETF-draft schema dialect every modern provider speaks |
-| Strict mode | "Guaranteed schema" | OpenAI flag that enforces schema via constrained decoding |
-| Constrained decoding | "Logit masking" | Decode-time enforcement that masks invalid next-tokens |
-| Refusal | "Model declines" | Typed outcome when input cannot fit the schema |
-| Parse error | "Invalid JSON" | Output did not parse as JSON; impossible under strict |
-| Schema violation | "Wrong shape" | Parsed but violated types / required / enum / range |
-| `additionalProperties: false` | "No extras allowed" | Forbids unknown fields; required in OpenAI strict |
-| Pydantic BaseModel | "Typed output" | Python class that emits and validates JSON Schema |
-| Zod schema | "TypeScript output type" | TS runtime schema for provider output validation |
-| Grammar enforcement | "Open-weights constrained decode" | FSM-based logit masking, as in outlines / guidance |
+| JSON Schema 2020-12 | "Спецификация schema" | IETF-draft schema dialect, на котором говорит каждый modern provider |
+| Strict mode | "Гарантированная schema" | Флаг OpenAI, enforcing schema через constrained decoding |
+| Constrained decoding | "Logit masking" | Decode-time enforcement, которое маскирует invalid next-tokens |
+| Refusal | "Модель отказывается" | Typed outcome, когда input не может fit the schema |
+| Parse error | "Invalid JSON" | Output не распарсился как JSON; impossible under strict |
+| Schema violation | "Неправильная форма" | Parsed, но нарушил types / required / enum / range |
+| `additionalProperties: false` | "Лишние поля запрещены" | Запрещает unknown fields; required in OpenAI strict |
+| Pydantic BaseModel | "Typed output" | Python class, который emits and validates JSON Schema |
+| Zod schema | "TypeScript output type" | TS runtime schema для provider output validation |
+| Grammar enforcement | "Open-weights constrained decode" | FSM-based logit masking, как в outlines / guidance |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI — Structured outputs](https://platform.openai.com/docs/guides/structured-outputs) — strict mode, refusals, and schema requirements
-- [OpenAI — Introducing structured outputs](https://openai.com/index/introducing-structured-outputs-in-the-api/) — August 2024 launch post explaining the decoding guarantee
-- [Pydantic AI — Output](https://ai.pydantic.dev/output/) — typed output_type bindings that serialize to each provider
-- [JSON Schema — 2020-12 release notes](https://json-schema.org/draft/2020-12/release-notes) — the canonical spec
-- [Microsoft — Structured outputs in Azure OpenAI](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs) — enterprise deployment notes and strict-mode caveats
+- [OpenAI — Structured outputs](https://platform.openai.com/docs/guides/structured-outputs) — strict mode, refusals и schema requirements
+- [OpenAI — Introducing structured outputs](https://openai.com/index/introducing-structured-outputs-in-the-api/) — launch post августа 2024 года, объясняющий decoding guarantee
+- [Pydantic AI — Output](https://ai.pydantic.dev/output/) — typed output_type bindings, которые сериализуются для каждого provider
+- [JSON Schema — 2020-12 release notes](https://json-schema.org/draft/2020-12/release-notes) — каноническая spec
+- [Microsoft — Structured outputs in Azure OpenAI](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs) — enterprise deployment notes и strict-mode caveats

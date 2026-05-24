@@ -1,148 +1,148 @@
-# MCP Resources and Prompts — Context Exposure Beyond Tools
+# MCP Resources и Prompts — контекст за пределами tools
 
-> Tools get 90 percent of MCP attention. The other two server primitives solve different problems. Resources expose data for reading; prompts expose reusable templates as slash-commands. Many servers should use resources instead of wrapping reads in tools, and prompts instead of hard-coding workflows in client prompts. This lesson names the decision rule and walks the `resources/*` and `prompts/*` messages.
+> Tools получают 90 процентов внимания в MCP. Два других серверных примитива решают другие задачи. Resources предоставляют данные для чтения; prompts предоставляют переиспользуемые шаблоны как slash-commands. Многие servers должны использовать resources вместо оборачивания чтения в tools, и prompts вместо жестко зашитых workflows в client prompts. Этот урок формулирует правило выбора и проходит по сообщениям `resources/*` и `prompts/*`.
 
-**Type:** Build
-**Languages:** Python (stdlib, resource + prompt handler)
-**Prerequisites:** Phase 13 · 07 (MCP server)
-**Time:** ~45 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, resource + prompt handler)
+**Предварительные требования:** Phase 13 · 07 (MCP server)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Decide between exposing a capability as a tool, a resource, or a prompt for a given domain.
-- Implement `resources/list`, `resources/read`, `resources/subscribe` and handle `notifications/resources/updated`.
-- Implement `prompts/list` and `prompts/get` with argument templates.
-- Recognize when the host surfaces prompts as slash-commands vs auto-injected context.
+- Решать, предоставлять ли capability как tool, resource или prompt для заданного domain.
+- Реализовать `resources/list`, `resources/read`, `resources/subscribe` и обработать `notifications/resources/updated`.
+- Реализовать `prompts/list` и `prompts/get` с templates аргументов.
+- Понимать, когда host показывает prompts как slash-commands, а когда как автоматически добавленный context.
 
-## The Problem
+## Проблема
 
-A naive MCP server for a notes app exposes everything as tools: `notes_read`, `notes_list`, `notes_search`. This wraps every data access in a model-driven tool call. Consequences:
+Наивный MCP server для notes app предоставляет все как tools: `notes_read`, `notes_list`, `notes_search`. Это оборачивает каждый доступ к данным в tool call под управлением модели. Последствия:
 
-- The model has to decide whether to call `notes_read` for every query that might benefit from context.
-- Read-only content cannot be subscribed to or streamed to the host's side panel.
-- Client UIs (Claude Desktop's resource attachment panel, Cursor's "Include file" picker) cannot surface the data.
+- Модель должна решать, вызывать ли `notes_read` для каждого query, которому может помочь context.
+- Read-only content нельзя подписать или отправить stream в side panel host.
+- Client UIs (панель прикрепления resources в Claude Desktop, picker "Include file" в Cursor) не могут показать эти данные.
 
-The right split: expose data as a resource, expose mutating or computed actions as tools, expose reusable multi-step workflows as prompts. Each primitive has its UX affordance and its access pattern.
+Правильное разделение: предоставляйте данные как resource, mutating или computed actions как tools, переиспользуемые multi-step workflows как prompts. У каждого primitive есть свой UX affordance и паттерн доступа.
 
-## The Concept
+## Концепция
 
-### Tools vs resources vs prompts — the decision rule
+### Tools, resources и prompts — правило выбора
 
 | Capability | Primitive |
 |------------|-----------|
-| User wants to search, filter, or transform data | tool |
-| User wants the host to include this data as context | resource |
-| User wants a templated workflow they can re-run | prompt |
+| Пользователь хочет искать, фильтровать или преобразовывать данные | tool |
+| Пользователь хочет, чтобы host включал эти данные как context | resource |
+| Пользователь хочет шаблонный workflow, который можно повторять | prompt |
 
-Guideline: if the model would benefit from calling it on every related query, it is a tool. If the user would benefit from attaching it to a conversation, it is a resource. If a whole multi-step workflow is the unit the user wants to re-use, it is a prompt.
+Ориентир: если модели полезно вызывать это для каждого связанного query, это tool. Если пользователю полезно прикрепить это к conversation, это resource. Если единицей повторного использования является целый multi-step workflow, это prompt.
 
 ### Resources
 
-`resources/list` returns `{resources: [{uri, name, mimeType, description?}]}`. `resources/read` takes `{uri}` and returns `{contents: [{uri, mimeType, text | blob}]}`.
+`resources/list` возвращает `{resources: [{uri, name, mimeType, description?}]}`. `resources/read` принимает `{uri}` и возвращает `{contents: [{uri, mimeType, text | blob}]}`.
 
-URIs can be anything addressable:
+URI могут быть чем угодно адресуемым:
 
 - `file:///Users/alice/notes/mcp.md`
 - `postgres://my-db/query/SELECT ...`
 - `notes://note-14` (custom scheme)
 - `memory://session-2026-04-22/recent` (server-specific)
 
-`contents[]` supports both text and binary. Binary uses `blob` as a base64-encoded string plus a `mimeType`.
+`contents[]` поддерживает и text, и binary. Binary использует `blob` как base64-encoded string плюс `mimeType`.
 
 ### Resource subscriptions
 
-Declare `{resources: {subscribe: true}}` in capabilities. Client calls `resources/subscribe {uri}`. Server sends `notifications/resources/updated {uri}` when the resource changes. Client re-reads.
+Объявите `{resources: {subscribe: true}}` в capabilities. Client вызывает `resources/subscribe {uri}`. Server отправляет `notifications/resources/updated {uri}`, когда resource меняется. Client перечитывает.
 
-Use case: a notes server whose resources are files on disk; a file watcher triggers update notifications; Claude Desktop re-pulls the file into context when edited outside the host.
+Use case: notes server, у которого resources — это files на диске; file watcher запускает update notifications; Claude Desktop повторно подтягивает file в context, когда его редактируют вне host.
 
-### Resource templates (2025-11-25 addition)
+### Resource templates (добавление 2025-11-25)
 
-`resourceTemplates` let you expose a parameterized URI pattern: `notes://{id}` with `id` as a completion target. The client can autocomplete ids in the resource picker.
+`resourceTemplates` позволяют предоставить parameterized URI pattern: `notes://{id}`, где `id` — цель completion. Client может выполнять autocomplete ids в resource picker.
 
 ### Prompts
 
-`prompts/list` returns `{prompts: [{name, description, arguments?}]}`. `prompts/get` takes `{name, arguments}` and returns `{description, messages: [{role, content}]}`.
+`prompts/list` возвращает `{prompts: [{name, description, arguments?}]}`. `prompts/get` принимает `{name, arguments}` и возвращает `{description, messages: [{role, content}]}`.
 
-A prompt is a template that fills to a list of messages the host feeds its model. For example, a `code_review` prompt takes a `file_path` argument and returns a three-message sequence: a system message, a user message with the file body, and an assistant kickoff with a reasoning template.
+Prompt — это template, который заполняется в список messages, передаваемый host своей модели. Например, prompt `code_review` принимает argument `file_path` и возвращает sequence из трех messages: system message, user message с телом file и стартовое assistant message с reasoning template.
 
-### Hosts and prompts
+### Hosts и prompts
 
-Claude Desktop, VS Code, and Cursor expose prompts as slash-commands in the chat UI. The user types `/code_review` and picks arguments from a form. The server's prompt is the contract between "user shortcut" and "full prompt sent to model".
+Claude Desktop, VS Code и Cursor показывают prompts как slash-commands в chat UI. Пользователь вводит `/code_review` и выбирает arguments из form. Prompt server — это contract между "user shortcut" и "полным prompt, отправленным модели".
 
-Not every client supports prompts yet — check capability negotiation. A server with prompt capability declared but a client without prompt support simply will not see the slash commands.
+Не каждый client пока поддерживает prompts — проверяйте capability negotiation. Server с объявленной prompt capability, но client без поддержки prompts, просто не увидит slash commands.
 
-### The "list changed" notification
+### Notification "list changed"
 
-Both resources and prompts emit `notifications/list_changed` when the set mutates. A notes server that just imported 20 new notes emits `notifications/resources/list_changed`; the client re-calls `resources/list` to pick up the additions.
+И resources, и prompts отправляют `notifications/list_changed`, когда их набор меняется. Notes server, который только что импортировал 20 новых notes, отправляет `notifications/resources/list_changed`; client повторно вызывает `resources/list`, чтобы подобрать additions.
 
-### Content type conventions
+### Соглашения по content type
 
-For text: `mimeType: "text/plain"`, `text/markdown`, `application/json`.
-For binary: `image/png`, `application/pdf`, plus the `blob` field.
-For MCP Apps (Lesson 14): `text/html;profile=mcp-app` in a `ui://` URI.
+Для text: `mimeType: "text/plain"`, `text/markdown`, `application/json`.
+Для binary: `image/png`, `application/pdf` плюс поле `blob`.
+Для MCP Apps (Lesson 14): `text/html;profile=mcp-app` в `ui://` URI.
 
 ### Dynamic resources
 
-A resource URI does not have to correspond to a static file. `notes://recent` can return the latest five notes on every read. `db://query/users/active` can execute a parameterized query. The server is free to compute content dynamically.
+Resource URI не обязан соответствовать static file. `notes://recent` может возвращать пять последних notes при каждом read. `db://query/users/active` может выполнять parameterized query. Server свободен вычислять content dynamically.
 
-Rule: if the client can cache by URI, the URI must be stable. If computation is one-shot, the URI should include a timestamp or nonce so the client cache does not stale out.
+Правило: если client может cache by URI, URI должен быть stable. Если computation one-shot, URI должен включать timestamp или nonce, чтобы client cache не устаревал незаметно.
 
-### Subscriptions vs polling
+### Subscriptions и polling
 
-Subscription-capable clients get server push via `notifications/resources/updated`. Pre-subscription clients or hosts that do not support it poll by re-reading. Both are spec-compliant. The server's capability declaration tells the client which it supports.
+Clients с поддержкой subscriptions получают server push через `notifications/resources/updated`. Pre-subscription clients или hosts, которые это не поддерживают, poll через повторное чтение. Оба варианта spec-compliant. Capability declaration server сообщает client, что поддерживается.
 
-Cost of subscriptions: per-session state on the server (who is subscribed to what). Keep the subscribed set bounded; disconnected clients should time out.
+Стоимость subscriptions: per-session state на server (кто на что подписан). Держите subscribed set bounded; disconnected clients должны истекать по timeout.
 
-### Prompts vs system prompts
+### Prompts и system prompts
 
-Prompts in MCP are not system prompts. The host's system prompt (its own operating instructions) and MCP prompts (server-supplied templates invoked by user) live side by side. A well-behaved client never lets a server prompt override its own system prompt; it layers them.
+Prompts в MCP — не system prompts. System prompt host (его собственные operating instructions) и MCP prompts (templates от server, invoked by user) живут side by side. Well-behaved client никогда не позволяет server prompt override its own system prompt; он накладывает их слоями.
 
-## Use It
+## Использование
 
-`code/main.py` extends the notes server from Lesson 07 with:
+`code/main.py` расширяет notes server из Lesson 07:
 
-- Per-note resources (`notes://note-1`, etc.) with `resources/subscribe` support.
-- A `review_note` prompt that renders to a three-message template.
-- A file-watcher simulation that emits `notifications/resources/updated` when a note is modified.
-- A `notes://recent` dynamic resource that always returns the latest five notes.
+- Per-note resources (`notes://note-1`, etc.) с поддержкой `resources/subscribe`.
+- Prompt `review_note`, который renders в template из трех messages.
+- Симуляция file watcher, которая emits `notifications/resources/updated`, когда note modified.
+- Dynamic resource `notes://recent`, который всегда возвращает пять последних notes.
 
-Run the demo to see the full flow.
+Запустите demo, чтобы увидеть полный flow.
 
 ## Ship It
 
-This lesson produces `outputs/skill-primitive-splitter.md`. Given a proposed MCP server, the skill categorizes each capability as tool / resource / prompt with a rationale.
+Этот урок создает `outputs/skill-primitive-splitter.md`. По proposed MCP server skill классифицирует каждую capability как tool / resource / prompt с обоснованием.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Observe the initial resource list, then trigger a note edit and verify the `notifications/resources/updated` event fires.
+1. Запустите `code/main.py`. Посмотрите initial resource list, затем запустите редактирование note и проверьте, что событие `notifications/resources/updated` срабатывает.
 
-2. Add a `resources/list_changed` emitter: when a new note is created, send the notification so clients re-discover.
+2. Добавьте emitter `resources/list_changed`: когда создается new note, отправьте notification, чтобы clients повторно выполнили discovery.
 
-3. Design three prompts for a GitHub MCP server: `summarize_pr`, `triage_issue`, `release_notes`. Each with argument schemas. The prompt body should be runnable without further edits.
+3. Спроектируйте три prompts для GitHub MCP server: `summarize_pr`, `triage_issue`, `release_notes`. Каждый с argument schemas. Prompt body должен запускаться без дальнейших правок.
 
-4. Take an existing tool in the Lesson 07 server and classify whether it should remain a tool or be split into a resource plus tool pair. Justify in one sentence.
+4. Возьмите существующий tool в server из Lesson 07 и классифицируйте, должен ли он остаться tool или быть разделен на пару resource plus tool. Обоснуйте одним предложением.
 
-5. Read the spec's `server/resources` and `server/prompts` sections. Identify the one field in `resources/read` that is rarely populated but spec-supported. Hint: look at `_meta` on resource content.
+5. Прочитайте разделы `server/resources` и `server/prompts` в спецификации. Найдите одно поле в `resources/read`, которое редко заполняется, но поддерживается spec. Подсказка: посмотрите на `_meta` в resource content.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это значит на самом деле |
 |------|----------------|------------------------|
-| Resource | "Exposed data" | URI-addressable content the host can read |
-| Resource URI | "Pointer to data" | Scheme-prefixed identifier (`file://`, `notes://`, etc.) |
-| `resources/subscribe` | "Watch for changes" | Client-opt-in server-push updates for a specific URI |
-| `notifications/resources/updated` | "Resource changed" | Signal to client that a subscribed resource has new content |
-| Resource template | "Parameterized URI" | URI pattern with completion hints for the host picker |
-| Prompt | "Slash-command template" | Named multi-message template with argument slots |
-| Prompt arguments | "Template inputs" | Typed parameters the host collects before rendering |
-| `prompts/get` | "Render template" | Server returns the filled-in message list |
+| Resource | "Открытые данные" | URI-addressable content, который host может читать |
+| Resource URI | "Указатель на данные" | Identifier со scheme-prefix (`file://`, `notes://`, etc.) |
+| `resources/subscribe` | "Следить за изменениями" | Server-push updates для specific URI, на которые client подписался |
+| `notifications/resources/updated` | "Resource changed" | Signal клиенту, что subscribed resource получил новый content |
+| Resource template | "Parameterized URI" | URI pattern с completion hints для picker в host |
+| Prompt | "Slash-command template" | Named multi-message template с slots для arguments |
+| Prompt arguments | "Template inputs" | Typed parameters, которые host собирает перед rendering |
+| `prompts/get` | "Render template" | Server возвращает заполненный список messages |
 | Content block | "Typed chunk" | `{type: text | image | resource | ui_resource}` |
-| Slash-command UX | "User shortcut" | Host surfaces prompts as commands starting with `/` |
+| Slash-command UX | "User shortcut" | Host показывает prompts как команды, начинающиеся с `/` |
 
-## Further Reading
+## Дополнительное чтение
 
-- [MCP — Concepts: Resources](https://modelcontextprotocol.io/docs/concepts/resources) — resource URIs, subscriptions, and templates
-- [MCP — Concepts: Prompts](https://modelcontextprotocol.io/docs/concepts/prompts) — prompt templates and slash-command integration
-- [MCP — Server resources spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/resources) — full `resources/*` message reference
-- [MCP — Server prompts spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts) — full `prompts/*` message reference
-- [MCP — Protocol info site: resources](https://modelcontextprotocol.info/docs/concepts/resources/) — community guide expanding on the official docs
+- [MCP — Concepts: Resources](https://modelcontextprotocol.io/docs/concepts/resources) — resource URIs, subscriptions и templates
+- [MCP — Concepts: Prompts](https://modelcontextprotocol.io/docs/concepts/prompts) — prompt templates и интеграция со slash-commands
+- [MCP — Server resources spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/resources) — полный reference сообщений `resources/*`
+- [MCP — Server prompts spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts) — полный reference сообщений `prompts/*`
+- [MCP — Protocol info site: resources](https://modelcontextprotocol.info/docs/concepts/resources/) — community guide, расширяющий официальные docs

@@ -1,143 +1,143 @@
-# Building an MCP Client — Discovery, Invocation, Session Management
+# Создание MCP-клиента — обнаружение, вызовы, управление сессиями
 
-> Most MCP content ships server tutorials and waves a hand at the client. Client code is where the hard orchestration lives: process spawning, capability negotiation, tool list merging across multiple servers, sampling callbacks, reconnection, and namespace collision resolution. This lesson builds a multi-server client that lifts three different MCP servers into one flat tool namespace for the model.
+> Большая часть материалов по MCP показывает руководства по серверам и почти не объясняет клиент. Именно в коде клиента живет сложная оркестрация: запуск процессов, согласование capabilities, объединение списков tools от нескольких серверов, callbacks для sampling, переподключение и разрешение конфликтов имен. В этом уроке мы строим multi-server client, который поднимает три разных MCP-сервера в одно плоское пространство имен tools для модели.
 
-**Type:** Build
-**Languages:** Python (stdlib, multi-server MCP client)
-**Prerequisites:** Phase 13 · 07 (building an MCP server)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, multi-server MCP client)
+**Предварительные требования:** Phase 13 · 07 (создание MCP-сервера)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Spawn an MCP server as a child process, complete `initialize`, and send a `notifications/initialized`.
-- Maintain per-server session state (capabilities, tool list, last-seen notification ids).
-- Merge tool lists across multiple servers into one namespace with collision handling.
-- Route a tool call to the server that owns it and reassemble the response.
+- Запустить MCP-сервер как дочерний процесс, завершить `initialize` и отправить `notifications/initialized`.
+- Поддерживать состояние сессии для каждого сервера (capabilities, список tools, ids последних увиденных notifications).
+- Объединять списки tools от нескольких серверов в одно пространство имен с обработкой конфликтов.
+- Направлять tool call на сервер, которому он принадлежит, и собирать ответ обратно.
 
-## The Problem
+## Проблема
 
-A real agent host (Claude Desktop, Cursor, Goose, Gemini CLI) loads multiple MCP servers at once. A user might have a filesystem server, a Postgres server, and a GitHub server running simultaneously. The client's job:
+Настоящий agent host (Claude Desktop, Cursor, Goose, Gemini CLI) загружает сразу несколько MCP-серверов. У пользователя могут одновременно работать filesystem server, Postgres server и GitHub server. Задача клиента:
 
-1. Spawn each server.
-2. Handshake each independently.
-3. Call `tools/list` on each and flatten the result.
-4. When the model emits `notes_search`, look it up in the merged namespace and route to the right server.
-5. Handle notifications from any server (`tools/list_changed`) without blocking.
-6. Reconnect on transport failure.
+1. Запустить каждый сервер.
+2. Выполнить handshake с каждым независимо.
+3. Вызвать `tools/list` на каждом и свести результат в плоский список.
+4. Когда модель выдает `notes_search`, найти его в объединенном пространстве имен и направить на правильный сервер.
+5. Обрабатывать notifications от любого сервера (`tools/list_changed`) без блокировки.
+6. Переподключаться при сбое transport.
 
-Hand-rolling all of that is what separates "toy" from "serviceable". The official SDKs wrap this, but the mental model has to be yours.
+Ручная реализация всего этого и отделяет игрушечный пример от пригодного в работе клиента. Официальные SDK это оборачивают, но mental model должен быть вашим.
 
-## The Concept
+## Концепция
 
-### Child-process spawning
+### Запуск дочерних процессов
 
-`subprocess.Popen` with `stdin=PIPE, stdout=PIPE, stderr=PIPE`. Set `bufsize=1` and use text mode for line-by-line reads. Each server is one process; the client holds one `Popen` handle per server.
+`subprocess.Popen` с `stdin=PIPE, stdout=PIPE, stderr=PIPE`. Установите `bufsize=1` и используйте текстовый режим для построчного чтения. Каждый сервер — отдельный процесс; клиент держит по одному handle `Popen` на сервер.
 
-### Per-server session state
+### Состояние сессии на каждый сервер
 
-A `Session` object per server holds:
+Объект `Session` для каждого сервера хранит:
 
-- `process` — the Popen handle.
-- `capabilities` — what the server declared at `initialize`.
-- `tools` — the last `tools/list` result.
-- `pending` — map of request id to a promise/future waiting for the response.
+- `process` — handle `Popen`.
+- `capabilities` — что сервер объявил в `initialize`.
+- `tools` — последний результат `tools/list`.
+- `pending` — отображение request id на promise/future, ожидающий response.
 
-Requests are async by nature; a `tools/call` sent to server A while server B is mid-call must not block. Either use threads with queues or asyncio.
+Requests по природе async; `tools/call`, отправленный серверу A, не должен блокироваться, пока сервер B находится в середине вызова. Используйте либо потоки с очередями, либо asyncio.
 
-### Merged namespace
+### Объединенное пространство имен
 
-When the client sees the aggregate tool list, names can collide. Two servers might both expose `search`. The client has three options:
+Когда клиент видит общий список tools, имена могут конфликтовать. Два сервера могут оба предоставлять `search`. У клиента есть три варианта:
 
-1. **Prefix by server name.** `notes/search`, `files/search`. Clear but ugly.
-2. **Silent first-come.** Later server's `search` overrides the earlier. Risky; hides collisions.
-3. **Collision rejection.** Refuse to load the second server; notify the user. Safest for security-sensitive hosts.
+1. **Префикс по имени сервера.** `notes/search`, `files/search`. Понятно, но некрасиво.
+2. **Молчаливый first-come.** Более поздний `search` переопределяет ранний. Рискованно; скрывает конфликты.
+3. **Отклонение конфликта.** Отказаться загружать второй сервер; уведомить пользователя. Самый безопасный вариант для security-sensitive hosts.
 
-Claude Desktop uses prefix-by-server. Cursor uses collision rejection with a clear error. VS Code MCP adopts prefix-by-server as well.
+Claude Desktop использует префикс по серверу. Cursor использует отклонение конфликта с понятной ошибкой. VS Code MCP тоже принимает префикс по серверу.
 
 ### Routing
 
-After merging, a dispatch table maps `tool_name -> session`. The model emits a call by name; the client finds the session and writes a `tools/call` message to that server's stdin, then awaits the response.
+После объединения dispatch table отображает `tool_name -> session`. Модель выдает вызов по имени; клиент находит сессию и пишет message `tools/call` в stdin этого сервера, затем ожидает response.
 
-### Sampling callback
+### Callback для sampling
 
-If the server declared the `sampling` capability at `initialize`, it may send `sampling/createMessage` asking the client to run its LLM. The client must:
+Если сервер объявил capability `sampling` в `initialize`, он может отправить `sampling/createMessage`, прося клиента запустить свой LLM. Клиент должен:
 
-1. Block further requests to that server until the sample resolves, or pipeline if its implementation supports concurrency.
-2. Call its LLM provider.
-3. Send the response back to the server.
+1. Блокировать дальнейшие requests к этому серверу, пока sample не завершится, или использовать pipeline, если implementation поддерживает concurrency.
+2. Вызвать своего LLM provider.
+3. Отправить response обратно серверу.
 
-Lesson 11 covers sampling end-to-end. This lesson stubs it for completeness.
+Lesson 11 разбирает sampling end-to-end. Этот урок оставляет stub для полноты.
 
-### Notification handling
+### Обработка notifications
 
-`notifications/tools/list_changed` means re-call `tools/list`. `notifications/resources/updated` means re-read the resource if it is in use. Notifications must not produce responses — do not try to ack them.
+`notifications/tools/list_changed` означает: повторно вызвать `tools/list`. `notifications/resources/updated` означает: перечитать resource, если он используется. Notifications не должны порождать responses — не пытайтесь их подтверждать.
 
-A common client bug: blocking the read loop on `tools/call` while a notification sits in the stream. Use a background reader thread that pushes every message onto a queue; the main thread dequeues and dispatches.
+Распространенная ошибка клиента: блокировать цикл чтения на `tools/call`, пока notification лежит в stream. Используйте фоновый поток чтения, который кладет каждое message в очередь; основной поток извлекает их и направляет обработчику.
 
 ### Reconnection
 
-Transport can fail: server crashed, OS killed the process, stdio pipe broke. The client detects EOF on stdout and treats the session as dead. Options:
+Transport может сломаться: сервер упал, ОС завершила процесс, stdio pipe оборвался. Клиент обнаруживает EOF на stdout и считает session dead. Варианты:
 
-- Silently restart the server and re-handshake. OK for pure read-only servers.
-- Surface the failure to the user. OK for stateful servers with user-visible sessions.
+- Молча перезапустить сервер и заново выполнить handshake. Подходит для чисто read-only servers.
+- Показать failure пользователю. Подходит для stateful servers с user-visible sessions.
 
-Phase 13 · 09 covers the Streamable HTTP reconnection semantics; stdio is simpler.
+Phase 13 · 09 рассматривает семантику переподключения Streamable HTTP; stdio проще.
 
-### Keepalive and session id
+### Keepalive и session id
 
-Streamable HTTP uses a `Mcp-Session-Id` header. Stdio has no session id — the process identity IS the session. Keepalive pings are optional; stdio pipes do not break under inactivity.
+Streamable HTTP использует header `Mcp-Session-Id`. В stdio нет session id — идентичность процесса и есть session. Keepalive pings необязательны; stdio pipes не ломаются от бездействия.
 
-## Use It
+## Использование
 
-`code/main.py` spawns three simulated MCP servers as subprocesses, handshakes each, merges their tool lists, and routes tool calls to the right one. The "servers" are actually other Python processes running toy responders (no real LLM). Run it to see:
+`code/main.py` запускает три simulated MCP servers как subprocesses, выполняет handshake с каждым, объединяет их списки tools и направляет tool calls к нужному серверу. Эти "servers" на самом деле другие процессы Python с игрушечными responders (без настоящего LLM). Запустите, чтобы увидеть:
 
-- Three initializations, each with their own capability set.
-- Three `tools/list` results merged into a 7-tool namespace.
-- A routing decision based on the tool name.
-- A collision prevented by namespace prefixing.
+- Три initializations, у каждого свой набор capabilities.
+- Три результата `tools/list`, объединенные в пространство имен из 7 tools.
+- Решение о routing на основе имени tool.
+- Конфликт, предотвращенный префиксом пространства имен.
 
-What to look at:
+На что смотреть:
 
-- The `Session` dataclass holds per-server state cleanly.
-- The background reader thread dequeues every line on stdout without blocking the main thread.
-- The dispatch table is a simple `dict[str, Session]`.
-- Collision handling is explicit: when two servers declare the same name, the later one is renamed with a prefix.
+- Dataclass `Session` аккуратно хранит состояние на каждый сервер.
+- Фоновый поток чтения извлекает каждую строку из stdout без блокировки основного потока.
+- Dispatch table — простой `dict[str, Session]`.
+- Обработка конфликтов явная: когда два сервера объявляют одно имя, более поздний переименовывается с префиксом.
 
 ## Ship It
 
-This lesson produces `outputs/skill-mcp-client-harness.md`. Given a declarative list of MCP servers (name, command, args), the skill produces a harness that spawns them, merges tool lists, and ships a routing function with collision resolution.
+Этот урок создает `outputs/skill-mcp-client-harness.md`. По декларативному списку MCP-серверов (name, command, args) skill создает harness, который запускает их, объединяет списки tools и поставляет routing function с разрешением конфликтов.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` and watch the server spawn log. Kill one of the simulated server processes with a SIGTERM and observe how the client detects the EOF and marks that session as dead.
+1. Запустите `code/main.py` и посмотрите log запуска серверов. Убейте один из simulated server processes через SIGTERM и наблюдайте, как клиент обнаруживает EOF и помечает эту session как dead.
 
-2. Implement namespace prefixing. When two servers expose `search`, rename the second as `<server>/search`. Update the dispatch table and verify tool calls route correctly.
+2. Реализуйте префиксы пространства имен. Когда два сервера предоставляют `search`, переименуйте второй в `<server>/search`. Обновите dispatch table и проверьте, что tool calls направляются правильно.
 
-3. Add a connection-pool-style backoff for server restart: exponential backoff on consecutive failures, cap at 30 seconds, emit a notification to the user after three failures.
+3. Добавьте backoff в стиле connection pool для перезапуска сервера: exponential backoff при последовательных failures, ограничение в 30 seconds, notification пользователю после трех failures.
 
-4. Sketch a client that supports 100 concurrent MCP servers. What data structure replaces the simple dispatch dict? (Hint: trie for prefix namespacing, plus a metric for tool-count-per-server.)
+4. Набросайте клиент, который поддерживает 100 concurrent MCP servers. Какая data structure заменит простой dispatch dict? (Подсказка: trie для префиксов пространства имен плюс метрика tool-count-per-server.)
 
-5. Port the client to the official MCP Python SDK. The SDK wraps `stdio_client` and `ClientSession`. The code should shrink from ~200 lines to ~40 lines while preserving multi-server routing.
+5. Перенесите client на официальный MCP Python SDK. SDK оборачивает `stdio_client` и `ClientSession`. Код должен сократиться с ~200 строк до ~40 строк, сохранив multi-server routing.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это значит на самом деле |
 |------|----------------|------------------------|
-| MCP client | "The agent host" | Process that spawns servers and orchestrates tool calls |
-| Session | "Per-server state" | Capabilities, tool list, and pending-request bookkeeping |
-| Merged namespace | "One tool list" | Flat set of tool names across all active servers |
-| Namespace collision | "Two servers same tool" | Client must prefix, reject, or first-come the duplicate |
-| Routing | "Who gets this call?" | Dispatch from tool name to owning server |
-| Background reader | "Non-blocking stdout" | Thread or task that drains server stdout into a queue |
-| Sampling callback | "LLM-as-a-service" | Client handler for `sampling/createMessage` from server |
-| `notifications/*_changed` | "Primitive mutated" | Signal the client must re-discover or re-read |
-| Reconnection policy | "When server dies" | Restart semantics when transport fails |
-| Stdio session | "Process = session" | No session id; child process lifetime is the session |
+| MCP client | "Agent host" | Процесс, который запускает серверы и оркестрирует tool calls |
+| Session | "Состояние на сервер" | Capabilities, список tools и учет pending requests |
+| Merged namespace | "Один список tools" | Плоский набор имен tools по всем активным серверам |
+| Namespace collision | "Два сервера, один tool" | Клиент должен добавить префикс, отклонить конфликт или принять первый duplicate |
+| Routing | "Кому идет этот вызов?" | Dispatch от имени tool к серверу-владельцу |
+| Background reader | "Неблокирующий stdout" | Thread или task, который вычитывает stdout сервера в очередь |
+| Sampling callback | "LLM-as-a-service" | Handler клиента для `sampling/createMessage` от сервера |
+| `notifications/*_changed` | "Примитив изменился" | Signal, что клиент должен заново выполнить discovery или перечитать данные |
+| Reconnection policy | "Когда сервер умер" | Семантика restart при transport failure |
+| Stdio session | "Процесс = session" | Нет session id; lifetime дочернего процесса и есть session |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Model Context Protocol — Client spec](https://modelcontextprotocol.io/specification/2025-11-25/client) — canonical client behavior
-- [MCP — Quickstart client guide](https://modelcontextprotocol.io/quickstart/client) — hello-world client tutorial with the Python SDK
-- [MCP Python SDK — client module](https://github.com/modelcontextprotocol/python-sdk) — reference `ClientSession` and `stdio_client`
-- [MCP TypeScript SDK — Client](https://github.com/modelcontextprotocol/typescript-sdk) — TS parallel
-- [VS Code — MCP in extensions](https://code.visualstudio.com/api/extension-guides/ai/mcp) — how VS Code multiplexes multiple MCP servers in a single editor host
+- [Model Context Protocol — Client spec](https://modelcontextprotocol.io/specification/2025-11-25/client) — каноническое поведение клиента
+- [MCP — Quickstart client guide](https://modelcontextprotocol.io/quickstart/client) — hello-world tutorial клиента с Python SDK
+- [MCP Python SDK — client module](https://github.com/modelcontextprotocol/python-sdk) — reference по `ClientSession` и `stdio_client`
+- [MCP TypeScript SDK — Client](https://github.com/modelcontextprotocol/typescript-sdk) — параллельная реализация на TS
+- [VS Code — MCP in extensions](https://code.visualstudio.com/api/extension-guides/ai/mcp) — как VS Code multiplexes несколько MCP-серверов в одном editor host

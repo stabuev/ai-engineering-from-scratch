@@ -1,30 +1,30 @@
-# OpenTelemetry GenAI — Tracing Tool Calls End-to-End
+# OpenTelemetry GenAI — трассировка вызовов инструментов end-to-end
 
-> An agent calls five tools, three MCP servers, and two sub-agents. You need one trace across all of it. The OpenTelemetry GenAI semantic conventions (stable attributes in v1.37 and up) are the 2026 standard, natively supported by Datadog, Langfuse, Arize Phoenix, OpenLLMetry, and AgentOps. This lesson names the required attributes, walks the span hierarchy (agent → LLM → tool), and ships a stdlib span emitter you can plug into any OTel exporter.
+> Агент вызывает пять инструментов, три MCP server и двух sub-agents. Вам нужен один trace через все это. Семантические соглашения OpenTelemetry GenAI (стабильные атрибуты в v1.37 и выше) — стандарт 2026 года, нативно поддерживаемый Datadog, Langfuse, Arize Phoenix, OpenLLMetry и AgentOps. Этот урок называет обязательные атрибуты, проходит по иерархии spans (agent → LLM → tool) и поставляет emitter для spans на stdlib, который можно подключить к любому OTel exporter.
 
-**Type:** Build
-**Languages:** Python (stdlib, OTel span emitter)
-**Prerequisites:** Phase 13 · 07 (MCP server), Phase 13 · 08 (MCP client)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python (stdlib, emitter для OTel spans)
+**Предварительные требования:** Фаза 13 · 07 (MCP server), Фаза 13 · 08 (MCP client)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the required OTel GenAI attributes for an LLM span and a tool-execution span.
-- Build a trace hierarchy that covers agent loop, LLM call, tool call, and MCP client dispatch.
-- Decide what content to capture (opt-in) vs redact (defaults).
-- Emit spans to a local collector (Jaeger, Langfuse) without rewriting tool code.
+- Назвать обязательные атрибуты OTel GenAI для LLM span и span выполнения инструмента.
+- Построить иерархию trace, покрывающую agent loop, LLM call, tool call и dispatch MCP client.
+- Решить, какой контент захватывать (opt-in), а какой редактировать/скрывать по умолчанию.
+- Отправлять spans в локальный collector (Jaeger, Langfuse) без переписывания кода инструментов.
 
-## The Problem
+## Проблема
 
-A debug from February 2026: user reports "my agent sometimes takes 30 seconds to respond; other times 3 seconds." No traces. Logs show the LLM call, but not the tool dispatch, not the MCP server round-trip, not the sub-agent. You guess. Eventually you find: one MCP server occasionally hangs on a cold-start.
+Отладочный случай из февраля 2026 года: пользователь сообщает: "мой агент иногда отвечает за 30 секунд, а иногда за 3 секунды." Trace нет. Логи показывают LLM call, но не dispatch tool, не round-trip MCP server, не sub-agent. Вы гадаете. В итоге находите: один MCP server иногда зависает на cold-start.
 
-Without end-to-end tracing, you cannot find this. OTel GenAI fixes it.
+Без end-to-end tracing это не найти. OTel GenAI решает проблему.
 
-The conventions settled in 2025-2026 under the OpenTelemetry semantic-conventions group. They define stable attribute names so Datadog, Langfuse, Phoenix, OpenLLMetry, and AgentOps all parse the same spans. Instrument once; ship to any backend.
+Соглашения закрепились в 2025-2026 годах в группе OpenTelemetry semantic-conventions. Они определяют стабильные имена атрибутов, чтобы Datadog, Langfuse, Phoenix, OpenLLMetry и AgentOps одинаково разбирали одни и те же spans. Инструментируете один раз; отправляете в любой backend.
 
-## The Concept
+## Концепция
 
-### Span hierarchy
+### Иерархия spans
 
 ```
 agent.invoke_agent  (top, INTERNAL span)
@@ -35,126 +35,126 @@ agent.invoke_agent  (top, INTERNAL span)
  └── subagent.invoke (INTERNAL)
 ```
 
-The whole thing nests under one trace id. Span ids link the parent-child relationships.
+Все это вложено под один trace id. Span ids связывают отношения parent-child.
 
-### Required attributes
+### Обязательные атрибуты
 
-Per the 2025-2026 semconv:
+Согласно semconv 2025-2026:
 
 - `gen_ai.operation.name` — `"chat"`, `"text_completion"`, `"embeddings"`, `"execute_tool"`, `"invoke_agent"`.
 - `gen_ai.provider.name` — `"openai"`, `"anthropic"`, `"google"`, `"azure_openai"`.
-- `gen_ai.request.model` — requested model string (e.g. `"gpt-4o-2024-08-06"`).
-- `gen_ai.response.model` — the model actually served.
+- `gen_ai.request.model` — запрошенная строка модели (например, `"gpt-4o-2024-08-06"`).
+- `gen_ai.response.model` — модель, которая фактически обслужила запрос.
 - `gen_ai.usage.input_tokens` / `gen_ai.usage.output_tokens`.
-- `gen_ai.response.id` — provider response id for correlation.
+- `gen_ai.response.id` — provider response id для корреляции.
 
-For tool spans:
+Для tool spans:
 
-- `gen_ai.tool.name` — tool identifier.
-- `gen_ai.tool.call.id` — the specific call id.
-- `gen_ai.tool.description` — tool description (optional).
+- `gen_ai.tool.name` — идентификатор инструмента.
+- `gen_ai.tool.call.id` — id конкретного вызова.
+- `gen_ai.tool.description` — описание инструмента (опционально).
 
-For agent spans:
+Для agent spans:
 
 - `gen_ai.agent.name` / `gen_ai.agent.id` / `gen_ai.agent.description`.
 
-### Span kinds
+### Виды spans
 
-- `SpanKind.CLIENT` for calls crossing a process boundary (LLM provider, MCP server).
-- `SpanKind.INTERNAL` for the agent's own loop steps and tool execution.
+- `SpanKind.CLIENT` для вызовов, пересекающих границу процесса (LLM provider, MCP server).
+- `SpanKind.INTERNAL` для собственных шагов agent loop и выполнения инструмента.
 
-### Opt-in content capture
+### Opt-in захват контента
 
-By default, spans carry metrics and timing — not prompts or completions. Large payloads and PII are off by default. Set `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental` and specific content-capture env vars to include content. Review carefully before enabling in prod.
+По умолчанию spans несут метрики и timing — не prompts и completions. Большие payloads и PII по умолчанию выключены. Установите `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental` и специальные env vars для content-capture, чтобы включить контент. Перед включением в prod внимательно проверьте риски.
 
-### Events on spans
+### Events на spans
 
-Token-level events can be added as span events:
+События уровня токенов можно добавлять как span events:
 
-- `gen_ai.content.prompt` — input messages.
-- `gen_ai.content.completion` — output messages.
-- `gen_ai.content.tool_call` — tool call as recorded.
+- `gen_ai.content.prompt` — входные сообщения.
+- `gen_ai.content.completion` — выходные сообщения.
+- `gen_ai.content.tool_call` — записанный вызов инструмента.
 
-Events time-order within a span for detailed replay.
+Events упорядочены во времени внутри span для детального воспроизведения.
 
 ### Exporters
 
-OTel spans export to:
+OTel spans экспортируются в:
 
 - **Jaeger / Tempo.** OSS, on-prem.
-- **Langfuse.** LLM-observability-specific; visualizes token usage.
-- **Arize Phoenix.** Evals + tracing combined.
-- **Datadog.** Commercial; natively parses `gen_ai.*` attributes.
-- **Honeycomb.** Column-oriented; query-friendly.
+- **Langfuse.** Специализирован для LLM observability; визуализирует token usage.
+- **Arize Phoenix.** Evals + tracing вместе.
+- **Datadog.** Коммерческий; нативно разбирает атрибуты `gen_ai.*`.
+- **Honeycomb.** Column-oriented; удобен для запросов.
 
-All speak OTLP, the wire format. Your code does not care.
+Все говорят на OTLP как wire format. Вашему коду все равно.
 
-### Propagation across MCP
+### Propagation через MCP
 
-When an MCP client calls a server, inject the W3C traceparent header into the request. Streamable HTTP supports standard headers. Stdio does not carry HTTP headers natively; the spec's 2026 roadmap discusses adding a `_meta.traceparent` field on JSON-RPC calls.
+Когда MCP client вызывает server, внедрите W3C traceparent header в запрос. Streamable HTTP поддерживает стандартные headers. Stdio нативно не переносит HTTP headers; roadmap спецификации на 2026 год обсуждает добавление поля `_meta.traceparent` в JSON-RPC calls.
 
-Until that ships: include the traceparent in the `_meta` of every request manually. Server logs the trace id.
+Пока это не поставлено: включайте traceparent в `_meta` каждого запроса вручную. Server логирует trace id.
 
-### Metrics
+### Метрики
 
-Alongside spans, the GenAI semconv defines metrics:
+Наряду со spans, GenAI semconv определяет metrics:
 
 - `gen_ai.client.token.usage` — histogram.
 - `gen_ai.client.operation.duration` — histogram.
 - `gen_ai.tool.execution.duration` — histogram.
 
-Use these for dashboards that do not need per-call detail.
+Используйте их для dashboards, которым не нужна детализация каждого вызова.
 
-### AgentOps layer
+### Слой AgentOps
 
-AgentOps (founded 2024) specializes in GenAI observability. It wraps popular frameworks (LangGraph, Pydantic AI, CrewAI) to emit OTel spans automatically. Useful if your stack uses a supported framework; use manual instrumentation otherwise.
+AgentOps (основан в 2024 году) специализируется на GenAI observability. Он оборачивает популярные фреймворки (LangGraph, Pydantic AI, CrewAI), чтобы автоматически испускать OTel spans. Полезно, если ваш stack использует поддерживаемый фреймворк; иначе используйте ручную instrumentation.
 
-## Use It
+## Используйте
 
-`code/main.py` emits OTel-shaped spans to stdout (in OTLP-JSON-like format) for an agent that calls an LLM, dispatches two tools, and makes one MCP round-trip. No real exporter — the lesson focuses on the span shape and attribute set. Paste the output into an OTLP-compatible viewer or just read it.
+`code/main.py` выводит spans в форме OTel в stdout (в формате, похожем на OTLP JSON) для агента, который вызывает LLM, отправляет два tools и делает один MCP round-trip. Реального exporter нет — урок сфокусирован на форме span и наборе атрибутов. Вставьте вывод в OTLP-совместимый viewer или просто прочитайте его.
 
-What to look at:
+На что обратить внимание:
 
-- Trace id is shared across all spans.
-- Parent-child links are encoded via `parentSpanId`.
-- Required `gen_ai.*` attributes are populated.
-- Content capture is off by default; one scenario turns it on via env var.
+- Trace id общий для всех spans.
+- Связи parent-child закодированы через `parentSpanId`.
+- Обязательные атрибуты `gen_ai.*` заполнены.
+- Content capture по умолчанию выключен; один сценарий включает его через env var.
 
-## Ship It
+## Отгрузите
 
-This lesson produces `outputs/skill-otel-genai-instrumentation.md`. Given an agent codebase, the skill produces an instrumentation plan: where to add spans, which attributes to populate, and which exporters to target.
+Этот урок создает `outputs/skill-otel-genai-instrumentation.md`. Для кодовой базы агента skill создает план instrumentation: где добавить spans, какие атрибуты заполнять и на какие exporters нацелиться.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Count the spans and identify which is CLIENT vs INTERNAL.
+1. Запустите `code/main.py`. Посчитайте spans и определите, какие из них CLIENT, а какие INTERNAL.
 
-2. Turn on content capture (env var) and confirm `gen_ai.content.prompt` and `gen_ai.content.completion` events appear. Note the implications for PII.
+2. Включите content capture (env var) и подтвердите, что events `gen_ai.content.prompt` и `gen_ai.content.completion` появляются. Отметьте последствия для PII.
 
-3. Add the tool-execution metric `gen_ai.tool.execution.duration` and emit it as a histogram sample per call.
+3. Добавьте метрику выполнения инструмента `gen_ai.tool.execution.duration` и отправляйте ее как histogram sample для каждого вызова.
 
-4. Propagate a traceparent from a parent agent span into an MCP request's `_meta.traceparent` field. Verify the MCP server would see the same trace id.
+4. Прокиньте traceparent из parent agent span в поле `_meta.traceparent` MCP request. Проверьте, что MCP server увидел бы тот же trace id.
 
-5. Read the OTel GenAI semconv spec. Identify one attribute listed in the semconv that this lesson's code does NOT emit. Add it.
+5. Прочитайте спецификацию OTel GenAI semconv. Определите один атрибут из semconv, который код этого урока НЕ отправляет. Добавьте его.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| OTel | "OpenTelemetry" | Open standard for traces, metrics, logs |
-| GenAI semconv | "GenAI semantic conventions" | Stable attribute names for LLM / tool / agent spans |
-| `gen_ai.*` | "The attribute namespace" | All GenAI attributes share this prefix |
-| Span | "Timed operation" | A unit of work with a start, end, and attributes |
-| Trace | "Cross-span ancestry" | Tree of spans sharing a trace id |
-| SpanKind | "CLIENT / SERVER / INTERNAL" | Hints about span direction |
-| OTLP | "OpenTelemetry Line Protocol" | Wire format for exporters |
-| Opt-in content | "Prompt / completion capture" | Off by default; env var to enable |
-| traceparent | "W3C header" | Propagates trace context across services |
-| Exporter | "Backend-specific shipper" | Component that sends spans to Jaeger / Datadog / etc. |
+| OTel | "OpenTelemetry" | Открытый стандарт для traces, metrics, logs |
+| GenAI semconv | "Семантические соглашения GenAI" | Стабильные имена атрибутов для LLM / tool / agent spans |
+| `gen_ai.*` | "Namespace атрибутов" | Все атрибуты GenAI используют этот префикс |
+| Span | "Операция во времени" | Единица работы с началом, концом и атрибутами |
+| Trace | "Родство между spans" | Дерево spans с общим trace id |
+| SpanKind | "CLIENT / SERVER / INTERNAL" | Подсказки о направлении span |
+| OTLP | "OpenTelemetry Line Protocol" | Wire format для exporters |
+| Opt-in content | "Захват prompt / completion" | По умолчанию выключен; включается env var |
+| traceparent | "Header W3C" | Передает trace context между сервисами |
+| Exporter | "Shipper для конкретного backend" | Компонент, который отправляет spans в Jaeger / Datadog / etc. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenTelemetry — GenAI semconv](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — canonical conventions for GenAI spans, metrics, and events
-- [OpenTelemetry — GenAI spans](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/) — LLM and tool-execution span attribute list
-- [OpenTelemetry — GenAI agent spans](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/) — agent-level `invoke_agent` span
-- [open-telemetry/semantic-conventions — GenAI spans](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md) — GitHub-hosted source of truth
-- [Datadog — LLM OTel semantic convention](https://www.datadoghq.com/blog/llm-otel-semantic-convention/) — production integration walkthrough
+- [OpenTelemetry — GenAI semconv](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — канонические соглашения для GenAI spans, metrics и events
+- [OpenTelemetry — GenAI spans](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/) — список атрибутов LLM и tool-execution spans
+- [OpenTelemetry — GenAI agent spans](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/) — agent-level span `invoke_agent`
+- [open-telemetry/semantic-conventions — GenAI spans](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md) — source of truth на GitHub
+- [Datadog — LLM OTel semantic convention](https://www.datadoghq.com/blog/llm-otel-semantic-convention/) — walkthrough production integration

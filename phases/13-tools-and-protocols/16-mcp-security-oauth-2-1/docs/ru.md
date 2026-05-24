@@ -1,57 +1,57 @@
 # MCP Security II — OAuth 2.1, Resource Indicators, Incremental Scopes
 
-> Remote MCP servers need authorization, not just authentication. The 2025-11-25 spec aligns with OAuth 2.1 + PKCE + resource indicators (RFC 8707) + protected-resource metadata (RFC 9728). SEP-835 adds incremental scope consent with step-up authorization on 403 WWW-Authenticate. This lesson implements the step-up flow as a state machine so you can see every hop.
+> Удаленным MCP servers нужна authorization, а не только authentication. Спецификация 2025-11-25 согласуется с OAuth 2.1 + PKCE + resource indicators (RFC 8707) + protected-resource metadata (RFC 9728). SEP-835 добавляет incremental scope consent со step-up authorization через 403 WWW-Authenticate. Этот урок реализует step-up flow как конечный автомат, чтобы вы видели каждый переход.
 
-**Type:** Build
-**Languages:** Python (stdlib, OAuth state machine simulator)
-**Prerequisites:** Phase 13 · 09 (transports), Phase 13 · 15 (security I)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, симулятор конечного автомата OAuth)
+**Предварительные требования:** Phase 13 · 09 (transports), Phase 13 · 15 (security I)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Distinguish resource server from authorization server responsibilities.
-- Walk the PKCE-protected OAuth 2.1 authorization code flow.
-- Use `resource` (RFC 8707) and protected-resource metadata (RFC 9728) to prevent confused-deputy attacks.
-- Implement step-up authorization: server responds 403 with WWW-Authenticate asking for a higher scope; client re-prompts user consent and retries.
+- Различать обязанности resource server и authorization server.
+- Проследить OAuth 2.1 authorization code flow, защищенный PKCE.
+- Использовать `resource` (RFC 8707) и protected-resource metadata (RFC 9728), чтобы предотвращать confused-deputy attacks.
+- Реализовать step-up authorization: server отвечает 403 с WWW-Authenticate, запрашивая более высокий scope; client снова запрашивает consent пользователя и повторяет запрос.
 
-## The Problem
+## Проблема
 
-Early MCP (pre-2025) shipped remote servers with ad-hoc API keys or even no auth. The 2025-11-25 spec closes that gap with a full OAuth 2.1 profile.
+Ранний MCP (до 2025) поставлял remote servers с ad-hoc API keys или вообще без auth. Спецификация 2025-11-25 закрывает этот пробел полным профилем OAuth 2.1.
 
-Three real-world needs:
+Три реальные потребности:
 
-- **Ordinary remote servers.** User installs a remote MCP server that accesses their Notion / GitHub / Gmail. OAuth 2.1 with PKCE is the right shape.
-- **Scope escalation.** A notes server granted `notes:read` can later need `notes:write` for a specific action. Instead of re-doing the whole flow, step-up (SEP-835) asks for the additional scope.
-- **Confused deputy prevention.** Client holds a token audience-scoped for Server A. Server A is malicious and tries to present the token to Server B. Resource indicators (RFC 8707) pin the token to its intended audience.
+- **Обычные remote servers.** Пользователь устанавливает remote MCP server, который получает доступ к его Notion / GitHub / Gmail. OAuth 2.1 с PKCE имеет правильную форму.
+- **Scope escalation.** Notes server с grant `notes:read` позже может потребовать `notes:write` для конкретного действия. Вместо повторения всего flow step-up (SEP-835) запрашивает дополнительный scope.
+- **Confused deputy prevention.** Client держит token, scoped по audience для Server A. Server A malicious и пытается предъявить token Server B. Resource indicators (RFC 8707) pin token к intended audience.
 
-OAuth 2.1 is not new. What is new is MCP's profile: specific required flows (authorization code + PKCE only; no implicit, no client credentials by default), resource indicators mandatory on every token request, and protected-resource metadata published so clients know where to go.
+OAuth 2.1 не новый. Новое — профиль MCP: конкретные обязательные flows (только authorization code + PKCE; без implicit, без client credentials по умолчанию), обязательные resource indicators в каждом token request и опубликованные protected-resource metadata, чтобы clients знали, куда идти.
 
-## The Concept
+## Концепция
 
-### Roles
+### Роли
 
-- **Client.** The MCP client (Claude Desktop, Cursor, etc.).
-- **Resource server.** The MCP server (notes, GitHub, Postgres, whatever).
-- **Authorization server.** Issues tokens. May be the same service as the resource server or a separate IdP (Auth0, Keycloak, Cognito).
+- **Client.** MCP client (Claude Desktop, Cursor и т. д.).
+- **Resource server.** MCP server (notes, GitHub, Postgres и т. д.).
+- **Authorization server.** Выдает tokens. Может быть тем же сервисом, что resource server, или отдельным IdP (Auth0, Keycloak, Cognito).
 
-In MCP's profile, resource and authorization servers CAN be the same host but SHOULD be distinguished by URLs.
+В профиле MCP resource и authorization servers могут быть одним host, но должны различаться URL.
 
 ### Authorization code + PKCE
 
-The flow:
+Flow:
 
-1. Client generates `code_verifier` (random) and `code_challenge` (SHA256).
-2. Client redirects user to `/authorize?response_type=code&client_id=...&redirect_uri=...&scope=notes:read&code_challenge=...&resource=https://notes.example.com`.
-3. User consents. Authorization server redirects to `redirect_uri?code=...`.
-4. Client POSTs to `/token?grant_type=authorization_code&code=...&code_verifier=...&resource=...`.
-5. Authorization server validates the verifier's hash against the stored challenge and issues an access token.
-6. Client uses the token: `Authorization: Bearer ...` on every request to the resource server.
+1. Client генерирует `code_verifier` (случайный) и `code_challenge` (SHA256).
+2. Client перенаправляет пользователя на `/authorize?response_type=code&client_id=...&redirect_uri=...&scope=notes:read&code_challenge=...&resource=https://notes.example.com`.
+3. User дает consent. Authorization server перенаправляет на `redirect_uri?code=...`.
+4. Client отправляет POST на `/token?grant_type=authorization_code&code=...&code_verifier=...&resource=...`.
+5. Authorization server проверяет hash verifier against stored challenge и выдает access token.
+6. Client использует token: `Authorization: Bearer ...` на каждом request к resource server.
 
-PKCE prevents authorization-code interception attacks. Resource indicators prevent the token from being valid elsewhere.
+PKCE предотвращает authorization-code interception attacks. Resource indicators предотвращают валидность token где-либо еще.
 
 ### Protected-resource metadata (RFC 9728)
 
-The resource server publishes a `.well-known/oauth-protected-resource` document:
+Resource server публикует документ `.well-known/oauth-protected-resource`:
 
 ```json
 {
@@ -61,25 +61,25 @@ The resource server publishes a `.well-known/oauth-protected-resource` document:
 }
 ```
 
-Client discovers the authorization server from the resource server. Reduces configuration — the client only needs the resource URL.
+Client discovers authorization server from resource server. Это уменьшает configuration — клиенту нужен только resource URL.
 
 ### Resource indicators (RFC 8707)
 
-`resource` parameter in the token request pins the token's intended audience. The issued token contains `aud: "https://notes.example.com"`. Another MCP server receiving this token checks `aud` and rejects it.
+Параметр `resource` в token request закрепляет intended audience token. Выданный token содержит `aud: "https://notes.example.com"`. Другой MCP server, получивший этот token, проверяет `aud` и отклоняет его.
 
 ### Scope model
 
-Scopes are space-separated strings. Common MCP conventions:
+Scopes — это строки, разделенные пробелами. Распространенные MCP conventions:
 
 - `notes:read`, `notes:write`, `notes:delete`
-- `admin:*` for admin capabilities (use sparingly)
-- `profile:read` for identity
+- `admin:*` для admin capabilities (используйте осторожно)
+- `profile:read` для identity
 
-Scope selection should be least-privilege: request what you need now, step up when you need more.
+Выбор scope должен быть least-privilege: запрашивайте то, что нужно сейчас, и делайте step-up, когда понадобится больше.
 
 ### Step-up authorization (SEP-835)
 
-User grants `notes:read`. They later ask the agent to delete a note. The server responds:
+Пользователь grants `notes:read`. Позже он просит агента удалить заметку. Сервер отвечает:
 
 ```
 HTTP/1.1 403 Forbidden
@@ -87,35 +87,35 @@ WWW-Authenticate: Bearer error="insufficient_scope",
     scope="notes:delete", resource="https://notes.example.com"
 ```
 
-Client sees the insufficient_scope error, prompts the user with a consent dialog for the additional scope, performs a mini OAuth flow for it, retries the request with the new token.
+Client видит error insufficient_scope, показывает пользователю consent dialog для дополнительного scope, выполняет мини-flow OAuth для него и повторяет request с новым token.
 
 ### Token audience validation
 
-Every request: server checks `token.aud == self.resource_url`. Mismatch = 401. This stops cross-server token reuse.
+Каждый request: server checks `token.aud == self.resource_url`. Mismatch = 401. Это останавливает cross-server token reuse.
 
-### Short-lived tokens and rotation
+### Short-lived tokens и rotation
 
-Access tokens SHOULD be short-lived (1 hour default). Refresh tokens rotate on every refresh. The client handles silent refresh in the background.
+Access tokens должны быть short-lived (1 час по умолчанию). Refresh tokens rotate on every refresh. Client handles silent refresh in the background.
 
 ### No token passthrough
 
-Sampling servers (Phase 13 · 11) MUST NOT pass the client's token through to other services. The sampling request is the boundary.
+Sampling servers (Phase 13 · 11) не должны передавать token клиента дальше в другие сервисы. Sampling request является boundary.
 
 ### Confused deputy prevention
 
-Token binds to `aud`. Client binds to `client_id`. Every request validated against both. The spec explicitly bans the old "pass-the-token" pattern that was common in pre-MCP remote tool ecosystems.
+Token привязан к `aud`. Client привязан к `client_id`. Каждый request проверяется по обоим значениям. Спецификация явно запрещает старый паттерн "pass-the-token", распространенный в remote tool ecosystems до MCP.
 
 ### Client ID discovery
 
-Each MCP client publishes its metadata at a fixed URL. Authorization servers can fetch the client's metadata document to discover redirect URIs and contact info. This removes manual client registration.
+Каждый MCP client публикует свои metadata по fixed URL. Authorization servers могут fetch client metadata document, чтобы discover redirect URIs и contact info. Это убирает manual client registration.
 
 ### Gateways and OAuth
 
-Phase 13 · 17 shows how an enterprise gateway handles OAuth: gateway holds credentials for upstream servers, tokens to the client are gateway-issued, and upstream tokens never leave the gateway. This flips the trust model — users authenticate with the gateway once; gateway handles N server authorizations.
+Phase 13 · 17 показывает, как enterprise gateway handles OAuth: gateway хранит credentials для upstream servers, tokens для client выпускает сам gateway, а upstream tokens никогда не покидают gateway. Это переворачивает trust model — users authenticate with the gateway once; gateway handles N server authorizations.
 
-## Use It
+## Использование
 
-`code/main.py` simulates the full OAuth 2.1 step-up flow as a state machine. It implements:
+`code/main.py` симулирует полный OAuth 2.1 step-up flow как конечный автомат. Он реализует:
 
 - PKCE code-verifier / challenge generation.
 - Authorization code flow with resource indicator.
@@ -123,43 +123,43 @@ Phase 13 · 17 shows how an enterprise gateway handles OAuth: gateway holds cred
 - Token validation with audience check.
 - Step-up on `insufficient_scope`.
 
-No HTTP server in this lesson; the state machine runs in memory so you can trace every hop. Phase 13 · 17's gateway lesson wires it to an actual transport.
+В этом уроке нет HTTP server; конечный автомат выполняется in memory, чтобы вы могли проследить каждый hop. Gateway lesson Phase 13 · 17 подключает это к actual transport.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-oauth-scope-planner.md`. Given a remote MCP server with tools, the skill designs the scope set, pinning rules, and step-up policy.
+Этот урок создает `outputs/skill-oauth-scope-planner.md`. Для remote MCP server с tools skill проектирует набор scopes, правила pinning и step-up policy.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Trace the two-scope step-up flow. Note which hops repeat on step-up.
+1. Запустите `code/main.py`. Проследите two-scope step-up flow. Отметьте, какие hops повторяются на step-up.
 
-2. Add refresh-token rotation: every refresh issues a new refresh token and invalidates the old one. Simulate a stolen refresh token being used after rotation and confirm it fails.
+2. Добавьте refresh-token rotation: каждый refresh выдает новый refresh token и invalidates old one. Симулируйте использование stolen refresh token после rotation и подтвердите, что оно завершается отказом.
 
-3. Implement the protected-resource metadata endpoint as a real HTTP response using stdlib http.server. Mirror the /mcp endpoint from Lesson 09.
+3. Реализуйте protected-resource metadata endpoint как настоящий HTTP response с помощью stdlib http.server. Отразите endpoint `/mcp` из Lesson 09.
 
-4. Design a scope hierarchy for a GitHub MCP server: read repo, write PR, approve PR, merge PR, admin. Use step-up between each level.
+4. Спроектируйте scope hierarchy для GitHub MCP server: read repo, write PR, approve PR, merge PR, admin. Используйте step-up между каждым уровнем.
 
-5. Read RFC 8707 and RFC 9728. Identify the one field in 9728 that MCP uses differently from the RFC's example. (Hint: it concerns `scopes_supported`.)
+5. Прочитайте RFC 8707 и RFC 9728. Определите одно поле в 9728, которое MCP использует иначе, чем example из RFC. (Hint: это касается `scopes_supported`.)
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| OAuth 2.1 | "Modern OAuth" | Consolidated RFC that mandates PKCE and forbids implicit flow |
-| PKCE | "Proof-of-possession" | Code verifier + challenge defeating authorization-code interception |
-| Resource indicator | "Token audience" | RFC 8707 `resource` parameter pinning token to one server |
+| OAuth 2.1 | "Modern OAuth" | Consolidated RFC, который mandates PKCE и forbids implicit flow |
+| PKCE | "Proof-of-possession" | Code verifier + challenge, defeating authorization-code interception |
+| Resource indicator | "Token audience" | Параметр RFC 8707 `resource`, закрепляющий token за одним server |
 | Protected-resource metadata | "Discovery doc" | RFC 9728 `.well-known/oauth-protected-resource` |
-| Step-up authorization | "Incremental consent" | SEP-835 flow for adding scopes on demand |
-| `insufficient_scope` | "403 with WWW-Authenticate" | Server signal to re-consent for a larger scope |
-| Confused deputy | "Token reuse across services" | Attack where a trusted holder forwards a token inappropriately |
-| Short-lived token | "Access token TTL" | Bearer that expires quickly; refresh token renews |
-| Scope hierarchy | "Least privilege stack" | Graduated scope set with step-up between levels |
-| Client ID metadata | "Client discovery doc" | URL at which the client publishes its own OAuth metadata |
+| Step-up authorization | "Incremental consent" | Flow SEP-835 для добавления scopes on demand |
+| `insufficient_scope` | "403 with WWW-Authenticate" | Сигнал server для re-consent на larger scope |
+| Confused deputy | "Token reuse across services" | Attack, где trusted holder неправомерно forwards token |
+| Short-lived token | "Access token TTL" | Bearer, который быстро expires; refresh token renews |
+| Scope hierarchy | "Least privilege stack" | Graduated scope set со step-up между уровнями |
+| Client ID metadata | "Client discovery doc" | URL, по которому client публикует собственные OAuth metadata |
 
-## Further Reading
+## Дополнительное чтение
 
-- [MCP — Authorization spec](https://modelcontextprotocol.io/specification/draft/basic/authorization) — canonical MCP OAuth profile
-- [den.dev — MCP November authorization spec](https://den.dev/blog/mcp-november-authorization-spec/) — walkthrough of the 2025-11-25 changes
-- [RFC 8707 — Resource indicators for OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc8707) — the audience-pinning RFC
-- [RFC 9728 — OAuth 2.0 protected resource metadata](https://datatracker.ietf.org/doc/html/rfc9728) — the discovery-document RFC
-- [Aembit — MCP OAuth 2.1, PKCE and the future of AI authorization](https://aembit.io/blog/mcp-oauth-2-1-pkce-and-the-future-of-ai-authorization/) — practical step-up-flow walk-through
+- [MCP — Authorization spec](https://modelcontextprotocol.io/specification/draft/basic/authorization) — канонический MCP OAuth profile
+- [den.dev — MCP November authorization spec](https://den.dev/blog/mcp-november-authorization-spec/) — walkthrough изменений 2025-11-25
+- [RFC 8707 — Resource indicators for OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc8707) — RFC для audience-pinning
+- [RFC 9728 — OAuth 2.0 protected resource metadata](https://datatracker.ietf.org/doc/html/rfc9728) — RFC discovery-document
+- [Aembit — MCP OAuth 2.1, PKCE and the future of AI authorization](https://aembit.io/blog/mcp-oauth-2-1-pkce-and-the-future-of-ai-authorization/) — practical step-up-flow walkthrough
