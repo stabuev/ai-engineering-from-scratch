@@ -1,78 +1,78 @@
 # Checkpoints and Rollback
 
-> Every graph-state transition persists. When a worker crashes, its lease expires and another worker picks up at the latest checkpoint. Cloudflare Durable Objects hold state across hours or weeks. Propose-then-commit (Lesson 15) defines a rollback plan per action. Post-action verification closes the loop. EU AI Act Article 14 makes effective human oversight mandatory for high-risk systems — in practice this means checkpoints must be queryable, rollbacks must be rehearsed, and the audit trail must survive a deploy. The sharp failure mode: without idempotency keys and precondition checks, a retry after a transient failure can double-execute an already-approved action. Post-action verification is what catches it.
+> Каждый graph-state transition сохраняется. Когда worker падает, его lease истекает, и другой worker подхватывает выполнение с последнего checkpoint. Cloudflare Durable Objects удерживают состояние часами или неделями. Propose-then-commit (Урок 15) определяет rollback plan для каждого действия. Post-action verification замыкает цикл. EU AI Act Article 14 делает effective human oversight обязательным для high-risk systems — на практике это означает, что checkpoints должны быть доступны для запросов, rollbacks должны быть отрепетированы, а audit trail должен переживать deploy. Острый режим отказа: без idempotency keys и precondition checks retry после transient failure может double-execute уже одобренное действие. Post-action verification — то, что это ловит.
 
-**Type:** Learn
-**Languages:** Python (stdlib, checkpoint and rollback state machine)
-**Prerequisites:** Phase 15 · 12 (Durable execution), Phase 15 · 15 (Propose-then-commit)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, state machine checkpoint and rollback)
+**Предварительные требования:** Фаза 15 · 12 (Надежное выполнение), Фаза 15 · 15 (Propose-then-commit)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Durable execution (Lesson 12) makes a crashed agent resumable. Propose-then-commit (Lesson 15) makes an approved action auditable. This lesson joins them: what happens when an approved action executes partially, crashes, and resumes? When does the rollback run, and against what state?
+Durable execution (Урок 12) делает упавшего агента возобновляемым. Propose-then-commit (Урок 15) делает одобренное действие аудируемым. Этот урок соединяет их: что происходит, когда одобренное действие выполняется частично, падает и возобновляется? Когда запускается rollback и относительно какого состояния?
 
-Real systems wire this up differently:
+Реальные системы связывают это по-разному:
 
-- **LangGraph** checkpoints every graph-state transition to PostgreSQL. On worker crash, the lease releases and another worker resumes at the latest checkpoint. Workflows pause on `interrupt()`, which itself persists.
-- **Cloudflare Durable Objects** hold per-key state across hours or weeks. Co-locate the computation with the storage for the approved action.
-- **Microsoft Agent Framework** exposes `Checkpoint` primitives in the workflow API; replay plus idempotency covers retries.
+- **LangGraph** сохраняет checkpoint для каждого graph-state transition в PostgreSQL. При падении worker lease освобождается, и другой worker возобновляет выполнение с последнего checkpoint. Workflows приостанавливаются на `interrupt()`, который сам сохраняется.
+- **Cloudflare Durable Objects** хранят per-key state часами или неделями. Размещайте вычисление рядом с storage для одобренного действия.
+- **Microsoft Agent Framework** предоставляет primitives `Checkpoint` в workflow API; replay плюс idempotency покрывают retries.
 
-In every case, the combination that actually works is: idempotency key (prevents double-execute) + precondition check (state is still what we approved against) + post-action verify (the side effect actually happened) + rollback on verify-fail.
+В каждом случае комбинация, которая действительно работает: idempotency key (предотвращает double-execute) + precondition check (state все еще тот, против которого мы дали approval) + post-action verify (side effect действительно произошел) + rollback on verify-fail.
 
-## The Concept
+## Концепция
 
-### Every transition persists
+### Каждый transition сохраняется
 
-A graph-state transition is any step that moves the workflow from one named state to another. Naive implementations persist only at specific commit points; production implementations persist every transition. The cost (a few extra writes) is small relative to the reliability gain (replay lands anywhere, lease recovery is precise).
+Graph-state transition — это любой шаг, переводящий workflow из одного именованного состояния в другое. Наивные реализации сохраняются только в конкретных commit points; production implementations сохраняют каждый transition. Стоимость (несколько дополнительных writes) мала относительно выигрыша в надежности (replay попадает куда угодно, lease recovery точен).
 
 ### Lease recovery
 
-When a worker crashes, the workflow is not lost; the lease (a short-lived claim that this worker is executing this run) simply expires. Another worker picks up the latest checkpoint and resumes. The lease mechanism is what lets production systems survive rolling deploys without losing in-flight work.
+Когда worker падает, workflow не теряется; lease (краткоживущая claim, что этот worker выполняет этот run) просто истекает. Другой worker подхватывает последний checkpoint и продолжает. Lease mechanism позволяет production systems переживать rolling deploys без потери in-flight work.
 
-### Idempotency plus preconditions
+### Idempotency плюс preconditions
 
-Idempotency alone is not enough. Consider: a workflow is approved to "transfer $100 from A to B when balance > $1000." The workflow is committed, crashes mid-execution, and resumes. If only the idempotency key is checked, and the execution resumes, the transfer runs once (correct). But consider that between crash and resume, A's balance drops to $500 via a different workflow. The idempotency check still passes; the precondition does not. Without a precondition check, we ship an overdraft.
+Одной idempotency недостаточно. Рассмотрим: workflow одобрен для "перевести $100 из A в B, когда баланс > $1000." Workflow committed, падает в середине выполнения и возобновляется. Если проверяется только idempotency key, и выполнение возобновляется, transfer выполняется один раз (корректно). Но предположим, что между crash и resume баланс A падает до $500 через другой workflow. Idempotency check все еще проходит; precondition — нет. Без precondition check мы отправляем overdraft.
 
-Every consequential action needs both:
+Каждому consequential action нужны оба:
 
-- **Idempotency key**: prevents double-execute.
-- **Precondition check**: confirms the state is still consistent with what was approved.
+- **Idempotency key**: предотвращает double-execute.
+- **Precondition check**: подтверждает, что state все еще согласован с одобренным action.
 
 ### Post-action verification
 
-"The tool returned 200" is not verification. Real verification re-reads the target state and confirms the side effect actually happened. Patterns:
+"Tool returned 200" — это не verification. Настоящая verification заново читает целевое состояние и подтверждает, что side effect действительно произошел. Паттерны:
 
-- Database update: `UPDATE ... RETURNING *` then assert the returned row matches intended state.
-- Email send: check sent-folder for the message ID after submission.
-- File write: read the file back and hash it.
-- API call: follow-up `GET` on the target resource.
+- Database update: `UPDATE ... RETURNING *`, затем assert, что returned row соответствует intended state.
+- Email send: проверить папку отправленных по message ID после submission.
+- File write: прочитать файл обратно и захэшировать его.
+- API call: последующий `GET` по target resource.
 
-If verify fails, the workflow is in a known-bad state. Rollback engages.
+Если verify fails, workflow находится в известном плохом состоянии. Включается rollback.
 
 ### Rollback plans
 
-Every consequential action in propose-then-commit (Lesson 15) carries a rollback plan. Types:
+Каждое consequential action в propose-then-commit (Урок 15) несет rollback plan. Типы:
 
-- **In-band rollback**: reverse the side effect directly (`DELETE` after `INSERT`, `Send-correction-email` after send).
-- **Compensating transaction**: a new action that neutralizes the original (standard SAGA pattern).
-- **Out-of-band rollback**: alert a human, pause the workflow, leave the bad state for investigation.
+- **In-band rollback**: напрямую обратить side effect (`DELETE` after `INSERT`, `Send-correction-email` after send).
+- **Compensating transaction**: новое действие, которое нейтрализует исходное (стандартный SAGA pattern).
+- **Out-of-band rollback**: alert human, pause workflow, leave the bad state for investigation.
 
-No-op rollback ("we cannot undo this") must be named in the proposal. Actions with no rollback require stronger HITL at commit time (Lesson 15 challenge-and-response).
+No-op rollback ("we cannot undo this") должен быть назван в proposal. Actions без rollback требуют более строгого HITL во время commit (Урок 15 challenge-and-response).
 
-### EU AI Act Article 14 operational reading
+### Операционное прочтение EU AI Act Article 14
 
-Article 14 requires "effective human oversight" for high-risk systems. In operational terms, implementers read it as:
+Article 14 требует "effective human oversight" для high-risk systems. В операционных терминах implementers читают это так:
 
-- Checkpoints are queryable by an auditor.
-- Rollbacks are rehearsed (tested end-to-end at least once).
-- The audit trail survives a deploy (checkpoint backend is not ephemeral).
-- Failed verifications are alerted on, not silently logged.
+- Checkpoints доступны аудитору для запросов.
+- Rollbacks отрепетированы (tested end-to-end хотя бы один раз).
+- Audit trail переживает deploy (checkpoint backend не ephemeral).
+- Failed verifications вызывают alert, а не молча log.
 
-A workflow that crashes mid-commit, resumes, and completes the side effect without a verify + rollback pathway does not survive the Article 14 test.
+Workflow, который падает mid-commit, возобновляется и завершает side effect без verify + rollback pathway, не проходит тест Article 14.
 
-### The sharp failure mode: the double-execute
+### Острый режим отказа: double-execute
 
-The most common production incident in this space:
+Самый распространенный production incident в этой области:
 
 1. Action approved, idempotency key k.
 2. Commit starts, executes, returns 200.
@@ -80,45 +80,45 @@ The most common production incident in this space:
 4. Workflow resumes; sees "approved but not committed"; re-executes.
 5. Side effect fires twice.
 
-Mitigation: persist an "in-flight" intent before execution, execute with an idempotency key, then mark "committed" only after post-action verification succeeds. If the action fires and the status write fails, you know to verify and (if necessary) re-fire. If the status write succeeds and the action fails, you verify and fire exactly once via the recovery path.
+Mitigation: сохранять "in-flight" intent до выполнения, выполнять с idempotency key, затем помечать "committed" только после успешной post-action verification. Если action fires, а status write fails, вы знаете, что нужно verify и (если нужно) re-fire. Если status write succeeds, а action fails, вы verify и fire exactly once через recovery path.
 
-## Use It
+## Используйте это
 
-`code/main.py` implements a checkpointed workflow with idempotency, preconditions, verify, and rollback. The driver simulates four scenarios: clean run, retry after crash (idempotency catches), precondition fail (workflow aborts without firing), verify fail (rollback fires).
+`code/main.py` реализует checkpointed workflow с idempotency, preconditions, verify и rollback. Driver симулирует четыре сценария: clean run, retry after crash (idempotency catches), precondition fail (workflow aborts without firing), verify fail (rollback fires).
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-rollback-rehearsal.md` designs a rollback-rehearsal test for a proposed workflow and audits the checkpoint backend for audit-trail persistence.
+`outputs/skill-rollback-rehearsal.md` проектирует rollback-rehearsal test для предлагаемого workflow и аудирует checkpoint backend на persistence audit-trail.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Verify the four scenarios. For the crash-during-commit case, confirm the action fires exactly once across retries.
+1. Запустите `code/main.py`. Проверьте четыре сценария. Для случая crash-during-commit убедитесь, что action fires exactly once across retries.
 
-2. Modify the "mark as done first, then do it" pattern so the status write fires after the action. Rerun the crash scenario. Measure how many duplicate actions fire.
+2. Измените паттерн "сначала пометить выполненным, затем выполнить" так, чтобы status write срабатывал после action. Перезапустите crash scenario. Измерьте, сколько duplicate actions fires.
 
-3. Design a rollback plan for a specific production action (e.g., "post to a Slack channel"). Classify as in-band, compensating, or out-of-band. Justify the choice.
+3. Спроектируйте rollback plan для конкретного production action (например, "post to a Slack channel"). Классифицируйте как in-band, compensating или out-of-band. Обоснуйте выбор.
 
-4. Take one workflow you know. Identify every state transition. Mark each with a durability requirement (persist / do not persist). Count the ones you are currently not persisting.
+4. Возьмите один знакомый вам workflow. Найдите каждое state transition. Пометьте каждое durability requirement (persist / do not persist). Посчитайте те, которые вы сейчас не сохраняете.
 
-5. Rehearsed-rollback test: design an end-to-end test that runs a real workflow, crashes it, and confirms the rollback path fires. What does the test assert?
+5. Rehearsed-rollback test: спроектируйте end-to-end test, который запускает real workflow, crashes it и подтверждает, что rollback path fires. Что проверяет test?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это означает на самом деле |
 |---|---|---|
-| Checkpoint | "Save point" | Every graph-state transition persists to a durable store |
-| Lease | "Worker claim" | Short-lived claim that a worker is executing a run; expires on crash |
-| Precondition | "State gate" | Assertion that the state is still consistent with the approved action |
-| Post-action verify | "Re-read check" | Confirm the side effect actually happened in the target system |
-| In-band rollback | "Direct undo" | Reverse the side effect with the inverse operation |
-| Compensating transaction | "SAGA undo" | A new action that neutralizes the original |
-| Mark-as-done-first | "Status write order" | Persist the committed status before returning from commit |
-| Article 14 | "EU AI Act human oversight" | Operational: queryable checkpoints, rehearsed rollbacks, auditable trail |
+| Checkpoint | "Точка сохранения" | Каждое graph-state transition сохраняется в durable store |
+| Lease | "Claim worker" | Краткоживущая claim, что worker выполняет run; истекает при crash |
+| Precondition | "Шлюз состояния" | Assertion, что state все еще согласован с approved action |
+| Post-action verify | "Повторное чтение" | Подтвердить, что side effect действительно произошел в target system |
+| In-band rollback | "Прямой откат" | Обратить side effect обратной операцией |
+| Compensating transaction | "SAGA-откат" | Новое action, которое нейтрализует original |
+| Mark-as-done-first | "Порядок записи статуса" | Persist committed status before returning from commit |
+| Article 14 | "Человеческий надзор по EU AI Act" | Операционно: queryable checkpoints, rehearsed rollbacks, auditable trail |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Microsoft Agent Framework — Checkpointing and HITL](https://learn.microsoft.com/en-us/agent-framework/workflows/human-in-the-loop) — checkpoint primitives and lease recovery.
-- [Cloudflare Agents — Human in the loop](https://developers.cloudflare.com/agents/concepts/human-in-the-loop/) — Durable Objects as a state substrate.
+- [Microsoft Agent Framework — Checkpointing and HITL](https://learn.microsoft.com/en-us/agent-framework/workflows/human-in-the-loop) — checkpoint primitives и lease recovery.
+- [Cloudflare Agents — Human in the loop](https://developers.cloudflare.com/agents/concepts/human-in-the-loop/) — Durable Objects как state substrate.
 - [EU AI Act — Article 14: Human oversight](https://artificialintelligenceact.eu/article/14/) — regulatory baseline.
-- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — reliability framing for long-horizon workflows.
-- [Anthropic — Claude Code Agent SDK: agent loop](https://code.claude.com/docs/en/agent-sdk/agent-loop) — workflow shape for Claude Code Routines.
+- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — reliability framing для long-horizon workflows.
+- [Anthropic — Claude Code Agent SDK: agent loop](https://code.claude.com/docs/en/agent-sdk/agent-loop) — workflow shape для Claude Code Routines.

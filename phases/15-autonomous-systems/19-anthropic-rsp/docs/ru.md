@@ -1,101 +1,101 @@
 # Anthropic Responsible Scaling Policy v3.0
 
-> RSP v3.0 went into effect February 24, 2026, replacing the 2023 policy. Two-tier mitigation: what Anthropic will do unilaterally vs what is framed as an industry-wide recommendation (including RAND SL-4 security standards). Adds Frontier Safety Roadmaps and Risk Reports as standing documents rather than one-off deliverables. Drops the 2023 pause commitment. Introduces the AI R&D-4 threshold: once crossed, Anthropic must publish an affirmative case identifying misalignment risks and mitigations. Claude Opus 4.6 does not cross it. Anthropic states in the v3.0 announcement that "confidently ruling this out is becoming difficult." SaferAI rated the 2023 RSP at 2.2; they downgraded v3.0 to 1.9, putting Anthropic in the "weak" RSP category alongside OpenAI and DeepMind. Qualitative thresholds replaced the 2023 quantitative commitments; removing the pause clause is the sharpest regression.
+> RSP v3.0 вступила в силу 24 февраля 2026 года, заменив политику 2023 года. Двухуровневая mitigation: что Anthropic будет делать самостоятельно и что оформлено как industry-wide recommendation (включая стандарты безопасности RAND SL-4). Добавляет Frontier Safety Roadmaps и Risk Reports как постоянные документы, а не разовые deliverables. Убирает pause commitment 2023 года. Вводит порог AI R&D-4: после его пересечения Anthropic должна опубликовать affirmative case с указанием misalignment risks и mitigations. Claude Opus 4.6 его не пересекает. В объявлении v3.0 Anthropic утверждает, что "confidently ruling this out is becoming difficult." SaferAI оценивала RSP 2023 года на 2.2; v3.0 они понизили до 1.9, поместив Anthropic в категорию "weak" RSP вместе с OpenAI и DeepMind. Качественные пороги заменили количественные обязательства 2023 года; удаление pause clause - самая резкая регрессия.
 
-**Type:** Learn
-**Languages:** Python (stdlib, RSP threshold decision engine)
-**Prerequisites:** Phase 15 · 06 (AAR), Phase 15 · 07 (RSI)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, движок принятия решений по порогам RSP)
+**Предварительные требования:** Phase 15 · 06 (AAR), Phase 15 · 07 (RSI)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-Frontier labs publish scaling policies that are partly technical documents, partly governance documents, and partly signals to regulators. RSP v3.0 is the current Anthropic document. Reading it closely matters not because compliance with it is binding (it is not), but because the framing shapes how a lab conceives of catastrophic risk and how they communicate trade-offs to the public.
+Frontier labs публикуют scaling policies, которые одновременно являются техническими документами, governance-документами и сигналами регуляторам. RSP v3.0 - текущий документ Anthropic. Читать его внимательно важно не потому, что соблюдение обязательно (это не так), а потому что framing формирует то, как лаборатория понимает catastrophic risk и как она объясняет trade-offs обществу.
 
-The v3.0 vs v2.0 diff is the useful unit. What got added: Frontier Safety Roadmaps, Risk Reports, the AI R&D-4 threshold. What got removed: the 2023 pause commitment. What got reframed: a two-tier mitigation schedule split between Anthropic-unilateral and industry-recommendation. External review — SaferAI — downgraded the score from 2.2 (v2) to 1.9 (v3.0). This is how a scaling policy can get less rigorous while looking more polished.
+Diff v3.0 vs v2.0 - полезная единица анализа. Что добавлено: Frontier Safety Roadmaps, Risk Reports, порог AI R&D-4. Что удалено: pause commitment 2023 года. Что переоформлено: двухуровневый график mitigation, разделенный на Anthropic-unilateral и industry-recommendation. Внешняя оценка - SaferAI - снизила score с 2.2 (v2) до 1.9 (v3.0). Так scaling policy может стать менее строгой, выглядя при этом более отполированной.
 
-## The Concept
+## Концепция
 
-### The two-tier mitigation schedule
+### Двухуровневый график mitigation
 
-- **Anthropic unilateral actions**: what Anthropic will do regardless of what other labs do. Training stops above a threshold, specific security measures, specific deployment gates.
-- **Industry-wide recommendations**: what Anthropic thinks the industry should do collectively. Includes RAND SL-4 security standards. These are not commitments on Anthropic's side; they are policy advocacy.
+- **Anthropic unilateral actions**: что Anthropic будет делать независимо от того, что делают другие лаборатории. Остановки обучения выше порога, конкретные меры безопасности, конкретные deployment gates.
+- **Industry-wide recommendations**: что Anthropic считает необходимым делать индустрии коллективно. Включает стандарты безопасности RAND SL-4. Это не обязательства Anthropic; это policy advocacy.
 
-The two-tier structure was not in v2. It means that a reader needs to look at which column each commitment lives in. A security measure in the "industry-wide recommendation" column is not Anthropic's promise; it is Anthropic's hope.
+Двухуровневой структуры не было в v2. Она означает, что читателю нужно смотреть, в какой колонке находится каждое обязательство. Мера безопасности в колонке "industry-wide recommendation" - не обещание Anthropic; это надежда Anthropic.
 
-### The AI R&D-4 threshold
+### Порог AI R&D-4
 
-This is the capability level RSP v3.0 names as the important next threshold. Specifically: a model that could automate a substantial fraction of AI research at competitive cost. Once Anthropic believes a model crosses it, they must publish an affirmative case identifying misalignment risks and mitigations before continued scaling.
+Это уровень capabilities, который RSP v3.0 называет важным следующим порогом. Конкретно: модель, способная автоматизировать значительную долю AI research при конкурентной стоимости. Как только Anthropic считает, что модель его пересекает, компания должна опубликовать affirmative case, указывающий misalignment risks и mitigations, до продолжения scaling.
 
-Claude Opus 4.6 does not cross it per the v3.0 announcement. The document adds: "confidently ruling this out is becoming difficult." That phrasing matters; it concedes that the threshold is close enough to be a live concern, not a speculative limit.
+Claude Opus 4.6 не пересекает его согласно объявлению v3.0. Документ добавляет: "confidently ruling this out is becoming difficult." Эта формулировка важна; она признает, что порог достаточно близок, чтобы быть актуальной заботой, а не спекулятивным пределом.
 
-Lesson 6 (Automated Alignment Research) and Lesson 7 (Recursive Self-Improvement) feed directly into this threshold. Automated alignment researchers crossing research-quality bars is evidence that the AI R&D-4 threshold is approaching.
+Lesson 6 (Automated Alignment Research) и Lesson 7 (Recursive Self-Improvement) напрямую ведут к этому порогу. Automated alignment researchers, пересекающие research-quality bars, - evidence того, что порог AI R&D-4 приближается.
 
-### Frontier Safety Roadmaps and Risk Reports
+### Frontier Safety Roadmaps и Risk Reports
 
-v3.0 elevates two artifact types to standing documents:
+v3.0 поднимает два типа артефактов до статуса постоянных документов:
 
-- **Frontier Safety Roadmap**: forward-looking document describing planned safety work, capability expectations, and mitigation research.
-- **Risk Report**: retrospective document on specific models after release, describing observed capability and residual risk.
+- **Frontier Safety Roadmap**: forward-looking document, описывающий планируемую safety work, ожидания по capabilities и mitigation research.
+- **Risk Report**: retrospective document по конкретным моделям после release, описывающий наблюдаемые capabilities и residual risk.
 
-Both are public. Both are updated on a declared cadence. The utility is: reader can track how what Anthropic said they would do in a Roadmap compares to what they report in a Risk Report.
+Оба публичны. Оба обновляются по заявленной cadence. Практическая польза: читатель может отслеживать, как то, что Anthropic обещала сделать в Roadmap, соотносится с тем, что она сообщает в Risk Report.
 
-### Removing the pause clause
+### Удаление pause clause
 
-The 2023 RSP included an explicit pause commitment: if a model crossed specific capability thresholds, training would pause until mitigations were in place. v3.0 replaces the explicit pause with a softer formulation (publish an affirmative case, proceed if mitigations are adequate). SaferAI and other analysts called this out directly as the strongest regression in the new document.
+RSP 2023 года включала явное pause commitment: если модель пересекает конкретные capability thresholds, training останавливается до появления mitigations. v3.0 заменяет явную паузу более мягкой формулировкой (опубликовать affirmative case, продолжать, если mitigations адекватны). SaferAI и другие аналитики прямо назвали это самой сильной регрессией нового документа.
 
-The policy argument for the change: quantitative thresholds in 2023 turned out to be unreachable by 2026-era capability benchmarks because the benchmarks themselves were re-scaled. The counter-argument: a pause clause in a scaling policy is a commitment device; removing it removes the credibility of the policy.
+Policy-аргумент в пользу изменения: количественные пороги 2023 года оказались недостижимыми для capability benchmarks эпохи 2026 года, потому что сами benchmarks были переотмасштабированы. Контраргумент: pause clause в scaling policy - это commitment device; его удаление подрывает credibility политики.
 
-### SaferAI's downgrade
+### Понижение оценки SaferAI
 
-SaferAI is an independent organization that rates RSP-style documents. Their public rating: 2023 Anthropic RSP scored 2.2 (out of a scale where 4.0 is the best current RSP and 1.0 is nominal). v3.0 scored 1.9. This moved Anthropic from "moderate" to "weak," joining OpenAI and DeepMind in the weak category.
+SaferAI - независимая организация, оценивающая документы в стиле RSP. Их публичная оценка: Anthropic RSP 2023 года получила 2.2 (по шкале, где 4.0 - лучшая текущая RSP, а 1.0 - nominal). v3.0 получила 1.9. Это переместило Anthropic из "moderate" в "weak", вместе с OpenAI и DeepMind в слабой категории.
 
-The downgrade factors per SaferAI:
-- Qualitative thresholds replaced quantitative ones.
-- Pause commitment removed.
-- AI R&D-4 threshold mitigations are described as "affirmative case" rather than specific measures.
-- Review mechanisms depend on Anthropic's Safety Advisory Group, with limited independent oversight.
+Факторы понижения по SaferAI:
+- Качественные пороги заменили количественные.
+- Pause commitment удалено.
+- Mitigations для порога AI R&D-4 описаны как "affirmative case", а не как конкретные меры.
+- Review mechanisms зависят от Anthropic's Safety Advisory Group, с ограниченным independent oversight.
 
-### What this lesson is not
+### Чем этот урок не является
 
-This is not a lesson in compliance. RSP v3.0 is not a regulation; nothing forces Anthropic to follow it. The lesson is in reading the document with the specificity and skepticism it deserves. Scaling policies are the primary public signal frontier labs emit about catastrophic-risk posture. Reading them well is a practical skill for anyone whose work depends on frontier capabilities.
+Это не урок по compliance. RSP v3.0 не является regulation; ничто не заставляет Anthropic ей следовать. Урок состоит в чтении документа с той конкретностью и скепсисом, которых он заслуживает. Scaling policies - главный публичный сигнал frontier labs о позиции по catastrophic risk. Умение хорошо их читать - практический навык для всех, чья работа зависит от frontier capabilities.
 
-## Use It
+## Использование
 
-`code/main.py` implements a small decision engine that mirrors the RSP threshold-evaluation shape: given a candidate model and a set of capability measurements, return whether the AI R&D-4 threshold is crossed, the required affirmative-case sections, and whether deployment can proceed. It's intentionally simple; the point is to make the document's logic explicit.
+`code/main.py` реализует небольшой decision engine, отражающий форму threshold evaluation в RSP: по candidate model и набору capability measurements вернуть, пересечен ли порог AI R&D-4, какие разделы affirmative case требуются и может ли deployment продолжаться. Он намеренно простой; цель - сделать логику документа явной.
 
-## Ship It
+## Практический результат
 
-`outputs/skill-scaling-policy-review.md` reviews a scaling policy (Anthropic, OpenAI, DeepMind, or internal) against the v3.0 reference: two-tier structure, thresholds, pause commitments, independent review.
+`outputs/skill-scaling-policy-review.md` рассматривает scaling policy (Anthropic, OpenAI, DeepMind или internal) относительно reference v3.0: двухуровневая структура, пороги, pause commitments, independent review.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Feed in three synthetic models at different capability levels. Confirm the threshold evaluator behaves as expected and produces the right affirmative-case template.
+1. Запустите `code/main.py`. Передайте три synthetic models с разными capability levels. Подтвердите, что threshold evaluator ведет себя ожидаемо и создает правильный шаблон affirmative case.
 
-2. Read RSP v3.0 in full (32 pages). Identify every commitment that lives in the "industry-wide recommendation" tier. Which of those commitments would have been "Anthropic unilateral" in v2?
+2. Прочитайте RSP v3.0 полностью (32 pages). Найдите каждое обязательство, находящееся на уровне "industry-wide recommendation". Какие из этих обязательств в v2 были бы "Anthropic unilateral"?
 
-3. Read SaferAI's RSP grading methodology. Reproduce their 1.9 score for v3.0 by applying their rubric to the document. Which rubric row drove the downgrade most?
+3. Прочитайте методологию оценки RSP от SaferAI. Воспроизведите их score 1.9 для v3.0, применив rubric к документу. Какая строка rubric сильнее всего повлияла на downgrade?
 
-4. The 2023 pause commitment was removed. Propose a replacement commitment that preserves the credibility of the policy while acknowledging the 2026 benchmark-rescaling problem.
+4. Pause commitment 2023 года было удалено. Предложите replacement commitment, которое сохраняет credibility политики, признавая проблему benchmark-rescaling 2026 года.
 
-5. Compare RSP v3.0 to OpenAI Preparedness Framework v2 (Lesson 20). Pick one area where v3.0 is stronger. Pick one area where the Preparedness Framework is stronger.
+5. Сравните RSP v3.0 с OpenAI Preparedness Framework v2 (Lesson 20). Выберите одну область, где v3.0 сильнее. Выберите одну область, где Preparedness Framework сильнее.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |---|---|---|
-| RSP | "Anthropic's scaling policy" | Responsible Scaling Policy; v3.0 effective Feb 24, 2026 |
-| AI R&D-4 | "Research-automation threshold" | Capability to automate substantial AI research at competitive cost |
-| Affirmative case | "Safety justification" | Published argument that risks are identified and mitigations adequate |
-| Frontier Safety Roadmap | "Forward plan" | Standing document on planned safety work and expected capabilities |
-| Risk Report | "Retrospective on a model" | Standing document on observed capability and residual risk after release |
-| Two-tier mitigation | "Unilateral vs industry" | Anthropic commitments vs industry recommendations, separated |
-| Pause commitment | "2023 clause" | Explicit promise to pause training; removed in v3.0 |
-| SaferAI rating | "Independent RSP grade" | Third-party rubric; v3.0 scored 1.9 (v2 was 2.2) |
+| RSP | "Scaling policy Anthropic" | Responsible Scaling Policy; v3.0 вступила в силу 24 февраля 2026 года |
+| AI R&D-4 | "Порог автоматизации исследований" | Способность автоматизировать существенную часть AI research при конкурентной стоимости |
+| Affirmative case | "Обоснование безопасности" | Опубликованный аргумент, что risks выявлены, а mitigations адекватны |
+| Frontier Safety Roadmap | "План на будущее" | Постоянный документ о планируемой safety work и expected capabilities |
+| Risk Report | "Ретроспектива по модели" | Постоянный документ о observed capability и residual risk после release |
+| Two-tier mitigation | "Anthropic vs индустрия" | Разделенные обязательства Anthropic и industry recommendations |
+| Pause commitment | "Пункт 2023 года" | Явное обещание pause training; удалено в v3.0 |
+| SaferAI rating | "Независимая оценка RSP" | Third-party rubric; v3.0 получила 1.9 (v2 получила 2.2) |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anthropic — Responsible Scaling Policy v3.0](https://anthropic.com/responsible-scaling-policy/rsp-v3-0) — the full 32-page policy.
-- [Anthropic — RSP v3.0 announcement](https://www.anthropic.com/news/responsible-scaling-policy-v3) — summary of changes from v2.
-- [Anthropic — Frontier Safety Roadmap](https://www.anthropic.com/research/frontier-safety) — standing document linked from RSP v3.0.
-- [Anthropic — Risk Report: Claude Opus 4.6](https://www.anthropic.com/research/risk-report-claude-opus-4-6) — retrospective on the current frontier model.
-- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — connects AI R&D-4 to measured autonomy.
+- [Anthropic — Responsible Scaling Policy v3.0](https://anthropic.com/responsible-scaling-policy/rsp-v3-0) — полная политика на 32 страницы.
+- [Anthropic — RSP v3.0 announcement](https://www.anthropic.com/news/responsible-scaling-policy-v3) — summary изменений относительно v2.
+- [Anthropic — Frontier Safety Roadmap](https://www.anthropic.com/research/frontier-safety) — постоянный документ, linked from RSP v3.0.
+- [Anthropic — Risk Report: Claude Opus 4.6](https://www.anthropic.com/research/risk-report-claude-opus-4-6) — retrospective по текущей frontier model.
+- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — связывает AI R&D-4 с measured autonomy.

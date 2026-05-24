@@ -1,108 +1,108 @@
 # Human-in-the-Loop: Propose-Then-Commit
 
-> The 2026 consensus on HITL is specific. It is not "the agent asks, the user clicks Approve." It is propose-then-commit: the proposed action is persisted to a durable store with an idempotency key; surfaced to a reviewer with intent, data lineage, permissions touched, blast radius, and a rollback plan; committed only after positive acknowledgement; verified after execution to confirm the side effect actually happened. LangGraph's `interrupt()` plus PostgreSQL checkpointing, Microsoft Agent Framework's `RequestInfoEvent`, and Cloudflare's `waitForApproval()` all implement the same shape. The canonical failure mode is the rubber-stamp approval: "Approve?" is clicked without review. The documented mitigation is challenge-and-response with an explicit checklist.
+> Консенсус 2026 года по HITL конкретен. Это не "агент спрашивает, пользователь нажимает Approve." Это propose-then-commit: предлагаемое действие сохраняется в durable store с idempotency key; показывается reviewer вместе с intent, data lineage, затронутыми permissions, blast radius и rollback plan; commit выполняется только после positive acknowledgement; после выполнения идет verification, чтобы подтвердить, что side effect действительно произошел. `interrupt()` в LangGraph плюс PostgreSQL checkpointing, `RequestInfoEvent` в Microsoft Agent Framework и `waitForApproval()` в Cloudflare реализуют одну и ту же форму. Канонический режим отказа — rubber-stamp approval: "Approve?" кликают без review. Задокументированная mitigation — challenge-and-response с явным checklist.
 
-**Type:** Learn
-**Languages:** Python (stdlib, propose-then-commit state machine with idempotency)
-**Prerequisites:** Phase 15 · 12 (Durable execution), Phase 15 · 14 (Tripwires)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, state machine propose-then-commit с idempotency)
+**Предварительные требования:** Фаза 15 · 12 (Надежное выполнение), Фаза 15 · 14 (Tripwires)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-An agent takes an action. The user has to decide: approve or not. If the decision is instant, it is probably not a review. If the decision is structured, it is slow but trustworthy. The engineering question is how to make a structured review the path of least resistance.
+Агент выполняет действие. Пользователь должен решить: одобрить или нет. Если решение мгновенное, это, вероятно, не review. Если решение структурированное, оно медленное, но заслуживает доверия. Инженерный вопрос в том, как сделать структурированное review путем наименьшего сопротивления.
 
-The 2023-era HITL pattern was a synchronous prompt: "Agent wants to send email to X with body Y — approve?" The user clicks Approve. Everyone feels the system is safe. In practice this surface is heavily rubber-stamped: users approve fast, approvals predict little, and when the agent goes wrong, the audit trail shows a long history of approvals the user cannot recall.
+HITL-паттерн эпохи 2023 года был синхронным prompt: "Агент хочет отправить письмо X с текстом Y — одобрить?" Пользователь нажимает Approve. Всем кажется, что система безопасна. На практике эту поверхность часто rubber-stamp: пользователи одобряют быстро, approvals мало что предсказывают, а когда агент ошибается, audit trail показывает длинную историю approvals, которые пользователь не может вспомнить.
 
-The 2026 pattern — propose-then-commit — moves HITL onto a durable substrate, attaches structured metadata, and requires positive commit. Every managed agent SDK ships a version: LangGraph `interrupt()`, Microsoft Agent Framework `RequestInfoEvent`, Cloudflare `waitForApproval()`. The API names differ; the shape does not.
+Паттерн 2026 года — propose-then-commit — переносит HITL на durable substrate, добавляет структурированные metadata и требует positive commit. Каждый managed agent SDK поставляет свою версию: LangGraph `interrupt()`, Microsoft Agent Framework `RequestInfoEvent`, Cloudflare `waitForApproval()`. Имена API различаются; форма — нет.
 
-## The Concept
+## Концепция
 
-### The propose-then-commit state machine
+### State machine propose-then-commit
 
-1. **Propose.** Agent produces a proposed action. Persisted to a durable store (PostgreSQL, Redis, Durable Object). Includes:
-   - intent (why is the agent doing this)
-   - data lineage (what source led to this proposal)
-   - permissions touched (which scopes / files / endpoints)
-   - blast radius (what is the worst case)
-   - rollback plan (if committed, how do we undo it)
-   - idempotency key (unique per proposal; resubmission returns the same record)
-2. **Surface.** Reviewer sees the proposal with all metadata. The reviewer is a person (not the agent reviewing itself).
-3. **Commit.** Positive acknowledgement. The action executes.
-4. **Verify.** After execution, the side effect is read back and confirmed. If the verify step fails, the system is in a known bad state and alerting engages.
+1. **Propose.** Агент создает предлагаемое действие. Оно сохраняется в durable store (PostgreSQL, Redis, Durable Object). Включает:
+   - intent (зачем агент это делает)
+   - data lineage (какой источник привел к этому proposal)
+   - permissions touched (какие scopes / files / endpoints)
+   - blast radius (худший сценарий)
+   - rollback plan (если committed, как это отменить)
+   - idempotency key (уникальный для proposal; повторная отправка возвращает ту же запись)
+2. **Surface.** Reviewer видит proposal со всеми metadata. Reviewer — человек (не агент, проверяющий сам себя).
+3. **Commit.** Positive acknowledgement. Действие выполняется.
+4. **Verify.** После выполнения side effect считывается обратно и подтверждается. Если шаг verify не проходит, система находится в известном плохом состоянии и включается alerting.
 
-### The idempotency key
+### Idempotency key
 
-Without an idempotency key, a retry after a transient failure can double-execute an approved action. Concrete example: user approves "transfer $100 from A to B." Network blips. Workflow retries. The user has approved once but the transfer executes twice. The idempotency key ties the approval to a single, unique side effect; the second execution is a no-op.
+Без idempotency key retry после transient failure может дважды выполнить одобренное действие. Конкретный пример: пользователь approve "transfer $100 from A to B." Network blips. Workflow retries. Пользователь одобрил один раз, но transfer выполняется дважды. Idempotency key привязывает approval к одному уникальному side effect; второе выполнение — no-op.
 
-This is the same idempotency pattern Stripe and AWS APIs use. Reusing it for agent approvals is explicit in the Microsoft Agent Framework docs.
+Это тот же паттерн idempotency, который используют Stripe и AWS APIs. Его повторное использование для agent approvals явно указано в документации Microsoft Agent Framework.
 
-### Durability: why approvals outlast processes
+### Durability: почему approvals переживают процессы
 
-The approval waiting room is a piece of state the agent does not own. The workflow is paused (Lesson 12). When the approval arrives, the workflow resumes from exactly that point. This is why LangGraph pairs `interrupt()` with PostgreSQL checkpointing and not just in-memory state — an approval two days later still finds the workflow intact.
+Approval waiting room — это часть состояния, которой агент не владеет. Workflow приостановлен (Урок 12). Когда approval приходит, workflow возобновляется ровно с этой точки. Поэтому LangGraph сочетает `interrupt()` с PostgreSQL checkpointing, а не просто с in-memory state — approval через два дня все еще находит workflow целым.
 
-### Rubber-stamp approvals and the challenge-and-response mitigation
+### Rubber-stamp approvals и mitigation challenge-and-response
 
-The default UI for HITL ("Approve" / "Reject" buttons) produces fast approvals with no genuine review. Documented mitigation: a challenge-and-response checklist that requires positive answers to specific questions before the Approve button is enabled. Concrete shape:
+UI по умолчанию для HITL (кнопки "Approve" / "Reject") производит быстрые approvals без настоящего review. Задокументированная mitigation: checklist challenge-and-response, требующий положительных ответов на конкретные вопросы перед тем, как кнопка Approve станет доступной. Конкретная форма:
 
-- "Do you understand what resource this touches? [ ]"
-- "Have you verified the blast radius is acceptable? [ ]"
-- "Do you have a rollback plan if this fails? [ ]"
+- "Вы понимаете, какой ресурс затрагивает это действие? [ ]"
+- "Вы проверили, что blast radius приемлем? [ ]"
+- "У вас есть rollback plan на случай сбоя? [ ]"
 
-Not bureaucracy for its own sake — a forcing function. The reviewer who cannot tick the boxes either asks for clarification (escalation) or declines (safe default). The Anthropic agent-safety research explicitly cites checklist-driven HITL as a mitigation for rubber-stamp approval patterns.
+Это не бюрократия ради бюрократии, а forcing function. Reviewer, который не может поставить галочки, либо просит clarification (escalation), либо отклоняет действие (safe default). Исследования Anthropic по безопасности агентов прямо цитируют checklist-driven HITL как mitigation для rubber-stamp approval patterns.
 
-### What counts as consequential
+### Что считается consequential
 
-Not every action needs propose-then-commit. The 2026 guidance:
+Не каждое действие требует propose-then-commit. Guidance 2026 года:
 
-- **Consequential actions** (always HITL): irreversible writes, financial transactions, outbound communication, production database changes, destructive file-system operations.
-- **Reversible actions** (sometimes HITL): edits to local files, staging-env changes, reversible writes with clear rollback.
-- **Reads and inspections** (never HITL): reading a file, listing resources, calling a read-only API.
+- **Consequential actions** (всегда HITL): необратимые записи, финансовые транзакции, исходящие коммуникации, изменения production-базы данных, разрушительные операции с файловой системой.
+- **Reversible actions** (иногда HITL): правки локальных файлов, изменения staging-окружения, обратимые записи с ясным rollback.
+- **Reads and inspections** (никогда HITL): чтение файла, перечисление ресурсов, вызов read-only API.
 
 ### Post-action verification
 
-"The commit ran" is not the same as "the side effect happened." Network-partition and race conditions can produce a workflow that thinks it succeeded while the backend did not persist. The verify step re-reads the target resource after commit to confirm. This is the same pattern as database transactions with `RETURNING` clauses or AWS `GetObject` after `PutObject`.
+"Commit ran" не то же самое, что "side effect happened." Network partition и race conditions могут породить workflow, который считает, что завершился успешно, хотя backend ничего не сохранил. Шаг verify заново читает целевой ресурс после commit для подтверждения. Это тот же паттерн, что database transactions с `RETURNING` clauses или AWS `GetObject` после `PutObject`.
 
 ### EU AI Act Article 14
 
-Article 14 mandates effective human oversight for high-risk AI systems in the EU. "Effective" is not decorative. Regulatory language specifically excludes rubber-stamp patterns. Propose-then-commit with challenge-and-response is the shape that survives Article 14 scrutiny in the Microsoft Agent Governance Toolkit compliance docs.
+Article 14 требует effective human oversight для high-risk AI systems в ЕС. "Effective" — не декоративное слово. Язык регулирования прямо исключает rubber-stamp patterns. Propose-then-commit с challenge-and-response — форма, которая выдерживает проверку Article 14 в compliance docs Microsoft Agent Governance Toolkit.
 
-## Use It
+## Используйте это
 
-`code/main.py` implements a propose-then-commit state machine in stdlib Python. Durable store is a JSON file. Idempotency key is a hash of (thread_id, action_signature). The driver simulates three cases: a clean approval flow, a retry after transient failure (which must not double-execute), and a rubber-stamp default versus a challenge-and-response flow.
+`code/main.py` реализует state machine propose-then-commit на stdlib Python. Durable store — JSON-файл. Idempotency key — hash от (thread_id, action_signature). Driver симулирует три случая: чистый approval flow, retry после transient failure (который не должен double-execute), и rubber-stamp default versus challenge-and-response flow.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-hitl-design.md` reviews a proposed HITL workflow for propose-then-commit shape and flags missing metadata, idempotency, verification, or challenge-and-response layers.
+`outputs/skill-hitl-design.md` проверяет предлагаемый HITL workflow на форму propose-then-commit и отмечает отсутствующие metadata, idempotency, verification или слои challenge-and-response.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Confirm that a retry of an approved proposal uses the durable record and does not re-execute. Now change the idempotency key to include a timestamp and show the retry double-executes.
+1. Запустите `code/main.py`. Убедитесь, что retry одобренного proposal использует durable record и не re-execute. Теперь измените idempotency key так, чтобы он включал timestamp, и покажите, что retry выполняется дважды.
 
-2. Extend the proposal record with a `rollback` field. Simulate an execution whose verify step fails. Show the rollback firing automatically.
+2. Расширьте proposal record полем `rollback`. Симулируйте выполнение, у которого verify step fails. Покажите, что rollback fires automatically.
 
-3. Read Microsoft Agent Framework's `RequestInfoEvent` docs. Identify one metadata field the API includes that the toy engine is missing. Add it and explain what it protects against.
+3. Прочитайте документацию `RequestInfoEvent` в Microsoft Agent Framework. Найдите одно metadata field, которое API включает, а toy engine пропускает. Добавьте его и объясните, от чего оно защищает.
 
-4. Design a challenge-and-response checklist for a specific action (e.g., "post to a public Twitter account"). What three questions must the reviewer answer? Why those three?
+4. Спроектируйте checklist challenge-and-response для конкретного действия (например, "post to a public Twitter account"). На какие три вопроса reviewer должен ответить? Почему именно эти три?
 
-5. Pick one case where a synchronous "Approve?" prompt would be sufficient (no durable store needed). Explain why, and name the risk class you are accepting.
+5. Выберите один случай, где синхронного prompt "Approve?" было бы достаточно (durable store не нужен). Объясните почему и назовите risk class, который вы принимаете.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это означает на самом деле |
 |---|---|---|
-| Propose-then-commit | "Two-phase approval" | Persisted proposal + positive commit + verify |
-| Idempotency key | "Retry-safe token" | Unique per proposal; second execution no-ops |
-| Data lineage | "Where it came from" | The specific source content that led to the proposal |
-| Blast radius | "Worst case" | Scope of effect if the action goes wrong |
-| Rubber-stamp | "Fast approval" | "Approve" clicked without genuine review |
-| Challenge-and-response | "Forcing checklist" | Reviewer must positively acknowledge specific questions |
-| RequestInfoEvent | "MS Agent Framework primitive" | Durable HITL request with structured metadata |
-| `interrupt()` / `waitForApproval()` | "Framework primitives" | LangGraph / Cloudflare equivalents of the same shape |
+| Propose-then-commit | "Двухфазное одобрение" | Сохраненный proposal + positive commit + verify |
+| Idempotency key | "Retry-safe token" | Уникален для proposal; второе выполнение становится no-op |
+| Data lineage | "Откуда это пришло" | Конкретный source content, который привел к proposal |
+| Blast radius | "Худший сценарий" | Область эффекта, если действие пойдет не так |
+| Rubber-stamp | "Быстрое одобрение" | Нажатие "Approve" без настоящего review |
+| Challenge-and-response | "Принудительный checklist" | Reviewer должен явно подтвердить конкретные вопросы |
+| RequestInfoEvent | "Примитив MS Agent Framework" | Durable HITL request со структурированными metadata |
+| `interrupt()` / `waitForApproval()` | "Примитивы фреймворков" | Эквиваленты той же формы в LangGraph / Cloudflare |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Microsoft Agent Framework — Human in the loop](https://learn.microsoft.com/en-us/agent-framework/workflows/human-in-the-loop) — `RequestInfoEvent`, durable approvals.
-- [Cloudflare Agents — Human in the loop](https://developers.cloudflare.com/agents/concepts/human-in-the-loop/) — `waitForApproval()` and Durable Objects.
-- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — HITL as a mitigation for long-horizon risk.
-- [EU AI Act — Article 14: Human oversight](https://artificialintelligenceact.eu/article/14/) — regulatory baseline for high-risk systems.
-- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — constitutional framing around oversight.
+- [Cloudflare Agents — Human in the loop](https://developers.cloudflare.com/agents/concepts/human-in-the-loop/) — `waitForApproval()` и Durable Objects.
+- [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — HITL как mitigation для long-horizon risk.
+- [EU AI Act — Article 14: Human oversight](https://artificialintelligenceact.eu/article/14/) — regulatory baseline для high-risk systems.
+- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — constitutional framing вокруг надзора.

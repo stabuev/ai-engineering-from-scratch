@@ -1,108 +1,108 @@
 # STaR, V-STaR, Quiet-STaR — Self-Taught Reasoning
 
-> The smallest possible self-improvement loop sits inside the rationale. A model generates a chain of thought, keeps the ones that land on correct answers, and fine-tunes on those. That is STaR. V-STaR adds a verifier so inference-time selection is better. Quiet-STaR pushes the rationale down to every token. All three work. None of them are magic — the loop preserves any shortcut that happened to reach the right answer.
+> Минимально возможный цикл самоулучшения находится внутри rationale. Модель генерирует цепочку рассуждений, оставляет те, которые приводят к правильным ответам, и дообучается на них. Это STaR. V-STaR добавляет верификатор, чтобы улучшить отбор во время inference. Quiet-STaR опускает rationale до каждого токена. Все три работают. Ни один из них не является магией — цикл сохраняет любой shortcut, который случайно привел к правильному ответу.
 
-**Type:** Learn
-**Languages:** Python (stdlib, bootstrap-loop simulator)
-**Prerequisites:** Phase 13 · 01-03 (Reasoning and CoT), Phase 15 · 01 (long-horizon framing)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, симулятор bootstrap-loop)
+**Предварительные требования:** Фаза 13 · 01-03 (Reasoning и CoT), Фаза 15 · 01 (long-horizon framing)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-The straightforward way to teach a model to reason is to collect human-written reasoning traces. That is expensive, slow, and bounded by how much high-quality chain-of-thought humans are willing to write.
+Прямой способ научить модель рассуждать — собрать написанные людьми трассы рассуждений. Это дорого, медленно и ограничено тем, сколько качественного chain-of-thought люди готовы писать.
 
-STaR (Self-Taught Reasoner, Zelikman et al., 2022) asks: what if the model writes its own rationales and grades them against known answers? The loop is:
+STaR (Self-Taught Reasoner, Zelikman et al., 2022) задает вопрос: что если модель сама пишет свои rationales и оценивает их по известным ответам? Цикл такой:
 
-1. Sample a reasoning trace plus answer.
-2. If the final answer is correct, keep the trace.
-3. Fine-tune on the kept traces.
-4. Repeat.
+1. Сэмплировать трассу рассуждения плюс ответ.
+2. Если финальный ответ правильный, сохранить трассу.
+3. Дообучить на сохраненных трассах.
+4. Повторить.
 
-It works. GSM8K and CommonsenseQA both improved without new human annotation. But the loop has a built-in bias: any rationale that produced the right answer is retained, regardless of whether the reasoning itself was sound. V-STaR (Hosseini et al., 2024) patches this with a learned verifier; Quiet-STaR (Zelikman et al., 2024) generalizes the idea to per-token internal rationales.
+Это работает. GSM8K и CommonsenseQA улучшились без новой человеческой разметки. Но у цикла есть встроенное смещение: любой rationale, который дал правильный ответ, сохраняется независимо от того, было ли само рассуждение корректным. V-STaR (Hosseini et al., 2024) исправляет это обученным верификатором; Quiet-STaR (Zelikman et al., 2024) обобщает идею до внутренних rationales на каждый токен.
 
-## The Concept
+## Концепция
 
-### STaR: bootstrap on what worked
+### STaR: bootstrap на том, что сработало
 
-Start from a base model with some weak reasoning ability. On each training problem, sample a rationale plus answer. If the answer matches the label, keep the (problem, rationale, answer) triple. Fine-tune the model on the kept set. Repeat.
+Начните с базовой модели с некоторой слабой способностью к рассуждению. На каждой обучающей задаче сэмплируйте rationale плюс ответ. Если ответ совпадает с меткой, сохраните тройку (problem, rationale, answer). Дообучите модель на сохраненном наборе. Повторите.
 
-One twist matters. If the model can never get a problem right, the loop cannot learn on it. STaR adds **rationalization**: for problems the model fails, inject the correct answer as a hint and re-prompt the model to produce a rationale that leads to it. Rationalized rationales are added to the training set.
+Важен один поворот. Если модель никогда не может решить задачу правильно, цикл не может на ней учиться. STaR добавляет **rationalization**: для задач, где модель проваливается, подставить правильный ответ как подсказку и заново запросить у модели rationale, который к нему ведет. Rationalized rationales добавляются в обучающий набор.
 
-Result in the original paper (Zelikman et al., 2022): a GPT-J base model improved on GSM8K from 5.8% to 10.7% through repeated STaR rounds with rationalization — about 5 percentage points absolute. On CommonsenseQA, STaR-trained GPT-J 6B reached 72.5%, comparable to a fine-tuned GPT-3 175B (~73%) — a roughly 30x larger model trained on hand-annotated rationales.
+Результат в исходной статье (Zelikman et al., 2022): базовая модель GPT-J улучшилась на GSM8K с 5.8% до 10.7% через повторные раунды STaR с rationalization — примерно на 5 процентных пунктов в абсолютном выражении. На CommonsenseQA STaR-trained GPT-J 6B достигла 72.5%, сопоставимо с fine-tuned GPT-3 175B (~73%) — моделью примерно в 30 раз больше, обученной на hand-annotated rationales.
 
-### V-STaR: train a verifier with DPO
+### V-STaR: обучить верификатор с DPO
 
-STaR throws away incorrect rationales. Hosseini et al. (2024) observed those are also data: every pair of (rationale, "is this correct") can train a verifier. They use Direct Preference Optimization over both correct and incorrect solutions to build a ranker. At inference time, sample N rationales and pick the verifier's top choice.
+STaR отбрасывает неправильные rationales. Hosseini et al. (2024) заметили, что это тоже данные: каждая пара (rationale, "корректно ли это?") может обучать верификатор. Они используют Direct Preference Optimization по правильным и неправильным решениям, чтобы построить ранжировщик. Во время inference сэмплируется N rationales и выбирается лучший по верификатору.
 
-Reported delta: +4 to +17 percentage points over prior self-improvement baselines on GSM8K and MATH, with most of the gain coming from using the verifier for inference-time selection rather than for additional generator fine-tuning.
+Заявленная дельта: +4 до +17 процентных пунктов по сравнению с предыдущими self-improvement baselines на GSM8K и MATH, причем большая часть выигрыша идет от использования верификатора для inference-time selection, а не от дополнительного дообучения генератора.
 
-### Quiet-STaR: per-token internal rationales
+### Quiet-STaR: внутренние rationales на каждый токен
 
-Zelikman et al. (2024) asked: what if the model learns to generate a short internal rationale at every token position, not just between problem and answer? Quiet-STaR trains a model to emit a hidden "thought" before each predicted token, then mixes the thought-aware prediction with the baseline prediction via a learned weight.
+Zelikman et al. (2024) спросили: что если модель учится генерировать короткий внутренний rationale в каждой позиции токена, а не только между задачей и ответом? Quiet-STaR обучает модель выдавать скрытую "мысль" перед каждым предсказываемым токеном, а затем смешивает prediction с учетом мысли с baseline prediction через обучаемый вес.
 
-Result: Mistral 7B gained absolute zero-shot improvements on GSM8K from 5.9% to 10.9% and CommonsenseQA from 36.3% to 47.2% without task-specific fine-tuning. The model learned "when to think" — hard tokens get longer internal rationales; easy ones get almost none.
+Результат: Mistral 7B получила абсолютные zero-shot улучшения на GSM8K с 5.9% до 10.9% и CommonsenseQA с 36.3% до 47.2% без task-specific fine-tuning. Модель научилась "когда думать": сложные токены получают более длинные внутренние rationales, простые почти не получают.
 
-### Why all three share a safety concern
+### Почему у всех трех есть общий safety concern
 
-All three methods use the final answer as the gradient signal. A rationale that reaches the right answer via flawed reasoning — exploiting a shortcut, guessing, or using a non-generalizing pattern — gets positively reinforced. On in-distribution problems the shortcut works. On out-of-distribution problems it breaks silently.
+Все три метода используют финальный ответ как gradient signal. Rationale, который приходит к правильному ответу через ошибочное рассуждение — эксплуатируя shortcut, угадывая или используя необобщающийся паттерн, — получает положительное подкрепление. На in-distribution задачах shortcut работает. На out-of-distribution задачах он ломается тихо.
 
-V-STaR's verifier mitigates by learning to rank rationales, but the verifier is trained on the same label set. It can learn to prefer well-formatted wrong reasoning over honest uncertainty. The safer design is to combine STaR-style data with (a) process-supervised reward models (rewarding intermediate steps, not just answers) and (b) held-out OOD evaluation that breaks simple shortcuts.
+Верификатор V-STaR смягчает это, обучаясь ранжировать rationales, но он обучается на том же наборе меток. Он может научиться предпочитать хорошо оформленное неверное рассуждение честной неопределенности. Более безопасный дизайн — сочетать данные в стиле STaR с (a) process-supervised reward models (вознаграждающими промежуточные шаги, а не только ответы) и (b) held-out OOD evaluation, которая ломает простые shortcuts.
 
-### Comparison
+### Сравнение
 
-| Method | Training signal | Inference cost | Data waste | Known failure mode |
+| Метод | Обучающий сигнал | Стоимость inference | Потери данных | Известный режим отказа |
 |---|---|---|---|---|
-| STaR | keep (rationale, answer) if correct | 1x | discards all incorrect rationales | shortcut rationales |
-| STaR + rationalization | above + correct-answer hinted retries | 1x | less | rationalized rationales may be implausible |
-| V-STaR | STaR + DPO verifier from both classes | Nx (best-of-N) | minimal | verifier can reinforce confident wrongness |
-| Quiet-STaR | per-token rationale + mixing weight | 1.5-3x | minimal | still answer-conditioned gradient |
+| STaR | сохранять (rationale, answer), если правильно | 1x | отбрасывает все неправильные rationales | shortcut rationales |
+| STaR + rationalization | выше + повторы с подсказанным правильным ответом | 1x | меньше | rationalized rationales могут быть неправдоподобными |
+| V-STaR | STaR + DPO-verifier из обоих классов | Nx (best-of-N) | минимальные | verifier может усиливать уверенную неправоту |
+| Quiet-STaR | rationale на каждый токен + mixing weight | 1.5-3x | минимальные | все еще answer-conditioned gradient |
 
-### Where this sits in the 2026 stack
+### Где это находится в стеке 2026 года
 
-STaR is old. But the pattern reappears everywhere in 2025-2026. RL on verifiable math problems (DeepSeek-R1, Kimi-k1.5, o1) is STaR's answer-conditioned gradient signal, scaled up. Process reward models (Lightman et al., 2023; OpenAI's "Let's verify step by step") are the process-supervised alternative. AlphaEvolve (Lesson 3) is STaR for code, with a program evaluator instead of a label. Darwin Godel Machine (Lesson 4) is STaR for the agent scaffolding itself.
+STaR уже не новый. Но паттерн снова появляется повсюду в 2025-2026. RL на верифицируемых математических задачах (DeepSeek-R1, Kimi-k1.5, o1) — это answer-conditioned gradient signal STaR, масштабированный вверх. Process reward models (Lightman et al., 2023; OpenAI "Let's verify step by step") — process-supervised альтернатива. AlphaEvolve (Урок 3) — это STaR для кода, с program evaluator вместо метки. Darwin Godel Machine (Урок 4) — это STaR для самого agent scaffolding.
 
-Understanding STaR makes all of these click. It is the minimum-viable self-improvement loop.
+Понимание STaR делает все эти системы ясными. Это минимально жизнеспособный цикл самоулучшения.
 
-## Use It
+## Использование
 
-`code/main.py` runs a simulated STaR loop on a toy arithmetic task. You can watch:
+`code/main.py` запускает симулированный цикл STaR на игрушечной арифметической задаче. Вы можете наблюдать:
 
-- How accuracy climbs over bootstrap rounds.
-- How shortcuts sneak in: the simulator includes a "lazy" rationale class that gets the right answer 40% of the time but generalizes badly. Watch whether STaR keeps them.
-- How a verifier (V-STaR style) helps at inference but cannot fully prune shortcuts introduced during training.
+- Как точность растет по bootstrap-раундам.
+- Как просачиваются shortcuts: симулятор включает "lazy" класс rationale, который дает правильный ответ в 40% случаев, но плохо обобщается. Посмотрите, сохраняет ли их STaR.
+- Как верификатор (в стиле V-STaR) помогает во время inference, но не может полностью отсечь shortcuts, внесенные во время обучения.
 
-## Ship It
+## Практический результат
 
-`outputs/skill-star-loop-reviewer.md` helps you audit a proposed self-taught-reasoning pipeline before you train on it.
+`outputs/skill-star-loop-reviewer.md` помогает провести аудит предлагаемого self-taught-reasoning pipeline до того, как вы начнете на нем обучение.
 
-## Exercises
+## Упражнения
 
-1. Run the simulator. Set the shortcut frequency to zero, then to 0.4. How much does final accuracy diverge between the two runs, even though both hit >90% on the training distribution?
+1. Запустите симулятор. Установите shortcut frequency сначала в ноль, затем в 0.4. Насколько расходится финальная точность между двумя запусками, хотя оба достигают >90% на обучающем распределении?
 
-2. Add a held-out OOD test to the simulator. Draw problems from a different distribution and evaluate the bootstrapped model on both in-distribution and OOD sets. Quantify the gap.
+2. Добавьте в симулятор held-out OOD test. Генерируйте задачи из другого распределения и оценивайте bootstrapped model на in-distribution и OOD наборах. Измерьте разрыв.
 
-3. Read the Quiet-STaR paper (arXiv:2403.09629) Section 3. Explain the "end-of-thought" token and the mixing-weight head in three sentences each.
+3. Прочитайте статью Quiet-STaR (arXiv:2403.09629), Section 3. Объясните token "end-of-thought" и mixing-weight head в трех предложениях каждый.
 
-4. Compare STaR's keep-if-correct filter to a process-supervised alternative that rewards each rationale step independently. Identify the labelling cost difference and the plausible quality difference.
+4. Сравните фильтр keep-if-correct в STaR с process-supervised альтернативой, которая вознаграждает каждый шаг rationale независимо. Определите разницу в стоимости labeling и правдоподобную разницу в качестве.
 
-5. Design one evaluation that would catch shortcut rationales in a deployed model. It does not have to be perfect — it has to break the simplest shortcuts a STaR loop would reinforce.
+5. Спроектируйте одну оценку, которая ловила бы shortcut rationales в развернутой модели. Она не обязана быть идеальной — она должна ломать самые простые shortcuts, которые усиливал бы цикл STaR.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |---|---|---|
-| STaR | "Self-Taught Reasoner" | Fine-tune on model-generated rationales that land correct answers; repeat |
-| Rationalization | "Hinted retry" | Inject the correct answer and re-prompt for a rationale on problems the base model fails |
-| V-STaR | "Verifier STaR" | DPO-train a verifier on both correct and incorrect rationales, use it for inference-time selection |
-| Quiet-STaR | "Per-token rationales" | Generate hidden thoughts at every token position; mix with baseline prediction |
-| Answer-conditioned gradient | "Outcome-based signal" | The training loop rewards final answers, not reasoning steps |
-| Process reward model | "Step-level verifier" | Reward model trained on per-step correctness, not outcome — contrasts with STaR |
-| Shortcut rationale | "Right answer, wrong reasoning" | A rationale that reaches the label via a non-generalizing pattern; STaR keeps these |
+| STaR | "Self-Taught Reasoner" | Повторяющееся дообучение на сгенерированных моделью rationales, которые приводят к правильным ответам |
+| Rationalization | "Повтор с подсказкой" | Подставить правильный ответ и заново запросить rationale для задач, где базовая модель проваливается |
+| V-STaR | "Verifier STaR" | Обучить верификатор DPO на правильных и неправильных rationales и использовать его для inference-time selection |
+| Quiet-STaR | "Rationales для каждого токена" | Генерировать скрытые мысли в каждой позиции токена; смешивать с baseline prediction |
+| Answer-conditioned gradient | "Сигнал по итоговому ответу" | Обучающий цикл вознаграждает финальные ответы, а не шаги рассуждения |
+| Process reward model | "Верификатор уровня шага" | Reward model, обученная на корректности каждого шага, а не только исхода — контраст со STaR |
+| Shortcut rationale | "Правильный ответ, неверное рассуждение" | Rationale, который приходит к метке через необобщающийся паттерн; STaR сохраняет такие |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Zelikman et al. (2022). STaR: Bootstrapping Reasoning With Reasoning](https://arxiv.org/abs/2203.14465) — the original paper.
-- [Hosseini et al. (2024). V-STaR: Training Verifiers for Self-Taught Reasoners](https://arxiv.org/abs/2402.06457) — adds a DPO verifier for inference-time selection.
-- [Zelikman et al. (2024). Quiet-STaR: Language Models Can Teach Themselves to Think Before Speaking](https://arxiv.org/abs/2403.09629) — per-token internal rationales.
-- [Lightman et al. (2023). Let's Verify Step by Step](https://arxiv.org/abs/2305.20050) — process reward models, the alternative gradient signal.
-- [DeepSeek-R1 paper (arXiv:2501.12948)](https://arxiv.org/abs/2501.12948) — RL on verifiable tasks, STaR scaled to frontier training.
+- [Zelikman et al. (2022). STaR: Bootstrapping Reasoning With Reasoning](https://arxiv.org/abs/2203.14465) — исходная статья.
+- [Hosseini et al. (2024). V-STaR: Training Verifiers for Self-Taught Reasoners](https://arxiv.org/abs/2402.06457) — добавляет DPO verifier для inference-time selection.
+- [Zelikman et al. (2024). Quiet-STaR: Language Models Can Teach Themselves to Think Before Speaking](https://arxiv.org/abs/2403.09629) — внутренние rationales на каждый токен.
+- [Lightman et al. (2023). Let's Verify Step by Step](https://arxiv.org/abs/2305.20050) — process reward models, альтернативный gradient signal.
+- [DeepSeek-R1 paper (arXiv:2501.12948)](https://arxiv.org/abs/2501.12948) — RL на верифицируемых задачах, STaR в масштабе frontier training.

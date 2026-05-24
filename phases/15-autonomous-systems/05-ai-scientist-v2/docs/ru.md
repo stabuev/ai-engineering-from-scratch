@@ -1,108 +1,108 @@
-# AI Scientist v2 — Workshop-Level Autonomous Research
+# AI Scientist v2 — автономные исследования уровня workshop
 
-> Sakana's AI Scientist v2 (Yamada et al., arXiv:2504.08066) runs the full research loop: hypothesis, code, experiments, figures, writeup, submission. It is the first system to have a generated paper pass peer review at an ICLR 2025 workshop. Independent evaluation (Beel et al.) found 42% of experiments failed from coding errors and literature review frequently mislabeled established concepts as novel. Sakana's own docs warn that the codebase executes LLM-written code and recommend Docker isolation. Both halves of that picture are the point.
+> AI Scientist v2 от Sakana (Yamada et al., arXiv:2504.08066) выполняет полный исследовательский цикл: hypothesis, code, experiments, figures, writeup, submission. Это первая система, у которой сгенерированная статья прошла peer review на ICLR 2025 workshop. Независимая оценка (Beel et al.) обнаружила, что 42% экспериментов провалились из-за coding errors, а literature review часто ошибочно помечал известные концепции как novel. Собственная документация Sakana предупреждает, что codebase выполняет код, написанный LLM, и рекомендует Docker isolation. Обе половины этой картины и есть суть.
 
-**Type:** Learn
-**Languages:** Python (stdlib, research-loop state-machine toy)
-**Prerequisites:** Phase 15 · 03 (AlphaEvolve), Phase 15 · 04 (DGM)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, игрушечная research-loop state-machine)
+**Предварительные требования:** Фаза 15 · 03 (AlphaEvolve), Фаза 15 · 04 (DGM)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Research is an open-ended task. Unlike AlphaEvolve's algorithmic search or DGM's benchmark-bounded self-modification, a research result does not have a machine-checkable correctness criterion. A paper is judged by reviewers, not unit tests. That makes the loop harder to close — and more valuable if closed, because research is where compounding progress lives.
+Исследование — открытая задача. В отличие от algorithmic search в AlphaEvolve или benchmark-bounded self-modification в DGM, у исследовательского результата нет машинно-проверяемого критерия корректности. Статью оценивают рецензенты, а не unit tests. Это делает цикл труднее замкнуть — и более ценным, если его удается замкнуть, потому что research — место, где живет compounding progress.
 
-AI Scientist v1 (Sakana, 2024) closed the loop by starting from human-authored templates. The LLM filled in experiments within a fixed scaffolding. AI Scientist v2 (Yamada et al., 2025) removes the template requirement by using agentic tree search with a vision-language model critique loop. The system generates ideas, implements experiments, produces figures, writes a paper, and iterates on reviewer feedback.
+AI Scientist v1 (Sakana, 2024) замкнул цикл, начиная с шаблонов, написанных людьми. LLM заполняла эксперименты внутри фиксированного scaffolding. AI Scientist v2 (Yamada et al., 2025) убирает требование шаблонов, используя agentic tree search с циклом critique от vision-language model. Система генерирует идеи, реализует эксперименты, производит figures, пишет статью и итерирует по reviewer feedback.
 
-Peer review verdict: one v2-generated paper was accepted at an ICLR 2025 workshop (with disclosure). Independent evaluation verdict: the system is far from reliable. Both are true.
+Вердикт peer review: одна статья, сгенерированная v2, была принята на ICLR 2025 workshop (с disclosure). Вердикт независимой оценки: система далеко не надежна. Верны оба утверждения.
 
-## The Concept
+## Концепция
 
-### The architecture
+### Архитектура
 
-1. **Idea generation.** The LLM proposes research ideas conditioned on a topic and prior literature. v1 used templates; v2 uses agentic search over a space of hypotheses.
-2. **Novelty check.** A literature retrieval step checks whether the idea has been published. This is the step where Beel et al.'s evaluation found mislabeling — established methods frequently classified as novel.
-3. **Experiment plan.** The agent drafts an experimental protocol and writes code.
-4. **Execution.** Code runs in a sandbox. Failures are fed back into a retry loop. In Beel et al.'s measurements, 42% of experiments failed from coding errors at this stage.
-5. **Figure generation.** A vision-language model reads generated figures and rewrites them for clarity. This was v2's key technical addition.
-6. **Writeup.** The LLM drafts a paper, iterates with an internal reviewer.
-7. **Optional: submission.** The paper is submitted to a venue.
+1. **Генерация идей.** LLM предлагает исследовательские идеи с учетом темы и предыдущей литературы. v1 использовала templates; v2 использует agentic search по пространству hypotheses.
+2. **Проверка новизны.** Шаг literature retrieval проверяет, была ли идея опубликована. Именно на этом шаге оценка Beel et al. обнаружила mislabeling — известные методы часто классифицировались как novel.
+3. **План эксперимента.** Агент формирует experimental protocol и пишет код.
+4. **Выполнение.** Код запускается в sandbox. Отказы возвращаются в retry loop. В измерениях Beel et al. 42% экспериментов провалились из-за coding errors на этом этапе.
+5. **Генерация figures.** Vision-language model читает сгенерированные figures и переписывает их для ясности. Это было ключевым техническим добавлением v2.
+6. **Writeup.** LLM пишет черновик статьи и итерирует с internal reviewer.
+7. **Опционально: submission.** Статья отправляется на venue.
 
-### What the workshop-acceptance result means
+### Что означает результат workshop acceptance
 
-One v2-generated paper passed peer review at an ICLR 2025 workshop. The authors disclosed the paper's origin to the program committee. The acceptance is a data point; it is not a license to claim the system "does research."
+Одна статья, сгенерированная v2, прошла peer review на ICLR 2025 workshop. Авторы раскрыли происхождение статьи program committee. Принятие — это datapoint; это не основание утверждать, что система полноценно "занимается исследованиями".
 
-Important context: workshop papers are a lower bar than main-conference papers. Peer review is noisy; a small fraction of submissions are accepted on any given day. One success is a proof of concept, not a reliability claim. The Nature 2026 paper documents the end-to-end loop and was itself co-authored by human researchers; it is not "the system wrote a Nature paper."
+Важный контекст: workshop papers имеют более низкую планку, чем main-conference papers. Peer review шумный; небольшая доля submissions принимается в любой конкретный день. Один успех — proof of concept, а не утверждение о reliability. Статья Nature 2026 документирует end-to-end loop и сама была написана в соавторстве с исследователями-людьми; это не "система написала статью в Nature".
 
-### What the independent evaluation found
+### Что нашла независимая оценка
 
-Beel et al. (arXiv:2502.14297) ran an external evaluation. Headline findings:
+Beel et al. (arXiv:2502.14297) провели внешнюю оценку. Главные находки:
 
-- **Experiment failures.** 42% of experiments failed from coding errors (bad imports, shape mismatches, undefined variables). The retry loop caught some, not all.
-- **Novelty mislabeling.** The literature-retrieval step frequently flagged established concepts as novel. This is the research equivalent of hallucination.
-- **Presentation-quality gap.** The vision-language figure critique produced publication-grade visuals, masking underlying experimental weaknesses.
+- **Провалы экспериментов.** 42% экспериментов провалились из-за coding errors (bad imports, shape mismatches, undefined variables). Retry loop поймал часть, но не все.
+- **Ошибочная маркировка новизны.** Шаг literature-retrieval часто помечал известные концепции как novel. Это исследовательский аналог hallucination.
+- **Разрыв качества презентации.** Vision-language figure critique производил visuals уровня публикации, маскируя слабости базовых экспериментов.
 
-The last finding is the important one for this phase. A system that produces convincing outputs without doing convincing research is more dangerous, not safer, than one that fails obviously. Evaluation must reach the underlying claims, not stop at the figure.
+Последняя находка важна для этой фазы. Система, которая производит убедительные outputs, не выполняя убедительного research, опаснее, а не безопаснее, чем система, которая явно проваливается. Evaluation должна доходить до базовых claims, а не останавливаться на figure.
 
-### The sandbox-escape concern
+### Риск sandbox escape
 
-Sakana's own repository README warns:
+README собственного repository Sakana предупреждает:
 
 > Due to the nature of this software, which executes LLM-generated code, we cannot guarantee safety. There are risks of dangerous packages, uncontrolled web access, and spawning of unintended processes. Use at your own risk and consider Docker isolation.
 
-This is the operational shape of autonomy in an unverified domain. The LLM writes code; the code runs; the code can do anything the process is allowed to do. Without a sandbox that hard-limits filesystem, network, and process actions, any self-directed research agent can exfiltrate data, burn compute, or rewrite itself.
+Это операционная форма автономии в неверифицированном домене. LLM пишет код; код запускается; код может делать все, что разрешено процессу. Без sandbox, который жестко ограничивает filesystem, network и process actions, любой self-directed research agent может exfiltrate data, burn compute или rewrite itself.
 
-AlphaEvolve's sandbox story is easier because its evaluator is tight. AI Scientist v2's loop runs open-ended code with open-ended goals. That is why it needs stronger isolation (Docker minimum; seccomp / gVisor preferred) and a manual review of every submission before it leaves the system.
+Sandbox story AlphaEvolve проще, потому что evaluator там узкий. Цикл AI Scientist v2 запускает open-ended code с open-ended goals. Поэтому ему нужна более сильная isolation (Docker минимум; seccomp / gVisor предпочтительнее) и ручное review каждой submission до того, как она покинет систему.
 
-### Where v2 sits in the frontier stack
+### Где v2 находится во frontier stack
 
-| System | Target | Output kind | Evaluator | Known failure |
+| Система | Цель | Вид output | Evaluator | Известный отказ |
 |---|---|---|---|---|
-| AlphaEvolve | algorithms | code | unit + benchmark | bounded by evaluator rigor |
+| AlphaEvolve | algorithms | code | unit + benchmark | ограничен строгостью evaluator |
 | DGM | agent scaffolding | code | SWE-bench | reward hacking |
-| AI Scientist v2 | research papers | text + code + figures | peer review (weak) | experiment failures, mislabeling, polish masking weakness |
+| AI Scientist v2 | research papers | text + code + figures | peer review (слабый) | experiment failures, mislabeling, polish masking weakness |
 
-v2 has the weakest automatic evaluator of the three, the widest output surface, and the shortest path to public artifacts. The operational controls (sandbox, review, disclosure) are doing most of the safety work.
+У v2 самый слабый automatic evaluator из трех, самая широкая output surface и самый короткий путь к публичным artifacts. Operational controls (sandbox, review, disclosure) выполняют большую часть safety work.
 
-## Use It
+## Использование
 
-`code/main.py` simulates the v2 loop as a state machine: idea → novelty check → experiment → figure → writeup → review → accept-or-iterate. Each state has a configurable failure probability pulled from the Beel et al. findings. Run the simulator for N loops and count:
+`code/main.py` симулирует цикл v2 как state machine: idea → novelty check → experiment → figure → writeup → review → accept-or-iterate. У каждого состояния есть настраиваемая вероятность отказа, взятая из findings Beel et al. Запустите симулятор для N loops и посчитайте:
 
-- How many ideas reach submission.
-- How many submissions would have a critical experimental flaw the polished paper hides.
-- How retry budgets trade off quality vs yield.
+- Сколько идей доходят до submission.
+- Сколько submissions имели бы критический experimental flaw, скрытый отполированной статьей.
+- Как retry budgets обменивают quality на yield.
 
-## Ship It
+## Практический результат
 
-`outputs/skill-ai-scientist-sandbox-review.md` is a two-gate review checklist for anything produced by a research-loop agent before it leaves the sandbox.
+`outputs/skill-ai-scientist-sandbox-review.md` — двухшлюзовой review checklist для всего, что произведено research-loop agent, до выхода из sandbox.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` with default parameters. What fraction of loop runs produce a "clean" paper? What fraction produce a paper with an experiment-failure flaw the figure critique polished over?
+1. Запустите `code/main.py` со стандартными параметрами. Какая доля loop runs производит "clean" paper? Какая доля производит paper с experiment-failure flaw, который figure critique отполировал?
 
-2. The defaults already use Beel et al.'s 42% / 25%. Re-run with `--experiment-failure 0.20 --novelty-mislabel 0.10` and then with `--experiment-failure 0.60 --novelty-mislabel 0.40`. How does the polished-but-flawed share shift between the two runs?
+2. Defaults уже используют 42% / 25% из Beel et al. Перезапустите с `--experiment-failure 0.20 --novelty-mislabel 0.10`, а затем с `--experiment-failure 0.60 --novelty-mislabel 0.40`. Как меняется доля polished-but-flawed между двумя запусками?
 
-3. Read Sakana's AI Scientist v2 repo README on sandbox requirements. Name two additional restrictions (beyond Docker) you would apply for a multi-day autonomous run.
+3. Прочитайте README repository Sakana AI Scientist v2 про sandbox requirements. Назовите два дополнительных ограничения (помимо Docker), которые вы применили бы для multi-day autonomous run.
 
-4. Read Beel et al. Section 4 on presentation-quality gap. Design one additional evaluator that would catch polished-looking but experimentally flawed papers.
+4. Прочитайте Beel et al. Section 4 про presentation-quality gap. Спроектируйте один дополнительный evaluator, который ловил бы papers, выглядящие отполированными, но экспериментально flawed.
 
-5. Propose a human-review protocol for research-agent outputs that scales better than "a PhD reads every paper." Identify the bottleneck and design around it.
+5. Предложите human-review protocol для outputs research-agent, который масштабируется лучше, чем "PhD читает каждую статью." Определите bottleneck и спроектируйте вокруг него.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |---|---|---|
-| AI Scientist v1 | "Sakana's templated research agent" | Filled experiments into a fixed scaffold |
-| AI Scientist v2 | "Template-free research agent" | Agentic tree search with VLM figure critique |
-| Agentic tree search | "Branching research agent" | Expands multiple experiment plans in parallel; prunes by internal critic |
-| Vision-language critique | "VLM polish on figures" | Multimodal model reads figures and rewrites them for clarity |
-| Literature retrieval | "Novelty check" | Searches prior work to confirm idea novelty — documented to mislabel |
-| Polish masking | "Pretty paper, broken research" | Presentation quality exceeds experimental quality; hides weaknesses |
-| Sandbox escape | "LLM code breaks out" | Agent-executed code does things the loop designer did not intend |
+| AI Scientist v1 | "Research agent Sakana на шаблонах" | Заполнял эксперименты в фиксированный scaffold |
+| AI Scientist v2 | "Research agent без шаблонов" | Agentic tree search с VLM figure critique |
+| Agentic tree search | "Ветвящийся research agent" | Расширяет несколько experiment plans параллельно; отсеивает через internal critic |
+| Vision-language critique | "VLM-полировка figures" | Multimodal model читает figures и переписывает их для ясности |
+| Literature retrieval | "Проверка новизны" | Ищет prior work, чтобы подтвердить новизну идеи — задокументировано mislabeling |
+| Polish masking | "Красивая статья, слабое исследование" | Presentation quality выше experimental quality; скрывает слабости |
+| Sandbox escape | "LLM-код выходит за пределы sandbox" | Код, выполняемый агентом, делает то, чего дизайнер цикла не предполагал |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Yamada et al. (2025). The AI Scientist-v2](https://arxiv.org/abs/2504.08066) — paper.
-- [Sakana blog on the Nature 2026 publication](https://sakana.ai/ai-scientist-nature/) — vendor summary with peer-review context.
+- [Yamada et al. (2025). The AI Scientist-v2](https://arxiv.org/abs/2504.08066) — статья.
+- [Sakana blog on the Nature 2026 publication](https://sakana.ai/ai-scientist-nature/) — vendor summary с контекстом peer-review.
 - [Beel et al. (2025). Independent evaluation of The AI Scientist](https://arxiv.org/abs/2502.14297) — external evaluation numbers.
-- [Sakana AI Scientist v1 paper](https://arxiv.org/abs/2408.06292) — the templated predecessor.
-- [Anthropic — Measuring AI agent autonomy](https://www.anthropic.com/research/measuring-agent-autonomy) — broader framing of open-ended research agents.
+- [Sakana AI Scientist v1 paper](https://arxiv.org/abs/2408.06292) — templated predecessor.
+- [Anthropic — Measuring AI agent autonomy](https://www.anthropic.com/research/measuring-agent-autonomy) — более широкий framing open-ended research agents.

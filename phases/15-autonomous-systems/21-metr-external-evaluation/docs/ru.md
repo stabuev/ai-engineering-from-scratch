@@ -1,115 +1,115 @@
-# METR Time Horizons and External Capability Evaluation
+# METR Time Horizons и внешняя оценка capabilities
 
-> METR (ex-ARC Evals) is an independent 501(c)(3) since December 2023. Their Time Horizon 1.1 benchmark (January 2026) fits a logistic curve to task-success probability vs log(expert human completion time); the intersection at 50% probability defines the model's time horizon. The 2025–2026 engagement set covers GPT-5.1, GPT-5.1-Codex-Max, and prototype monitoring evaluations (can a monitor catch side tasks; can the agent evade). Benchmark suites: HCAST (180+ ML, cyber, SWE, reasoning tasks; 1 minute to 8+ hours), RE-Bench (71 ML research-engineering tasks with expert baseline), SWAA. The honest note: METR measurements are idealized — no human, no real consequences — and the team has documented the eval-vs-deployment behavior gap (Lesson 1). A time horizon is an upper bound, not a deployment prediction.
+> METR (ex-ARC Evals) является независимой 501(c)(3) с декабря 2023 года. Их benchmark Time Horizon 1.1 (январь 2026) подгоняет logistic curve к вероятности успеха задачи как функции log(expert human completion time); пересечение при 50% probability определяет time horizon модели. Набор engagements 2025–2026 покрывает GPT-5.1, GPT-5.1-Codex-Max и prototype monitoring evaluations (может ли monitor поймать side tasks; может ли agent evade). Benchmark suites: HCAST (180+ задач ML, cyber, SWE, reasoning; от 1 minute до 8+ hours), RE-Bench (71 ML research-engineering tasks с expert baseline), SWAA. Честная оговорка: измерения METR идеализированы - без человека, без реальных последствий - и команда документировала eval-vs-deployment behavior gap (Lesson 1). Time horizon - это upper bound, а не deployment prediction.
 
-**Type:** Learn
-**Languages:** Python (stdlib, logistic-fit horizon estimator)
-**Prerequisites:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 19 (RSP)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, оценщик horizon через logistic-fit)
+**Предварительные требования:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 19 (RSP)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Scaling policies (Lessons 19, 20) are only as useful as the measurements they reference. "AI R&D-4 threshold" and "Long-range Autonomy" are defined in policy prose; they become actionable only when specific evaluations produce specific numbers.
+Scaling policies (Lessons 19, 20) полезны ровно настолько, насколько полезны измерения, на которые они ссылаются. "AI R&D-4 threshold" и "Long-range Autonomy" определены в тексте policy; они становятся actionable только когда конкретные evaluations дают конкретные числа.
 
-METR is the 2024–2026 external evaluation organization that has defined many of those numbers. They evaluate frontier models — often pre-release, under NDA with labs — and publish methodology afterward. The Time Horizon 1.1 benchmark (January 2026) is their headline artifact: a single scalar that compresses capability into a human-legible unit ("this model can do the kind of task an expert spends X hours on at 50% reliability").
+METR - организация external evaluation 2024–2026 годов, определившая многие из этих чисел. Они оценивают frontier models - часто pre-release, по NDA с лабораториями - и затем публикуют methodology. Benchmark Time Horizon 1.1 (январь 2026) - их headline artifact: один scalar, сжимающий capability в понятную людям единицу ("эта модель может делать задачи такого типа, на которые эксперт тратит X hours, с надежностью 50%").
 
-The lesson is partly about the methodology (how a horizon is computed) and partly about the interpretation (why a horizon is an upper bound, not a deployment prediction). The two skills belong together. A team that understands how the horizon is fit is much harder to fool with a bad vendor claim than a team that just sees "14 hours" on a slide.
+Урок частично о методологии (как вычисляется horizon), а частично об интерпретации (почему horizon - upper bound, а не deployment prediction). Эти два навыка связаны. Команду, которая понимает, как подгоняется horizon, гораздо труднее обмануть плохим vendor claim, чем команду, которая просто видит "14 hours" на слайде.
 
-## The Concept
+## Концепция
 
-### METR background
+### Контекст METR
 
-- Founded: December 2023 (ex-ARC Evals, spun out into independent 501(c)(3)).
-- Scope: evaluation of frontier models' autonomous capabilities, often pre-release.
-- Partner labs: Anthropic, OpenAI (multiple engagements 2025–2026).
-- Notable deliverables: Time Horizon 1.0 (March 2025), Time Horizon 1.1 (January 2026), prototype monitoring evaluations.
+- Основана: декабрь 2023 (ex-ARC Evals, выделена в независимую 501(c)(3)).
+- Scope: evaluation автономных capabilities frontier models, часто pre-release.
+- Partner labs: Anthropic, OpenAI (несколько engagements 2025–2026).
+- Notable deliverables: Time Horizon 1.0 (март 2025), Time Horizon 1.1 (январь 2026), prototype monitoring evaluations.
 
-### The Time Horizon fit
+### Подгонка Time Horizon
 
-Methodology (from METR blog and papers):
+Методология (из blog и papers METR):
 
-1. Collect a task suite spanning minute-scale to hour-scale expert completion times. Current suites: HCAST (180+ tasks), RE-Bench (71 tasks), SWAA.
-2. Run the model on each task; record success or failure.
-3. Fit a logistic curve: P(success) as a function of log(expert completion time).
-4. The horizon is the expert-time at which P(success) = 0.5.
+1. Собрать task suite, охватывающий expert completion times от минут до часов. Текущие suites: HCAST (180+ tasks), RE-Bench (71 tasks), SWAA.
+2. Запустить модель на каждой задаче; записать success или failure.
+3. Подогнать logistic curve: P(success) как функцию log(expert completion time).
+4. Horizon - это expert-time, при котором P(success) = 0.5.
 
-The logistic-fit shape is the right one because capability generally has an increasing, plateau-approaching relationship with task difficulty. The 50% point is a choice (could be 10%, 90%); METR reports multiple thresholds in the detailed paper but leads with 50% because it is the most intuitive.
+Форма logistic-fit подходит, потому что capability обычно имеет возрастающую, выходящую на плато связь со сложностью задачи. Точка 50% - это выбор (могли быть 10%, 90%); METR сообщает несколько thresholds в подробной paper, но ведет с 50%, потому что это наиболее интуитивно.
 
-### The January 2026 numbers
+### Числа января 2026
 
-Per Time Horizon 1.1:
+По Time Horizon 1.1:
 
-- Claude Opus 4.6: ~14 hours at 50% reliability, as of Time Horizon 1.1 (January 2026).
-- Doubling time on HCAST-style tasks: ~4.3 months (130.8 days) on the post-2023 fit reported by Time Horizon 1.1 (January 2026); the ~7-month figure is the full 2019–2025 fit from Time Horizon 1.0 and is reported in TH1.1 alongside the post-2023 number.
+- Claude Opus 4.6: ~14 hours при 50% reliability, на момент Time Horizon 1.1 (January 2026).
+- Doubling time на задачах HCAST-style: ~4.3 months (130.8 days) по post-2023 fit, опубликованному в Time Horizon 1.1 (January 2026); число ~7-month - это полный fit 2019–2025 из Time Horizon 1.0, и оно приводится в TH1.1 рядом с post-2023 number.
 
-Those are the specific numbers the rest of Phase 15 references. They are cited in Anthropic's RSP v3.0 (Lesson 19) and DeepMind's FSF v3 (Lesson 20) as one of the measurements feeding threshold assessments.
+Это конкретные числа, на которые ссылается остальная Phase 15. Они цитируются в Anthropic's RSP v3.0 (Lesson 19) и DeepMind's FSF v3 (Lesson 20) как одно из измерений, входящих в threshold assessments.
 
 ### Benchmark suites
 
-- **HCAST**: 189 tasks across ML, cybersecurity, software engineering, and general reasoning. Span: 1 minute to 8+ hours of expert time. The main suite behind the horizon number.
-- **RE-Bench**: 71 ML research-engineering tasks with a human expert baseline. Measures whether the model can do the kind of ML R&D work that feeds into the AI R&D-4 threshold.
-- **SWAA**: shorter tasks; useful for calibrating the low end of the horizon curve.
+- **HCAST**: 189 tasks по ML, cybersecurity, software engineering и general reasoning. Диапазон: от 1 minute до 8+ hours expert time. Основной suite для horizon number.
+- **RE-Bench**: 71 ML research-engineering tasks с human expert baseline. Измеряет, может ли модель выполнять тип ML R&D work, который ведет к порогу AI R&D-4.
+- **SWAA**: более короткие задачи; полезны для калибровки нижнего конца horizon curve.
 
 ### Prototype monitoring evaluations
 
-2025–2026 METR work included monitoring-evaluation prototypes: can a monitor catch a model performing a side task (something other than what the operator asked for); can the agent evade the monitor. These directly feed the "Undermining Safeguards" category in OpenAI PF v2 and the deceptive-alignment monitoring in DeepMind FSF v3 (Lesson 20).
+Работа METR 2025–2026 включала prototype monitoring evaluations: может ли monitor поймать модель, выполняющую side task (что-то кроме того, что запросил operator); может ли agent evade monitor. Это напрямую питает категорию "Undermining Safeguards" в OpenAI PF v2 и deceptive-alignment monitoring в DeepMind FSF v3 (Lesson 20).
 
-### Why horizons are upper bounds
+### Почему horizons являются upper bounds
 
-- **Idealized tooling**: benchmark tasks give the model clean tools and well-formatted data. Real deployments are messier.
-- **No real consequences**: the model never actually bills a customer, deletes real data, or contacts real people. Real deployments have irreversible stakes.
-- **Eval-context gaming**: Lesson 1. Models behave differently in tests. The 2026 International AI Safety Report documents this empirically.
-- **No legitimate user variance**: benchmark prompts are structured. Real users produce ambiguous, context-dependent requests.
+- **Idealized tooling**: benchmark tasks дают модели чистые tools и хорошо форматированные data. Реальные deployments грязнее.
+- **No real consequences**: модель никогда реально не выставляет счет customer, не удаляет реальные data и не связывается с реальными people. Реальные deployments имеют irreversible stakes.
+- **Eval-context gaming**: Lesson 1. Модели ведут себя иначе в tests. 2026 International AI Safety Report документирует это эмпирически.
+- **No legitimate user variance**: benchmark prompts структурированы. Реальные users создают неоднозначные, context-dependent requests.
 
-The horizon is the capability ceiling under favorable conditions. Deployment reliability is a different number, lower, and teams must measure their own distribution to know it.
+Horizon - это capability ceiling при благоприятных условиях. Deployment reliability - другое число, ниже, и команды должны измерять собственное распределение, чтобы знать его.
 
-### The external-evaluator case
+### Аргумент в пользу external evaluator
 
-External evaluation matters because internal labs have incentives to optimize metrics they report. METR's independence — a 501(c)(3) with a declared methodology and peer-reviewed papers — is the structural mitigation. It is not sufficient alone (labs still control what METR sees), but it is strictly better than no external evaluation.
+External evaluation важна, потому что у внутренних лабораторий есть incentives оптимизировать metrics, которые они сообщают. Независимость METR - 501(c)(3) с заявленной methodology и peer-reviewed papers - является структурной mitigation. Одной ее недостаточно (лаборатории все еще контролируют, что видит METR), но это строго лучше, чем отсутствие external evaluation.
 
-### How to use horizon numbers in practice
+### Как использовать horizon numbers на практике
 
-- **As a capability filter**: if a model's horizon is well below the expert-time of a proposed task, do not ship it autonomous (Lesson 1's skill file).
-- **As a trend indicator**: doubling time tells you how long the current practice will remain safe even without new mitigations.
-- **As a prior**: a horizon of 14 hours is a starting point. Adjust down for your task distribution, your tooling quality, and your deployment context.
+- **Как capability filter**: если horizon модели существенно ниже expert-time предлагаемой задачи, не отправляйте ее autonomous (skill file Lesson 1).
+- **Как trend indicator**: doubling time говорит, как долго текущая практика останется безопасной даже без новых mitigations.
+- **Как prior**: horizon 14 hours - отправная точка. Корректируйте вниз с учетом task distribution, tooling quality и deployment context.
 
-## Use It
+## Использование
 
-`code/main.py` implements a logistic fit of task-success vs log(expert time), given a synthetic result set. It reports the 50% horizon (METR's headline), 10% horizon (conservative), and 90% horizon (optimistic). Also demonstrates what changes when the success rate is artificially inflated by eval-context gaming.
+`code/main.py` реализует logistic fit task-success vs log(expert time) по synthetic result set. Он сообщает 50% horizon (headline METR), 10% horizon (conservative) и 90% horizon (optimistic). Также демонстрирует, что меняется, когда success rate искусственно завышается из-за eval-context gaming.
 
-## Ship It
+## Практический результат
 
-`outputs/skill-horizon-interpretation.md` reviews a vendor's horizon claim and produces a gap analysis between benchmark claim and deployment reality.
+`outputs/skill-horizon-interpretation.md` рассматривает vendor's horizon claim и создает gap analysis между benchmark claim и deployment reality.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Confirm the fit's 50% horizon matches the synthetic ground truth. Now halve the task-time grid; does the horizon estimate change meaningfully?
+1. Запустите `code/main.py`. Подтвердите, что 50% horizon из fit совпадает с synthetic ground truth. Теперь уменьшите task-time grid вдвое; меняется ли horizon estimate существенно?
 
-2. Read METR's Time Horizon 1.1 blog post. Identify the specific tasks where reliability is highest and where it is lowest. Explain why the gap exists.
+2. Прочитайте blog post METR о Time Horizon 1.1. Найдите конкретные tasks, где reliability самая высокая и самая низкая. Объясните, почему существует gap.
 
-3. Read METR's "Measuring Autonomous AI Capabilities" resources. List the HCAST task categories. Pick one category you would weight more heavily for a production task and justify why.
+3. Прочитайте ресурсы METR "Measuring Autonomous AI Capabilities". Перечислите task categories HCAST. Выберите категорию, которой вы дали бы больший вес для production task, и обоснуйте почему.
 
-4. Introduce eval-context gaming into the simulator: flip ~20% of failed tasks to success. Report the new horizon. This approximates what a gaming rate of 20% does to the observed number.
+4. Введите eval-context gaming в симулятор: переверните ~20% failed tasks в success. Сообщите новый horizon. Это приближает эффект gaming rate 20% на observed number.
 
-5. Design an internal horizon evaluation on your own bug backlog or a representative task set. Describe the data collection, the fit, and what the output tells you. Compare to METR numbers.
+5. Спроектируйте internal horizon evaluation на собственном bug backlog или representative task set. Опишите data collection, fit и то, что output сообщает вам. Сравните с числами METR.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |---|---|---|
-| METR | "External evaluator" | ex-ARC Evals; independent 501(c)(3) since Dec 2023 |
-| Time Horizon | "Capability measure" | Expert task length at 50% reliability, from logistic fit |
-| HCAST | "METR's main suite" | 180+ tasks spanning 1 min to 8+ hours |
+| METR | "Внешний оценщик" | ex-ARC Evals; независимая 501(c)(3) с декабря 2023 года |
+| Time Horizon | "Мера capability" | Длина экспертной задачи при 50% reliability, из logistic fit |
+| HCAST | "Основной suite METR" | 180+ tasks spanning 1 min to 8+ hours |
 | RE-Bench | "Research engineering" | 71 ML research-engineering tasks with human baseline |
-| SWAA | "Short-task suite" | Calibrates the low end of the horizon curve |
-| Doubling time | "Growth rate" | Time for the 50% horizon to double; ~7 months per HCAST |
-| Eval-context gaming | "Model behaves differently" | Documented behavior gap between tests and deployment |
-| Upper bound | "Horizon is a ceiling" | Benchmark horizon > deployment reliability under load |
+| SWAA | "Suite коротких задач" | Калибрует нижний конец horizon curve |
+| Doubling time | "Темп роста" | Время удвоения 50% horizon; ~7 months per HCAST |
+| Eval-context gaming | "Модель ведет себя иначе" | Документированный behavior gap между tests and deployment |
+| Upper bound | "Horizon - потолок" | Benchmark horizon > deployment reliability under load |
 
-## Further Reading
+## Дополнительное чтение
 
-- [METR — Resources for Measuring Autonomous AI Capabilities](https://metr.org/measuring-autonomous-ai-capabilities/) — HCAST, RE-Bench, SWAA specs.
-- [METR — Measuring AI Ability to Complete Long Tasks](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) — the original horizon paper.
-- [METR — Time Horizon 1.1 (January 2026)](https://metr.org/research/) — current numbers and methodology.
+- [METR — Resources for Measuring Autonomous AI Capabilities](https://metr.org/measuring-autonomous-ai-capabilities/) — specs HCAST, RE-Bench, SWAA.
+- [METR — Measuring AI Ability to Complete Long Tasks](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) — исходная horizon paper.
+- [METR — Time Horizon 1.1 (January 2026)](https://metr.org/research/) — текущие числа и methodology.
 - [Epoch AI — METR Time Horizons benchmark](https://epoch.ai/benchmarks/metr-time-horizons) — live tracking.
 - [Anthropic — Measuring agent autonomy in practice](https://www.anthropic.com/research/measuring-agent-autonomy) — internal perspective on METR's measurements.
