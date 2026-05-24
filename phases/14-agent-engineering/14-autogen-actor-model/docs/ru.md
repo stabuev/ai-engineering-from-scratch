@@ -1,117 +1,117 @@
-# AutoGen v0.4: Actor Model and Agent Framework
+# AutoGen v0.4: акторная модель и агентный фреймворк
 
-> AutoGen v0.4 (Microsoft Research, Jan 2025) redesigned agent orchestration around the actor model. Async message exchange, event-driven agents, fault isolation, natural concurrency. The framework is now in maintenance mode while Microsoft Agent Framework (public preview Oct 2025) becomes the successor.
+> AutoGen v0.4 (Microsoft Research, Jan 2025) перепроектировал orchestration агентов вокруг actor model. Асинхронный обмен сообщениями, event-driven agents, fault isolation, естественная конкуррентность. Framework теперь в maintenance mode, пока Microsoft Agent Framework (public preview Oct 2025) становится преемником.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 01 (Agent Loop), Phase 14 · 12 (Workflow Patterns)
-**Time:** ~75 minutes
+**Тип:** Изучение + практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 01 (Agent Loop), Фаза 14 · 12 (Workflow Patterns)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Describe the actor model: agents as actors, messages as the only IPC, failure isolation per actor.
-- Name AutoGen v0.4's three API layers — Core, AgentChat, Extensions — and what each is for.
-- Explain why decoupling message delivery from handling gives fault isolation and natural concurrency.
-- Implement a stdlib actor runtime in Python and port a two-agent code-review flow onto it.
+- Описать actor model: agents как actors, messages как единственный IPC, failure isolation для каждого actor.
+- Назвать три API layers AutoGen v0.4 — Core, AgentChat, Extensions — и назначение каждого.
+- Объяснить, почему decoupling доставки сообщений и обработки даёт fault isolation и natural concurrency.
+- Реализовать stdlib actor runtime на Python и перенести на него two-agent code-review flow.
 
-## The Problem
+## Проблема
 
-Most agent frameworks are synchronous: one agent produces, one agent consumes, in a call stack. Failures crash the stack. Concurrency is bolted on. Distribution requires rewriting.
+Большинство agent frameworks синхронны: один agent производит, один agent потребляет, всё внутри call stack. Failures рушат stack. Concurrency прикручена сбоку. Distribution требует переписывания.
 
-AutoGen v0.4's answer: the actor model. Each agent is an actor with a private inbox. Messages are the only interaction. The runtime decouples delivery from handling. Failures isolate to one actor. Concurrency is native. Distribution is just different transport.
+Ответ AutoGen v0.4: actor model. Каждый agent — actor с private inbox. Messages — единственный способ взаимодействия. Runtime отделяет доставку от обработки. Failures изолируются в одном actor. Concurrency встроена нативно. Distribution — просто другой transport.
 
-## The Concept
+## Концепция
 
 ### Actors
 
-An actor has:
+У actor есть:
 
-- A private state (never directly touched from outside).
-- An inbox (message queue).
-- A handler: `receive(message) -> effects` where effects can be "reply," "send to other actor," "spawn new actor," "update state," "stop self."
+- Private state (никогда напрямую не трогается извне).
+- Inbox (message queue).
+- Handler: `receive(message) -> effects`, где effects могут быть "reply", "send to other actor", "spawn new actor", "update state", "stop self".
 
-Two actors cannot share memory. They can only send messages.
+Два actors не могут разделять память. Они могут только отправлять сообщения.
 
-### Three API layers in AutoGen v0.4
+### Три API layers в AutoGen v0.4
 
-1. **Core.** Low-level actor framework. `AgentRuntime`, `Agent`, `Message`, `Topic`. Async message exchange, event-driven.
-2. **AgentChat.** Task-driven high-level API (replacement for v0.2's ConversableAgent). `AssistantAgent`, `UserProxyAgent`, `RoundRobinGroupChat`, `SelectorGroupChat`.
+1. **Core.** Low-level actor framework. `AgentRuntime`, `Agent`, `Message`, `Topic`. Асинхронный обмен сообщениями, event-driven.
+2. **AgentChat.** Task-driven high-level API (замена ConversableAgent из v0.2). `AssistantAgent`, `UserProxyAgent`, `RoundRobinGroupChat`, `SelectorGroupChat`.
 3. **Extensions.** Integrations — OpenAI, Anthropic, Azure, tools, memory.
 
-### Why decoupling matters
+### Почему decoupling важен
 
-In the v0.2 model, calling `agent_a.chat(agent_b)` synchronously blocks agent_a until agent_b returns. In v0.4, `send(agent_b, msg)` puts the message in agent_b's inbox and returns. The runtime delivers later. Three consequences:
+В модели v0.2 вызов `agent_a.chat(agent_b)` синхронно блокирует agent_a, пока agent_b не вернется. В v0.4 `send(agent_b, msg)` кладет message в inbox agent_b и возвращается. Runtime доставляет позже. Три следствия:
 
-- **Fault isolation.** Agent B crashing does not crash Agent A — the runtime catches the failure in B's handler and decides what to do (log, retry, dead-letter).
-- **Natural concurrency.** Many messages in flight at once; actors process their inbox concurrently.
-- **Distribution-ready.** Inbox + transport is the same abstraction whether the actor is in-process or on another host.
+- **Fault isolation.** Crash Agent B не рушит Agent A — runtime ловит failure в handler B и решает, что делать (log, retry, dead-letter).
+- **Natural concurrency.** Много messages in flight одновременно; actors обрабатывают inbox concurrently.
+- **Distribution-ready.** Inbox + transport — одна и та же абстракция, независимо от того, actor in-process или на другом host.
 
 ### Topologies
 
-- **RoundRobinGroupChat.** Agents take turns in a fixed rotation.
-- **SelectorGroupChat.** A selector agent picks who goes next based on conversation context.
-- **Magentic-One.** Reference multi-agent team for web browsing, code execution, file handling. Built on AgentChat.
+- **RoundRobinGroupChat.** Agents ходят по очереди в fixed rotation.
+- **SelectorGroupChat.** Selector agent выбирает, кто идёт дальше, на основе conversation context.
+- **Magentic-One.** Reference multi-agent team для web browsing, code execution, file handling. Построена на AgentChat.
 
 ### Observability
 
-OpenTelemetry support is built in. Every message emits a span; tool calls carry `gen_ai.*` attributes per the 2026 OTel GenAI semantic conventions (Lesson 23).
+OpenTelemetry support встроен. Каждый message emits span; tool calls несут attributes `gen_ai.*` согласно OTel GenAI semantic conventions 2026 года (Lesson 23).
 
-### Status: maintenance mode
+### Статус: maintenance mode
 
-Early 2026: AutoGen v0.7.x is stable for research and prototyping. Microsoft has shifted active development to the Microsoft Agent Framework (public preview Oct 1 2025; 1.0 GA targeted end of Q1 2026). AutoGen patterns port forward cleanly — the actor model is the durable idea.
+Начало 2026 года: AutoGen v0.7.x стабилен для research и prototyping. Microsoft перенесла active development в Microsoft Agent Framework (public preview Oct 1 2025; 1.0 GA targeted end of Q1 2026). Паттерны AutoGen чисто переносятся вперёд — actor model является durable idea.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a stdlib actor runtime:
+`code/main.py` реализует stdlib actor runtime:
 
-- `Message` — typed payload with `sender`, `recipient`, `topic`, `body`.
-- `Actor` — abstract with `receive(message, runtime)`.
-- `Runtime` — event loop with a shared queue, delivery, failure isolation.
-- A two-actor demo: `ReviewerAgent` reviews code, `ChecklistAgent` runs a checklist; they exchange messages until consensus.
+- `Message` — typed payload с `sender`, `recipient`, `topic`, `body`.
+- `Actor` — abstract с `receive(message, runtime)`.
+- `Runtime` — event loop с shared queue, delivery, failure isolation.
+- Two-actor demo: `ReviewerAgent` reviews code, `ChecklistAgent` runs a checklist; они обмениваются messages до consensus.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The trace shows message delivery, a simulated failure in one actor that does not crash the other, and convergence on a shared verdict.
+Трасса показывает доставку сообщений, simulated failure в одном actor, который не рушит другого, и convergence к shared verdict.
 
-## Use It
+## Используйте это
 
-- **AutoGen v0.4/v0.7** (maintenance) — stable for research, prototyping, multi-agent patterns.
-- **Microsoft Agent Framework** (public preview) — the forward path; same actor-model ideas in a refreshed API.
-- **LangGraph swarm topology** (Lesson 13) — similar pattern via shared-tool handoffs.
-- **Custom actor runtime** — when you need specific transport (NATS, RabbitMQ, gRPC).
+- **AutoGen v0.4/v0.7** (maintenance) — стабилен для research, prototyping, multi-agent patterns.
+- **Microsoft Agent Framework** (public preview) — forward path; те же actor-model ideas в обновленном API.
+- **LangGraph swarm topology** (Lesson 13) — похожий паттерн через shared-tool handoffs.
+- **Custom actor runtime** — когда нужен specific transport (NATS, RabbitMQ, gRPC).
 
-## Ship It
+## Доведите до продакшена
 
-`outputs/skill-actor-runtime.md` generates a minimal actor runtime plus a team template (RoundRobin or Selector) for a given multi-agent task.
+`outputs/skill-actor-runtime.md` генерирует minimal actor runtime плюс team template (RoundRobin или Selector) для заданной multi-agent task.
 
-## Exercises
+## Упражнения
 
-1. Add a dead-letter queue: when a handler raises, park the failing message for human inspection. How often does DLQ get hit in your toy?
-2. Implement `SelectorGroupChat`: a selector actor picks who processes the next message based on conversation state.
-3. Add distributed transport: swap the in-process queue for a JSON-over-HTTP server so actors can run in separate processes.
-4. Wire an OTel span per message (or a no-op stand-in). Emit `gen_ai.agent.name`, `gen_ai.operation.name` per Lesson 23.
-5. Read AutoGen v0.4's architecture post. Port your toy to the real `autogen_core` API. What did you skip that matters in production?
+1. Добавьте dead-letter queue: когда handler raises, помещайте failing message для human inspection. Как часто DLQ срабатывает в игрушке?
+2. Реализуйте `SelectorGroupChat`: selector actor выбирает, кто обработает next message, на основе conversation state.
+3. Добавьте distributed transport: замените in-process queue на JSON-over-HTTP server, чтобы actors могли run in separate processes.
+4. Подключите OTel span per message (или no-op stand-in). Emit `gen_ai.agent.name`, `gen_ai.operation.name` согласно Lesson 23.
+5. Прочитайте architecture post AutoGen v0.4. Перенесите игрушку на реальный API `autogen_core`. Что вы пропустили из того, что важно in production?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Actor | "Agent" | Private state + inbox + handler; no shared memory |
-| Message | "Event" | Typed payload; the only way actors interact |
-| Inbox | "Mailbox" | Per-actor queue of pending messages |
-| Runtime | "Agent host" | Event loop that routes messages and isolates failures |
-| Topic | "Channel" | Named publish-subscribe route between actors |
-| Fault isolation | "Let it crash" | One actor failing does not crash others |
-| RoundRobinGroupChat | "Fixed-rotation team" | Agents take turns in order |
-| SelectorGroupChat | "Context-routed team" | Selector picks who goes next |
-| Magentic-One | "Reference team" | Multi-agent squad for web + code + files |
+| Actor | "Agent" | Private state + inbox + handler; без shared memory |
+| Message | "Event" | Typed payload; единственный способ взаимодействия между actors |
+| Inbox | "Mailbox" | Per-actor queue pending messages |
+| Runtime | "Agent host" | Event loop, который routes messages и isolates failures |
+| Topic | "Channel" | Named publish-subscribe route между actors |
+| Fault isolation | "Let it crash" | Failure одного actor не рушит others |
+| RoundRobinGroupChat | "Fixed-rotation team" | Agents ходят по очереди |
+| SelectorGroupChat | "Context-routed team" | Selector выбирает, кто идет дальше |
+| Magentic-One | "Reference team" | Multi-agent squad для web + code + files |
 
-## Further Reading
+## Дополнительное чтение
 
-- [AutoGen v0.4, Microsoft Research](https://www.microsoft.com/en-us/research/articles/autogen-v0-4-reimagining-the-foundation-of-agentic-ai-for-scale-extensibility-and-robustness/) — the redesign post
+- [AutoGen v0.4, Microsoft Research](https://www.microsoft.com/en-us/research/articles/autogen-v0-4-reimagining-the-foundation-of-agentic-ai-for-scale-extensibility-and-robustness/) — пост о redesign
 - [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — graph-shaped alternative
-- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — spans AutoGen emits by default
+- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — spans, которые AutoGen emits by default

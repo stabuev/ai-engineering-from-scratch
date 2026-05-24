@@ -1,26 +1,26 @@
-# Multi-Session Handoff
+# Multi-session handoff
 
-> The session is going to end. The work is not. The handoff packet is the artifact that turns "the agent worked for an hour" into "the next session is productive in the first minute." Build it on purpose, not as an afterthought.
+> Сессия закончится. Работа — нет. Handoff packet — artifact, который превращает "агент работал час" в "следующая сессия продуктивна с первой минуты". Стройте его намеренно, а не как afterthought.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 34 (Repo Memory), Phase 14 · 38 (Verification), Phase 14 · 39 (Reviewer)
-**Time:** ~50 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 34 (Repo Memory), Phase 14 · 38 (Verification), Phase 14 · 39 (Reviewer)
+**Время:** ~50 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Identify the seven fields every handoff packet needs.
-- Generate a handoff from the workbench artifacts without hand-writing prose.
-- Trim large feedback logs into a handoff-sized summary.
-- Make the next session's first action deterministic.
+- Определить семь fields, нужных каждому handoff packet.
+- Генерировать handoff из workbench artifacts без ручного prose.
+- Обрезать большие feedback logs до handoff-sized summary.
+- Сделать первое действие следующей сессии deterministic.
 
-## The Problem
+## Проблема
 
-The session ends. The agent says "great, we made progress." The next session opens. The next agent asks "where did we leave off?" The first agent's answer is gone. The next agent rediscovers, re-runs the same commands, re-asks the human the same questions, and burns thirty minutes recovering the last thirty seconds of the previous session.
+Сессия заканчивается. Агент говорит "great, we made progress." Открывается следующая сессия. Следующий агент спрашивает "where did we leave off?" Ответ первого агента исчез. Следующий агент rediscover, re-runs те же commands, re-asks human those same questions и сжигает тридцать минут на восстановление последних тридцати секунд предыдущей сессии.
 
-The cost of a bad handoff is paid every session for the life of the task. The fix is a packet generated automatically at session end: what changed, why, what was tried, what failed, what is left, what to do first next time.
+Цена плохого handoff платится каждую сессию на протяжении жизни task. Исправление — packet, generated automatically at session end: what changed, why, what was tried, what failed, what is left, what to do first next time.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -32,94 +32,94 @@ flowchart LR
   Handoff --> Next[Next Session]
 ```
 
-### Seven fields every handoff carries
+### Семь полей каждого handoff
 
 | Field | Question it answers |
 |-------|---------------------|
 | `summary` | One paragraph of what was done |
-| `changed_files` | The diff at a glance |
+| `changed_files` | Diff at a glance |
 | `commands_run` | What was actually executed |
 | `failed_attempts` | What was tried and why it did not work |
 | `open_risks` | What could bite next session, with severity |
-| `next_action` | The first concrete step next session takes |
-| `verdict_pointer` | Path to the verification + review reports |
+| `next_action` | First concrete step next session takes |
+| `verdict_pointer` | Path to verification + review reports |
 
-The `next_action` field is the load-bearing one. A handoff with everything except `next_action` is a status report, not a handoff.
+Поле `next_action` — load-bearing. Handoff со всем, кроме `next_action`, — status report, не handoff.
 
-### Handoffs are generated, not written
+### Handoffs generated, not written
 
-A hand-written handoff is a handoff that gets skipped on a hard day. The generator reads the workbench artifacts and emits the packet. The agent's job is to leave the workbench in a state the generator can summarize, not to write the summary.
+Ручной handoff — handoff, который пропускают в тяжелый день. Generator читает workbench artifacts и emits packet. Задача агента — оставить workbench в состоянии, которое generator can summarize, а не писать summary.
 
-### Two forms: human-readable and machine-readable
+### Две формы: human-readable и machine-readable
 
-`handoff.md` is what the human reads. `handoff.json` is what the next agent loads. Both come from the same source artifacts. If they diverge, the JSON wins.
+`handoff.md` читает human. `handoff.json` загружает следующий agent. Оба происходят из одних source artifacts. Если они расходятся, JSON wins.
 
 ### Feedback log trimming
 
-The full `feedback_record.jsonl` may be hundreds of entries. The handoff carries only the last K plus every entry with a non-zero exit. The next session loads the full log if it needs to, but the packet stays small.
+Полный `feedback_record.jsonl` может содержать сотни entries. Handoff несет только last K плюс каждую entry с non-zero exit. Следующая session загружает full log при необходимости, но packet остается small.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- A loader that gathers state, verdict, review, and feedback into a single `WorkbenchSnapshot`.
-- A `generate_handoff(snapshot) -> (markdown, payload)` function.
-- A filter that picks the last K feedback entries plus all non-zero exits.
-- A demo run that writes `handoff.md` and `handoff.json` next to the script.
+- Loader, который gathers state, verdict, review и feedback в один `WorkbenchSnapshot`.
+- Function `generate_handoff(snapshot) -> (markdown, payload)`.
+- Filter, который выбирает last K feedback entries plus all non-zero exits.
+- Demo run, который пишет `handoff.md` и `handoff.json` рядом со script.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: a printed handoff body, plus both files on disk.
+Вывод: printed handoff body плюс оба files on disk.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Codex CLI, Claude Code, and OpenCode each ship a different compaction story; the structured handoff packet sits on top of all three.
+Codex CLI, Claude Code и OpenCode поставляют разные compaction stories; structured handoff packet сидит поверх всех трех.
 
-**Compaction strategies vary; the packet schema does not.** Codex CLI's POST /v1/responses/compact is a server-side opaque AES blob (fast path for OpenAI models); the fallback is a local "handoff summary" appended as a `_summary` user-role message. Claude Code runs five-stage progressive compaction at 95% of context. OpenCode does timestamp-based message hiding plus a 5-heading LLM summary. Three different mechanisms, same need: serialize what survives compression into a portable artifact. The packet is that artifact.
+**Compaction strategies vary; packet schema does not.** Codex CLI POST /v1/responses/compact — server-side opaque AES blob (fast path for OpenAI models); fallback — local "handoff summary", appended as `_summary` user-role message. Claude Code runs five-stage progressive compaction at 95% of context. OpenCode делает timestamp-based message hiding плюс 5-heading LLM summary. Три разных механизма, одна потребность: serialize what survives compression into portable artifact. Packet — этот artifact.
 
-**Fresh-session handoff is not compaction.** Compaction extends a session; handoff closes one cleanly and starts the next. The Hermes Issue #20372 framing (April 2026) is right: when in-place compression starts degrading, the agent should write a compact handoff, end the session, and resume in fresh context. The packet is what makes that transition cheap. The mistake is to keep compressing until quality collapses; the fix is to budget for an early, clean handoff.
+**Fresh-session handoff is not compaction.** Compaction extends a session; handoff cleanly closes one and starts the next. Формулировка Hermes Issue #20372 (April 2026) правильна: когда in-place compression начинает degrading, agent должен write compact handoff, end session и resume in fresh context. Packet делает этот transition дешевым. Ошибка — keep compressing until quality collapses; fix — budget for early, clean handoff.
 
-**One active handoff per branch and topic.** Multi-agent coordination breaks down on stale handoffs more than on bad model output. Always include `branch`, `last_known_good_commit`, and a `status` of `active | superseded | archived`. Stale handoffs are archived; only the active one drives the next session. This is the difference between handoff-as-notes and handoff-as-state.
+**One active handoff per branch and topic.** Multi-agent coordination breaks down on stale handoffs more than bad model output. Всегда включайте `branch`, `last_known_good_commit` и `status` of `active | superseded | archived`. Stale handoffs archived; only active one drives next session. Это разница между handoff-as-notes и handoff-as-state.
 
-**Wrap up before 50-75% context, not at the wall.** The hand-written-pattern playbook (CLAUDE.md + HANDOVER.md) reports best results when the session ends at 50-75% context budget instead of 95%. The packet generator runs cleanly before compression artifacts pollute the source state. Cheap to write while context is intact; expensive when the model is already losing its place.
+**Wrap up before 50-75% context, not at the wall.** Playbook для hand-written pattern (CLAUDE.md + HANDOVER.md) сообщает лучшие результаты, когда session ends at 50-75% context budget вместо 95%. Packet generator runs cleanly до того, как compression artifacts загрязнят source state. Дешево писать, пока context intact; дорого, когда model already losing its place.
 
-## Use It
+## Используйте это
 
 Production patterns:
 
-- **Session-end hook.** The runtime fires the generator when the user closes the chat. The packet goes into `outputs/handoff/<session_id>/`.
-- **PR template.** The generator's markdown is also a PR body. Reviewers read it without opening five other files.
-- **Cross-agent handoff.** Build with one product (Claude Code), continue with another (Codex). The packet is the lingua franca.
+- **Session-end hook.** Runtime запускает generator, когда user closes chat. Packet попадает в `outputs/handoff/<session_id>/`.
+- **PR template.** Markdown generator также становится PR body. Reviewers читают его, не открывая five other files.
+- **Cross-agent handoff.** Сборка в одном product (Claude Code), продолжение в другом (Codex). Packet — lingua franca.
 
-The packet is small, regular, and cheap to produce. The cost saving compounds with every session.
+Packet маленький, регулярный и дешевый в производстве. Экономия cost compounds with every session.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-handoff-generator.md` produces a generator tuned to a project's artifact paths, an end-of-session hook that runs it, and a `handoff.json` schema the next agent reads on startup.
+`outputs/skill-handoff-generator.md` создает generator, настроенный на artifact paths проекта, end-of-session hook для его запуска и schema `handoff.json`, которую next agent reads on startup.
 
-## Exercises
+## Упражнения
 
-1. Add an `assumptions_to_validate` field that surfaces every assumption the builder logged but the reviewer did not score above 1.
-2. Trim the feedback summary differently for failing runs versus passing ones. Defend the asymmetry.
-3. Include a "questions for the human" list. What is the threshold for a question to make it into the packet versus into a chat message?
-4. Make the generator idempotent: running it twice produces the same packet. What needs to be stable for that to hold?
-5. Add a "next session prereqs" section listing exactly the artifacts the next session must load before acting.
+1. Добавьте поле `assumptions_to_validate`, которое surfaces every assumption, записанное builder, но не оцененное reviewer выше 1.
+2. Обрезайте feedback summary по-разному для failing runs и passing runs. Защитите asymmetry.
+3. Включите список "questions for the human". Какой threshold нужен вопросу, чтобы попасть в packet, а не chat message?
+4. Сделайте generator idempotent: running it twice produces same packet. Что должно быть stable?
+5. Добавьте section "next session prereqs", listing exactly artifacts, которые next session must load before acting.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Handoff packet | "Session summary" | Generated artifact carrying the seven fields, both markdown and JSON |
-| Next action | "What to do first" | The one concrete step that starts the next session |
-| Feedback trim | "Log summary" | Last K records plus every non-zero exit |
-| Status report | "What we did" | A document missing `next_action`; useful, but not a handoff |
-| Verdict pointer | "Receipt" | Path to the verification + review reports for traceability |
+| Handoff packet | "Session summary" | Generated artifact с семью полями, both markdown and JSON |
+| Next action | "What to do first" | Один конкретный step, с которого starts next session |
+| Feedback trim | "Log summary" | Последние K records плюс каждый non-zero exit |
+| Status report | "What we did" | Документ без `next_action`; полезен, но не handoff |
+| Verdict pointer | "Receipt" | Path к verification + review reports для traceability |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic, Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [OpenAI Agents SDK handoffs](https://platform.openai.com/docs/guides/agents-sdk/handoffs)
@@ -132,6 +132,6 @@ The packet is small, regular, and cheap to produce. The cost saving compounds wi
 - [Microsoft Agent Framework, Compaction](https://learn.microsoft.com/en-us/agent-framework/agents/conversations/compaction)
 - [OpenCode, Context Management and Compaction](https://deepwiki.com/sst/opencode/2.4-context-management-and-compaction)
 - [LangChain, Context Engineering for Agents](https://www.langchain.com/blog/context-engineering-for-agents)
-- Phase 14 · 34 — the state file the generator reads
-- Phase 14 · 38 — the verification verdict the packet points at
-- Phase 14 · 39 — the reviewer report bundled into the packet
+- Phase 14 · 34 — state file, который generator reads
+- Phase 14 · 38 — verification verdict, на который packet points
+- Phase 14 · 39 — reviewer report bundled into packet

@@ -1,26 +1,26 @@
-# Scope Contracts and Task Boundaries
+# Контракты области действия и границы задач
 
-> The model does not know where the work ends. A scope contract is a per-task file that says where the work begins, where it ends, and how to roll back if it spills. The contract turns "stay in scope" from a wish into a check.
+> Модель не знает, где заканчивается работа. Scope contract — это файл на задачу, который говорит, где работа начинается, где заканчивается и как откатиться, если она расползется. Contract превращает "stay in scope" из пожелания в check.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 32 (Minimal Workbench), Phase 14 · 33 (Rules as Constraints)
-**Time:** ~50 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 32 (Minimal Workbench), Phase 14 · 33 (Rules as Constraints)
+**Время:** ~50 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Write a scope contract that an agent reads at task start and a verifier reads at task end.
-- Specify allowed files, forbidden files, acceptance criteria, rollback plan, and approval boundaries.
-- Implement a scope checker that compares a diff against the contract and flags violations.
-- Make scope creep visible, automatic, and reviewable.
+- Написать scope contract, который агент читает в начале task, а verifier — в конце task.
+- Указать allowed files, forbidden files, acceptance criteria, rollback plan и approval boundaries.
+- Реализовать scope checker, который сравнивает diff с contract и отмечает violations.
+- Сделать scope creep видимым, автоматическим и reviewable.
 
-## The Problem
+## Проблема
 
-Agents creep. The task is "fix the login bug." The diff touches the login route, the email helper, the database driver, the README, and the release script. Each touch had a plausible reason in the moment. Together they are a different change than the one that was reviewed.
+Агенты расползаются. Task звучит "fix the login bug". Diff трогает login route, email helper, database driver, README и release script. У каждого касания была правдоподобная причина в моменте. Вместе это уже другое изменение, не то, которое проходило review.
 
-Scope creep is the most under-monitored failure mode in agent work because the agent narrates each step in good faith. The fix is not a stricter prompt. The fix is a contract on disk that says what was promised and a check that compares the result against the promise.
+Scope creep — самый недомониторенный failure mode в agent work, потому что агент добросовестно объясняет каждый шаг. Исправление — не более строгий prompt. Исправление — contract на диске, где написано, что было обещано, и check, который сравнивает результат с обещанием.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -34,94 +34,94 @@ flowchart LR
   Verdict -- no --> Block[block + open question]
 ```
 
-### What goes in a scope contract
+### Что входит в scope contract
 
 | Field | Purpose |
 |-------|---------|
-| `task_id` | Links to the task on the board |
-| `goal` | One sentence the reviewer can verify |
-| `allowed_files` | Globs the agent may write |
-| `forbidden_files` | Globs the agent must not touch even by accident |
-| `acceptance_criteria` | Test commands or assertion lines that prove done |
-| `rollback_plan` | One paragraph the operator can execute if a halt is required |
-| `approvals_required` | Actions outside scope that need explicit human sign-off |
+| `task_id` | Связывает с task на board |
+| `goal` | Одно предложение, которое reviewer может verify |
+| `allowed_files` | Globs, в которые agent может писать |
+| `forbidden_files` | Globs, которые agent не должен трогать даже случайно |
+| `acceptance_criteria` | Test commands или assertion lines, доказывающие done |
+| `rollback_plan` | Один paragraph, который operator может выполнить, если нужен halt |
+| `approvals_required` | Actions вне scope, которым нужен explicit human sign-off |
 
-A contract without `forbidden_files` is incomplete. The negative space is half the contract.
+Contract без `forbidden_files` неполон. Негативное пространство — половина contract.
 
-### Globs, not raw paths
+### Globs, а не raw paths
 
-Real repos move files. Pin contracts to globs (`app/**/*.py`, `tests/test_signup*.py`) so a refactor between sessions does not invalidate the contract.
+Настоящие repos перемещают files. Привязывайте contracts к globs (`app/**/*.py`, `tests/test_signup*.py`), чтобы refactor между sessions не invalidated contract.
 
-### Rollback is part of scope
+### Rollback — часть scope
 
-Listing how to roll back forces the contract author to think about what could go wrong. A contract you cannot roll back from is a contract that should not be approved.
+Перечисление rollback заставляет автора contract думать о том, что может пойти не так. Contract, из которого нельзя откатиться, не должен быть approved.
 
-### Scope check is a diff check
+### Scope check — это diff check
 
-The agent writes a diff. The checker reads the diff, the allowed globs, the forbidden globs, and a list of any acceptance commands that ran. Each violation is a tagged finding the verification gate can refuse.
+Agent пишет diff. Checker читает diff, allowed globs, forbidden globs и список acceptance commands, которые запускались. Каждое violation — tagged finding, который verification gate может refuse.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `scope_contract.json` schema (subset of JSON Schema, glob arrays).
-- A diff parser that turns a list of touched files plus a list of run commands into a `RunSummary`.
-- A `scope_check` that returns `(violations, in_scope, off_scope)` against the contract.
-- Two demo runs: one that stays in scope, one that creeps. The checker flags the creep with the exact file and reason.
+- Schema `scope_contract.json` (подмножество JSON Schema, glob arrays).
+- Diff parser, который превращает список touched files плюс список run commands в `RunSummary`.
+- `scope_check`, возвращающий `(violations, in_scope, off_scope)` против contract.
+- Два demo runs: один остается in scope, другой creeps. Checker отмечает creep с точным file и reason.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: the contract, the two runs, the per-run verdicts, and a saved `scope_report.json`.
+Вывод: contract, два runs, verdict по каждому run и сохраненный `scope_report.json`.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-A practitioner running "specsmaxxing" (scope contracts in YAML before invoking the agent) reports rabbit-hole rate dropped from 52% to 21% in three weeks without changing the agent. The contract did the work, not the model. Three patterns make the gain stick.
+Практик, запускавший "specsmaxxing" (scope contracts в YAML перед вызовом agent), сообщает: rabbit-hole rate упал с 52% до 21% за три недели без смены agent. Работу сделал contract, не model. Три паттерна закрепляют выигрыш.
 
-**Violation budgets, not binary failures.** `agent-guardrails` (the OSS merge gate used by Claude Code, Cursor, Windsurf, Codex via MCP) ships a `violationBudget` per task: minor scope slips within budget are surfaced as warnings; only when the budget is exceeded does the merge gate refuse. Pair with `violationSeverity: "error" | "warning"`. The budget is the difference between a gate that ships and a gate that gets disabled by the team that hated it.
+**Violation budgets, а не binary failures.** `agent-guardrails` (OSS merge gate, используемый Claude Code, Cursor, Windsurf, Codex через MCP) поставляет `violationBudget` на task: minor scope slips внутри budget показываются как warnings; только при превышении budget merge gate refuses. Свяжите с `violationSeverity: "error" | "warning"`. Budget — разница между gate, который ship, и gate, который команда отключит, потому что он всем мешал.
 
-**Severity asymmetry by path family.** Off-scope writes to `docs/**` are usually `warn`; off-scope writes to `scripts/**`, `migrations/**`, `config/prod/**` are always `block`. This asymmetry has to live in the contract, not in the runtime, because it is project-specific and changes per task.
+**Severity asymmetry by path family.** Off-scope writes в `docs/**` обычно `warn`; off-scope writes в `scripts/**`, `migrations/**`, `config/prod/**` всегда `block`. Эта asymmetry должна жить в contract, а не runtime, потому что она project-specific и меняется по task.
 
-**Time and network budgets next to file budgets.** A `time_budget_minutes` field bounds the wall clock; the runtime refuses to continue past it without re-approval. A `network_egress` allowlist on hostnames prevents the agent from quietly hitting an external API that was not part of the task. These are scope dimensions too; the file globs are necessary, not sufficient.
+**Time and network budgets рядом с file budgets.** Поле `time_budget_minutes` ограничивает wall clock; runtime отказывается продолжать после него без re-approval. Allowlist `network_egress` по hostnames не дает agent тихо обращаться к внешнему API, который не был частью task. Это тоже scope dimensions; file globs необходимы, но недостаточны.
 
-**Multi-contract merge semantics (least privilege).** When two scope contracts apply (e.g., a project-wide contract plus a task-specific one), the merge is: **intersect** `allowed_files` (both contracts must permit the path), **union** `forbidden_files` (either can prohibit), `time_budget_minutes` is the most restrictive (min), `approvals_required` accumulates. `network_egress` is `None` for no enforcement, `[]` for deny-all, `[...]` as an allowlist; under merge, `None` defers to the other side, two lists intersect, and deny-all stays deny-all. State this in the contract schema so the merge is mechanical and reviewable.
+**Multi-contract merge semantics (least privilege).** Когда применяются два scope contracts (например, project-wide и task-specific), merge такой: **intersect** `allowed_files` (оба contracts должны разрешать path), **union** `forbidden_files` (любой может запретить), `time_budget_minutes` — самый restrictive (min), `approvals_required` накапливаются. `network_egress` равен `None` для отсутствия enforcement, `[]` для deny-all, `[...]` как allowlist; при merge `None` уступает другой стороне, два lists пересекаются, deny-all остается deny-all. Зафиксируйте это в contract schema, чтобы merge был mechanical и reviewable.
 
-## Use It
+## Используйте это
 
 Production patterns:
 
-- **Claude Code slash commands.** A `/scope` command writes the contract and pins it as session context. Subagents read the contract before acting.
-- **GitHub PRs.** Push the contract as a JSON file in the PR body or as a checked-in artifact. CI runs the scope checker against the merge diff.
-- **LangGraph interrupts.** A scope violation triggers an interrupt; the handler asks the human whether the contract needs to grow or the agent needs to back off.
+- **Claude Code slash commands.** Команда `/scope` пишет contract и pins его как session context. Subagents читают contract перед действием.
+- **GitHub PRs.** Поместите contract как JSON file в PR body или как checked-in artifact. CI запускает scope checker против merge diff.
+- **LangGraph interrupts.** Scope violation вызывает interrupt; handler спрашивает человека, должен ли contract grow или agent back off.
 
-The contract travels with the task. When the task closes, the contract is archived under `outputs/scope/closed/`.
+Contract travels with the task. Когда task closes, contract архивируется в `outputs/scope/closed/`.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-scope-contract.md` generates a scope contract for a task description and a glob-aware checker that runs in CI on every agent diff.
+`outputs/skill-scope-contract.md` генерирует scope contract для task description и glob-aware checker, который запускается в CI на каждом agent diff.
 
-## Exercises
+## Упражнения
 
-1. Add a `network_egress` field listing allowed external hosts. Refuse runs that touch other hosts.
-2. Extend the checker to fail soft on `docs/**` and hard on `scripts/**`. Justify the asymmetry.
-3. Make the contract derive `allowed_files` from a `goal` field using a static rule set (no LLM). What goes wrong on the first edge case?
-4. Add a `time_budget_minutes` and refuse to continue once the wall clock exceeds it.
-5. Run two contracts against the same diff. What is the right merge semantics when both apply?
+1. Добавьте поле `network_egress` со списком allowed external hosts. Отказывайте runs, которые трогают другие hosts.
+2. Расширьте checker: fail soft на `docs/**` и hard на `scripts/**`. Обоснуйте asymmetry.
+3. Сделайте так, чтобы contract выводил `allowed_files` из поля `goal` через static rule set (no LLM). Что сломается на первом edge case?
+4. Добавьте `time_budget_minutes` и отказывайтесь продолжать, когда wall clock его превышает.
+5. Запустите два contracts против одного diff. Какая merge semantics правильна, когда применяются оба?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Scope contract | "The task brief" | Per-task JSON listing allowed/forbidden files, acceptance, rollback |
+| Scope contract | "The task brief" | Per-task JSON со списком allowed/forbidden files, acceptance, rollback |
 | Scope creep | "It also touched..." | Files outside the contract changed in the same task |
-| Rollback plan | "We can revert" | The one-paragraph operator runbook for halting |
-| Approval boundary | "Needs sign-off" | An action listed in the contract as requiring explicit human approval |
+| Rollback plan | "We can revert" | One-paragraph operator runbook для halting |
+| Approval boundary | "Needs sign-off" | Action, listed in the contract as requiring explicit human approval |
 | Diff check | "Path audit" | Comparing touched files against the contract globs |
 
-## Further Reading
+## Дополнительное чтение
 
 - [LangGraph human-in-the-loop interrupts](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/)
 - [OpenAI Agents SDK tool approval policies](https://platform.openai.com/docs/guides/agents-sdk)
@@ -131,6 +131,6 @@ The contract travels with the task. When the task closes, the contract is archiv
 - [OpenCode permission globs](https://opencode.ai/docs/agents/) — fine-grained per-permission scope
 - [Knostic, AI Coding Agent Security: Threat Models and Protection Strategies](https://www.knostic.ai/blog/ai-coding-agent-security) — scope as part of least privilege
 - [Augment Code, AI Spec Template](https://www.augmentcode.com/guides/ai-spec-template) — three-tier boundary system (must/ask/never)
-- Phase 14 · 27 — prompt injection defenses that pair with scope locks
-- Phase 14 · 33 — the rule set this contract specializes per task
-- Phase 14 · 38 — the verification gate the checker reports into
+- Фаза 14 · 27 — prompt injection defenses, которые pair with scope locks
+- Phase 14 · 33 — rule set, который этот contract specializes per task
+- Phase 14 · 38 — verification gate, куда reports checker

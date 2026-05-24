@@ -1,28 +1,28 @@
-# The Minimal Agent Workbench
+# Минимальный воркбенч агента
 
-> The smallest useful workbench is three files: a root instructions router, a state file, and a task board. Everything else is layered on top. If a repo cannot carry these three, no model will save it.
+> Самый маленький полезный воркбенч состоит из трех файлов: корневого маршрутизатора инструкций, файла состояния и доски задач. Все остальное наслаивается сверху. Если репозиторий не может нести эти три файла, никакая модель его не спасет.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 31 (Why Capable Models Still Fail)
-**Time:** ~45 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 31 (Why Capable Models Still Fail)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Define the three files that form the minimum viable workbench.
-- Explain why a short root router beats a long monolithic `AGENTS.md`.
-- Build a state file the agent can read at every turn and write at the end.
-- Build a task board that survives multi-session work without chat history.
+- Определить три файла, из которых состоит минимально жизнеспособный воркбенч.
+- Объяснить, почему короткий корневой маршрутизатор лучше длинного монолитного `AGENTS.md`.
+- Построить файл состояния, который агент может читать на каждом ходе и записывать в конце.
+- Построить доску задач, которая выдерживает многосессионную работу без истории чата.
 
-## The Problem
+## Проблема
 
-Most teams reach for a workbench by writing a 3000-line `AGENTS.md` and calling it done. The model loads it, ignores the parts it cannot summarize, and still fails on the same surfaces it always failed on.
+Большинство команд начинают строить воркбенч с 3000-строчного `AGENTS.md` и считают дело законченным. Модель загружает его, игнорирует части, которые не может сжать в краткое резюме, и все равно ошибается на тех же поверхностях, где ошибалась раньше.
 
-You need the opposite. A tiny root file that routes the agent into deeper files only when relevant. Durable state the agent reads before acting and writes after. A task board that says what is in flight, what is blocked, and what is up next.
+Нужно противоположное. Крошечный корневой файл, который направляет агента в более глубокие файлы только когда это уместно. Долговечное состояние, которое агент читает перед действием и записывает после. Доска задач, где видно, что в работе, что заблокировано и что идет дальше.
 
-Three files. Each one with a job. Each one machine-readable enough to evolve into a real system later.
+Три файла. У каждого своя задача. Каждый достаточно машиночитаем, чтобы позже вырасти в настоящую систему.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -33,92 +33,92 @@ flowchart LR
   Board --> Agent
 ```
 
-### AGENTS.md is a router, not a manual
+### AGENTS.md — это маршрутизатор, а не руководство
 
-A good `AGENTS.md` is short. It points the agent at:
+Хороший `AGENTS.md` короткий. Он указывает агенту на:
 
-- The state file (where you are).
-- The task board (what is left).
-- The deeper rules (under `docs/agent-rules.md`).
-- The verification command (how to know it works).
+- Файл состояния (где вы находитесь).
+- Доску задач (что осталось).
+- Более глубокие правила (в `docs/agent-rules.md`).
+- Команду проверки (как понять, что все работает).
 
-Anything longer goes in deeper docs, loaded only when needed. Long manuals get ignored. Short routers get followed.
+Все более длинное уходит в глубокие документы, которые загружаются только при необходимости. Длинные руководства игнорируют. Коротким маршрутизаторам следуют.
 
-### agent_state.json is the system of record
+### agent_state.json — система записи
 
-State carries: the active task id, the touched files, the assumptions made, the blockers, and the next action. The agent reads it at every turn. The next session reads it instead of replaying chat.
+Состояние хранит: id активной задачи, затронутые файлы, сделанные допущения, блокеры и следующее действие. Агент читает его на каждом ходе. Следующая сессия читает его вместо воспроизведения чата.
 
-State lives in a file because chat history is unreliable. Sessions die. Conversations get trimmed. The file does not.
+Состояние живет в файле, потому что история чата ненадежна. Сессии умирают. Диалоги обрезаются. Файл остается.
 
-### task_board.json is the queue
+### task_board.json — очередь
 
-The task board carries every task with status `todo | in_progress | done | blocked`. It is the queue the agent pulls from when state is empty, and the queue you read when you want to know whether the agent is on track.
+Доска задач хранит каждую задачу со статусом `todo | in_progress | done | blocked`. Это очередь, из которой агент берет работу, когда состояние пусто, и очередь, которую вы читаете, когда хотите понять, движется ли агент правильно.
 
-A task on the board has an id, a goal, an owner (`builder`, `reviewer`, or `human`), and acceptance criteria. The board is small on purpose: when it grows past a screen, you have a planning problem, not a board problem.
+У задачи на доске есть id, цель, владелец (`builder`, `reviewer` или `human`) и критерии приемки. Доска намеренно маленькая: если она разрастается за пределы одного экрана, у вас проблема планирования, а не проблема доски.
 
-### Three files is the floor, not the ceiling
+### Три файла — это минимум, а не максимум
 
-Later lessons add scope contracts, feedback runners, verification gates, reviewer checklists, and handoff packets. The three files here are what they all assume.
+Следующие уроки добавят контракты области действия, раннеры обратной связи, verification gates, чеклисты reviewer и пакеты handoff. Три файла здесь — то, на что все они опираются.
 
-## Build It
+## Соберите это
 
-`code/main.py` writes the minimal workbench into an empty repo and demonstrates a single agent turn that:
+`code/main.py` записывает минимальный воркбенч в пустой репозиторий и демонстрирует один ход агента, который:
 
-1. Reads `agent_state.json`.
-2. Pulls the next task from `task_board.json` if state is empty.
-3. Touches a single file inside scope.
-4. Writes back updated state.
+1. Читает `agent_state.json`.
+2. Берет следующую задачу из `task_board.json`, если состояние пусто.
+3. Трогает один файл внутри области действия.
+4. Записывает обновленное состояние обратно.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The script creates `workdir/` next to itself, lays down the three files, runs one turn, and prints the diff. Re-run it to see how the second turn picks up where the first left off.
+Скрипт создает `workdir/` рядом с собой, раскладывает три файла, выполняет один ход и печатает diff. Запустите его повторно, чтобы увидеть, как второй ход продолжает с места, где остановился первый.
 
-## Use It
+## Используйте это
 
-Inside production agent products, the same three files show up under different names:
+В production-продуктах для агентов те же три файла появляются под разными именами:
 
-- **Claude Code:** `AGENTS.md` or `CLAUDE.md` for the router, `.claude/state.json`-style stores for state, hooks for the board.
-- **Codex / Cursor:** workspace rules for the router, session memory for state, queued tasks in the chat sidebar for the board.
-- **Custom Python agent:** the same files you just wrote.
+- **Claude Code:** `AGENTS.md` или `CLAUDE.md` как маршрутизатор, хранилища в стиле `.claude/state.json` для состояния, hooks для доски.
+- **Codex / Cursor:** workspace rules как маршрутизатор, session memory для состояния, queued tasks в боковой панели чата для доски.
+- **Custom Python agent:** те же файлы, которые вы только что написали.
 
-The names change. The shape does not.
+Имена меняются. Форма — нет.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-The minimum workbench survives contact with real monorepos when three patterns are layered on top of it. They are independent; pick the ones your repo actually needs.
+Минимальный воркбенч выдерживает контакт с настоящими монорепозиториями, когда поверх него наслаивают три паттерна. Они независимы; выбирайте те, которые действительно нужны вашему репозиторию.
 
-**Nested `AGENTS.md` with nearest-wins precedence.** OpenAI ships 88 `AGENTS.md` files across its main repo, one per subcomponent. Codex, Cursor, Claude Code, and Copilot all walk from the working file toward the repo root and concatenate every `AGENTS.md` they find on the way. Sub-directory files extend the root file. Codex adds `AGENTS.override.md` to replace rather than extend; the override mechanism is Codex-specific and avoid it for cross-tool work. Augment Code's measurement is the line that matters: the best `AGENTS.md` files give a quality jump equivalent to upgrading from Haiku to Opus; the worst ones make output worse than no file at all.
+**Вложенные `AGENTS.md` с приоритетом nearest-wins.** OpenAI поставляет 88 файлов `AGENTS.md` в своем основном репозитории, по одному на подкомпонент. Codex, Cursor, Claude Code и Copilot идут от рабочего файла к корню репозитория и конкатенируют каждый `AGENTS.md`, найденный по пути. Файлы в поддиректориях расширяют корневой файл. Codex добавляет `AGENTS.override.md`, чтобы заменять, а не расширять; механизм override специфичен для Codex, и для кросс-инструментальной работы его лучше избегать. Важная строка из измерений Augment Code: лучшие файлы `AGENTS.md` дают скачок качества, эквивалентный апгрейду с Haiku до Opus; худшие делают результат хуже, чем отсутствие файла вообще.
 
-**Anti-patterns to refuse, even when they look like coverage.** Conflicting instructions silently drop the agent from interactive to greedy mode (ICLR 2026 AMBIG-SWE: 48.8% → 28% resolve rate); number priorities instead of stacking them flat. Unverifiable style rules ("follow the Google Python Style Guide") with no enforcement command let the agent invent compliance; pair every style rule with the exact lint command. Leading with style instead of commands buries the verification path; commands first, style last. Writing for humans instead of agents wastes context budget; terseness is a feature.
+**Антипаттерны, которые нужно отвергать, даже когда они выглядят как покрытие.** Противоречивые инструкции тихо переводят агента из интерактивного режима в жадный (ICLR 2026 AMBIG-SWE: 48.8% → 28% resolve rate); нумеруйте приоритеты вместо того, чтобы складывать их плоским списком. Непроверяемые стилевые правила ("follow the Google Python Style Guide") без команды enforcement позволяют агенту выдумывать соответствие; связывайте каждое стилевое правило с точной lint-командой. Если начинать со стиля вместо команд, путь проверки оказывается похоронен; сначала команды, стиль в конце. Писать для людей вместо агентов значит тратить контекстный бюджет; краткость — это свойство.
 
-**Cross-tool symlinks.** A single root file with symlinks (`ln -s AGENTS.md CLAUDE.md`, `ln -s AGENTS.md .github/copilot-instructions.md`, `ln -s AGENTS.md .cursorrules`) keeps every coding agent on the same source of truth. Nx's `nx ai-setup` automates this across Claude Code, Cursor, Copilot, Gemini, Codex, and OpenCode from a single config.
+**Кросс-инструментальные symlinks.** Один корневой файл с symlinks (`ln -s AGENTS.md CLAUDE.md`, `ln -s AGENTS.md .github/copilot-instructions.md`, `ln -s AGENTS.md .cursorrules`) держит всех coding agents на одном источнике истины. Nx `nx ai-setup` автоматизирует это для Claude Code, Cursor, Copilot, Gemini, Codex и OpenCode из единой конфигурации.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-minimal-workbench.md` generates the three-file workbench for any new repo: an `AGENTS.md` router tuned to the project, an `agent_state.json` with the right keys, and a `task_board.json` seeded with the current backlog.
+`outputs/skill-minimal-workbench.md` генерирует трехфайловый воркбенч для любого нового репозитория: маршрутизатор `AGENTS.md`, настроенный под проект, `agent_state.json` с правильными ключами и `task_board.json`, заполненный текущим backlog.
 
-## Exercises
+## Упражнения
 
-1. Add a `last_run` timestamp to `agent_state.json`. Refuse to run if the file is older than 24 hours unless an operator confirms.
-2. Add a `priority` field to the task board and change the puller to always pick the highest priority `todo`.
-3. Migrate `task_board.json` to JSON Lines so each task is a line and diffs are clean in version control.
-4. Write a `lint_workbench.py` that fails if `AGENTS.md` is over 80 lines or references a file that does not exist.
-5. Decide which one of the three files would hurt the most to lose. Defend it.
+1. Добавьте timestamp `last_run` в `agent_state.json`. Отказывайтесь запускаться, если файл старше 24 часов, пока оператор не подтвердит.
+2. Добавьте поле `priority` в доску задач и измените puller так, чтобы он всегда выбирал `todo` с наивысшим приоритетом.
+3. Мигрируйте `task_board.json` на JSON Lines, чтобы каждая задача была строкой, а diff в version control был чистым.
+4. Напишите `lint_workbench.py`, который падает, если `AGENTS.md` длиннее 80 строк или ссылается на несуществующий файл.
+5. Решите, потеря какого из трех файлов навредила бы сильнее всего. Защитите свой выбор.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Router | `AGENTS.md` | Short root file that points the agent at deeper docs and files |
-| State file | "The notes" | Machine-readable record of where the agent is, written every turn |
-| Task board | "The backlog" | JSON queue of work with status, owner, acceptance |
-| System of record | "Source of truth" | The file the workbench treats as authoritative when chat is gone |
+| Router | `AGENTS.md` | Короткий корневой файл, который указывает агенту на более глубокие docs и files |
+| State file | "The notes" | Машиночитаемая запись о том, где находится агент, записываемая каждый ход |
+| Task board | "The backlog" | JSON-очередь работы со status, owner, acceptance |
+| System of record | "Source of truth" | Файл, который workbench считает authoritative, когда chat исчез |
 
-## Further Reading
+## Дополнительное чтение
 
 - [agents.md — the open spec](https://agents.md/) — adopted by Cursor, Codex, Claude Code, Copilot, Gemini, OpenCode
 - [Augment Code, A good AGENTS.md is a model upgrade. A bad one is worse than no docs at all](https://www.augmentcode.com/blog/how-to-write-good-agents-dot-md-files) — measured quality jumps
@@ -127,5 +127,5 @@ The minimum workbench survives contact with real monorepos when three patterns a
 - [Nx Blog, Teach Your AI Agent How to Work in a Monorepo](https://nx.dev/blog/nx-ai-agent-skills) — single-source generation across six tools
 - [The Prompt Shelf, AGENTS.md Best Practices: Structure, Scope, and Real Examples](https://thepromptshelf.dev/blog/agents-md-best-practices/) — section ordering that survives review
 - [Anthropic, Claude Code subagents and session store](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/sub-agents)
-- Phase 14 · 31 — the failure modes this minimum absorbs
-- Phase 14 · 34 — the durable state schema this lesson previews
+- Phase 14 · 31 — failure modes, которые поглощает этот минимум
+- Phase 14 · 34 — durable state schema, которую предваряет этот урок

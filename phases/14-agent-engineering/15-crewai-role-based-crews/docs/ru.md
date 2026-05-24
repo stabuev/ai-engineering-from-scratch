@@ -1,106 +1,106 @@
-# CrewAI: Role-Based Crews and Flows
+# CrewAI: ролевые команды и Flows
 
-> CrewAI is the 2026 role-based multi-agent framework — Agents, Tasks, Crews, Processes as the four primitives. Production guidance from the docs: "for any production-ready application, start with a Flow."
+> CrewAI — ролевая мультиагентная платформа 2026 года: Agents, Tasks, Crews, Processes как четыре примитива. Рекомендация из документации для production: "for any production-ready application, start with a Flow."
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 12 (Workflow Patterns), Phase 14 · 14 (Actor Model)
-**Time:** ~60 minutes
+**Тип:** Изучение + практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 12 (Workflow Patterns), Фаза 14 · 14 (Actor Model)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name CrewAI's four primitives — Agent, Task, Crew, Process — and the role of each.
-- Distinguish Crews (autonomous role-based collaboration) from Flows (event-driven deterministic workflows).
-- Explain why the docs recommend starting with Flows for production and Crews for exploration.
-- Implement a stdlib Crew runner plus a stdlib Flow runner; show when each shines.
+- Назвать четыре примитива CrewAI — Agent, Task, Crew, Process — и роль каждого.
+- Отличать Crews (автономная ролевая совместная работа) от Flows (событийные детерминированные workflow).
+- Объяснить, почему документация рекомендует начинать с Flows для production и использовать Crews для исследования.
+- Реализовать Crew runner на stdlib и Flow runner на stdlib; показать, где каждый подход раскрывается лучше.
 
-## The Problem
+## Проблема
 
-Teams adopting multi-agent frameworks hit the same wall: "autonomous collaboration" sounds great, but when customers file a bug you need deterministic replay. CrewAI splits this explicitly — Crews for creative collaboration, Flows for event-driven, auditable, production-shaped workflows.
+Команды, внедряющие мультиагентные фреймворки, упираются в одну и ту же стену: "автономная совместная работа" звучит отлично, но когда клиент заводит баг, нужен детерминированный replay. CrewAI явно разделяет это: Crews для творческой совместной работы, Flows для событийных, аудируемых workflow, пригодных для production.
 
-## The Concept
+## Концепция
 
-### Four primitives
+### Четыре примитива
 
-- **Agent.** Role + goal + backstory + tools. The backstory is load-bearing — it shapes tone and judgment.
-- **Task.** Description + expected_output + assigned agent. Reusable unit of work.
-- **Crew.** Container that sequences Agents and Tasks. Owns the execution Process.
-- **Process.** Sequential or Hierarchical (with a manager Agent) or Consensual.
+- **Agent.** Роль + цель + предыстория + инструменты. Предыстория имеет реальный вес: она формирует тон и суждение.
+- **Task.** Описание + expected_output + назначенный agent. Переиспользуемая единица работы.
+- **Crew.** Контейнер, который упорядочивает Agents и Tasks. Владеет Process выполнения.
+- **Process.** Sequential или Hierarchical (с manager Agent) или Consensual.
 
 ### Crews vs Flows
 
-- **Crew.** Autonomous, LLM-driven. Good for open-ended tasks: research, brainstorming, first drafts. The framework picks the shape at runtime.
-- **Flow.** Event-driven, code-owned graph. Each step fires on a trigger (function decorator, event match). Good for production: observable, testable, deterministic.
+- **Crew.** Автономный, управляемый LLM. Хорош для открытых задач: исследования, брейншторминг, первые черновики. Фреймворк выбирает форму выполнения во время runtime.
+- **Flow.** Событийный граф, которым владеет код. Каждый шаг запускается по триггеру (декоратор функции, совпадение события). Хорош для production: наблюдаемый, тестируемый, детерминированный.
 
-CrewAI 2026 docs say: start production apps with Flows; fold Crews in as sub-steps when autonomy earns its cost.
+Документация CrewAI 2026 говорит: начинайте production-приложения с Flows; добавляйте Crews как подшаги, когда автономность оправдывает свою стоимость.
 
-### Memory system
+### Система памяти
 
-CrewAI ships four memory types out of the box: short-term (within run), long-term (across runs), entity (per-entity facts), contextual (retrieval-time assembly). Integrations with vector stores are first-party.
+CrewAI поставляет четыре типа памяти из коробки: short-term (внутри run), long-term (между runs), entity (факты по отдельным сущностям), contextual (сборка во время retrieval). Интеграции с vector stores являются first-party.
 
-### AWS Bedrock integration
+### Интеграция AWS Bedrock
 
-CrewAI has documented AWS Bedrock integration with CloudWatch, AgentOps, and Langfuse observability hooks. AWS docs cite a 5.76x speedup vs LangGraph on QA tasks in their benchmarks — take framework-specific numbers as directional, not absolute.
+У CrewAI есть документированная интеграция AWS Bedrock с observability hooks для CloudWatch, AgentOps и Langfuse. Документация AWS приводит ускорение 5.76x по сравнению с LangGraph на QA-задачах в их benchmarks — воспринимайте framework-specific числа как ориентировочные, а не абсолютные.
 
-### Dependency shape
+### Форма зависимостей
 
-Independent of LangChain. Python 3.10–3.13. Uses `uv` for dependency management. 30k+ GitHub stars early 2026.
+Независим от LangChain. Python 3.10–3.13. Использует `uv` для управления зависимостями. 30k+ GitHub stars в начале 2026 года.
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **Crew-as-prod.** Using a free-form Crew in prod without a Flow wrapper. Output variability is high; debugging is painful.
-- **Backstory bloat.** 2000-word backstories push out context budget. Keep them tight.
-- **Process confusion.** Hierarchical process adds a manager Agent that routes; use only when you have 4+ specialists.
+- **Crew-as-prod.** Использование свободной Crew в production без Flow-обертки. Вариативность output высокая; отладка болезненна.
+- **Раздутая backstory.** Предыстории на 2000 слов вытесняют context budget. Держите их компактными.
+- **Путаница с Process.** Hierarchical process добавляет manager Agent, который маршрутизирует; используйте только когда есть 4+ специалиста.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements stdlib versions of both:
+`code/main.py` реализует stdlib-версии обоих подходов:
 
-- `Agent`, `Task`, `Crew`, `SequentialCrew` (one task at a time), `HierarchicalCrew` (manager routes).
-- `Flow` with `@start()` and `@listen()` decorators (plain-function stand-ins) that fire on named events.
-- Same three-step task (research, outline, draft) implemented both ways.
+- `Agent`, `Task`, `Crew`, `SequentialCrew` (по одной task за раз), `HierarchicalCrew` (manager маршрутизирует).
+- `Flow` с декораторами `@start()` и `@listen()` (замены на обычных функциях), которые срабатывают по именованным событиям.
+- Одна и та же трехшаговая task (research, outline, draft), реализованная обоими способами.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The Crew trace is fluid and variable; the Flow trace is fixed and observable. That is the choice.
+Трасса Crew текучая и вариативная; трасса Flow фиксированная и наблюдаемая. В этом и состоит выбор.
 
-## Use It
+## Используйте это
 
-- **CrewAI Flow** for production.
-- **CrewAI Crew** for exploration, pairing, first drafts.
-- **LangGraph** (Lesson 13) if you want a more explicit state machine.
-- **AutoGen v0.4** (Lesson 14) if you want actor-model concurrency.
+- **CrewAI Flow** для production.
+- **CrewAI Crew** для исследования, парной работы, первых черновиков.
+- **LangGraph** (Урок 13), если нужна более явная state machine.
+- **AutoGen v0.4** (Урок 14), если нужна concurrency в стиле actor model.
 
-## Ship It
+## Отправьте в работу
 
-`outputs/skill-crew-or-flow.md` picks Crew vs Flow for a task and scaffolds the minimal implementation.
+`outputs/skill-crew-or-flow.md` выбирает Crew vs Flow для task и создает scaffold минимальной реализации.
 
-## Exercises
+## Упражнения
 
-1. Convert a Crew-based demo to a Flow. Count the touchpoints where variability drops.
-2. Add entity memory to the Crew: facts about a customer persist across tasks.
-3. Implement a Hierarchical process: a manager Agent picks which specialist runs next based on the prior output.
-4. Read CrewAI's docs intro. Port your toy to the real `crewai` API. What changes about testability?
-5. Wire AgentOps or Langfuse to one of your runs. Which traces did you miss in the stdlib version?
+1. Преобразуйте Crew-based demo в Flow. Посчитайте точки, где уменьшается вариативность.
+2. Добавьте entity memory в Crew: факты о customer сохраняются между tasks.
+3. Реализуйте Hierarchical process: manager Agent выбирает, какой specialist запускается следующим, на основе предыдущего output.
+4. Прочитайте вводную часть документации CrewAI. Перенесите свой toy в настоящий API `crewai`. Что меняется в testability?
+5. Подключите AgentOps или Langfuse к одному из runs. Каких traces вам не хватало в stdlib-версии?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Agent | "Persona" | Role + goal + backstory + tools |
-| Task | "Unit of work" | Description + expected output + assignee |
-| Crew | "Agent team" | Container for Agents + Tasks + Process |
+| Agent | "Persona" | Роль + цель + backstory + tools |
+| Task | "Unit of work" | Описание + expected output + assignee |
+| Crew | "Agent team" | Контейнер для Agents + Tasks + Process |
 | Process | "Execution strategy" | Sequential / Hierarchical / Consensual |
-| Flow | "Deterministic workflow" | Event-driven, code-owned, testable |
-| Backstory | "Persona prompt" | Tone and judgment shaper for the Agent |
-| Entity memory | "Per-entity facts" | Memory scoped to a customer/account/issue |
+| Flow | "Deterministic workflow" | Событийный, принадлежащий коду, тестируемый |
+| Backstory | "Persona prompt" | Формирователь тона и суждения для Agent |
+| Entity memory | "Per-entity facts" | Память, ограниченная customer/account/issue |
 
-## Further Reading
+## Дополнительное чтение
 
-- [CrewAI docs introduction](https://docs.crewai.com/en/introduction) — concepts and recommended production path
-- [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — when multi-agent helps and when it doesn't
-- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — the state-machine alternative
+- [CrewAI docs introduction](https://docs.crewai.com/en/introduction) — концепции и рекомендуемый путь к production
+- [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — когда multi-agent помогает, а когда нет
+- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — альтернатива на основе state machine

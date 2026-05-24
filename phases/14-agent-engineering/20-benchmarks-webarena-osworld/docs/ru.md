@@ -1,118 +1,118 @@
-# Benchmarks: WebArena and OSWorld
+# Бенчмарки: WebArena и OSWorld
 
-> WebArena tests web-agent capability across four self-hosted apps. OSWorld tests desktop-agent capability across Ubuntu, Windows, macOS. At release (2023–2024) both showed a big gap between best-in-class agents and humans. The gap is narrowing; the failure modes haven't changed.
+> WebArena тестирует возможности веб-агента на четырех самостоятельно развернутых приложениях. OSWorld тестирует возможности desktop-агента на Ubuntu, Windows и macOS. На момент выпуска (2023-2024) оба показывали большой разрыв между лучшими агентами и людьми. Разрыв сокращается; режимы отказа не изменились.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 19 (SWE-bench, GAIA)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 19 (SWE-bench, GAIA)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Describe WebArena's four self-hosted apps and why execution-based evaluation matters.
-- Explain why OSWorld uses real OS screenshots instead of accessibility APIs.
-- Name the two primary OSWorld failure modes: GUI grounding and operational knowledge.
-- Summarize what OSWorld-G and OSWorld-Human add on top of the base benchmark.
+- Описать четыре самостоятельно развернутых приложения WebArena и объяснить, почему важна оценка на основе выполнения.
+- Объяснить, почему OSWorld использует реальные screenshots ОС вместо accessibility APIs.
+- Назвать два главных режима отказа OSWorld: GUI grounding и operational knowledge.
+- Кратко изложить, что OSWorld-G и OSWorld-Human добавляют поверх базового бенчмарка.
 
-## The Problem
+## Проблема
 
-Generalist agents can call tools. Can they drive a browser across 20 clicks to complete a shopping checkout? Can they configure a Linux box using only keyboard and mouse? These are the questions WebArena and OSWorld answer.
+Агенты общего назначения умеют вызывать tools. Могут ли они управлять browser на протяжении 20 clicks, чтобы завершить shopping checkout? Могут ли они настроить Linux box, используя только keyboard и mouse? На эти вопросы отвечают WebArena и OSWorld.
 
-## The Concept
+## Концепция
 
 ### WebArena (Zhou et al., ICLR 2024)
 
-- 812 long-horizon tasks across four self-hosted web apps: a shopping site, a forum, a GitLab-like dev tool, a business CMS.
-- Plus utilities: map, calculator, scratchpad.
-- Evaluation is execution-based via gym APIs — was the order placed, was the issue closed, was the CMS page updated?
-- At release: best GPT-4 agent hit 14.41% success vs human 78.24%.
+- 812 long-horizon tasks в четырех самостоятельно развернутых web apps: shopping site, forum, GitLab-like dev tool, business CMS.
+- Плюс вспомогательные utilities: map, calculator, scratchpad.
+- Evaluation выполняется на основе результата через gym APIs: был ли order placed, issue closed, CMS page updated?
+- На момент выпуска лучший GPT-4 agent достиг 14.41% success против 78.24% у человека.
 
-The self-hosted framing matters — the benchmark is not flaky because the target apps are pinned and reproducible.
+Self-hosted постановка важна: benchmark не flaky, потому что целевые apps зафиксированы и воспроизводимы.
 
-### Extensions
+### Расширения
 
-- **VisualWebArena** — visually grounded tasks where success depends on interpreting images (screenshots as first-class observations).
-- **TheAgentCompany** (Dec 2024) — adds terminal + coding; more like a real remote-work environment.
+- **VisualWebArena** — visually grounded tasks, где success зависит от интерпретации images (screenshots как наблюдения первого класса).
+- **TheAgentCompany** (декабрь 2024) — добавляет terminal + coding; больше похоже на настоящую среду удаленной работы.
 
 ### OSWorld (Xie et al., NeurIPS 2024)
 
-- 369 real computer tasks across Ubuntu, Windows, macOS.
-- Free-form keyboard and mouse control of real applications.
-- 1920×1080 screenshots as the observation.
-- At release: best model 12.24% vs human 72.36%.
+- 369 реальных computer tasks на Ubuntu, Windows и macOS.
+- Свободное управление keyboard и mouse в реальных applications.
+- Screenshots 1920×1080 как observation.
+- На момент выпуска лучшая model: 12.24% против 72.36% у человека.
 
-### Primary failure modes
+### Основные режимы отказа
 
-1. **GUI grounding.** Pixel → element mapping. Models struggle to localize UI elements reliably in 1920×1080.
-2. **Operational knowledge.** Which menu has the setting, which keyboard shortcut, which preference pane. Knowledge tail that humans build over years.
+1. **GUI grounding.** Pixel → element mapping. Models с трудом надежно локализуют UI elements в 1920×1080.
+2. **Operational knowledge.** В каком menu находится setting, какой keyboard shortcut нужен, где лежит preference pane. Длинный хвост знаний, который люди накапливают годами.
 
-### Follow-ups
+### Продолжения
 
-- **OSWorld-G** — 564-sample grounding suite + Jedi training set. Decomposes grounding from planning so you can measure them separately.
-- **OSWorld-Human** — manually curated gold action trajectories. Shows top agents use 1.4-2.7x more steps than necessary (the trajectory-efficiency gap).
+- **OSWorld-G** — grounding suite на 564 samples + Jedi training set. Отделяет grounding от planning, чтобы измерять их отдельно.
+- **OSWorld-Human** — вручную подготовленные gold action trajectories. Показывает, что top agents используют в 1.4-2.7x больше steps, чем необходимо (trajectory-efficiency gap).
 
-### Why this matters
+### Почему это важно
 
-Claude computer use, OpenAI CUA, Gemini 2.5 Computer Use (Lesson 21) all train on workloads shaped by WebArena and OSWorld. The benchmarks are the target; the production models are the shipped answer.
+Claude computer use, OpenAI CUA и Gemini 2.5 Computer Use (Урок 21) обучаются на workloads, сформированных WebArena и OSWorld. Benchmarks задают цель; production models дают практический ответ.
 
-### Where benchmarking goes wrong
+### Где benchmarking ломается
 
-- **Screenshot-only evals.** OSWorld is screenshot-driven; evaluating an agent that uses DOM or accessibility APIs on OSWorld misses the grounding challenge.
-- **Ignoring trajectory length.** Scoring only success-rate misses the 1.4-2.7x step inefficiency OSWorld-Human surfaces.
-- **Stale self-hosted apps.** WebArena's apps pin specific versions; update without re-curation breaks comparability.
+- **Screenshot-only evals.** OSWorld screenshot-driven; оценка agent, который использует DOM или accessibility APIs на OSWorld, упускает grounding challenge.
+- **Игнорирование trajectory length.** Оценка только success-rate пропускает step inefficiency 1.4-2.7x, которую показывает OSWorld-Human.
+- **Устаревшие self-hosted apps.** Apps WebArena закрепляют конкретные versions; update без повторной подготовки ломает сопоставимость.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a toy web-agent harness:
+`code/main.py` реализует toy web-agent harness:
 
-- A minimal "shopping app" state machine: list_items, add_to_cart, checkout.
-- Gold trajectories for 3 tasks.
-- A scripted agent that attempts each task.
-- Execution-based evaluator (state check) and trajectory-efficiency metric (steps vs gold).
+- Минимальная state machine "shopping app": list_items, add_to_cart, checkout.
+- Gold trajectories для 3 tasks.
+- Scripted agent, который пытается выполнить каждую task.
+- Execution-based evaluator (state check) и trajectory-efficiency metric (steps vs gold).
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: per-task success rate and trajectory efficiency, mirroring OSWorld-Human's methodology.
+Output: success rate по задачам и trajectory efficiency, отражающие методологию OSWorld-Human.
 
-## Use It
+## Используйте это
 
-- **WebArena Verified** self-hosted on an internal cluster for continuous evaluation.
-- **OSWorld** in a VM fleet for desktop agents.
-- **Computer-use agents** (Lesson 21) — Claude, OpenAI CUA, Gemini — all trained on workloads like these.
-- **Your own product flows** — capture gold trajectories for your top 20 tasks; run agents against them weekly.
+- **WebArena Verified**, self-hosted на внутреннем cluster для continuous evaluation.
+- **OSWorld** в VM fleet для desktop agents.
+- **Computer-use agents** (Урок 21) — Claude, OpenAI CUA, Gemini — все обучались на workloads вроде этих.
+- **Ваши собственные product flows** — зафиксируйте gold trajectories для top 20 tasks; запускайте agents против них еженедельно.
 
-## Ship It
+## Отправьте в работу
 
-`outputs/skill-web-desktop-harness.md` builds a web/desktop agent harness with execution-based eval and trajectory efficiency metric.
+`outputs/skill-web-desktop-harness.md` строит web/desktop agent harness с execution-based eval и trajectory efficiency metric.
 
-## Exercises
+## Упражнения
 
-1. Extend the toy harness with a second app (a forum). Write 3 tasks plus gold trajectories.
-2. Add trajectory-efficiency reporting per task. On your toy, is the agent 1x, 2x, or 3x over gold?
-3. Implement a "distractor" tool — one the gold trajectory never uses. Does the scripted agent get tempted?
-4. Read OSWorld-G. How would you separate grounding failures from planning failures in your own evals?
-5. Read WebArena's apps README. What breaks when you upgrade one of the pinned app versions?
+1. Расширьте toy harness вторым app (forum). Напишите 3 tasks плюс gold trajectories.
+2. Добавьте reporting trajectory-efficiency по task. В вашем toy agent идет в 1x, 2x или 3x сверх gold?
+3. Реализуйте "distractor" tool — tool, который gold trajectory никогда не использует. Scripted agent поддается соблазну?
+4. Прочитайте OSWorld-G. Как бы вы отделили grounding failures от planning failures в собственных evals?
+5. Прочитайте apps README WebArena. Что ломается при upgrade одной из pinned app versions?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| WebArena | "Web agent benchmark" | 812 tasks across 4 self-hosted apps; gym-style evaluation |
-| VisualWebArena | "Visual WebArena" | Visually grounded WebArena; screenshots are observations |
-| OSWorld | "Desktop agent benchmark" | 369 tasks on real Ubuntu/Windows/macOS |
-| GUI grounding | "Pixel-to-element mapping" | Model localizing UI elements in 1920x1080 |
-| Operational knowledge | "OS know-how" | Which menu, which shortcut, which preference pane |
+| WebArena | "Web agent benchmark" | 812 tasks в 4 self-hosted apps; gym-style evaluation |
+| VisualWebArena | "Visual WebArena" | Visually grounded WebArena; screenshots являются observations |
+| OSWorld | "Desktop agent benchmark" | 369 tasks на реальных Ubuntu/Windows/macOS |
+| GUI grounding | "Pixel-to-element mapping" | Model локализует UI elements в 1920x1080 |
+| Operational knowledge | "OS know-how" | Какое menu, какой shortcut, какая preference pane нужны |
 | OSWorld-G | "Grounding suite" | 564 grounding-only samples + training set |
-| OSWorld-Human | "Gold trajectories" | Manual expert action sequences to measure efficiency |
-| Trajectory efficiency | "Steps over gold" | Agent step count divided by human minimum |
+| OSWorld-Human | "Gold trajectories" | Ручные expert action sequences для измерения efficiency |
+| Trajectory efficiency | "Steps over gold" | Agent step count, деленный на human minimum |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Zhou et al., WebArena (arXiv:2307.13854)](https://arxiv.org/abs/2307.13854) — four-app web benchmark
+- [Zhou et al., WebArena (arXiv:2307.13854)](https://arxiv.org/abs/2307.13854) — web benchmark из четырех apps
 - [Xie et al., OSWorld (arXiv:2404.07972)](https://arxiv.org/abs/2404.07972) — cross-OS desktop benchmark
-- [Anthropic, Introducing computer use](https://www.anthropic.com/news/3-5-models-and-computer-use) — Claude's benchmark-shaped capability
-- [OpenAI, Computer-Using Agent](https://openai.com/index/computer-using-agent/) — OSWorld and WebArena numbers
+- [Anthropic, Introducing computer use](https://www.anthropic.com/news/3-5-models-and-computer-use) — benchmark-shaped capability Claude
+- [OpenAI, Computer-Using Agent](https://openai.com/index/computer-using-agent/) — числа OSWorld и WebArena

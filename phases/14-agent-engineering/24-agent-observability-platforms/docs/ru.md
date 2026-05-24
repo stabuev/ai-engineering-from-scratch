@@ -1,119 +1,119 @@
-# Agent Observability: Langfuse, Phoenix, Opik
+# Наблюдаемость агентов: Langfuse, Phoenix, Opik
 
-> Three open-source agent observability platforms dominate 2026. Langfuse (MIT) — 6M+ installs/month, tracing + prompt management + evals + session replay. Arize Phoenix (Elastic 2.0) — deep agent-specific evals, RAG relevancy, OpenInference auto-instrumentation. Comet Opik (Apache 2.0) — automated prompt optimization, guardrails, LLM-judge hallucination detection.
+> В 2026 году доминируют три open-source платформы наблюдаемости агентов. Langfuse (MIT) — 6M+ установок в месяц, tracing + управление prompt + evals + session replay. Arize Phoenix (Elastic 2.0) — глубокие agent-specific evals, релевантность RAG, автоинструментация OpenInference. Comet Opik (Apache 2.0) — автоматическая оптимизация prompt, guardrails, обнаружение галлюцинаций LLM-judge.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 23 (OTel GenAI)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 23 (OTel GenAI)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the three top open-source agent observability platforms and their licenses.
-- Distinguish what each one is strongest at: Langfuse (prompt mgmt + sessions), Phoenix (RAG + auto-instrumentation), Opik (optimization + guardrails).
-- Explain why 89% of organizations report having agent observability in place by 2026.
-- Implement a stdlib trace-to-dashboard pipeline with LLM-judge evaluation.
+- Назвать три ведущие open-source платформы наблюдаемости агентов и их лицензии.
+- Различать, в чем каждая сильнее: Langfuse (prompt mgmt + sessions), Phoenix (RAG + auto-instrumentation), Opik (optimization + guardrails).
+- Объяснить, почему 89% организаций сообщают, что к 2026 году у них есть agent observability.
+- Реализовать stdlib trace-to-dashboard pipeline с LLM-judge evaluation.
 
-## The Problem
+## Проблема
 
-OTel GenAI (Lesson 23) gives you the schema. You still need the platform that ingests spans, runs evaluations, stores prompt versions, and surfaces regressions. The three contenders each emphasize different parts of the lifecycle.
+OTel GenAI (Урок 23) дает схему. Но вам все еще нужна платформа, которая принимает spans, запускает evaluations, хранит prompt versions и показывает regressions. Три претендента делают акцент на разных частях lifecycle.
 
-## The Concept
+## Концепция
 
 ### Langfuse (MIT)
 
 - 6M+ SDK installs/month, 19k+ GitHub stars.
-- Features: tracing, prompt management with versioning + playground, evaluations (LLM-as-judge, user feedback, custom), session replays.
-- June 2025: formerly commercial modules (LLM-as-a-judge, annotation queues, prompt experiments, Playground) open-sourced under MIT.
-- Strongest for: end-to-end observability with tight prompt-management loop.
+- Возможности: tracing, prompt management with versioning + playground, evaluations (LLM-as-judge, user feedback, custom), session replays.
+- Июнь 2025: бывшие commercial modules (LLM-as-a-judge, annotation queues, prompt experiments, Playground) open-sourced под MIT.
+- Сильнее всего для: end-to-end observability с тесным prompt-management loop.
 
 ### Arize Phoenix (Elastic License 2.0)
 
-- Deeper agent-specific evaluation: trace clustering, anomaly detection, retrieval relevancy for RAG.
-- Native OpenInference auto-instrumentation.
-- Pairs with managed Arize AX for production.
-- No prompt versioning — positioned as a drift/behavioral-regression tool alongside broader platforms.
-- Strongest for: RAG relevancy, behavioral drift, anomaly detection.
+- Более глубокая agent-specific evaluation: trace clustering, anomaly detection, retrieval relevancy for RAG.
+- Нативная OpenInference auto-instrumentation.
+- Сочетается с managed Arize AX для production.
+- Нет prompt versioning — позиционируется как инструмент drift/behavioral-regression рядом с более широкими платформами.
+- Сильнее всего для: RAG relevancy, behavioral drift, anomaly detection.
 
 ### Comet Opik (Apache 2.0)
 
-- Automated prompt optimization through A/B experiments.
+- Automated prompt optimization через A/B experiments.
 - Guardrails (PII redaction, topical constraints).
 - LLM-judge hallucination detection.
-- Benchmark from Comet's own measurement: Opik logs + evals in 23.44s vs Langfuse 327.15s (~14x gap) — take vendor benchmarks as directional.
-- Strongest for: optimization loop, automated experimentation, guardrail enforcement.
+- Benchmark из собственных измерений Comet: Opik logs + evals за 23.44s против Langfuse 327.15s (~14x gap) — воспринимайте vendor benchmarks как ориентир.
+- Сильнее всего для: optimization loop, automated experimentation, guardrail enforcement.
 
-### Industry data
+### Отраслевые данные
 
-Per Maxim (2026 field analysis): 89% of organizations have agent observability in place; quality issues are the top production barrier (32% of respondents cite them).
+По Maxim (2026 field analysis): у 89% организаций есть agent observability; quality issues - главный production barrier (их называют 32% respondents).
 
-### Picking one
+### Выбор платформы
 
-| Need | Pick |
+| Потребность | Выбор |
 |------|------|
-| All-in-one with prompt management | Langfuse |
-| Deep RAG evaluation + drift | Phoenix |
-| Automated optimization + guardrails | Opik |
-| Open licensing, no ELv2 | Langfuse (MIT) or Opik (Apache 2.0) |
-| Datadog / New Relic integration | Any — they all export OTel |
+| All-in-one с prompt management | Langfuse |
+| Глубокая RAG evaluation + drift | Phoenix |
+| Автоматическая оптимизация + guardrails | Opik |
+| Открытая лицензия, без ELv2 | Langfuse (MIT) или Opik (Apache 2.0) |
+| Интеграция с Datadog / New Relic | Любая — все экспортируют OTel |
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **No eval strategy.** Tracing without evaluation is just expensive logging.
-- **Self-rolled LLM-judge without grounding.** CRITIC pattern (Lesson 05) applies — judges need external tools for factual verification.
-- **Prompt versions not tied to traces.** When prod regresses, you cannot bisect to the prompt that caused it.
+- **Нет eval strategy.** Tracing без evaluation - это просто дорогой logging.
+- **Self-rolled LLM-judge без grounding.** Применяется паттерн CRITIC (Урок 05) — judges нужны external tools для factual verification.
+- **Prompt versions не связаны с traces.** Когда prod регрессирует, вы не можете bisect до prompt, который это вызвал.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a stdlib trace collector + LLM-judge evaluator:
+`code/main.py` реализует stdlib trace collector + LLM-judge evaluator:
 
 - Ingest GenAI-shaped spans.
-- Group by session, tag failed runs (guardrail trips, low-confidence evals).
-- A scripted LLM-judge that scores agent responses on a rubric.
-- A dashboard-like summary: failure rate, top failure reasons, eval score distribution.
+- Группировка по session, теги failed runs (guardrail trips, low-confidence evals).
+- Scripted LLM-judge, который оценивает agent responses по rubric.
+- Dashboard-like summary: failure rate, top failure reasons, eval score distribution.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: per-session eval scores and failure categorization matching what Langfuse/Phoenix/Opik would show.
+Output: per-session eval scores и failure categorization, соответствующие тому, что показали бы Langfuse/Phoenix/Opik.
 
-## Use It
+## Используйте это
 
-- **Langfuse** self-hosted or cloud; wire via OTel or their SDK.
+- **Langfuse** self-hosted или cloud; подключайте через OTel или их SDK.
 - **Arize Phoenix** self-hosted; auto-instrument OpenInference.
-- **Comet Opik** self-hosted or cloud; automated optimization loop.
-- **Datadog LLM Observability** for mixed ops+ML teams that already run Datadog.
+- **Comet Opik** self-hosted или cloud; automated optimization loop.
+- **Datadog LLM Observability** для смешанных ops+ML teams, которые уже используют Datadog.
 
-## Ship It
+## Отправьте в работу
 
-`outputs/skill-obs-platform-wiring.md` picks a platform and wires traces + evals + prompt versions into an existing agent.
+`outputs/skill-obs-platform-wiring.md` выбирает платформу и подключает traces + evals + prompt versions к существующему агенту.
 
-## Exercises
+## Упражнения
 
-1. Export a week of OTel traces to Langfuse cloud (free tier). Which sessions failed? Why?
-2. Write an LLM-judge rubric for your domain (factual correctness, tone, scope adherence). Test on 50 traces.
-3. Compare Langfuse prompt versioning against Phoenix's trace clustering. Which tells you what broke faster?
-4. Read Opik's guardrail docs. Wire a PII redaction guardrail to one of your agent runs.
-5. Benchmark the three on your corpus. Ignore vendor-published numbers; measure your own.
+1. Экспортируйте неделю OTel traces в Langfuse cloud (free tier). Какие sessions failed? Почему?
+2. Напишите LLM-judge rubric для своего домена (factual correctness, tone, scope adherence). Проверьте на 50 traces.
+3. Сравните Langfuse prompt versioning с Phoenix trace clustering. Что быстрее говорит, что сломалось?
+4. Прочитайте guardrail docs Opik. Подключите PII redaction guardrail к одному из ваших agent runs.
+5. Проведите benchmark трех платформ на вашем corpus. Игнорируйте vendor-published numbers; измерьте сами.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Tracing | "Spans collector" | Ingest OTel / SDK spans; index by session |
-| Prompt management | "Prompt CMS" | Versioned prompts tied to traces |
-| LLM-as-judge | "Automated eval" | Separate LLM scores agent output against a rubric |
-| Session replay | "Trace playback" | Step through past runs for debugging |
-| RAG relevancy | "Retrieval quality" | Does the retrieved context match the query |
-| Trace clustering | "Behavioral grouping" | Cluster similar runs for drift detection |
-| Guardrail enforcement | "Policy at log time" | PII/toxicity/scope checks on logged content |
+| Tracing | "Сборщик spans" | Прием OTel / SDK spans; индексирование по сессиям |
+| Prompt management | "Prompt CMS" | Версионированные prompt, связанные с трассами |
+| LLM-as-judge | "Автоматическая eval" | Отдельная LLM оценивает вывод агента по рубрике |
+| Session replay | "Воспроизведение трассы" | Пошаговый просмотр прошлых запусков для отладки |
+| RAG relevancy | "Качество retrieval" | Соответствует ли извлеченный контекст запросу |
+| Trace clustering | "Группировка поведения" | Кластеризация похожих запусков для обнаружения drift |
+| Guardrail enforcement | "Политика во время логирования" | Проверки PII/toxicity/scope для залогированного контента |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Langfuse docs](https://langfuse.com/) — tracing, evals, prompt mgmt
-- [Arize Phoenix docs](https://docs.arize.com/phoenix) — auto-instrumentation, drift
+- [Langfuse docs](https://langfuse.com/) — tracing, evals, управление prompt
+- [Arize Phoenix docs](https://docs.arize.com/phoenix) — автоинструментация, drift
 - [Comet Opik](https://www.comet.com/site/products/opik/) — optimization + guardrails
-- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — the schema all three consume
+- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — схема, которую потребляют все три

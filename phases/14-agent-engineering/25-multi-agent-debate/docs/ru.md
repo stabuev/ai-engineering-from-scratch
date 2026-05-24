@@ -1,119 +1,119 @@
-# Multi-Agent Debate and Collaboration
+# Многоагентные дебаты и совместная работа
 
-> Du et al. (ICML 2024, "Society of Minds") run N model instances that independently propose answers, then iteratively critique each other over R rounds to converge. Improves factuality, rule-following, reasoning. Sparse topology beats full mesh on token cost.
+> Du et al. (ICML 2024, "Society of Minds") запускают N экземпляров модели, которые независимо предлагают ответы, а затем итеративно критикуют друг друга в течение R раундов, чтобы сойтись. Это улучшает factuality, rule-following, reasoning. Sparse topology выигрывает у full mesh по token cost.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 12 (Workflow Patterns), Phase 14 · 05 (Self-Refine and CRITIC)
-**Time:** ~60 minutes
+**Тип:** Изучение + практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 12 (Workflow Patterns), Phase 14 · 05 (Self-Refine and CRITIC)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the debate protocol: N proposers, R rounds, converge on a shared answer.
-- Describe why debate improves factuality, rule-following, and reasoning.
-- Explain sparse topology: not every debater needs to see every other.
-- Implement a stdlib debate over a scripted LLM with full-mesh and sparse variants; measure token cost vs accuracy.
+- Объяснить debate protocol: N proposers, R rounds, сходимость к общему ответу.
+- Описать, почему debate улучшает factuality, rule-following и reasoning.
+- Объяснить sparse topology: не каждому debater нужно видеть всех остальных.
+- Реализовать stdlib debate поверх scripted LLM с full-mesh и sparse variants; измерить token cost vs accuracy.
 
-## The Problem
+## Проблема
 
-Self-Refine (Lesson 05) is one model critiquing itself — risks groupthink. CRITIC (Lesson 05) grounds critique in external tools — not always available. Debate introduces a third mode: multiple instances, cross-critique, convergence by disagreement.
+Self-Refine (Lesson 05) - это одна модель, критикующая саму себя, что несет риск groupthink. CRITIC (Lesson 05) заземляет critique во external tools, но они не всегда доступны. Debate вводит третий режим: multiple instances, cross-critique, convergence by disagreement.
 
-## The Concept
+## Концепция
 
 ### Society of Minds (Du et al., ICML 2024)
 
-- N model instances independently propose answers to the same question.
-- Over R rounds, each model reads the others' proposals and critiques them.
-- Models update their answers based on the critiques.
-- After R rounds, return the convergent answer.
+- N экземпляров модели независимо предлагают ответы на один и тот же вопрос.
+- В течение R раундов каждая модель читает proposals других и критикует их.
+- Модели обновляют свои ответы на основе critiques.
+- После R раундов возвращается convergent answer.
 
-Original experiments used N=3, R=2 due to cost. Accuracy improves with more agents and more rounds on hard problems (MMLU, GSM8K, Chess Move Validity, biography generation).
+В исходных экспериментах использовались N=3, R=2 из-за стоимости. Accuracy улучшается с увеличением числа agents и rounds на сложных задачах (MMLU, GSM8K, Chess Move Validity, biography generation).
 
-Cross-model combinations beat single-model debates: ChatGPT + Bard together > either alone.
+Cross-model combinations превосходят single-model debates: ChatGPT + Bard вместе > каждый по отдельности.
 
 ### Sparse topology
 
-"Improving Multi-Agent Debate with Sparse Communication Topology" (arXiv:2406.11776, 2024-2025) showed full-mesh debate is not always optimal. Sparse topologies (star, ring, hub-and-spoke) can match accuracy at lower token cost. Each debater sees only a subset of peers.
+"Improving Multi-Agent Debate with Sparse Communication Topology" (arXiv:2406.11776, 2024-2025) показала, что full-mesh debate не всегда оптимален. Sparse topologies (star, ring, hub-and-spoke) могут давать сопоставимую accuracy при меньшем token cost. Каждый debater видит только подмножество peers.
 
-Implications:
+Следствия:
 
-- Full mesh N=5, R=3 = 5 × 3 = 15 proposals, each reading 4 peers = 60 critique ops.
-- Star N=5, R=3 (one hub + 4 spokes) = 15 proposals, spokes read only the hub = 12 critique ops.
+- Full mesh N=5, R=3 = 5 × 3 = 15 proposals, каждый читает 4 peers = 60 critique ops.
+- Star N=5, R=3 (one hub + 4 spokes) = 15 proposals, spokes читают только hub = 12 critique ops.
 
-### When debate helps
+### Когда debate помогает
 
-- **Factuality.** N independent proposals, cross-check reduces hallucination.
-- **Rule-following.** Chess move validity — one model misses a rule, others catch it.
-- **Open-ended reasoning.** Multiple framings narrow in on the right answer.
+- **Factuality.** N независимых proposals, cross-check снижает hallucination.
+- **Rule-following.** Chess move validity — одна модель пропускает правило, другие замечают.
+- **Open-ended reasoning.** Несколько framings сходятся к правильному ответу.
 
-### When debate hurts
+### Когда debate вредит
 
-- **Latency-sensitive UX.** N × R serial rounds is latency you may not have.
-- **Cost-sensitive scale.** N × R tokens per question.
-- **Simple factual lookups.** One lookup is cheaper than five debates.
+- **Latency-sensitive UX.** N × R serial rounds - это задержка, которой у вас может не быть.
+- **Cost-sensitive scale.** N × R tokens на вопрос.
+- **Простые factual lookups.** Один lookup дешевле пяти debates.
 
-### 2026 practical instantiations
+### Практические реализации 2026 года
 
-- **Anthropic orchestrator-workers** (Lesson 12) — one variant of debate with a synthesis step.
-- **LangGraph supervisor** (Lesson 13) — central router + specialist agents can implement debate as a node.
-- **OpenAI Agents SDK** (Lesson 16) — agents handoff back and forth for iterative critique.
-- **Multi-agent evals** — pair debate + evaluator-optimizer for eval signal.
+- **Anthropic orchestrator-workers** (Lesson 12) — один вариант debate с synthesis step.
+- **LangGraph supervisor** (Lesson 13) — central router + specialist agents могут реализовать debate как node.
+- **OpenAI Agents SDK** (Lesson 16) — agents handoff туда и обратно для iterative critique.
+- **Multi-agent evals** — combine debate + evaluator-optimizer для eval signal.
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **Convergence collapse.** All agents converge on the first wrong answer. Mitigate with required disagreement rounds.
-- **Hub failure.** In a star topology, a bad hub corrupts everyone. Rotate or use multiple hubs.
-- **Prompt homogenization.** All agents use the same prompt; they produce the same answers. Use diverse prompts and/or models.
+- **Convergence collapse.** Все agents сходятся на первом неверном ответе. Смягчайте обязательными раундами disagreement.
+- **Hub failure.** В star topology плохой hub заражает всех. Ротируйте hub или используйте несколько hubs.
+- **Prompt homogenization.** Все agents используют один и тот же prompt; они выдают одинаковые ответы. Используйте diverse prompts и/или models.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements stdlib debate:
+`code/main.py` реализует stdlib debate:
 
-- `Debater` class (scripted LLM with per-debater opinion drift).
-- `FullMeshDebate` and `SparseDebate` runners.
-- Three questions: one factual, one rule-based, one reasoning.
+- Класс `Debater` (scripted LLM с per-debater opinion drift).
+- Runners `FullMeshDebate` и `SparseDebate`.
+- Три вопроса: factual, rule-based и reasoning.
 - Metrics: convergent answer, rounds to convergence, total critique ops.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: per-protocol accuracy and cost; sparse matches full mesh on 2/3 questions at lower cost.
+Output: per-protocol accuracy and cost; sparse совпадает с full mesh на 2/3 questions при меньшей стоимости.
 
-## Use It
+## Используйте это
 
-- **Anthropic orchestrator-workers** for simple 2-3-worker debates.
-- **LangGraph** for stateful multi-round debate with checkpointing.
-- **Custom** for research or specialized correctness guarantees.
+- **Anthropic orchestrator-workers** для простых debates с 2-3 workers.
+- **LangGraph** для stateful multi-round debate с checkpointing.
+- **Custom** для research или specialized correctness guarantees.
 
-## Ship It
+## Доведите до продакшена
 
-`outputs/skill-debate.md` scaffolds a multi-agent debate with configurable topology, N, R, and a convergence rule.
+`outputs/skill-debate.md` формирует каркас multi-agent debate с configurable topology, N, R и convergence rule.
 
-## Exercises
+## Упражнения
 
-1. Implement a "forced disagreement" rule: in round 1, every debater must produce a distinct proposal. Measure effect on convergence speed.
-2. Add a confidence-weighted aggregation: debaters return (answer, confidence); aggregator weights by confidence. Does it help?
-3. Swap one "agent" for a different scripted LLM with different opinions. Does heterogeneity improve accuracy?
-4. Measure token cost for full mesh vs sparse on your 3 questions. Plot cost vs accuracy.
-5. Read the Society of Minds paper. Port your toy to N=5, R=3. What breaks? What gets better?
+1. Реализуйте правило "forced disagreement": в round 1 каждый debater должен выдать distinct proposal. Измерьте влияние на convergence speed.
+2. Добавьте confidence-weighted aggregation: debaters возвращают (answer, confidence); aggregator взвешивает по confidence. Помогает ли это?
+3. Замените одного "agent" на другую scripted LLM с другими opinions. Улучшает ли heterogeneity accuracy?
+4. Измерьте token cost для full mesh vs sparse на ваших 3 questions. Постройте график cost vs accuracy.
+5. Прочитайте paper Society of Minds. Перенесите toy на N=5, R=3. Что ломается? Что становится лучше?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Debate | "Multi-agent critique" | N proposers, R rounds of cross-critique, converge |
-| Full mesh | "Everyone reads everyone" | Every debater reads every peer each round |
-| Sparse topology | "Limited peer view" | Debaters read only a subset of peers |
-| Hub-and-spoke | "Star topology" | One central debater, N-1 spokes read only the hub |
-| Convergence | "Agreement" | Debaters converge on a shared answer |
-| Society of Minds | "Du et al. debate paper" | ICML 2024 multi-agent debate method |
+| Debate | "Multi-agent critique" | N proposers, R rounds cross-critique, сходимость |
+| Full mesh | "Все читают всех" | Каждый участник дебатов читает каждого другого участника в каждом раунде |
+| Sparse topology | "Ограниченный обзор соседей" | Участники дебатов читают только подмножество соседей |
+| Hub-and-spoke | "Звездная топология" | Один центральный участник, N-1 spoke-участников читают только hub |
+| Convergence | "Agreement" | Debaters сходятся на общем ответе |
+| Society of Minds | "Debate paper Du et al." | ICML 2024 multi-agent debate method |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Du et al., Society of Minds (arXiv:2305.14325)](https://arxiv.org/abs/2305.14325) — canonical multi-agent debate
 - [Sparse Communication Topology (arXiv:2406.11776)](https://arxiv.org/abs/2406.11776) — sparse topology results
-- [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — orchestrator-workers as a debate variant
+- [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — orchestrator-workers как вариант debate
 - [Madaan et al., Self-Refine (arXiv:2303.17651)](https://arxiv.org/abs/2303.17651) — single-model self-critique counterpart
