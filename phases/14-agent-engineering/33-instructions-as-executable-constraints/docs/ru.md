@@ -1,28 +1,28 @@
-# Agent Instructions as Executable Constraints
+# Инструкции агента как исполняемые ограничения
 
-> Instructions written as prose are wishes. Instructions written as constraints are tests. The workbench turns each rule into something an agent can check at runtime and a reviewer can verify after the fact.
+> Инструкции, написанные прозой, — это пожелания. Инструкции, написанные как ограничения, — это тесты. Воркбенч превращает каждое правило во что-то, что агент может проверить во время выполнения, а reviewer — верифицировать постфактум.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 32 (Minimal Workbench)
-**Time:** ~50 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 32 (Minimal Workbench)
+**Время:** ~50 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Separate routing prose from operational rules.
-- Express startup rules, forbidden actions, definition of done, uncertainty handling, and approval boundaries as machine-checkable constraints.
-- Implement a rule checker that scores a run against the rule set.
-- Make the rule set diff-friendly so review can see what changed.
+- Отделить маршрутизирующую прозу от операционных правил.
+- Выразить startup rules, forbidden actions, definition of done, uncertainty handling и approval boundaries как машино-проверяемые ограничения.
+- Реализовать rule checker, который оценивает запуск по набору правил.
+- Сделать набор правил удобным для diff, чтобы review видел, что изменилось.
 
-## The Problem
+## Проблема
 
-A typical `AGENTS.md` reads like onboarding documentation. It tells the agent to "be careful" and "test thoroughly" and "ask if unsure." Three days later, the agent ships a change with no tests, writes to a forbidden directory, and never asks because it never knew where the line was.
+Типичный `AGENTS.md` читается как onboarding-документация. Он говорит агенту "be careful", "test thoroughly" и "ask if unsure". Через три дня агент отгружает изменение без тестов, пишет в запрещенную директорию и ни о чем не спрашивает, потому что он так и не понял, где проходит граница.
 
-Instructions are powerful when they are operational and weak when they are aspirational. The fix is to write rules the workbench can interpret and the reviewer can score.
+Инструкции сильны, когда они операционны, и слабы, когда они декларативны. Исправление — писать правила, которые воркбенч может интерпретировать, а reviewer может оценить.
 
-## The Concept
+## Концепция
 
-Rules belong in `docs/agent-rules.md`, away from the short root router. Each rule has a name, a category, and a check.
+Правила живут в `docs/agent-rules.md`, отдельно от короткого корневого маршрутизатора. У каждого правила есть имя, категория и проверка.
 
 ```mermaid
 flowchart LR
@@ -32,89 +32,89 @@ flowchart LR
   Report --> Reviewer[Reviewer]
 ```
 
-### Five categories that cover most rules
+### Пять категорий, которые покрывают большинство правил
 
 | Category | Question the rule answers | Example |
 |----------|---------------------------|---------|
-| Startup | What must be true before work begins? | "state file exists and is fresh" |
-| Forbidden | What must never happen? | "do not edit `scripts/release.sh`" |
-| Definition of done | What proves the task is complete? | "pytest exits 0 and acceptance line passes" |
-| Uncertainty | What does the agent do when unsure? | "open a question note instead of guessing" |
-| Approval | What requires human approval? | "any new dependency, any prod write" |
+| Startup | Что должно быть истинно до начала работы? | "state file exists and is fresh" |
+| Forbidden | Что никогда не должно происходить? | "do not edit `scripts/release.sh`" |
+| Definition of done | Что доказывает, что задача завершена? | "pytest exits 0 and acceptance line passes" |
+| Uncertainty | Что делает агент, когда не уверен? | "open a question note instead of guessing" |
+| Approval | Что требует human approval? | "any new dependency, any prod write" |
 
-A rule that does not fit one of these five usually wants to be two rules. Force the split.
+Правило, которое не помещается в одну из этих пяти категорий, обычно хочет быть двумя правилами. Принудительно разделите его.
 
-### Rules are machine-readable
+### Правила машиночитаемы
 
-Each rule has a slug, a category, a one-line description, and a `check` field that names a function in `rule_checker.py`. Adding a rule means adding a check; the checker grows with the workbench.
+У каждого правила есть slug, категория, однострочное описание и поле `check`, называющее функцию в `rule_checker.py`. Добавить правило значит добавить check; checker растет вместе с воркбенчем.
 
-### Rules are diff-friendly
+### Правила удобны для diff
 
-Rules live one per heading in a single markdown file. Renames are visible in diffs. New rules sit at the top of their category. Stale rules get deleted, not commented out, because the workbench is the source of truth, not the chat log of how the team felt last quarter.
+Правила живут по одному на heading в одном markdown-файле. Переименования видны в diffs. Новые правила идут в начало своей категории. Устаревшие правила удаляют, а не комментируют, потому что workbench — источник истины, а не chat log о том, что команда чувствовала в прошлом квартале.
 
-### Rules versus framework guardrails
+### Правила против framework guardrails
 
-Framework guardrails (OpenAI Agents SDK guardrails, LangGraph interrupts) enforce rules at the runtime level. The rule set in this lesson is the human-readable, reviewable contract that those guardrails implement. You need both: the runtime catches violations during a turn, the rule set proves the runtime is doing the right thing.
+Framework guardrails (OpenAI Agents SDK guardrails, LangGraph interrupts) обеспечивают правила на уровне runtime. Набор правил в этом уроке — человекочитаемый, reviewable contract, который эти guardrails реализуют. Нужны оба слоя: runtime ловит нарушения во время хода, rule set доказывает, что runtime делает правильную вещь.
 
-## Build It
+## Соберите это
 
-`code/main.py` ships:
+`code/main.py` поставляет:
 
-- `agent-rules.md` parser that loads rules into a dataclass.
-- `rule_checker.py` style checker functions, one per `check` reference.
-- A demo agent run that violates two rules and a check pass that catches them.
+- Парсер `agent-rules.md`, который загружает rules в dataclass.
+- Checker-функции в стиле `rule_checker.py`, по одной на каждую ссылку `check`.
+- Demo agent run, который нарушает два правила, и check pass, который их ловит.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: parsed rule set, run trace, pass/fail per rule, and a `rule_report.json` saved next to the script.
+Вывод: разобранный rule set, run trace, pass/fail по каждому правилу и `rule_report.json`, сохраненный рядом со скриптом.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns separate a rule set that lasts a quarter from one that decays in a week.
+Три паттерна отделяют rule set, который живет квартал, от того, который сгнивает за неделю.
 
-**Severity tagging at write time.** Every rule carries `severity`: `block`, `warn`, or `info`. The checker reports all three; the runtime only refuses on `block`. Most teams overstate severity early then quietly weaken it under deadline pressure; tagging at write time forces the calibration up front. Pair with the verification gate (Phase 14 · 38), which signs any override of a `block` rule into a `overrides.jsonl` audit log.
+**Severity tagging во время записи.** Каждое правило несет `severity`: `block`, `warn` или `info`. Checker сообщает все три; runtime отказывается только на `block`. Большинство команд сначала завышают severity, а затем тихо ослабляют ее под давлением дедлайна; tagging во время записи заставляет откалибровать это заранее. Свяжите с verification gate (Phase 14 · 38), который подписывает любой override правила `block` в audit log `overrides.jsonl`.
 
-**Rule expiry as a forcing function.** Every rule carries an `expires_at` date (default 90 days from authoring). The checker emits a warning when an unexpired rule has had zero violations for 60 consecutive days; the next quarterly review either justifies keeping it, weakens it to `info`, or deletes it. Cloudflare's production AI Code Review data (April 2026, 131,246 review runs across 5,169 repos in 30 days) showed that rule sets with explicit expiry stayed under 30 rules per repo; sets without grew to 80+ with most never firing.
+**Rule expiry как forcing function.** Каждое правило несет дату `expires_at` (по умолчанию 90 дней от создания). Checker выдает warning, когда неистекшее правило не имело нарушений 60 дней подряд; следующий quarterly review либо обосновывает сохранение, либо ослабляет его до `info`, либо удаляет. Production-данные Cloudflare AI Code Review (апрель 2026, 131,246 review runs в 5,169 repos за 30 дней) показали, что rule sets с явным expiry оставались меньше 30 правил на repo; наборы без expiry разрастались до 80+ и большинство правил никогда не срабатывало.
 
-**Markdown-as-source, JSON-as-cache.** `agent-rules.md` is the authored file; `agent-rules.lock.json` is a cache the checker reads in the hot path. The lock is regenerated by a pre-commit hook. Markdown diffs are reviewable; JSON parsing stays out of every turn. Same shape as `package.json` / `package-lock.json` and `Cargo.toml` / `Cargo.lock`.
+**Markdown-as-source, JSON-as-cache.** `agent-rules.md` — authored file; `agent-rules.lock.json` — cache, который checker читает в hot path. Lock регенерируется pre-commit hook. Markdown diffs пригодны для review; JSON parsing не попадает в каждый ход. Та же форма, что у `package.json` / `package-lock.json` и `Cargo.toml` / `Cargo.lock`.
 
-## Use It
+## Используйте это
 
-In production:
+В production:
 
-- Claude Code, Codex, Cursor read the rules at session start and quote them when refusing actions. The checker re-runs them in CI to catch silent drift.
-- OpenAI Agents SDK guardrails register the same checks as input and output guardrails. The markdown is the docs surface; the SDK is the runtime surface.
-- LangGraph interrupts fire when an in-flight node violates a rule. The interrupt handler reads the rule, asks the human, and resumes.
+- Claude Code, Codex, Cursor читают rules при старте сессии и цитируют их при отказе от действий. Checker перезапускает их в CI, чтобы поймать silent drift.
+- OpenAI Agents SDK guardrails регистрируют те же checks как input и output guardrails. Markdown — поверхность docs; SDK — поверхность runtime.
+- LangGraph interrupts срабатывают, когда in-flight node нарушает rule. Interrupt handler читает правило, спрашивает человека и resumes.
 
-The rule set is portable across all three because it is just markdown plus function names.
+Rule set переносим между всеми тремя, потому что это всего лишь markdown плюс имена функций.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-rule-set-builder.md` interviews a project owner, classifies their existing prose instructions into the five categories, and emits a versioned `agent-rules.md` plus a checker stub.
+`outputs/skill-rule-set-builder.md` интервьюирует владельца проекта, классифицирует существующие prose instructions по пяти категориям и генерирует versioned `agent-rules.md` плюс checker stub.
 
-## Exercises
+## Упражнения
 
-1. Add a sixth category if your product genuinely needs it. Defend why it does not collapse into one of the five.
-2. Extend the checker so a rule can carry a severity (`block`, `warn`, `info`) and the report aggregates accordingly.
-3. Wire the checker into CI: fail the build if a block-severity rule fails on the latest agent run.
-4. Add an "expiry" field per rule. After 90 days without a check fail, the rule is up for review.
-5. Find a real `AGENTS.md` and rewrite it as five-category rules. How many of its lines were operational? How many were aspirational?
+1. Добавьте шестую категорию, если вашему продукту она действительно нужна. Защитите, почему она не схлопывается в одну из пяти.
+2. Расширьте checker так, чтобы правило могло нести severity (`block`, `warn`, `info`), а report агрегировал это соответствующим образом.
+3. Подключите checker к CI: валите build, если правило с block-severity падает на последнем agent run.
+4. Добавьте поле "expiry" для каждого правила. После 90 дней без check fail правило отправляется на review.
+5. Найдите настоящий `AGENTS.md` и перепишите его как правила пяти категорий. Сколько его строк были операционными? Сколько — декларативными?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Operational rule | "A real instruction" | A rule the workbench can check at runtime |
-| Aspirational rule | "Be careful" | A rule with no check; either delete or upgrade |
-| Definition of done | "Acceptance" | An objective, file-backed proof the task is complete |
-| Block severity | "Hard rule" | Violation halts the run; cannot be silenced without an operator |
-| Rule expiry | "Stale rule sweep" | A rule with no fails in N days is up for retirement |
+| Operational rule | "A real instruction" | Правило, которое workbench может проверить во время выполнения |
+| Aspirational rule | "Be careful" | Правило без check; его нужно удалить или усилить |
+| Definition of done | "Acceptance" | Объективное, file-backed доказательство, что задача завершена |
+| Block severity | "Hard rule" | Нарушение останавливает run; его нельзя заглушить без оператора |
+| Rule expiry | "Stale rule sweep" | Правило без fails за N дней отправляется на retirement |
 
-## Further Reading
+## Дополнительное чтение
 
 - [OpenAI Agents SDK guardrails](https://platform.openai.com/docs/guides/agents-sdk/guardrails)
 - [LangGraph interrupts](https://langchain-ai.github.io/langgraph/how-tos/human_in_the_loop/breakpoints/)
@@ -124,6 +124,6 @@ The rule set is portable across all three because it is just markdown plus funct
 - [microservices.io, GenAI development platform — part 1: guardrails](https://microservices.io/post/architecture/2026/03/09/genai-development-platform-part-1-development-guardrails.html) — defense in depth between rules and CI
 - [Type-Checked Compliance: Deterministic Guardrails (arXiv 2604.01483)](https://arxiv.org/pdf/2604.01483) — Lean 4 as the upper bound on rule-as-check
 - [logi-cmd/agent-guardrails](https://github.com/logi-cmd/agent-guardrails) — merge-gate implementation: scope, mutation testing, violation budgets
-- Phase 14 · 32 — the minimal workbench this rule set drops into
-- Phase 14 · 38 — the verification gate that consumes the rule report
-- Phase 14 · 39 — the reviewer agent that scores rule compliance
+- Phase 14 · 32 — minimal workbench, в который вставляется этот rule set
+- Phase 14 · 38 — verification gate, который потребляет rule report
+- Phase 14 · 39 — reviewer agent, который оценивает rule compliance

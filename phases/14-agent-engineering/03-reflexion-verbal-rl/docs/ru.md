@@ -1,30 +1,30 @@
-# Reflexion: Verbal Reinforcement Learning
+# Reflexion: вербальное обучение с подкреплением
 
-> Gradient-based RL needs thousands of trials and a GPU cluster to fix a failure mode. Reflexion (Shinn et al., NeurIPS 2023) does it in natural language: after each failed trial, the agent writes a reflection, stores it in episodic memory, and conditions the next trial on that memory. This is the pattern behind Letta's sleep-time compute, Claude Code's CLAUDE.md learnings, and pro-workflow's learn-rule.
+> Gradient-based RL нужны тысячи trials и GPU cluster, чтобы исправить failure mode. Reflexion (Shinn et al., NeurIPS 2023) делает это на естественном языке: после каждой failed trial агент пишет reflection, сохраняет её в episodic memory и conditioning следующей trial делает на этой памяти. Это паттерн за sleep-time compute в Letta, learnings в `CLAUDE.md` у Claude Code и `learn-rule` в pro-workflow.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 01 (Agent Loop), Phase 14 · 02 (ReWOO)
-**Time:** ~60 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 01 (Agent Loop), Фаза 14 · 02 (ReWOO)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the three components of Reflexion (Actor, Evaluator, Self-Reflector) and the role of episodic memory.
-- Implement a stdlib Reflexion loop with binary evaluator, reflection buffer, and fresh re-attempts.
-- Choose between scalar, heuristic, and self-evaluated feedback sources for a given task.
-- Explain why verbal reinforcement catches errors that gradient-based RL would need thousands of trials to fix.
+- Назвать три компонента Reflexion (Actor, Evaluator, Self-Reflector) и роль episodic memory.
+- Реализовать Reflexion loop на stdlib с binary evaluator, reflection buffer и fresh re-attempts.
+- Выбирать между scalar, heuristic и self-evaluated feedback sources для конкретной задачи.
+- Объяснить, почему verbal reinforcement ловит ошибки, для исправления которых gradient-based RL потребовались бы тысячи trials.
 
-## The Problem
+## Проблема
 
-An agent fails a task. In standard RL you would run thousands more trials, compute gradients, update weights. Expensive, slow, and most production agents do not have a training budget for every failure.
+Агент проваливает задачу. В стандартном RL вы бы запустили ещё тысячи trials, посчитали gradients, обновили weights. Дорого, медленно, и у большинства production agents нет training budget на каждую ошибку.
 
-Reflexion (Shinn et al., arXiv:2303.11366) asks a different question: what if the agent just thought about why it failed and tried again with that thought in its prompt? No weight updates. No gradient. Just natural language stored between trials.
+Reflexion (Shinn et al., arXiv:2303.11366) задаёт другой вопрос: что если агент просто подумает, почему он ошибся, и попробует снова с этой мыслью в prompt? Без weight updates. Без gradient. Только естественный язык, сохранённый между trials.
 
-The result: on ALFWorld it beats ReAct and other non-fine-tuned baselines. On HotpotQA it improves over ReAct. On code generation (HumanEval/MBPP) it sets state of the art at the time. All without a single gradient step.
+Результат: на ALFWorld он превосходит ReAct и другие non-fine-tuned baselines. На HotpotQA улучшает ReAct. В code generation (HumanEval/MBPP) устанавливает state of the art на тот момент. И всё это без единого gradient step.
 
-## The Concept
+## Концепция
 
-### The three components
+### Три компонента
 
 ```
 Actor         : generates a trajectory (ReAct-style loop)
@@ -32,100 +32,100 @@ Evaluator     : scores the trajectory — binary, heuristic, or self-eval
 Self-Reflector: writes a natural-language reflection on the failure
 ```
 
-Plus one data structure:
+Плюс одна структура данных:
 
 ```
 Episodic memory: list of prior reflections, prepended to the next trial's prompt
 ```
 
-One trial runs the Actor. Evaluator scores it. If the score is low, Self-Reflector produces a reflection ("I picked the wrong tool because I misread the question as asking about X when it was asking about Y"). The reflection goes into episodic memory. Next trial starts fresh but sees the reflection.
+Одна trial запускает Actor. Evaluator оценивает её. Если score низкий, Self-Reflector создаёт reflection ("I picked the wrong tool because I misread the question as asking about X when it was asking about Y"). Reflection попадает в episodic memory. Следующая trial начинается заново, но видит reflection.
 
-### Three evaluator types
+### Три типа evaluator
 
-1. **Scalar** — an external binary signal. ALFWorld succeeds or fails. HumanEval tests pass or fail. Simplest, highest-signal.
-2. **Heuristic** — predefined failure signatures. "If the agent produced the same action twice in a row, mark as stuck." "If the trajectory exceeds 50 steps, mark as inefficient."
-3. **Self-evaluated** — the LLM scores its own trajectory. Needed when no ground truth is available. Weaker signal; pairs well with tool-grounded verification (Lesson 05 — CRITIC).
+1. **Scalar** — внешний binary signal. ALFWorld succeeds or fails. HumanEval tests pass or fail. Самый простой, самый high-signal.
+2. **Heuristic** — заранее заданные сигнатуры сбоев. "Если агент выдал одно и то же действие два раза подряд, пометь как застрявший." "Если траектория превышает 50 шагов, пометь как неэффективную."
+3. **Self-evaluated** — LLM оценивает собственную trajectory. Нужен, когда ground truth недоступен. Более слабый signal; хорошо сочетается с tool-grounded verification (Lesson 05 — CRITIC).
 
-The 2026 default is a mix: scalar when available, self-eval when not, heuristics as safety rails.
+Default 2026 года — смесь: scalar, когда доступен; self-eval, когда нет; heuristics как safety rails.
 
-### Why this generalizes
+### Почему это обобщается
 
-Reflexion is not a new algorithm so much as a named pattern. Almost every production "self-healing" agent runs some variant:
+Reflexion — не столько новый алгоритм, сколько именованный паттерн. Почти каждый production "self-healing" agent запускает какой-то вариант:
 
-- Letta's sleep-time compute (Lesson 08): a separate agent reflects on past conversations and writes to memory blocks.
-- Claude Code's `CLAUDE.md` / "save memory" pattern: reflections captured as learnings, prepended to future sessions.
-- pro-workflow's `/learn-rule` command: corrections captured as explicit rules.
-- LangGraph's reflection nodes: a node that scores output and routes to refine if needed.
+- Sleep-time compute Letta (Lesson 08): отдельный agent рефлексирует над прошлыми conversations и пишет в memory blocks.
+- Паттерн `CLAUDE.md` / "save memory" в Claude Code: reflections фиксируются как learnings и prepended к будущим sessions.
+- Команда `/learn-rule` в pro-workflow: corrections фиксируются как explicit rules.
+- Reflection nodes в LangGraph: node, который scores output и routes to refine if needed.
 
-All derive from the same insight: natural language is a rich-enough medium to carry "what I learned from failure" between runs.
+Все они следуют одной insight: natural language — достаточно богатая среда, чтобы переносить "what I learned from failure" между runs.
 
-### When it works and when it does not
+### Когда это работает и когда нет
 
-Reflexion works when:
+Reflexion работает, когда:
 
-- There is a clear failure signal (test failure, tool error, wrong answer).
-- The task class is reproducible (the same type of question can be asked again).
-- The reflection has room to improve on the trajectory (enough action budget).
+- Есть четкий failure signal (test failure, tool error, wrong answer).
+- Task class воспроизводим (тот же тип вопроса можно задать снова).
+- У reflection есть пространство для улучшения trajectory (достаточный action budget).
 
-Reflexion does not help when:
+Reflexion не помогает, когда:
 
-- The agent already succeeds on the first try.
-- The failure is external (network down, tool broken) — reflection on "the network was down" does not help future runs.
-- The reflection turns into superstition — storing a narrative about a one-off flaky run.
+- Agent уже succeeds on the first try.
+- Failure внешний (network down, tool broken) — reflection о том, что "the network was down", не помогает будущим runs.
+- Reflection превращается в superstition — хранение narrative об одноразовом flaky run.
 
-2026 pitfall: memory rot. Reflections accumulate; some are obsolete or wrong; re-runs get slower as the episodic buffer grows. Mitigation: periodic compaction (Lesson 06), TTL on reflections, or a separate sleep-time cleanup agent (Letta).
+Ловушка 2026 года: memory rot. Reflections накапливаются; некоторые устаревают или неверны; re-runs становятся медленнее по мере роста episodic buffer. Mitigation: periodic compaction (Lesson 06), TTL on reflections или отдельный sleep-time cleanup agent (Letta).
 
-## Build It
+## Соберите это
 
-`code/main.py` implements Reflexion on a toy puzzle: produce a 3-element list that sums to a target. The Actor emits candidate lists; the Evaluator checks the sum; the Self-Reflector writes a line about what went wrong. The reflection goes into episodic memory for the next trial.
+`code/main.py` реализует Reflexion на игрушечной задаче: создать 3-element list, сумма которого равна target. Actor выдаёт candidate lists; Evaluator проверяет sum; Self-Reflector пишет строку о том, что пошло не так. Reflection попадает в episodic memory для следующей trial.
 
-Components:
+Компоненты:
 
-- `Actor` — a scripted policy that improves when it sees reflections.
-- `Evaluator.binary()` — pass/fail on the target sum.
-- `SelfReflector` — generates a one-line diagnosis of the failure.
-- `EpisodicMemory` — a bounded list with TTL semantics.
+- `Actor` — scripted policy, которая улучшается, когда видит reflections.
+- `Evaluator.binary()` — pass/fail по target sum.
+- `SelfReflector` — создаёт one-line diagnosis failure.
+- `EpisodicMemory` — bounded list с TTL semantics.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The trace shows three trials. Trial 1 fails, a reflection is stored, trial 2 sees the reflection and improves but still fails, trial 3 succeeds. Compare with a baseline run (no reflection) — it stays stuck at trial 1's answer.
+Trace показывает три trials. Trial 1 завершается неудачей, reflection сохраняется, trial 2 видит reflection и улучшается, но всё ещё не проходит, trial 3 успешен. Сравните с baseline run (без reflection) — он застревает на ответе trial 1.
 
-## Use It
+## Используйте это
 
-LangGraph ships reflection as a node pattern. Claude Code's `/memory` command and pro-workflow's `/learn-rule` externalize the episodic buffer as a markdown file. Letta's sleep-time compute runs the Self-Reflector on downtime so the primary agent stays latency-bound. OpenAI Agents SDK does not ship Reflexion directly; you build it with a custom Guardrail that rejects trajectories by score and a memory `Session` that survives across runs.
+LangGraph поставляет reflection как node pattern. Команда `/memory` в Claude Code и `/learn-rule` в pro-workflow выносят episodic buffer в markdown file. Sleep-time compute Letta запускает Self-Reflector during downtime, чтобы primary agent оставался latency-bound. OpenAI Agents SDK не поставляет Reflexion напрямую; вы строите его через custom Guardrail, который rejects trajectories by score, и memory `Session`, которая survives across runs.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-reflexion-buffer.md` creates and maintains an episodic buffer with reflection capture, TTL, and deduplication. Given a task class and a failure, it emits a reflection that actually helps the next trial (not a generic "be more careful").
+`outputs/skill-reflexion-buffer.md` создаёт и поддерживает episodic buffer с reflection capture, TTL и deduplication. При заданном task class и failure он выдаёт reflection, которая действительно помогает следующей trial (а не generic "be more careful").
 
-## Exercises
+## Упражнения
 
-1. Switch from binary to scalar evaluator that returns a distance metric (how far from target). Does it converge faster?
-2. Add a TTL of 10 trials to reflections. Do older reflections hurt or help after that point?
-3. Implement heuristic evaluator: mark the trial as stuck if the same action repeats. How does this interact with Self-Reflector?
-4. Run Reflexion with an adversarial Actor that ignores reflections. What is the minimum reflection prompt engineering that forces the Actor to notice them?
-5. Read Section 4 of the Reflexion paper on AlfWorld. Reproduce the 130% success-rate improvement conceptually: what is the key delta vs vanilla ReAct?
+1. Переключитесь с binary на scalar evaluator, который возвращает distance metric (насколько далеко от target). Сходится ли быстрее?
+2. Добавьте TTL в 10 trials для reflections. Старые reflections после этого вредят или помогают?
+3. Реализуйте heuristic evaluator: mark the trial as stuck, если одно и то же action repeats. Как это взаимодействует с Self-Reflector?
+4. Запустите Reflexion с adversarial Actor, который ignores reflections. Какой минимум reflection prompt engineering заставит Actor заметить их?
+5. Прочитайте Section 4 статьи Reflexion об AlfWorld. Концептуально воспроизведите 130% success-rate improvement: какой key delta относительно vanilla ReAct?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Reflexion | "Self-correction" | Shinn et al. 2023 — Actor, Evaluator, Self-Reflector plus episodic memory |
-| Verbal reinforcement | "Learning without gradients" | Natural-language reflection prepended to the next trial's prompt |
-| Episodic memory | "Per-task reflections" | Bounded buffer of prior reflections for one task class |
-| Scalar evaluator | "Binary success signal" | Pass/fail or numeric score from ground truth |
-| Heuristic evaluator | "Pattern-based detector" | Predefined failure signatures (e.g. stuck-loop, too-many-steps) |
-| Self-evaluator | "LLM-as-judge on own trace" | Lower-signal fallback when no ground truth — pair with tool-grounded verification |
-| Memory rot | "Stale reflections" | Episodic buffer fills with obsolete entries; fix with compaction/TTL |
-| Sleep-time reflection | "Async self-reflection" | Run Self-Reflector off the hot path so primary agent stays fast |
+| Reflexion | "Самокоррекция" | Shinn et al. 2023 — Actor, Evaluator, Self-Reflector плюс episodic memory |
+| Verbal reinforcement | "Learning without gradients" | Natural-language reflection, prepended к prompt следующей trial |
+| Episodic memory | "Per-task reflections" | Bounded buffer предыдущих reflections для одного task class |
+| Scalar evaluator | "Бинарный success signal" | Pass/fail или numeric score из ground truth |
+| Heuristic evaluator | "Pattern-based detector" | Заранее заданные сигнатуры сбоев (например, stuck-loop, too-many-steps) |
+| Self-evaluator | "LLM-as-judge on own trace" | Lower-signal fallback без ground truth — сочетайте с tool-grounded verification |
+| Memory rot | "Stale reflections" | Episodic buffer заполняется obsolete entries; fix через compaction/TTL |
+| Sleep-time reflection | "Async self-reflection" | Запуск Self-Reflector off the hot path, чтобы primary agent оставался быстрым |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Shinn et al., Reflexion: Language Agents with Verbal Reinforcement Learning (arXiv:2303.11366)](https://arxiv.org/abs/2303.11366) — the canonical paper
+- [Shinn et al., Reflexion: Language Agents with Verbal Reinforcement Learning (arXiv:2303.11366)](https://arxiv.org/abs/2303.11366) — каноническая статья
 - [Letta, Sleep-time Compute](https://www.letta.com/blog/sleep-time-compute) — async reflection in production
-- [Anthropic, Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — managing the episodic buffer as part of context
+- [Anthropic, Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — управление episodic buffer как частью context
 - [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — reflection node pattern

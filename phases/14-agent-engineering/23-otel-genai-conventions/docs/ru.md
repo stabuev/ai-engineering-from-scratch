@@ -1,128 +1,128 @@
 # OpenTelemetry GenAI Semantic Conventions
 
-> OpenTelemetry's GenAI SIG (launched April 2024) defines the standard schema for agent telemetry. Span names, attributes, and content-capture rules converge across vendors so agent traces mean the same thing in Datadog, Grafana, Jaeger, and Honeycomb.
+> GenAI SIG OpenTelemetry (запущена в апреле 2024 года) определяет стандартную схему для телеметрии агентов. Имена span, атрибуты и правила захвата контента сходятся между вендорами, чтобы трассы агентов означали одно и то же в Datadog, Grafana, Jaeger и Honeycomb.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 13 (LangGraph), Phase 14 · 24 (Observability Platforms)
-**Time:** ~60 minutes
+**Тип:** Изучение + практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 13 (LangGraph), Фаза 14 · 24 (Observability Platforms)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the GenAI span categories: model/client, agent, tool.
-- Distinguish `invoke_agent` CLIENT vs INTERNAL spans and when each applies.
-- List the top-level GenAI attributes: provider name, request model, data-source ID.
-- Explain the content-capture contract: opt-in, `OTEL_SEMCONV_STABILITY_OPT_IN`, external-reference recommendation.
+- Назвать категории GenAI spans: model/client, agent, tool.
+- Отличать `invoke_agent` CLIENT от INTERNAL spans и понимать, когда применяется каждый вариант.
+- Перечислить top-level GenAI attributes: provider name, request model, data-source ID.
+- Объяснить контракт content-capture: opt-in, `OTEL_SEMCONV_STABILITY_OPT_IN`, рекомендация external-reference.
 
-## The Problem
+## Проблема
 
-Every vendor invents their own span names. Ops teams end up building per-framework dashboards. OpenTelemetry's GenAI SIG fixes this by defining one standard the whole ecosystem targets.
+Каждый vendor придумывает собственные span names. Ops-команды в итоге строят dashboards под каждый framework отдельно. GenAI SIG OpenTelemetry исправляет это, определяя единый стандарт, на который ориентируется вся экосистема.
 
-## The Concept
+## Концепция
 
-### Span categories
+### Категории spans
 
-1. **Model / client spans.** Cover raw LLM calls. Emitted by provider SDKs (Anthropic, OpenAI, Bedrock) and framework model adapters.
-2. **Agent spans.** `create_agent` (when the agent is constructed) and `invoke_agent` (when it runs).
-3. **Tool spans.** One per tool invocation; connected to the agent span by parent-child relation.
+1. **Model / client spans.** Покрывают сырые LLM-вызовы. Их эмитят provider SDKs (Anthropic, OpenAI, Bedrock) и framework model adapters.
+2. **Agent spans.** `create_agent` (когда агент создается) и `invoke_agent` (когда он запускается).
+3. **Tool spans.** Один span на каждый вызов инструмента; связан с agent span отношением parent-child.
 
-### Agent span naming
+### Именование agent spans
 
-- Span name: `invoke_agent {gen_ai.agent.name}` if named; fallback to `invoke_agent`.
-- Span kind:
-  - **CLIENT** — for remote agent services (OpenAI Assistants API, Bedrock Agents).
-  - **INTERNAL** — for in-process agent frameworks (LangChain, CrewAI, local ReAct).
+- Имя span: `invoke_agent {gen_ai.agent.name}`, если имя задано; fallback - `invoke_agent`.
+- Вид span:
+  - **CLIENT** — для remote agent services (OpenAI Assistants API, Bedrock Agents).
+  - **INTERNAL** — для in-process agent frameworks (LangChain, CrewAI, local ReAct).
 
-### Key attributes
+### Ключевые attributes
 
 - `gen_ai.provider.name` — `anthropic`, `openai`, `aws.bedrock`, `google.vertex`.
-- `gen_ai.request.model` — the model ID.
-- `gen_ai.response.model` — the resolved model (may differ from request due to routing).
-- `gen_ai.agent.name` — agent identifier.
+- `gen_ai.request.model` — model ID.
+- `gen_ai.response.model` — resolved model (может отличаться от request из-за routing).
+- `gen_ai.agent.name` — идентификатор агента.
 - `gen_ai.operation.name` — `chat`, `completion`, `invoke_agent`, `tool_call`.
-- `gen_ai.data_source.id` — for RAG: which corpus or store was consulted.
+- `gen_ai.data_source.id` — для RAG: какой corpus или store был использован.
 
-Technology-specific conventions exist for Anthropic, Azure AI Inference, AWS Bedrock, OpenAI.
+Для Anthropic, Azure AI Inference, AWS Bedrock и OpenAI существуют technology-specific conventions.
 
-### Content capture
+### Захват контента
 
-The default rule: instrumentations SHOULD NOT capture inputs/outputs by default. Capture is opt-in via:
+Правило по умолчанию: instrumentations SHOULD NOT захватывать inputs/outputs по умолчанию. Capture включается через opt-in:
 
 - `gen_ai.system_instructions`
 - `gen_ai.input.messages`
 - `gen_ai.output.messages`
 
-Recommended production pattern: store content externally (S3, your log store), record references on spans (pointer IDs, not prose). This is the Lesson 27 content-poisoning defense wired into observability.
+Рекомендуемый production pattern: хранить content внешне (S3, ваш log store), а в spans записывать references (pointer IDs, а не prose). Это защита от content-poisoning из Урока 27, встроенная в observability.
 
 ### Stability
 
-Most conventions are experimental as of March 2026. Opt in to the stable preview with:
+Большинство conventions являются experimental по состоянию на март 2026 года. Включите stable preview через:
 
 ```
 OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental
 ```
 
-Datadog v1.37+ maps GenAI attributes natively into its LLM Observability schema. Other backends (Grafana, Honeycomb, Jaeger) support the raw attributes.
+Datadog v1.37+ нативно отображает атрибуты GenAI в свою схему LLM Observability. Другие бэкенды (Grafana, Honeycomb, Jaeger) поддерживают сырые атрибуты.
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **Capturing full prompts in spans.** PII, secrets, customer data in traces that ops can read. Store externally.
-- **No `gen_ai.provider.name`.** Multi-provider dashboards break when attribution is missing.
-- **Spans without parent links.** Orphaned tool spans. Always propagate context.
-- **Not setting stability opt-in.** Your attributes may get renamed on backend upgrade.
+- **Захват полных prompts в spans.** PII, secrets и customer data оказываются в traces, которые может читать ops. Храните внешне.
+- **Нет `gen_ai.provider.name`.** Multi-provider dashboards ломаются, когда отсутствует attribution.
+- **Spans без parent links.** Осиротевшие tool spans. Всегда распространяйте context.
+- **Не задан stability opt-in.** Ваши attributes могут быть переименованы при backend upgrade.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a stdlib span emitter matching GenAI conventions:
+`code/main.py` реализует stdlib span emitter, соответствующий GenAI conventions:
 
-- `Span` with GenAI attribute schema.
-- `Tracer` with `start_span`, nested contexts.
-- A scripted agent run that emits: `create_agent`, `invoke_agent` (INTERNAL), per-tool spans, `chat` spans for LLM calls.
-- A content-capture mode that stores prompts externally and records IDs on spans.
+- `Span` со схемой GenAI attributes.
+- `Tracer` с `start_span`, nested contexts.
+- Скриптовый запуск агента, который эмитит: `create_agent`, `invoke_agent` (INTERNAL), span для каждого инструмента, `chat` spans для вызовов LLM.
+- Режим content-capture, который хранит prompts внешне и записывает IDs в spans.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: a span tree with all required GenAI attributes, and an "external store" showing the opt-in content references.
+Output: span tree со всеми обязательными GenAI attributes и "external store", показывающий opt-in content references.
 
-## Use It
+## Используйте это
 
-- **Datadog LLM Observability** (v1.37+) maps attributes natively.
-- **Langfuse / Phoenix / Opik** (Lesson 24) — auto-instrument the ecosystem.
-- **Jaeger / Honeycomb / Grafana Tempo** — raw OTel traces; build dashboards from GenAI attributes.
-- **Self-hosted** — run the OTel Collector with a GenAI processor.
+- **Datadog LLM Observability** (v1.37+) нативно мапит attributes.
+- **Langfuse / Phoenix / Opik** (Урок 24) — auto-instrument the ecosystem.
+- **Jaeger / Honeycomb / Grafana Tempo** — raw OTel traces; стройте dashboards из GenAI attributes.
+- **Self-hosted** — запустите OTel Collector с GenAI processor.
 
-## Ship It
+## Отправьте в работу
 
-`outputs/skill-otel-genai.md` wires OTel GenAI spans into an existing agent with content-capture defaults and external-reference storage.
+`outputs/skill-otel-genai.md` подключает OTel GenAI spans к существующему агенту с content-capture defaults и external-reference storage.
 
-## Exercises
+## Упражнения
 
-1. Instrument your Lesson 01 ReAct loop with `invoke_agent` (INTERNAL) + per-tool spans. Send to a Jaeger instance.
-2. Add content capture in "references only" mode: prompts to SQLite, span attributes carry only row IDs.
-3. Read the spec for `gen_ai.data_source.id`. Wire it into your Lesson 09 Mem0 search.
-4. Set `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental` and verify your attributes don't get renamed by the collector.
-5. Build a dashboard: "which tool errors correlate with which models" from GenAI attributes alone.
+1. Инструментируйте ваш ReAct loop из Урока 01 с `invoke_agent` (INTERNAL) + per-tool spans. Отправьте в Jaeger instance.
+2. Добавьте content capture в режиме "references only": prompts в SQLite, span attributes несут только row IDs.
+3. Прочитайте spec для `gen_ai.data_source.id`. Подключите его к поиску Mem0 из Урока 09.
+4. Задайте `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental` и проверьте, что collector не переименовывает ваши attributes.
+5. Постройте dashboard: "which tool errors correlate with which models" только из GenAI attributes.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| GenAI SIG | "OpenTelemetry GenAI group" | OTel working group defining the schema |
-| invoke_agent | "Agent span" | Name of the span representing an agent run |
-| CLIENT span | "Remote call" | Span for a call to a remote agent service |
-| INTERNAL span | "In-process" | Span for an in-process agent run |
+| GenAI SIG | "OpenTelemetry GenAI group" | Рабочая группа OTel, определяющая схему |
+| invoke_agent | "Span агента" | Имя span, представляющего запуск агента |
+| CLIENT span | "Удаленный вызов" | Span для вызова удаленного агентского сервиса |
+| INTERNAL span | "In-process" | Span для in-process agent run |
 | gen_ai.provider.name | "Provider" | anthropic / openai / aws.bedrock / google.vertex |
-| gen_ai.data_source.id | "RAG source" | Which corpus/store a retrieval hit |
-| Content capture | "Prompt logging" | Opt-in capture of messages; store externally in prod |
-| Stability opt-in | "Preview mode" | Env var to pin experimental conventions |
+| gen_ai.data_source.id | "RAG source" | В каком corpus/store был retrieval hit |
+| Content capture | "Логирование prompt" | Захват сообщений по явному включению; в prod храните внешне |
+| Stability opt-in | "Preview mode" | Переменная окружения для фиксации экспериментальных conventions |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — the spec
+- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — спецификация
 - [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) — GenAI spans by default
 - [AutoGen v0.4 (Microsoft Research)](https://www.microsoft.com/en-us/research/articles/autogen-v0-4-reimagining-the-foundation-of-agentic-ai-for-scale-extensibility-and-robustness/) — OTel spans built in
 - [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) — W3C trace context propagation

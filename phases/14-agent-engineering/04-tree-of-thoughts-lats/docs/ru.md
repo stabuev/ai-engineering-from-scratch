@@ -1,30 +1,30 @@
-# Tree of Thoughts and LATS: Deliberate Search
+# Tree of Thoughts и LATS: намеренный поиск
 
-> A single chain-of-thought trajectory has no room to backtrack. ToT (Yao et al., 2023) turns reasoning into a tree with self-evaluation on each node. LATS (Zhou et al., 2024) unifies ToT with ReAct and Reflexion under Monte Carlo Tree Search. Game of 24 goes from 4% (CoT) to 74% (ToT); LATS hits 92.7% pass@1 on HumanEval.
+> У одной траектории chain-of-thought нет пространства для отката. ToT (Yao et al., 2023) превращает рассуждение в дерево с самооценкой на каждом узле. LATS (Zhou et al., 2024) объединяет ToT с ReAct и Reflexion под Monte Carlo Tree Search. Game of 24 растёт с 4% (CoT) до 74% (ToT); LATS достигает 92.7% pass@1 на HumanEval.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 01 (Agent Loop), Phase 14 · 03 (Reflexion)
-**Time:** ~75 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 01 (Agent Loop), Фаза 14 · 03 (Reflexion)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Frame reasoning as search: nodes are "thoughts," edges are "expansions," value is "how promising."
-- Implement a stdlib ToT-style BFS tree search with self-evaluation scoring.
-- Extend to a toy LATS MCTS loop with select / expand / simulate / backpropagate.
-- Decide when search is worth the token multiplier (Game of 24, code generation) and when a single trajectory is enough (simple Q&A).
+- Представлять рассуждение как поиск: узлы — это "thoughts", рёбра — "expansions", value — "how promising".
+- Реализовать поиск по дереву в стиле ToT BFS на stdlib с оцениванием через самооценку.
+- Расширить его до игрушечного цикла LATS MCTS с select / expand / simulate / backpropagate.
+- Решать, когда поиск стоит множителя по токенам (Game of 24, генерация кода), а когда достаточно одной траектории (простые Q&A).
 
-## The Problem
+## Проблема
 
-Chain-of-thought is a linear walk. If the first step is wrong, every subsequent step works on a bad premise. On Game of 24 (use four digits with + − × ÷ to make 24), GPT-4 CoT hits 4% accuracy. The model picks the wrong subexpression early and cannot recover.
+Chain-of-thought — это линейная прогулка. Если первый шаг неверен, каждый следующий шаг работает с плохой предпосылкой. На Game of 24 (использовать четыре цифры с + − × ÷, чтобы получить 24) GPT-4 CoT достигает точности 4%. Модель рано выбирает неверное подвыражение и не может восстановиться.
 
-What reasoning needs is the ability to propose multiple candidates, evaluate them, pick the promising ones, and backtrack when dead ends appear. That is search. Tree of Thoughts and LATS are the two canonical formulations.
+Рассуждению нужна способность предлагать несколько кандидатов, оценивать их, выбирать перспективные и откатываться, когда появляются тупики. Это поиск. Tree of Thoughts и LATS — две канонические формулировки.
 
-## The Concept
+## Концепция
 
 ### Tree of Thoughts (Yao et al., NeurIPS 2023)
 
-Each node is a coherent intermediate step ("a thought"). Each node can expand to K child thoughts. The LLM self-evaluates each node with a scoring prompt. Search explores the tree — BFS, DFS, or beam.
+Каждый узел — связный промежуточный шаг ("a thought"). Каждый узел может расширяться в K дочерних мыслей. LLM самооценивает каждый узел через оценочный промпт. Поиск исследует дерево — BFS, DFS или beam.
 
 ```
                      (root: "find 24 from 4 6 4 1")
@@ -34,97 +34,97 @@ Each node is a coherent intermediate step ("a thought"). Each node can expand to
           ...    ...          ...                finish
 ```
 
-Self-evaluation is the load-bearing piece. The paper shows three variants: `sure / likely / impossible` classification, `1..10` numeric score, and vote among candidates. All three beat CoT substantially on Game of 24 (4% -> 74% with GPT-4).
+Самооценка — несущая часть. Статья показывает три варианта: классификация `sure / likely / impossible`, числовой балл `1..10` и голосование между кандидатами. Все три существенно превосходят CoT на Game of 24 (4% -> 74% с GPT-4).
 
 ### LATS (Zhou et al., ICML 2024)
 
-LATS unifies ToT, ReAct, and Reflexion under MCTS. The LLM plays three roles:
+LATS объединяет ToT, ReAct и Reflexion под MCTS. LLM играет три роли:
 
-- **Policy**: propose candidate next actions (ReAct-style).
-- **Value function**: score a partial trajectory (ToT-style self-eval).
-- **Self-reflector**: on failure, write a natural-language reflection (Reflexion-style) and use it to reseed future rollouts.
+- **Policy**: предлагает возможные следующие действия (в стиле ReAct).
+- **Value function**: оценивает частичную траекторию (самооценка в стиле ToT).
+- **Self-reflector**: при сбое пишет reflection на естественном языке (в стиле Reflexion) и использует её для повторного запуска будущих rollouts.
 
-Environment feedback (observations) mixes into the value function so the search is informed by real tool results, not just model opinions. Results at paper time: HumanEval pass@1 92.7% with GPT-4 (SOTA), WebShop average 75.9 with GPT-3.5 (approaching gradient-based fine-tuning).
+Обратная связь от среды (observations) смешивается в value function, поэтому поиск опирается на реальные результаты инструментов, а не только на мнения модели. Результаты на момент статьи: HumanEval pass@1 92.7% с GPT-4 (SOTA), средний WebShop 75.9 с GPT-3.5 (приближаясь к fine-tuning на градиентах).
 
-### MCTS, minimally
+### MCTS, минимально
 
-Four phases per iteration:
+Четыре фазы на итерацию:
 
-1. **Select** — walk from root to a leaf using UCT (upper confidence bound for trees).
-2. **Expand** — generate K children via the policy.
-3. **Simulate** — rollout from a child using the policy, score the leaf with the value function (or environment reward).
-4. **Backpropagate** — update visit counts and value estimates up the path.
+1. **Select** — пройти от root до leaf, используя UCT (upper confidence bound for trees).
+2. **Expand** — сгенерировать K дочерних узлов через policy.
+3. **Simulate** — сделать rollout от дочернего узла через policy, оценить лист через value function (или reward среды).
+4. **Backpropagate** — обновить visit counts и оценки value вверх по пути.
 
-UCT formula: `Q(s, a) + c * sqrt(ln N(s) / N(s, a))`. First term is exploitation; second is exploration. Tune `c` per task.
+Формула UCT: `Q(s, a) + c * sqrt(ln N(s) / N(s, a))`. Первый член — exploitation; второй — exploration. Настраивайте `c` под задачу.
 
-### The cost reality
+### Реальность стоимости
 
-Search explodes tokens. ToT on Game of 24 uses 100–1000x the tokens of CoT. LATS is similar. This is not free; reserve search for:
+Поиск взрывает расход токенов. ToT на Game of 24 использует в 100–1000 раз больше токенов, чем CoT. LATS похож. Это не бесплатно; резервируйте поиск для:
 
-- Tasks where a single trajectory is demonstrably insufficient (Game of 24, complex code).
-- Tasks where wall-clock is less important than correctness.
-- Tasks with a cheap, reliable value function (unit tests for code, explicit target for math).
+- Задач, где одной траектории явно недостаточно (Game of 24, сложный код).
+- Задач, где wall-clock менее важен, чем корректность.
+- Задач с дешёвой и надёжной value function (unit tests для кода, явная цель для математики).
 
-If your task has a single right answer and a noisy evaluator, search often makes things worse — it finds a "good-scoring" wrong answer.
+Если у задачи один правильный ответ и шумный evaluator, поиск часто ухудшает результат — он находит неверный ответ с хорошей оценкой.
 
-### 2026 positioning
+### Позиционирование в 2026 году
 
-Most production agents do not run LATS. They run ReAct with tool-grounded verification (CRITIC, Lesson 05). Search shows up in specialized niches:
+Большинство production agents не запускают LATS. Они запускают ReAct с верификацией, заземлённой на инструменты (CRITIC, Lesson 05). Поиск появляется в специализированных нишах:
 
-- Coding agents that run tests as the value function (HumanEval-style).
-- Deep-research agents that explore multiple query paths.
-- Planning-heavy workflows inside LangGraph subgraphs.
+- Coding agents, которые запускают тесты как value function (в стиле HumanEval).
+- Deep-research agents, которые исследуют несколько путей запросов.
+- Workflows с тяжёлым планированием внутри subgraphs LangGraph.
 
-AlphaEvolve (Lesson 11) is the 2025 extreme: evolutionary search over code, machine-checkable fitness, frontier gains (first 4x4 matmul improvement in 56 years).
+AlphaEvolve (Lesson 11) — экстремум 2025 года: эволюционный поиск по коду, машинно проверяемая fitness-функция, frontier gains (первое улучшение 4x4 matmul за 56 лет).
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- A tiny ToT BFS on a stylized "pick arithmetic ops" task.
-- A toy LATS MCTS loop on the same task (Select / Expand / Simulate / Backpropagate) with UCT selection.
-- A value function that composes a symbolic score plus a self-eval score.
+- Миниатюрный ToT BFS на стилизованной задаче "pick arithmetic ops".
+- Игрушечный LATS MCTS loop на той же задаче (Select / Expand / Simulate / Backpropagate) с выбором через UCT.
+- Value function, которая объединяет символический балл и self-eval score.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The trace shows ToT expanding three candidates per node with BFS, compared to LATS converging on the best rollout via MCTS. Token counts printed for both.
+Трасса показывает ToT, который расширяет по три кандидата на узел через BFS, в сравнении с LATS, который сходится к лучшему rollout через MCTS. Количество токенов печатается для обоих.
 
-## Use It
+## Используйте это
 
-LangGraph ships ToT-style exploration as subgraph patterns; the LangChain team's blog on LATS (May 2024) is the reference tutorial. LlamaIndex ships a `TreeOfThoughts` agent. For most 2026 production agents this pattern lives behind an `if task_complexity > threshold: use_search()` gate — see the evaluator-optimizer pattern in Lesson 05.
+LangGraph поставляет исследование в стиле ToT как шаблоны subgraph; блог команды LangChain о LATS (May 2024) — эталонный туториал. LlamaIndex поставляет agent `TreeOfThoughts`. Для большинства production agents 2026 года этот паттерн живёт за gate `if task_complexity > threshold: use_search()` — см. паттерн evaluator-optimizer в Lesson 05.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-search-policy.md` selects between linear ReAct, ToT, LATS, and evolutionary search given task shape, budget, and evaluator fidelity.
+`outputs/skill-search-policy.md` выбирает между линейным ReAct, ToT, LATS и эволюционным поиском по форме задачи, бюджету и надёжности evaluator.
 
-## Exercises
+## Упражнения
 
-1. Run the toy LATS with UCT c=0.1 vs c=2.0. What changes in the trace?
-2. Swap the value function for a noisier scorer (add random jitter). Does MCTS still find the best leaf? What is the minimum signal-to-noise it tolerates?
-3. Implement beam-search ToT (keep top-k at each level) and compare to BFS. Which is better on a tight token budget?
-4. Read LATS Section 5.1. Reproduce the HumanEval trajectory count: how many rollouts does it take to hit the reported pass@1?
-5. Read the LATS paper's discussion on "when LATS helps less." Write a one-paragraph decision rule mapping task shape to search strategy.
+1. Запустите игрушечный LATS с UCT c=0.1 vs c=2.0. Что меняется в трассе?
+2. Замените value function на более шумный scorer (добавьте random jitter). MCTS всё ещё находит лучший leaf? Какой минимальный signal-to-noise он выдерживает?
+3. Реализуйте beam-search ToT (keep top-k at each level) и сравните с BFS. Что лучше при жёстком бюджете токенов?
+4. Прочитайте LATS Section 5.1. Воспроизведите количество траекторий HumanEval: сколько rollouts нужно, чтобы достичь заявленного pass@1?
+5. Прочитайте discussion статьи LATS о "when LATS helps less." Напишите правило принятия решения в один абзац, связывающее форму задачи со стратегией поиска.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Tree of Thoughts | "Branching CoT" | Yao et al. — tree of thought nodes with self-evaluation |
-| LATS | "MCTS for LLMs" | Zhou et al. — unifies ToT + ReAct + Reflexion under MCTS |
-| UCT | "Upper confidence bound" | Select formula balancing exploitation (Q) and exploration (ln N / n) |
-| Value function | "How good is this state" | Prompted LLM score or environment reward; feeds backprop |
-| Policy | "Action proposer" | ReAct-style generator; emits candidate next thoughts/actions |
-| Rollout | "Simulated trajectory" | Walk from a node to a leaf using policy, score with value |
-| Backpropagate | "Update ancestors" | Push the leaf's reward up the path, updating visit counts and Q |
-| Search cost | "Token explosion" | 100-1000x CoT on Game of 24; budget before you adopt |
+| Tree of Thoughts | "Branching CoT" | Yao et al. — дерево thought nodes с самооценкой |
+| LATS | "MCTS for LLMs" | Zhou et al. — объединяет ToT + ReAct + Reflexion под MCTS |
+| UCT | "Upper confidence bound" | Формула Select, балансирующая exploitation (Q) и exploration (ln N / n) |
+| Value function | "How good is this state" | Prompted LLM score или reward среды; питает backprop |
+| Policy | "Action proposer" | Генератор в стиле ReAct; выдаёт кандидаты следующих thoughts/actions |
+| Rollout | "Simulated trajectory" | Проход от node до leaf через policy, оценивание через value |
+| Backpropagate | "Update ancestors" | Протолкнуть reward leaf вверх по пути, обновляя visit counts и Q |
+| Search cost | "Token explosion" | 100-1000x CoT на Game of 24; заложите бюджет до внедрения |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Yao et al., Tree of Thoughts (arXiv:2305.10601)](https://arxiv.org/abs/2305.10601) — the canonical paper
-- [Zhou et al., LATS (arXiv:2310.04406)](https://arxiv.org/abs/2310.04406) — MCTS with Reflexion feedback
-- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — subgraph patterns for search
-- [AlphaEvolve (arXiv:2506.13131)](https://arxiv.org/abs/2506.13131) — evolutionary search with programmatic evaluators
+- [Yao et al., Tree of Thoughts (arXiv:2305.10601)](https://arxiv.org/abs/2305.10601) — каноническая статья
+- [Zhou et al., LATS (arXiv:2310.04406)](https://arxiv.org/abs/2310.04406) — MCTS с обратной связью Reflexion
+- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — шаблоны subgraph для поиска
+- [AlphaEvolve (arXiv:2506.13131)](https://arxiv.org/abs/2506.13131) — эволюционный поиск с программными evaluators

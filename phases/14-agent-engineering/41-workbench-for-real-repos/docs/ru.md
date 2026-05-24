@@ -1,26 +1,26 @@
-# The Workbench on a Real Repo
+# Воркбенч на реальном репозитории
 
-> Eleven lessons of surfaces are worth nothing if they do not survive contact with a real codebase. This lesson runs the same task twice on a small sample app: prompt-only versus workbench-guided. The numbers do the arguing.
+> Одиннадцать уроков surfaces ничего не стоят, если они не переживают контакт с реальным codebase. Этот урок запускает одну и ту же task дважды на маленьком sample app: prompt-only versus workbench-guided. Цифры спорят сами.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phases 14 · 32 to 14 · 40
-**Time:** ~60 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phases 14 · 32 to 14 · 40
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Bring the seven workbench surfaces together on a small application.
-- Run the same task twice (prompt-only and workbench-guided) and measure five outcomes.
-- Read the before/after report and decide which surfaces gave the most leverage.
-- Defend the workbench against a "but my model is good enough" pushback.
+- Собрать семь workbench surfaces на небольшом application.
+- Запустить одну task дважды (prompt-only и workbench-guided) и измерить пять outcomes.
+- Прочитать before/after report и решить, какие surfaces дали больше всего leverage.
+- Защитить workbench от возражения "but my model is good enough".
 
-## The Problem
+## Проблема
 
-A demo on a toy task convinces no one. The case for the workbench is made when a real-feeling task on a real-feeling repo lands in production with fewer failures, fewer reverts, and a packet the next session can use.
+Demo на toy task никого не убеждает. Аргумент за workbench появляется, когда real-feeling task на real-feeling repo попадает в production с меньшим числом failures, меньшим числом reverts и packet, который next session can use.
 
-This lesson ships that real-feeling repo and runs the same task through both pipelines. The result is a before/after report you can hand to a skeptic.
+Этот урок поставляет такой real-feeling repo и прогоняет одну task через оба pipelines. Result — before/after report, который можно отдать skeptic.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -31,19 +31,19 @@ flowchart TD
   M --> Report[before-after-report.md]
 ```
 
-### The sample app
+### Sample app
 
-A minimal FastAPI-style handler in `sample_app/`:
+Минимальный FastAPI-style handler в `sample_app/`:
 
 - `app.py` with `/signup` (no validation yet).
 - `test_app.py` with one happy-path test.
-- `README.md` and `scripts/release.sh` as forbidden-zone bait.
+- `README.md` и `scripts/release.sh` как forbidden-zone bait.
 
-### The task
+### Task
 
 > Add input validation to `/signup`: reject passwords shorter than 8 characters, return 422 with a typed error envelope. Add a test that proves the new behavior.
 
-### The two pipelines
+### Два pipelines
 
 Prompt-only:
 
@@ -63,86 +63,86 @@ Workbench-guided:
 7. Run reviewer (Lesson 39).
 8. Generate handoff (Lesson 40).
 
-### The five outcomes measured
+### Пять измеряемых outcomes
 
 | Outcome | Why it matters |
 |---------|----------------|
-| `tests_actually_run` | Most "tests passed" claims are unverifiable |
-| `acceptance_met` | The test that proves the goal must be the test that ran |
-| `files_outside_scope` | Scope creep is the dominant silent failure |
-| `handoff_quality` | The next session pays for or benefits from this |
-| `reviewer_total` | Qualitative judgment on top of the gate |
+| `tests_actually_run` | Большинство claims "tests passed" unverifiable |
+| `acceptance_met` | Test, доказывающий goal, должен быть именно тем test, который ran |
+| `files_outside_scope` | Scope creep — dominant silent failure |
+| `handoff_quality` | Next session pays for or benefits from this |
+| `reviewer_total` | Qualitative judgment on top of gate |
 
-## Build It
+## Соберите это
 
-`code/main.py` orchestrates the two pipelines against the same sample app fixture. Both pipelines are scripted (no LLM in the loop) so the measurement is reproducible. The script writes the comparison into `before-after-report.md` and `comparison.json`.
+`code/main.py` orchestrates два pipelines against the same sample app fixture. Оба pipelines scripted (no LLM in the loop), поэтому measurement reproducible. Script writes comparison into `before-after-report.md` and `comparison.json`.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: a console table of outcomes per pipeline, the markdown report saved next to the script, and the JSON for whoever wants to chart it.
+Вывод: console table of outcomes per pipeline, markdown report saved next to script, and JSON for whoever wants to chart it.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-The skeptic's question is "how much does the workbench actually help?" The 2026 numbers say a lot more than the explanation.
+Вопрос skeptic: "how much does the workbench actually help?" Цифры 2026 отвечают: намного лучше, чем объяснение.
 
-**Terminal Bench Top-30 to Top-5 on the same model.** LangChain's *Anatomy of an Agent Harness* (April 2026): a coding agent jumped from outside the top 30 to rank five on Terminal Bench 2.0 by changing only the harness. Same model. Different surfaces. Twenty-five-rank delta.
+**Terminal Bench: с top-30 до top-5 на той же модели.** LangChain *Anatomy of an Agent Harness* (апрель 2026): coding agent поднялся с позиции вне top 30 до rank five на Terminal Bench 2.0, изменив только harness. Та же model. Другие surfaces. Разница в двадцать пять позиций.
 
-**Vercel 80% to 100% by deleting tools.** Vercel reported deleting 80% of its agent's tools moved the success rate from 80% to 100%. Smaller tool surface, sharper scope, fewer ways to fail. Negative space wins.
+**Vercel: с 80% до 100% через удаление tools.** Vercel reported, что удаление 80% agent tools подняло success rate с 80% до 100%. Меньшая tool surface, более четкий scope, меньше способов fail. Negative space wins.
 
-**Harvey 2x accuracy via harness alone.** Legal agents more than doubled their accuracy through harness optimization, no model change.
+**Harvey: 2x accuracy только через harness.** Legal agents more than doubled accuracy through harness optimization, без смены model.
 
-**88% of enterprise AI agent projects fail to reach production.** The preprints.org *Harness Engineering for Language Agents* paper (March 2026) traces the failures to runtime, not reasoning: stale state, brittle retries, overgrown context, poor recovery from intermediate mistakes.
+**88% enterprise AI agent projects не доходят до production.** Paper preprints.org *Harness Engineering for Language Agents* (март 2026) связывает failures с runtime, а не reasoning: stale state, brittle retries, overgrown context, плохое восстановление после intermediate mistakes.
 
-**Long-context collapse.** WebAgent baseline 40-50% success drops to under 10% in long-context conditions, mostly from infinite loops and goal loss. The Ralph Loop and the handoff packet exist to absorb that.
+**Long-context collapse.** WebAgent baseline 40-50% success drops to under 10% in long-context conditions, mostly from infinite loops and goal loss. Ralph Loop и handoff packet существуют, чтобы absorb that.
 
-**False negatives still exist.** Single-step factual tasks, one-line lints, formatter runs, anything the model has memorized verbatim — these run faster prompt-only. The benchmark should enumerate them honestly so the workbench is not framed as overkill.
+**False negatives still exist.** Single-step factual tasks, one-line lints, formatter runs, все, что model memorized verbatim, быстрее выполняется prompt-only. Benchmark should enumerate them honestly, чтобы workbench не выглядел overkill.
 
-The takeaway is not "harness wins forever." Models do absorb harness tricks over time. The takeaway is that today, the engineering load sits in the seven surfaces, and the numbers prove it.
+Вывод не в том, что "harness wins forever." Models со временем absorb harness tricks. Вывод: today engineering load sits in seven surfaces, and numbers prove it.
 
-## Use It
+## Используйте это
 
-This lesson is the case file you cite when:
+Этот урок — case file, на который вы ссылаетесь, когда:
 
-- Someone asks why every PR carries an `agent-rules.md` and a scope contract.
-- A team wants to drop the verification gate "just for this sprint."
-- A new agent product launches and you need a portable benchmark for whether it actually saves time.
+- Кто-то спрашивает, почему каждый PR несет `agent-rules.md` и scope contract.
+- Team wants to drop verification gate "just for this sprint."
+- Запускается новый agent product, и вам нужен portable benchmark, показывающий, экономит ли он время на самом деле.
 
-The numbers travel further than the explanation.
+Numbers travel дальше explanation.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-workbench-benchmark.md` is a portable evaluation harness that runs any agent product through both pipelines against a project's own sample app and reports the five outcomes.
+`outputs/skill-workbench-benchmark.md` — portable evaluation harness, который прогоняет любой agent product через оба pipelines на sample app проекта и reports five outcomes.
 
-## Exercises
+## Упражнения
 
-1. Add a sixth outcome: time-to-first-meaningful-edit. How do you measure it cleanly?
-2. Run the comparison on a real second-day task in your codebase. Where do the workbench numbers slip?
-3. Add a "false negative" pass: tasks where prompt-only would have been faster and the workbench overhead is real cost. Defend keeping the workbench anyway.
-4. Replace the scripted "agent" with a real LLM call. Which outcomes get noisier?
-5. Author a one-page summary aimed at a non-engineer. What survives the cut?
+1. Добавьте sixth outcome: time-to-first-meaningful-edit. Как измерить это cleanly?
+2. Запустите comparison на real second-day task в вашем codebase. Где workbench numbers slip?
+3. Добавьте "false negative" pass: tasks, где prompt-only был бы быстрее, а workbench overhead — реальная cost. Защитите сохранение workbench anyway.
+4. Замените scripted "agent" на real LLM call. Какие outcomes станут шумнее?
+5. Напишите one-page summary aimed at non-engineer. Что переживет сокращение?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Sample app | "Toy repo" | Small but realistic enough to exercise all seven surfaces |
-| Pipeline | "Workflow" | Ordered sequence of surface reads/writes the agent follows |
-| Before/after report | "The receipts" | The artifact you hand to a skeptic |
-| False negative | "Workbench overkill" | Tasks where prompt-only is faster; useful to enumerate honestly |
-| Workbench benchmark | "Reliability score" | Portable harness that runs the comparison on your codebase |
+| Sample app | "Toy repo" | Маленький, но достаточно реалистичный repo, чтобы задействовать все семь surfaces |
+| Pipeline | "Workflow" | Упорядоченная sequence чтений/записей surfaces, которой следует agent |
+| Before/after report | "The receipts" | Artifact, который вы отдаете skeptic |
+| False negative | "Workbench overkill" | Tasks, где prompt-only быстрее; полезно честно перечислять |
+| Workbench benchmark | "Reliability score" | Portable harness, который запускает comparison на вашей codebase |
 
-## Further Reading
+## Дополнительное чтение
 
-- [LangChain, The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — Terminal Bench Top-30 to Top-5 receipt
-- [MongoDB, The Agent Harness: Why the LLM Is the Smallest Part of Your Agent System](https://www.mongodb.com/company/blog/technical/agent-harness-why-llm-is-smallest-part-of-your-agent-system) — Vercel + Harvey numbers
+- [LangChain, The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — receipt Terminal Bench Top-30 to Top-5
+- [MongoDB, The Agent Harness: Why the LLM Is the Smallest Part of Your Agent System](https://www.mongodb.com/company/blog/technical/agent-harness-why-llm-is-smallest-part-of-your-agent-system) — числа Vercel + Harvey
 - [preprints.org, Harness Engineering for Language Agents](https://www.preprints.org/manuscript/202603.1756) — 88% enterprise failure rate, runtime root causes
-- [HN: Improving 15 LLMs at Coding in One Afternoon. Only the Harness Changed](https://news.ycombinator.com/item?id=46988596) — replicated across 15 models
+- [HN: Improving 15 LLMs at Coding in One Afternoon. Only the Harness Changed](https://news.ycombinator.com/item?id=46988596) — репликация на 15 models
 - [Cloudflare, Orchestrating AI Code Review at Scale](https://blog.cloudflare.com/ai-code-review/) — 131k review runs / 30 days in production
 - [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
-- Phases 14 · 32 to 14 · 40 — the surfaces this lesson exercises end-to-end
-- Phase 14 · 19 — SWE-bench, GAIA, AgentBench as the macro benchmarks this lesson complements
-- Phase 14 · 30 — eval-driven agent development the same harness plugs into
+- Фазы 14 · 32 до 14 · 40 — surfaces, которые этот урок проверяет end-to-end
+- Фаза 14 · 19 — SWE-bench, GAIA, AgentBench как macro benchmarks, которые дополняет этот урок
+- Фаза 14 · 30 — eval-driven agent development, куда подключается тот же harness

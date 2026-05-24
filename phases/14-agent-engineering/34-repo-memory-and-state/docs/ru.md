@@ -1,26 +1,26 @@
-# Repo Memory and Durable State
+# Память репозитория и долговечное состояние
 
-> Chat history is volatile. The repo is durable. The workbench stores agent state in versioned files so the next session, the next agent, and the next reviewer all read from the same source of truth.
+> История чата изменчива. Репозиторий долговечен. Воркбенч хранит состояние агента в версионированных файлах, чтобы следующая сессия, следующий агент и следующий reviewer читали один и тот же источник истины.
 
-**Type:** Build
-**Languages:** Python (stdlib + `jsonschema` optional)
-**Prerequisites:** Phase 14 · 32 (Minimal Workbench)
-**Time:** ~60 minutes
+**Тип:** Build
+**Языки:** Python (stdlib + `jsonschema` optional)
+**Предварительные требования:** Phase 14 · 32 (Minimal Workbench)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Define what belongs in repo memory and what belongs in chat history.
-- Author JSON Schemas for `agent_state.json` and `task_board.json`.
-- Build a state manager that loads, validates, mutates, and persists state atomically.
-- Use the schema to refuse bad writes before they corrupt the workbench.
+- Определить, что относится к repo memory, а что — к chat history.
+- Написать JSON Schemas для `agent_state.json` и `task_board.json`.
+- Построить state manager, который загружает, валидирует, изменяет и атомарно сохраняет состояние.
+- Использовать schema, чтобы отказываться от плохих записей до того, как они испортят workbench.
 
-## The Problem
+## Проблема
 
-The agent finishes a session. The chat closes. The next session opens and asks where to start. The model says "let me check the files," reads stale notes, and re-does work that was already complete. Or worse, it rewrites a finished file because no one told it the file was finished.
+Агент завершает сессию. Чат закрывается. Следующая сессия открывается и спрашивает, с чего начать. Модель говорит "let me check the files", читает устаревшие заметки и повторяет работу, которая уже была завершена. Или хуже: переписывает законченный файл, потому что никто не сказал ей, что файл завершен.
 
-The workbench fix is repo memory: state lives in JSON files in the repo, written under a schema, persisted atomically, diff-friendly in code review. Chat is a transient feed; the repo is the system of record.
+Исправление воркбенча — repo memory: состояние живет в JSON-файлах в репозитории, пишется под schema, сохраняется атомарно и удобно читается в code review. Чат — transient feed; репозиторий — system of record.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -32,7 +32,7 @@ flowchart LR
   Write --> Manager
 ```
 
-### What belongs in repo memory
+### Что относится к repo memory
 
 | Belongs | Does not belong |
 |---------|-----------------|
@@ -42,100 +42,100 @@ flowchart LR
 | Open blockers | Sampled completions |
 | Next action | Vendor-specific model ids |
 
-The test is durability: would this be useful three months from now in a CI rerun? If yes, repo. If no, telemetry.
+Тест — долговечность: будет ли это полезно через три месяца при повторном CI rerun? Если да — repo. Если нет — telemetry.
 
 ### Schema-first state
 
-JSON Schema is the contract. Without it, every agent invents new fields, every reviewer learns a new shape, and every CI script has to special-case past versions. With it, a bad write is a refused write.
+JSON Schema — это контракт. Без нее каждый агент придумывает новые поля, каждый reviewer изучает новую форму, а каждый CI script вынужден special-case старые версии. С ней плохая запись становится отказанной записью.
 
-The schema covers:
+Schema покрывает:
 
 - Required keys.
-- Allowed `status` values.
-- Forbidden values (e.g. `null` for arrays).
+- Допустимые значения `status`.
+- Запрещенные значения (например, `null` для arrays).
 - Pattern constraints (task ids match `T-\d{3,}`).
-- Version field for migrations.
+- Version field для migrations.
 
-### Atomic writes
+### Атомарные записи
 
-State writes need to survive partial failures: write to a tempfile, fsync, rename over the target. The state file is the source of truth; a half-written one is worse than no file at all.
+Записи состояния должны переживать частичные отказы: записать во временный файл, fsync, rename поверх target. State file — источник истины; наполовину записанный файл хуже, чем отсутствие файла.
 
-### Migrations
+### Миграции
 
-When the schema changes, ship a migration script next to the schema bump. The state file carries a `schema_version` field; the manager refuses to load a file from a version it cannot migrate.
+Когда schema меняется, поставляйте migration script рядом с schema bump. State file несет поле `schema_version`; manager отказывается загружать файл версии, которую не может мигрировать.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `agent_state.schema.json` and `task_board.schema.json`.
-- A stdlib-only validator (subset of JSON Schema: required, type, enum, pattern, items).
-- `StateManager.load`, `StateManager.update`, `StateManager.commit` with atomic temp-and-rename writes.
-- A demo that mutates state, persists, reloads, and proves the round-trip.
+- `agent_state.schema.json` и `task_board.schema.json`.
+- Валидатор только на stdlib (подмножество JSON Schema: required, type, enum, pattern, items).
+- `StateManager.load`, `StateManager.update`, `StateManager.commit` с атомарной temp-and-rename записью.
+- Demo, который изменяет состояние, сохраняет, загружает заново и доказывает round-trip.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The script writes `workdir/agent_state.json` and `workdir/task_board.json`, mutates them across two turns, and prints the validated state at each step.
+Скрипт записывает `workdir/agent_state.json` и `workdir/task_board.json`, изменяет их на двух ходах и печатает validated state на каждом шаге.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Four patterns turn the lesson's minimum into something a multi-agent monorepo can survive.
+Четыре паттерна превращают минимум урока в то, что переживет multi-agent monorepo.
 
-**Atomic temp-and-rename is not optional.** A March 2026 Hive project bug report documents the failure mode cleanly: `state.json` was written via `write_text()` and exceptions were caught and silenced. Partial writes left sessions resuming against corrupt state with no signal. The fix is always: `tempfile.mkstemp` in the same directory as the target, write, `fsync`, `os.replace` (atomic rename on POSIX and Windows). This lesson's `atomic_write` does exactly that.
+**Atomic temp-and-rename не опционален.** Bug report проекта Hive за март 2026 документирует failure mode чисто: `state.json` записывался через `write_text()`, а exceptions ловились и глушились. Частичные записи оставляли сессии возобновляться на corrupt state без сигнала. Исправление всегда одно: `tempfile.mkstemp` в той же директории, что target, write, `fsync`, `os.replace` (atomic rename на POSIX и Windows). `atomic_write` в этом уроке делает именно это.
 
-**Idempotency keys on every non-idempotent tool call.** If an agent crashes after calling a tool but before checkpointing the result, recovery retries the tool call. Safe for reads; dangerous for emails, DB inserts, file uploads. The pattern: log every tool call ID before execution into a `pending_calls.jsonl`. On retry, check for the ID; if present, skip the call and use the cached result. Anthropic and LangChain both call this out in 2026 guidance; LangGraph's checkpointer persists pending writes for the same reason.
+**Idempotency keys на каждом non-idempotent tool call.** Если агент падает после вызова tool, но до checkpoint результата, recovery повторит tool call. Безопасно для reads; опасно для emails, DB inserts, file uploads. Паттерн: логировать каждый tool call ID до выполнения в `pending_calls.jsonl`. При retry проверить ID; если он есть, пропустить call и использовать cached result. Anthropic и LangChain оба подчеркивают это в guidance 2026 года; LangGraph checkpointer сохраняет pending writes по той же причине.
 
-**Separate large artifacts from state.** Don't store CSVs, long transcripts, or generated files in `agent_state.json`. Save the artifact as a separate file (or upload to object storage) and keep only the path in state. Checkpoints stay small and fast; the artifacts grow independently.
+**Отделяйте большие artifacts от state.** Не храните CSVs, длинные transcripts или generated files в `agent_state.json`. Сохраните artifact отдельным файлом (или загрузите в object storage) и держите в state только path. Checkpoints остаются маленькими и быстрыми; artifacts растут независимо.
 
-**Event sourcing for audit, snapshots for resume.** Append to an event log (`state.events.jsonl`) on every mutation; periodically snapshot to `state.json`. Resume reads the snapshot, then replays any events after the snapshot's timestamp. This costs more disk but lets you replay agent decisions verbatim — essential when debugging long-horizon runs. The same shape Postgres uses internally for WAL.
+**Event sourcing для audit, snapshots для resume.** Append в event log (`state.events.jsonl`) на каждую mutation; периодически snapshot в `state.json`. Resume читает snapshot, затем replay events после timestamp snapshot. Это стоит больше диска, но позволяет replay agent decisions verbatim — важно при debugging long-horizon runs. Та же форма, которую Postgres использует внутри для WAL.
 
-**Schema migrations or refuse to load.** The `schema_version` integer is the contract. When the manager loads a file at an unknown version, it refuses to read. Ship a migration script next to the schema bump; `tools/migrate_state.py` runs idempotently on every startup.
+**Schema migrations или отказ от загрузки.** Integer `schema_version` — контракт. Когда manager загружает файл неизвестной версии, он отказывается читать. Поставляйте migration script рядом с schema bump; `tools/migrate_state.py` запускается idempotently на каждом startup.
 
-## Use It
+## Используйте это
 
-In production:
+В production:
 
-- **LangGraph checkpointers.** Same idea, different storage. The checkpointer persists graph state to SQLite, Postgres, or a custom backend. The schema this lesson teaches is what you reach for when the checkpointer dies and you need to read state by hand.
-- **Letta memory blocks.** Persistent blocks with structured schemas (Phase 14 · 08). Same discipline scoped to long-running personas.
-- **OpenAI Agents SDK session store.** Pluggable backends, schema-aware. The state file in this lesson is the local-file backend.
+- **LangGraph checkpointers.** Та же идея, другое хранилище. Checkpointer сохраняет graph state в SQLite, Postgres или custom backend. Schema из этого урока — то, к чему вы обращаетесь, когда checkpointer умер и нужно прочитать state вручную.
+- **Letta memory blocks.** Persistent blocks со structured schemas (Phase 14 · 08). Та же дисциплина, scoped to long-running personas.
+- **OpenAI Agents SDK session store.** Pluggable backends, schema-aware. State file в этом уроке — local-file backend.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-state-schema.md` generates a project-specific JSON Schema pair (state + board), a Python `StateManager` wired to atomic writes, and a migration scaffold so the next schema bump does not break the workbench.
+`outputs/skill-state-schema.md` генерирует project-specific пару JSON Schema (state + board), Python `StateManager`, подключенный к atomic writes, и migration scaffold, чтобы следующий schema bump не сломал workbench.
 
-## Exercises
+## Упражнения
 
-1. Add a `last_human_touch` timestamp. Refuse any agent write within five seconds of a human edit.
-2. Extend the validator to support `oneOf` so a task can be either a build task or a review task with different required fields.
-3. Add a `schema_version` field and write the migration from v1 to v2 (rename `blockers` to `risks`).
-4. Move the storage backend from a local file to SQLite. Keep the `StateManager` API identical.
-5. Run two agents against the same state file with a 50 ms write race. What goes wrong and how does the atomic rename save you?
+1. Добавьте timestamp `last_human_touch`. Отказывайтесь от любой agent write в течение пяти секунд после human edit.
+2. Расширьте validator поддержкой `oneOf`, чтобы task могла быть build task или review task с разными required fields.
+3. Добавьте поле `schema_version` и напишите migration from v1 to v2 (переименуйте `blockers` в `risks`).
+4. Перенесите storage backend с local file на SQLite. Сохраните API `StateManager` идентичным.
+5. Запустите двух agents против одного state file с write race 50 ms. Что ломается и как atomic rename вас спасает?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Repo memory | "Notes file" | State stored in tracked files in the repo, under schema |
-| Schema-first | "Validate inputs" | Define the contract before the writer, refuse drift |
-| Atomic write | "Just rename" | Write to temp, fsync, rename, so partial failures cannot corrupt |
-| Migration | "Schema bump" | A script that turns vN state into v(N+1) state |
-| System of record | "Source of truth" | The artifact the workbench treats as authoritative |
+| Repo memory | "Notes file" | State, сохраненный в tracked files в repo, под schema |
+| Schema-first | "Validate inputs" | Сначала определить contract, затем writer; отказывать drift |
+| Atomic write | "Just rename" | Записать во temp, fsync, rename, чтобы partial failures не corrupt |
+| Migration | "Schema bump" | Script, который превращает vN state в v(N+1) state |
+| System of record | "Source of truth" | Artifact, который workbench считает authoritative |
 
-## Further Reading
+## Дополнительное чтение
 
 - [JSON Schema specification](https://json-schema.org/specification.html)
 - [LangGraph checkpointers](https://langchain-ai.github.io/langgraph/concepts/persistence/)
 - [Letta memory blocks](https://docs.letta.com/concepts/memory)
 - [Fast.io, AI Agent State Checkpointing: A Practical Guide](https://fast.io/resources/ai-agent-state-checkpointing/) — schema-first checkpointing with idempotency
 - [Fast.io, AI Agent Workflow State Persistence: Best Practices 2026](https://fast.io/resources/ai-agent-workflow-state-persistence/) — concurrency control, TTL, event sourcing
-- [Hive Issue #6263 — non-atomic state.json writes silently ignored](https://github.com/aden-hive/hive/issues/6263) — the failure mode in a real project
+- [Hive Issue #6263 — non-atomic state.json writes silently ignored](https://github.com/aden-hive/hive/issues/6263) — failure mode in a real project
 - [eunomia, Checkpoint/Restore Systems: Evolution, Techniques, Applications](https://eunomia.dev/blog/2025/05/11/checkpointrestore-systems-evolution-techniques-and-applications-in-ai-agents/) — CR primitives from OS history applied to agents
 - [Indium, 7 State Persistence Strategies for Long-Running AI Agents in 2026](https://www.indium.tech/blog/7-state-persistence-strategies-ai-agents-2026/)
 - [Microsoft Agent Framework, Compaction](https://learn.microsoft.com/en-us/agent-framework/agents/conversations/compaction) — vendor checkpoint manager
 - Phase 14 · 08 — memory blocks and sleep-time compute
-- Phase 14 · 32 — the three-file minimum this lesson schematizes
-- Phase 14 · 40 — handoff packets read from the same schema
+- Phase 14 · 32 — three-file minimum, который этот урок schematizes
+- Phase 14 · 40 — handoff packets, читающие ту же schema

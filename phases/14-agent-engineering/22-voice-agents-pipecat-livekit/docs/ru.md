@@ -1,129 +1,129 @@
-# Voice Agents: Pipecat and LiveKit
+# Голосовые агенты: Pipecat и LiveKit
 
-> Voice agents are a first-class production category in 2026. Pipecat gives you a Python frame-based pipeline (VAD → STT → LLM → TTS → transport). LiveKit Agents bridges AI models to users over WebRTC. Production latency targets land at 450–600ms end-to-end for premium stacks.
+> Голосовые агенты в 2026 году стали полноценной производственной категорией. Pipecat дает Python-конвейер на основе фреймов (VAD -> STT -> LLM -> TTS -> transport). LiveKit Agents связывает AI-модели с пользователями через WebRTC. Для премиальных стеков производственные цели по задержке находятся на уровне 450-600 ms end-to-end.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 01 (Agent Loop), Phase 14 · 12 (Workflow Patterns)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 01 (Agent Loop), Phase 14 · 12 (Workflow Patterns)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Describe Pipecat's frame-based pipeline: DOWNSTREAM (source→sink) and UPSTREAM (control).
-- Name the canonical voice pipeline stages and which transports Pipecat supports.
-- Explain LiveKit Agents' two voice agent classes (MultimodalAgent, VoicePipelineAgent) and when each fits.
-- Summarize 2026 production latency expectations and how they drive architecture choices.
+- Описать фреймовый конвейер Pipecat: DOWNSTREAM (source→sink) и UPSTREAM (control).
+- Назвать канонические этапы голосового конвейера и транспорты, которые поддерживает Pipecat.
+- Объяснить два класса голосовых агентов LiveKit Agents (MultimodalAgent, VoicePipelineAgent) и когда подходит каждый из них.
+- Суммировать производственные ожидания по задержке в 2026 году и то, как они определяют архитектурные решения.
 
-## The Problem
+## Проблема
 
-Voice agents are not a text loop with TTS bolted on. Latency budgets are brutal (~600ms), partial audio is the default, turn detection is a model, and transports range from telephony SIP to WebRTC. Either you build a frame-based pipeline (Pipecat) or you lean on a platform (LiveKit).
+Голосовые агенты - это не текстовый цикл с прикрученным TTS. Бюджеты задержки жесткие (~600 ms), частичный аудиопоток является нормой, определение хода - это модель, а транспорты варьируются от telephony SIP до WebRTC. Либо вы строите фреймовый конвейер (Pipecat), либо опираетесь на платформу (LiveKit).
 
-## The Concept
+## Концепция
 
 ### Pipecat (pipecat-ai/pipecat)
 
-- Python frame-based pipeline framework.
-- `Frame` → `FrameProcessor` chain.
-- Two flow directions:
-  - **DOWNSTREAM** — source → sink (audio in, TTS out).
-  - **UPSTREAM** — feedback and control (cancellation, metrics, barge-in).
-- `PipelineTask` manages lifecycle with events (`on_pipeline_started`, `on_pipeline_finished`, `on_idle_timeout`) and observers for metrics/tracing/RTVI.
+- Python-фреймворк конвейеров на основе фреймов.
+- Цепочка `Frame` -> `FrameProcessor`.
+- Два направления потока:
+  - **DOWNSTREAM** — source -> sink (audio in, TTS out).
+  - **UPSTREAM** — обратная связь и управление (cancellation, metrics, barge-in).
+- `PipelineTask` управляет жизненным циклом через события (`on_pipeline_started`, `on_pipeline_finished`, `on_idle_timeout`) и observers для metrics/tracing/RTVI.
 
-Typical pipeline:
+Типичный конвейер:
 
 ```
 VAD (Silero) → STT → LLM (context alternates user/assistant) → TTS → transport
 ```
 
-Transports: Daily, LiveKit, SmallWebRTCTransport, FastAPI WebSocket, WhatsApp.
+Транспорты: Daily, LiveKit, SmallWebRTCTransport, FastAPI WebSocket, WhatsApp.
 
-Pipecat Flows adds structured conversations (state machines). Pipecat Cloud is the managed runtime.
+Pipecat Flows добавляет структурированные диалоги (state machines). Pipecat Cloud - это managed runtime.
 
 ### LiveKit Agents (livekit/agents)
 
-- Bridges AI models to users over WebRTC.
-- Key concepts: `Agent`, `AgentSession`, `entrypoint`, `AgentServer`.
-- Two voice agent classes:
-  - **MultimodalAgent** — direct audio via OpenAI Realtime or equivalent.
-  - **VoicePipelineAgent** — STT → LLM → TTS cascade; gives text-level control.
-- Semantic turn detection via a transformer model.
-- Native MCP integration.
-- Telephony via SIP.
-- 50+ models with no API keys via LiveKit Inference; 200+ more via plugins.
+- Связывает AI-модели с пользователями через WebRTC.
+- Ключевые понятия: `Agent`, `AgentSession`, `entrypoint`, `AgentServer`.
+- Два класса голосовых агентов:
+  - **MultimodalAgent** — прямое аудио через OpenAI Realtime или аналог.
+  - **VoicePipelineAgent** — каскад STT -> LLM -> TTS; дает контроль на уровне текста.
+- Семантическое определение хода через transformer model.
+- Нативная интеграция MCP.
+- Телефония через SIP.
+- 50+ моделей без API keys через LiveKit Inference; еще 200+ через plugins.
 
-### Commercial platforms
+### Коммерческие платформы
 
-Vapi (~450–600ms on an optimized premium stack) and Retell (~600ms end-to-end across 180 test calls) build on top of these. Pick a platform when you want a managed voice stack without a WebRTC team.
+Vapi (~450-600 ms на оптимизированном premium stack) и Retell (~600 ms end-to-end по 180 тестовым звонкам) строятся поверх этих подходов. Выбирайте платформу, когда нужен managed voice stack без команды WebRTC.
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **No barge-in handling.** User interrupts; agent keeps talking. Requires UPSTREAM cancel frames in Pipecat, equivalent in LiveKit.
-- **STT confidence ignored.** Low-confidence transcripts fed to the LLM as if gospel. Gate on confidence or request confirmation.
-- **TTS mid-sentence cutoff.** When the pipeline cancels mid-utterance, TTS needs to know or cut audio.
-- **Latency budget ignored.** Every component adds 50–200ms. Sum your chain before shipping.
+- **Нет обработки barge-in.** Пользователь перебивает; агент продолжает говорить. Нужны UPSTREAM cancel frames в Pipecat или эквивалент в LiveKit.
+- **Игнорируется STT confidence.** Низкоуверенные транскрипты передаются в LLM как истина. Ставьте gate по confidence или просите подтверждение.
+- **TTS обрывается посреди предложения.** Когда конвейер отменяется в середине высказывания, TTS должен узнать об этом или обрезать аудио.
+- **Игнорируется бюджет задержки.** Каждый компонент добавляет 50-200 ms. Сложите всю цепочку до запуска в production.
 
-### Typical 2026 latencies
+### Типичные задержки 2026 года
 
-- VAD: 20–60ms
-- STT partial: 100–250ms
-- LLM first token: 150–400ms
-- TTS first audio: 100–200ms
-- Transport RTT: 30–80ms
+- VAD: 20-60 ms
+- STT partial: 100-250 ms
+- LLM first token: 150-400 ms
+- TTS first audio: 100-200 ms
+- Transport RTT: 30-80 ms
 
-End-to-end 450–600ms is premium. 800–1200ms is common. Anything > 1500ms feels broken.
+End-to-end 450-600 ms - это premium. 800-1200 ms встречается часто. Все, что > 1500 ms, ощущается сломанным.
 
-## Build It
+## Соберите это
 
-`code/main.py` is a frame-based toy pipeline with:
+`code/main.py` - игрушечный фреймовый конвейер с:
 
-- `Frame` types (audio, transcript, text, tts_audio, control).
-- `Processor` interface with `process(frame)`.
-- A five-stage pipeline (VAD → STT → LLM → TTS → transport) as scripted processors.
-- An UPSTREAM cancel frame to demonstrate barge-in.
+- Типами `Frame` (audio, transcript, text, tts_audio, control).
+- Интерфейсом `Processor` с `process(frame)`.
+- Пятиэтапным конвейером (VAD -> STT -> LLM -> TTS -> transport) как scripted processors.
+- UPSTREAM cancel frame для демонстрации barge-in.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The trace shows normal flow and a barge-in cancel that stops TTS mid-utterance.
+Trace показывает нормальный поток и barge-in cancel, который останавливает TTS в середине высказывания.
 
-## Use It
+## Используйте это
 
-- **Pipecat** for full control — custom processors, Python-first, pluggable providers.
-- **LiveKit Agents** for WebRTC-first deployments and telephony.
-- **Vapi / Retell** for hosted voice agents without a WebRTC team.
-- **OpenAI Realtime / Gemini Live** for direct audio-in/audio-out (MultimodalAgent).
+- **Pipecat** для полного контроля — custom processors, Python-first, pluggable providers.
+- **LiveKit Agents** для WebRTC-first развертываний и телефонии.
+- **Vapi / Retell** для hosted voice agents без команды WebRTC.
+- **OpenAI Realtime / Gemini Live** для прямого audio-in/audio-out (MultimodalAgent).
 
-## Ship It
+## Доведите до продакшена
 
-`outputs/skill-voice-pipeline.md` scaffolds a Pipecat-shaped voice pipeline with VAD + STT + LLM + TTS + transport plus barge-in handling.
+`outputs/skill-voice-pipeline.md` формирует каркас голосового конвейера в стиле Pipecat с VAD + STT + LLM + TTS + transport, а также обработкой barge-in.
 
-## Exercises
+## Упражнения
 
-1. Add a metrics observer to your toy pipeline: count frames per stage per second. Where does latency accumulate?
-2. Implement confidence-gated STT: below threshold, request "could you repeat that?"
-3. Add semantic turn detection: simple rule — if transcript ends with "?", end of turn.
-4. Read Pipecat's transport docs. Swap the stdlib transport for the SmallWebRTCTransport config (stub).
-5. Measure an OpenAI Realtime vs STT+LLM+TTS cascade on the same query. What latency cost does text-level control carry?
+1. Добавьте metrics observer в игрушечный конвейер: считайте frames per stage per second. Где накапливается задержка?
+2. Реализуйте STT с gate по confidence: ниже порога просите "could you repeat that?"
+3. Добавьте семантическое определение хода: простое правило — если transcript заканчивается на "?", ход завершен.
+4. Прочитайте transport docs Pipecat. Замените stdlib transport на конфиг SmallWebRTCTransport (stub).
+5. Измерьте OpenAI Realtime и каскад STT+LLM+TTS на одном и том же запросе. Какую цену по задержке несет контроль на уровне текста?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Frame | "Event" | Typed unit of data in the pipeline (audio, transcript, text, control) |
-| Processor | "Pipeline stage" | Handler with process(frame) |
-| DOWNSTREAM | "Forward flow" | Source to sink: audio in, speech out |
-| UPSTREAM | "Feedback flow" | Control: cancel, metrics, barge-in |
-| VAD | "Voice activity detection" | Detects when user is speaking |
-| Semantic turn detection | "Smart end-of-turn" | Model-based decision that the user is done |
-| MultimodalAgent | "Direct audio agent" | Audio in, audio out; no text in the middle |
-| VoicePipelineAgent | "Cascade agent" | STT + LLM + TTS; text-level control |
+| Frame | "Событие" | Типизированная единица данных в конвейере (audio, transcript, text, control) |
+| Processor | "Этап конвейера" | Обработчик с process(frame) |
+| DOWNSTREAM | "Прямой поток" | От source к sink: аудио на входе, речь на выходе |
+| UPSTREAM | "Поток обратной связи" | Управление: отмена, метрики, barge-in |
+| VAD | "Определение голосовой активности" | Определяет, когда пользователь говорит |
+| Semantic turn detection | "Умное завершение реплики" | Решение на основе модели о том, что пользователь закончил |
+| MultimodalAgent | "Прямой аудиоагент" | Аудио на входе, аудио на выходе; без текста посередине |
+| VoicePipelineAgent | "Каскадный агент" | STT + LLM + TTS; контроль на уровне текста |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Pipecat docs](https://docs.pipecat.ai/getting-started/introduction) — frame-based pipeline, processors, transports
-- [LiveKit Agents docs](https://docs.livekit.io/agents/) — WebRTC + voice primitives
-- [Vapi](https://vapi.ai/) — managed voice platform
-- [Retell AI](https://www.retellai.com/) — managed voice, latency-benchmarked
+- [Pipecat docs](https://docs.pipecat.ai/getting-started/introduction) — фреймовый конвейер, процессоры, транспорты
+- [LiveKit Agents docs](https://docs.livekit.io/agents/) — WebRTC + голосовые примитивы
+- [Vapi](https://vapi.ai/) — управляемая голосовая платформа
+- [Retell AI](https://www.retellai.com/) — управляемый голосовой стек с бенчмарками задержки

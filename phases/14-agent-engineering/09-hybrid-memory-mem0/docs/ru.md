@@ -1,46 +1,46 @@
-# Hybrid Memory: Vector + Graph + KV (Mem0)
+# Гибридная память: Vector + Graph + KV (Mem0)
 
-> Mem0 (Chhikara et al., 2025) treats memory as three stores in parallel — vector for semantic similarity, KV for fast fact lookup, graph for entity-relationship reasoning. A scoring layer fuses the three on retrieval. This is the 2026 production standard for external memory.
+> Mem0 (Chhikara et al., 2025) рассматривает память как три параллельных хранилища — vector для семантического сходства, KV для быстрого поиска фактов, graph для reasoning по сущностям и отношениям. Слой скоринга объединяет все три при retrieval. Это продакшен-стандарт 2026 года для внешней памяти.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 07 (MemGPT), Phase 14 · 08 (Letta Blocks)
-**Time:** ~75 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 07 (MemGPT), Фаза 14 · 08 (Letta Blocks)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain why a single store (vector only, graph only, KV only) is insufficient for agent memory.
-- Name Mem0's three parallel stores and what each one optimizes for.
-- Describe Mem0's fusion scoring — relevance, importance, recency — and why it is a weighted sum, not a hierarchy.
-- Implement a toy three-store memory in stdlib with an `add()` that writes to all three and a `search()` that fuses results.
+- Объяснить, почему одного хранилища (только vector, только graph, только KV) недостаточно для памяти агента.
+- Назвать три параллельных хранилища Mem0 и то, под что оптимизировано каждое.
+- Описать fusion scoring Mem0 — relevance, importance, recency — и почему это взвешенная сумма, а не иерархия.
+- Реализовать игрушечную память из трех хранилищ на stdlib с `add()`, который пишет во все три, и `search()`, который объединяет результаты.
 
-## The Problem
+## Проблема
 
-One store is wrong for one of three query classes:
+Одно хранилище ошибочно для одного из трех классов запросов:
 
-- **Semantic similarity** — "what did we discuss about agent drift last week?" Vector wins; KV and graph miss.
-- **Fact lookup** — "what is the user's phone number?" KV wins; vector is wasteful, graph is overkill.
-- **Relationship reasoning** — "which customers share the same billing entity?" Graph wins; vector and KV cannot answer.
+- **Semantic similarity** — "что мы обсуждали про agent drift на прошлой неделе?" Vector побеждает; KV и graph промахиваются.
+- **Fact lookup** — "какой номер телефона пользователя?" KV побеждает; vector расточителен, graph избыточен.
+- **Relationship reasoning** — "у каких клиентов одна и та же billing entity?" Graph побеждает; vector и KV не могут ответить.
 
-Production agents issue all three in one session. A single-store memory is always wrong for two of them. Mem0's contribution is wiring all three behind a single `add`/`search` surface with a scoring function that fuses them.
+Продакшен-агенты задают все три типа в одной сессии. Память с одним хранилищем всегда ошибается на двух из них. Вклад Mem0 — подключить все три за единой поверхностью `add`/`search` со scoring-функцией, которая их объединяет.
 
-## The Concept
+## Концепция
 
-### Three stores in parallel
+### Три хранилища параллельно
 
-Mem0 (arXiv:2504.19413, April 2025) on `add(text, user_id, metadata)`:
+Mem0 (arXiv:2504.19413, April 2025) при `add(text, user_id, metadata)`:
 
-1. Extract candidate facts from the text (an LLM-driven step).
-2. Write each fact to the vector store (embedding) for semantic search.
-3. Write each fact to the KV store keyed on (user_id, fact_type, entity) for O(1) lookup.
-4. Write each fact to the graph store (Mem0g) as typed edges for relationship queries.
+1. Извлекает candidate facts из текста (LLM-driven шаг).
+2. Записывает каждый факт в vector store (embedding) для semantic search.
+3. Записывает каждый факт в KV store с ключом (user_id, fact_type, entity) для O(1) lookup.
+4. Записывает каждый факт в graph store (Mem0g) как типизированные ребра для relationship queries.
 
-On `search(query, user_id)`:
+При `search(query, user_id)`:
 
-1. Vector store returns top-k by embedding cosine.
-2. KV store returns direct hits keyed on query-derived (user_id, type, entity).
-3. Graph store returns subgraph reachable from query entities.
-4. A scoring layer fuses the three.
+1. Vector store возвращает top-k по embedding cosine.
+2. KV store возвращает прямые попадания по query-derived (user_id, type, entity).
+3. Graph store возвращает подграф, достижимый из сущностей запроса.
+4. Слой scoring объединяет все три.
 
 ### Fusion scoring
 
@@ -50,96 +50,96 @@ score = w_relevance * relevance(q, record)
       + w_recency * recency(record)
 ```
 
-- **Relevance** — vector cosine, KV exact match, graph path weight.
-- **Importance** — tagged at write time or learned (some facts matter more: names, IDs, policies).
-- **Recency** — exponential decay over time since last write or read.
+- **Relevance** — vector cosine, точное совпадение KV, вес пути graph.
+- **Importance** — проставляется при записи или обучается (некоторые факты важнее: имена, ID, политики).
+- **Recency** — экспоненциальное затухание по времени с последней записи или чтения.
 
-Weights are tuned per product. Higher `w_recency` for chat agents; higher `w_importance` for compliance agents; higher `w_relevance` for retrieval agents.
+Веса настраиваются под продукт. Более высокий `w_recency` для chat agents; более высокий `w_importance` для compliance agents; более высокий `w_relevance` для retrieval agents.
 
-### Mem0g and temporal reasoning
+### Mem0g и temporal reasoning
 
-Mem0g adds a conflict detector. When a new fact contradicts an existing edge, the existing edge is marked invalid but not deleted. Temporal queries ("what was the user's city in March?") traverse the valid-at-time subgraph.
+Mem0g добавляет conflict detector. Когда новый факт противоречит существующему ребру, существующее ребро помечается invalid, но не удаляется. Temporal queries ("какой город был у пользователя в марте?") обходят подграф valid-at-time.
 
-This is the compliance-grade behavior Letta's invalidation pattern generalizes.
+Это compliance-grade поведение, которое обобщает паттерн инвалидации Letta.
 
-### Benchmark numbers
+### Числа benchmark
 
-The Mem0 paper reports (2025):
+Статья Mem0 сообщает (2025):
 
 - **LoCoMo** (long-form conversation memory): 91.6
 - **LongMemEval** (long-horizon episodic memory): 93.4
 - **BEAM 1M** (1M-token memory benchmark): 64.1
 
-Comparison baselines (full-context 128k LLM, flat vector store, flat KV) all lose by 10+ points. Benchmarks alone don't justify choice — operational shape does — but the numbers show the fusion design is not a rounding error.
+Базовые сравнения (full-context 128k LLM, flat vector store, flat KV) проигрывают на 10+ пунктов. Одни benchmarks не оправдывают выбор — важна эксплуатационная форма, — но числа показывают, что fusion-дизайн не является погрешностью округления.
 
-### Scope taxonomy
+### Таксономия scope
 
-Mem0 splits memory by scope:
+Mem0 разделяет память по scope:
 
-- **User memory** — persists across sessions, keyed on `user_id`.
-- **Session memory** — persists within one thread.
-- **Agent memory** — per-agent instance state.
+- **User memory** — сохраняется между сессиями, ключуется по `user_id`.
+- **Session memory** — сохраняется внутри одного thread.
+- **Agent memory** — состояние отдельного экземпляра агента.
 
-Every write picks one scope. Retrieval can query across scopes with per-scope weights. Mixing scopes without thought is how you get "the assistant told Alice about Bob's project" incidents.
+Каждая запись выбирает один scope. Retrieval может запрашивать несколько scope с весами на scope. Бездумное смешивание scope приводит к инцидентам вида "ассистент рассказал Alice о проекте Bob."
 
-### Where this pattern goes wrong
+### Где этот паттерн ломается
 
-- **Embedding drift.** Vector results that look right on the first hundred queries degrade as the corpus grows. Add periodic re-embedding of the top-N-used records.
-- **KV schema creep.** `(user_id, type, entity)` looks simple until every team adds their own `type`. Audit the type set quarterly.
-- **Graph explosion.** One noisy extractor adds 50 edges per message. Cap graph writes per `add` call; drop low-confidence edges.
+- **Embedding drift.** Vector-результаты, которые выглядят правильно на первой сотне запросов, деградируют по мере роста корпуса. Добавьте периодический re-embedding top-N-used записей.
+- **KV schema creep.** `(user_id, type, entity)` выглядит просто, пока каждая команда не добавляет свой `type`. Аудируйте набор типов ежеквартально.
+- **Graph explosion.** Один шумный extractor добавляет 50 ребер на сообщение. Ограничьте graph-записи на один вызов `add`; отбрасывайте low-confidence edges.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements the three-store pattern in stdlib:
+`code/main.py` реализует паттерн трех хранилищ на stdlib:
 
-- `VectorStore` — naive token-overlap similarity as an embedding stand-in.
-- `KVStore` — dict keyed on `(user_id, fact_type, entity)`.
-- `GraphStore` — typed edges (subject, relation, object, valid).
-- `Mem0` — top-level facade with `add()`, `search()`, fusion scoring, and scope-aware retrieval.
-- A worked trace on a multi-user, multi-session conversation.
+- `VectorStore` — наивное token-overlap similarity как замена embedding.
+- `KVStore` — dict с ключом `(user_id, fact_type, entity)`.
+- `GraphStore` — типизированные ребра (subject, relation, object, valid).
+- `Mem0` — верхнеуровневый facade с `add()`, `search()`, fusion scoring и scope-aware retrieval.
+- Проработанную трассу на multi-user, multi-session разговоре.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The output shows three separate recall paths plus the fused top-k. Flip the scoring weights at the top of `main()` and watch the ranking change.
+Вывод показывает три отдельных пути recall плюс объединенный top-k. Поменяйте scoring weights вверху `main()` и посмотрите, как меняется ranking.
 
-## Use It
+## Используйте это
 
-- **Mem0 (Apache 2.0)** — production-ready. Self-host with Postgres + Qdrant + Neo4j, or use the managed cloud.
-- **Letta** — three-tier core/recall/archival; bring your own vector and graph backends.
-- **Zep** — commercial alternative with temporal KG and fact extraction.
-- **Custom builds** — when you need exact control over the extractor (compliance) or fusion weights (voice agents where recency dominates).
+- **Mem0 (Apache 2.0)** — production-ready. Self-host с Postgres + Qdrant + Neo4j или управляемое облако.
+- **Letta** — трехуровневая схема core/recall/archival; приносите свои vector и graph backends.
+- **Zep** — коммерческая альтернатива с temporal KG и fact extraction.
+- **Custom builds** — когда нужен точный контроль над extractor (compliance) или fusion weights (voice agents, где recency доминирует).
 
-## Ship It
+## Доведите до продакшена
 
-`outputs/skill-hybrid-memory.md` generates a three-store memory scaffold with a fusion scorer, scope taxonomy, and temporal invalidation wired in.
+`outputs/skill-hybrid-memory.md` генерирует scaffold треххранилищной памяти с fusion scorer, scope taxonomy и подключенной temporal invalidation.
 
-## Exercises
+## Упражнения
 
-1. Replace the toy vector similarity with a real embedding model (sentence-transformers, Ollama, OpenAI embeddings). Measure recall@10 on a synthetic long conversation. Does the ranking drift over 1000 writes?
-2. Add a temporal query: `search(query, as_of=timestamp)`. Return only records valid at or before that time. Which store needs the most work?
-3. Implement a conflict detector: if an incoming fact contradicts a graph edge, invalidate the old edge and log both. Test on "user lives in Berlin" -> "user lives in Lisbon."
-4. Port the fusion scorer to include a `user_feedback` dimension (thumbs-up on retrieved records). How do you prevent gaming (the agent only returns records it already liked)?
-5. Read the Mem0 docs (`docs.mem0.ai`). Port the toy to `mem0` client calls. Compare retrieval quality on the same 20 test queries.
+1. Замените игрушечное vector similarity реальной embedding-моделью (sentence-transformers, Ollama, OpenAI embeddings). Измерьте recall@10 на синтетическом длинном разговоре. Дрейфует ли ranking после 1000 записей?
+2. Добавьте temporal query: `search(query, as_of=timestamp)`. Возвращайте только записи, valid at or before этого времени. Какому хранилищу потребуется больше всего работы?
+3. Реализуйте conflict detector: если входящий факт противоречит graph edge, инвалидируйте старое ребро и залогируйте оба. Протестируйте на "user lives in Berlin" -> "user lives in Lisbon."
+4. Перенесите fusion scorer так, чтобы он включал измерение `user_feedback` (thumbs-up на retrieved records). Как предотвратить gaming (агент возвращает только записи, которые ему уже понравились)?
+5. Прочитайте документацию Mem0 (`docs.mem0.ai`). Перенесите игрушку на вызовы клиента `mem0`. Сравните качество retrieval на тех же 20 test queries.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Hybrid memory | "Vector plus graph plus KV" | Three stores written in parallel, fused on retrieval |
-| Fact extraction | "Memory ingestion" | LLM step that breaks text into (entity, relation, fact) tuples |
-| Fusion scoring | "Relevance ranking" | Weighted sum of relevance, importance, recency |
-| Scope | "Memory namespace" | user / session / agent — determines who sees what |
-| Mem0g | "Memory graph" | Typed edges with temporal validity for relationship queries |
-| Temporal invalidation | "Soft delete" | Mark contradicted edges invalid; never delete |
-| Embedding drift | "Retrieval rot" | Vector quality degrades as corpus grows; re-embed periodically |
+| Hybrid memory | "Vector плюс graph плюс KV" | Три хранилища, записываемые параллельно и объединяемые при retrieval |
+| Fact extraction | "Memory ingestion" | LLM-шаг, который разбивает текст на кортежи (entity, relation, fact) |
+| Fusion scoring | "Relevance ranking" | Взвешенная сумма relevance, importance, recency |
+| Scope | "Memory namespace" | user / session / agent — определяет, кто что видит |
+| Mem0g | "Memory graph" | Типизированные ребра с temporal validity для relationship queries |
+| Temporal invalidation | "Soft delete" | Пометить противоречивые ребра invalid; никогда не удалять |
+| Embedding drift | "Retrieval rot" | Vector-качество деградирует по мере роста корпуса; периодически делать re-embed |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Chhikara et al., Mem0 (arXiv:2504.19413)](https://arxiv.org/abs/2504.19413) — the original paper
+- [Chhikara et al., Mem0 (arXiv:2504.19413)](https://arxiv.org/abs/2504.19413) — исходная статья
 - [Mem0 docs](https://docs.mem0.ai/platform/overview) — production API, SDKs, managed cloud
-- [Packer et al., MemGPT (arXiv:2310.08560)](https://arxiv.org/abs/2310.08560) — the virtual-context predecessor
-- [Letta, Memory Blocks blog](https://www.letta.com/blog/memory-blocks) — the three-tier sibling design
+- [Packer et al., MemGPT (arXiv:2310.08560)](https://arxiv.org/abs/2310.08560) — предшественник virtual-context
+- [Letta, Memory Blocks blog](https://www.letta.com/blog/memory-blocks) — родственный трехуровневый дизайн

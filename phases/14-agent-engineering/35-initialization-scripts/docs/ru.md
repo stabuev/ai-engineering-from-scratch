@@ -1,26 +1,26 @@
-# Initialization Scripts for Agents
+# Скрипты инициализации для агентов
 
-> Every session that starts cold pays a tax. The agent reads the same files, retries the same probes, and rediscovers the same paths. An init script pays the tax once and writes the answers into state.
+> Каждая холодная сессия платит налог. Агент читает те же файлы, повторяет те же probes и заново находит те же paths. Init script платит этот налог один раз и записывает ответы в state.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 32 (Minimal Workbench), Phase 14 · 34 (Repo Memory)
-**Time:** ~45 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 32 (Minimal Workbench), Phase 14 · 34 (Repo Memory)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Identify the work an agent should never have to redo per session.
-- Build a deterministic init script that probes runtime, dependencies, and repo health.
-- Persist the probe result so the agent reads it instead of re-running checks.
-- Fail loud, fast, and with one place to look when initialization fails.
+- Определить работу, которую агент не должен повторять в каждой сессии.
+- Построить deterministic init script, который проверяет runtime, dependencies и repo health.
+- Сохранять probe result, чтобы агент читал его вместо повторного запуска checks.
+- Падать громко, быстро и с одним местом для диагностики, когда initialization fails.
 
-## The Problem
+## Проблема
 
-Open a session. The agent guesses the Python version. Guesses the test command. Lists the repo root five times to find the entry point. Tries to import a package that is not installed. Asks the user where the config file lives. By the time it makes a real edit, ten thousand tokens have gone to setup work that should have been a single script.
+Открывается сессия. Агент угадывает версию Python. Угадывает test command. Пять раз листит repo root, чтобы найти entry point. Пытается импортировать package, который не установлен. Спрашивает пользователя, где живет config file. К моменту настоящего edit десять тысяч tokens ушли на setup work, который должен был быть одним script.
 
-The fix is one initialization script that runs before the agent does anything else and writes a `init_report.json` the agent reads at startup.
+Исправление — один initialization script, который запускается до любых действий агента и пишет `init_report.json`, читаемый агентом при startup.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -32,96 +32,96 @@ flowchart TD
   Decision -- no --> Halt[fail loud, halt, surface to human]
 ```
 
-### What the init script probes
+### Что проверяет init script
 
 | Probe | Why it matters |
 |-------|----------------|
-| Runtime versions | Wrong Python or Node version means silent wrong-version bugs |
-| Dependency availability | A missing package later costs ten times the cost of catching it now |
-| Test command | The agent must know how to verify; if the command is missing the workbench is broken |
+| Runtime versions | Неправильная версия Python или Node дает тихие wrong-version bugs |
+| Dependency availability | Missing package позже стоит в десять раз дороже, чем поймать его сейчас |
+| Test command | Агент должен знать, как verify; если команды нет, workbench сломан |
 | Repo paths | Hard-coded paths drift; resolve them once and pin |
-| Environment variables | Missing `OPENAI_API_KEY` is a failure surface, not a runtime mystery |
-| State + board freshness | Stale state from a crashed session is a footgun |
-| Last-known-good commit | Anchor for the handoff diff at the end of the session |
+| Environment variables | Missing `OPENAI_API_KEY` — failure surface, а не runtime mystery |
+| State + board freshness | Stale state после crashed session — footgun |
+| Last-known-good commit | Anchor для handoff diff в конце session |
 
 ### Fail loud, fail fast, fail in one place
 
-A probe failure means halt and surface to the human. No "the agent will figure it out." The whole point of init is to refuse to start when the workbench is broken.
+Probe failure означает halt и surface to human. Никакого "agent will figure it out". Весь смысл init — отказаться стартовать, когда workbench сломан.
 
 ### Idempotent
 
-Run it twice in a row. The second run should be a no-op except for a fresh timestamp. Idempotency is what lets you wire the script into CI, hooks, or a pre-task slash command.
+Запустите дважды подряд. Второй run должен быть no-op, кроме свежего timestamp. Idempotency позволяет подключать script к CI, hooks или pre-task slash command.
 
-### Init versus startup rules
+### Init против startup rules
 
-Rules (Phase 14 · 33) describe what must be true to act. Init is the script that establishes that those rules can be checked. Rules without init become "be careful." Init without rules becomes a polished failure.
+Rules (Phase 14 · 33) описывают, что должно быть true для действия. Init — script, который устанавливает, что эти rules можно проверить. Rules без init превращаются в "be careful". Init без rules превращается в polished failure.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements `init_agent.py`:
+`code/main.py` реализует `init_agent.py`:
 
-- Five probes: Python version, listed dependencies via `importlib.util.find_spec`, test command resolvability, required env vars, state file freshness.
-- Each probe returns `(name, status, detail)`.
-- The script writes `init_report.json` with the full probe set and exits non-zero if any block-severity probe fails.
+- Пять probes: Python version, listed dependencies через `importlib.util.find_spec`, test command resolvability, required env vars, state file freshness.
+- Каждый probe возвращает `(name, status, detail)`.
+- Скрипт пишет `init_report.json` с полным probe set и выходит non-zero, если любой block-severity probe fails.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The script prints the table of probes, writes `init_report.json`, and exits zero on the happy path or non-zero with a list of failed probes.
+Скрипт печатает таблицу probes, пишет `init_report.json` и выходит zero на happy path или non-zero со списком failed probes.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns separate a useful init script from a ceremony.
+Три паттерна отделяют полезный init script от церемонии.
 
-**Last-known-good commit anchoring.** Probe the current commit against a `LKG` file written on the last successful merge. If the diff exceeds a budget (default 50 files), refuse to start and require a human to ratify the new baseline. This is what Cloudflare's AI Code Review uses to scope reviewer agents: every review session anchors against the same last-known-good and never compounds drift across sessions.
+**Last-known-good commit anchoring.** Проверяйте текущий commit против файла `LKG`, записанного при последнем successful merge. Если diff превышает budget (default 50 files), отказывайтесь стартовать и требуйте human ratify нового baseline. Именно так Cloudflare AI Code Review скоупит reviewer agents: каждая review session anchored против одного last-known-good и никогда не compounds drift между sessions.
 
-**Lock files with TTL.** Write a `prereqs.lock` after the first successful probe pass. Subsequent runs trust the lock for N hours (24h default) and skip the expensive probes. The init script reads the lock first; if it is fresh and the dependency manifest hash matches, it short-circuits. This is the same pattern Docker uses for layer caches: idempotent probe + content hash = skip.
+**Lock files with TTL.** Пишите `prereqs.lock` после первого успешного probe pass. Последующие runs доверяют lock N часов (default 24h) и пропускают дорогие probes. Init script сначала читает lock; если он fresh и hash dependency manifest совпадает, он short-circuits. Это тот же паттерн, который Docker использует для layer caches: idempotent probe + content hash = skip.
 
-**No network, no LLM, no surprises in the hot path.** Init probes are deterministic plumbing. A probe that calls an LLM to classify a failure or that hits an external service to check a license is not a probe; it is a workflow. If a probe takes longer than three seconds in a dry run, treat that as a workbench smell and either move it out of init or cache its result.
+**No network, no LLM, no surprises in the hot path.** Init probes — deterministic plumbing. Probe, который вызывает LLM для классификации failure или ходит во внешний service проверить license, — не probe, а workflow. Если probe в dry run занимает больше трех секунд, считайте это workbench smell и вынесите его из init или закешируйте result.
 
-## Use It
+## Используйте это
 
-In production:
+В production:
 
-- **Claude Code hooks.** `pre-task` hook calls the init script and refuses to launch the agent if it fails.
-- **GitHub Actions.** A `setup-agent` job runs the init script; the agent job depends on it.
-- **Docker entrypoint.** The agent container runs the init script before exec-ing the agent runtime; logs surface on failure.
+- **Claude Code hooks.** `pre-task` hook вызывает init script и отказывается запускать agent, если он fails.
+- **GitHub Actions.** Job `setup-agent` запускает init script; agent job зависит от него.
+- **Docker entrypoint.** Agent container запускает init script перед exec agent runtime; logs surfaced on failure.
 
-The init script is portable because it makes no calls to a specific framework. Bash, Make, or a tasks file can all wrap it.
+Init script переносим, потому что не делает calls к конкретному framework. Bash, Make или tasks file могут его оборачивать.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-init-script.md` interviews the project, classifies its setup work into probes, and emits a project-specific `init_agent.py` plus a CI workflow that runs it before any agent step.
+`outputs/skill-init-script.md` интервьюирует проект, классифицирует setup work по probes и генерирует project-specific `init_agent.py` плюс CI workflow, который запускает его перед любым agent step.
 
-## Exercises
+## Упражнения
 
-1. Add a probe that diffs the current commit against the last-known-good commit and refuses to start if more than 50 files changed.
-2. Wire the script to write a `prereqs.lock` file and refuse to start if the lock is older than seven days.
-3. Add a `--fix` flag that auto-installs missing dev dependencies but never modifies runtime dependencies without approval.
-4. Move probes from hardcoded functions to a YAML registry. Defend the trade-off.
-5. Add a timing budget per probe. A probe that runs longer than three seconds is a workbench smell.
+1. Добавьте probe, который diff текущего commit против last-known-good commit и отказывается стартовать, если изменилось больше 50 files.
+2. Подключите script к записи `prereqs.lock` и отказывайтесь стартовать, если lock старше seven days.
+3. Добавьте flag `--fix`, который auto-installs missing dev dependencies, но никогда не меняет runtime dependencies без approval.
+4. Перенесите probes из hardcoded functions в YAML registry. Защитите trade-off.
+5. Добавьте timing budget на probe. Probe, который работает дольше трех секунд, — workbench smell.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Probe | "A check" | A deterministic function returning `(name, status, detail)` |
-| Init report | "Setup output" | JSON written next to state with the probe results |
-| Idempotent | "Safe to re-run" | Two runs in a row produce identical reports modulo timestamp |
-| Fail loud | "Don't swallow" | Halt and surface to the human; no silent fallback |
-| Setup tax | "Bootstrap cost" | The tokens the agent spends per session rediscovering the obvious |
+| Probe | "A check" | Deterministic function, возвращающая `(name, status, detail)` |
+| Init report | "Setup output" | JSON, записанный рядом со state, с probe results |
+| Idempotent | "Safe to re-run" | Два runs подряд дают identical reports modulo timestamp |
+| Fail loud | "Don't swallow" | Halt и surface to human; no silent fallback |
+| Setup tax | "Bootstrap cost" | Tokens, которые agent тратит per session на rediscovering obvious |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic, Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [GitHub Actions, composite actions for setup](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
 - [microservices.io, GenAI dev platform: guardrails](https://microservices.io/post/architecture/2026/03/09/genai-development-platform-part-1-development-guardrails.html) — pre-commit + CI checks as init
 - [Augment Code, How to Build Your AGENTS.md (2026)](https://www.augmentcode.com/guides/how-to-build-agents-md) — init expectations
 - [Codex Blog, Codex CLI Context Compaction](https://codex.danielvaughan.com/2026/03/31/codex-cli-context-compaction-architecture/) — session start as compaction-aware init
-- Phase 14 · 33 — the rule set this script enables
-- Phase 14 · 34 — the state file this script seeds
-- Phase 14 · 38 — the verification gate the init script feeds
-- Phase 14 · 40 — the handoff that consumes the init report's last-known-good
+- Phase 14 · 33 — rule set, который включает этот script
+- Phase 14 · 34 — state file, который этот script seeds
+- Phase 14 · 38 — verification gate, который питается init script
+- Phase 14 · 40 — handoff, который потребляет last-known-good из init report

@@ -1,88 +1,88 @@
-# Production Runtimes: Queue, Event, Cron
+# Продакшен-рантаймы: queue, event, cron
 
-> Production agents run on six runtime shapes: request-response, streaming, durable execution, queue-based background, event-driven, and scheduled. Pick the shape before you pick the framework. Observability is load-bearing at every shape.
+> Production-агенты работают в шести формах runtime: request-response, streaming, durable execution, queue-based background, event-driven и scheduled. Сначала выбирайте форму runtime, и только потом framework. Observability является несущей частью в каждой форме.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 13 (LangGraph), Phase 14 · 22 (Voice)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 · 13 (LangGraph), Фаза 14 · 22 (Voice)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the six production runtime shapes and match each to a framework / product pattern.
-- Explain why durable execution (LangGraph) matters for long-horizon tasks.
-- Describe the event-driven runtime and when Claude Managed Agents fits.
-- Explain the observability-as-load-bearing claim for multi-step agents.
+- Назвать шесть форм production runtime и сопоставить каждую с паттерном framework / product.
+- Объяснить, почему durable execution (LangGraph) важно для long-horizon задач.
+- Описать event-driven runtime и случаи, где подходит Claude Managed Agents.
+- Объяснить утверждение observability-as-load-bearing для многошаговых агентов.
 
-## The Problem
+## Проблема
 
-Production agents fail in ways a Jupyter notebook doesn't surface: network timeouts at step 37, user hangs up mid-voice call, cron job dies on machine reboot, background worker runs out of memory. The runtime shape determines which failures are survivable.
+Production-агенты ломаются так, как Jupyter notebook не показывает: network timeout на шаге 37, пользователь кладет трубку посреди voice call, cron job умирает при перезагрузке машины, background worker исчерпывает память. Форма runtime определяет, какие сбои переживаемы.
 
-## The Concept
+## Концепция
 
 ### Request-response
 
-- Synchronous HTTP. User waits for completion.
-- Only viable for short tasks (<30s).
-- Stacks: Agno (Python + FastAPI), Mastra (TypeScript + Express/Hono/Fastify/Koa).
-- Observability: standard HTTP access logs + OTel spans.
+- Синхронный HTTP. Пользователь ждет завершения.
+- Подходит только для коротких задач (<30s).
+- Стеки: Agno (Python + FastAPI), Mastra (TypeScript + Express/Hono/Fastify/Koa).
+- Observability: стандартные HTTP access logs + OTel spans.
 
 ### Streaming
 
-- SSE or WebSocket for progressive output.
-- LiveKit extends this to WebRTC for voice/video (Lesson 22).
-- Stacks: any framework with streaming support + a frontend that handles SSE/WS.
+- SSE или WebSocket для постепенной выдачи результата.
+- LiveKit расширяет это до WebRTC для voice/video (Урок 22).
+- Стеки: любой framework с поддержкой streaming + frontend, который обрабатывает SSE/WS.
 - Observability: per-chunk timing, first-token latency, tail latency.
 
 ### Durable execution
 
-- State checkpointed after every step; auto-resumes on failure.
-- AutoGen v0.4 actor model isolates failures to one agent (Lesson 14).
-- LangGraph's core differentiator (Lesson 13).
-- Essential when step count is unknown and recovery cost is high.
+- State checkpointed после каждого шага; auto-resumes при сбое.
+- AutoGen v0.4 actor model изолирует сбои до одного агента (Урок 14).
+- Ключевой дифференциатор LangGraph (Урок 13).
+- Необходимо, когда число шагов неизвестно, а цена восстановления высока.
 
 ### Queue-based / background
 
-- Job enters a queue, workers pick up, results flow back via webhooks or pub/sub.
-- Essential for long-horizon agents (dozens-to-hundreds of steps per task, per Anthropic's computer use announcement).
-- Stacks: Celery (Python), BullMQ (Node), SQS + Lambda (AWS), custom.
+- Job попадает в queue, workers забирают его, результаты возвращаются через webhooks или pub/sub.
+- Необходимо для long-horizon агентов (десятки-сотни шагов на задачу, по announcement Anthropic о computer use).
+- Стеки: Celery (Python), BullMQ (Node), SQS + Lambda (AWS), custom.
 - Observability: queue depth, per-job latency distribution, DLQ size.
 
 ### Event-driven
 
-- Agents subscribe to triggers: new email, PR opened, cron fire.
-- Claude Managed Agents covers this out of the box (Lesson 17).
-- CrewAI Flows (Lesson 15) structures event-driven deterministic workflows.
+- Агенты подписываются на triggers: new email, PR opened, cron fire.
+- Claude Managed Agents покрывает это из коробки (Урок 17).
+- CrewAI Flows (Урок 15) структурирует event-driven deterministic workflows.
 - Observability: trigger source, event-to-start latency, agent latency.
 
 ### Scheduled
 
-- Cron-shaped agents that run periodically.
-- Combine with durable execution so a failing nightly run resumes next tick.
-- Stacks: Kubernetes CronJob + a durable framework; hosted (Render cron, Vercel cron).
+- Cron-shaped агенты, которые запускаются периодически.
+- Комбинируйте с durable execution, чтобы failing nightly run продолжался на следующем tick.
+- Стеки: Kubernetes CronJob + durable framework; hosted (Render cron, Vercel cron).
 
-### 2026 deployment patterns
+### Паттерны развертывания 2026 года
 
-- **CrewAI Flows** for event-driven production.
-- **Agno** stateless FastAPI for Python microservices.
-- **Mastra** server adapters (Express, Hono, Fastify, Koa) for embedding.
-- **Pipecat Cloud / LiveKit Cloud** for managed voice (Lesson 22).
-- **Claude Managed Agents** for hosted long-running async.
+- **CrewAI Flows** для event-driven production.
+- **Agno** stateless FastAPI для Python microservices.
+- **Mastra** server adapters (Express, Hono, Fastify, Koa) для embedding.
+- **Pipecat Cloud / LiveKit Cloud** для managed voice (Урок 22).
+- **Claude Managed Agents** для hosted long-running async.
 
-### Observability is load-bearing
+### Observability как несущая часть
 
-Without OpenTelemetry GenAI spans (Lesson 23) plus a Langfuse/Phoenix/Opik backend (Lesson 24), you cannot debug a multi-step agent that failed at step 40. This is not optional for production. It's the difference between "we debug fast" and "we replay from scratch with more logging."
+Без OpenTelemetry GenAI spans (Урок 23) плюс backend Langfuse/Phoenix/Opik (Урок 24) вы не сможете отладить многошагового агента, который упал на шаге 40. В production это не опция. Это разница между "мы быстро отлаживаем" и "мы переигрываем с нуля с большим количеством logging."
 
-### Where production runtimes fail
+### Где production runtimes ломаются
 
-- **Wrong shape choice.** Picking request-response for a 5-minute task. Users hang up; workers pile up; retries compound.
-- **No DLQ.** Queue workers without dead-letter. Failed jobs vanish.
-- **Opaque background work.** Background agent runs without trace export. Failures are invisible until the user reports them.
-- **Skipping durable state.** Any run > 30 seconds where you can't afford to restart needs durable execution.
+- **Wrong shape choice.** Выбор request-response для 5-минутной задачи. Пользователи отключаются; workers накапливаются; retries усугубляют проблему.
+- **No DLQ.** Queue workers без dead-letter. Failed jobs исчезают.
+- **Opaque background work.** Background agent запускается без trace export. Сбои невидимы, пока пользователь о них не сообщит.
+- **Skipping durable state.** Любой run > 30 seconds, где нельзя позволить restart, нуждается в durable execution.
 
-## Build It
+## Практика
 
-`code/main.py` is a stdlib multi-shape demo:
+`code/main.py` — stdlib multi-shape demo:
 
 - Request-response endpoint (plain function).
 - Streaming handler (generator).
@@ -90,50 +90,50 @@ Without OpenTelemetry GenAI spans (Lesson 23) plus a Langfuse/Phoenix/Opik backe
 - Event trigger registry.
 - Cron-shaped scheduler.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: five traces showing each shape's behavior on the same task. Same agent logic, different outer shells. Durable execution (the sixth shape) is intentionally covered in Lesson 13 with LangGraph checkpointing.
+Output: пять traces, показывающих поведение каждой формы на одной и той же задаче. Та же agent logic, разные внешние оболочки. Durable execution (шестая форма) намеренно покрыта в Уроке 13 с LangGraph checkpointing.
 
-## Use It
+## Как использовать
 
-- **Request-response** for chat-style UX.
-- **Streaming** for progressive responses.
-- **Durable** for long-horizon tasks.
-- **Queue** for batch / async / long-running.
-- **Event** for agent reactivity.
-- **Cron** for housekeeping (memory consolidation, evals, cost reports).
+- **Request-response** для chat-style UX.
+- **Streaming** для progressive responses.
+- **Durable** для long-horizon tasks.
+- **Queue** для batch / async / long-running.
+- **Event** для agent reactivity.
+- **Cron** для housekeeping (memory consolidation, evals, cost reports).
 
-## Ship It
+## Что подготовить
 
-`outputs/skill-runtime-shape.md` picks a runtime shape for a task and wires the observability requirements.
+`outputs/skill-runtime-shape.md` выбирает runtime shape для задачи и связывает requirements по observability.
 
-## Exercises
+## Упражнения
 
-1. Port your Lesson 01 ReAct loop to all six shapes in your stack. Which shape fits which product surface?
-2. Add a DLQ to the queue-based demo. Simulate 10% job failure; surface DLQ size.
-3. Write a cron-triggered eval agent that runs nightly against your top 20 traces from the day.
-4. Implement streaming with backpressure: if the client is slow, pause the agent. How does this interact with a turn budget?
-5. Read Claude Managed Agents docs. When would you move a self-hosted long-horizon agent to managed?
+1. Перенесите ваш ReAct loop из Урока 01 во все шесть форм в вашем stack. Какая форма подходит какому product surface?
+2. Добавьте DLQ в queue-based demo. Смоделируйте 10% job failure; выведите DLQ size.
+3. Напишите cron-triggered eval agent, который nightly запускается против ваших top 20 traces за день.
+4. Реализуйте streaming with backpressure: если client медленный, поставьте agent на паузу. Как это взаимодействует с turn budget?
+5. Прочитайте Claude Managed Agents docs. Когда вы перенесли бы self-hosted long-horizon agent в managed?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Request-response | "Synchronous" | User waits; short tasks only |
-| Streaming | "SSE / WS" | Progressive output; better UX; latency observable per chunk |
-| Durable execution | "Resume from failure" | Checkpointed state; restart at last step |
-| Queue-based | "Background jobs" | Producer / worker pool / DLQ |
-| Event-driven | "Trigger-based" | Agent reacts to external events |
-| DLQ | "Dead-letter queue" | Parking lot for failed jobs |
-| Claude Managed Agents | "Hosted harness" | Anthropic-hosted long-running async with caching + compaction |
+| Request-response | "Synchronous" | Пользователь ждет; только короткие задачи |
+| Streaming | "SSE / WS" | Постепенный output; лучший UX; latency наблюдаема по chunk |
+| Durable execution | "Возобновление после сбоя" | Состояние с checkpoint; restart с последнего шага |
+| Queue-based | "Фоновые задания" | Producer / worker pool / DLQ |
+| Event-driven | "Trigger-based" | Агент реагирует на внешние события |
+| DLQ | "Dead-letter queue" | Место ожидания для failed jobs |
+| Claude Managed Agents | "Hosted harness" | Долгоживущий async, размещенный у Anthropic, с caching + compaction |
 
-## Further Reading
+## Дополнительное чтение
 
-- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — durable execution details
+- [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) — детали durable execution
 - [Claude Managed Agents overview](https://platform.claude.com/docs/en/managed-agents/overview) — hosted long-running async
 - [Anthropic, Introducing computer use](https://www.anthropic.com/news/3-5-models-and-computer-use) — "dozens-to-hundreds of steps per task"
 - [AutoGen v0.4 (Microsoft Research)](https://www.microsoft.com/en-us/research/articles/autogen-v0-4-reimagining-the-foundation-of-agentic-ai-for-scale-extensibility-and-robustness/) — actor-model fault isolation

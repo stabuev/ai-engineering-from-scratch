@@ -1,30 +1,30 @@
-# Verification Gates
+# Verification gates
 
-> The agent does not get to mark its own work as done. A verification gate reads the scope contract, the feedback log, the rule report, and the diff, and answers a single question: is this task actually complete? If the gate says no, the task is not done, no matter what the chat says.
+> Агент не получает права сам помечать свою работу как done. Verification gate читает scope contract, feedback log, rule report и diff и отвечает на один вопрос: эта задача действительно завершена? Если gate говорит no, задача не done, независимо от того, что сказано в chat.
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 · 33 (Rules), Phase 14 · 36 (Scope), Phase 14 · 37 (Feedback)
-**Time:** ~55 minutes
+**Тип:** Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 14 · 33 (Rules), Phase 14 · 36 (Scope), Phase 14 · 37 (Feedback)
+**Время:** ~55 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Define a verification gate as a deterministic function over workbench artifacts.
-- Combine rule report, scope report, feedback records, and diff into a single verdict.
-- Emit a `verification_report.json` the reviewer agent and CI can both read.
-- Refuse to advance a task on any block-severity failure, without exception.
+- Определить verification gate как deterministic function над workbench artifacts.
+- Объединить rule report, scope report, feedback records и diff в единый verdict.
+- Выпустить `verification_report.json`, который могут читать и reviewer agent, и CI.
+- Отказываться продвигать task при любом block-severity failure, без исключений.
 
-## The Problem
+## Проблема
 
-Agents declare success too easily. Three failure shapes dominate:
+Агенты слишком легко объявляют success. Доминируют три формы failure:
 
-- "Looks good." The model read its own diff and decided it was correct.
-- "Tests passed." Said with confidence. No record of the test actually running.
-- "Acceptance met." Acceptance criteria interpreted loosely enough to mean "anything resembling done."
+- "Looks good." Модель прочитала собственный diff и решила, что он correct.
+- "Tests passed." Сказано уверенно. Нет record, что test действительно запускался.
+- "Acceptance met." Acceptance criteria интерпретированы настолько свободно, что означают "anything resembling done."
 
-The workbench fix is a single verification gate that reads the artifacts the agent has already produced and makes the call. The gate is deterministic. The gate is in version control. The gate is wired into CI. The agent cannot bribe it.
+Исправление воркбенча — единый verification gate, который читает artifacts, уже produced by agent, и принимает решение. Gate deterministic. Gate in version control. Gate wired into CI. Agent cannot bribe it.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -38,7 +38,7 @@ flowchart TD
   Pass -- no --> Refuse[refuse done + surface to human]
 ```
 
-### What the gate checks
+### Что проверяет gate
 
 | Check | Source artifact | Severity |
 |-------|-----------------|----------|
@@ -50,94 +50,94 @@ flowchart TD
 | No `null` exit codes in feedback | `feedback_record.jsonl` | block |
 | Touched files match `scope.allowed_files` | both | warn |
 
-A `warn` finding annotates the verdict; a `block` finding prevents `passed: true`.
+Finding `warn` аннотирует verdict; finding `block` не дает `passed: true`.
 
 ### Deterministic, not probabilistic
 
-The gate must produce the same verdict for the same artifact set every time. No LLM judges. LLM judges belong on the reviewer side (Phase 14 · 39) where the goal is qualitative evaluation, not status.
+Gate должен выдавать один и тот же verdict для одного и того же artifact set каждый раз. Никаких LLM judges. LLM judges относятся к reviewer side (Phase 14 · 39), где цель — qualitative evaluation, а не status.
 
 ### One report, one path
 
-The gate emits one `verification_report.json` per task close-out, written under `outputs/verification/<task_id>.json`. CI consumes the same path. Multiple gates with different paths fork the source of truth.
+Gate выпускает один `verification_report.json` на task close-out, записанный в `outputs/verification/<task_id>.json`. CI потребляет тот же path. Multiple gates with different paths fork the source of truth.
 
 ### Refuse without exception
 
-Block-severity findings cannot be overridden by the agent. They can only be overridden by a human, with a recorded `override_reason` and an `overridden_by` user id. The override is a signed change, not an agent decision.
+Block-severity findings не могут быть overridden агентом. Их может override только human, с записанными `override_reason` и `overridden_by` user id. Override — signed change, не agent decision.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- A loader for each input artifact, all stubbed locally so the lesson is self-contained.
-- A `verify(task_id, artifacts) -> VerdictReport` pure function.
-- A printer that shows the per-check results and the final pass/fail.
-- A demo with three task scenarios: clean pass, scope creep, missing acceptance.
+- Loader для каждого input artifact, все stubbed locally, чтобы lesson был self-contained.
+- Pure function `verify(task_id, artifacts) -> VerdictReport`.
+- Printer, показывающий per-check results и final pass/fail.
+- Demo с тремя task scenarios: clean pass, scope creep, missing acceptance.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: three verdict reports, each saved next to the script.
+Вывод: три verdict reports, каждый сохранен рядом со script.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Four patterns elevate the gate from "another lint job" to "the deciding edge."
+Четыре паттерна поднимают gate с "another lint job" до "deciding edge".
 
-**Defense-in-depth, not single gate.** Pre-commit hook → CI status check → pre-tool authz hook → pre-merge gate. Each layer is deterministic so a failure in one layer is caught by the next. microservices.io's March 2026 playbook is explicit: the pre-commit hook is non-bypassable because, unlike a model-side skill, it does not depend on the agent following instructions. The verification gate sits at the CI / pre-merge layer.
+**Defense-in-depth, not single gate.** Pre-commit hook → CI status check → pre-tool authz hook → pre-merge gate. Каждый layer deterministic, поэтому failure в одном layer ловится следующим. Playbook microservices.io за март 2026 explicit: pre-commit hook non-bypassable, потому что, unlike model-side skill, не зависит от того, следует ли agent instructions. Verification gate сидит на CI / pre-merge layer.
 
-**Defense by deterministic check, model-judge only for nuance.** Anthropic's 2026 Hybrid Norm pairing: verifiable rewards (unit tests, schema checks, exit codes) answer "did the code solve the problem?" — LLM rubrics answer "is the code readable, secure, on-style?" The gate runs the first class; the reviewer (Phase 14 · 39) runs the second. Mixing them collapses the signal.
+**Defense by deterministic check, model-judge only for nuance.** Anthropic Hybrid Norm 2026: verifiable rewards (unit tests, schema checks, exit codes) отвечают "did the code solve the problem?" — LLM rubrics отвечают "is the code readable, secure, on-style?" Gate запускает первый класс; reviewer (Phase 14 · 39) запускает второй. Смешивание collapsing signal.
 
-**Signed override log, not Slack threads.** Every override emits a row in `outputs/verification/overrides.jsonl` with: timestamp, finding code, reason, signing user, current HEAD commit. The runtime refuses any override that lacks the signature; the audit trail is git-tracked. This is the line between an override policy and an override theater.
+**Signed override log, not Slack threads.** Каждый override пишет строку в `outputs/verification/overrides.jsonl`: timestamp, finding code, reason, signing user, current HEAD commit. Runtime refuses any override без signature; audit trail git-tracked. Это граница между override policy и override theater.
 
-**Coverage floor as a first-class check.** A `coverage_report.json` feeds a `coverage_floor` (default 80%) check. The gate fails if measured coverage drops below the floor or below the previous merge's floor by more than 1 percentage point. Without this check, agents quietly delete tests that fail and the verification reports stay green.
+**Coverage floor as a first-class check.** `coverage_report.json` питает check `coverage_floor` (default 80%). Gate fails, если measured coverage падает ниже floor или ниже previous merge floor больше чем на 1 percentage point. Без этого check agents тихо delete tests that fail, а verification reports остаются green.
 
-**`--strict` mode promotes warns to blocks.** For release branches, ship-blocking PRs, or post-incident triage, `--strict` makes every warning a hard fail. The flag is opt-in by branch; not the global default, because strict-on-everything corrodes day-to-day flow.
+**`--strict` mode promotes warns to blocks.** Для release branches, ship-blocking PRs или post-incident triage `--strict` делает каждый warning hard fail. Flag opt-in by branch; не global default, потому что strict-on-everything corrodes day-to-day flow.
 
-## Use It
+## Используйте это
 
 Production patterns:
 
-- **CI step.** A `verify_agent` job runs the gate against the agent's final artifacts. Merge protection refuses without `passed: true`.
-- **Pre-handoff hook.** The agent runtime calls the gate before generating the handoff doc. No green verdict, no handoff.
-- **Manual triage.** Operators read the report when an agent claims success and a human suspects it.
+- **CI step.** Job `verify_agent` запускает gate против final artifacts агента. Merge protection refuses без `passed: true`.
+- **Pre-handoff hook.** Agent runtime вызывает gate перед генерацией handoff doc. Нет green verdict — нет handoff.
+- **Manual triage.** Operators читают report, когда agent claims success, а human suspects it.
 
-The gate is the deciding edge in the workbench flow. Every other surface is upstream of it.
+Gate — deciding edge в workbench flow. Every other surface is upstream of it.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-verification-gate.md` wires the gate into a specific project: which acceptance commands feed it, which rules are block-severity, which off-scope writes are tolerated, how the override audit log is stored.
+`outputs/skill-verification-gate.md` подключает gate к конкретному проекту: какие acceptance commands feed it, какие rules are block-severity, какие off-scope writes tolerated, как хранится override audit log.
 
-## Exercises
+## Упражнения
 
-1. Add a `coverage_floor` check: the test command must produce a coverage report with at least 80%. Decide which artifact carries the floor.
-2. Support a `--strict` mode that promotes every `warn` to `block`. Document the cases where strict mode is the right default.
-3. Make the gate produce a Markdown summary in addition to JSON. Defend which fields belong in the summary.
-4. Add a `time_since_last_human_touch` check: any file edited within 60 seconds of a human keystroke is exempt from off-scope flags.
-5. Run the gate on a real agent diff from your product. How many findings are real and how many are noise? Where does the gate need to grow?
+1. Добавьте check `coverage_floor`: test command должна produce coverage report не ниже 80%. Решите, какой artifact carries the floor.
+2. Поддержите mode `--strict`, который promotes every `warn` to `block`. Document cases, где strict mode — правильный default.
+3. Сделайте так, чтобы gate producing Markdown summary in addition to JSON. Защитите, какие fields belong in the summary.
+4. Добавьте check `time_since_last_human_touch`: любой file edited within 60 seconds of human keystroke exempt from off-scope flags.
+5. Запустите gate на real agent diff из вашего product. Сколько findings real и сколько noise? Где gate needs to grow?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Verification gate | "The check that stops things" | Deterministic function over workbench artifacts producing a pass/fail verdict |
-| Block severity | "Hard fail" | A finding that prevents `passed: true` and requires a signed override |
+| Verification gate | "The check that stops things" | Deterministic function over workbench artifacts producing pass/fail verdict |
+| Block severity | "Hard fail" | Finding, который prevents `passed: true` and requires signed override |
 | Override log | "Why we let it through" | Signed entries with reason and user id, audited by review |
-| Acceptance command | "The proof" | A shell command whose zero exit is what `done` means |
+| Acceptance command | "The proof" | Shell command whose zero exit is what `done` means |
 | One report path | "Source of truth" | `outputs/verification/<task_id>.json`, consumed by CI and humans alike |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic, Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)
 - [OpenAI Agents SDK guardrails](https://platform.openai.com/docs/guides/agents-sdk/guardrails)
 - [microservices.io, GenAI dev platform: guardrails](https://microservices.io/post/architecture/2026/03/09/genai-development-platform-part-1-development-guardrails.html) — defense in depth between pre-commit and CI
 - [ICMD, The 2026 Playbook for Agentic AI Ops](https://icmd.app/article/the-2026-playbook-for-agentic-ai-ops-guardrails-costs-and-reliability-at-scale-1776661990431) — approval-gate ladder (draft → approval → auto under thresholds)
-- [Type-Checked Compliance: Deterministic Guardrails (arXiv 2604.01483)](https://arxiv.org/pdf/2604.01483) — Lean 4 as the upper bound of deterministic gating
+- [Type-Checked Compliance: Deterministic Guardrails (arXiv 2604.01483)](https://arxiv.org/pdf/2604.01483) — Lean 4 as upper bound of deterministic gating
 - [logi-cmd/agent-guardrails — merge gate spec](https://github.com/logi-cmd/agent-guardrails) — scope + mutation-testing gates
 - [Guardrails AI x MLflow](https://guardrailsai.com/blog/guardrails-mlflow) — deterministic validators as CI scorers
 - [Akira, Real-Time Guardrails for Agentic Systems](https://www.akira.ai/blog/real-time-guardrails-agentic-systems) — pre/post-tool gates
-- Phase 14 · 27 — prompt injection defenses (the gate's adversarial pair)
-- Phase 14 · 36 — the scope contract this gate enforces
-- Phase 14 · 37 — the feedback log this gate scores
-- Phase 14 · 39 — the reviewer agent the gate hands off to
+- Phase 14 · 27 — prompt injection defenses (adversarial pair gate)
+- Phase 14 · 36 — scope contract, который gate enforces
+- Phase 14 · 37 — feedback log, который gate scores
+- Phase 14 · 39 — reviewer agent, которому gate hands off

@@ -1,33 +1,33 @@
-# Eval-Driven Agent Development
+# Разработка агентов через evals
 
-> Anthropic's guidance: "start with simple prompts, optimize them with comprehensive evaluation, and add multi-step agentic systems only when needed." Evaluation is not the last step. It's the outer loop that drives every other choice in Phase 14.
+> Рекомендация Anthropic: "start with simple prompts, optimize them with comprehensive evaluation, and add multi-step agentic systems only when needed." Evaluation — не последний шаг. Это внешний цикл, который управляет каждым другим выбором в Фазе 14.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** All of Phase 14.
-**Time:** ~60 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Предварительные требования:** вся Фаза 14.
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name the three evaluation layers — static benchmarks, custom offline, online production — and what each is for.
-- Explain the evaluator-optimizer tight loop.
-- Describe the 2026 best practice: evals live next to code, run in CI, gate PRs.
-- Connect every Phase 14 lesson to the eval case it generates.
+- Назвать три слоя evaluation — статические бенчмарки, кастомные offline evals и online evals в production — и назначение каждого.
+- Объяснить плотный цикл evaluator-optimizer.
+- Описать best practice 2026: evals живут рядом с кодом, запускаются в CI и блокируют PR.
+- Связать каждый урок Фазы 14 с eval case, который он порождает.
 
-## The Problem
+## Проблема
 
-Agents pass demos. They fail in production in ways demos cannot predict. Benchmarks answer "is this model broadly capable?" not "is this agent shipping the right patches for my product?" The answer: evaluation at three layers, running continuously, with every guardrail and learned rule mapped to an eval case.
+Агенты проходят демо. Они ломаются в production способами, которые демо не могут предсказать. Бенчмарки отвечают на вопрос "is this model broadly capable?", а не "is this agent shipping the right patches for my product?" Ответ: evaluation на трех слоях, непрерывно запускаемая, где каждый guardrail и learned rule сопоставлены с eval case.
 
-## The Concept
+## Концепция
 
-### Three evaluation layers
+### Три слоя evaluation
 
-1. **Static benchmarks** — SWE-bench Verified for code (Lesson 19), WebArena/OSWorld for browsing / desktop (Lesson 20), GAIA for generalist (Lesson 19), BFCL V4 for tool use (Lesson 06). Use for cross-model comparison and regression gating. Contamination is real: SWE-bench+ found 32.67% solution leakage. Always report Verified / +-audited scores.
+1. **Статические бенчмарки** — SWE-bench Verified для кода (урок 19), WebArena/OSWorld для браузера / desktop (урок 20), GAIA для generalist-задач (урок 19), BFCL V4 для tool use (урок 06). Используйте их для сравнения моделей и regression gating. Contamination реален: SWE-bench+ нашел 32.67% solution leakage. Всегда сообщайте Verified / +-audited scores.
 
-2. **Custom offline evals** — your product's shape:
+2. **Кастомные offline evals** — форма вашего продукта:
    - LLM-as-judge (Langfuse, Phoenix, Opik — Lesson 24).
-   - Execution-based (run the patch, check tests).
-   - Trajectory-based (compare action sequences against gold; OSWorld-Human shows top agents 1.4-2.7x over gold).
+   - Execution-based (запустить patch, проверить tests).
+   - Trajectory-based (сравнить action sequences с gold; OSWorld-Human показывает, что top agents делают 1.4-2.7x шагов относительно gold).
 
 3. **Online evals** — production:
    - Session replays (Langfuse).
@@ -36,108 +36,108 @@ Agents pass demos. They fail in production in ways demos cannot predict. Benchma
 
 ### Evaluator-optimizer (Anthropic)
 
-The tight loop:
+Плотный цикл:
 
-1. Proposer generates output.
-2. Evaluator judges.
-3. Refine until evaluator passes.
+1. Proposer генерирует output.
+2. Evaluator оценивает.
+3. Refine, пока evaluator не пройдет.
 
-This is Self-Refine (Lesson 05) generalized. Any agent flow you care about can wrap in evaluator-optimizer for reliability.
+Это Self-Refine (урок 05), обобщенный. Любой важный agent flow можно обернуть в evaluator-optimizer для надежности.
 
-### 2026 best practice
+### Лучшие практики 2026 года
 
-- Evals live next to code.
-- Run in CI on every PR.
-- Gate merge on eval scores (e.g. "no regression > 5% vs main").
-- Every guardrail maps to an eval case.
-- Every learned rule (Reflexion, pro-workflow learn-rule) maps to a failure case.
+- Evals живут рядом с кодом.
+- Запускаются в CI на каждом PR.
+- Merge блокируется по eval scores (например, "no regression > 5% vs main").
+- Каждый guardrail сопоставлен с eval case.
+- Каждое learned rule (Reflexion, pro-workflow learn-rule) сопоставлено с failure case.
 
-### Tying Phase 14 together
+### Как Phase 14 связывается воедино
 
-Every lesson in Phase 14 generates eval cases:
+Каждый урок Фазы 14 порождает eval cases:
 
-| Lesson | Eval case it generates |
+| Урок | Eval case, который он порождает |
 |--------|------------------------|
 | 01 Agent Loop | Budget-exhausted, infinite-loop guard |
-| 02 ReWOO | Planner replans correctly when a tool fails |
-| 03 Reflexion | Learned reflections apply on retry |
-| 05 Self-Refine/CRITIC | Judge passes refined output |
-| 06 Tool Use | Argument coercion works; unknown tools rejected |
-| 07-10 Memory | Retrieval citations match sources; stale facts invalidate |
-| 12 Workflow Patterns | Each pattern produces correct output |
-| 13 LangGraph | Resume reproduces state exactly |
-| 14 AutoGen Actors | DLQ catches crashed handlers |
-| 16 OpenAI Agents SDK | Guardrail trips on the right inputs |
-| 17 Claude Agent SDK | Subagent results return to orchestrator |
+| 02 ReWOO | Planner корректно replans при tool failure |
+| 03 Reflexion | Learned reflections применяются при retry |
+| 05 Self-Refine/CRITIC | Judge пропускает refined output |
+| 06 Tool Use | Argument coercion работает; unknown tools отклоняются |
+| 07-10 Memory | Retrieval citations совпадают с sources; stale facts invalidate |
+| 12 Workflow Patterns | Каждый pattern производит правильный output |
+| 13 LangGraph | Resume точно воспроизводит state |
+| 14 AutoGen Actors | DLQ ловит crashed handlers |
+| 16 OpenAI Agents SDK | Guardrail срабатывает на правильных inputs |
+| 17 Claude Agent SDK | Subagent results возвращаются к orchestrator |
 | 19-20 Benchmarks | SWE-bench Verified score, WebArena success rate, OSWorld efficiency |
-| 21 Computer Use | Per-step safety catches injected DOM |
+| 21 Computer Use | Per-step safety ловит injected DOM |
 | 23 OTel | Spans emit required attributes |
 | 26 Failure Modes | Detectors tag known failures |
 | 27 Prompt Injection | PVE refuses poisoned retrievals |
 | 28 Orchestration | Supervisor routes to the right specialist |
 | 29 Runtime Shapes | DLQ handles N% failure |
 
-If your eval suite has cases for each, you have covered Phase 14.
+Если в вашем eval suite есть cases для каждого, Фаза 14 покрыта.
 
-### Where eval-driven development fails
+### Где eval-driven development ломается
 
-- **No baseline.** Evals without a last-known-good are unreadable. Store baselines.
-- **LLM-judge without grounding.** Judges hallucinate too. CRITIC pattern (Lesson 05) — judge grounds on external tools.
-- **Over-fitting to evals.** Optimizing for the eval diverges from production usefulness. Rotate cases.
-- **Flaky evals.** Non-deterministic cases cause false alarms. Pin seeds, snapshot state.
+- **Нет baseline.** Evals без last-known-good нечитаемы. Храните baselines.
+- **LLM-judge без grounding.** Judges тоже hallucinate. CRITIC pattern (урок 05) — judge grounds on external tools.
+- **Over-fitting к evals.** Оптимизация под eval расходится с production usefulness. Ротируйте cases.
+- **Flaky evals.** Non-deterministic cases вызывают false alarms. Фиксируйте seeds, snapshot state.
 
-## Build It
+## Практика
 
-`code/main.py` is a stdlib eval harness:
+`code/main.py` — eval harness на stdlib:
 
-- Case registry with categories (benchmark, custom, online).
-- A scripted agent under test.
-- Evaluator-optimizer loop: propose, judge, refine until pass or max rounds.
-- CI gate: aggregate pass rate + regression against baseline.
+- Реестр cases с категориями (benchmark, custom, online).
+- Scripted agent under test.
+- Цикл evaluator-optimizer: propose, judge, refine до pass или max rounds.
+- CI gate: агрегированный pass rate + regression against baseline.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output: per-case pass/fail, regression flag, CI gate verdict.
+Output: pass/fail по каждому case, regression flag, verdict CI gate.
 
-## Use It
+## Как использовать
 
-- Write eval cases in the same repo as your agent code.
-- Run them on every PR via CI.
-- Fail the build on regression.
-- Track pass rate over time.
-- Tie every production failure to a new case.
+- Пишите eval cases в том же repo, что и код агента.
+- Запускайте их на каждом PR через CI.
+- Роняйте build при regression.
+- Отслеживайте pass rate во времени.
+- Связывайте каждый production failure с новым case.
 
-## Ship It
+## Что подготовить
 
-`outputs/skill-eval-suite.md` builds a three-layer eval suite for an agent product with CI gates and regression tracking.
+`outputs/skill-eval-suite.md` строит трехслойный eval suite для agent product с CI gates и regression tracking.
 
-## Exercises
+## Упражнения
 
-1. Take one of your production failures. Write an eval case that reproduces it. Does your agent pass it now?
-2. Build an LLM-judge rubric for your domain with three dimensions (factual, tone, scope). Score 50 sessions.
-3. Wire the eval suite into CI. Fail the build on >=5% regression.
-4. Add a trajectory-efficiency metric: how many steps did the agent take vs a gold trajectory?
-5. Map every Phase 14 lesson to an eval case in your suite. Any missing? That's a gap to close.
+1. Возьмите один из ваших production failures. Напишите eval case, который его воспроизводит. Проходит ли ваш agent его сейчас?
+2. Постройте LLM-judge rubric для вашего domain с тремя dimensions (factual, tone, scope). Оцените 50 sessions.
+3. Подключите eval suite к CI. Роняйте build при regression >=5%.
+4. Добавьте метрику trajectory efficiency: сколько steps сделал agent по сравнению с gold trajectory?
+5. Сопоставьте каждый урок Фазы 14 с eval case в вашем suite. Есть пропуски? Это gap, который нужно закрыть.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят люди | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Static benchmark | "Off-the-shelf eval" | SWE-bench, GAIA, AgentBench, WebArena, OSWorld |
-| Custom offline eval | "Domain eval" | LLM-as-judge / exec / trajectory on your product shape |
-| Online eval | "Production eval" | Session replay, guardrail alerts, cost/latency tracking |
-| Evaluator-optimizer | "Propose-judge-refine" | Iterate until judge passes |
-| CI gate | "Merge blocker" | Fail the build on eval regression |
-| Baseline | "Last-known-good" | Reference score to detect regression |
-| Trajectory efficiency | "Steps over gold" | Agent step count divided by human expert minimum |
+| Static benchmark | "Готовая eval" | SWE-bench, GAIA, AgentBench, WebArena, OSWorld |
+| Custom offline eval | "Доменная eval" | LLM-as-judge / exec / trajectory под форму вашего продукта |
+| Online eval | "Продакшен-eval" | Session replay, guardrail alerts, отслеживание cost/latency |
+| Evaluator-optimizer | "Propose-judge-refine" | Итерации до тех пор, пока judge не пройдет |
+| CI gate | "Блокер merge" | Роняет build при eval regression |
+| Baseline | "Last-known-good" | Reference score для обнаружения регрессии |
+| Trajectory efficiency | "Шаги сверх gold" | Число шагов агента, деленное на минимум human expert |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — "start simple, optimize with evals"
-- [OpenAI, SWE-bench Verified](https://openai.com/index/introducing-swe-bench-verified/) — the curated benchmark
+- [OpenAI, SWE-bench Verified](https://openai.com/index/introducing-swe-bench-verified/) — curated benchmark
 - [Berkeley Function Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html) — tool-use benchmark
-- [Langfuse docs](https://langfuse.com/) — evals + session replay in practice
+- [Langfuse docs](https://langfuse.com/) — evals + session replay на практике
