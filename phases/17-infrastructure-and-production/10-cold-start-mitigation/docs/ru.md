@@ -1,71 +1,71 @@
 # Cold Start Mitigation for Serverless LLMs
 
-> A 20 GB model image takes 5-10 minutes (7B) to 20+ minutes (70B) to go from cold to serving. In a true serverless world, that is not a warm-up — it is an outage. Mitigations operate at five layers: pre-seeded node images (Bottlerocket on AWS, dual-volume arch), model streaming (NVIDIA Run:ai Model Streamer, native in vLLM), GPU memory snapshots (Modal checkpoints, up to 10x faster restart), warm pools (`min_workers=1`), tiered loading (ServerlessLLM's NVMe→DRAM→HBM pipeline, 10-200x latency reduction), and live migration that moves input tokens (KB) rather than KV cache (GB). Modal publishes 2-4s cold starts as a floor; Baseten 5-10s default, sub-second with pre-warming. This lesson teaches you to measure, budget, and stack the five layers.
+> Образ модели на 20 GB занимает от 5-10 минут (7B) до 20+ минут (70B), чтобы пройти путь от cold до serving. В настоящем serverless мире это не warm-up — это outage. Mitigations работают на пяти слоях: pre-seeded node images (Bottlerocket on AWS, dual-volume arch), model streaming (NVIDIA Run:ai Model Streamer, native in vLLM), GPU memory snapshots (Modal checkpoints, до 10x faster restart), warm pools (`min_workers=1`), tiered loading (ServerlessLLM's NVMe→DRAM→HBM pipeline, 10-200x latency reduction) и live migration, которая переносит input tokens (KB), а не KV cache (GB). Modal публикует 2-4s cold starts как нижнюю границу; Baseten 5-10s default, sub-second with pre-warming. Этот урок учит измерять, бюджетировать и складывать пять слоев.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy cold-start path simulator)
-**Prerequisites:** Phase 17 · 02 (Inference Platform Economics), Phase 17 · 03 (GPU Autoscaling)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy cold-start path simulator)
+**Предварительные требования:** Phase 17 · 02 (Inference Platform Economics), Phase 17 · 03 (GPU Autoscaling)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Enumerate the five layers of cold-start mitigation and name one tool or pattern at each layer.
-- Compute total cold-start time as a sum of (node provision) + (weights download) + (weights load into HBM) + (engine init) for a 70B model.
-- Explain why live migration transfers input tokens (KB) not KV cache (GB) and what the penalty is (recomputation).
-- Name the warm-pool trade-off (pay for idle GPU or accept cold-start tail) and the SLA threshold at which `min_workers > 0` becomes mandatory.
+- Перечислить пять слоев cold-start mitigation и назвать один tool или pattern на каждом слое.
+- Вычислить total cold-start time как сумму (node provision) + (weights download) + (weights load into HBM) + (engine init) для 70B model.
+- Объяснить, почему live migration передает input tokens (KB), а не KV cache (GB), и какова цена (recomputation).
+- Назвать trade-off warm-pool (платить за idle GPU или принимать cold-start tail) и SLA threshold, при котором `min_workers > 0` становится обязательным.
 
-## The Problem
+## Проблема
 
-Your serverless LLM endpoint scales to zero overnight. At 8 a.m. traffic spikes. The first request waits while:
+Ваш serverless LLM endpoint ночью scale to zero. В 8 a.m. traffic spikes. Первый запрос ждет, пока:
 
 1. Karpenter provisions a GPU node: 45-60s.
 2. The container pulls a 30 GB image with weights: 120-300s.
 3. The engine loads weights into HBM: 45-120s depending on model size and storage speed.
 4. vLLM or TRT-LLM initializes CUDA graphs, KV cache pool, tokenizer: 10-30s.
 
-Total: 220-510s (roughly 3-8 minutes) before one token comes back. Your SLA is 2s. You ship a warm-pool (`min_workers=1`) and the problem seems to vanish — but now you pay for one idle GPU 24x7. If your service has 5 products each with one warm replica, that's 5 × 24 × 30 = 3,600 GPU-hours/month whether or not a single user called.
+Итого: 220-510s (примерно 3-8 минут) до первого token. Ваш SLA — 2s. Вы ship warm-pool (`min_workers=1`), и проблема как будто исчезает — но теперь вы платите за один idle GPU 24x7. Если у сервиса 5 products, каждый с одной warm replica, это 5 × 24 × 30 = 3,600 GPU-hours/month, независимо от того, вызвал ли хоть один пользователь сервис.
 
-Cold-start mitigation is how to keep the serverless economics while approximating the latency of always-on.
+Cold-start mitigation — это способ сохранить serverless economics, приближаясь к latency always-on.
 
-## The Concept
+## Концепция
 
 ### Layer 1 — pre-seeded node images (Bottlerocket)
 
-On AWS, Bottlerocket's dual-volume architecture separates OS from data. Snapshot the data volume with your container image pre-pulled; reference the snapshot ID in your `EC2NodeClass`. New nodes boot with weights already on local NVMe — steps 2 and part of 3 vanish. Works with Karpenter natively. Typical savings: 2-4 minutes per cold start for large models.
+На AWS dual-volume architecture Bottlerocket отделяет OS от data. Сделайте snapshot data volume с уже pulled container image; укажите snapshot ID в `EC2NodeClass`. Новые nodes загружаются с weights уже на local NVMe — steps 2 и часть 3 исчезают. Нативно работает с Karpenter. Типичная экономия: 2-4 minutes на cold start для large models.
 
-Equivalent on GCP: custom VM images with pre-baked container layers. On Azure: managed disk snapshots with the same pattern.
+Эквивалент на GCP: custom VM images с заранее baked container layers. На Azure: managed disk snapshots по тому же pattern.
 
 ### Layer 2 — model streaming (Run:ai Model Streamer)
 
-Instead of loading the full file before answering the first request, stream weights into GPU memory layer-by-layer and start processing as soon as the first transformer block is resident. The NVIDIA Run:ai Model Streamer ships native in vLLM 2026. Works with S3, GCS, and local NVMe. Cuts weight-load time roughly in half for large models by overlapping I/O with compute setup.
+Вместо загрузки всего файла до ответа на первый request, stream weights в GPU memory layer-by-layer и начинайте processing, как только первый transformer block resident. NVIDIA Run:ai Model Streamer поставляется native in vLLM 2026. Работает с S3, GCS и local NVMe. Сокращает weight-load time примерно вдвое для large models за счет overlap I/O with compute setup.
 
 ### Layer 3 — GPU memory snapshots (Modal)
 
-Modal takes a checkpoint of the GPU state (weights, CUDA graphs, KV cache region) after first load. Subsequent restarts deserialize directly into HBM — 10x faster than re-initializing. This is the closest thing to "boot a warm GPU in 2 seconds." Trade-off: snapshots are per-GPU-topology, so if Karpenter migrates you to a different SKU, you re-checkpoint.
+Modal делает checkpoint GPU state (weights, CUDA graphs, KV cache region) после первой загрузки. Последующие restarts deserialize напрямую в HBM — 10x быстрее, чем re-initializing. Это ближайшая вещь к "boot a warm GPU in 2 seconds." Trade-off: snapshots зависят от per-GPU-topology, поэтому если Karpenter переносит вас на другой SKU, нужно re-checkpoint.
 
 ### Layer 4 — warm pools (min_workers=1)
 
-Simplest mitigation: keep one replica always ready. Cost is one GPU's hourly rate 24x7. The arithmetic is brutal on small models (you pay $0.85-$1.50/hr to avoid a 30s cold start) and kind to large ones (pay $4/hr to avoid a 5-minute cold start). The SLA threshold where warm pools become mandatory: typically TTFT P99 < 60s on a 70B+ model.
+Самая простая mitigation: держать одну replica всегда ready. Стоимость — hourly rate одного GPU 24x7. Арифметика жестока на small models (вы платите $0.85-$1.50/hr, чтобы избежать 30s cold start) и благосклонна к large ones (платите $4/hr, чтобы избежать 5-minute cold start). SLA threshold, где warm pools становятся обязательными: обычно TTFT P99 < 60s на 70B+ model.
 
 ### Layer 5 — tiered loading (ServerlessLLM)
 
-ServerlessLLM treats storage as a hierarchy: NVMe (fast but big), DRAM (medium but tiered), HBM (tiny but instant). Weights are pre-loaded to DRAM; load-on-demand into HBM. Paper reports 10-200x latency reduction on cold loads versus naive disk-to-HBM. Production adoption is early but integrations with vLLM exist.
+ServerlessLLM рассматривает storage как hierarchy: NVMe (fast but big), DRAM (medium but tiered), HBM (tiny but instant). Weights предварительно загружаются в DRAM; load-on-demand в HBM. Paper сообщает 10-200x latency reduction на cold loads относительно naive disk-to-HBM. Production adoption ранний, но integrations with vLLM существуют.
 
 ### Layer 6 — live migration (bonus pattern)
 
-When a node becomes unavailable (spot eviction, node drain), traditional pattern is cold-start another replica and drain request queue. Live migration moves the input tokens (kilobytes) to a destination that has the model loaded and recomputes KV cache on the destination. Recomputation is cheaper than transferring GB of KV cache over the network. Applicable to disaggregated deployments.
+Когда node становится недоступной (spot eviction, node drain), традиционный pattern — cold-start другой replica и drain request queue. Live migration переносит input tokens (kilobytes) на destination, где model loaded, и recomputes KV cache на destination. Recomputation дешевле, чем передавать GB KV cache по сети. Применимо к disaggregated deployments.
 
-### The warm-pool math
+### Математика warm-pool
 
-For a service with P99 TTFT SLA of 2s, the question is not "warm pool yes/no" but "how many warm replicas, and which paths get them."
+Для сервиса с P99 TTFT SLA of 2s вопрос не "warm pool yes/no", а "сколько warm replicas и какие paths их получают".
 
 - High-value interactive paths (live chat, voice agent): `min_workers=1-2`.
 - Background batch paths (nightly classification): scale-to-zero accepted, 5-10 minute cold start tolerable.
 - Premium tier: `min_workers` per tenant with dedicated capacity.
 
-### Measure before optimizing
+### Измеряйте перед оптимизацией
 
-Cold-start anatomy for a 70B model on a fresh node (illustrative):
+Анатомия cold-start для 70B model на fresh node (illustrative):
 
 | Phase | Time | Mitigation |
 |-------|------|-----------|
@@ -77,7 +77,7 @@ Cold-start anatomy for a 70B model on a fresh node (illustrative):
 | **Total cold** | **328s** | |
 | **Total with mitigations** | **~15s** | 22x reduction |
 
-### Numbers you should remember
+### Числа, которые нужно помнить
 
 - Modal cold start: 2-4s (with GPU snapshots).
 - Baseten default cold start: 5-10s; sub-second with pre-warming.
@@ -85,25 +85,25 @@ Cold-start anatomy for a 70B model on a fresh node (illustrative):
 - Run:ai Model Streamer: ~2x weight-load speedup.
 - ServerlessLLM tiered loading: 10-200x latency reduction (paper numbers).
 
-## Use It
+## Используйте это
 
-`code/main.py` models a cold-start path with and without each mitigation. Reports total cold-start time, warm-pool cost, and the break-even request rate above which warm pool pays for itself.
+`code/main.py` моделирует cold-start path с каждой mitigation и без нее. Сообщает total cold-start time, warm-pool cost и break-even request rate, выше которого warm pool окупается.
 
-## Ship It
+## Отправьте в прод
 
-This lesson produces `outputs/skill-cold-start-planner.md`. Given SLA, model size, and traffic shape, picks which mitigations to stack.
+Этот урок создает `outputs/skill-cold-start-planner.md`. По SLA, model size и traffic shape выбирает, какие mitigations складывать.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Compute the break-even request rate above which a warm replica is cheaper than paying the cold-start tax via extra request drops at SLO.
-2. You deploy a 13B model with P99 TTFT SLA of 3s. Pick the minimum mitigation stack (fewest layers) that achieves it.
-3. Bottlerocket pre-seeding eliminates image pull but weights still load from snapshot to HBM. Compute wall-clock for a 70B model if the snapshot-backed NVMe reads at 7 GB/s.
-4. Your serverless provider offers GPU snapshots (Modal) and your team refuses because "snapshots leak PII." Argue both sides — what is the realistic risk, and what is the mitigation (ephemeral snapshots, encryption, namespace isolation)?
-5. Design a tiered warm-pool policy: how many warm replicas for paid users, trial users, and batch workloads? Show the math.
+1. Запустите `code/main.py`. Вычислите break-even request rate, выше которого warm replica дешевле, чем платить cold-start tax через extra request drops at SLO.
+2. Вы deploy 13B model с P99 TTFT SLA of 3s. Выберите минимальный mitigation stack (fewest layers), который этого достигает.
+3. Bottlerocket pre-seeding устраняет image pull, но weights все еще загружаются из snapshot в HBM. Вычислите wall-clock для 70B model, если snapshot-backed NVMe читает at 7 GB/s.
+4. Ваш serverless provider предлагает GPU snapshots (Modal), а команда отказывается, потому что "snapshots leak PII." Аргументируйте обе стороны — каков realistic risk и mitigation (ephemeral snapshots, encryption, namespace isolation)?
+5. Спроектируйте tiered warm-pool policy: сколько warm replicas для paid users, trial users и batch workloads? Покажите математику.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Cold start | "the big pause" | Time from request to first token on a fresh replica |
 | Warm pool | "always-on minimum" | `min_workers >= 1` to keep at least one replica ready |
@@ -116,11 +116,11 @@ This lesson produces `outputs/skill-cold-start-planner.md`. Given SLA, model siz
 | `min_workers` | "warm replicas" | Serverless minimum keep-alive count |
 | Scale-to-zero | "full serverless" | No cost when idle; accept full cold-start tax |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Modal — Cold start performance](https://modal.com/docs/guide/cold-start) — Modal's published benchmarks and checkpoint architecture.
+- [Modal — Cold start performance](https://modal.com/docs/guide/cold-start) — опубликованные Modal benchmarks и checkpoint architecture.
 - [AWS Bottlerocket](https://github.com/bottlerocket-os/bottlerocket) — pre-seeded data volume snapshot pattern.
 - [NVIDIA Run:ai Model Streamer](https://github.com/run-ai/runai-model-streamer) — overlap weights load with compute setup.
-- [Baseten — Cold-start mitigation](https://www.baseten.co/blog/cold-start-mitigation/) — pre-warming playbook.
-- [ServerlessLLM paper (USENIX OSDI'24)](https://www.usenix.org/conference/osdi24/presentation/fu) — tiered loading design.
-- [NVIDIA — Disaggregated LLM Inference on Kubernetes](https://developer.nvidia.com/blog/deploying-disaggregated-llm-inference-workloads-on-kubernetes/) — live migration for disaggregated deployments.
+- [Baseten — Cold-start mitigation](https://www.baseten.co/blog/cold-start-mitigation/) — playbook pre-warming.
+- [ServerlessLLM paper (USENIX OSDI'24)](https://www.usenix.org/conference/osdi24/presentation/fu) — design tiered loading.
+- [NVIDIA — Disaggregated LLM Inference on Kubernetes](https://developer.nvidia.com/blog/deploying-disaggregated-llm-inference-workloads-on-kubernetes/) — live migration для disaggregated deployments.

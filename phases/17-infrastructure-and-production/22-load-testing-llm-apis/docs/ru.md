@@ -1,120 +1,120 @@
-# Load Testing LLM APIs — Why k6 and Locust Lie
+# Нагрузочное тестирование LLM APIs — почему k6 и Locust врут
 
-> Traditional load testers were not designed for streaming responses, variable output lengths, token-level metrics, or GPU saturation. Two traps bite most teams. The GIL trap: Locust's token-level measurement runs tokenization under the Python GIL, which competes with request generation under heavy concurrency; tokenization backlog then inflates reported inter-token latency — your client is the bottleneck, not the server. The prompt-uniformity trap: identical prompts in a loop test one point on the token distribution; real traffic has variable length and diverse prefix matches. LLMPerf fixes this with `--mean-input-tokens` + `--stddev-input-tokens`. Tool mapping in 2026: LLM-specialized (GenAI-Perf, LLMPerf, LLM-Locust, guidellm) for token-level accuracy; **k6 v2026.1.0** + **k6 Operator 1.0 GA (Sept 2025)** — streaming-aware, Kubernetes-native distributed via TestRun/PrivateLoadZone CRDs, best for CI/CD gates; Vegeta for Go constant-rate saturation; Locust 2.43.3 only with LLM-Locust extension for streaming. Load patterns: steady-state, ramp, spike (autoscaling test), soak (memory leaks).
+> Традиционные нагрузочные тестеры не проектировались для потоковых ответов, переменной длины вывода, токен-уровневых метрик или насыщения GPU. Большинство команд попадает в две ловушки. Ловушка GIL: токен-уровневые измерения Locust запускают токенизацию под Python GIL, который конкурирует с генерацией запросов при высокой конкурентности; затем очередь токенизации раздувает измеренную межтокенную задержку — узкое место у вас клиент, а не сервер. Ловушка однообразия промптов: одинаковые промпты в цикле тестируют одну точку распределения токенов; реальный трафик имеет переменную длину и разные совпадения префиксов. LLMPerf исправляет это через `--mean-input-tokens` + `--stddev-input-tokens`. Карта инструментов в 2026: LLM-специализированные (GenAI-Perf, LLMPerf, LLM-Locust, guidellm) для токен-уровневой точности; **k6 v2026.1.0** + **k6 Operator 1.0 GA (Sept 2025)** — aware к streaming, Kubernetes-native distributed через TestRun/PrivateLoadZone CRDs, лучший вариант для CI/CD gates; Vegeta для Go constant-rate saturation; Locust 2.43.3 только с расширением LLM-Locust для streaming. Паттерны нагрузки: steady-state, ramp, spike (тест autoscaling), soak (утечки памяти).
 
-**Type:** Build
-**Languages:** Python (stdlib, toy realistic-prompt generator + latency collector)
-**Prerequisites:** Phase 17 · 08 (Inference Metrics), Phase 17 · 03 (GPU Autoscaling)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, toy realistic-prompt generator + latency collector)
+**Предварительные требования:** Phase 17 · 08 (Inference Metrics), Phase 17 · 03 (GPU Autoscaling)
+**Время:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the two anti-patterns (GIL trap, prompt-uniformity trap) that make generic load testers lie for LLM APIs.
-- Pick a tool for a given purpose: LLMPerf (benchmark run), k6 + streaming extension (CI gate), guidellm (large-scale synthetic), GenAI-Perf (NVIDIA reference).
-- Design four load patterns (steady, ramp, spike, soak) and name the failure mode each catches.
-- Build a realistic prompt distribution using mean + stddev of input tokens rather than fixed length.
+- Объяснить два антипаттерна (GIL trap, prompt-uniformity trap), из-за которых универсальные нагрузочные тестеры врут для LLM APIs.
+- Выбрать инструмент под цель: LLMPerf (benchmark run), k6 + streaming extension (CI gate), guidellm (large-scale synthetic), GenAI-Perf (NVIDIA reference).
+- Спроектировать четыре паттерна нагрузки (steady, ramp, spike, soak) и назвать failure mode, который ловит каждый.
+- Построить реалистичное распределение промптов через mean + stddev входных токенов, а не фиксированную длину.
 
-## The Problem
+## Проблема
 
-You k6-tested your LLM endpoint at 500 concurrent users. It held. You shipped. In production at 200 actual users the service fell over — P99 TTFT exploded, GPUs pinned.
+Вы протестировали LLM endpoint через k6 на 500 concurrent users. Он выдержал. Вы выпустили релиз. В продакшене на 200 реальных пользователях сервис упал — P99 TTFT взлетел, GPUs уперлись в предел.
 
-Two things happened. First, k6 sent 500 identical prompts — your request-coalescing and prefix caching made it look like you were handling 500 concurrent decodes when you were actually handling one. Second, k6 doesn't track inter-token latency on streaming responses the way the eye experiences it; it sees one HTTP connection, not 500 tokens arriving at varying intervals.
+Произошли две вещи. Во-первых, k6 отправлял 500 одинаковых промптов — request coalescing и prefix caching создали видимость, что вы обрабатываете 500 конкурентных decode, хотя фактически обрабатывали один. Во-вторых, k6 не отслеживает inter-token latency на streaming responses так, как это воспринимает глаз; он видит одно HTTP-соединение, а не 500 токенов, приходящих с разными интервалами.
 
-Load testing for LLMs is its own discipline.
+Нагрузочное тестирование LLM — отдельная дисциплина.
 
-## The Concept
+## Концепция
 
-### The GIL trap (Locust)
+### Ловушка GIL (Locust)
 
-Locust uses Python and runs tokenization client-side under the GIL. Under high concurrency the tokenizer queues behind request generation. Reported inter-token latency includes client-side tokenization backlog. You think the server is slow; it's the test harness.
+Locust использует Python и выполняет токенизацию на стороне клиента под GIL. При высокой конкурентности tokenizer становится в очередь за генерацией запросов. Измеренная inter-token latency включает backlog клиентской токенизации. Вам кажется, что медленный сервер; на самом деле это тестовый harness.
 
-Fix: LLM-Locust extension moves tokenization to separate processes, or use a compiled-language harness (k6, LLMPerf using tokenizers.rs).
+Исправление: расширение LLM-Locust переносит токенизацию в отдельные процессы, либо используйте harness на компилируемом языке (k6, LLMPerf с tokenizers.rs).
 
-### The prompt-uniformity trap
+### Ловушка однообразия промптов
 
-All known load testers let you configure one prompt. In a loop test of 10,000 iterations the exact same prompt sends each time. Server sees the same prefix every time — prefix cache hits approach 100%, throughput looks great.
+Все известные нагрузочные тестеры позволяют настроить один промпт. В циклическом тесте на 10 000 итераций каждый раз отправляется ровно тот же промпт. Сервер каждый раз видит тот же префикс — prefix cache hits приближаются к 100%, throughput выглядит отличным.
 
-Fix: sample from a prompt distribution. LLMPerf uses `--mean-input-tokens 500 --stddev-input-tokens 150` — diverse lengths, diverse content.
+Исправление: семплируйте из распределения промптов. LLMPerf использует `--mean-input-tokens 500 --stddev-input-tokens 150` — разные длины, разный контент.
 
-### Four load patterns
+### Четыре паттерна нагрузки
 
-1. **Steady-state** — constant RPS for 30-60 min. Catches: baseline performance regressions.
-2. **Ramp** — linearly increase RPS from 0 to target over 15 min. Catches: capacity breakpoint, warm-up anomalies.
-3. **Spike** — sudden 3-10x RPS for 2 min then back. Catches: autoscaling latency, queue saturation, cold-start impact.
-4. **Soak** — steady-state for 4-8 hours. Catches: memory leaks, connection-pool drift, observability overflow.
+1. **Steady-state** — постоянный RPS 30-60 мин. Ловит: регрессии базовой производительности.
+2. **Ramp** — линейное увеличение RPS от 0 до целевого за 15 мин. Ловит: capacity breakpoint, аномалии прогрева.
+3. **Spike** — резкий 3-10x RPS на 2 мин, затем возврат. Ловит: задержку autoscaling, saturation очередей, влияние cold start.
+4. **Soak** — steady-state 4-8 часов. Ловит: утечки памяти, дрейф connection pools, переполнение observability.
 
-### 2026 tool mapping
+### Карта инструментов 2026
 
-**LLMPerf** (Anyscale) — Python but Rust-backed tokenization. Mean/stddev prompts. Streaming-aware. Best default for performance runs.
+**LLMPerf** (Anyscale) — Python, но токенизация на Rust. Mean/stddev промпты. Streaming-aware. Лучший дефолт для performance runs.
 
-**NVIDIA GenAI-Perf** — NVIDIA's reference. Uses Triton client; comprehensive metric coverage. Note its ITL excludes TTFT; LLMPerf's includes it. Two tools produce different TPOT for the same server.
+**NVIDIA GenAI-Perf** — референс NVIDIA. Использует Triton client; широкий охват метрик. Учтите: его ITL исключает TTFT; у LLMPerf включает. Два инструмента дают разный TPOT для одного сервера.
 
-**LLM-Locust** (TrueFoundry) — Locust extension that fixes the GIL trap. Familiar Locust DSL + streaming metrics.
+**LLM-Locust** (TrueFoundry) — расширение Locust, исправляющее GIL trap. Привычный Locust DSL + streaming metrics.
 
 **guidellm** — large-scale synthetic benchmarking.
 
 **k6 v2026.1.0** + **k6 Operator 1.0 GA (Sept 2025)**:
-- k6 itself (Go, compiled, no GIL) added streaming-aware metrics.
-- k6 Operator uses TestRun / PrivateLoadZone CRDs for Kubernetes-native distributed testing.
-- Best for CI/CD gates and SLA testing.
+- сам k6 (Go, compiled, без GIL) добавил streaming-aware metrics.
+- k6 Operator использует TestRun / PrivateLoadZone CRDs для Kubernetes-native distributed testing.
+- Лучший вариант для CI/CD gates и SLA testing.
 
-**Vegeta** — Go, simpler than k6. Constant-rate HTTP saturation. Not LLM-aware but good for gateway / rate-limit testing.
+**Vegeta** — Go, проще k6. Constant-rate HTTP saturation. Не LLM-aware, но хорош для тестирования gateway / rate limit.
 
-**Locust 2.43.3 stock** — has the GIL trap for LLM. Only with LLM-Locust extension.
+**Locust 2.43.3 stock** — имеет GIL trap для LLM. Только с расширением LLM-Locust.
 
-### SLA gate in CI
+### SLA gate в CI
 
-Run k6 on the PR with:
+Запускайте k6 на PR с:
 
-- 30-50 iterations each at baseline RPS.
-- Gate: P50/P95 TTFT, 5xx < 5%, TPOT under threshold.
-- Break the build on breach.
+- 30-50 итерациями на baseline RPS.
+- Gate: P50/P95 TTFT, 5xx < 5%, TPOT ниже порога.
+- Ломайте build при нарушении.
 
-### Realistic prompt distribution
+### Реалистичное распределение промптов
 
-Build from real traffic samples (if you have them) or from published distributions (e.g., ShareGPT prompts for chat, HumanEval for code). Feed the mean + stddev to LLMPerf. Avoid loop-with-one-prompt at all costs.
+Стройте его из реальных сэмплов трафика (если они есть) или опубликованных распределений (например, ShareGPT prompts для chat, HumanEval для code). Передайте mean + stddev в LLMPerf. Избегайте loop-with-one-prompt любой ценой.
 
-### Numbers you should remember
+### Числа, которые стоит запомнить
 
 - k6 Operator 1.0 GA: September 2025.
 - k6 v2026.1.0: streaming-aware metrics.
-- Typical LLMPerf run: 100-1000 requests at concurrency X.
-- Typical CI gate: 30-50 iterations per PR.
-- Four patterns: steady, ramp, spike, soak.
+- Типичный LLMPerf run: 100-1000 requests при concurrency X.
+- Типичный CI gate: 30-50 iterations на PR.
+- Четыре паттерна: steady, ramp, spike, soak.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates a load test with realistic prompt distribution, measures effective TPOT, and demonstrates the uniform-prompt trap.
+`code/main.py` симулирует нагрузочный тест с реалистичным распределением промптов, измеряет effective TPOT и демонстрирует ловушку uniform-prompt.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/skill-load-test-plan.md`. Given workload and SLA, picks tool and designs the four load patterns.
+Этот урок создает `outputs/skill-load-test-plan.md`. По workload и SLA выбирает инструмент и проектирует четыре паттерна нагрузки.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Compare uniform vs realistic distribution — where is the gap?
-2. Write the k6 script for a CI gate: TTFT P95 < 800 ms at 100 concurrent, runtime 5 minutes.
-3. Your soak test shows memory growing 50 MB/hour. Name three causes and the instrumentation to pick between them.
-4. Spike test from 10 RPS to 100 RPS. What's the expected recovery time if Karpenter + vLLM production-stack are in place (Phase 17 · 03 + 18)?
-5. GenAI-Perf reports TPOT=6ms; LLMPerf reports TPOT=11ms on the same server. Explain.
+1. Запустите `code/main.py`. Сравните uniform vs realistic distribution — где разрыв?
+2. Напишите k6 script для CI gate: TTFT P95 < 800 ms при 100 concurrent, runtime 5 minutes.
+3. Soak test показывает рост памяти 50 MB/hour. Назовите три причины и instrumentation, чтобы выбрать между ними.
+4. Spike test с 10 RPS до 100 RPS. Какое expected recovery time, если Karpenter + vLLM production-stack уже стоят (Phase 17 · 03 + 18)?
+5. GenAI-Perf сообщает TPOT=6ms; LLMPerf сообщает TPOT=11ms на том же сервере. Объясните.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| LLMPerf | "the LLM harness" | Anyscale benchmark tool, streaming-aware |
-| GenAI-Perf | "NVIDIA tool" | NVIDIA reference harness |
-| LLM-Locust | "Locust for LLMs" | Locust extension fixing GIL trap |
+| LLMPerf | "the LLM harness" | Benchmark-инструмент Anyscale, streaming-aware |
+| GenAI-Perf | "NVIDIA tool" | Референсный harness NVIDIA |
+| LLM-Locust | "Locust for LLMs" | Расширение Locust, исправляющее GIL trap |
 | guidellm | "synthetic benchmark" | Large-scale synthetic tool |
-| k6 Operator | "K8s k6" | CRD-based distributed k6 |
-| GIL trap | "Python client overhead" | Tokenization backlog inflates reported latency |
-| Prompt-uniformity trap | "single-prompt lie" | Loop with same prompt hits cache, inflates throughput |
-| Steady-state | "constant load" | Flat RPS for N minutes |
-| Ramp | "linear up" | 0 to target over duration |
-| Spike | "burst test" | Sudden multiplier then revert |
-| Soak | "long test" | Hours for leak detection |
+| k6 Operator | "K8s k6" | Distributed k6 на базе CRD |
+| GIL trap | "Python client overhead" | Backlog токенизации раздувает измеренную latency |
+| Prompt-uniformity trap | "single-prompt lie" | Цикл с тем же промптом попадает в cache и раздувает throughput |
+| Steady-state | "constant load" | Ровный RPS N минут |
+| Ramp | "linear up" | От 0 до target за duration |
+| Spike | "burst test" | Резкий multiplier, затем возврат |
+| Soak | "long test" | Часы для обнаружения утечек |
 
-## Further Reading
+## Дополнительное чтение
 
 - [TianPan — Load Testing LLM Applications](https://tianpan.co/blog/2026-03-19-load-testing-llm-applications)
 - [PremAI — Load Testing LLMs 2026](https://blog.premai.io/load-testing-llms-tools-metrics-realistic-traffic-simulation-2026/)

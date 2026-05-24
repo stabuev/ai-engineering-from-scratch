@@ -1,38 +1,38 @@
-# GPU Autoscaling on Kubernetes — Karpenter, KAI Scheduler, Gang Scheduling
+# GPU Autoscaling на Kubernetes — Karpenter, KAI Scheduler, Gang Scheduling
 
-> Three layers, not one. Karpenter provisions nodes dynamically (under one minute, 40% faster than Cluster Autoscaler). KAI Scheduler handles gang scheduling, topology awareness, and hierarchical queues — it prevents the 7-of-8 partial allocation trap where seven nodes wait and burn on one missing GPU. Application-level autoscalers (NVIDIA Dynamo Planner, llm-d Workload Variant Autoscaler) scale on inference-specific signals — queue depth, KV cache utilization — not CPU/DCGM duty cycle. The classic HPA trap is that `DCGM_FI_DEV_GPU_UTIL` is a duty-cycle measurement: 100% could be 10 requests or 100. vLLM pre-allocates KV cache memory, so memory never triggers scale-down. This lesson teaches you to compose the three layers and avoid the default Karpenter `WhenEmptyOrUnderutilized` policy that terminates running GPU jobs mid-inference.
+> Три слоя, а не один. Karpenter динамически provisions nodes (менее чем за минуту, на 40% быстрее Cluster Autoscaler). KAI Scheduler обрабатывает gang scheduling, topology awareness и hierarchical queues — он предотвращает ловушку partial allocation 7-of-8, где семь nodes ждут и сжигают деньги из-за одного недостающего GPU. Application-level autoscalers (NVIDIA Dynamo Planner, llm-d Workload Variant Autoscaler) масштабируются по inference-specific signals: queue depth, KV cache utilization, а не CPU/DCGM duty cycle. Классическая ловушка HPA в том, что `DCGM_FI_DEV_GPU_UTIL` — это duty-cycle measurement: 100% может означать 10 requests или 100. vLLM заранее выделяет KV cache memory, поэтому memory никогда не запускает scale-down. Этот урок учит компоновать три слоя и избегать default policy Karpenter `WhenEmptyOrUnderutilized`, которая завершает running GPU jobs прямо во время inference.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy queue-depth autoscaler simulator)
-**Prerequisites:** Phase 17 · 02 (Inference Platform Economics), Phase 17 · 04 (vLLM Serving Internals)
-**Time:** ~75 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, учебный симулятор queue-depth autoscaler)
+**Предварительные требования:** Phase 17 · 02 (Inference Platform Economics), Phase 17 · 04 (vLLM Serving Internals)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Diagram the three autoscaling layers (node provisioning, gang scheduling, application-level) and name the tool used at each layer.
-- Explain why `DCGM_FI_DEV_GPU_UTIL` is the wrong HPA signal for vLLM and name two replacements (queue depth, KV cache utilization).
-- Describe gang scheduling and the partial-allocation failure mode KAI Scheduler prevents (7 of 8 GPUs idle).
-- Name the Karpenter consolidation policy (`WhenEmptyOrUnderutilized`) that terminates running GPU jobs and state the 2026 safe alternative.
+- Нарисовать три слоя autoscaling (node provisioning, gang scheduling, application-level) и назвать инструмент на каждом слое.
+- Объяснить, почему `DCGM_FI_DEV_GPU_UTIL` — неправильный HPA signal для vLLM, и назвать две замены (queue depth, KV cache utilization).
+- Описать gang scheduling и failure mode partial allocation, который предотвращает KAI Scheduler (7 of 8 GPUs idle).
+- Назвать Karpenter consolidation policy (`WhenEmptyOrUnderutilized`), которая завершает running GPU jobs, и сформулировать безопасную альтернативу 2026 года.
 
-## The Problem
+## Проблема
 
-Your team ships an LLM-serving service on Kubernetes. You set up HPA with `DCGM_FI_DEV_GPU_UTIL` as the signal. The service pins at 100% utilization during business hours. HPA never scales up — it already thinks you're full. You add a replica manually; TTFT drops. HPA still doesn't scale. The signal is lying to you.
+Ваша команда запускает LLM-serving service на Kubernetes. Вы настраиваете HPA с `DCGM_FI_DEV_GPU_UTIL` как signal. Сервис упирается в 100% utilization в рабочие часы. HPA не scale up — он уже считает, что вы заполнены. Вы вручную добавляете replica; TTFT падает. HPA все равно не масштабируется. Signal вам врет.
 
-Separately, you use Cluster Autoscaler for nodes. A 1M-token prompt arrives at 2 a.m.; the cluster spends 3 minutes provisioning a node, and the request times out.
+Отдельно вы используете Cluster Autoscaler для nodes. В 2 a.m. приходит 1M-token prompt; cluster тратит 3 минуты на provisioning node, и request timeout.
 
-Separately again, you deploy a 70B model requiring 8 GPUs across 2 nodes. The cluster has 7 GPUs free and 1 spread across 3 nodes. Cluster Autoscaler provisions a node for the 1 missing GPU. Seven nodes wait 4 minutes burning money while Kubernetes gets the last GPU up.
+Еще отдельно вы деплоите 70B model, требующую 8 GPUs на 2 nodes. В cluster свободны 7 GPUs и 1 разбросан по 3 nodes. Cluster Autoscaler provisions node для 1 недостающего GPU. Семь nodes ждут 4 минуты и сжигают деньги, пока Kubernetes поднимает последний GPU.
 
-Three layers, three different failure modes. GPU-aware autoscaling in 2026 is not "turn on HPA." It's composing node provisioning, gang scheduling, and application-signal autoscaling.
+Три слоя, три разных failure modes. GPU-aware autoscaling в 2026 году — это не "включить HPA". Это композиция node provisioning, gang scheduling и application-signal autoscaling.
 
-## The Concept
+## Концепция
 
-### Layer 1 — node provisioning (Karpenter)
+### Слой 1 — node provisioning (Karpenter)
 
-Karpenter watches pending pods and provisions nodes within ~45-60 seconds (Cluster Autoscaler typically takes 90-120 seconds for GPU nodes). It picks instance types dynamically per the `NodePool` constraint — if your pod needs 8 H100s and the cluster has no matching node, Karpenter provisions one directly instead of scaling an existing group.
+Karpenter наблюдает pending pods и provisions nodes примерно за ~45-60 секунд (Cluster Autoscaler обычно занимает 90-120 секунд для GPU nodes). Он динамически выбирает instance types по constraint `NodePool`: если pod требует 8 H100s и в cluster нет подходящего node, Karpenter provisions его напрямую, вместо scaling существующей group.
 
-**The consolidation trap**: Karpenter's default `consolidationPolicy: WhenEmptyOrUnderutilized` is dangerous for GPU pools. It will terminate a running GPU node to migrate pods to a cheaper right-sized instance. For inference workloads that means evicting running requests and reloading a 70B model on the new node. Loss is minutes of capacity plus request failures.
+**Ловушка consolidation**: default `consolidationPolicy: WhenEmptyOrUnderutilized` в Karpenter опасна для GPU pools. Она завершит running GPU node, чтобы мигрировать pods на более дешевый right-sized instance. Для inference workloads это означает evict running requests и заново загрузить 70B model на новом node. Потеря — минуты capacity плюс request failures.
 
-Safe setting for GPU pools:
+Безопасная настройка для GPU pools:
 
 ```yaml
 disruption:
@@ -40,38 +40,38 @@ disruption:
   consolidateAfter: 1h
 ```
 
-Lets Karpenter consolidate truly empty nodes after an hour but never evict a running job.
+Позволяет Karpenter consolidate действительно empty nodes через час, но никогда не evict running job.
 
-### Layer 2 — gang scheduling (KAI Scheduler)
+### Слой 2 — gang scheduling (KAI Scheduler)
 
-KAI Scheduler (project "Karp" then renamed) handles what default kube-scheduler does not:
+KAI Scheduler (project "Karp", затем переименован) обрабатывает то, чего не делает default kube-scheduler:
 
-**Gang scheduling** — schedule all-or-nothing. A distributed inference pod requiring 8 GPUs either all 8 start together or none do. Without this, you get the partial-allocation trap: 7 of 8 pods start, wait indefinitely, burn money.
+**Gang scheduling** — schedule all-or-nothing. Distributed inference pod, требующий 8 GPUs, либо запускает все 8 вместе, либо не запускает ни одного. Без этого возникает partial-allocation trap: 7 из 8 pods start, wait indefinitely, burn money.
 
-**Topology awareness** — know which GPUs share NVLink, which sit on the same rack, which have InfiniBand between them. Place pods accordingly. A DeepSeek-V3 67B tensor-parallel workload must stay on one NVLink domain; KAI Scheduler respects that.
+**Topology awareness** — знать, какие GPUs делят NVLink, какие находятся в одном rack, между какими есть InfiniBand. И размещать pods соответственно. Tensor-parallel workload DeepSeek-V3 67B должен оставаться в одном NVLink domain; KAI Scheduler это учитывает.
 
-**Hierarchical queues** — multiple teams compete for the same GPU pool with priority and quota. Team A's production pinch gets preempted by Team B's training job only if priority rules allow.
+**Hierarchical queues** — несколько команд конкурируют за общий GPU pool с priority и quota. Production pinch Team A вытесняется training job Team B только если priority rules разрешают.
 
-KAI is deployed alongside kube-scheduler as a secondary scheduler; you annotate workloads to use it. Ray and vLLM production-stack both integrate.
+KAI деплоится рядом с kube-scheduler как secondary scheduler; workloads аннотируются для его использования. Ray и vLLM production-stack оба интегрируются.
 
-### Layer 3 — application-level signals
+### Слой 3 — application-level signals
 
-**The HPA trap**: `DCGM_FI_DEV_GPU_UTIL` is a duty-cycle metric — it measures whether the GPU was doing work at each sampling interval. 100% utilization could mean 10 concurrent requests or 100; the GPU was busy either way. Scaling on duty cycle is scaling blindly.
+**Ловушка HPA**: `DCGM_FI_DEV_GPU_UTIL` — duty-cycle metric: она измеряет, выполнял ли GPU работу на каждом sampling interval. 100% utilization может означать 10 concurrent requests или 100; GPU был busy в обоих случаях. Scaling по duty cycle — это blind scaling.
 
-Worse, vLLM and similar engines pre-allocate KV cache memory (up to `--gpu-memory-utilization`). Memory usage stays near 90% even at one request. Memory-based HPA never scales down.
+Хуже того, vLLM и похожие engines pre-allocate KV cache memory (до `--gpu-memory-utilization`). Memory usage остается около 90% даже при одном request. Memory-based HPA никогда не scale down.
 
-**2026 replacement signals**:
+**Replacement signals 2026 года**:
 
-- Queue depth (number of requests waiting for prefill).
-- KV cache utilization (what fraction of blocks are allocated to active sequences).
-- Per-replica P99 TTFT (your SLA signal).
+- Queue depth (количество requests, ожидающих prefill).
+- KV cache utilization (какая доля blocks выделена active sequences).
+- Per-replica P99 TTFT (ваш SLA signal).
 - Goodput (requests meeting all SLOs per second).
 
-NVIDIA Dynamo Planner and llm-d Workload Variant Autoscaler consume these signals and scale replicas. They replace HPA entirely for LLM serving.
+NVIDIA Dynamo Planner и llm-d Workload Variant Autoscaler потребляют эти signals и scale replicas. Они полностью заменяют HPA для LLM serving.
 
-### When to use what
+### Когда что использовать
 
-| Scale decision | Tool |
+| Решение масштабирования | Инструмент |
 |----------------|------|
 | Add/remove nodes | Karpenter |
 | Schedule multi-GPU jobs | KAI Scheduler |
@@ -79,56 +79,56 @@ NVIDIA Dynamo Planner and llm-d Workload Variant Autoscaler consume these signal
 | Choose GPU type | Karpenter NodePool |
 | Preempt low-priority | KAI Scheduler queues |
 
-### Disaggregated prefill/decode complicates everything
+### Disaggregated prefill/decode все усложняет
 
-If you run disaggregated prefill/decode (Phase 17 · 17), you have two pod classes with different scaling triggers: prefill pods scale on queue depth, decode pods scale on KV cache pressure. llm-d exposes these as separate `Services` with per-role HPA. Do not try to put a single HPA in front of both.
+Если вы запускаете disaggregated prefill/decode (Phase 17 · 17), у вас два pod classes с разными scaling triggers: prefill pods scale on queue depth, decode pods scale on KV cache pressure. llm-d exposes these as separate `Services` with per-role HPA. Не пытайтесь ставить один HPA перед обоими.
 
-### Cold start matters here too
+### Cold start тоже важен
 
-Cold-start mitigation (Phase 17 · 10) is where node provisioning time becomes user-visible. Karpenter's 45-60 second warm-up plus a 20GB model load plus engine init means a from-zero request takes 2-5 minutes. Keep a warm pool (`min_workers=1`) for SLO-critical paths, or use Modal-style checkpointing at application layer.
+Cold-start mitigation (Phase 17 · 10) — место, где node provisioning time становится видимым пользователю. Warm-up Karpenter 45-60 секунд плюс загрузка модели 20GB плюс engine init означает, что from-zero request занимает 2-5 минут. Держите warm pool (`min_workers=1`) для SLO-critical paths или используйте Modal-style checkpointing на application layer.
 
-### Numbers you should remember
+### Числа, которые нужно помнить
 
 - Karpenter node provisioning: ~45-60s vs Cluster Autoscaler ~90-120s (GPU nodes).
-- KAI Scheduler prevents partial-allocation waste — 7-of-8 trap.
-- `DCGM_FI_DEV_GPU_UTIL` as HPA signal: broken; use queue depth or KV utilization.
-- Karpenter `WhenEmptyOrUnderutilized`: terminates running GPU jobs. Use `WhenEmpty + consolidateAfter: 1h` for inference.
+- KAI Scheduler предотвращает partial-allocation waste — 7-of-8 trap.
+- `DCGM_FI_DEV_GPU_UTIL` как HPA signal: broken; используйте queue depth или KV utilization.
+- Karpenter `WhenEmptyOrUnderutilized`: завершает running GPU jobs. Используйте `WhenEmpty + consolidateAfter: 1h` для inference.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates a three-layer autoscaler on a bursty GPU workload. Compares naive HPA (duty cycle), queue-depth HPA, and KAI-gang-scheduled scaling. Reports unmet requests, idle-GPU minutes, and a composite score.
+`code/main.py` симулирует three-layer autoscaler на bursty GPU workload. Сравнивает naive HPA (duty cycle), queue-depth HPA и KAI-gang-scheduled scaling. Выводит unmet requests, idle-GPU minutes и composite score.
 
-## Ship It
+## Доведите до результата
 
-This lesson produces `outputs/skill-gpu-autoscaler-plan.md`. Given cluster topology, workload shape, and SLO, it designs a three-layer autoscaling plan.
+Этот урок создает `outputs/skill-gpu-autoscaler-plan.md`. По cluster topology, workload shape и SLO он проектирует three-layer autoscaling plan.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Under a bursty workload, how many requests does naive duty-cycle HPA drop that queue-depth HPA catches? Where does the difference come from?
-2. Design a Karpenter NodePool for a cluster serving Llama 3.3 70B FP8 on H100 SXM5. Specify `capacity-type`, `disruption.consolidationPolicy`, `consolidateAfter`, and a taint that keeps non-GPU workloads off these nodes.
-3. Your team reports that deployments are stuck in Pending because "GPUs available but pod won't schedule." Diagnose — is this Karpenter, kube-scheduler, or KAI Scheduler? Which metrics confirm?
-4. Pick a signal to autoscale disaggregated prefill pods and a different signal for decode pods. Justify both.
-5. Compute the cost of the `WhenEmptyOrUnderutilized` consolidation trap on a 24x7 production service that averages 60 request-dropping events/day at P99 TTFT > 10s.
+1. Запустите `code/main.py`. При bursty workload сколько requests теряет naive duty-cycle HPA, которые ловит queue-depth HPA? Откуда возникает разница?
+2. Спроектируйте Karpenter NodePool для cluster, обслуживающего Llama 3.3 70B FP8 на H100 SXM5. Укажите `capacity-type`, `disruption.consolidationPolicy`, `consolidateAfter` и taint, который не пускает non-GPU workloads на эти nodes.
+3. Команда сообщает, что deployments stuck in Pending, потому что "GPUs available but pod won't schedule." Диагностируйте: это Karpenter, kube-scheduler или KAI Scheduler? Какие metrics подтверждают?
+4. Выберите signal для autoscale disaggregated prefill pods и другой signal для decode pods. Обоснуйте оба.
+5. Посчитайте стоимость ловушки `WhenEmptyOrUnderutilized` consolidation на 24x7 production service, где в среднем 60 request-dropping events/day при P99 TTFT > 10s.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Karpenter | "the node provisioner" | Kubernetes node autoscaler; sub-minute provisioning |
-| Cluster Autoscaler | "the old scaler" | Kubernetes node autoscaler predecessor; slower, group-based |
-| KAI Scheduler | "the GPU scheduler" | Secondary scheduler for gang + topology + queues |
-| Gang scheduling | "all or nothing" | Schedule N pods atomically or defer all of them |
-| Topology awareness | "rack-aware" | Place pods based on NVLink/IB/rack placement |
-| `DCGM_FI_DEV_GPU_UTIL` | "GPU utilization" | Duty-cycle metric; NOT a scaling signal for LLMs |
-| Queue depth | "waiting requests" | Correct HPA signal for prefill-bound scaling |
-| KV cache utilization | "memory pressure" | Correct HPA signal for decode-bound scaling |
-| Consolidation | "Karpenter consolidation" | Node termination to cheaper instance type |
-| `WhenEmpty + 1h` | "safe consolidation" | Policy that doesn't evict running GPU jobs |
+| Cluster Autoscaler | "the old scaler" | Предшественник Kubernetes node autoscaler; slower, group-based |
+| KAI Scheduler | "the GPU scheduler" | Secondary scheduler для gang + topology + queues |
+| Gang scheduling | "all or nothing" | Schedule N pods atomically или defer all of them |
+| Topology awareness | "rack-aware" | Размещение pods по NVLink/IB/rack placement |
+| `DCGM_FI_DEV_GPU_UTIL` | "GPU utilization" | Duty-cycle metric; НЕ scaling signal для LLMs |
+| Queue depth | "waiting requests" | Correct HPA signal для prefill-bound scaling |
+| KV cache utilization | "memory pressure" | Correct HPA signal для decode-bound scaling |
+| Consolidation | "Karpenter consolidation" | Node termination на более дешевый instance type |
+| `WhenEmpty + 1h` | "safe consolidation" | Policy, которая не evict running GPU jobs |
 
-## Further Reading
+## Дополнительное чтение
 
 - [KAI Scheduler GitHub](https://github.com/kai-scheduler/KAI-Scheduler) — design docs and configuration examples.
-- [Karpenter Disruption Controls](https://karpenter.sh/docs/concepts/disruption/) — consolidation policy semantics and GPU-safe defaults.
+- [Karpenter Disruption Controls](https://karpenter.sh/docs/concepts/disruption/) — semantics consolidation policy and GPU-safe defaults.
 - [NVIDIA — Disaggregated LLM Inference on Kubernetes](https://developer.nvidia.com/blog/deploying-disaggregated-llm-inference-workloads-on-kubernetes/) — Dynamo Planner scaling signals.
 - [Ray docs — KAI Scheduler for RayClusters](https://docs.ray.io/en/latest/cluster/kubernetes/k8s-ecosystem/kai-scheduler.html) — Ray integration pattern.
 - [AWS EKS Compute and Autoscaling Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/aiml-compute.html) — managed-Kubernetes-specific guidance.

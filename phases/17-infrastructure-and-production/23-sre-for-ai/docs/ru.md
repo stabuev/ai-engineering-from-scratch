@@ -1,28 +1,28 @@
 # SRE for AI — Multi-Agent Incident Response, Runbooks, Predictive Detection
 
-> AI SRE uses LLMs grounded in infrastructure data (logs, runbooks, service topology) via RAG to automate investigation, documentation, and coordination phases. The 2026 architecture pattern is multi-agent orchestration — specialized agents (logs, metrics, runbooks) coordinated by a supervisor; AI proposes hypotheses and queries, humans approve judgment calls. Datadog Bits AI and Azure SRE Agent ship this as managed products. Runbooks are evolving: NeuBird Hawkeye uses adversarial evaluation (two models analyze the same incident; agreement = confidence, disagreement = uncertainty); operational memory persists across team changes. Auto-remediation stays cautious: AI suggests, humans approve. Fully autonomous action is narrow (restart pod, rollback specific deploy) with tight guardrails — anyone selling "set it and forget it" is overselling. Emerging frontier: pre-incident prediction. MIT research reports an LLM trained on historical logs + GPU temps + API error patterns predicted 89% of outages 10-15 min early. Projection: 95% of enterprise LLMs have automated failover by end-2026.
+> AI SRE использует LLM, grounded in infrastructure data (logs, runbooks, service topology), через RAG для автоматизации фаз расследования, документирования и координации. Архитектурный паттерн 2026 — multi-agent orchestration: специализированные агенты (logs, metrics, runbooks), координируемые supervisor; AI предлагает гипотезы и queries, люди утверждают judgment calls. Datadog Bits AI и Azure SRE Agent поставляют это как managed products. Runbooks эволюционируют: NeuBird Hawkeye использует adversarial evaluation (две модели анализируют один incident; agreement = confidence, disagreement = uncertainty); operational memory сохраняется при смене команды. Auto-remediation остается осторожной: AI предлагает, люди утверждают. Полностью автономные действия узкие (restart pod, rollback specific deploy) с жесткими guardrails — все, кто продает "set it and forget it", переобещают. Новый фронтир: pre-incident prediction. Исследование MIT сообщает, что LLM, обученная на historical logs + GPU temps + API error patterns, предсказала 89% outages за 10-15 min. Прогноз: у 95% enterprise LLM будет automated failover к концу 2026.
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy multi-agent incident triage simulator)
-**Prerequisites:** Phase 17 · 13 (Observability), Phase 17 · 24 (Chaos Engineering)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy multi-agent incident triage simulator)
+**Предварительные требования:** Phase 17 · 13 (Observability), Phase 17 · 24 (Chaos Engineering)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Diagram the multi-agent AI SRE architecture: supervisor + specialized agents (logs, metrics, runbooks) + human approval gate.
-- Explain why auto-remediation is narrow (restart pod, revert deploy) rather than broad (re-architect service).
-- Name the adversarial evaluation pattern (NeuBird Hawkeye): two models agree = confidence; disagree = escalate.
-- Cite the MIT 89% early-detection result and the operational constraint: predictions without actuation are just dashboards.
+- Нарисовать multi-agent AI SRE architecture: supervisor + specialized agents (logs, metrics, runbooks) + human approval gate.
+- Объяснить, почему auto-remediation узкая (restart pod, revert deploy), а не широкая (re-architect service).
+- Назвать adversarial evaluation pattern (NeuBird Hawkeye): две модели согласны = confidence; не согласны = escalate.
+- Процитировать результат MIT 89% early-detection и операционное ограничение: predictions without actuation are just dashboards.
 
-## The Problem
+## Проблема
 
-An on-call engineer gets paged at 3 a.m. "High error rate in checkout." They check Datadog, Loki, three runbooks, the deploy log. 30 minutes later they realize the root cause is a vLLM OOM from a KV cache spike. They restart the pod; error clears.
+On-call engineer получает page в 3 a.m. "High error rate in checkout." Он проверяет Datadog, Loki, три runbooks, deploy log. Через 30 минут понимает, что root cause — vLLM OOM из-за spike KV cache. Он перезапускает pod; ошибка исчезает.
 
-In 2026 the first 20 minutes of that investigation are automatable. Grouping logs by service, correlating to recent deploys, matching against runbooks — all are RAG + tool-use. A supervised agent can do first-pass triage and present a hypothesis before the human opens Datadog.
+В 2026 первые 20 минут такого расследования автоматизируемы. Группировка logs по service, корреляция с recent deploys, сопоставление с runbooks — все это RAG + tool-use. Supervised agent может выполнить first-pass triage и представить гипотезу до того, как человек откроет Datadog.
 
-Fully autonomous remediation is a different problem. Restart pod: safe. Scale GPU pool: safe if policy allows. Re-architect the service: absolutely not. The discipline is drawing the narrow line.
+Полностью автономная remediation — другая проблема. Restart pod: безопасно. Scale GPU pool: безопасно, если policy разрешает. Re-architect the service: категорически нет. Дисциплина в том, чтобы провести узкую границу.
 
-## The Concept
+## Концепция
 
 ### Multi-agent architecture
 
@@ -47,33 +47,33 @@ Fully autonomous remediation is a different problem. Restart pod: safe. Scale GP
         Action (narrow set)
 ```
 
-Supervisor breaks the incident into sub-queries. Specialized agents have tool access (log search, PromQL, doc retrieval). Supervisor synthesizes, presents hypothesis + evidence to human. Human approves or redirects.
+Supervisor разбивает incident на sub-queries. Specialized agents имеют доступ к инструментам (log search, PromQL, doc retrieval). Supervisor синтезирует результат, показывает hypothesis + evidence человеку. Человек утверждает или перенаправляет.
 
-### Auto-remediation scope
+### Область auto-remediation
 
 **Safe (narrow)**: restart pod, revert specific deploy, scale pool within pre-approved bounds, enable pre-approved feature flag.
 
 **Not safe (broad)**: change service topology, modify resource limits, deploy new code, change IAM, alter databases.
 
-Anyone selling "set it and forget it" is overselling. The safe set grows as AI SRE matures, but the boundary is real.
+Все, кто продает "set it and forget it", переобещают. Безопасный набор растет по мере взросления AI SRE, но граница реальна.
 
 ### Adversarial evaluation (NeuBird Hawkeye)
 
-Two models independently analyze the same incident. If they agree on root cause, confidence is high. If they disagree, escalate to human with both hypotheses visible. Simple pattern, effective filter against hallucinated root causes.
+Две модели независимо анализируют один incident. Если они согласны по root cause, confidence высокий. Если не согласны, escalate to human с обеими гипотезами на виду. Простой паттерн, эффективный фильтр против hallucinated root causes.
 
 ### Operational memory
 
-Team turnover is the silent kill of traditional SRE — tribal knowledge leaves. AI SRE stores runbooks + post-mortems in a vector DB; agents retrieve on every new incident. When new engineers join, the AI has full history.
+Team turnover — тихий убийца традиционного SRE: tribal knowledge уходит. AI SRE хранит runbooks + post-mortems в vector DB; agents извлекают их при каждом новом incident. Когда приходят новые engineers, у AI есть вся история.
 
 ### Pre-incident prediction
 
-MIT 2025 research: LLM trained on historical logs, GPU temperatures, API error patterns predicted 89% of outages 10-15 minutes before they happened on the test set.
+Исследование MIT 2025: LLM, обученная на historical logs, GPU temperatures, API error patterns, предсказала 89% outages за 10-15 минут до их возникновения на test set.
 
-Reality check: predictions without actuation are dashboards. The operational question is "when we predict, what do we do?" Pre-emptive drain? Pager? Auto-scale? The answer is policy-specific.
+Reality check: predictions without actuation are dashboards. Операционный вопрос: "когда мы предсказываем, что делаем?" Pre-emptive drain? Pager? Auto-scale? Ответ зависит от policy.
 
 ### Products in 2026
 
-- **Datadog Bits AI** — managed SRE copilot inside Datadog.
+- **Datadog Bits AI** — managed SRE copilot внутри Datadog.
 - **Azure SRE Agent** — Azure-native.
 - **NeuBird Hawkeye** — adversarial eval + operational memory.
 - **PagerDuty AIOps** — triage + deduplication.
@@ -81,46 +81,46 @@ Reality check: predictions without actuation are dashboards. The operational que
 
 ### Runbooks as code
 
-Runbooks evolve from Confluence pages to versioned markdown with structured sections (symptom, hypothesis, verify, act). Structured runbooks feed better RAG retrieval. Start any AI-SRE rollout by turning unstructured runbooks into structured.
+Runbooks эволюционируют из Confluence pages в versioned markdown со structured sections (symptom, hypothesis, verify, act). Структурированные runbooks дают лучший RAG retrieval. Любой AI-SRE rollout начинайте с превращения неструктурированных runbooks в structured.
 
-### Numbers you should remember
+### Числа, которые стоит запомнить
 
-- MIT early-detection: 89% of outages, 10-15 min lead time.
+- MIT early-detection: 89% outages, 10-15 min lead time.
 - Multi-agent triage: supervisor + (logs, metrics, runbooks) + human.
 - Safe auto-remediation set: restart pod, revert deploy, scale within bounds.
 - Adversarial eval: two models independent; agreement = confidence.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates a multi-agent triage: log agent finds error, metric agent finds CPU spike, runbook agent matches to known issue. Supervisor ranks hypotheses.
+`code/main.py` симулирует multi-agent triage: log agent находит error, metric agent находит CPU spike, runbook agent сопоставляет с known issue. Supervisor ранжирует гипотезы.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/skill-ai-sre-plan.md`. Given current on-call, incident volume, team maturity, designs an AI SRE rollout.
+Этот урок создает `outputs/skill-ai-sre-plan.md`. По current on-call, incident volume, team maturity проектирует AI SRE rollout.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. What if the log and metric agents disagree? How does the supervisor resolve?
-2. Define three "safe" auto-remediation actions for your service. Justify each.
-3. Write a structured runbook template: sections, required fields, verification commands.
-4. Predictive detection fires at 12 min lead. What's your policy — pager, pre-drain, or both?
-5. Argue whether a 3-person team should adopt AI SRE in 2026 or wait. Consider maturity, volume, risk.
+1. Запустите `code/main.py`. Что если log и metric agents не согласны? Как supervisor разрешает конфликт?
+2. Определите три "safe" auto-remediation actions для вашего service. Обоснуйте каждую.
+3. Напишите structured runbook template: sections, required fields, verification commands.
+4. Predictive detection срабатывает при 12 min lead. Ваша policy — pager, pre-drain или оба?
+5. Аргументируйте, стоит ли команде из 3 человек внедрять AI SRE в 2026 или ждать. Учитывайте maturity, volume, risk.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| AI SRE | "agent for on-call" | LLM-backed incident investigation + coordination |
-| Supervisor agent | "the orchestrator" | Top-level agent breaking incidents into sub-queries |
-| Specialized agent | "domain agent" | Sub-agent with tool access (logs, metrics, runbooks) |
-| Auto-remediation | "AI fixes it" | Narrow pre-approved action; NOT broad re-architecture |
-| Operational memory | "vector runbooks" | Post-mortems + runbooks in vector DB for RAG |
-| Adversarial eval | "two-model check" | Independent analyses; agreement = confidence |
-| NeuBird Hawkeye | "the adversarial one" | Product with adversarial-eval + memory pattern |
-| Bits AI | "Datadog's SRE agent" | Datadog-managed AI SRE |
-| Pre-incident prediction | "early detection" | 10-15 min lead time on outage prediction |
+| AI SRE | "agent for on-call" | Incident investigation + coordination на базе LLM |
+| Supervisor agent | "the orchestrator" | Top-level agent, разбивающий incidents на sub-queries |
+| Specialized agent | "domain agent" | Sub-agent с tool access (logs, metrics, runbooks) |
+| Auto-remediation | "AI fixes it" | Узкое pre-approved действие; НЕ широкая re-architecture |
+| Operational memory | "vector runbooks" | Post-mortems + runbooks в vector DB для RAG |
+| Adversarial eval | "two-model check" | Независимый анализ; agreement = confidence |
+| NeuBird Hawkeye | "the adversarial one" | Product с adversarial-eval + memory pattern |
+| Bits AI | "Datadog's SRE agent" | AI SRE под управлением Datadog |
+| Pre-incident prediction | "early detection" | 10-15 min lead time в outage prediction |
 
-## Further Reading
+## Дополнительное чтение
 
 - [incident.io — AI SRE Complete Guide 2026](https://incident.io/blog/what-is-ai-sre-complete-guide-2026)
 - [InfoQ — Human-Centred AI for SRE](https://www.infoq.com/news/2026/01/opsworker-ai-sre/)

@@ -1,38 +1,38 @@
 # Chaos Engineering for LLM Production
 
-> Chaos engineering for LLMs is its own discipline in 2026. Prerequisites before running experiments in production: defined SLI/SLO, trace+metric+log observability, automated rollback, runbooks, on-call. Architecture has four planes: control (experiment scheduler), target (services, infra, data stores), safety (guards + abort + traffic filters), observability (metrics + traces + logs), feedback (into SLO adjustments). Guardrails are mandatory: burn-rate alerts pause experiments if daily error-budget burn > 2x expected; suppression windows + trace-ID correlation dedupe alert noise. Cadence: weekly small canary + SLO review; monthly game day + postmortem; quarterly cross-team resilience audit + dependency mapping. LLM-specific experiments: memory overload, network failures, provider outages, malformed prompts, KV cache eviction storms. Tooling: Harness Chaos Engineering (LLM-derived recommendations, blast-radius downscaling, MCP tool integration); LitmusChaos (CNCF); Chaos Mesh (CNCF Kubernetes-native).
+> Chaos engineering для LLM в 2026 — отдельная дисциплина. Предпосылки перед запуском экспериментов в production: defined SLI/SLO, trace+metric+log observability, automated rollback, runbooks, on-call. Архитектура имеет четыре planes: control (experiment scheduler), target (services, infra, data stores), safety (guards + abort + traffic filters), observability (metrics + traces + logs), feedback (into SLO adjustments). Guardrails обязательны: burn-rate alerts ставят эксперименты на pause, если daily error-budget burn > 2x expected; suppression windows + trace-ID correlation dedupe alert noise. Cadence: weekly small canary + SLO review; monthly game day + postmortem; quarterly cross-team resilience audit + dependency mapping. LLM-specific experiments: memory overload, network failures, provider outages, malformed prompts, KV cache eviction storms. Tooling: Harness Chaos Engineering (LLM-derived recommendations, blast-radius downscaling, MCP tool integration); LitmusChaos (CNCF); Chaos Mesh (CNCF Kubernetes-native).
 
-**Type:** Learn
-**Languages:** Python (stdlib, toy chaos experiment runner)
-**Prerequisites:** Phase 17 · 23 (SRE for AI), Phase 17 · 13 (Observability)
-**Time:** ~60 minutes
+**Тип:** Learn
+**Языки:** Python (stdlib, toy chaos experiment runner)
+**Предварительные требования:** Phase 17 · 23 (SRE for AI), Phase 17 · 13 (Observability)
+**Время:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Name the five chaos engineering prerequisites (SLI/SLO, observability, rollback, runbooks, on-call) and explain why skipping any breaks the practice.
-- Diagram the four planes (control, target, safety, observability) and the feedback loop into SLO.
-- Enumerate five LLM-specific experiments (memory overload, network fail, provider outage, malformed prompt, KV eviction storm).
-- Pick a tool — Harness, LitmusChaos, Chaos Mesh — given stack.
+- Назвать пять prerequisites для chaos engineering (SLI/SLO, observability, rollback, runbooks, on-call) и объяснить, почему пропуск любого ломает практику.
+- Нарисовать четыре planes (control, target, safety, observability) и feedback loop в SLO.
+- Перечислить пять LLM-specific experiments (memory overload, network fail, provider outage, malformed prompt, KV eviction storm).
+- Выбрать инструмент — Harness, LitmusChaos, Chaos Mesh — под заданный stack.
 
-## The Problem
+## Проблема
 
-Chaos testing in traditional stacks is established. LLM stacks add new failure modes. A 4K-token prompt with a poison character stalls the tokenizer for 12 seconds. An upstream provider 429s; your gateway retries; your service OOMs on retry-amplified concurrency. A KV cache eviction storm under burst load causes re-prefill cascades that saturate compute.
+Chaos testing в традиционных стеках уже устоялся. LLM stacks добавляют новые failure modes. 4K-token prompt с poison character останавливает tokenizer на 12 секунд. Upstream provider возвращает 429; ваш gateway делает retries; ваш service получает OOM из-за retry-amplified concurrency. KV cache eviction storm под burst load вызывает re-prefill cascades, которые насыщают compute.
 
-None of these show up in unit tests. Chaos engineering is how you discover them before users do.
+Ничего из этого не проявится в unit tests. Chaos engineering — способ обнаружить это раньше пользователей.
 
-## The Concept
+## Концепция
 
 ### Prerequisites
 
-Don't run chaos in production without:
+Не запускайте chaos в production без:
 
 1. **SLI/SLO** — defined service-level indicators and objectives.
-2. **Observability** — traces, metrics, logs, wired to dashboards.
+2. **Observability** — traces, metrics, logs, подключенные к dashboards.
 3. **Automated rollback** — Phase 17 · 20 policy-flag rollback.
 4. **Runbooks** — structured, Phase 17 · 23.
-5. **On-call** — someone to respond.
+5. **On-call** — кто-то, кто реагирует.
 
-Missing any means chaos becomes real incident.
+Отсутствие любого пункта превращает chaos в реальный incident.
 
 ### Four planes + feedback
 
@@ -42,32 +42,32 @@ Missing any means chaos becomes real incident.
 
 **Safety plane** — kill switch, suppression windows, blast-radius limits, error-budget gates.
 
-**Observability plane** — normal metrics + trace-ID correlation to distinguish chaos-induced from natural failures.
+**Observability plane** — обычные metrics + trace-ID correlation, чтобы отличать chaos-induced failures от natural failures.
 
-**Feedback loop** — findings feed back into SLO adjustment, runbook updates, code fixes.
+**Feedback loop** — findings возвращаются в SLO adjustment, runbook updates, code fixes.
 
-### Guardrails are mandatory
+### Guardrails обязательны
 
-- **Burn-rate alert**: pause experiment if daily error-budget burn exceeds 2x expected.
-- **Suppression windows**: silence non-experiment alerts in the blast radius during experiment.
-- **Trace-ID correlation**: all experiment-induced errors carry a tag so on-call can dedupe.
+- **Burn-rate alert**: pause experiment, если daily error-budget burn превышает 2x expected.
+- **Suppression windows**: заглушают non-experiment alerts в blast radius на время experiment.
+- **Trace-ID correlation**: все experiment-induced errors несут tag, чтобы on-call мог dedupe.
 
-### Five LLM-specific experiments
+### Пять LLM-specific experiments
 
-1. **Memory overload** — force a KV cache preemption storm by sending long-context requests with high concurrency. Observe: does the service gracefully shed or crash?
+1. **Memory overload** — вызовите KV cache preemption storm, отправляя long-context requests с высокой concurrency. Наблюдайте: service graceful shed или crash?
 
-2. **Network failure** — cut connectivity between inference gateway and provider. Observe: does fallback kick in within SLA? (Phase 17 · 19)
+2. **Network failure** — разорвите connectivity между inference gateway и provider. Наблюдайте: fallback включается within SLA? (Phase 17 · 19)
 
-3. **Provider outage simulation** — 100% 429 from OpenAI. Observe: does routing failover to Anthropic? (Phase 17 · 16, 19)
+3. **Provider outage simulation** — 100% 429 от OpenAI. Наблюдайте: routing failover to Anthropic? (Phase 17 · 16, 19)
 
-4. **Malformed prompt** — inject tokenizer-stalling payload (e.g., deeply nested unicode, huge UTF-8 codepoint). Observe: does a single request lock up a worker?
+4. **Malformed prompt** — внедрите tokenizer-stalling payload (e.g., deeply nested unicode, huge UTF-8 codepoint). Наблюдайте: один request блокирует worker?
 
-5. **KV eviction storm** — force eviction by saturating vLLM block budget. Observe: does LMCache recover or does service degrade?
+5. **KV eviction storm** — принудительно вызовите eviction, насытив vLLM block budget. Наблюдайте: LMCache восстанавливается или service деградирует?
 
 ### Cadence
 
-- **Weekly** — small canary experiments in staging, maybe 5% prod.
-- **Monthly** — scheduled game day on a specific scenario; cross-team attendance; postmortem.
+- **Weekly** — small canary experiments в staging, возможно 5% prod.
+- **Monthly** — scheduled game day по конкретному scenario; cross-team attendance; postmortem.
 - **Quarterly** — cross-team resilience audit; dependency map update.
 
 ### Tooling
@@ -80,48 +80,48 @@ Missing any means chaos becomes real incident.
 
 ### Starting small
 
-First experiment: pod-kill one decode replica under steady traffic. Observe rerouting and recovery. If this works and looks safe, graduate to network chaos.
+Первый experiment: pod-kill одной decode replica под steady traffic. Наблюдайте rerouting and recovery. Если это работает и выглядит безопасно, переходите к network chaos.
 
-First LLM-specific experiment: inject one provider 429 for 5 minutes. Observe fallback. Most teams discover their fallback wasn't fully tested.
+Первый LLM-specific experiment: inject one provider 429 for 5 minutes. Наблюдайте fallback. Большинство команд обнаруживают, что их fallback не был полностью протестирован.
 
-### Numbers you should remember
+### Числа, которые стоит запомнить
 
 - Four planes: control, target, safety, observability.
 - Burn-rate pause: 2x expected daily budget burn.
 - Cadence: weekly canary, monthly game day, quarterly audit.
 - Five LLM experiments: memory, network, provider, malformed prompt, KV storm.
 
-## Use It
+## Используйте это
 
-`code/main.py` simulates three chaos experiments with safety plane gates. Reports which experiments would trip the burn-rate abort.
+`code/main.py` симулирует три chaos experiments с safety plane gates. Сообщает, какие experiments сработали бы burn-rate abort.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/skill-chaos-plan.md`. Given stack and maturity, picks first three experiments and the tooling.
+Этот урок создает `outputs/skill-chaos-plan.md`. По stack и maturity выбирает первые три experiments и tooling.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Which experiment trips the burn-rate gate and why?
-2. Design the first five chaos experiments for a vLLM-based RAG service. Include success criteria.
-3. Your burn-rate alert paused an experiment. How do you determine root cause — chaos or natural?
-4. Argue whether chaos should run in production or only staging. When is production the right answer?
-5. Name three LLM-specific failure modes that generic network-chaos cannot reproduce.
+1. Запустите `code/main.py`. Какой experiment срабатывает burn-rate gate и почему?
+2. Спроектируйте первые пять chaos experiments для vLLM-based RAG service. Включите success criteria.
+3. Ваш burn-rate alert поставил experiment на pause. Как определить root cause — chaos или natural?
+4. Аргументируйте, должен ли chaos запускаться в production или только staging. Когда production — правильный ответ?
+5. Назовите три LLM-specific failure modes, которые generic network-chaos не может воспроизвести.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| SLI / SLO | "service targets" | Indicator + objective; required prerequisite |
-| Blast radius | "scope" | Set of services / users affected by experiment |
-| Burn-rate alert | "budget gate" | Fires when error-budget burn rate > 2x expected |
+| SLI / SLO | "service targets" | Indicator + objective; обязательный prerequisite |
+| Blast radius | "scope" | Набор services / users, затронутых experiment |
+| Burn-rate alert | "budget gate" | Срабатывает, когда error-budget burn rate > 2x expected |
 | Game day | "monthly drill" | Scheduled cross-team chaos exercise |
 | LitmusChaos | "CNCF workflow" | Graduated CNCF Kubernetes chaos tool |
 | Chaos Mesh | "CNCF CRD" | CNCF sandbox Kubernetes-native chaos |
-| Harness CE | "commercial AI-assisted" | Harness chaos with AI recommendations |
-| Malformed prompt | "tokenizer bomb" | Input that stalls tokenization |
-| KV eviction storm | "preemption cascade" | Mass eviction triggering re-prefills |
+| Harness CE | "commercial AI-assisted" | Harness chaos с AI recommendations |
+| Malformed prompt | "tokenizer bomb" | Input, который стопорит tokenization |
+| KV eviction storm | "preemption cascade" | Массовый eviction, запускающий re-prefills |
 
-## Further Reading
+## Дополнительное чтение
 
 - [DevSecOps School — Chaos Engineering 2026 Guide](https://devsecopsschool.com/blog/chaos-engineering/)
 - [Ankush Sharma — Observability for LLMs (book)](https://www.amazon.com/Observability-Large-Language-Models-Engineering-ebook/dp/B0DJSR65TR)
