@@ -1,51 +1,51 @@
 # Model Context Protocol (MCP)
 
-> Every LLM app built before 2025 invented its own tool schema. Then Anthropic shipped MCP, Claude adopted it, OpenAI adopted it, and by 2026 it is the default wire format for connecting any LLM to any tool, data source, or agent. Write one MCP server and every host talks to it.
+> Каждое LLM-приложение, созданное до 2025 года, изобретало собственную схему инструментов. Затем Anthropic выпустила MCP, Claude его принял, OpenAI его приняла, и к 2026 году он стал стандартным форматом передачи данных для подключения любой LLM к любому инструменту, источнику данных или агенту. Напишите один MCP-сервер, и каждый хост сможет с ним работать.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 03 (Structured Outputs)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 11 · 09 (вызов функций), Фаза 11 · 03 (структурированные выводы)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-You ship a chatbot that needs three tools: a database query, a calendar API, and a file reader. You write three JSON schemas for Claude. Then sales wants the same tools in ChatGPT — you rewrite them for OpenAI's `tools` parameter. Then you add Cursor, Zed, and Claude Code — three more rewrites, each with subtly different JSON conventions. A week later, Anthropic adds a new field; you update six schemas.
+Вы выпускаете чат-бота, которому нужны три инструмента: запрос к базе данных, API календаря и чтение файлов. Вы пишете три JSON-схемы для Claude. Затем отдел продаж хочет те же инструменты в ChatGPT — вы переписываете их под параметр OpenAI `tools`. Затем добавляете Cursor, Zed и Claude Code — еще три переписывания, каждое с немного отличающимися JSON-соглашениями. Через неделю Anthropic добавляет новое поле; вы обновляете шесть схем.
 
-This was the pre-2025 reality. Every host (the thing running an LLM) and every server (the thing exposing tools and data) shipped bespoke protocols. Scaling meant an N×M integration matrix.
+Такой была реальность до 2025 года. Каждый хост (то, что запускает LLM) и каждый сервер (то, что предоставляет инструменты и данные) поставлялись с собственными протоколами. Масштабирование означало матрицу интеграций N×M.
 
-Model Context Protocol collapses that matrix. One JSON-RPC-based spec. One server exposes tools, resources, and prompts. Any compliant host — Claude Desktop, ChatGPT, Cursor, Claude Code, Zed, and a long tail of agent frameworks — can discover and call them without custom glue.
+Model Context Protocol схлопывает эту матрицу. Одна спецификация на основе JSON-RPC. Один сервер предоставляет инструменты, ресурсы и промпты. Любой совместимый хост — Claude Desktop, ChatGPT, Cursor, Claude Code, Zed и длинный хвост агентных фреймворков — может обнаруживать и вызывать их без пользовательской склейки.
 
-As of early 2026, MCP is the default tool-and-context protocol across the big three (Anthropic, OpenAI, Google) and every major agent harness.
+По состоянию на начало 2026 года MCP является стандартным протоколом инструментов и контекста у большой тройки (Anthropic, OpenAI, Google) и в каждой крупной агентной среде выполнения.
 
-## The Concept
+## Концепция
 
-![MCP: one host, one server, three capabilities](../assets/mcp-architecture.svg)
+![MCP: один хост, один сервер, три возможности](../assets/mcp-architecture.svg)
 
-**The three primitives.** An MCP server exposes exactly three things.
+**Три примитива.** MCP-сервер предоставляет ровно три вещи.
 
-1. **Tools** — functions the model can call. Analog of OpenAI's `tools` or Anthropic's `tool_use`. Each has a name, description, JSON Schema input, and a handler.
-2. **Resources** — read-only content the model or user can request (files, database rows, API responses). Addressed by URI.
-3. **Prompts** — reusable templated prompts the user can invoke as shortcuts.
+1. **Tools** — функции, которые может вызвать модель. Аналог `tools` в OpenAI или `tool_use` в Anthropic. У каждого есть имя, описание, входная JSON Schema и обработчик.
+2. **Resources** — контент только для чтения, который может запросить модель или пользователь (файлы, строки базы данных, ответы API). Адресуются через URI.
+3. **Prompts** — переиспользуемые шаблонные промпты, которые пользователь может вызывать как быстрые команды.
 
-**The wire format.** JSON-RPC 2.0 over stdio, WebSocket, or streamable HTTP. Every message is `{"jsonrpc": "2.0", "method": "...", "params": {...}, "id": N}`. Discovery methods are `tools/list`, `resources/list`, `prompts/list`. Invocation methods are `tools/call`, `resources/read`, `prompts/get`.
+**Формат передачи данных.** JSON-RPC 2.0 поверх stdio, WebSocket или потокового HTTP. Каждое сообщение имеет вид `{"jsonrpc": "2.0", "method": "...", "params": {...}, "id": N}`. Методы обнаружения: `tools/list`, `resources/list`, `prompts/list`. Методы вызова: `tools/call`, `resources/read`, `prompts/get`.
 
-**Host vs client vs server.** The host is the LLM application (Claude Desktop). The client is a sub-component of the host that speaks to exactly one server. The server is your code. One host can mount many servers simultaneously.
+**Хост, клиент и сервер.** Хост — это LLM-приложение (Claude Desktop). Клиент — подкомпонент хоста, который говорит ровно с одним сервером. Сервер — ваш код. Один хост может одновременно подключать много серверов.
 
-### The handshake
+### Рукопожатие
 
-Every session opens with `initialize`. The client sends protocol version and its capabilities. The server responds with its version, name, and the capability set it supports (`tools`, `resources`, `prompts`, `logging`, `roots`). Everything after is negotiated against those capabilities.
+Каждая сессия начинается с `initialize`. Клиент отправляет версию протокола и свои возможности. Сервер отвечает своей версией, именем и набором поддерживаемых возможностей (`tools`, `resources`, `prompts`, `logging`, `roots`). Все последующее согласуется относительно этих возможностей.
 
-### What MCP is not
+### Чем MCP не является
 
-- Not a retrieval API. RAG (Phase 11 · 06) still decides what to pull; MCP is the transport for exposing retrieval results as resources.
-- Not an agent framework. MCP is the plumbing; frameworks like LangGraph, PydanticAI, and OpenAI Agents SDK sit above it.
-- Not tied to Anthropic. The spec and reference implementations are open source under the `modelcontextprotocol` org.
+- Не API извлечения. RAG (Фаза 11 · 06) по-прежнему решает, что извлекать; MCP — транспорт для предоставления результатов извлечения как ресурсов.
+- Не агентный фреймворк. MCP — это инфраструктурная связка; фреймворки вроде LangGraph, PydanticAI и OpenAI Agents SDK находятся выше.
+- Не привязан к Anthropic. Спецификация и эталонные реализации открыты как ПО с открытым исходным кодом в организации `modelcontextprotocol`.
 
-## Build It
+## Соберите это
 
-### Step 1: a minimal MCP server
+### Шаг 1: минимальный MCP-сервер
 
-The official Python SDK is `mcp` (formerly `mcp-python`). The high-level `FastMCP` helper decorates handlers.
+Официальный Python SDK называется `mcp` (ранее `mcp-python`). Высокоуровневый помощник `FastMCP` декорирует обработчики.
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -71,11 +71,11 @@ if __name__ == "__main__":
     mcp.run(transport="stdio")
 ```
 
-Three decorators register the three primitives. The type hints become the JSON Schema the host sees. Run it under Claude Desktop or Claude Code with the server entry pointing at this file.
+Три декоратора регистрируют три примитива. Аннотации типов становятся JSON Schema, которую видит хост. Запустите это в Claude Desktop или Claude Code, указав точку входа сервера на этот файл.
 
-### Step 2: calling an MCP server from a host
+### Шаг 2: вызов MCP-сервера из хоста
 
-The official Python client speaks JSON-RPC. Pairing it with the Anthropic SDK takes a dozen lines.
+Официальный Python-клиент говорит на JSON-RPC. Связка с Anthropic SDK занимает около десятка строк.
 
 ```python
 from mcp.client.stdio import StdioServerParameters, stdio_client
@@ -92,18 +92,18 @@ async def call_add(a: int, b: int) -> int:
             return int(result.content[0].text)
 ```
 
-`session.list_tools()` returns the same schema the LLM will see. Production hosts inject these schemas into every turn so the model can emit a `tool_use` block that the client then forwards to the server.
+`session.list_tools()` возвращает ту же схему, которую увидит LLM. Продакшен-хосты вставляют эти схемы в каждый ход, чтобы модель могла выдать блок `tool_use`, который клиент затем пересылает серверу.
 
-### Step 3: streamable HTTP transport
+### Шаг 3: потоковый HTTP-транспорт
 
-Stdio is fine for local dev. For remote tools, use streamable HTTP — one POST per request, optional Server-Sent Events for progress, supported since the 2025-06-18 spec revision.
+Stdio подходит для локальной разработки. Для удаленных инструментов используйте потоковый HTTP — один POST на запрос, необязательные Server-Sent Events для прогресса; поддерживается с ревизии спецификации 2025-06-18.
 
 ```python
 # Inside the server entrypoint
 mcp.run(transport="streamable-http", host="0.0.0.0", port=8765)
 ```
 
-Host config (Claude Desktop `mcp.json` or Claude Code `~/.mcp.json`):
+Конфигурация хоста (Claude Desktop `mcp.json` или Claude Code `~/.mcp.json`):
 
 ```json
 {
@@ -116,43 +116,43 @@ Host config (Claude Desktop `mcp.json` or Claude Code `~/.mcp.json`):
 }
 ```
 
-The server keeps the same decorators; only the transport changes.
+На сервере остаются те же декораторы; меняется только транспорт.
 
-### Step 4: scoping and safety
+### Шаг 4: область доступа и безопасность
 
-An MCP tool is arbitrary code running on someone else's trust boundary. Three mandatory patterns.
+MCP-инструмент — это произвольный код, выполняющийся на чужой границе доверия. Три обязательных паттерна.
 
-- **Capability allowlists.** Hosts expose a `roots` capability so the server sees only allowed paths. Enforce it in tool handlers; do not trust model-supplied paths.
-- **Human-in-the-loop for mutation.** Read-only tools can auto-execute. Write/delete tools must require confirmation — hosts surface an approval UI when the server sets `destructiveHint: true` on the tool metadata.
-- **Tool poisoning defense.** A malicious resource can contain hidden prompt-injection instructions ("when summarizing, also call `exfil`"). Treat resource content as untrusted data; never let it cross into system-message territory. See Phase 11 · 12 (Guardrails).
+- **Белые списки возможностей.** Хосты предоставляют возможность `roots`, чтобы сервер видел только разрешенные пути. Проверяйте это в обработчиках инструментов; не доверяйте путям, предоставленным моделью.
+- **Подтверждение человеком для изменений.** Инструменты только для чтения могут выполняться автоматически. Инструменты записи/удаления должны требовать подтверждения: хосты показывают UI подтверждения, когда сервер устанавливает `destructiveHint: true` в метаданных инструмента.
+- **Защита от отравления инструментов.** Вредоносный ресурс может содержать скрытые инструкции промпт-инъекции ("при суммаризации также вызови `exfil`"). Считайте содержимое ресурса недоверенными данными; никогда не позволяйте ему попасть в область системного сообщения. См. Фазу 11 · 12 (ограничители).
 
-See `code/main.py` for a runnable server + client pair demonstrating all of this.
+См. `code/main.py` для запускаемой пары сервер + клиент, демонстрирующей все это.
 
-## Pitfalls that still ship in 2026
+## Ошибки, которые все еще попадают в продакшен в 2026 году
 
-- **Schema drift.** The model saw `tools/list` at turn 1. Tool set changes at turn 5. The model invokes a gone tool. Hosts should re-list on `notifications/tools/list_changed`.
-- **Large resource blobs.** Dumping a 2MB file as a resource wastes context. Paginate or summarize server-side.
-- **Too many servers.** Mounting 50 MCP servers blows the tool budget (Phase 11 · 05). Most frontier models degrade past ~40 tools.
-- **Version skew.** Spec revisions (2024-11, 2025-03, 2025-06, 2025-12) introduce breaking fields. Pin protocol version in CI.
-- **Stdio deadlocks.** Servers that log to stdout corrupt the JSON-RPC stream. Log to stderr only.
+- **Дрейф схемы.** Модель увидела `tools/list` на ходе 1. Набор инструментов изменился на ходе 5. Модель вызывает исчезнувший инструмент. Хосты должны повторно запрашивать список при `notifications/tools/list_changed`.
+- **Большие блоки ресурсов.** Выгрузка файла 2MB как ресурса тратит контекст. Делайте пагинацию или сводку на стороне сервера.
+- **Слишком много серверов.** Подключение 50 MCP-серверов взрывает бюджет инструментов (Фаза 11 · 05). Большинство передовых моделей деградируют после ~40 инструментов.
+- **Расхождение версий.** Ревизии спецификации (2024-11, 2025-03, 2025-06, 2025-12) вводят обратно несовместимые поля. Фиксируйте версию протокола в CI.
+- **Взаимные блокировки stdio.** Серверы, которые логируют в stdout, повреждают поток JSON-RPC. Логируйте только в stderr.
 
-## Use It
+## Используйте это
 
-The 2026 MCP stack:
+MCP-стек 2026 года:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Local dev, single-user tools | Python `FastMCP`, stdio transport |
-| Remote team tools / SaaS integration | Streamable HTTP, OAuth 2.1 auth |
-| TypeScript host (VS Code extension, web app) | `@modelcontextprotocol/sdk` |
-| High-throughput server, typed access | Official Rust SDK (`modelcontextprotocol/rust-sdk`) |
-| Exploring ecosystem servers | `modelcontextprotocol/servers` monorepo (Filesystem, GitHub, Postgres, Slack, Puppeteer) |
+| Локальная разработка, инструменты для одного пользователя | Python `FastMCP`, транспорт stdio |
+| Удаленные командные инструменты / интеграция с SaaS | Потоковый HTTP, аутентификация OAuth 2.1 |
+| TypeScript-хост (расширение VS Code, веб-приложение) | `@modelcontextprotocol/sdk` |
+| Высоконагруженный сервер, типизированный доступ | Официальный Rust SDK (`modelcontextprotocol/rust-sdk`) |
+| Изучение серверов экосистемы | Монорепозиторий `modelcontextprotocol/servers` (Filesystem, GitHub, Postgres, Slack, Puppeteer) |
 
-Rule of thumb: if a tool is read-only, cacheable, and called from two or more hosts, ship it as an MCP server. If it is one-off inline logic, keep it as a local function (Phase 11 · 09).
+Правило большого пальца: если инструмент доступен только для чтения, кешируемый и вызывается из двух или более хостов, выпускайте его как MCP-сервер. Если это одноразовая встроенная логика, оставьте ее локальной функцией (Фаза 11 · 09).
 
-## Ship It
+## Отгрузите это
 
-Save `outputs/skill-mcp-server-designer.md`:
+Сохраните `outputs/skill-mcp-server-designer.md`:
 
 ```markdown
 ---
@@ -175,32 +175,32 @@ Given a domain (internal API, database, file source) and the hosts that will mou
 Refuse to ship a server that writes to disk or calls external APIs without an approval path. Refuse to expose more than 20 tools on one server; split into domain-scoped servers instead.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Extend the `demo-server` with a `subtract` tool. Connect it from Claude Desktop. Confirm the host picks up the new tool without a restart by emitting a `tools/list_changed` notification.
-2. **Medium.** Add a `resource` that exposes the last 100 lines of `/var/log/app.log`. Enforce a roots allowlist so `../etc/passwd` is blocked even if the model asks for it.
-3. **Hard.** Build an MCP proxy that multiplexes three upstream servers (Filesystem, GitHub, Postgres) into one aggregate surface. Handle name collisions and forward `notifications/tools/list_changed` cleanly.
+1. **Легко.** Расширьте `demo-server` инструментом `subtract`. Подключите его из Claude Desktop. Подтвердите, что хост подхватывает новый инструмент без перезапуска, отправив уведомление `tools/list_changed`.
+2. **Средне.** Добавьте `resource`, который предоставляет последние 100 строк `/var/log/app.log`. Примените белый список roots так, чтобы `../etc/passwd` блокировался, даже если модель попросит его.
+3. **Сложно.** Постройте MCP-прокси, который мультиплексирует три вышестоящих сервера (Filesystem, GitHub, Postgres) в одну агрегированную поверхность. Обработайте конфликты имен и аккуратно пересылайте `notifications/tools/list_changed`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| MCP | "Tool protocol for LLMs" | JSON-RPC 2.0 spec for exposing tools, resources, and prompts to any LLM host. |
-| Host | "Claude Desktop" | The LLM application — owns the model and user UI, mounts one or more clients. |
-| Client | "Connection" | A per-server connection inside the host that speaks JSON-RPC to exactly one server. |
-| Server | "The thing with the tools" | Your code; advertises tools/resources/prompts and handles their invocation. |
-| Tool | "Function call" | Model-invokable action with a JSON Schema input and a text/JSON result. |
-| Resource | "Read-only data" | URI-addressed content (file, row, API response) the host can request. |
-| Prompt | "Saved prompt" | User-invokable template (often with arguments) surfaced as a slash-command. |
-| Stdio transport | "Local dev mode" | Parent host spawns the server as a child process; JSON-RPC over stdin/stdout. |
-| Streamable HTTP | "The 2025-06 remote transport" | POST for requests, optional SSE for server-initiated messages; replaces the older SSE-only transport. |
+| MCP | "Протокол инструментов для LLM" | Спецификация JSON-RPC 2.0 для предоставления инструментов, ресурсов и промптов любому LLM-хосту. |
+| Host | "Claude Desktop" | LLM-приложение: владеет моделью и пользовательским UI, подключает один или несколько клиентов. |
+| Client | "Соединение" | Соединение внутри хоста для одного сервера, которое говорит по JSON-RPC ровно с одним сервером. |
+| Server | "То, где находятся инструменты" | Ваш код; объявляет инструменты/ресурсы/промпты и обрабатывает их вызовы. |
+| Tool | "Вызов функции" | Действие, вызываемое моделью, с входом JSON Schema и текстовым/JSON-результатом. |
+| Resource | "Данные только для чтения" | Контент с URI-адресацией (файл, строка, ответ API), который может запросить хост. |
+| Prompt | "Сохраненный промпт" | Шаблон, вызываемый пользователем (часто с аргументами) и показываемый как слэш-команда. |
+| Stdio transport | "Режим локальной разработки" | Родительский хост запускает сервер как дочерний процесс; JSON-RPC поверх stdin/stdout. |
+| Streamable HTTP | "Удаленный транспорт 2025-06" | POST для запросов, необязательный SSE для сообщений, инициированных сервером; заменяет старый транспорт только на SSE. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Model Context Protocol specification](https://modelcontextprotocol.io/specification) — canonical reference, versioned by date.
-- [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) — Filesystem, GitHub, Postgres, Slack, Puppeteer reference servers.
-- [Anthropic — Introducing MCP (Nov 2024)](https://www.anthropic.com/news/model-context-protocol) — launch post with design rationale.
-- [Python SDK](https://github.com/modelcontextprotocol/python-sdk) — official SDK used in this lesson.
-- [Security considerations for MCP](https://modelcontextprotocol.io/docs/concepts/security) — roots, destructive hints, tool poisoning.
-- [Google A2A specification](https://google.github.io/A2A/) — Agent2Agent protocol; the sibling standard for agent-to-agent communication that complements MCP's agent-to-tool scope.
-- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — where MCP sits in the broader pattern library for agent design (augmented LLM, workflows, autonomous agents).
+- [Спецификация Model Context Protocol](https://modelcontextprotocol.io/specification) — канонический справочник, версионируемый по дате.
+- [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) — эталонные серверы для Filesystem, GitHub, Postgres, Slack, Puppeteer.
+- [Anthropic — Представляем MCP (ноябрь 2024)](https://www.anthropic.com/news/model-context-protocol) — стартовая публикация с обоснованием дизайна.
+- [Python SDK](https://github.com/modelcontextprotocol/python-sdk) — официальный SDK, используемый в этом уроке.
+- [Соображения безопасности для MCP](https://modelcontextprotocol.io/docs/concepts/security) — roots, destructive hints, отравление инструментов.
+- [Спецификация Google A2A](https://google.github.io/A2A/) — протокол Agent2Agent; родственный стандарт для коммуникации между агентами, дополняющий область "агент-инструмент" в MCP.
+- [Anthropic — Построение эффективных агентов (декабрь 2024)](https://www.anthropic.com/research/building-effective-agents) — где MCP находится в более широкой библиотеке паттернов для проектирования агентов (LLM с расширениями, рабочие процессы, автономные агенты).

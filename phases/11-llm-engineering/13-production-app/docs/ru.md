@@ -1,42 +1,31 @@
-# Building a Production LLM Application
+# Создание производственного LLM-приложения
 
-> You have built prompts, embeddings, RAG pipelines, function calling, caching layers, and guardrails. Separately. In isolation. Like practicing guitar scales without ever playing a song. This lesson is the song. You will wire every component from Lessons 01-12 into a single production-ready service. Not a toy. Not a demo. A system that handles real traffic, fails gracefully, streams tokens, tracks costs, and survives its first 10,000 users.
+> Вы уже собрали промпты, эмбеддинги, RAG-пайплайны, вызов функций, слои кеширования и защитные правила по отдельности. В этом итоговом проекте вы соединяете их в один готовый к production сервис: не игрушку и не демо, а систему, которая обрабатывает реальный трафик, корректно переживает сбои, стримит токены, отслеживает затраты и выдерживает первые 10,000 пользователей.
 
-**Type:** Build (Capstone)
-**Languages:** Python
-**Prerequisites:** Phase 11 Lessons 01-15
-**Time:** ~120 minutes
-**Related:** Phase 11 · 14 (MCP) for replacing bespoke tool schemas with a shared protocol; Phase 11 · 15 (Prompt Caching) for 50-90% cost reduction on stable prefixes. Both are expected in every serious 2026 production stack.
+**Тип:** сборка (итоговый проект)
+**Языки:** Python
+**Предварительные требования:** Фаза 11, уроки 01-15
+**Время:** ~120 минут
+**Связано:** Фаза 11 · 14 (MCP) для замены специализированных схем инструментов общим протоколом; Фаза 11 · 15 (кеширование промптов) для снижения затрат на 50-90% на стабильных префиксах. Оба компонента ожидаются в любом серьезном production-стеке 2026 года.
 
-## Learning Objectives
+## Цели обучения
 
-- Wire all Phase 11 components (prompts, RAG, function calling, caching, guardrails) into a single production-ready service
-- Implement streaming token delivery, graceful error handling, and request timeout management
-- Build observability into the application: request logging, cost tracking, latency percentiles, and error rate dashboards
-- Deploy the application with health checks, rate limiting, and a fallback strategy for provider outages
+- Соединить компоненты Фазы 11 (промпты, RAG, вызов функций, кеширование, защитные правила) в единый готовый к production сервис
+- Реализовать потоковую доставку токенов, корректную обработку ошибок и управление таймаутами запросов
+- Встроить наблюдаемость: логирование запросов, отслеживание затрат, процентили задержки и дашборды доли ошибок
+- Развернуть приложение с проверками здоровья, ограничением частоты запросов и fallback-стратегией на случай сбоев провайдера
 
-## The Problem
+## Проблема
 
-Building an LLM feature takes an afternoon. Shipping an LLM product takes months.
+LLM-фичу можно собрать за один день. Вывод LLM-продукта в production занимает месяцы. Разрыв не в интеллекте модели, а в инфраструктуре: прототип вызывает OpenAI и печатает ответ, но production сталкивается с переполненными контекстными окнами, дублирующимися запросами, ошибками API 500 в 2 часа ночи, небезопасным SQL, неконтролируемыми счетами и медленными ответами.
 
-The gap is not intelligence. It is infrastructure. Your prototype calls OpenAI, gets a response, prints it. Works on your laptop. Then reality arrives:
+Каждое production LLM-приложение -- Perplexity, Cursor, ChatGPT, Notion AI -- решило эти проблемы не более умными промптами, а строгой инженерией. Здесь вы собираете управление промптами, эмбеддинги/векторный поиск, вызов функций, оценку, кеширование, защитные правила, streaming, обработку ошибок, observability и отслеживание затрат в одном сервисе.
 
-- A user sends a 50,000-token document. Your context window overflows.
-- Two users ask the same question 4 seconds apart. You pay for both.
-- The API returns a 500 error at 2am. Your service crashes.
-- A user asks the model to generate SQL. The model outputs `DROP TABLE users`.
-- Your monthly bill hits $12,000 and you have no idea which feature caused it.
-- Response time averages 8 seconds. Users leave after 3.
+## Концепция
 
-Every LLM application in production today -- Perplexity, Cursor, ChatGPT, Notion AI -- solved these problems. Not by being smarter about prompts. By being rigorous about engineering.
+### Production-архитектура
 
-This is the capstone. You will build a complete production LLM service that integrates prompt management (L01-02), embeddings and vector search (L04-07), function calling (L09), evaluation (L10), caching (L11), guardrails (L12), streaming, error handling, observability, and cost tracking. One service. Every component wired together.
-
-## The Concept
-
-### Production Architecture
-
-Every serious LLM application follows the same flow. The details vary. The structure does not.
+Каждое серьезное LLM-приложение следует одному и тому же потоку. Детали различаются; структура остается той же.
 
 ```mermaid
 graph LR
@@ -60,28 +49,26 @@ graph LR
     Eval --> Cost --> Resp
 ```
 
-The request enters through an API gateway that handles authentication and rate limiting. Input guardrails check for prompt injection and banned content before the prompt router selects the right template. A semantic cache checks if a similar question was answered recently. On a cache miss, the LLM is called with streaming enabled. Output guardrails validate the response. The eval logger records quality metrics. The cost tracker accounts for every token. The response streams back to the client.
+Запрос входит через API gateway, где выполняются authentication и rate limiting. Входные guardrails проверяют prompt injection и запрещенный контент. Prompt router выбирает шаблон. Semantic cache ищет похожие предыдущие ответы. При промахе кеша LLM вызывается со streaming. Eval logger записывает метрики качества. Cost tracker учитывает каждый токен. Ответ потоково возвращается клиенту.
 
-Seven components. Each one is a lesson you already completed. The engineering is in the wiring.
+### Стек
 
-### The Stack
-
-| Component | Lesson | Technology | Purpose |
+| Компонент | Урок | Технология | Назначение |
 |-----------|--------|------------|---------|
-| API Server | -- | FastAPI + Uvicorn | HTTP endpoints, SSE streaming, health checks |
-| Prompt Templates | L01-02 | Jinja2 / string templates | Versioned prompt management with variable injection |
-| Embeddings | L04 | text-embedding-3-small | Semantic similarity for cache and RAG |
-| Vector Store | L06-07 | In-memory (prod: Pinecone/Qdrant) | Nearest neighbor search for context retrieval |
-| Function Calling | L09 | Tool registry + JSON Schema | External data access, structured actions |
-| Evaluation | L10 | Custom metrics + logging | Response quality, latency, accuracy tracking |
-| Caching | L11 | Semantic cache (embedding-based) | Avoid redundant LLM calls, reduce cost and latency |
-| Guardrails | L12 | Regex + classifier rules | Block prompt injection, PII, unsafe content |
-| Cost Tracker | L11 | Token counter + pricing table | Per-request and aggregate cost accounting |
-| Streaming | -- | Server-Sent Events (SSE) | Token-by-token delivery, sub-second first token |
+| API-сервер | -- | FastAPI + Uvicorn | HTTP-эндпойнты, SSE streaming, проверки здоровья |
+| Шаблоны промптов | L01-02 | Jinja2 / строковые шаблоны | Версионированное управление промптами с подстановкой переменных |
+| Эмбеддинги | L04 | text-embedding-3-small | Семантическая близость для кеша и RAG |
+| Векторное хранилище | L06-07 | In-memory (prod: Pinecone/Qdrant) | Поиск ближайших соседей для retrieval контекста |
+| Вызов функций | L09 | Реестр инструментов + JSON Schema | Доступ к внешним данным, структурированные действия |
+| Оценка | L10 | Пользовательские метрики + logging | Отслеживание качества ответа, задержки и точности |
+| Кеширование | L11 | Semantic cache (embedding-based) | Избегать лишних вызовов LLM, снижать стоимость и задержку |
+| Guardrails | L12 | Regex + правила классификатора | Блокировка prompt injection, PII и небезопасного контента |
+| Трекер затрат | L11 | Счетчик токенов + таблица цен | Учет стоимости по запросам и в агрегате |
+| Streaming | -- | Server-Sent Events (SSE) | Доставка токен за токеном, первый токен меньше чем за секунду |
 
-### Streaming: Why It Matters
+### Streaming: зачем он нужен
 
-A GPT-5 response with 500 output tokens takes 3-8 seconds to fully generate. Without streaming, the user stares at a spinner for the entire duration. With streaming, the first token arrives in 200-500ms. The total time is the same. The perceived latency drops by 90%.
+Без streaming пользователь смотрит на индикатор загрузки 3-8 секунд. При streaming первый токен приходит за 200-500 мс; общее время то же, но воспринимаемая задержка резко падает.
 
 ```mermaid
 sequenceDiagram
@@ -102,21 +89,17 @@ sequenceDiagram
     S-->>C: SSE: data: [DONE]
 ```
 
-Three protocols for streaming:
-
-| Protocol | Latency | Complexity | When to Use |
+| Протокол | Задержка | Сложность | Когда использовать |
 |----------|---------|------------|-------------|
-| Server-Sent Events (SSE) | Low | Low | Most LLM apps. Unidirectional, HTTP-based, works everywhere |
-| WebSockets | Low | Medium | Bidirectional needs: voice, real-time collaboration |
-| Long Polling | High | Low | Legacy clients that cannot handle SSE or WebSockets |
+| Server-Sent Events (SSE) | Низкая | Низкая | Большинство LLM-приложений. Однонаправленный, на базе HTTP, работает почти везде |
+| WebSockets | Низкая | Средняя | Двусторонние сценарии: голос, совместная работа в реальном времени |
+| Long Polling | Высокая | Низкая | Legacy-клиенты, которые не поддерживают SSE или WebSockets |
 
-SSE is the default choice. OpenAI, Anthropic, and Google all stream via SSE. Your server receives chunks from the LLM API and forwards them to the client as SSE events. The client uses `EventSource` (browser) or `httpx` (Python) to consume the stream.
+SSE -- выбор по умолчанию. Сервер получает чанки от LLM API и пересылает их клиенту как SSE-события. Клиент читает поток через `EventSource` или `httpx`.
 
-### Error Handling: The Three Layers
+### Обработка ошибок: три слоя
 
-Production LLM apps fail in three distinct ways. Each requires a different recovery strategy.
-
-**Layer 1: API failures.** The LLM provider returns 429 (rate limit), 500 (server error), or times out. Solution: exponential backoff with jitter. Start at 1 second, double each retry, add random jitter to prevent thundering herd. Maximum 3 retries.
+Производственные LLM-приложения ломаются на слое API, слое модели и слое приложения. Сбоям API нужен экспоненциальный backoff with jitter; сбоям модели нужен повтор с исправленным промптом; сбоям приложения нужна graceful degradation.
 
 ```
 Attempt 1: immediate
@@ -126,53 +109,39 @@ Attempt 4: 4s + random(0, 2.0s)
 Give up: return fallback response
 ```
 
-**Layer 2: Model failures.** The model returns malformed JSON, hallucinates a function name, or produces an output that fails validation. Solution: retry with a corrected prompt. Include the error in the retry message so the model can self-correct.
-
-**Layer 3: Application failures.** A downstream service is unreachable, the vector store is slow, a guardrail throws an exception. Solution: graceful degradation. If RAG context is unavailable, proceed without it. If the cache is down, bypass it. Never let a secondary system crash the primary flow.
-
-| Failure | Retry? | Fallback | User Impact |
+| Сбой | Повторять? | Fallback | Влияние на пользователя |
 |---------|--------|----------|-------------|
-| API 429 (rate limit) | Yes, with backoff | Queue the request | "Processing, please wait..." |
-| API 500 (server error) | Yes, 3 attempts | Switch to fallback model | Transparent to user |
-| API timeout (>30s) | Yes, 1 attempt | Shorter prompt, smaller model | Slightly lower quality |
-| Malformed output | Yes, with error context | Return raw text | Minor formatting issues |
-| Guardrail block | No | Explain why request was blocked | Clear error message |
-| Vector store down | No retry on vector store | Skip RAG context | Lower quality, still functional |
-| Cache down | No retry on cache | Direct LLM call | Higher latency, higher cost |
+| API 429 (rate limit) | Да, с backoff | Поставить запрос в очередь | "Обрабатываем, пожалуйста подождите..." |
+| API 500 (server error) | Да, 3 попытки | Переключиться на fallback-модель | Незаметно для пользователя |
+| API timeout (>30s) | Да, 1 попытка | Более короткий промпт, меньшая модель | Немного ниже качество |
+| Некорректный output | Да, с контекстом ошибки | Вернуть сырой текст | Небольшие проблемы форматирования |
+| Блокировка guardrail | Нет | Объяснить, почему запрос заблокирован | Понятное сообщение об ошибке |
+| Vector store недоступен | Без retry на vector store | Пропустить RAG-контекст | Ниже качество, но сервис работает |
+| Cache недоступен | Без retry на cache | Прямой вызов LLM | Выше задержка и стоимость |
 
-**Fallback model chain.** When your primary model is unavailable, fall through a chain:
+Цепочка fallback-моделей:
 
 ```
 claude-sonnet-4-20250514 -> gpt-4o -> gpt-4o-mini -> cached response -> "Service temporarily unavailable"
 ```
 
-Each step trades quality for availability. The user always gets something.
+Каждый шаг обменивает качество на доступность.
 
-### Observability: What to Measure
+### Observability: что измерять
 
-You cannot improve what you cannot see. Every production LLM app needs three pillars of observability.
+Нужны structured logging, tracing и metrics dashboard. Логируйте request ID, user ID, template, model, tokens, latency, cache hit/miss, guardrails, cost и errors. Трассируйте каждый компонент. Следите за P50/P99 latency, cache hit rate, guardrail block rate и cost per request.
 
-**Structured logging.** Every request produces a JSON log entry with: request ID, user ID, prompt template name, model used, input tokens, output tokens, latency (ms), cache hit/miss, guardrail pass/fail, cost (USD), and any errors.
-
-**Tracing.** A single user request touches 5-8 components. OpenTelemetry traces let you see the full journey: how long did embedding take? Was it a cache hit? How long was the LLM call? Did the guardrail add latency? Without tracing, debugging production issues is guesswork.
-
-**Metrics dashboard.** The five numbers every LLM team watches:
-
-| Metric | Target | Why |
+| Метрика | Цель | Зачем |
 |--------|--------|-----|
-| P50 latency | < 2s | Median user experience |
-| P99 latency | < 10s | Tail latency drives churn |
-| Cache hit rate | > 30% | Direct cost savings |
-| Guardrail block rate | < 5% | Too high = false positives annoying users |
-| Cost per request | < $0.01 | Unit economics viability |
+| P50 latency | < 2s | Медианный пользовательский опыт |
+| P99 latency | < 10s | Хвостовая задержка повышает отток |
+| Cache hit rate | > 30% | Прямая экономия затрат |
+| Guardrail block rate | < 5% | Слишком высокое значение = ложные срабатывания раздражают пользователей |
+| Cost per request | < $0.01 | Жизнеспособность экономики на единицу запроса |
 
-### A/B Testing Prompts in Production
+### A/B-тестирование промптов в production
 
-Your prompt is not finished when it works. It is finished when you have data proving it outperforms the alternative.
-
-**Shadow mode.** Run a new prompt on 100% of traffic but only log the results -- do not show them to users. Compare quality metrics against the current prompt. No user risk, full data.
-
-**Percentage rollout.** Route 10% of traffic to the new prompt. Monitor metrics. If quality holds, increase to 25%, then 50%, then 100%. If quality drops, instant rollback.
+Используйте shadow mode для сравнения без риска и percentage rollout для контролируемого включения. Используйте детерминированный hash пользователя, а не случайный выбор, чтобы каждый пользователь получал стабильный опыт.
 
 ```mermaid
 graph TD
@@ -189,94 +158,76 @@ graph TD
     B --> L
 ```
 
-Use a deterministic hash of the user ID, not random selection. This ensures each user gets a consistent experience across requests within the same experiment.
+### Примеры реальной архитектуры
 
-### Real Architecture Examples
+**Perplexity.** Поступает запрос, веб-страницы извлекаются, нарезаются на чанки, превращаются в эмбеддинги, rerank-ятся, используются как RAG-контекст, а ответ стримится с цитатами.
 
-**Perplexity.** User query enters. A search engine retrieves 10-20 web pages. Pages are chunked, embedded, and reranked. Top 5 chunks become RAG context. The LLM generates an answer with citations, streamed back in real-time. Two models: a fast one for search query reformulation, a strong one for answer synthesis. Estimated 50M+ queries/day.
+**Cursor.** Открытый файл, соседние файлы, правки и вывод терминала формируют контекст. Router выбирает small model для autocomplete и более сильную model для chat; MCP позволяет подключать third-party tools.
 
-**Cursor.** The open file, surrounding files, recent edits, and terminal output form the context. A prompt router decides: small model for autocomplete (Cursor-small, ~20ms), large model for chat (Claude Sonnet 4.6 / GPT-5, ~3s). Context is aggressively compressed -- only relevant code sections, not entire files. Codebase embeddings provide long-range context. Speculative edits stream diffs, not full files. MCP integration lets third-party tools plug in without per-tool code changes.
-
-**ChatGPT.** Plugins, function calling, and MCP servers let the model access the web, run code, generate images, and query databases. A routing layer decides which capabilities to invoke. Memory persists user preferences across sessions. The system prompt is 1,500+ tokens of behavioral rules, cached via prompt caching. Multiple models serve different features: GPT-5 for chat, GPT-Image for images, Whisper for voice, o4-mini for deep reasoning.
+**ChatGPT.** Plugins, function calling и MCP servers открывают доступ к web/code/images/databases. Routing layer выбирает capabilities. Memory и prompt caching поддерживают поведение продукта на масштабе.
 
 ### Scaling
 
-| Scale | Architecture | Infra |
+| Масштаб | Архитектура | Инфраструктура |
 |-------|-------------|-------|
-| 0-1K DAU | Single FastAPI server, sync calls | 1 VM, $50/month |
+| 0-1K DAU | Один FastAPI server, синхронные вызовы | 1 VM, $50/month |
 | 1K-10K DAU | Async FastAPI, semantic cache, queue | 2-4 VMs + Redis, $500/month |
 | 10K-100K DAU | Horizontal scaling, load balancer, async workers | Kubernetes, $5K/month |
 | 100K+ DAU | Multi-region, model routing, dedicated inference | Custom infra, $50K+/month |
 
-Key scaling patterns:
+Ключевые паттерны: async везде, queue-based processing для не real-time задач, HTTP connection pooling и horizontal scaling, потому что LLM-приложения ограничены I/O.
 
-- **Async everywhere.** Never block a web server thread on an LLM call. Use `asyncio` and `httpx.AsyncClient`.
-- **Queue-based processing.** For non-real-time tasks (summarization, analysis), push to a queue (Redis, SQS) and process with workers. Return a job ID, let the client poll.
-- **Connection pooling.** Reuse HTTP connections to LLM providers. Creating a new TLS connection per request adds 100-200ms.
-- **Horizontal scaling.** LLM apps are I/O bound, not CPU bound. A single async server handles 100+ concurrent requests. Scale servers, not cores.
+### Прогноз затрат
 
-### Cost Projection
+Перед запуском оцените месячную стоимость.
 
-Before you ship, estimate your monthly cost. This spreadsheet decides if your business model works.
-
-| Variable | Value | Source |
+| Переменная | Значение | Источник |
 |----------|-------|--------|
 | Daily Active Users (DAU) | 10,000 | Analytics |
-| Queries per user per day | 5 | Product analytics |
-| Avg input tokens per query | 1,500 | Measured (system + context + user) |
-| Avg output tokens per query | 400 | Measured |
-| Input price per 1M tokens | $5.00 | OpenAI GPT-5 pricing |
-| Output price per 1M tokens | $15.00 | OpenAI GPT-5 pricing |
-| Cache hit rate | 35% | Measured from cache metrics |
-| Effective daily queries | 32,500 | 50,000 * (1 - 0.35) |
+| Запросов на пользователя в день | 5 | Product analytics |
+| Среднее число input tokens на запрос | 1,500 | Измерено (system + context + user) |
+| Среднее число output tokens на запрос | 400 | Измерено |
+| Цена input за 1M tokens | $5.00 | OpenAI GPT-5 pricing |
+| Цена output за 1M tokens | $15.00 | OpenAI GPT-5 pricing |
+| Cache hit rate | 35% | Измерено по cache metrics |
+| Эффективные дневные запросы | 32,500 | 50,000 * (1 - 0.35) |
 
-**Monthly LLM cost:**
+**Месячная стоимость LLM:**
 - Input: 32,500 queries/day x 1,500 tokens x 30 days / 1M x $2.50 = **$3,656**
 - Output: 32,500 queries/day x 400 tokens x 30 days / 1M x $10.00 = **$3,900**
-- **Total: $7,556/month** (with caching saving ~$4,070/month)
+- **Итого: $7,556/month** (с кешированием экономится ~$4,070/month)
 
-Without caching, the same traffic costs $11,625/month. A 35% cache hit rate saves 35% on LLM costs. This is why Lesson 11 exists.
+Без кеширования тот же трафик стоит $11,625/month.
 
-### The Deployment Checklist
+### Deployment checklist
 
-15 items. Ship nothing until every box is checked.
+15 пунктов. Ничего не запускайте, пока не отмечен каждый.
 
-| # | Item | Category |
+| # | Пункт | Категория |
 |---|------|----------|
-| 1 | API keys stored in environment variables, not code | Security |
-| 2 | Rate limiting per user (10-50 req/min default) | Protection |
-| 3 | Input guardrails active (prompt injection, PII) | Safety |
-| 4 | Output guardrails active (content filtering, format validation) | Safety |
-| 5 | Semantic cache configured and tested | Cost |
-| 6 | Streaming enabled for all chat endpoints | UX |
-| 7 | Exponential backoff on all LLM API calls | Reliability |
-| 8 | Fallback model chain configured | Reliability |
-| 9 | Structured logging with request IDs | Observability |
-| 10 | Cost tracking per request and per user | Business |
-| 11 | Health check endpoint returning dependency status | Ops |
-| 12 | Max token limits on input and output | Cost/Safety |
-| 13 | Timeout on all external calls (30s default) | Reliability |
-| 14 | CORS configured for production domains only | Security |
-| 15 | Load test with 100 concurrent users passing | Performance |
+| 1 | API keys хранятся в environment variables, а не в коде | Безопасность |
+| 2 | Rate limiting на пользователя (по умолчанию 10-50 req/min) | Защита |
+| 3 | Входные guardrails включены (prompt injection, PII) | Безопасность |
+| 4 | Выходные guardrails включены (content filtering, format validation) | Безопасность |
+| 5 | Semantic cache настроен и протестирован | Стоимость |
+| 6 | Streaming включен для всех chat endpoints | UX |
+| 7 | Exponential backoff на всех вызовах LLM API | Надежность |
+| 8 | Fallback model chain настроена | Надежность |
+| 9 | Structured logging с request IDs | Observability |
+| 10 | Cost tracking по запросу и по пользователю | Бизнес |
+| 11 | Health check endpoint возвращает status dependencies | Ops |
+| 12 | Max token limits на input и output | Cost/Safety |
+| 13 | Timeout на всех external calls (по умолчанию 30s) | Надежность |
+| 14 | CORS настроен только для production domains | Безопасность |
+| 15 | Load test со 100 concurrent users проходит | Производительность |
 
-## Build It
+## Соберите это
 
-This is the capstone. One file. Every component wired together.
+Это итоговый проект: один файл, все компоненты соединены вместе. Код включает FastAPI-ready сервис, prompt versioning/A-B testing, semantic cache, guardrails, simulated streaming LLM calls, retry/fallback, cost tracking, structured logs и eval logs.
 
-The code builds a complete production LLM service with:
-- FastAPI server with health checks and CORS
-- Prompt template management with versioning and A/B testing
-- Semantic caching using cosine similarity on embeddings
-- Input and output guardrails (prompt injection, PII, content safety)
-- Simulated LLM calls with streaming (SSE)
-- Exponential backoff with jitter and fallback model chain
-- Cost tracking per request and aggregate
-- Structured logging with request IDs
-- Evaluation logging for quality tracking
+### Шаг 1: базовая инфраструктура
 
-### Step 1: Core Infrastructure
-
-The foundation. Configuration, logging, and the data structures every component depends on.
+Основа: конфигурация, логирование и общие структуры данных.
 
 ```python
 import asyncio
@@ -363,9 +314,9 @@ class CostTracker:
         }
 ```
 
-### Step 2: Prompt Management
+### Шаг 2: управление промптами
 
-Versioned prompt templates with A/B testing support. Each template has a name, version, and the template string. The router selects based on request context and experiment assignment.
+Версионированные шаблоны промптов с A/B-тестированием. Router выбирает версию шаблона по контексту запроса и детерминированному назначению эксперимента.
 
 ```python
 @dataclass
@@ -456,9 +407,9 @@ def select_prompt(template_name, user_id, variables):
     return template, rendered
 ```
 
-### Step 3: Semantic Cache
+### Шаг 3: semantic cache
 
-Embedding-based cache that matches semantically similar queries. Two questions phrased differently but meaning the same thing will hit the cache.
+Кеш на основе embeddings для семантически похожих запросов.
 
 ```python
 def simple_embedding(text, dim=64):
@@ -539,9 +490,9 @@ class SemanticCache:
         }
 ```
 
-### Step 4: Guardrails
+### Шаг 4: guardrails
 
-Input validation catches prompt injection and PII before the LLM sees it. Output validation catches unsafe content before the user sees it. Two walls. Nothing passes unchecked.
+Валидация входа ловит prompt injection и PII до LLM; валидация выхода ловит небезопасный контент до пользователя.
 
 ```python
 INJECTION_PATTERNS = [
@@ -614,9 +565,9 @@ def check_output_guardrails(text):
     return GuardrailResult(passed=True)
 ```
 
-### Step 5: LLM Caller with Retry and Streaming
+### Шаг 5: вызов LLM с retry и streaming
 
-The core LLM interface. Exponential backoff with jitter on failures. Fallback through the model chain. Streaming support for token-by-token delivery.
+Основной интерфейс LLM: retry, backoff, fallback chain и потоковая выдача токенов.
 
 ```python
 def estimate_tokens(text):
@@ -716,9 +667,9 @@ async def stream_response(text):
         await asyncio.sleep(random.uniform(0.02, 0.08))
 ```
 
-### Step 6: The Request Pipeline
+### Шаг 6: request pipeline
 
-The orchestrator. Takes a raw user request, runs it through every component, and returns a structured result.
+Оркестратор: сырой запрос проходит через каждый компонент и превращается в структурированный результат.
 
 ```python
 class ProductionLLMService:
@@ -883,7 +834,7 @@ class ProductionLLMService:
         }
 ```
 
-### Step 7: Run the Full Demo
+### Шаг 7: запустите полное демо
 
 ```python
 async def run_production_demo():
@@ -998,11 +949,11 @@ if __name__ == "__main__":
     main()
 ```
 
-## Use It
+## Используйте это
 
-### FastAPI Server (Production Deployment)
+### FastAPI-сервер (production deployment)
 
-The demo above runs as a script. For production, wrap it in FastAPI with proper endpoints.
+Демо запускается как скрипт. Для production оберните его в FastAPI с правильными endpoints.
 
 ```python
 # from fastapi import FastAPI, HTTPException
@@ -1054,11 +1005,11 @@ The demo above runs as a script. For production, wrap it in FastAPI with proper 
 #     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
-To run this as a real server, uncomment and install dependencies: `pip install fastapi uvicorn`. Hit `http://localhost:8000/docs` for auto-generated API docs.
+Чтобы запустить это как реальный сервер, раскомментируйте код и установите зависимости: `pip install fastapi uvicorn`. Откройте `http://localhost:8000/docs`, чтобы увидеть автоматически сгенерированную API-документацию.
 
-### Real API Integration
+### Интеграция с реальными API
 
-Replace the simulated LLM calls with actual provider SDKs.
+Замените simulated LLM calls на реальные SDK провайдеров.
 
 ```python
 # import openai
@@ -1089,7 +1040,7 @@ Replace the simulated LLM calls with actual provider SDKs.
 #             yield text
 ```
 
-### Docker Deployment
+### Docker deployment
 
 ```dockerfile
 # FROM python:3.12-slim
@@ -1101,51 +1052,49 @@ Replace the simulated LLM calls with actual provider SDKs.
 # CMD ["uvicorn", "production_app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 ```
 
-Four workers. Each handles async I/O. A single box with 4 workers serves 400+ concurrent LLM requests because they are all waiting on network I/O, not CPU.
+Четыре workers обрабатывают async I/O. Один сервер с 4 workers может обслуживать сотни одновременных LLM-запросов, потому что они ждут network I/O, а не CPU.
 
-## Ship It
+## Что отправить
 
-This lesson produces `outputs/prompt-architecture-reviewer.md` -- a reusable prompt that reviews the architecture of any LLM application against the production checklist. Give it a description of your system and it returns a gap analysis.
+Этот урок создает `outputs/prompt-architecture-reviewer.md`: переиспользуемый промпт для ревью архитектуры LLM-приложения по production-чеклисту. Он также создает `outputs/skill-production-checklist.md`: фреймворк принятия решений для вывода LLM-приложений в production с порогами и критериями pass/fail.
 
-It also produces `outputs/skill-production-checklist.md` -- a decision framework for shipping LLM applications to production, covering every component from this lesson with specific thresholds and pass/fail criteria.
+## Упражнения
 
-## Exercises
+1. **Добавьте RAG-интеграцию.** Постройте in-memory vector store с 20 документами. Для `rag_answer` сделайте embedding query, найдите top 3 documents и внедрите context. Измерьте качество с RAG и без него, а retrieval latency отслеживайте отдельно.
 
-1. **Add RAG integration.** Build a simple in-memory vector store with 20 documents. When the template is `rag_answer`, embed the query, find the 3 most similar documents, and inject them as context. Measure how response quality changes with and without RAG context. Track retrieval latency separately from LLM latency.
+2. **Реализуйте настоящий function calling.** Добавьте реестр инструментов из урока 09. Определяйте вопросы, требующие внешних данных, выполняйте tool и включайте результат в prompt. Добавьте `tools_used` в response.
 
-2. **Implement real function calling.** Add a tool registry (from Lesson 09) to the service. When a user asks a question that requires external data (weather, calculation, search), the pipeline should detect this, execute the tool, and include the result in the prompt. Add a `tools_used` field to the response.
+3. **Постройте систему cost alerting.** Отслеживайте cost per user per day. При превышении $0.50/day переключайте пользователя на `gpt-4o-mini`. При превышении $100/day включайте emergency mode: cache-only для повторов, `gpt-4o-mini` для остальных запросов, отклонение requests больше 2,000 input tokens.
 
-3. **Build a cost alerting system.** Track cost per user per day. When a user exceeds $0.50/day, switch them to `gpt-4o-mini`. When total daily cost exceeds $100, activate emergency mode: cache-only responses for repeated queries, `gpt-4o-mini` for everything else, reject requests over 2,000 input tokens. Test with a simulated traffic spike.
+4. **Реализуйте версионирование промптов с откатом.** Храните prompt versions с timestamps. Показывайте metrics per version. Если у новой version error rate в 2 раза выше за 100 requests, автоматически откатывайтесь.
 
-4. **Implement prompt versioning with rollback.** Store all prompt versions with timestamps. Add an endpoint that shows quality metrics (latency, user ratings, error rate) per prompt version. Implement automatic rollback: if a new prompt version has 2x the error rate of the previous version over 100 requests, automatically revert.
+5. **Добавьте OpenTelemetry tracing.** Инструментируйте cache lookup, guardrail check, LLM call и cost calculation как spans. Экспортируйте traces и покажите вклад каждого component в total latency.
 
-5. **Add OpenTelemetry tracing.** Instrument every component (cache lookup, guardrail check, LLM call, cost calculation) as a separate span. Each span records its duration. Export traces to the console. Show the full trace for a single request, with each component's contribution to total latency visible.
+## Ключевые термины
 
-## Key Terms
-
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| API Gateway | "The frontend" | The entry point that handles authentication, rate limiting, CORS, and request routing before any LLM logic runs |
-| Prompt Router | "Template selector" | Logic that picks the right prompt template based on request type, A/B experiment assignment, and user context |
-| Semantic Cache | "Smart cache" | A cache keyed by embedding similarity rather than exact string match -- two differently-phrased identical questions return the same cached response |
-| SSE (Server-Sent Events) | "Streaming" | A unidirectional HTTP protocol where the server pushes events to the client -- used by OpenAI, Anthropic, and Google for token-by-token delivery |
-| Exponential Backoff | "Retry logic" | Waiting 1s, 2s, 4s, 8s between retries (doubling each time) with random jitter to prevent all clients retrying simultaneously |
-| Fallback Chain | "Model cascade" | An ordered list of models tried in sequence -- when the primary fails, fall through to cheaper or more available alternatives |
-| Graceful Degradation | "Partial failure handling" | When a secondary component fails (cache, RAG, guardrails), the system continues with reduced functionality rather than crashing |
-| Cost Per Request | "Unit economics" | The total LLM spend (input tokens + output tokens at model pricing) for a single user request -- the number that determines if your business model works |
-| Shadow Mode | "Dark launch" | Running a new prompt or model on real traffic but only logging results, not showing them to users -- risk-free A/B testing |
-| Health Check | "Readiness probe" | An endpoint that returns the status of all dependencies (cache, LLM availability, guardrails) -- used by load balancers and Kubernetes to route traffic |
+| API Gateway | "фронтенд" | Входная точка, которая обрабатывает authentication, rate limiting, CORS и request routing до LLM logic |
+| Prompt Router | "выбор шаблона" | Логика, выбирающая prompt template по request type, A/B assignment и user context |
+| Semantic Cache | "умный кеш" | Cache, ключом которого является embedding similarity, а не exact string match |
+| SSE (Server-Sent Events) | "стриминг" | Однонаправленный HTTP protocol, в котором server отправляет events client |
+| Exponential Backoff | "логика повторов" | Ожидание 1s, 2s, 4s, 8s между retries с random jitter |
+| Fallback Chain | "каскад моделей" | Упорядоченный список models, которые пробуются последовательно, когда primary fails |
+| Graceful Degradation | "обработка частичных сбоев" | Продолжение работы с reduced functionality, когда secondary component fails |
+| Cost Per Request | "unit economics" | Полные LLM spend на один user request |
+| Shadow Mode | "темный запуск" | Запуск new prompt/model на real traffic только с logging results, без показа пользователям |
+| Health Check | "readiness probe" | Endpoint, возвращающий статус зависимостей для load balancers и Kubernetes |
 
-## Further Reading
+## Дополнительное чтение
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/) -- the async Python framework used in this lesson, with native SSE streaming and automatic OpenAPI docs
-- [OpenAI Production Best Practices](https://platform.openai.com/docs/guides/production-best-practices) -- rate limits, error handling, and scaling guidance from the largest LLM API provider
-- [Anthropic API Reference](https://docs.anthropic.com/en/api/messages-streaming) -- streaming implementation details for Claude, including server-sent events and tool use during streaming
-- [OpenTelemetry Python SDK](https://opentelemetry.io/docs/languages/python/) -- the standard for distributed tracing, used to instrument every component of an LLM pipeline
-- [Semantic Caching with GPTCache](https://github.com/zilliztech/GPTCache) -- production semantic caching library that implements the concepts from this lesson at scale
-- [Hamel Husain, "Your AI Product Needs Evals"](https://hamel.dev/blog/posts/evals/) -- the definitive guide on evaluation-driven development for LLM applications, complementing the eval component in this capstone
-- [Eugene Yan, "Patterns for Building LLM-based Systems"](https://eugeneyan.com/writing/llm-patterns/) -- architectural patterns (guardrails, RAG, caching, routing) seen across production LLM deployments at major tech companies
-- [vLLM documentation](https://docs.vllm.ai/) -- PagedAttention-based serving: the default self-hosted inference layer used under the FastAPI capstone in this lesson.
-- [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference/index) -- Text Generation Inference: Rust server with continuous batching, Flash Attention, and Medusa speculative decoding; the HF-native alternative to vLLM.
-- [NVIDIA TensorRT-LLM documentation](https://nvidia.github.io/TensorRT-LLM/) -- the highest-throughput path on NVIDIA hardware; quantization, in-flight batching, and FP8 kernels for enterprise deployments.
-- [Hamel Husain -- Optimizing Latency: TGI vs vLLM vs CTranslate2 vs mlc](https://hamel.dev/notes/llm/inference/03_inference.html) -- measured comparison of throughput and latency across the main serving frameworks.
+- [FastAPI Documentation](https://fastapi.tiangolo.com/) -- асинхронный Python framework, использованный в этом уроке
+- [OpenAI Production Best Practices](https://platform.openai.com/docs/guides/production-best-practices) -- рекомендации по rate limits, error handling и scaling
+- [Anthropic API Reference](https://docs.anthropic.com/en/api/messages-streaming) -- детали streaming для Claude
+- [OpenTelemetry Python SDK](https://opentelemetry.io/docs/languages/python/) -- стандарт distributed tracing
+- [Semantic Caching with GPTCache](https://github.com/zilliztech/GPTCache) -- production-библиотека для семантического кеширования
+- [Hamel Husain, "Your AI Product Needs Evals"](https://hamel.dev/blog/posts/evals/) -- evaluation-driven development для LLM apps
+- [Eugene Yan, "Patterns for Building LLM-based Systems"](https://eugeneyan.com/writing/llm-patterns/) -- production-паттерны архитектуры LLM
+- [vLLM documentation](https://docs.vllm.ai/) -- serving на основе PagedAttention
+- [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference/index) -- server Text Generation Inference
+- [NVIDIA TensorRT-LLM documentation](https://nvidia.github.io/TensorRT-LLM/) -- путь high-throughput deployment для NVIDIA
+- [Hamel Husain -- Optimizing Latency: TGI vs vLLM vs CTranslate2 vs mlc](https://hamel.dev/notes/llm/inference/03_inference.html) -- сравнение serving frameworks

@@ -1,37 +1,37 @@
 # Context Engineering: Windows, Budgets, Memory, and Retrieval
 
-> Prompt engineering is a subset. Context engineering is the whole game. A prompt is a string you type. Context is everything that goes into the model's window: system instructions, retrieved documents, tool definitions, conversation history, few-shot examples, and the prompt itself. The best AI engineers in 2026 are context engineers. They decide what goes in, what stays out, and in what order.
+> Prompt engineering — это подмножество. Context engineering — вся игра. Prompt — строка, которую вы вводите. Context — все, что попадает в окно модели: system instructions, retrieved documents, tool definitions, conversation history, few-shot examples и сам prompt. Лучшие AI engineers в 2026 году — context engineers. Они решают, что входит, что остается снаружи и в каком порядке.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10 (LLMs from Scratch), Phase 11 Lesson 01-02
-**Time:** ~90 minutes
-**Related:** Phase 11 · 15 (Prompt Caching) — the cache-friendly layout is an extension of context engineering. Phase 5 · 28 (Long-Context Evaluation) for how to measure lost-in-the-middle with NIAH/RULER.
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 10 (LLMs from Scratch), Phase 11 Lesson 01-02
+**Время:** ~90 минут
+**Связано:** Phase 11 · 15 (Prompt Caching) — cache-friendly layout является продолжением context engineering. Phase 5 · 28 (Long-Context Evaluation) о том, как измерять lost-in-the-middle с NIAH/RULER.
 
-## Learning Objectives
+## Цели обучения
 
-- Calculate token budgets across all context window components (system prompt, tools, history, retrieved docs, generation headroom)
-- Implement context window management strategies: truncation, summarization, and sliding window for conversation history
-- Prioritize and order context components to maximize the model's attention on the most relevant information
-- Build a context assembler that dynamically allocates tokens based on query type and available window space
+- Рассчитывать token budgets по всем компонентам context window (system prompt, tools, history, retrieved docs, generation headroom)
+- Реализовать стратегии управления context window: truncation, summarization и sliding window для conversation history
+- Приоритизировать и упорядочивать context components, чтобы максимизировать внимание модели к самой релевантной информации
+- Построить context assembler, который динамически выделяет tokens по query type и доступному window space
 
-## The Problem
+## Проблема
 
-Claude Opus 4.7 has a 200K token window (1M in beta). GPT-5 has 400K. Gemini 3 Pro has 2M. Llama 4 claims 10M. These numbers sound enormous until you fill them.
+Claude Opus 4.7 имеет окно 200K tokens (1M in beta). GPT-5 — 400K. Gemini 3 Pro — 2M. Llama 4 заявляет 10M. Эти числа кажутся огромными, пока вы не начнете их заполнять.
 
-Here is a real breakdown for a coding assistant. System prompt: 500 tokens. Tool definitions for 50 tools: 8,000 tokens. Retrieved documentation: 4,000 tokens. Conversation history (10 turns): 6,000 tokens. Current user query: 200 tokens. Generation budget (max output): 4,000 tokens. Total: 22,700 tokens. That is only 18% of a 128K window.
+Реальный breakdown для coding assistant: system prompt — 500 tokens. Tool definitions для 50 tools — 8,000 tokens. Retrieved documentation — 4,000 tokens. Conversation history (10 turns) — 6,000 tokens. Current user query — 200 tokens. Generation budget (max output) — 4,000 tokens. Total: 22,700 tokens. Это всего 18% окна 128K.
 
-But attention does not scale linearly with context length. A model with 128K tokens of context pays quadratic attention cost (O(n^2) in vanilla transformers, though most production models use efficient attention variants). More importantly, retrieval accuracy degrades. The "Needle in a Haystack" test shows that models struggle to find information placed in the middle of long contexts. Research by Liu et al. (2023) showed that LLMs retrieve information at the start and end of long contexts with near-perfect accuracy, but accuracy drops 10-20% for information placed in the middle (positions 40-70% of the context). This "lost-in-the-middle" effect varies by model but affects all current architectures.
+Но attention не масштабируется линейно с длиной context. Модель с 128K tokens платит quadratic attention cost (O(n^2) in vanilla transformers, хотя production models используют efficient attention variants). Еще важнее: retrieval accuracy деградирует. Тест "Needle in a Haystack" показывает, что модели плохо находят информацию в середине длинного context. Liu et al. (2023) показали: LLMs почти идеально извлекают информацию в начале и конце long contexts, но accuracy падает на 10-20% для информации в середине (positions 40-70% of the context). Этот эффект "lost-in-the-middle" зависит от модели, но затрагивает текущие architectures.
 
-The practical lesson: having 200K tokens available does not mean using 200K tokens is effective. A carefully curated 10K token context often outperforms a dumped 100K token context. Context engineering is the discipline of maximizing signal-to-noise ratio within the context window.
+Практический урок: наличие 200K tokens не означает, что использовать 200K tokens эффективно. Аккуратно curated context на 10K tokens часто лучше dumped context на 100K tokens. Context engineering — дисциплина максимизации signal-to-noise ratio внутри context window.
 
-Every token you put in the window displaces a token that could carry more relevant information. Every irrelevant tool definition, every stale conversation turn, every chunk of retrieved text that does not answer the question -- each one makes the model slightly worse at the task.
+Каждый token в окне вытесняет token, который мог бы нести более релевантную информацию. Каждое нерелевантное tool definition, устаревший conversation turn, chunk retrieved text, который не отвечает на question, немного ухудшает модель на задаче.
 
-## The Concept
+## Концепция
 
-### The Context Window is a Scarce Resource
+### Context Window — дефицитный ресурс
 
-Think of the context window as RAM, not disk. It is fast and directly accessible, but limited. You cannot fit everything. You must choose.
+Думайте о context window как о RAM, а не disk. Он быстрый и напрямую доступный, но ограниченный. Нельзя поместить все. Нужно выбирать.
 
 ```mermaid
 graph TD
@@ -54,20 +54,20 @@ graph TD
     style G fill:#1a1a2e,stroke:#0f3460,color:#fff
 ```
 
-Each component competes for space. Adding more tool definitions means less room for conversation history. Adding more retrieved context means less room for few-shot examples. Context engineering is the art of allocating this budget to maximize task performance.
+Каждый component конкурирует за space. Больше tool definitions означает меньше места для conversation history. Больше retrieved context означает меньше места для few-shot examples. Context engineering — искусство распределения этого budget для максимальной task performance.
 
 ### Lost-in-the-Middle
 
-The most important empirical finding in context engineering. Models attend better to information at the beginning and end of the context. Information in the middle gets lower attention scores and is more likely to be ignored.
+Самое важное эмпирическое наблюдение в context engineering: модели лучше attend к информации в начале и конце context. Информация в середине получает lower attention scores и чаще игнорируется.
 
-Liu et al. (2023) tested this systematically. They placed a relevant document among 20 irrelevant documents at various positions and measured answer accuracy. When the relevant document was first or last, accuracy was 85-90%. When it was in the middle (position 10 of 20), accuracy dropped to 60-70%.
+Liu et al. (2023) проверили это системно. Они помещали relevant document среди 20 irrelevant documents на разные positions и измеряли answer accuracy. Когда relevant document был first или last, accuracy была 85-90%. В середине (position 10 of 20) она падала до 60-70%.
 
-This has direct engineering implications:
+Инженерные выводы:
 
-- Put the most important information first (system prompt, critical instructions)
-- Put the current query and most relevant context last (recency bias helps)
-- Treat the middle of the context as the lowest-priority zone
-- If you must include information in the middle, duplicate the key point at the end
+- Самую важную информацию ставьте first (system prompt, critical instructions)
+- Current query и most relevant context ставьте last (recency bias помогает)
+- Середину context считайте lowest-priority zone
+- Если важную информацию нужно включить в середину, продублируйте key point в конце
 
 ```mermaid
 graph LR
@@ -89,37 +89,35 @@ graph LR
 
 ### Context Components
 
-**System prompt**: sets the persona, constraints, and behavioral rules. This goes first and stays constant across turns. Claude Code uses roughly 6,000 tokens for its system prompt including tool definitions and behavioral instructions. Keep it tight. Every word in the system prompt is repeated on every API call.
+**System prompt**: задает persona, constraints и behavioral rules. Он идет first и остается constant across turns. Claude Code использует примерно 6,000 tokens для system prompt, включая tool definitions и behavioral instructions. Держите его tight: каждое слово повторяется на каждом API call.
 
-**Tool definitions**: each tool adds 50-200 tokens (name, description, parameter schema). 50 tools at 150 tokens each is 7,500 tokens before any conversation happens. Dynamic tool selection -- only including tools relevant to the current query -- can reduce this by 60-80%.
+**Tool definitions**: каждый tool добавляет 50-200 tokens (name, description, parameter schema). 50 tools по 150 tokens — это 7,500 tokens до начала conversation. Dynamic tool selection — включение только tools, relevant to current query — может сократить это на 60-80%.
 
-**Retrieved context**: documents from a vector database, search results, file contents. The quality of retrieval directly determines the quality of the response. Bad retrieval is worse than no retrieval -- it fills the window with noise and actively misleads the model.
+**Retrieved context**: documents from vector database, search results, file contents. Quality of retrieval directly determines quality of response. Bad retrieval хуже, чем no retrieval: он заполняет window noise и активно вводит model в заблуждение.
 
-**Conversation history**: every previous user message and assistant response. Grows linearly with conversation length. A 50-turn conversation at 200 tokens per turn is 10,000 tokens of history. Most of it is irrelevant to the current query.
+**Conversation history**: every previous user message and assistant response. Растет linearly with conversation length. Conversation на 50 turns по 200 tokens — 10,000 tokens history. Большая часть нерелевантна current query.
 
-**Few-shot examples**: input/output pairs that demonstrate the desired behavior. Two to three well-chosen examples often improve output quality more than thousands of tokens of instructions. But they cost space.
+**Few-shot examples**: input/output pairs, демонстрирующие desired behavior. Два-три well-chosen examples часто улучшают output quality сильнее, чем тысячи tokens instructions. Но они стоят space.
 
-**Generation budget**: the tokens reserved for the model's response. If you fill the window to capacity, the model has no room to answer. Reserve at least 2,000-4,000 tokens for generation.
+**Generation budget**: tokens, reserved for model response. Если заполнить window полностью, модели не останется места для ответа. Reserve at least 2,000-4,000 tokens for generation.
 
 ### Context Compression Strategies
 
-**History summarization**: instead of keeping all previous turns verbatim, periodically summarize the conversation. "We discussed X, decided Y, and the user wants Z" in 100 tokens replaces 10 turns that took 2,000 tokens. Run summarization when history exceeds a threshold (e.g., 5,000 tokens).
+**History summarization**: вместо хранения всех previous turns verbatim периодически summarizing conversation. "We discussed X, decided Y, and the user wants Z" in 100 tokens replaces 10 turns that took 2,000 tokens. Запускайте summarization, когда history превышает threshold (например, 5,000 tokens).
 
-**Relevance filtering**: score each retrieved document against the current query and drop documents below a threshold. If you retrieved 10 chunks but only 3 are relevant, discard the other 7. Better to have 3 highly relevant chunks than 10 mediocre ones.
+**Relevance filtering**: score каждый retrieved document against current query и drop documents below threshold. Если retrieved 10 chunks, но relevant only 3, discard other 7.
 
-**Tool pruning**: classify the user's query intent and only include tools relevant to that intent. A code question does not need calendar tools. A scheduling question does not need file system tools. This can reduce tool definitions from 8,000 tokens to 1,000.
+**Tool pruning**: classify user query intent и include only tools relevant to that intent. Code question не требует calendar tools. Scheduling question не требует file system tools. Это может сократить tool definitions с 8,000 tokens до 1,000.
 
-**Recursive summarization**: for very long documents, summarize in stages. First summarize each section, then summarize the summaries. A 50-page document becomes a 500-token digest that captures the key points.
+**Recursive summarization**: для очень long documents summarize in stages. Сначала each section, затем summaries of summaries. Документ на 50 страниц становится digest на 500 tokens.
 
 ### Memory Systems
 
-Context engineering spans three time horizons.
+**Short-term memory**: current conversation. Stored directly in context window. Растет с каждым turn. Управляется summarization и truncation.
 
-**Short-term memory**: the current conversation. Stored in the context window directly. Grows with each turn. Managed by summarization and truncation.
+**Long-term memory**: facts and preferences, persistent across conversations. "The user prefers TypeScript." "The project uses PostgreSQL." Stored in database, retrieved on session start. Claude Code хранит это в CLAUDE.md files. ChatGPT хранит это в memory feature.
 
-**Long-term memory**: facts and preferences that persist across conversations. "The user prefers TypeScript." "The project uses PostgreSQL." Stored in a database, retrieved on session start. Claude Code stores this in CLAUDE.md files. ChatGPT stores it in its memory feature.
-
-**Episodic memory**: specific past interactions that might be relevant. "Last Tuesday, we debugged a similar issue in the auth module." Stored as embeddings, retrieved when the current conversation matches a past episode.
+**Episodic memory**: specific past interactions, которые могут быть relevant. "Last Tuesday, we debugged a similar issue in the auth module." Stored as embeddings, retrieved when current conversation matches a past episode.
 
 ```mermaid
 graph TD
@@ -146,7 +144,7 @@ graph TD
 
 ### Dynamic Context Assembly
 
-The key insight: different queries need different context. A static system prompt + static tools + static history is wasteful. The best systems dynamically assemble context per query.
+Ключевая мысль: разные queries требуют разного context. Static system prompt + static tools + static history расточительны. Лучшие systems dynamically assemble context per query.
 
 1. Classify the query intent
 2. Select relevant tools (not all tools)
@@ -155,13 +153,11 @@ The key insight: different queries need different context. A static system promp
 5. Add few-shot examples that match the task type
 6. Order everything by importance: critical first, important last, optional in the middle
 
-This is what separates a good AI application from a great one. The model is the same. The context is the differentiator.
+## Собираем
 
-## Build It
+### Шаг 1: Счетчик токенов
 
-### Step 1: Token Counter
-
-You cannot budget what you cannot measure. Build a simple token counter (approximation using whitespace splitting, since the exact count depends on the tokenizer).
+Нельзя budget то, что нельзя measure. Постройте простой token counter (approximation using whitespace splitting, потому что exact count зависит от tokenizer).
 
 ```python
 import json
@@ -177,9 +173,9 @@ def count_tokens_json(obj):
     return count_tokens(json.dumps(obj))
 ```
 
-### Step 2: Context Budget Manager
+### Шаг 2: Менеджер бюджета контекста
 
-The core abstraction. A budget manager tracks how many tokens each component uses and enforces limits.
+Core abstraction. Budget manager tracks how many tokens each component uses and enforces limits.
 
 ```python
 class ContextBudget:
@@ -234,9 +230,9 @@ class ContextBudget:
         return "\n".join(lines)
 ```
 
-### Step 3: Lost-in-the-Middle Reordering
+### Шаг 3: Переупорядочивание против lost-in-the-middle
 
-Implement the reordering strategy: most important items go first and last, least important go in the middle.
+Реализуйте reordering strategy: most important items go first and last, least important go in the middle.
 
 ```python
 def reorder_lost_in_middle(items, scores):
@@ -265,7 +261,7 @@ def score_relevance(query, documents):
     return scores
 ```
 
-### Step 4: Conversation History Compressor
+### Шаг 4: Компрессор истории диалога
 
 Summarize old conversation turns to reclaim token budget.
 
@@ -316,9 +312,9 @@ class ConversationManager:
         return count_tokens(self.get_context())
 ```
 
-### Step 5: Dynamic Tool Selector
+### Шаг 5: Динамический выбор инструментов
 
-Only include tools relevant to the current query. Classify intent, then filter.
+Включайте только tools, relevant to current query. Classify intent, then filter.
 
 ```python
 TOOL_REGISTRY = {
@@ -411,9 +407,9 @@ def select_tools(query, token_budget=2000):
     return relevant, total_tokens
 ```
 
-### Step 6: Full Context Assembly Pipeline
+### Шаг 6: Полный pipeline сборки контекста
 
-Wire everything together. Given a query, dynamically assemble the optimal context.
+Соедините все вместе. Для query динамически assemble optimal context.
 
 ```python
 class ContextEngine:
@@ -523,68 +519,68 @@ def run_demo():
     print(f"  (Most relevant at start and end, least relevant in middle)")
 ```
 
-## Use It
+## Используйте это
 
-### Claude Code's Context Strategy
+### Контекстная стратегия Claude Code
 
-Claude Code manages context with a layered approach. The system prompt includes behavioral rules and tool definitions (~6K tokens). When you open a file, its contents are injected as context. When you search, results are added. Old conversation turns are summarized. CLAUDE.md provides long-term memory that persists across sessions.
+Claude Code управляет контекстом послойно. System prompt содержит поведенческие правила и определения инструментов (~6K токенов). Когда вы открываете файл, его содержимое добавляется в контекст. Когда вы выполняете поиск, добавляются результаты. Старые ходы диалога суммаризируются. CLAUDE.md дает долгосрочную память, которая сохраняется между сессиями.
 
-The key engineering decision: Claude Code does not dump your entire codebase into the context. It retrieves relevant files on demand. This is context engineering in practice.
+Ключевое инженерное решение: Claude Code не сбрасывает весь ваш код в контекст. Он извлекает релевантные файлы по требованию. Это context engineering на практике.
 
-### Cursor's Dynamic Context Loading
+### Dynamic Context Loading в Cursor
 
-Cursor indexes your entire codebase into embeddings. When you type a query, it retrieves the most relevant files and code blocks using vector similarity. Only those pieces go into the context window. A 500K-line codebase is compressed into the 5-10 most relevant code blocks.
+Cursor индексирует весь ваш код в embeddings. Когда вы вводите запрос, он извлекает наиболее релевантные файлы и блоки кода через vector similarity. В context window попадают только эти фрагменты. Кодовая база на 500K строк сжимается до 5-10 самых релевантных блоков кода.
 
-This is the pattern: embed everything, retrieve on demand, include only what matters.
+Паттерн такой: embed everything, retrieve on demand, include only what matters.
 
-### ChatGPT Memory
+### Память ChatGPT
 
-ChatGPT stores user preferences and facts as long-term memory. On each conversation start, relevant memories are retrieved and included in the system prompt. "The user prefers Python" costs 5 tokens but saves hundreds of tokens of repeated instructions across conversations.
+ChatGPT хранит пользовательские предпочтения и факты как long-term memory. В начале каждого диалога релевантные memories извлекаются и включаются в system prompt. Факт "The user prefers Python" стоит 5 токенов, но экономит сотни токенов повторяющихся инструкций между диалогами.
 
-### RAG as Context Engineering
+### RAG как Context Engineering
 
-Retrieval-Augmented Generation is context engineering formalized. Instead of stuffing knowledge into the model's weights (training) or the system prompt (static context), you retrieve relevant documents at query time and inject them into the context window. The entire RAG pipeline -- chunking, embedding, retrieval, reranking -- exists to solve one problem: putting the right information in the context window.
+Retrieval-Augmented Generation - это формализованный context engineering. Вместо того чтобы зашивать знания в веса модели (training) или system prompt (static context), вы извлекаете релевантные документы во время запроса и вставляете их в context window. Весь RAG pipeline - chunking, embedding, retrieval, reranking - существует ради одной задачи: поместить правильную информацию в context window.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/prompt-context-optimizer.md` -- a reusable prompt that audits a context assembly strategy and recommends optimizations. Feed it your system prompt, tool count, average history length, and retrieval strategy, and it identifies token waste and suggests improvements.
+Этот урок создает `outputs/prompt-context-optimizer.md` - переиспользуемый промпт, который аудитит стратегию сборки контекста и рекомендует оптимизации. Передайте ему system prompt, количество инструментов, среднюю длину history и стратегию retrieval, и он найдет растрату токенов и предложит улучшения.
 
-It also produces `outputs/skill-context-engineering.md` -- a decision framework for designing context assembly pipelines based on task type, context window size, and latency budget.
+Он также создает `outputs/skill-context-engineering.md` - decision framework для проектирования context assembly pipelines на основе типа задачи, размера context window и latency budget.
 
-## Exercises
+## Упражнения
 
-1. Add a "token waste detector" to the ContextBudget class. It should flag components using more than 30% of the budget and suggest compression strategies specific to each component type (summarize history, prune tools, re-rank documents).
+1. Добавьте "token waste detector" в класс ContextBudget. Он должен отмечать компоненты, которые используют больше 30% бюджета, и предлагать стратегии сжатия для каждого типа компонента (summarize history, prune tools, re-rank documents).
 
-2. Implement semantic deduplication for retrieved context. If two retrieved documents are more than 80% similar (by word overlap or cosine similarity of their embeddings), keep only the higher-scored one. Measure how much token budget this recovers.
+2. Реализуйте semantic deduplication для retrieved context. Если два извлеченных документа более чем на 80% похожи (по word overlap или cosine similarity их embeddings), оставляйте только документ с более высоким score. Измерьте, сколько token budget это возвращает.
 
-3. Build a "context replay" tool. Given a conversation transcript, replay it through the ContextEngine and visualize how the budget allocation changes turn by turn. Plot token usage per component over time. Identify the turn where context starts getting compressed.
+3. Постройте "context replay" tool. По transcript диалога проигрывайте его через ContextEngine и визуализируйте, как распределение budget меняется от turn к turn. Постройте график token usage per component over time. Найдите turn, где context начинает сжиматься.
 
-4. Implement a priority-based tool selector. Instead of binary include/exclude, assign each tool a relevance score to the current query. Include tools in descending relevance order until the tool budget is exhausted. Compare task performance with 5, 10, 20, and 50 tools included.
+4. Реализуйте priority-based tool selector. Вместо бинарного include/exclude присваивайте каждому tool relevance score для текущего query. Включайте tools по убыванию релевантности, пока не исчерпан tool budget. Сравните task performance при включении 5, 10, 20 и 50 tools.
 
-5. Build a multi-strategy context compressor. Implement three compression strategies (truncation, summarization, extraction of key sentences) and benchmark them on a set of 20 documents. Measure the tradeoff between compression ratio and information retention (does the compressed version still contain the answer to the query?).
+5. Постройте multi-strategy context compressor. Реализуйте три стратегии сжатия (truncation, summarization, extraction of key sentences) и benchmark их на наборе из 20 документов. Измерьте tradeoff между compression ratio и information retention (содержит ли сжатая версия ответ на query?).
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Context window | "How much the model can read" | The maximum number of tokens (input + output) the model processes in a single forward pass -- 400K for GPT-5, 200K (1M beta) for Claude Opus 4.7, 2M for Gemini 3 Pro |
-| Context engineering | "Advanced prompt engineering" | The discipline of deciding what goes into the context window, in what order, and at what priority -- encompasses retrieval, compression, tool selection, and memory management |
-| Lost-in-the-middle | "Models forget stuff in the middle" | Empirical finding that LLMs attend better to the beginning and end of context, with 10-20% accuracy drop for information placed in the middle |
-| Token budget | "How many tokens you have left" | An explicit allocation of context window capacity across components (system prompt, tools, history, retrieval, generation) with per-component limits |
-| Dynamic context | "Loading stuff on the fly" | Assembling the context window differently for each query based on intent classification, relevant tool selection, and retrieval results |
-| History summarization | "Compressing the conversation" | Replacing verbatim old conversation turns with a concise summary, reducing token cost while preserving key information |
-| Tool pruning | "Only including relevant tools" | Classifying query intent and only including tool definitions that match, reducing tool token cost by 60-80% |
-| Long-term memory | "Remembering across sessions" | Facts and preferences stored in a database and retrieved at session start -- CLAUDE.md, ChatGPT Memory, and similar systems |
-| Episodic memory | "Remembering specific past events" | Past interactions stored as embeddings and retrieved when the current query is similar to a past conversation |
-| Generation budget | "Room for the answer" | Tokens reserved for the model's output -- if the context fills the window completely, the model has no room to respond |
+| Context window | "Сколько модель может прочитать" | Максимальное число токенов (input + output), которое модель обрабатывает за один forward pass: 400K для GPT-5, 200K (1M beta) для Claude Opus 4.7, 2M для Gemini 3 Pro |
+| Context engineering | "Продвинутый prompt engineering" | Дисциплина, определяющая, что попадает в context window, в каком порядке и с каким приоритетом; включает retrieval, compression, tool selection и memory management |
+| Lost-in-the-middle | "Модели забывают середину" | Эмпирический результат: LLMs лучше обращают внимание на начало и конец контекста, с падением точности на 10-20% для информации в середине |
+| Token budget | "Сколько токенов осталось" | Явное распределение емкости context window между компонентами (system prompt, tools, history, retrieval, generation) с лимитами для каждого компонента |
+| Dynamic context | "Загрузка на лету" | Сборка context window по-разному для каждого query на основе intent classification, выбора релевантных tools и retrieval results |
+| History summarization | "Сжатие диалога" | Замена старых ходов диалога дословно на краткое summary, которое снижает стоимость в токенах и сохраняет ключевую информацию |
+| Tool pruning | "Включать только релевантные tools" | Классификация intent запроса и включение только тех tool definitions, которые ему соответствуют, сокращая token cost инструментов на 60-80% |
+| Long-term memory | "Память между сессиями" | Факты и предпочтения, сохраненные в базе данных и извлекаемые в начале сессии: CLAUDE.md, ChatGPT Memory и похожие системы |
+| Episodic memory | "Память о конкретных прошлых событиях" | Прошлые взаимодействия, сохраненные как embeddings и извлекаемые, когда текущий query похож на прошлый диалог |
+| Generation budget | "Место для ответа" | Токены, зарезервированные для output модели; если context полностью заполняет окно, модели не остается места для ответа |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Liu et al., 2023 -- "Lost in the Middle: How Language Models Use Long Contexts"](https://arxiv.org/abs/2307.03172) -- the definitive study on position-dependent attention, showing that models struggle with information in the middle of long contexts
-- [Anthropic's Contextual Retrieval blog post](https://www.anthropic.com/news/contextual-retrieval) -- how Anthropic approaches context-aware chunk retrieval, reducing retrieval failure by 49%
-- [Simon Willison's "Context Engineering"](https://simonwillison.net/2025/Jun/27/context-engineering/) -- the blog post that named the discipline and distinguished it from prompt engineering
-- [LangChain documentation on RAG](https://python.langchain.com/docs/tutorials/rag/) -- practical implementation of retrieval-augmented generation as a context engineering pattern
-- [Greg Kamradt's Needle in a Haystack test](https://github.com/gkamradt/LLMTest_NeedleInAHaystack) -- the benchmark that revealed position-dependent retrieval failures across all major models
-- [Pope et al., "Efficiently Scaling Transformer Inference" (2022)](https://arxiv.org/abs/2211.05102) -- why context length drives memory and latency, and how KV cache, MQA, and GQA change the budget calculation.
-- [Agrawal et al., "SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills" (2023)](https://arxiv.org/abs/2308.16369) -- the two phases of inference that make long prompts expensive in TTFT but cheap in TPOT; the ground truth behind context-packing tradeoffs.
-- [Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints" (EMNLP 2023)](https://arxiv.org/abs/2305.13245) -- the grouped-query attention paper that cut KV memory 8× in production decoders without quality loss.
+- [Liu et al., 2023 -- "Lost in the Middle: How Language Models Use Long Contexts"](https://arxiv.org/abs/2307.03172) -- ключевое исследование position-dependent attention, показывающее, что модели хуже работают с информацией в середине длинных контекстов
+- [Anthropic's Contextual Retrieval blog post](https://www.anthropic.com/news/contextual-retrieval) -- как Anthropic подходит к context-aware chunk retrieval, снижая retrieval failure на 49%
+- [Simon Willison's "Context Engineering"](https://simonwillison.net/2025/Jun/27/context-engineering/) -- пост, который дал название дисциплине и отделил ее от prompt engineering
+- [LangChain documentation on RAG](https://python.langchain.com/docs/tutorials/rag/) -- практическая реализация retrieval-augmented generation как паттерна context engineering
+- [Greg Kamradt's Needle in a Haystack test](https://github.com/gkamradt/LLMTest_NeedleInAHaystack) -- benchmark, который показал position-dependent retrieval failures у всех основных моделей
+- [Pope et al., "Efficiently Scaling Transformer Inference" (2022)](https://arxiv.org/abs/2211.05102) -- почему context length определяет memory и latency, и как KV cache, MQA и GQA меняют расчет budget.
+- [Agrawal et al., "SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills" (2023)](https://arxiv.org/abs/2308.16369) -- две фазы inference, из-за которых длинные prompts дороги по TTFT, но дешевы по TPOT; основа tradeoffs при context-packing.
+- [Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints" (EMNLP 2023)](https://arxiv.org/abs/2305.13245) -- paper о grouped-query attention, который сократил KV memory в production decoders в 8 раз без потери качества.

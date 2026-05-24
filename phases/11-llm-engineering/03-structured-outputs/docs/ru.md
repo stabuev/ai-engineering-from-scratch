@@ -1,39 +1,39 @@
-# Structured Outputs: JSON, Schema Validation, Constrained Decoding
+# Структурированные выходные данные: JSON, валидация схем, constrained decoding
 
-> Your LLM returns a string. Your application needs JSON. That gap has crashed more production systems than any model hallucination. Structured output is the bridge between natural language and typed data. Get it right and your LLM becomes a reliable API. Get it wrong and you're parsing free-text with regex at 3am.
+> Ваша LLM возвращает строку. Вашему приложению нужен JSON. Из-за этого разрыва падало больше production-систем, чем из-за любых галлюцинаций модели. Структурированный вывод - это мост между естественным языком и типизированными данными. Сделаете правильно - и ваша LLM станет надежным API. Сделаете неправильно - и будете парсить свободный текст регулярными выражениями в 3 часа ночи.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lessons 01-05 (LLMs from Scratch)
-**Time:** ~90 minutes
-**Related:** Phase 5 · 20 (Structured Outputs & Constrained Decoding) covers the decoder-level theory (FSM/CFG logit processors, Outlines, XGrammar). This lesson focuses on the production SDK surface (OpenAI `response_format`, Anthropic tool use, Instructor) — read Phase 5 · 20 first if you want to understand what is happening below the API.
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 10, Lessons 01-05 (LLMs from Scratch)
+**Время:** ~90 минут
+**Связано:** Phase 5 · 20 (Structured Outputs & Constrained Decoding) рассматривает теорию на уровне декодера (FSM/CFG logit processors, Outlines, XGrammar). Этот урок фокусируется на production-поверхности SDK (OpenAI `response_format`, Anthropic tool use, Instructor) - сначала прочитайте Phase 5 · 20, если хотите понять, что происходит ниже API.
 
-## Learning Objectives
+## Цели обучения
 
-- Implement JSON-mode and schema-constrained outputs using OpenAI and Anthropic API parameters
-- Build a Pydantic validation layer that rejects malformed LLM outputs and retries with error feedback
-- Explain how constrained decoding forces valid JSON at the token level without post-processing
-- Design robust extraction prompts that reliably convert unstructured text into typed data structures
+- Реализовать JSON-mode и выводы, ограниченные схемой, с использованием параметров OpenAI и Anthropic API
+- Построить слой валидации на Pydantic, который отклоняет некорректно сформированные выводы LLM и повторяет попытку с обратной связью об ошибках
+- Объяснить, как constrained decoding принуждает к валидному JSON на уровне токенов без постобработки
+- Спроектировать надежные промпты для извлечения, которые стабильно преобразуют неструктурированный текст в типизированные структуры данных
 
-## The Problem
+## Проблема
 
-You ask an LLM: "Extract the product name, price, and availability from this text." It responds:
+Вы спрашиваете LLM: "Extract the product name, price, and availability from this text." Она отвечает:
 
 ```
 The product is the Sony WH-1000XM5 headphones, which cost $348.00 and are currently in stock.
 ```
 
-That is a perfectly correct answer. It is also completely useless to your application. Your inventory system needs `{"product": "Sony WH-1000XM5", "price": 348.00, "in_stock": true}`. You need a JSON object with specific keys, specific types, and specific value constraints. You do not need a sentence.
+Это совершенно правильный ответ. И он также полностью бесполезен для вашего приложения. Вашей системе управления запасами нужен `{"product": "Sony WH-1000XM5", "price": 348.00, "in_stock": true}`. Вам нужен JSON-объект с конкретными ключами, конкретными типами и конкретными ограничениями значений. Вам не нужно предложение.
 
-The naive solution: add "Respond in JSON" to your prompt. This works 90% of the time. The other 10% the model wraps the JSON in markdown code fences, or adds a preamble like "Here's the JSON:", or produces syntactically invalid JSON because it closed a bracket early. Your JSON parser crashes. Your pipeline breaks. You add try/except and a retry loop. The retry sometimes produces different data. Now you have a consistency problem on top of a parsing problem.
+Наивное решение: добавить "Respond in JSON" в промпт. Это работает в 90% случаев. В оставшихся 10% модель оборачивает JSON в markdown code fences, добавляет вступление вроде "Here's the JSON:" или создает синтаксически невалидный JSON, потому что слишком рано закрыла скобку. Ваш JSON-парсер падает. Ваш pipeline ломается. Вы добавляете try/except и цикл повторных попыток. Повторная попытка иногда выдает другие данные. Теперь поверх проблемы парсинга у вас появляется проблема согласованности.
 
-This is not a prompt engineering problem. It is a decoding problem. The model generates tokens left to right. At each position, it picks the most likely next token from a vocabulary of 100K+ options. Most of those options would produce invalid JSON at any given position. If the model just emitted `{"price":`, the next token must be a digit, a quote (for string), `null`, `true`, `false`, or a negative sign. Anything else produces invalid JSON. Without constraints, the model might pick a perfectly reasonable English word that is catastrophically wrong syntactically.
+Это не проблема prompt engineering. Это проблема декодирования. Модель генерирует токены слева направо. В каждой позиции она выбирает наиболее вероятный следующий токен из словаря в 100K+ вариантов. Большинство этих вариантов в любой данной позиции привели бы к невалидному JSON. Если модель только что выдала `{"price":`, следующий токен должен быть цифрой, кавычкой (для строки), `null`, `true`, `false` или знаком минуса. Все остальное создает невалидный JSON. Без ограничений модель может выбрать вполне разумное английское слово, которое синтаксически катастрофически неверно.
 
-## The Concept
+## Концепция
 
-### The Structured Output Spectrum
+### Спектр структурированного вывода
 
-There are four levels of structured output control, each more reliable than the last.
+Есть четыре уровня контроля структурированного вывода, и каждый следующий надежнее предыдущего.
 
 ```mermaid
 graph LR
@@ -50,17 +50,17 @@ graph LR
     style D fill:#1a1a2e,stroke:#0f3460,color:#fff
 ```
 
-**Prompt-based** ("Respond in valid JSON"): no enforcement. The model usually complies but sometimes does not. Reliability: ~90%. Failure mode: markdown fences, preamble text, truncated output, wrong structure.
+**Prompt-based** ("Respond in valid JSON"): нет принудительного ограничения. Модель обычно подчиняется, но иногда нет. Надежность: ~90%. Режимы отказа: markdown fences, вступительный текст, усеченный вывод, неправильная структура.
 
-**JSON mode**: the API guarantees the output is valid JSON. OpenAI's `response_format: { type: "json_object" }` enables this. The output will parse without errors. But it may not match your expected schema -- extra keys, wrong types, missing fields.
+**JSON mode**: API гарантирует, что вывод является валидным JSON. В OpenAI это включает `response_format: { type: "json_object" }`. Вывод распарсится без ошибок. Но он может не соответствовать ожидаемой схеме: лишние ключи, неправильные типы, отсутствующие поля.
 
-**Schema mode**: the API takes a JSON Schema and guarantees the output matches it. In 2026 every major provider supports this natively: OpenAI's `response_format: { type: "json_schema", json_schema: {...} }` (also as `tool_choice="required"`), Anthropic's tool use with `input_schema`, and Gemini's `response_schema` + `response_mime_type: "application/json"`. The output has the exact keys, types, and constraints you specified.
+**Schema mode**: API принимает JSON Schema и гарантирует, что вывод ей соответствует. В 2026 году каждый крупный провайдер поддерживает это нативно: OpenAI `response_format: { type: "json_schema", json_schema: {...} }` (также через `tool_choice="required"`), Anthropic tool use с `input_schema` и Gemini `response_schema` + `response_mime_type: "application/json"`. Вывод содержит ровно те ключи, типы и ограничения, которые вы указали.
 
-**Constrained decoding**: at each token position during generation, the decoder masks out all tokens that would produce invalid output. If the schema requires a number and the model is about to emit a letter, that token is set to probability zero. The model can only produce tokens that lead to valid output. This is what OpenAI's structured output mode and libraries like Outlines and Guidance implement under the hood.
+**Constrained decoding**: в каждой позиции токена во время генерации декодер маскирует все токены, которые привели бы к невалидному выводу. Если схема требует число, а модель собирается выдать букву, вероятность этого токена устанавливается в ноль. Модель может генерировать только токены, ведущие к валидному выводу. Именно это OpenAI structured output mode и библиотеки вроде Outlines и Guidance реализуют под капотом.
 
-### JSON Schema: The Contract Language
+### JSON Schema: язык контракта
 
-JSON Schema is how you tell the model (or validation layer) what shape the output must have. Every major structured output system uses it.
+JSON Schema - это способ сообщить модели (или слою валидации), какую форму должен иметь вывод. Ее использует каждая крупная система структурированного вывода.
 
 ```json
 {
@@ -78,13 +78,13 @@ JSON Schema is how you tell the model (or validation layer) what shape the outpu
 }
 ```
 
-This schema says: the output must be an object with a string `product`, a non-negative number `price`, a boolean `in_stock`, and an optional array of string `categories`. Any output that does not match gets rejected.
+Эта схема говорит: вывод должен быть объектом со строковым `product`, неотрицательным числом `price`, булевым `in_stock` и необязательным массивом строк `categories`. Любой вывод, который не соответствует, отклоняется.
 
-Schemas handle the hard cases: nested objects, arrays with typed items, enums (constrain a string to specific values), pattern matching (regex on strings), and combinators (oneOf, anyOf, allOf for polymorphic outputs).
+Схемы покрывают сложные случаи: вложенные объекты, массивы с типизированными элементами, перечисления (ограничение строки конкретными значениями), сопоставление с шаблоном (regex для строк) и комбинаторы (oneOf, anyOf, allOf для полиморфных выводов).
 
-### The Pydantic Pattern
+### Паттерн Pydantic
 
-In Python, you do not write JSON Schema by hand. You define a Pydantic model and it generates the schema for you.
+В Python вы не пишете JSON Schema вручную. Вы определяете модель Pydantic, и она генерирует схему за вас.
 
 ```python
 from pydantic import BaseModel
@@ -96,11 +96,11 @@ class Product(BaseModel):
     categories: list[str] = []
 ```
 
-This produces the same JSON Schema as above. The Instructor library (and OpenAI's SDK) accept Pydantic models directly: pass the model class, get back a validated instance. If the LLM output does not match, Instructor retries automatically.
+Это создает ту же JSON Schema, что и выше. Библиотека Instructor (и SDK OpenAI) принимают модели Pydantic напрямую: передаете класс модели, получаете обратно валидированный экземпляр. Если вывод LLM не соответствует, Instructor автоматически повторяет попытку.
 
 ### Function Calling / Tool Use
 
-An alternative interface for the same problem. Instead of asking the model to produce JSON directly, you define "tools" (functions) with typed parameters. The model outputs a function call with structured arguments. OpenAI calls this "function calling." Anthropic calls it "tool use." The result is the same: structured data.
+Альтернативный интерфейс для той же проблемы. Вместо того чтобы просить модель напрямую создать JSON, вы определяете "tools" (функции) с типизированными параметрами. Модель выводит вызов функции со структурированными аргументами. OpenAI называет это "function calling". Anthropic называет это "tool use". Результат тот же: структурированные данные.
 
 ```mermaid
 graph TD
@@ -117,27 +117,27 @@ graph TD
     style R fill:#1a1a2e,stroke:#51cf66,color:#fff
 ```
 
-Tool use is preferred when the model needs to choose which function to call, not just fill in parameters. If you have 10 different extraction schemas and the model must pick the right one based on the input, tool use gives you both the schema selection and the structured output.
+Tool use предпочтителен, когда модели нужно выбрать, какую функцию вызвать, а не просто заполнить параметры. Если у вас есть 10 разных схем извлечения и модель должна выбрать правильную на основе входа, tool use дает и выбор схемы, и структурированный вывод.
 
-### Common Failure Modes
+### Распространенные режимы отказа
 
-Even with schema enforcement, structured outputs can fail in subtle ways.
+Даже при принудительном соблюдении схемы структурированные выводы могут ломаться тонкими способами.
 
-**Hallucinated values**: the output matches the schema but contains invented data. The model produces `{"price": 299.99}` when the text says $348. Schema validation cannot catch this -- the type is correct, the value is wrong.
+**Галлюцинированные значения**: вывод соответствует схеме, но содержит выдуманные данные. Модель выдает `{"price": 299.99}`, когда в тексте указано $348. Валидация схемы не может это поймать: тип корректен, значение неверно.
 
-**Enum confusion**: you constrain a field to `["in_stock", "out_of_stock", "preorder"]`. The model outputs `"available"` -- semantically correct, but not in the allowed set. Good constrained decoding prevents this. Prompt-based approaches do not.
+**Путаница enum**: вы ограничиваете поле значениями `["in_stock", "out_of_stock", "preorder"]`. Модель выводит `"available"` - семантически корректно, но значения нет в разрешенном наборе. Хороший constrained decoding предотвращает это. Подходы на основе промпта - нет.
 
-**Nested object depth**: deeply nested schemas (4+ levels) produce more errors. Each level of nesting is another place where the model can lose track of structure.
+**Глубина вложенных объектов**: глубоко вложенные схемы (4+ уровня) порождают больше ошибок. Каждый уровень вложенности - еще одно место, где модель может потерять структуру.
 
-**Array length**: the model may produce too many or too few items in an array. Schemas support `minItems` and `maxItems` but not all providers enforce them at the decoding level.
+**Длина массива**: модель может создать слишком много или слишком мало элементов в массиве. Схемы поддерживают `minItems` и `maxItems`, но не все провайдеры принудительно соблюдают их на уровне декодирования.
 
-**Optional field omission**: the model omits fields that are technically optional but semantically important for your use case. Set them as required in the schema even if the data is sometimes missing -- force the model to produce `null` explicitly.
+**Пропуск необязательного поля**: модель пропускает поля, которые технически необязательны, но семантически важны для вашего сценария. Помечайте их как required в схеме, даже если данные иногда отсутствуют: заставьте модель явно выдать `null`.
 
-## Build It
+## Соберите это
 
-### Step 1: JSON Schema Validator
+### Шаг 1: валидатор JSON Schema
 
-Build a validator from scratch that checks whether a Python object matches a JSON Schema. This is what runs on the output side to verify compliance.
+Постройте валидатор с нуля, который проверяет, соответствует ли Python-объект JSON Schema. Именно он запускается на стороне вывода, чтобы проверить соответствие.
 
 ```python
 import json
@@ -204,9 +204,9 @@ def _validate(data, schema, path, errors):
             errors.append(f"{path}: expected integer, got {type(data).__name__}")
 ```
 
-### Step 2: Pydantic-Style Model to Schema
+### Шаг 2: модель в стиле Pydantic в схему
 
-Build a minimal class-to-schema converter. Define a Python class and generate its JSON Schema automatically.
+Постройте минимальный конвертер из класса в схему. Определите Python-класс и автоматически сгенерируйте его JSON Schema.
 
 ```python
 class SchemaField:
@@ -261,9 +261,9 @@ def model_to_schema(name, fields):
     }
 ```
 
-### Step 3: Constrained Token Filter
+### Шаг 3: фильтр constrained token
 
-Simulate constrained decoding. Given a partial JSON string and a schema, determine which token categories are valid at the current position.
+Сымитируйте constrained decoding. По частичной JSON-строке и схеме определите, какие категории токенов валидны в текущей позиции.
 
 ```python
 def next_valid_tokens(partial_json, schema):
@@ -322,9 +322,9 @@ def demonstrate_constrained_decoding():
         print(f"{display:<45} {valid}")
 ```
 
-### Step 4: Extraction Pipeline
+### Шаг 4: pipeline извлечения
 
-Combine everything into an extraction pipeline: define a schema, simulate an LLM producing structured output, validate the output, and handle retries.
+Объедините все в pipeline извлечения: определите схему, сымитируйте LLM, создающую структурированный вывод, провалидируйте вывод и обработайте повторные попытки.
 
 ```python
 def simulate_llm_extraction(text, schema, attempt=0):
@@ -368,7 +368,7 @@ product_schema = {
 }
 ```
 
-### Step 5: Run the Full Pipeline
+### Шаг 5: запустите полный pipeline
 
 ```python
 def run_demo():
@@ -419,7 +419,7 @@ def run_demo():
             print(f"  Output: FAILED after retries")
 ```
 
-## Use It
+## Используйте это
 
 ### OpenAI Structured Outputs
 
@@ -447,7 +447,7 @@ def run_demo():
 # print(product.product, product.price, product.in_stock)
 ```
 
-OpenAI's structured output mode uses constrained decoding internally. Every token the model generates is guaranteed to produce output matching the Pydantic schema. No retries needed. No validation needed. The constraint is baked into the decoding process.
+Режим структурированного вывода OpenAI использует constrained decoding внутри. Каждый токен, который генерирует модель, гарантированно ведет к выводу, соответствующему схеме Pydantic. Повторные попытки не нужны. Валидация не нужна. Ограничение встроено в процесс декодирования.
 
 ### Anthropic Tool Use
 
@@ -476,9 +476,9 @@ OpenAI's structured output mode uses constrained decoding internally. Every toke
 # )
 ```
 
-Anthropic achieves structured output through tool use. The model emits a tool call with structured arguments that match the input_schema. Same result, different API surface.
+Anthropic достигает структурированного вывода через tool use. Модель испускает tool call со структурированными аргументами, которые соответствуют input_schema. Тот же результат, другая поверхность API.
 
-### Instructor Library
+### Библиотека Instructor
 
 ```python
 # pip install instructor
@@ -500,49 +500,49 @@ Anthropic achieves structured output through tool use. The model emits a tool ca
 # )
 ```
 
-Instructor wraps any LLM client and adds automatic retries with validation. If the first attempt fails validation, it sends the errors back to the model as context and asks it to fix the output. This works with any provider, not just OpenAI.
+Instructor оборачивает любой LLM-клиент и добавляет автоматические повторные попытки с валидацией. Если первая попытка не проходит валидацию, он отправляет ошибки обратно модели как контекст и просит исправить вывод. Это работает с любым провайдером, не только с OpenAI.
 
-## Ship It
+## Отправьте это
 
-This lesson produces `outputs/prompt-structured-extractor.md` -- a reusable prompt template that extracts structured data from any text given a schema definition. Feed it a JSON Schema and unstructured text, and it returns validated JSON.
+Этот урок создает `outputs/prompt-structured-extractor.md` - переиспользуемый шаблон промпта, который извлекает структурированные данные из любого текста по заданному определению схемы. Передайте ему JSON Schema и неструктурированный текст, и он вернет валидированный JSON.
 
-It also produces `outputs/skill-structured-outputs.md` -- a decision framework for choosing the right structured output strategy based on your provider, reliability requirements, and schema complexity.
+Он также создает `outputs/skill-structured-outputs.md` - фреймворк принятия решений для выбора правильной стратегии структурированного вывода на основе вашего провайдера, требований к надежности и сложности схемы.
 
-## Exercises
+## Упражнения
 
-1. Extend the schema validator to support `oneOf` (the data must match exactly one of several schemas). This handles polymorphic outputs -- for example, a field that can be either a `Product` or a `Service` object with different shapes.
+1. Расширьте валидатор схемы поддержкой `oneOf` (данные должны соответствовать ровно одной из нескольких схем). Это покрывает полиморфные выводы - например, поле, которое может быть либо объектом `Product`, либо объектом `Service` с другой формой.
 
-2. Build a "schema diff" tool that compares two schemas and identifies breaking changes (removed required fields, changed types) versus non-breaking changes (added optional fields, relaxed constraints). This is essential for versioning your extraction schemas in production.
+2. Постройте инструмент "schema diff", который сравнивает две схемы и определяет breaking changes (удаленные обязательные поля, измененные типы) в сравнении с non-breaking changes (добавленные необязательные поля, ослабленные ограничения). Это необходимо для версионирования ваших схем извлечения в production.
 
-3. Implement a more realistic constrained decoding simulator. Given a JSON Schema and a vocabulary of 100 tokens (letters, digits, punctuation, keywords), walk through generation step by step, masking invalid tokens at each position. Measure what percentage of the vocabulary is valid at each step.
+3. Реализуйте более реалистичный симулятор constrained decoding. Получив JSON Schema и словарь из 100 токенов (буквы, цифры, пунктуация, ключевые слова), пройдите генерацию шаг за шагом, маскируя невалидные токены в каждой позиции. Измерьте, какой процент словаря валиден на каждом шаге.
 
-4. Build an extraction eval suite. Create 50 product descriptions with hand-labeled JSON outputs. Run your extraction pipeline on all 50 and measure exact match, field-level accuracy, and type compliance. Identify which fields are hardest to extract correctly.
+4. Постройте eval suite для извлечения. Создайте 50 описаний продуктов с вручную размеченными JSON-выводами. Запустите ваш pipeline извлечения на всех 50 и измерьте exact match, field-level accuracy и type compliance. Определите, какие поля сложнее всего извлекать корректно.
 
-5. Add "confidence scores" to your extraction pipeline. For each extracted field, estimate how confident the model is (based on token probabilities, or by running extraction 3 times and measuring consistency). Flag low-confidence fields for human review.
+5. Добавьте "confidence scores" в pipeline извлечения. Для каждого извлеченного поля оцените, насколько модель уверена (на основе вероятностей токенов или через запуск извлечения 3 раза и измерение согласованности). Помечайте поля с низкой уверенностью для проверки человеком.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| JSON mode | "Returns JSON" | API flag that guarantees syntactically valid JSON output, but does not enforce any particular schema |
-| Structured output | "Typed JSON" | Output that matches a specific JSON Schema with correct keys, types, and constraints |
-| Constrained decoding | "Guided generation" | At each token position, mask out tokens that would produce invalid output -- guarantees 100% schema compliance |
-| JSON Schema | "A JSON template" | A declarative language for describing the structure, types, and constraints of JSON data (used by OpenAPI, JSON Forms, etc.) |
-| Pydantic | "Python dataclasses+" | Python library that defines data models with type validation, used by FastAPI and Instructor to generate JSON Schemas |
-| Function calling | "Tool use" | LLM outputs a structured function invocation (name + typed arguments) instead of free text -- OpenAI and Anthropic both support this |
-| Instructor | "Pydantic for LLMs" | Python library that wraps LLM clients to return validated Pydantic instances, with automatic retry on validation failure |
-| Token masking | "Filtering the vocabulary" | Setting specific token probabilities to zero during generation so the model cannot produce them |
-| Schema compliance | "Matches the shape" | The output has every required field, correct types, values within constraints, and no extra disallowed fields |
-| Retry loop | "Try again until it works" | Send validation errors back to the model and ask it to fix the output -- Instructor does this automatically, up to a configurable max |
+| JSON mode | "Returns JSON" | Флаг API, который гарантирует синтаксически валидный JSON-вывод, но не принуждает к какой-либо конкретной схеме |
+| Structured output | "Typed JSON" | Вывод, который соответствует конкретной JSON Schema с правильными ключами, типами и ограничениями |
+| Constrained decoding | "Guided generation" | В каждой позиции токена маскировать токены, которые привели бы к невалидному выводу; гарантирует 100% соответствие схеме |
+| JSON Schema | "A JSON template" | Декларативный язык для описания структуры, типов и ограничений JSON-данных (используется OpenAPI, JSON Forms и т. д.) |
+| Pydantic | "Python dataclasses+" | Python-библиотека, которая определяет модели данных с валидацией типов; используется FastAPI и Instructor для генерации JSON Schemas |
+| Function calling | "Tool use" | LLM выводит структурированный вызов функции (имя + типизированные аргументы) вместо свободного текста; OpenAI и Anthropic оба поддерживают это |
+| Instructor | "Pydantic for LLMs" | Python-библиотека, которая оборачивает LLM-клиентов, чтобы возвращать валидированные экземпляры Pydantic, с автоматическим повтором при ошибке валидации |
+| Token masking | "Filtering the vocabulary" | Установка вероятностей конкретных токенов в ноль во время генерации, чтобы модель не могла их создать |
+| Schema compliance | "Matches the shape" | Вывод содержит каждое обязательное поле, правильные типы, значения в пределах ограничений и не содержит лишних запрещенных полей |
+| Retry loop | "Try again until it works" | Отправить ошибки валидации обратно модели и попросить исправить вывод; Instructor делает это автоматически до настраиваемого максимума |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI Structured Outputs Guide](https://platform.openai.com/docs/guides/structured-outputs) -- official documentation for JSON Schema-based constrained decoding in the OpenAI API
-- [Willard & Louf, 2023 -- "Efficient Guided Generation for Large Language Models"](https://arxiv.org/abs/2307.09702) -- the Outlines paper, describing how to compile JSON Schemas into finite state machines for token-level constraints
-- [Instructor documentation](https://python.useinstructor.com/) -- the standard library for getting structured outputs from any LLM with Pydantic validation and retries
-- [Anthropic Tool Use Guide](https://docs.anthropic.com/en/docs/tool-use) -- how Claude implements structured output via tool use with JSON Schema input_schema
-- [JSON Schema specification](https://json-schema.org/) -- the full spec for the schema language used by every major structured output system
-- [Outlines library](https://github.com/outlines-dev/outlines) -- open-source constrained generation using regex and JSON Schema compiled to finite state machines
-- [Dong et al., "XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models" (MLSys 2025)](https://arxiv.org/abs/2411.15100) -- the current state-of-the-art grammar engine; pushdown-automaton compilation that masks tokens at ~100 ns / token.
-- [Beurer-Kellner et al., "Prompting Is Programming: A Query Language for Large Language Models" (LMQL)](https://arxiv.org/abs/2212.06094) -- the LMQL paper framing constrained decoding as a query language with type and value constraints.
-- [Microsoft Guidance (framework docs)](https://github.com/guidance-ai/guidance) -- template-driven constrained generation; vendor-agnostic complement to Outlines and XGrammar.
+- [OpenAI Structured Outputs Guide](https://platform.openai.com/docs/guides/structured-outputs) - официальная документация по constrained decoding на основе JSON Schema в OpenAI API
+- [Willard & Louf, 2023 -- "Efficient Guided Generation for Large Language Models"](https://arxiv.org/abs/2307.09702) - статья Outlines, описывающая, как компилировать JSON Schemas в конечные автоматы для ограничений на уровне токенов
+- [Instructor documentation](https://python.useinstructor.com/) - стандартная библиотека для получения структурированных выводов из любой LLM с валидацией Pydantic и повторными попытками
+- [Anthropic Tool Use Guide](https://docs.anthropic.com/en/docs/tool-use) - как Claude реализует структурированный вывод через tool use с JSON Schema input_schema
+- [JSON Schema specification](https://json-schema.org/) - полная спецификация языка схем, используемого каждой крупной системой структурированного вывода
+- [Outlines library](https://github.com/outlines-dev/outlines) - open-source constrained generation с использованием regex и JSON Schema, скомпилированных в конечные автоматы
+- [Dong et al., "XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models" (MLSys 2025)](https://arxiv.org/abs/2411.15100) - современный state-of-the-art grammar engine; компиляция pushdown automaton, которая маскирует токены примерно за ~100 ns / token.
+- [Beurer-Kellner et al., "Prompting Is Programming: A Query Language for Large Language Models" (LMQL)](https://arxiv.org/abs/2212.06094) - статья LMQL, представляющая constrained decoding как язык запросов с ограничениями типов и значений.
+- [Microsoft Guidance (framework docs)](https://github.com/guidance-ai/guidance) - template-driven constrained generation; vendor-agnostic дополнение к Outlines и XGrammar.

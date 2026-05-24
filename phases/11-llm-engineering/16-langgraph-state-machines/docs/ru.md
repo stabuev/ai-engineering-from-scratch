@@ -1,68 +1,68 @@
-# LangGraph — State Machines for Agents
+# LangGraph — конечные автоматы для агентов
 
-> A ReAct loop written by hand is a `while True`. A ReAct loop written in LangGraph is a graph you can checkpoint, interrupt, branch, and time-travel through. The agent hasn't changed. The harness around it has.
+> Цикл ReAct, написанный вручную, — это `while True`. Цикл ReAct, написанный в LangGraph, — это граф, который можно сохранять в контрольных точках, прерывать, ветвить и перематывать во времени. Сам агент не изменился. Изменилась обвязка вокруг него.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 14 (Model Context Protocol)
-**Time:** ~75 minutes
+**Тип:** Практика
+**Языки:** Python
+**Предварительные требования:** Phase 11 · 09 (Function Calling), Phase 11 · 14 (Model Context Protocol)
+**Время:** ~75 минут
 
-## The Problem
+## Проблема
 
-You ship a function-calling agent. It works for three turns, then something goes wrong: the model tries a tool that returns 500, the user changes their mind mid-task, or the agent decides to refund an order without a human signing off. The `while True:` loop has no hooks. You can't pause it, you can't rewind it, and you can't branch off into "what if the model had picked the other tool." The moment you ship this past a demo, the agent becomes a black box that either worked or didn't.
+Вы выпускаете агента с вызовом функций. Он работает три хода, затем что-то идет не так: модель пробует инструмент, который возвращает 500, пользователь меняет решение в середине задачи, или агент решает оформить возврат заказа без подтверждения человеком. У цикла `while True:` нет точек зацепления. Вы не можете поставить его на паузу, откатить назад или ответвиться в сценарий "что если бы модель выбрала другой инструмент". В момент, когда вы выпускаете это дальше демо, агент становится черным ящиком, который либо сработал, либо нет.
 
-The next step is obvious once you see it. The agent is already a state machine — system prompt plus message history plus pending tool calls plus the next action. Make the state machine explicit: nodes for "the model thinks," "a tool runs," "a human approves," and edges for the conditional transitions between them. Once the graph is explicit, the harness gets four things for free: checkpointing (save state between steps), interrupts (pause for a human), streaming (stream tokens and intermediate events), and time-travel (rewind to a prior state and try a different branch).
+Следующий шаг становится очевидным, когда вы это видите. Агент уже является конечным автоматом: системный промпт плюс история сообщений плюс ожидающие вызовы инструментов плюс следующее действие. Сделайте конечный автомат явным: узлы для "модель думает", "инструмент запускается", "человек одобряет" и ребра для условных переходов между ними. Когда граф явный, обвязка получает четыре вещи почти бесплатно: контрольные точки (сохранение состояния между шагами), прерывания (пауза для человека), потоковую передачу (токены и промежуточные события) и перемещение во времени (откат к прошлому состоянию и проба другой ветки).
 
-LangGraph is the library that ships this abstraction. It is not an agent framework in the LangChain sense ("here is an AgentExecutor, good luck"). It is a graph runtime with first-class state, first-class persistence, and first-class interrupts. The agent loop is something you draw, not something you hand-write.
+LangGraph — библиотека, которая поставляет эту абстракцию. Это не агентный фреймворк в смысле LangChain ("вот вам AgentExecutor, удачи"). Это среда выполнения графов с состоянием, сохранением и прерываниями как сущностями первого класса. Цикл агента — это то, что вы рисуете, а не то, что пишете вручную.
 
-## The Concept
+## Концепция
 
-![LangGraph StateGraph: nodes, edges, and the checkpointer](../assets/langgraph-stategraph.svg)
+![LangGraph StateGraph: узлы, ребра и механизм контрольных точек](../assets/langgraph-stategraph.svg)
 
-A `StateGraph` has three things.
+У `StateGraph` есть три вещи.
 
-1. **State.** A typed dict (TypedDict or Pydantic model) that flows through the graph. Every node receives the full state and returns a partial update, which LangGraph merges using a *reducer* per field — `operator.add` for lists that should accumulate, overwrite by default.
-2. **Nodes.** Python functions `state -> partial_state`. Each is a discrete step: "call the model," "run tools," "summarize."
-3. **Edges.** Transitions between nodes. Static edges go one place. Conditional edges take a router function `state -> next_node_name` so the graph can branch on model output.
+1. **Состояние.** Типизированный словарь (TypedDict или модель Pydantic), который проходит через граф. Каждый узел получает полное состояние и возвращает частичное обновление, которое LangGraph сливает с помощью *редьюсера* для каждого поля: `operator.add` для списков, которые должны накапливаться, и перезапись по умолчанию.
+2. **Узлы.** Python-функции `state -> partial_state`. Каждая — отдельный шаг: "вызвать модель", "запустить инструменты", "суммировать".
+3. **Ребра.** Переходы между узлами. Статические ребра ведут в одно место. Условные ребра принимают функцию маршрутизации `state -> next_node_name`, чтобы граф мог ветвиться по выводу модели.
 
-You compile the graph. Compile binds the topology, attaches a checkpointer (optional but essential for production), and returns a runnable. You invoke it with an initial state and a `thread_id`. Every step of execution persists a checkpoint keyed on `(thread_id, checkpoint_id)`.
+Вы компилируете граф. Компиляция фиксирует топологию, подключает механизм контрольных точек (опциональный, но необходимый для production) и возвращает runnable. Вы вызываете его с начальным состоянием и `thread_id`. Каждый шаг выполнения сохраняет контрольную точку по ключу `(thread_id, checkpoint_id)`.
 
-### The four superpowers
+### Четыре суперсилы
 
-**Checkpointing.** Every node transition writes the new state to a store (in-memory for tests, Postgres/Redis/SQLite for prod). Resume by calling the graph again with the same `thread_id`. The graph picks up where it paused.
+**Контрольные точки.** Каждый переход узла записывает новое состояние в хранилище (in-memory для тестов, Postgres/Redis/SQLite для production). Resume выполняется повторным вызовом графа с тем же `thread_id`. Граф продолжает с места паузы.
 
-**Interrupts.** Mark a node with `interrupt_before=["human_review"]` and execution stops before that node runs. The state persists. Your API responds to the user with "awaiting approval." A later request to the same `thread_id` with `Command(resume=...)` resumes execution.
+**Прерывания.** Пометьте узел через `interrupt_before=["human_review"]`, и выполнение остановится перед запуском этого узла. Состояние сохраняется. Ваш API отвечает пользователю "ожидает одобрения". Более поздний запрос к тому же `thread_id` с `Command(resume=...)` возобновляет выполнение.
 
-**Streaming.** `graph.stream(state, mode="updates")` yields state deltas as they happen. `mode="messages"` streams the LLM tokens inside model nodes. `mode="values"` yields full snapshots. You pick what to surface in your UI.
+**Потоковая передача.** `graph.stream(state, mode="updates")` выдает изменения состояния по мере их появления. `mode="messages"` передает токены LLM внутри модельных узлов. `mode="values"` выдает полные снимки. Вы выбираете, что показывать в UI.
 
-**Time-travel.** `graph.get_state_history(thread_id)` returns the full checkpoint log. Pass any prior `checkpoint_id` to `graph.invoke` and you fork from that point. Great for debugging ("what if the model had picked tool B instead?") and for regression tests that replay production traces.
+**Перемещение во времени.** `graph.get_state_history(thread_id)` возвращает полный журнал контрольных точек. Передайте любой прошлый `checkpoint_id` в `graph.invoke`, и вы ответвитесь из этой точки. Это отлично подходит для отладки ("что если бы модель выбрала инструмент B?") и регрессионных тестов, которые проигрывают production-трассы.
 
-### Reducers are the point
+### Редьюсеры — главное
 
-Every state field has a reducer. Most defaults are fine — a new value overwrites the old. But message lists need `operator.add` so new messages append instead of replacing. Parallel edges merge their updates through the reducer. If two nodes both update `messages` and you forgot the `Annotated[list, add_messages]`, the second wins silently and you lose half the turn. The reducer is the only subtle thing in the library; get it right and the rest composes.
+У каждого поля состояния есть редьюсер. Большинство значений по умолчанию подходит: новое значение перезаписывает старое. Но спискам сообщений нужен `operator.add`, чтобы новые сообщения добавлялись, а не заменяли старые. Параллельные ребра сливают свои обновления через редьюсер. Если два узла оба обновляют `messages`, а вы забыли `Annotated[list, add_messages]`, второй тихо побеждает, и вы теряете половину хода. Редьюсер — единственная тонкая вещь в библиотеке; сделайте его правильно, и остальное складывается естественно.
 
-### The ReAct graph in four nodes
+### ReAct-граф в четырех узлах
 
-A production ReAct agent is four nodes and two edges:
+Production-агент ReAct — это четыре узла и два ребра:
 
-1. `agent` — calls the LLM with the current message history. Returns the assistant message (which may contain tool_calls).
-2. `tools` — executes any tool_calls in the last assistant message, appends the tool results as tool messages.
-3. A conditional edge from `agent` that routes to `tools` if the last message has tool_calls, else to `END`.
-4. A static edge from `tools` back to `agent`.
+1. `agent` — вызывает LLM с текущей историей сообщений. Возвращает сообщение ассистента (которое может содержать tool_calls).
+2. `tools` — выполняет все tool_calls из последнего сообщения ассистента, добавляет результаты инструментов как tool-сообщения.
+3. Условное ребро из `agent`, которое направляет в `tools`, если последнее сообщение содержит tool_calls, иначе в `END`.
+4. Статическое ребро из `tools` обратно в `agent`.
 
-That is it. You get the full ReAct loop (Thought → Action → Observation → Thought → …) with checkpointing, interrupts, and streaming, in roughly 40 lines of code.
+Вот и все. Вы получаете полный цикл ReAct (Thought → Action → Observation → Thought → …) с контрольными точками, прерываниями и потоковой передачей примерно в 40 строках кода.
 
-### StateGraph vs Send (fanout)
+### StateGraph и Send (fanout)
 
-`Send(node_name, state)` lets a node dispatch parallel subgraphs. Example: the agent decides to query three retrievers at once. Each `Send` spawns a parallel execution of the target node; their outputs merge through the state reducer. This is how LangGraph expresses the orchestrator-workers pattern without threading primitives.
+`Send(node_name, state)` позволяет узлу отправлять параллельные подграфы. Пример: агент решает запросить три ретривера одновременно. Каждый `Send` запускает параллельное выполнение целевого узла; их выводы сливаются через редьюсер состояния. Так LangGraph выражает паттерн orchestrator-workers без примитивов потоков.
 
-### Subgraphs
+### Подграфы
 
-A compiled graph can be a node in another graph. The outer graph sees a single node; the inner graph has its own state and its own checkpoints. This is how teams build supervisor-worker agents: the supervisor graph routes user intent to a per-domain worker subgraph.
+Скомпилированный граф может быть узлом в другом графе. Внешний граф видит один узел; внутренний граф имеет собственное состояние и собственные контрольные точки. Так команды строят агентов supervisor-worker: граф-супервизор направляет намерение пользователя в подграф работника для нужного домена.
 
-## Build It
+## Соберите это
 
-### Step 1: state and nodes
+### Шаг 1: состояние и узлы
 
 ```python
 from typing import Annotated, TypedDict
@@ -95,9 +95,9 @@ graph.add_edge("tools", "agent")
 app = graph.compile(checkpointer=MemorySaver())
 ```
 
-`add_messages` is the reducer that makes the message list accumulate instead of overwrite. Forgetting it is the most common LangGraph bug.
+`add_messages` — это редьюсер, который заставляет список сообщений накапливаться, а не перезаписываться. Забыть его — самая частая ошибка LangGraph.
 
-### Step 2: run with a thread
+### Шаг 2: запустите с thread
 
 ```python
 config = {"configurable": {"thread_id": "user-42"}}
@@ -109,11 +109,11 @@ for event in app.stream(
     print(event)
 ```
 
-Every update is a dict `{node_name: state_delta}`. Your frontend can stream these to the UI so users see "agent is thinking… calling search_web… got result… answering."
+Каждое обновление — словарь `{node_name: state_delta}`. Ваш frontend может передавать их в UI потоково, чтобы пользователи видели "агент думает... вызывает search_web... получил результат... отвечает."
 
-### Step 3: add a human-in-the-loop interrupt
+### Шаг 3: добавьте прерывание с участием человека
 
-Mark a node so execution pauses before it runs.
+Пометьте узел так, чтобы выполнение ставилось на паузу перед его запуском.
 
 ```python
 app = graph.compile(
@@ -130,9 +130,9 @@ app.invoke(Command(resume=True), config)
 app.update_state(config, {"messages": [AIMessage("Blocked by human reviewer.")]})
 ```
 
-The state, the checkpoint, and the thread all persist across the interrupt. Nothing is in memory except during execution.
+Состояние, контрольная точка и thread сохраняются между прерываниями. В памяти ничего не остается, кроме времени выполнения.
 
-### Step 4: time-travel for debugging
+### Шаг 4: перемещение во времени для отладки
 
 ```python
 history = list(app.get_state_history(config))
@@ -145,9 +145,9 @@ for event in app.stream(None, target, stream_mode="values"):
     pass  # replay from that point forward
 ```
 
-Passing `None` as the input replays from the given checkpoint; passing a value appends it as an update to that checkpoint's state before resuming. This is how you reproduce a bad agent run without re-running the whole conversation.
+Передача `None` как входа запускает повторное проигрывание из указанной контрольной точки; передача значения добавляет его как обновление к состоянию этой контрольной точки перед возобновлением. Так вы воспроизводите неудачный запуск агента без повторного запуска всего диалога.
 
-### Step 5: swap the checkpointer for production
+### Шаг 5: замените механизм контрольных точек для production
 
 ```python
 from langgraph.checkpoint.postgres import PostgresSaver
@@ -157,50 +157,50 @@ with PostgresSaver.from_conn_string("postgresql://...") as checkpointer:
     app = graph.compile(checkpointer=checkpointer)
 ```
 
-SQLite, Redis, and Postgres are shipped. `MemorySaver` is for tests. Anything that persists across restarts wants a real store.
+SQLite, Redis и Postgres поставляются готовыми. `MemorySaver` — для тестов. Все, что должно сохраняться между перезапусками, требует настоящего хранилища.
 
-## The Skill
+## Навык
 
-> You build agents as graphs, not as `while True` loops.
+> Вы строите агентов как графы, а не как циклы `while True`.
 
-Before you reach for LangGraph, do a 60-second design:
+Перед тем как тянуться за LangGraph, сделайте 60-секундный дизайн:
 
-1. **Name the nodes.** Every discrete decision or side-effecting action is a node. "Agent thinks," "tool runs," "reviewer approves," "response streams." If you can't list them, the task is not agent-shaped yet.
-2. **Declare the state.** Minimal TypedDict with a reducer for every list field. Do not stuff everything into `messages`; hoist task-specific fields (a working `plan`, a `budget` counter, a `retrieved_docs` list) to the top level.
-3. **Draw the edges.** Static unless the next step depends on model output. Every conditional edge needs a router function with named branches.
-4. **Choose a checkpointer up front.** `MemorySaver` for tests, Postgres/Redis/SQLite for anything else. Do not ship without one — no checkpointer means no resume, no interrupt, no time-travel.
-5. **Decide interrupts before tools run, not after.** Approvals go on the edge into a side-effecting node so you can cancel before harm; validation goes on the edge out of the model so you can reject bad calls cheaply.
-6. **Stream by default.** `mode="updates"` for the UI, `mode="messages"` for token-level streaming inside model nodes, `mode="values"` for full snapshots during eval.
+1. **Назовите узлы.** Каждое отдельное решение или действие с побочным эффектом — это узел. "Агент думает", "инструмент запускается", "рецензент одобряет", "ответ передается потоком". Если вы не можете их перечислить, задача еще не имеет агентной формы.
+2. **Объявите состояние.** Минимальный TypedDict с редьюсером для каждого поля-списка. Не складывайте все в `messages`; поднимайте поля, специфичные для задачи (рабочий `plan`, счетчик `budget`, список `retrieved_docs`), на верхний уровень.
+3. **Нарисуйте ребра.** Статические, если следующий шаг не зависит от вывода модели. Каждому условному ребру нужна функция маршрутизации с именованными ветками.
+4. **Выберите механизм контрольных точек заранее.** `MemorySaver` для тестов, Postgres/Redis/SQLite для всего остального. Не выпускайте без него: нет механизма контрольных точек — нет resume, нет interrupt, нет time-travel.
+5. **Решайте прерывания до запуска инструментов, а не после.** Одобрения ставятся на ребро в узел с побочным эффектом, чтобы можно было отменить до ущерба; валидация ставится на ребро из модели, чтобы дешево отклонять плохие вызовы.
+6. **Включайте потоковую передачу по умолчанию.** `mode="updates"` для UI, `mode="messages"` для потоковой передачи токенов внутри модельных узлов, `mode="values"` для полных снимков во время eval.
 
-Refuse to ship a LangGraph agent that has no checkpointer. Refuse to ship one that interrupts *after* the side effect. Refuse to ship a `messages` field without `add_messages` as its reducer.
+Отказывайтесь выпускать агента LangGraph без механизма контрольных точек. Отказывайтесь выпускать агента, который прерывается *после* побочного эффекта. Отказывайтесь выпускать поле `messages` без `add_messages` как редьюсера.
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Implement the four-node ReAct graph above with a calculator tool and a web-search tool. Verify that `list(app.get_state_history(config))` returns at least four checkpoints for a two-turn conversation.
-2. **Medium.** Add a `planner` node that runs before `agent` and writes a structured `plan: list[str]` into state. Have `agent` mark plan steps as done. Fail the test if `plan` is lost across a checkpoint resume (wrong reducer).
-3. **Hard.** Build a supervisor graph that routes between three subgraphs (`researcher`, `writer`, `reviewer`) using `Send`. Each subgraph has its own state and checkpointer. Add an `interrupt_before=["writer"]` on the outer graph so a human can approve the research brief. Confirm that time-travel from a prior checkpoint re-runs only the forked branch.
+1. **Легкое.** Реализуйте четырехузловой ReAct-граф выше с инструментом-калькулятором и инструментом веб-поиска. Проверьте, что `list(app.get_state_history(config))` возвращает минимум четыре контрольные точки для диалога в два хода.
+2. **Среднее.** Добавьте узел `planner`, который запускается перед `agent` и пишет структурированный `plan: list[str]` в состояние. Пусть `agent` отмечает шаги плана как выполненные. Тест должен падать, если `plan` теряется при возобновлении из контрольной точки (неверный редьюсер).
+3. **Сложное.** Постройте граф-супервизор, который маршрутизирует между тремя подграфами (`researcher`, `writer`, `reviewer`) с помощью `Send`. У каждого подграфа есть собственное состояние и механизм контрольных точек. Добавьте `interrupt_before=["writer"]` на внешний граф, чтобы человек мог одобрить исследовательский бриф. Подтвердите, что перемещение во времени из прошлой контрольной точки повторно запускает только ответвленную ветку.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| StateGraph | "The LangGraph graph" | The builder object you add nodes and edges to before compile. |
-| Reducer | "How the field merges" | A function `(old, new) -> merged` applied when a node returns an update for that field; default is overwrite, `add_messages` appends. |
-| Thread | "A conversation ID" | A `thread_id` string that scopes all checkpoints for one session. |
-| Checkpoint | "A paused state" | A persisted snapshot of the full graph state after a node transition, keyed on `(thread_id, checkpoint_id)`. |
-| Interrupt | "Pause for a human" | `interrupt_before` / `interrupt_after` stop execution at a node boundary; resume with `Command(resume=...)`. |
-| Time-travel | "Fork from a prior step" | `graph.invoke(None, config_with_old_checkpoint_id)` replays from that checkpoint forward. |
-| Send | "Parallel subgraph dispatch" | A constructor a node can return to spawn N parallel executions of a target node. |
-| Subgraph | "A compiled graph as a node" | A compiled StateGraph used as a node in another graph; preserves its own state scope. |
+| StateGraph | "Граф LangGraph" | Объект-строитель, в который вы добавляете узлы и ребра до компиляции. |
+| Reducer | "Как сливается поле" | Функция `(old, new) -> merged`, применяемая, когда узел возвращает обновление для этого поля; по умолчанию перезаписывает, `add_messages` добавляет. |
+| Thread | "ID диалога" | Строка `thread_id`, которая ограничивает область всех контрольных точек одной сессии. |
+| Checkpoint | "Состояние на паузе" | Сохраненный снимок полного состояния графа после перехода узла, с ключом `(thread_id, checkpoint_id)`. |
+| Interrupt | "Пауза для человека" | `interrupt_before` / `interrupt_after` останавливают выполнение на границе узла; возобновление через `Command(resume=...)`. |
+| Time-travel | "Ответвиться от прошлого шага" | `graph.invoke(None, config_with_old_checkpoint_id)` проигрывает выполнение из этой контрольной точки вперед. |
+| Send | "Параллельная отправка в подграф" | Конструктор, который узел может вернуть, чтобы запустить N параллельных выполнений целевого узла. |
+| Subgraph | "Скомпилированный граф как узел" | Скомпилированный StateGraph, используемый как узел в другом графе; сохраняет собственную область состояния. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [LangGraph documentation](https://langchain-ai.github.io/langgraph/) — canonical reference for StateGraph, reducers, checkpointers, and interrupts.
-- [LangGraph concepts: state, reducers, checkpointers](https://langchain-ai.github.io/langgraph/concepts/low_level/) — the mental model this lesson uses, straight from the source.
-- [LangGraph Persistence and Checkpoints](https://langchain-ai.github.io/langgraph/concepts/persistence/) — the detail on Postgres/SQLite/Redis stores, checkpoint namespaces, and thread IDs.
-- [LangGraph Human-in-the-loop](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — `interrupt_before`, `interrupt_after`, `Command(resume=...)`, and the edit-state pattern.
-- [Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models" (ICLR 2023)](https://arxiv.org/abs/2210.03629) — the pattern every LangGraph agent implements; read it for the reasoning trace rationale.
-- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — which graph shapes (chain, router, orchestrator-workers, evaluator-optimizer) to prefer and when.
-- Phase 11 · 09 (Function Calling) — the tool-call primitive every LangGraph agent node reuses.
-- Phase 11 · 14 (Model Context Protocol) — external tool discovery that plugs into a LangGraph `ToolNode` via the MCP adapter.
-- Phase 11 · 17 (Agent framework tradeoffs) — when to pick LangGraph over CrewAI, AutoGen, or Agno.
+- [Документация LangGraph](https://langchain-ai.github.io/langgraph/) — канонический справочник по StateGraph, редьюсерам, механизмам контрольных точек и прерываниям.
+- [Концепции LangGraph: состояние, редьюсеры, контрольные точки](https://langchain-ai.github.io/langgraph/concepts/low_level/) — ментальная модель этого урока из первоисточника.
+- [Сохранение и контрольные точки в LangGraph](https://langchain-ai.github.io/langgraph/concepts/persistence/) — подробности о хранилищах Postgres/SQLite/Redis, пространствах имен контрольных точек и thread IDs.
+- [Human-in-the-loop в LangGraph](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/) — `interrupt_before`, `interrupt_after`, `Command(resume=...)` и паттерн редактирования состояния.
+- [Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models" (ICLR 2023)](https://arxiv.org/abs/2210.03629) — паттерн, который реализует каждый агент LangGraph; прочитайте ради обоснования трассы рассуждений.
+- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — какие формы графов (chain, router, orchestrator-workers, evaluator-optimizer) предпочитать и когда.
+- Phase 11 · 09 (Function Calling) — примитив вызова инструментов, который переиспользует каждый узел агента LangGraph.
+- Phase 11 · 14 (Model Context Protocol) — внешнее обнаружение инструментов, которое подключается к LangGraph `ToolNode` через MCP-адаптер.
+- Phase 11 · 17 (Компромиссы агентных фреймворков) — когда выбирать LangGraph вместо CrewAI, AutoGen или Agno.

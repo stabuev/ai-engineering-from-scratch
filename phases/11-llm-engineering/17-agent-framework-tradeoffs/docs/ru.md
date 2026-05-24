@@ -1,134 +1,134 @@
-# Agent Framework Tradeoffs — LangGraph vs CrewAI vs AutoGen vs Agno
+# Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno
 
-> Every framework sells the same demo (research agent builds a report) and hides the same bug (state schema fights with the orchestration layer). Pick the framework whose abstractions match the shape of your problem; everything else is glue you write twice.
+> Каждый фреймворк продает одно и то же демо (исследовательский агент собирает отчет) и прячет одну и ту же ошибку (схема состояния спорит со слоем оркестрации). Выбирайте фреймворк, чьи абстракции соответствуют форме вашей задачи; все остальное — клей, который вы напишете дважды.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 16 (LangGraph)
-**Time:** ~45 minutes
+**Тип:** Теория
+**Языки:** Python
+**Предварительные требования:** Phase 11 · 09 (Function Calling), Phase 11 · 16 (LangGraph)
+**Время:** ~45 минут
 
-## The Problem
+## Проблема
 
-You have a task that needs more than one LLM call. Maybe it is a research workflow (plan, search, summarize, cite). Maybe it is a code-review pipeline (parse diff, critique, patch, validate). Maybe it is a multi-turn assistant that books flights, writes emails, and files expense reports. You pick a framework.
+У вас есть задача, требующая больше одного вызова LLM. Возможно, это исследовательский workflow (спланировать, найти, суммировать, процитировать). Возможно, pipeline для ревью кода (разобрать diff, раскритиковать, исправить, проверить). Возможно, многоходовый ассистент, который бронирует рейсы, пишет письма и подает отчеты о расходах. Вы выбираете фреймворк.
 
-Three days later, you discover the framework's abstractions leak. CrewAI gives you roles but fights you when the "researcher" needs to hand a structured plan to the "writer." AutoGen gives you chat between agents but has no first-class state so your checkpoint is a pickle of a conversation log. LangGraph gives you a state graph but forces you to name every transition before you know what the agent will do. Agno gives you a single-agent primitive that screams when you try to fan out to three concurrent workers.
+Через три дня вы обнаруживаете, что абстракции фреймворка протекают. CrewAI дает роли, но мешает, когда "исследователь" должен передать структурированный план "писателю". AutoGen дает чат между агентами, но не имеет состояния как сущности первого класса, поэтому ваша контрольная точка — это pickle журнала диалога. LangGraph дает граф состояния, но заставляет назвать каждый переход до того, как вы знаете, что агент будет делать. Agno дает примитив одного агента, который ломается, когда вы пытаетесь разветвиться на трех параллельных работников.
 
-The fix is not "pick the best framework." It is to match the framework's core abstraction to the shape of your problem. This lesson draws that map.
+Исправление — не "выбрать лучший фреймворк". Оно в том, чтобы сопоставить ключевую абстракцию фреймворка с формой вашей задачи. Этот урок рисует такую карту.
 
-## The Concept
+## Концепция
 
-![Agent framework matrix: core abstraction vs problem shape](../assets/framework-matrix.svg)
+![Матрица агентных фреймворков: ключевая абстракция и форма задачи](../assets/framework-matrix.svg)
 
-Four frameworks dominate the 2026 landscape. Their core abstractions are not the same.
+В ландшафте 2026 года доминируют четыре фреймворка. Их ключевые абстракции не одинаковы.
 
-| Framework | Core abstraction | Best fit | Worst fit |
+| Фреймворк | Ключевая абстракция | Лучше всего подходит | Хуже всего подходит |
 |-----------|------------------|----------|-----------|
-| **LangGraph** | `StateGraph` — typed state, nodes, conditional edges, checkpointer. | Workflows with explicit state and human-in-the-loop interrupts; production agents needing time-travel debugging. | Loose, role-driven brainstorming where the topology is unknown. |
-| **CrewAI** | `Crew` — roles (goal, backstory), tasks, process (sequential or hierarchical). | Role-playing or persona-driven workflows with a short linear/hierarchical plan. | Anything stateful beyond the crew's turn history; complex branching. |
-| **AutoGen** | `ConversableAgent` pair — two or more agents that speak in turns until an exit condition. | Multi-agent *dialogue* (teacher-student, proposer-critic, actor-reviewer) where the thinking emerges from the chat. | Deterministic workflows with a known DAG; anything needing durable state across restarts. |
-| **Agno** | `Agent` — a single LLM + tools + memory, composable into teams. | Fast-to-build single agents and lightweight teams; strong multi-modality and built-in storage drivers. | Deep, explicitly-branched graphs with custom reducers. |
+| **LangGraph** | `StateGraph` — типизированное состояние, узлы, условные ребра, механизм контрольных точек. | Workflow с явным состоянием и прерываниями human-in-the-loop; production-агенты, которым нужна отладка с перемещением во времени. | Свободный брейншторминг на ролях, где топология неизвестна. |
+| **CrewAI** | `Crew` — роли (цель, предыстория), задачи, процесс (последовательный или иерархический). | Ролевые или основанные на персонажах workflow с коротким линейным/иерархическим планом. | Все, что требует состояния сверх истории ходов crew; сложное ветвление. |
+| **AutoGen** | Пара `ConversableAgent` — два или больше агентов, которые говорят по очереди до условия выхода. | Многоагентный *диалог* (учитель-ученик, предлагающий-критик, исполнитель-рецензент), где мышление возникает из чата. | Детерминированные workflow с известным DAG; все, что требует долговечного состояния между перезапусками. |
+| **Agno** | `Agent` — одна LLM + инструменты + память, компонуемые в команды. | Быстро создаваемые одиночные агенты и легкие команды; сильная мультимодальность и встроенные драйверы хранилищ. | Глубокие, явно разветвленные графы с кастомными редьюсерами. |
 
-### What "abstraction" actually means
+### Что на самом деле означает "абстракция"
 
-A framework's core abstraction is the thing you draw on the whiteboard when you pitch the architecture.
+Ключевая абстракция фреймворка — это то, что вы рисуете на доске, когда объясняете архитектуру.
 
-- **LangGraph** → you draw a graph. Nodes are steps, edges are transitions, and the state object at every point is typed. The mental model is a state machine.
-- **CrewAI** → you draw an org chart. Each role has a job description and a manager routes tasks. The mental model is a small team of specialists.
-- **AutoGen** → you draw a Slack DM. Two agents message each other; a third joins if you need a moderator. The mental model is chat.
-- **Agno** → you draw a single box with tools hanging off it. Put boxes next to each other for a team. The mental model is "agent with batteries included."
+- **LangGraph** → вы рисуете граф. Узлы — шаги, ребра — переходы, а объект состояния в каждой точке типизирован. Ментальная модель — конечный автомат.
+- **CrewAI** → вы рисуете оргструктуру. У каждой роли есть должностное описание, а менеджер маршрутизирует задачи. Ментальная модель — небольшая команда специалистов.
+- **AutoGen** → вы рисуете личную переписку в Slack. Два агента обмениваются сообщениями; третий подключается, если нужен модератор. Ментальная модель — чат.
+- **Agno** → вы рисуете один блок с подключенными к нему инструментами. Поставьте блоки рядом, чтобы получить команду. Ментальная модель — "агент с батарейками в комплекте".
 
-### The state question
+### Вопрос состояния
 
-State is where most framework choices break down in production.
+Состояние — место, где большинство выборов фреймворка ломается в production.
 
-- **LangGraph.** Typed state (`TypedDict` or Pydantic model), per-field reducers, first-class checkpointer (SQLite/Postgres/Redis). Resume, interrupt, and time-travel are free. *(See Phase 11 · 16.)*
-- **CrewAI.** State flows as strings between tasks via the `context` field, or structured through `output_pydantic`. No durable per-crew store out of the box; you bolt on your own if the crew must survive a restart.
-- **AutoGen.** State is the chat history and any user-defined `context`. Conversation transcripts persist; arbitrary workflow state does not unless you write adapters.
-- **Agno.** Built-in storage drivers (SQLite, Postgres, Mongo, Redis, DynamoDB) attached to an `Agent` via `storage=` — conversation sessions and user memories persist automatically. Not a full graph checkpointer; a session store.
+- **LangGraph.** Типизированное состояние (`TypedDict` или модель Pydantic), редьюсеры по полям, механизм контрольных точек как сущность первого класса (SQLite/Postgres/Redis). Resume, interrupt и time-travel идут бесплатно. *(См. Phase 11 · 16.)*
+- **CrewAI.** Состояние течет строками между задачами через поле `context` или структурированно через `output_pydantic`. Долговечного хранилища на уровне crew из коробки нет; вы прикручиваете свое, если crew должен пережить перезапуск.
+- **AutoGen.** Состояние — это история чата и любой пользовательский `context`. Транскрипты диалогов сохраняются; произвольное состояние workflow — нет, если вы не напишете адаптеры.
+- **Agno.** Встроенные драйверы хранилищ (SQLite, Postgres, Mongo, Redis, DynamoDB), подключенные к `Agent` через `storage=`: сессии диалогов и пользовательские воспоминания сохраняются автоматически. Это не полноценный механизм контрольных точек графа, а хранилище сессий.
 
-### The branching question
+### Вопрос ветвления
 
-Every non-trivial agent branches. Who decides the branch matters.
+Каждый нетривиальный агент ветвится. Важно, кто решает, какую ветку выбрать.
 
-- **LangGraph** — you decide, via conditional edges. Routing is a Python function with named branches. Branches are first-class in the compiled graph; the checkpointer records which branch was taken.
-- **CrewAI** — the manager decides in hierarchical mode; in sequential mode you decide at build time. Routing is implicit in the task list; there is no first-class "if" outside the manager's prompt.
-- **AutoGen** — the agents decide via chat. Branching is emergent from who speaks next. `GroupChatManager` selects the next speaker; you can hand-write a `speaker_selection_method` but the default is LLM-driven.
-- **Agno** — the agent decides by which tool to call next. Teams have a coordinator/router/collaborator mode; branching beyond that is the developer's responsibility.
+- **LangGraph** — вы решаете через условные ребра. Маршрутизация — Python-функция с именованными ветками. Ветки являются сущностями первого класса в скомпилированном графе; механизм контрольных точек записывает, какая ветка была выбрана.
+- **CrewAI** — менеджер решает в иерархическом режиме; в последовательном режиме вы решаете во время сборки. Маршрутизация неявно задана списком задач; first-class `if` вне промпта менеджера нет.
+- **AutoGen** — агенты решают через чат. Ветвление возникает из того, кто говорит следующим. `GroupChatManager` выбирает следующего говорящего; вы можете вручную написать `speaker_selection_method`, но значение по умолчанию управляется LLM.
+- **Agno** — агент решает по тому, какой инструмент вызвать дальше. У команд есть режим coordinator/router/collaborator; ветвление за пределами этого — ответственность разработчика.
 
-### The observability question
+### Вопрос наблюдаемости
 
-- **LangGraph** — OpenTelemetry via LangSmith or any OTel exporter. Every node transition is a trace span; checkpoints double as replayable traces. LangSmith is the first-party option; Langfuse/Phoenix also have adapters.
-- **CrewAI** — first-class OpenTelemetry since late-2025; integrations with Langfuse, Phoenix, Opik, AgentOps.
-- **AutoGen** — OpenTelemetry integration via `autogen-core`; AgentOps and Opik have connectors. Tracing granularity is per-agent-message, not per-node.
-- **Agno** — built-in `monitoring=True` flag plus OpenTelemetry exporters; tight integration with Langfuse for session traces.
+- **LangGraph** — OpenTelemetry через LangSmith или любой OTel exporter. Каждый переход узла — trace span; контрольные точки также работают как воспроизводимые трассы. LangSmith — first-party вариант; у Langfuse/Phoenix тоже есть адаптеры.
+- **CrewAI** — OpenTelemetry как сущность первого класса с конца 2025 года; интеграции с Langfuse, Phoenix, Opik, AgentOps.
+- **AutoGen** — интеграция OpenTelemetry через `autogen-core`; у AgentOps и Opik есть коннекторы. Гранулярность трассировки — по сообщениям агентов, а не по узлам.
+- **Agno** — встроенный флаг `monitoring=True` плюс экспортеры OpenTelemetry; тесная интеграция с Langfuse для трасс сессий.
 
-### Cost and latency
+### Стоимость и задержка
 
-All four frameworks add per-call overhead (framework logic, validation, serialization). Rough order of increasing overhead: Agno ≈ LangGraph < CrewAI ≈ AutoGen. The difference is dominated by how much extra LLM routing the framework does. CrewAI's hierarchical manager spends tokens deciding who goes next; AutoGen's `GroupChatManager` likewise. LangGraph only spends tokens where you write `llm.invoke`. Agno's single-agent path is thin.
+Все четыре фреймворка добавляют накладные расходы на каждый вызов (логика фреймворка, валидация, сериализация). Примерный порядок роста overhead: Agno ≈ LangGraph < CrewAI ≈ AutoGen. Разница в основном определяется тем, сколько дополнительной LLM-маршрутизации выполняет фреймворк. Иерархический менеджер CrewAI тратит токены, решая, кто идет следующим; `GroupChatManager` в AutoGen делает то же самое. LangGraph тратит токены только там, где вы пишете `llm.invoke`. Путь одиночного агента Agno тонкий.
 
-When cost per run matters, prefer explicit routing (LangGraph edges, AutoGen `speaker_selection_method`) over LLM-selected routing.
+Когда важна стоимость одного запуска, предпочитайте явную маршрутизацию (ребра LangGraph, AutoGen `speaker_selection_method`) маршрутизации, выбранной LLM.
 
-### Interoperability
+### Совместимость
 
-- **LangGraph** ↔ **LangChain** tools, retrievers, LLMs. First-class MCP adapter (tools imported as MCP servers).
-- **CrewAI** ↔ tools inherit from `BaseTool`; LangChain tools, LlamaIndex tools, and MCP tools all adapt in. Crew-to-crew delegation via `allow_delegation=True`.
-- **AutoGen** → `FunctionTool` wraps any Python callable; MCP adapter available. Tight coupling to AG2 ecosystem for agent-to-agent patterns.
-- **Agno** → `@tool` decorator or BaseTool subclass; MCP adapter; tools can be shared across agents and teams.
+- **LangGraph** ↔ инструменты, retrievers и LLM из **LangChain**. MCP-адаптер как сущность первого класса (инструменты импортируются как MCP-серверы).
+- **CrewAI** ↔ инструменты наследуются от `BaseTool`; инструменты LangChain, LlamaIndex и MCP адаптируются внутрь. Делегирование от crew к crew через `allow_delegation=True`.
+- **AutoGen** → `FunctionTool` оборачивает любую Python-функцию; доступен MCP-адаптер. Тесная связка с экосистемой AG2 для agent-to-agent паттернов.
+- **Agno** → декоратор `@tool` или наследник BaseTool; MCP-адаптер; инструменты можно разделять между агентами и командами.
 
-## The Skill
+## Навык
 
-> You can explain, in one sentence, why a given framework is right for a given agent problem.
+> Вы можете объяснить в одном предложении, почему данный фреймворк подходит для данной агентной задачи.
 
-Pre-build checklist:
+Чеклист перед сборкой:
 
-1. **Draw the shape.** Is this a graph (typed state, named transitions)? A role play (specialists hand off work)? A chat (agents talk until done)? A single agent with tools?
-2. **Decide who branches.** Developer-decided branching → LangGraph. Manager-agent-decided → CrewAI hierarchical. Chat-emergent → AutoGen. Tool-call-decided → Agno.
-3. **Check the state budget.** Do you need resume-from-checkpoint? Time-travel? Human interrupts mid-run? If yes, LangGraph is the default; Agno sessions cover conversation-scoped state.
-4. **Check the cost budget.** LLM-selected routing costs extra tokens per turn. If the agent runs thousands of times a day, prefer explicit routing.
-5. **Budget the framework overhead.** Every framework is another dependency. If the task is two LLM calls and a tool, write 30 lines of plain Python; no framework is cheaper than no framework.
+1. **Нарисуйте форму.** Это граф (типизированное состояние, именованные переходы)? Ролевая игра (специалисты передают работу друг другу)? Чат (агенты разговаривают до завершения)? Одиночный агент с инструментами?
+2. **Решите, кто ветвится.** Ветвление, заданное разработчиком → LangGraph. Решение менеджера-агента → иерархический CrewAI. Возникающее из чата → AutoGen. Решение по вызову инструментов → Agno.
+3. **Проверьте бюджет состояния.** Нужны ли возобновление из контрольной точки? Перемещение во времени? Человеческие прерывания в середине запуска? Если да, LangGraph — вариант по умолчанию; сессии Agno покрывают состояние в рамках диалога.
+4. **Проверьте бюджет стоимости.** Маршрутизация, выбираемая LLM, стоит дополнительных токенов на каждом ходу. Если агент запускается тысячи раз в день, предпочитайте явную маршрутизацию.
+5. **Заложите накладные расходы фреймворка.** Каждый фреймворк — еще одна зависимость. Если задача — два вызова LLM и инструмент, напишите 30 строк обычного Python; ни один фреймворк не дешевле отсутствия фреймворка.
 
-Refuse to reach for a framework before you can draw the graph, the org chart, the chat, or the agent box. Refuse to pick one that forces you to fight its state model for the thing you actually need.
+Отказывайтесь тянуться за фреймворком, пока не можете нарисовать граф, оргструктуру, чат или блок агента. Отказывайтесь выбирать тот, который заставляет вас бороться с его моделью состояния ради того, что вам действительно нужно.
 
-## The Decision Matrix
+## Матрица решений
 
-| Problem shape | Preferred framework | Why |
+| Форма задачи | Предпочтительный фреймворк | Почему |
 |---------------|---------------------|-----|
-| Workflow DAG with typed state, human approvals, long-running | LangGraph | First-class state, checkpointer, interrupts, time-travel. |
-| Research / writing pipeline with distinct roles | CrewAI (sequential) or LangGraph subgraphs | Role-per-task is cheap to express in CrewAI; scale up with LangGraph when branching gets complex. |
-| Proposer-critic or teacher-student dialogue | AutoGen | Two-agent chat is its native shape. |
-| Single agent with tools, sessions, memory | Agno | Thinnest setup, built-in storage and memory. |
-| Thousands of parallel fanouts with reducers | LangGraph + `Send` | The only one with a first-class parallel dispatch primitive. |
-| Quick prototype, no framework commitment | Plain Python + provider SDK | No framework is the fastest framework. |
+| Workflow-DAG с типизированным состоянием, человеческими одобрениями и долгим выполнением | LangGraph | Состояние, механизм контрольных точек, прерывания и перемещение во времени как сущности первого класса. |
+| Исследовательский/писательский pipeline с различимыми ролями | CrewAI (sequential) или подграфы LangGraph | Роль на задачу дешево выразить в CrewAI; переходите к LangGraph, когда ветвление усложняется. |
+| Диалог предлагающий-критик или учитель-ученик | AutoGen | Чат двух агентов — его нативная форма. |
+| Одиночный агент с инструментами, сессиями и памятью | Agno | Самая тонкая настройка, встроенные хранилище и память. |
+| Тысячи параллельных fanout с редьюсерами | LangGraph + `Send` | Единственный с параллельной отправкой как примитивом первого класса. |
+| Быстрый прототип без привязки к фреймворку | Plain Python + provider SDK | Отсутствие фреймворка — самый быстрый фреймворк. |
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Take the same task — "research Anthropic's headquarters, write a 200-word brief, cite sources" — and implement it in LangGraph (four nodes: plan, search, write, cite) and in CrewAI (three roles: researcher, writer, editor). Report token cost per run and lines of code.
-2. **Medium.** Build the same task in AutoGen (researcher ↔ writer chat, editor joins via `GroupChat`) and Agno (a single agent with `search_tools` and `write_tools`, plus a session store). Rank the four implementations on (a) cost per run, (b) ability to resume after a crash, (c) ability to inject a human approval before the write step.
-3. **Hard.** Build a decision-tree script `pick_framework.py` that takes a short problem description (JSON: `{has_typed_state, has_roles, has_dialogue, has_parallel_fanout, needs_resume}`) and returns a recommendation with one-sentence justification. Verify it on six cases you design yourself.
+1. **Легкое.** Возьмите одну и ту же задачу — "исследовать штаб-квартиру Anthropic, написать бриф на 200 слов, процитировать источники" — и реализуйте ее в LangGraph (четыре узла: plan, search, write, cite) и в CrewAI (три роли: researcher, writer, editor). Отчитайте стоимость токенов на запуск и строки кода.
+2. **Среднее.** Постройте ту же задачу в AutoGen (чат researcher ↔ writer, editor подключается через `GroupChat`) и Agno (один агент с `search_tools` и `write_tools`, плюс хранилище сессий). Ранжируйте четыре реализации по (a) стоимости запуска, (b) способности возобновиться после сбоя, (c) способности вставить человеческое одобрение перед шагом write.
+3. **Сложное.** Постройте скрипт дерева решений `pick_framework.py`, который принимает краткое описание задачи (JSON: `{has_typed_state, has_roles, has_dialogue, has_parallel_fanout, needs_resume}`) и возвращает рекомендацию с обоснованием в одном предложении. Проверьте его на шести случаях, которые спроектируете сами.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Orchestration | "How the agents coordinate" | The layer that decides which node/role/agent runs next. |
-| Durable state | "Resume after a restart" | State that survives process death, attached to a checkpoint or session store. |
-| LLM-selected routing | "Let the model decide" | A planner LLM picks the next step each turn; flexible but pays tokens on every decision. |
-| Explicit routing | "Developer decides" | A Python function or static edge picks the next step; cheap and auditable. |
-| Crew | "A CrewAI team" | Roles + tasks + process (sequential or hierarchical) bound into a single runnable. |
-| GroupChat | "AutoGen's multi-agent chat" | A managed conversation between N agents with a speaker selector. |
-| Team (Agno) | "Multi-agent Agno" | Route / coordinate / collaborate mode over a set of agents. |
-| StateGraph | "LangGraph's graph" | Typed-state, node, conditional-edge, checkpointer primitive. |
+| Orchestration | "Как агенты координируются" | Слой, который решает, какой узел/роль/агент запускается следующим. |
+| Durable state | "Возобновление после перезапуска" | Состояние, которое переживает смерть процесса и привязано к контрольной точке или хранилищу сессий. |
+| LLM-selected routing | "Пусть модель решает" | Планирующая LLM выбирает следующий шаг на каждом ходу; гибко, но платит токенами за каждое решение. |
+| Explicit routing | "Разработчик решает" | Python-функция или статическое ребро выбирает следующий шаг; дешево и проверяемо. |
+| Crew | "Команда CrewAI" | Роли + задачи + процесс (последовательный или иерархический), связанные в один runnable. |
+| GroupChat | "Многоагентный чат AutoGen" | Управляемый диалог между N агентами с selector говорящего. |
+| Team (Agno) | "Многоагентный Agno" | Режим route / coordinate / collaborate поверх набора агентов. |
+| StateGraph | "Граф LangGraph" | Примитив типизированного состояния, узлов, условных ребер и механизма контрольных точек. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [LangGraph documentation](https://langchain-ai.github.io/langgraph/) — StateGraph, checkpointers, interrupts, time-travel.
-- [CrewAI documentation](https://docs.crewai.com/) — Crews, Flows, Agents, Tasks, Processes.
-- [AutoGen documentation](https://microsoft.github.io/autogen/) — ConversableAgent, GroupChat, teams, tools.
-- [Agno documentation](https://docs.agno.com/) — Agent, Team, Workflow, storage, memory.
-- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — pattern library (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer) framework-agnostic.
-- [Yao et al., "ReAct: Synergizing Reasoning and Acting" (ICLR 2023)](https://arxiv.org/abs/2210.03629) — the primitive every framework dresses up.
-- [Wu et al., "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation" (2023)](https://arxiv.org/abs/2308.08155) — AutoGen's design paper.
-- [Park et al., "Generative Agents: Interactive Simulacra of Human Behavior" (UIST 2023)](https://arxiv.org/abs/2304.03442) — role-play foundation that CrewAI-style persona stacks build on.
-- Phase 11 · 16 (LangGraph) — the framework this lesson benchmarks against.
-- Phase 11 · 19 (Reflexion) — a pattern that maps cleanly to LangGraph but awkwardly to CrewAI.
-- Phase 11 · 22 (Production observability) — how to instrument whichever framework you pick.
+- [Документация LangGraph](https://langchain-ai.github.io/langgraph/) — StateGraph, механизмы контрольных точек, прерывания, перемещение во времени.
+- [Документация CrewAI](https://docs.crewai.com/) — Crews, Flows, Agents, Tasks, Processes.
+- [Документация AutoGen](https://microsoft.github.io/autogen/) — ConversableAgent, GroupChat, команды, инструменты.
+- [Документация Agno](https://docs.agno.com/) — Agent, Team, Workflow, хранилище, память.
+- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — библиотека паттернов (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer), независимая от фреймворков.
+- [Yao et al., "ReAct: Synergizing Reasoning and Acting" (ICLR 2023)](https://arxiv.org/abs/2210.03629) — примитив, который каждый фреймворк оборачивает по-своему.
+- [Wu et al., "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation" (2023)](https://arxiv.org/abs/2308.08155) — дизайн-документ AutoGen.
+- [Park et al., "Generative Agents: Interactive Simulacra of Human Behavior" (UIST 2023)](https://arxiv.org/abs/2304.03442) — основа ролевого поведения, на которой строятся стеки персон в стиле CrewAI.
+- Phase 11 · 16 (LangGraph) — фреймворк, с которым этот урок сравнивает остальные.
+- Phase 11 · 19 (Reflexion) — паттерн, который хорошо ложится на LangGraph, но неловко на CrewAI.
+- Phase 11 · 22 (Production-наблюдаемость) — как инструментировать любой выбранный фреймворк.

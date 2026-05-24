@@ -1,29 +1,29 @@
-# Caching, Rate Limiting & Cost Optimization
+# Кэширование, ограничение скорости и оптимизация стоимости
 
-> Most AI startups do not die from bad models. They die from bad unit economics. A single GPT-4o call costs fractions of a cent. Ten thousand users making ten calls per day costs $250 in input tokens alone -- before you charge a single dollar. The companies that survive are the ones that treat every API call as a financial transaction, not a function call.
+> Большинство AI startups умирают не от плохих models. Они умирают от плохой unit economics. Один вызов GPT-4o стоит доли цента. Десять тысяч пользователей, делающих по десять calls в день, стоят $250 только во входных tokens — еще до того, как вы заработали первый доллар. Выживают компании, которые рассматривают каждый API call как финансовую транзакцию, а не как вызов функции.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 Lesson 09 (Function Calling)
-**Time:** ~45 minutes
-**Related:** Phase 11 · 15 (Prompt Caching) — this lesson covers application-layer caching (semantic cache, exact hash cache, model routing). Lesson 15 covers provider-layer prompt caching (Anthropic cache_control, OpenAI automatic, Gemini CachedContent). Combine both for 50-95% cost reduction.
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 11 Lesson 09 (Function Calling)
+**Время:** ~45 минут
+**Связано:** Phase 11 · 15 (Prompt Caching) — этот урок покрывает application-layer caching (semantic cache, exact hash cache, model routing). Lesson 15 покрывает provider-layer prompt caching (Anthropic cache_control, OpenAI automatic, Gemini CachedContent). Совмещайте оба подхода для снижения cost на 50-95%.
 
-## Learning Objectives
+## Цели обучения
 
-- Implement semantic caching that serves repeated or similar queries from cache instead of making a new API call
-- Calculate per-request costs across providers and implement token-aware rate limiting and budget alerts
-- Build a cost optimization layer with prompt compression, model routing (expensive vs cheap), and response caching
-- Design a tiered caching strategy using exact match, semantic similarity, and prefix caching for different query types
+- Реализовать semantic caching, который обслуживает повторяющиеся или похожие queries из cache вместо нового API call
+- Рассчитывать per-request costs у разных providers и реализовать token-aware rate limiting и budget alerts
+- Построить слой cost optimization с prompt compression, model routing (expensive vs cheap) и response caching
+- Спроектировать tiered caching strategy с exact match, semantic similarity и prefix caching для разных типов queries
 
-## The Problem
+## Проблема
 
-You build a RAG chatbot. It works beautifully. Users love it.
+Вы строите RAG chatbot. Он работает прекрасно. Пользователи довольны.
 
-Then the invoice arrives.
+Потом приходит invoice.
 
-GPT-5 costs $5 per million input tokens and $15 per million output. Claude Opus 4.7 costs $15 input / $75 output. Gemini 3 Pro costs $1.25 input / $5 output. GPT-5-mini is $0.25/$2. Prices below are illustrative; always check the provider's current pricing page.
+GPT-5 стоит $5 за миллион input tokens и $15 за миллион output. Claude Opus 4.7 стоит $15 input / $75 output. Gemini 3 Pro стоит $1.25 input / $5 output. GPT-5-mini — $0.25/$2. Цены ниже иллюстративны; всегда проверяйте актуальную pricing page провайдера.
 
-Here is the math that kills startups:
+Вот математика, которая убивает startups:
 
 - 10,000 daily active users
 - 10 queries per user per day
@@ -34,17 +34,17 @@ Here is the math that kills startups:
 **Daily output cost:** 10,000 x 10 x 500 / 1,000,000 x $10.00 = **$500/day**
 **Monthly total:** **$22,500/month**
 
-That is just the LLM. Add embeddings, vector database hosting, infrastructure. You are looking at $30,000/month for a chatbot.
+Это только LLM. Добавьте embeddings, vector database hosting, infrastructure. Получается $30,000/month за chatbot.
 
-The brutal part: 40-60% of those queries are near-duplicates. Users ask the same questions in slightly different words. Your system prompt -- identical across every request -- gets billed every single time. Context documents retrieved by RAG repeat across users who ask about the same topic.
+Жесткая часть: 40-60% этих queries — почти дубликаты. Пользователи задают одни и те же вопросы немного разными словами. Ваш system prompt — одинаковый в каждом request — тарифицируется каждый раз. Context documents, retrieved by RAG, повторяются у пользователей, спрашивающих об одной теме.
 
-You are paying full price for redundant computation.
+Вы платите полную цену за избыточные вычисления.
 
-## The Concept
+## Концепция
 
-### The Cost Anatomy of an LLM Call
+### Анатомия стоимости LLM Call
 
-Every API call has five cost components.
+У каждого API call есть пять компонентов cost.
 
 ```mermaid
 graph LR
@@ -58,11 +58,11 @@ graph LR
     F --> G[Output Cost<br/>$10.00/1M tokens]
 ```
 
-System prompts are the silent killer. A 1,500-token system prompt sent with every request costs $3.75 per million requests just for that prefix. At 100K requests per day, that is $375/day -- $11,250/month -- for text that never changes.
+System prompts — тихий убийца. System prompt на 1,500 tokens, отправляемый с каждым request, стоит $3.75 за миллион requests только за этот prefix. При 100K requests в день это $375/day — $11,250/month — за текст, который никогда не меняется.
 
-### Provider Caching: Built-in Discounts
+### Provider Caching: встроенные скидки
 
-All three major providers offer provider-side prompt caching in 2026, but the mechanics differ. See Phase 11 · 15 for the deep dive.
+В 2026 все три крупных provider предлагают provider-side prompt caching, но механика различается. Подробности — в Phase 11 · 15.
 
 | Provider | Mechanism | Discount | Minimum | Cache Duration |
 |----------|-----------|----------|---------|----------------|
@@ -70,15 +70,15 @@ All three major providers offer provider-side prompt caching in 2026, but the me
 | OpenAI | Automatic prefix matching | 50% on cache hits | 1,024 tokens | Best-effort up to 1 hour |
 | Google Gemini | Explicit CachedContent API | ~75% reduction (plus storage) | 4,096 (Flash) / 32,768 (Pro) | User-configurable TTL |
 
-**Anthropic's approach** is explicit. You mark sections of your prompt with `cache_control: {"type": "ephemeral"}`. The first request pays a 25% write premium. Subsequent requests with the same prefix get a 90% discount. A 2,000-token system prompt that costs $0.005 normally costs $0.000625 on cache hits. Over 100K requests, that saves $437.50/day.
+**Подход Anthropic** явный. Вы отмечаете sections prompt через `cache_control: {"type": "ephemeral"}`. Первый request платит 25% write premium. Последующие requests с тем же prefix получают 90% discount. System prompt на 2,000 tokens, который обычно стоит $0.005, на cache hits стоит $0.000625. На 100K requests это экономит $437.50/day.
 
-**OpenAI's approach** is automatic. Any prompt prefix that matches a previous request gets a 50% discount. No markers needed. The tradeoff: less discount, less control, but zero implementation effort.
+**Подход OpenAI** автоматический. Любой prompt prefix, совпадающий с предыдущим request, получает 50% discount. Markers не нужны. Tradeoff: меньше discount, меньше control, но нулевая implementation effort.
 
-### Semantic Caching: Your Custom Layer
+### Semantic Caching: ваш собственный слой
 
-Provider caching only works for identical prefixes. Semantic caching handles the harder case: different queries with the same meaning.
+Provider caching работает только для идентичных prefixes. Semantic caching решает более сложный случай: разные queries с одинаковым meaning.
 
-"What is the return policy?" and "How do I return an item?" are different strings but identical intent. A semantic cache embeds both queries, computes cosine similarity, and returns the cached response if similarity exceeds a threshold (typically 0.92-0.95).
+"What is the return policy?" и "How do I return an item?" — разные strings, но один intent. Semantic cache embeds обе queries, считает cosine similarity и возвращает cached response, если similarity выше threshold (обычно 0.92-0.95).
 
 ```mermaid
 flowchart TD
@@ -91,24 +91,24 @@ flowchart TD
     D --> G
 ```
 
-The embedding costs are negligible. OpenAI's text-embedding-3-small costs $0.02 per million tokens. Checking the cache costs almost nothing compared to a full LLM call.
+Стоимость embeddings пренебрежимо мала. OpenAI text-embedding-3-small стоит $0.02 за миллион tokens. Проверка cache почти ничего не стоит по сравнению с полноценным LLM call.
 
-### Exact Caching: Hash and Match
+### Exact Caching: hash and match
 
-For deterministic calls (temperature=0, same model, same prompt), exact caching is simpler and faster. Hash the full prompt, check the cache, return if found.
+Для deterministic calls (temperature=0, same model, same prompt) exact caching проще и быстрее. Хешируйте full prompt, проверяйте cache, возвращайте найденное.
 
-This works perfectly for:
+Это отлично работает для:
 - System prompt + fixed context + identical user queries
-- Function calling with identical tool definitions
-- Batch processing where the same document gets processed multiple times
+- Function calling с identical tool definitions
+- Batch processing, где один и тот же document обрабатывается несколько раз
 
-### Rate Limiting: Protecting Your Budget
+### Rate Limiting: защита бюджета
 
-Rate limiting is not just about fairness. It is about survival.
+Rate limiting — не только про fairness. Это про выживание.
 
-**Token bucket algorithm:** each user gets a bucket of N tokens that refills at rate R per second. A request consumes tokens from the bucket. If the bucket is empty, the request is rejected. This allows bursts (use the full bucket at once) while enforcing an average rate.
+**Token bucket algorithm:** каждый user получает bucket из N tokens, который пополняется со скоростью R в секунду. Request потребляет tokens из bucket. Если bucket пуст, request отклоняется. Это разрешает bursts (использовать весь bucket сразу), но enforced average rate.
 
-**Per-user quotas:** set daily/monthly token limits per user tier.
+**Per-user quotas:** задайте daily/monthly token limits по user tier.
 
 | Tier | Daily Token Limit | Max Requests/min | Model Access |
 |------|------------------|------------------|-------------|
@@ -116,11 +116,11 @@ Rate limiting is not just about fairness. It is about survival.
 | Pro | 500,000 | 60 | GPT-4o, Claude Sonnet |
 | Enterprise | 5,000,000 | 300 | All models |
 
-### Model Routing: Right Model for the Right Job
+### Model Routing: правильная модель для правильной задачи
 
-Not every query needs GPT-4o.
+Не каждый query требует GPT-4o.
 
-"What time does the store close?" does not require a $10/M-output model. GPT-4o-mini at $0.60/M output handles it perfectly. Claude Haiku at $1.25/M output handles it. A simple classifier routes cheap queries to cheap models and complex queries to expensive models.
+"What time does the store close?" не требует model за $10/M-output. GPT-4o-mini за $0.60/M output справится прекрасно. Claude Haiku за $1.25/M output тоже. Простой classifier направляет дешевые queries в дешевые models, а сложные — в дорогие.
 
 ```mermaid
 flowchart TD
@@ -130,11 +130,11 @@ flowchart TD
     B -->|Complex: reasoning, code| E[GPT-4o / Claude Opus<br/>$2.50/$10.00+]
 ```
 
-A well-tuned router saves 40-70% on model costs alone.
+Хорошо настроенный router экономит 40-70% только на model costs.
 
-### Cost Tracking: Know Where the Money Goes
+### Cost Tracking: знайте, куда уходят деньги
 
-You cannot optimize what you do not measure. Log every API call with:
+Нельзя оптимизировать то, что вы не измеряете. Логируйте каждый API call с:
 
 - Timestamp
 - Model name
@@ -146,32 +146,32 @@ You cannot optimize what you do not measure. Log every API call with:
 - Cache hit/miss
 - Request category
 
-This data reveals which features are expensive, which users are heavy consumers, and where caching has the most impact.
+Эти данные показывают, какие features дороги, какие users потребляют больше всего и где caching дает максимальный эффект.
 
-### Batching: Bulk Discounts
+### Batching: bulk discounts
 
-OpenAI's Batch API processes requests asynchronously at a 50% discount. You submit a batch of up to 50,000 requests, and results come back within 24 hours.
+OpenAI Batch API обрабатывает requests асинхронно со скидкой 50%. Вы отправляете batch до 50,000 requests, results возвращаются в течение 24 часов.
 
-Use batching for:
+Используйте batching для:
 - Nightly document processing
 - Bulk classification
 - Evaluation runs
 - Data enrichment pipelines
 
-Not for: real-time user-facing queries (latency matters).
+Не для: real-time user-facing queries (latency важна).
 
 ### Budget Alerts and Circuit Breakers
 
-A circuit breaker stops spending when you hit a limit. Without one, a bug or abuse can burn through your monthly budget in hours.
+Circuit breaker останавливает spending, когда достигнут limit. Без него bug или abuse может сжечь monthly budget за часы.
 
-Set three thresholds:
-1. **Warning** (70% of budget): send an alert
-2. **Throttle** (85% of budget): switch to cheaper models only
-3. **Stop** (95% of budget): reject new requests, return cached responses only
+Задайте три thresholds:
+1. **Warning** (70% budget): отправить alert
+2. **Throttle** (85% budget): перейти только на cheaper models
+3. **Stop** (95% budget): отклонять new requests, возвращать только cached responses
 
-### The Optimization Stack
+### Optimization Stack
 
-Apply these techniques in order. Each layer compounds on the previous ones.
+Применяйте эти techniques по порядку. Каждый слой усиливает предыдущие.
 
 | Layer | Technique | Typical Savings | Implementation Effort |
 |-------|-----------|----------------|----------------------|
@@ -183,11 +183,11 @@ Apply these techniques in order. Each layer compounds on the previous ones.
 | 6 | Prompt compression | 10-30% | Medium (rewrite prompts) |
 | 7 | Batching | 50% on eligible | Low (batch API) |
 
-A RAG app applying layers 1-5 typically reduces costs from $22,500/month to $4,000-6,000/month. That is the difference between burning runway and building a business.
+RAG app, применяющий layers 1-5, обычно снижает costs с $22,500/month до $4,000-6,000/month. Это разница между burning runway и building a business.
 
 ### Real Savings: Before and After
 
-Here is a real breakdown for a RAG chatbot serving 10,000 DAU.
+Вот реальный breakdown для RAG chatbot с 10,000 DAU.
 
 | Metric | Before Optimization | After Optimization | Savings |
 |--------|--------------------|--------------------|---------|
@@ -199,13 +199,13 @@ Here is a real breakdown for a RAG chatbot serving 10,000 DAU.
 | Monthly embedding cost | $0 | $180 | (new cost) |
 | Total monthly cost | $22,500 | $5,380 | 76% |
 
-The embedding cost for semantic caching ($180/month) pays for itself within the first hour of cache hits.
+Embedding cost для semantic caching ($180/month) окупается в течение первого часа cache hits.
 
-## Build It
+## Соберите это
 
-### Step 1: Cost Calculator
+### Шаг 1: Cost calculator
 
-Build a token cost calculator that knows current pricing for major models.
+Постройте token cost calculator, который знает текущие prices для major models.
 
 ```python
 import hashlib
@@ -253,9 +253,9 @@ def calculate_cost(model, input_tokens, output_tokens, cached_input_tokens=0):
     }
 ```
 
-### Step 2: Exact Cache
+### Шаг 2: Exact cache
 
-Hash the full prompt and return cached responses for identical requests.
+Хешируйте full prompt и возвращайте cached responses для identical requests.
 
 ```python
 class ExactCache:
@@ -308,9 +308,9 @@ class ExactCache:
         }
 ```
 
-### Step 3: Semantic Cache
+### Шаг 3: Semantic cache
 
-Embed queries and return cached responses when similarity exceeds a threshold.
+Embed queries и возвращайте cached responses, когда similarity превышает threshold.
 
 ```python
 def simple_embed(text):
@@ -382,9 +382,9 @@ class SemanticCache:
         }
 ```
 
-### Step 4: Rate Limiter
+### Шаг 4: Rate limiter
 
-Token bucket rate limiter with per-user quotas.
+Token bucket rate limiter с per-user quotas.
 
 ```python
 class TokenBucketRateLimiter:
@@ -452,9 +452,9 @@ class TokenBucketRateLimiter:
         }
 ```
 
-### Step 5: Cost Tracker
+### Шаг 5: Cost tracker
 
-Log every call and compute running totals.
+Логируйте каждый call и считайте running totals.
 
 ```python
 class CostTracker:
@@ -534,9 +534,9 @@ class CostTracker:
         }
 ```
 
-### Step 6: Model Router
+### Шаг 6: Model router
 
-Route queries to the cheapest model that can handle them.
+Направляйте queries к самой дешевой model, которая может с ними справиться.
 
 ```python
 SIMPLE_KEYWORDS = ["what time", "hours", "address", "phone", "price", "return policy", "hello", "hi", "thanks", "yes", "no"]
@@ -563,7 +563,7 @@ def route_model(query, tier="pro"):
     return {"query": query, "complexity": complexity, "model": model, "tier": tier}
 ```
 
-### Step 7: Run the Demo
+### Шаг 7: Запустите демо
 
 ```python
 def simulate_llm_call(model, query):
@@ -748,7 +748,7 @@ if __name__ == "__main__":
     run_demo()
 ```
 
-## Use It
+## Используйте это
 
 ### Anthropic Prompt Caching
 
@@ -775,7 +775,7 @@ if __name__ == "__main__":
 # print(f"Cache read tokens: {response.usage.cache_read_input_tokens}")
 ```
 
-The first call writes to the cache (25% premium). Every subsequent call with the same system prompt prefix reads from the cache (90% discount). The cache lasts 5 minutes and resets the timer on every hit.
+Первый call пишет в cache (25% premium). Каждый следующий call с тем же system prompt prefix читает из cache (90% discount). Cache живет 5 минут и сбрасывает таймер на каждом hit.
 
 ### OpenAI Automatic Caching
 
@@ -797,7 +797,7 @@ The first call writes to the cache (25% premium). Every subsequent call with the
 # print(f"Completion tokens: {response.usage.completion_tokens}")
 ```
 
-OpenAI caches automatically. Any prompt prefix of 1,024+ tokens that matches a recent request gets a 50% discount. No code changes needed -- just check `prompt_tokens_details.cached_tokens` in the response to verify it is working.
+OpenAI кэширует автоматически. Любой prompt prefix длиной 1,024+ tokens, совпадающий с недавним request, получает 50% discount. Изменения кода не нужны — просто проверяйте `prompt_tokens_details.cached_tokens` в response, чтобы убедиться, что caching работает.
 
 ### OpenAI Batch API
 
@@ -828,7 +828,7 @@ OpenAI caches automatically. Any prompt prefix of 1,024+ tokens that matches a r
 # print(f"Batch ID: {batch.id}, Status: {batch.status}")
 ```
 
-Batch API gives a flat 50% discount on all tokens. Results arrive within 24 hours. Perfect for non-real-time workloads: evaluations, data labeling, bulk summarization.
+Batch API дает плоскую скидку 50% на все tokens. Results приходят в течение 24 часов. Идеально для non-real-time workloads: evaluations, data labeling, bulk summarization.
 
 ### Production Semantic Cache with Redis
 
@@ -859,50 +859,50 @@ Batch API gives a flat 50% discount on all tokens. Results arrive within 24 hour
 #     return None
 ```
 
-In production, replace the linear scan with a vector index (Redis Vector Search, Pinecone, or pgvector). Linear scan works for <1,000 entries. Beyond that, use ANN (approximate nearest neighbor) for O(log n) lookup.
+В production замените linear scan на vector index (Redis Vector Search, Pinecone или pgvector). Linear scan работает для <1,000 entries. Дальше используйте ANN (approximate nearest neighbor) для O(log n) lookup.
 
-## Ship It
+## Что отправить
 
-This lesson produces `outputs/prompt-cost-optimizer.md` -- a reusable prompt that analyzes your LLM application and recommends specific cost optimizations with projected savings.
+Этот урок создает `outputs/prompt-cost-optimizer.md` — переиспользуемый prompt, который анализирует ваше LLM application и рекомендует конкретные cost optimizations с projected savings.
 
-It also produces `outputs/skill-cost-patterns.md` -- a decision framework for choosing the right caching strategy, rate limiting configuration, and model routing rules for your use case.
+Он также создает `outputs/skill-cost-patterns.md` — decision framework для выбора caching strategy, rate limiting configuration и model routing rules для вашего use case.
 
-## Exercises
+## Упражнения
 
-1. **Implement LRU eviction for the semantic cache.** Replace the oldest-first eviction with least-recently-used. Track the last access time for each entry and evict the entry with the oldest access time when the cache is full. Compare hit rates between the two strategies over 100 queries.
+1. **Реализуйте LRU eviction для semantic cache.** Замените oldest-first eviction на least-recently-used. Отслеживайте last access time для каждого entry и evict entry с самым старым access time, когда cache заполнен. Сравните hit rates двух strategies на 100 queries.
 
-2. **Build a cost projection tool.** Given a log of API calls (the CostTracker logs), project the monthly cost based on the trailing 7-day average. Account for weekday/weekend patterns. Trigger an alert if the projected monthly cost exceeds the budget by more than 20%.
+2. **Постройте cost projection tool.** По log API calls (CostTracker logs) спрогнозируйте monthly cost на основе trailing 7-day average. Учитывайте weekday/weekend patterns. Trigger alert, если projected monthly cost превышает budget более чем на 20%.
 
-3. **Implement tiered semantic caching.** Use two similarity thresholds: 0.98 for high-confidence hits (return immediately) and 0.90 for medium-confidence hits (return with a disclaimer: "Based on a similar previous question..."). Track which tier each hit came from and measure user satisfaction differences.
+3. **Реализуйте tiered semantic caching.** Используйте два similarity thresholds: 0.98 для high-confidence hits (return immediately) и 0.90 для medium-confidence hits (return with disclaimer: "Based on a similar previous question..."). Отслеживайте tier каждого hit и измеряйте differences user satisfaction.
 
-4. **Build a model routing classifier.** Replace the keyword-based classifier with an embedding-based one. Embed 50 labeled queries (simple/medium/complex), then classify new queries by finding the nearest labeled example. Measure classification accuracy against a test set of 20 queries.
+4. **Постройте model routing classifier.** Замените keyword-based classifier на embedding-based. Embed 50 labeled queries (simple/medium/complex), затем классифицируйте new queries по nearest labeled example. Измерьте classification accuracy на test set из 20 queries.
 
-5. **Implement a circuit breaker with degradation levels.** At 70% budget, log a warning. At 85%, automatically switch all routing to the cheapest model (gpt-4o-mini). At 95%, serve only cached responses and reject new queries. Test by simulating 1,000 requests against a $1.00 budget and verify each threshold triggers correctly.
+5. **Реализуйте circuit breaker с degradation levels.** На 70% budget логируйте warning. На 85% автоматически переключайте весь routing на cheapest model (gpt-4o-mini). На 95% обслуживайте только cached responses и отклоняйте new queries. Проверьте симуляцией 1,000 requests при budget $1.00 и убедитесь, что каждый threshold срабатывает.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Prompt caching | "Cache the system prompt" | Provider-level caching where repeated prompt prefixes get a discount (90% Anthropic, 50% OpenAI) -- no code changes for OpenAI, explicit markers for Anthropic |
-| Semantic caching | "Smart caching" | Embedding the query, computing similarity to past queries, and returning the cached response if similarity exceeds a threshold -- catches paraphrases that exact matching misses |
-| Exact caching | "Hash caching" | Hashing the full prompt (model + messages + temperature) and returning the cached response for identical inputs -- only works for temperature=0 deterministic calls |
-| Token bucket | "Rate limiter" | An algorithm where each user has a bucket of N tokens that refills at rate R per second -- allows bursts up to N while enforcing an average rate of R |
-| Model routing | "Cheapskate routing" | Using a classifier to send simple queries to cheap models (GPT-4o-mini, Haiku) and complex queries to expensive models (GPT-4o, Opus) -- saves 40-70% on model costs |
-| Cost tracking | "Metering" | Logging every API call with model, tokens, latency, cost, and user ID so you know exactly where money goes and which features are expensive |
-| Circuit breaker | "Kill switch" | Automatically degrading service (cheaper models, cached-only) or stopping requests entirely when spending approaches the budget limit |
-| Batch API | "Bulk discount" | OpenAI's asynchronous processing at 50% discount -- submit up to 50,000 requests, get results within 24 hours |
-| Prompt compression | "Token diet" | Rewriting system prompts and context to use fewer tokens while preserving meaning -- shorter prompts cost less and often perform better |
-| Cache hit rate | "Cache efficiency" | The percentage of requests served from cache instead of calling the LLM -- 40-60% is typical for production chatbots, saves proportionally on cost |
+| Prompt caching | "Cache the system prompt" | Provider-level caching, где повторяющиеся prompt prefixes получают discount (90% Anthropic, 50% OpenAI); без code changes для OpenAI, explicit markers для Anthropic |
+| Semantic caching | "Smart caching" | Embedding query, расчет similarity к прошлым queries и возврат cached response при превышении threshold; ловит paraphrases, которые exact matching пропускает |
+| Exact caching | "Hash caching" | Hashing full prompt (model + messages + temperature) и возврат cached response для identical inputs; работает только для deterministic calls при temperature=0 |
+| Token bucket | "Rate limiter" | Algorithm, где у каждого user есть bucket из N tokens, пополняемый со скоростью R в секунду; разрешает bursts до N и average rate R |
+| Model routing | "Cheapskate routing" | Classifier отправляет simple queries в cheap models (GPT-4o-mini, Haiku), а complex queries — в expensive models (GPT-4o, Opus); экономит 40-70% на model costs |
+| Cost tracking | "Metering" | Логирование каждого API call с model, tokens, latency, cost и user ID, чтобы знать, куда уходят деньги и какие features дороги |
+| Circuit breaker | "Kill switch" | Автоматическая деградация service (cheaper models, cached-only) или полная остановка requests при приближении spending к budget limit |
+| Batch API | "Bulk discount" | Асинхронная обработка OpenAI со скидкой 50%; отправьте до 50,000 requests и получите results в течение 24 часов |
+| Prompt compression | "Token diet" | Переписывание system prompts и context, чтобы использовать меньше tokens при сохранении meaning; shorter prompts дешевле и часто работают лучше |
+| Cache hit rate | "Cache efficiency" | Процент requests, обслуженных из cache вместо LLM call; 40-60% типично для production chatbots и дает пропорциональную экономию |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anthropic Prompt Caching Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) -- the official docs for Anthropic's explicit cache_control markers, pricing, and cache lifetime behavior
-- [OpenAI Prompt Caching](https://platform.openai.com/docs/guides/prompt-caching) -- OpenAI's automatic caching, how to verify cache hits via usage fields, and minimum prefix lengths
-- [OpenAI Batch API](https://platform.openai.com/docs/guides/batch) -- 50% discount for asynchronous processing, JSONL format, 24-hour completion window, and 50K request limits
-- [GPTCache](https://github.com/zilliztech/GPTCache) -- open-source semantic caching library supporting multiple embedding backends, vector stores, and eviction policies
-- [Martian Model Router](https://docs.withmartian.com) -- production model routing that automatically selects the cheapest model capable of handling each query
-- [Not Diamond](https://www.notdiamond.ai) -- ML-based model router that learns from your traffic patterns to optimize cost/quality tradeoffs across providers
-- [Helicone](https://www.helicone.ai) -- LLM observability platform with cost tracking, caching, rate limiting, and budget alerts as a proxy layer
-- [Dean & Barroso, "The Tail at Scale" (CACM 2013)](https://research.google/pubs/the-tail-at-scale/) -- latency, throughput, TTFT/TPOT percentiles, and hedged requests; the cost model behind "pick the cheapest model that still meets P95."
-- [Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (SOSP 2023)](https://arxiv.org/abs/2309.06180) -- the vLLM paper; why paged KV-cache + continuous batching beat naive servers 24× on throughput, the infra layer under "caching and cost."
-- [Dao et al., "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning" (ICLR 2024)](https://arxiv.org/abs/2307.08691) -- kernel-level cost reduction orthogonal to prompt caching; read alongside speculative decoding and GQA for the full cost-curve picture.
+- [Anthropic Prompt Caching Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — official docs по explicit cache_control markers, pricing и cache lifetime behavior Anthropic
+- [OpenAI Prompt Caching](https://platform.openai.com/docs/guides/prompt-caching) — automatic caching OpenAI, проверка cache hits через usage fields и minimum prefix lengths
+- [OpenAI Batch API](https://platform.openai.com/docs/guides/batch) — 50% discount для asynchronous processing, JSONL format, 24-hour completion window и 50K request limits
+- [GPTCache](https://github.com/zilliztech/GPTCache) — open-source semantic caching library с поддержкой multiple embedding backends, vector stores и eviction policies
+- [Martian Model Router](https://docs.withmartian.com) — production model routing, автоматически выбирающий cheapest model, capable для каждого query
+- [Not Diamond](https://www.notdiamond.ai) — ML-based model router, который учится на traffic patterns и оптимизирует cost/quality tradeoffs across providers
+- [Helicone](https://www.helicone.ai) — LLM observability platform с cost tracking, caching, rate limiting и budget alerts как proxy layer
+- [Dean & Barroso, "The Tail at Scale" (CACM 2013)](https://research.google/pubs/the-tail-at-scale/) — latency, throughput, TTFT/TPOT percentiles и hedged requests; cost model за принципом "pick the cheapest model that still meets P95."
+- [Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (SOSP 2023)](https://arxiv.org/abs/2309.06180) — paper vLLM; почему paged KV-cache + continuous batching дают throughput 24× выше naive servers, infra layer под "caching and cost."
+- [Dao et al., "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning" (ICLR 2024)](https://arxiv.org/abs/2307.08691) — kernel-level cost reduction, orthogonal к prompt caching; читайте вместе со speculative decoding и GQA для полной cost-curve picture.
