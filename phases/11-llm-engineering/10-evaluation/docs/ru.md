@@ -1,37 +1,37 @@
-# Evaluation & Testing LLM Applications
+# Оценка и тестирование LLM-приложений
 
-> You would never deploy a web app without tests. You would never ship a database migration without a rollback plan. But right now, most teams ship LLM applications by reading 10 outputs and saying "yeah, looks good." That is not evaluation. That is hope. Hope is not an engineering practice. Every prompt change, every model swap, every temperature tweak changes your output distribution in ways you cannot predict by reading a handful of examples. Evaluation is the only thing standing between your application and silent degradation.
+> Вы никогда не стали бы деплоить web app без тестов. Вы никогда не отправили бы database migration без rollback plan. Но прямо сейчас большинство команд выпускают LLM applications так: читают 10 outputs и говорят «да, выглядит нормально». Это не evaluation. Это надежда. Надежда не является engineering practice. Каждое изменение prompt, каждая замена model, каждая настройка temperature меняет распределение outputs так, что это нельзя предсказать по нескольким примерам. Evaluation — единственное, что стоит между вашим приложением и тихой деградацией.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 Lesson 01 (Prompt Engineering), Lesson 09 (Function Calling)
-**Time:** ~45 minutes
-**Related:** Phase 5 · 27 (LLM Evaluation — RAGAS, DeepEval, G-Eval) covers the framework-level concepts (NLI-based faithfulness, judge calibration, the RAG four). Phase 5 · 28 (Long-Context Evaluation) covers NIAH / RULER / LongBench / MRCR for context-length regression. This lesson focuses on what is LLM-engineering-specific: CI/CD integration, cost-gated eval runs, regression dashboards.
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 11 Lesson 01 (Prompt Engineering), Lesson 09 (Function Calling)
+**Время:** ~45 минут
+**Связано:** Phase 5 · 27 (LLM Evaluation — RAGAS, DeepEval, G-Eval) покрывает framework-level concepts (NLI-based faithfulness, judge calibration, the RAG four). Phase 5 · 28 (Long-Context Evaluation) покрывает NIAH / RULER / LongBench / MRCR для регрессии длины контекста. Этот урок фокусируется на том, что специфично для LLM engineering: CI/CD integration, cost-gated eval runs, regression dashboards.
 
-## Learning Objectives
+## Цели обучения
 
-- Build an evaluation dataset with input-output pairs, rubrics, and edge cases specific to your LLM application
-- Implement automated scoring using LLM-as-judge, regex matching, and deterministic assertion checks
-- Set up regression testing that detects quality degradation when prompts, models, or parameters change
-- Design evaluation metrics that capture what matters for your use case (correctness, tone, format compliance, latency)
+- Построить evaluation dataset с input-output pairs, rubrics и edge cases, специфичными для вашего LLM application
+- Реализовать автоматическое scoring через LLM-as-judge, regex matching и deterministic assertion checks
+- Настроить regression testing, который обнаруживает деградацию качества при изменении prompts, models или parameters
+- Спроектировать evaluation metrics, отражающие важное для вашего use case (correctness, tone, format compliance, latency)
 
-## The Problem
+## Проблема
 
-You build a RAG chatbot for customer support. It works great in your demos. You ship it. Two weeks later, someone changes the system prompt to reduce hallucinations. The change works -- hallucination rate drops. But answer completeness also drops 34% because the model now refuses to answer anything it is not 100% certain about.
+Вы строите RAG chatbot для customer support. На демо он работает отлично. Вы выпускаете его. Через две недели кто-то меняет system prompt, чтобы уменьшить hallucinations. Изменение работает — hallucination rate падает. Но полнота ответов тоже падает на 34%, потому что модель теперь отказывается отвечать на все, в чем не уверена на 100%.
 
-Nobody noticed for 11 days. Revenue from the self-service channel fell. Support tickets spiked.
+Никто не заметил этого 11 дней. Revenue из self-service channel упал. Support tickets выросли.
 
-This is the default outcome when you evaluate by vibes. You check a few examples, they look fine, you merge. But LLM outputs are stochastic. A prompt that works on 5 test cases can fail on the 6th. A model that scores 92% on your benchmarks can score 71% on the edge cases your users actually hit.
+Так выглядит результат по умолчанию, когда вы оцениваете «по ощущениям». Вы проверяете несколько примеров, они выглядят нормально, вы merge. Но outputs LLM стохастичны. Prompt, который работает на 5 test cases, может провалиться на 6-м. Model, которая получает 92% на ваших benchmarks, может получить 71% на edge cases, с которыми реально приходят пользователи.
 
-The fix is not "be more careful." The fix is automated evaluation that runs on every change, scores outputs against rubrics, computes confidence intervals, and blocks deployment when quality regresses.
+Решение — не «быть внимательнее». Решение — automated evaluation, которая запускается на каждое изменение, оценивает outputs по rubrics, считает confidence intervals и блокирует deployment при регрессии качества.
 
-Evaluation is not a nice-to-have. It is table stakes. Shipping without evals is deploying blind.
+Evaluation — не приятное дополнение. Это базовое требование. Shipping без evals — deployment вслепую.
 
-## The Concept
+## Концепция
 
-### The Eval Taxonomy
+### Таксономия Eval
 
-There are three categories of LLM evaluation. Each has a role. None is sufficient alone.
+Есть три категории LLM evaluation. У каждой своя роль. Ни одной по отдельности недостаточно.
 
 ```mermaid
 graph TD
@@ -57,11 +57,11 @@ graph TD
     style H fill:#e8e8e8,stroke:#333
 ```
 
-**Automated metrics** compare output text against reference answers using algorithms. BLEU measures n-gram overlap (originally for machine translation). ROUGE measures recall of reference n-grams (originally for summarization). BERTScore uses BERT embeddings to measure semantic similarity. These are fast and cheap -- you can score 10,000 outputs in seconds. But they miss nuance. Two answers can have zero word overlap and both be correct. One answer can have high ROUGE and be completely wrong in context.
+**Automated metrics** сравнивают output text с reference answers алгоритмами. BLEU измеряет n-gram overlap (изначально для machine translation). ROUGE измеряет recall reference n-grams (изначально для summarization). BERTScore использует BERT embeddings для измерения semantic similarity. Это быстро и дешево — можно оценить 10,000 outputs за секунды. Но такие метрики упускают нюансы. Два ответа могут не иметь ни одного общего слова и оба быть правильными. Ответ может иметь высокий ROUGE и быть полностью неверным в контексте.
 
-**LLM-as-judge** uses a strong model (GPT-5, Claude Opus 4.7, Gemini 3 Pro) to grade outputs against a rubric. This captures semantic quality -- relevance, correctness, helpfulness, safety -- that string metrics miss. It costs money (~$8 per 1,000 judge calls with GPT-5-mini, ~$25 with Claude Opus 4.7) but correlates 82-88% with human judgment on well-designed rubrics — see Phase 5 · 27 for the calibration recipe.
+**LLM-as-judge** использует сильную model (GPT-5, Claude Opus 4.7, Gemini 3 Pro), чтобы оценивать outputs по rubric. Это улавливает semantic quality — relevance, correctness, helpfulness, safety — которые пропускают string metrics. Это стоит денег (~$8 за 1,000 judge calls с GPT-5-mini, ~$25 с Claude Opus 4.7), но коррелирует на 82-88% с human judgment при хорошо спроектированных rubrics — рецепт calibration см. в Phase 5 · 27.
 
-**Human evaluation** is the gold standard but the slowest and most expensive. Reserve it for calibrating your automated evals, not for running on every commit.
+**Human evaluation** — золотой стандарт, но самый медленный и дорогой. Оставьте его для калибровки automated evals, а не для запуска на каждый commit.
 
 | Method | Speed | Cost per 1K evals | Correlation with humans | Best for |
 |--------|-------|-------------------|------------------------|----------|
@@ -74,42 +74,42 @@ graph TD
 | DeepEval (G-Eval + Pytest) | ~4 min | depends on judge | 80-88% | CI-native, per-PR regression gates |
 | Human expert | ~2 hours | ~$500 | 100% (by definition) | Calibration, edge cases, policy |
 
-### LLM-as-Judge: The Workhorse
+### LLM-as-Judge: рабочая лошадка
 
-This is the evaluation method you will use 90% of the time. The pattern is simple: give a strong model the input, the output, an optional reference answer, and a rubric. Ask it to score.
+Этот метод evaluation вы будете использовать в 90% случаев. Pattern прост: дайте сильной model input, output, опциональный reference answer и rubric. Попросите выставить score.
 
-Four criteria cover most use cases:
+Четыре критерия покрывают большинство use cases:
 
-**Relevance** (1-5): Does the output address what was asked? A score of 1 means completely off-topic. A score of 5 means directly and specifically answers the question.
+**Relevance** (1-5): отвечает ли output на заданный вопрос? Score 1 означает полный off-topic. Score 5 означает прямой и конкретный ответ на вопрос.
 
-**Correctness** (1-5): Is the information factually accurate? A score of 1 means contains major factual errors. A score of 5 means all claims are verifiable and accurate.
+**Correctness** (1-5): фактически ли верна информация? Score 1 означает крупные factual errors. Score 5 означает, что все claims проверяемы и точны.
 
-**Helpfulness** (1-5): Would a user find this useful? A score of 1 means the response provides no value. A score of 5 means the user can immediately act on the information.
+**Helpfulness** (1-5): будет ли это полезно пользователю? Score 1 означает, что response не дает ценности. Score 5 означает, что пользователь может сразу действовать на основе информации.
 
-**Safety** (1-5): Is the output free from harmful content, bias, or policy violations? A score of 1 means contains harmful or dangerous content. A score of 5 means completely safe and appropriate.
+**Safety** (1-5): свободен ли output от harmful content, bias или policy violations? Score 1 означает harmful или dangerous content. Score 5 означает полностью safe и appropriate.
 
-### Rubric Design
+### Дизайн Rubric
 
-Bad rubrics produce noisy scores. Good rubrics anchor each score to specific, observable behaviors.
+Плохие rubrics дают шумные scores. Хорошие rubrics привязывают каждый score к конкретному наблюдаемому поведению.
 
-Bad rubric: "Rate from 1-5 how good the answer is."
+Плохой rubric: "Rate from 1-5 how good the answer is."
 
-Good rubric:
-- **5**: The answer is factually correct, directly addresses the question, includes specific details or examples, and provides actionable information.
-- **4**: The answer is factually correct and addresses the question but lacks specific detail or is slightly verbose.
-- **3**: The answer is mostly correct but contains a minor inaccuracy or partially misses the question's intent.
-- **2**: The answer contains significant factual errors or only tangentially relates to the question.
-- **1**: The answer is factually wrong, off-topic, or harmful.
+Хороший rubric:
+- **5**: Ответ factually correct, прямо отвечает на вопрос, включает конкретные детали или примеры и дает actionable information.
+- **4**: Ответ factually correct и отвечает на вопрос, но не хватает конкретики или он слегка verbose.
+- **3**: Ответ mostly correct, но содержит minor inaccuracy или частично упускает intent вопроса.
+- **2**: Ответ содержит significant factual errors или только косвенно относится к вопросу.
+- **1**: Ответ factually wrong, off-topic или harmful.
 
-Anchored descriptions reduce judge variance by 30-40% compared to unanchored scales.
+Anchored descriptions уменьшают judge variance на 30-40% по сравнению со шкалами без anchor.
 
-**Pairwise comparison** is an alternative: show the judge two outputs and ask which is better. This eliminates scale calibration issues -- the judge does not need to decide if something is a "3" or a "4." It just picks the winner. Useful for comparing two prompt versions head-to-head.
+**Pairwise comparison** — альтернатива: покажите judge два outputs и спросите, какой лучше. Это устраняет проблемы scale calibration — judge не нужно решать, что является «3» или «4». Он просто выбирает победителя. Полезно для прямого сравнения двух prompt versions.
 
-**Best-of-N** generates N outputs for each input and has the judge pick the best one. This measures the ceiling of your system. If best-of-5 consistently beats best-of-1, you might benefit from sampling multiple responses and selecting.
+**Best-of-N** генерирует N outputs для каждого input и просит judge выбрать лучший. Это измеряет ceiling вашей системы. Если best-of-5 стабильно выигрывает у best-of-1, вам может помочь sampling нескольких responses и selection.
 
-### The Eval Pipeline
+### Eval Pipeline
 
-Every evaluation follows the same 6-step pipeline.
+Каждая evaluation проходит один и тот же pipeline из 6 шагов.
 
 ```mermaid
 flowchart LR
@@ -127,35 +127,35 @@ flowchart LR
     D -->|ship or block| P
 ```
 
-**Prompt**: Define your test cases. Each case has an input (user query + context) and optionally a reference answer.
+**Prompt**: определите test cases. Каждый case имеет input (user query + context) и опционально reference answer.
 
-**Run**: Execute the prompt against the model. Collect outputs. Run each test case 1-3 times if you want to measure variance.
+**Run**: выполните prompt против model. Соберите outputs. Запускайте каждый test case 1-3 раза, если хотите измерить variance.
 
-**Collect**: Store inputs, outputs, and metadata (model, temperature, timestamp, prompt version).
+**Collect**: сохраните inputs, outputs и metadata (model, temperature, timestamp, prompt version).
 
-**Score**: Apply your evaluation method -- automated metrics, LLM-as-judge, or both.
+**Score**: примените evaluation method — automated metrics, LLM-as-judge или оба.
 
-**Compare**: Compare scores against a baseline. The baseline is your last known-good version. Compute confidence intervals on the difference.
+**Compare**: сравните scores с baseline. Baseline — ваша последняя known-good version. Посчитайте confidence intervals для difference.
 
-**Decide**: If the new version is statistically significantly better (or not worse), ship it. If it regresses, block.
+**Decide**: если новая версия статистически значимо лучше (или не хуже), ship. Если есть регрессия, block.
 
-### Eval Datasets: The Foundation
+### Eval Datasets: фундамент
 
-Your eval dataset is only as good as the cases in it. Three types of test cases matter:
+Ваш eval dataset настолько хорош, насколько хороши cases внутри него. Важны три типа test cases:
 
-**Golden test set** (50-100 cases): Curated input-output pairs that represent your core use cases. These are your regression tests. Every prompt change must pass these.
+**Golden test set** (50-100 cases): curated input-output pairs, представляющие core use cases. Это ваши regression tests. Каждое изменение prompt должно их проходить.
 
-**Adversarial examples** (20-50 cases): Inputs designed to break your system. Prompt injections, edge cases, ambiguous queries, questions about topics outside your domain, requests for harmful content.
+**Adversarial examples** (20-50 cases): inputs, специально созданные, чтобы ломать систему. Prompt injections, edge cases, ambiguous queries, вопросы вне домена, запросы harmful content.
 
-**Distribution samples** (100-200 cases): Random samples from real production traffic. These catch problems that curated tests miss because they reflect what users actually ask.
+**Distribution samples** (100-200 cases): случайные samples из реального production traffic. Они ловят проблемы, которые curated tests пропускают, потому что отражают реальные вопросы пользователей.
 
 ### Sample Size and Confidence
 
-50 test cases is not enough.
+50 test cases недостаточно.
 
-If your eval scores 90% on 50 cases, the 95% confidence interval is [78%, 97%]. That is a 19-point spread. You cannot distinguish a system scoring 80% from one scoring 96%.
+Если eval показывает 90% на 50 cases, 95% confidence interval равен [78%, 97%]. Это разброс в 19 пунктов. Вы не можете отличить систему с 80% от системы с 96%.
 
-At 200 cases with 90% accuracy, the confidence interval tightens to [85%, 94%]. Now you can make decisions.
+На 200 cases при 90% accuracy interval сужается до [85%, 94%]. Теперь можно принимать решения.
 
 | Test cases | Observed accuracy | 95% CI width | Can detect 5% regression? |
 |-----------|------------------|-------------|--------------------------|
@@ -165,23 +165,23 @@ At 200 cases with 90% accuracy, the confidence interval tightens to [85%, 94%]. 
 | 500 | 90% | 5 points | Confidently |
 | 1000 | 90% | 3 points | Precisely |
 
-Use at least 200 test cases for any evaluation where you need to make deployment decisions. Use 500+ if you are comparing two systems that are close in quality.
+Используйте минимум 200 test cases для любой evaluation, где нужно принимать deployment decisions. Используйте 500+, если сравниваете две системы близкого качества.
 
 ### Regression Testing
 
-Every prompt change needs a before/after eval. This is non-negotiable.
+Каждое изменение prompt требует before/after eval. Это не обсуждается.
 
-The workflow:
-1. Run your eval suite on the current (baseline) prompt -- store the scores
-2. Make the prompt change
-3. Run the same eval suite on the new prompt
-4. Compare scores with a statistical test (paired t-test or bootstrap)
-5. If no statistically significant regression on any criteria -- ship
-6. If regression detected -- investigate which test cases degraded and why
+Workflow:
+1. Запустите eval suite на текущем (baseline) prompt — сохраните scores
+2. Измените prompt
+3. Запустите тот же eval suite на новом prompt
+4. Сравните scores статистическим тестом (paired t-test или bootstrap)
+5. Если нет statistically significant regression ни по одному criterion — ship
+6. Если regression detected — разберите, какие test cases ухудшились и почему
 
 ### Cost of Evals
 
-Evals cost money when using LLM-as-judge. Budget for it.
+Evals стоят денег при использовании LLM-as-judge. Закладывайте это в бюджет.
 
 | Eval size | GPT-5-mini judge | Claude Opus 4.7 judge | Gemini 3 Flash judge | Time |
 |-----------|------------------|-----------------------|----------------------|------|
@@ -190,23 +190,23 @@ Evals cost money when using LLM-as-judge. Budget for it.
 | 500 cases x 4 criteria | ~$10 | ~$30 | ~$2 | ~10 min |
 | 1000 cases x 4 criteria | ~$20 | ~$60 | ~$4 | ~20 min |
 
-A 200-case eval suite running on every PR with GPT-5-mini costs ~$4 per run. If your team merges 10 PRs per week, that is $160/month. Compare that to the cost of shipping a regression that tanks user satisfaction for 11 days.
+Eval suite на 200 cases, запускаемый на каждый PR с GPT-5-mini, стоит ~$4 за run. Если команда merge 10 PR в неделю, это $160/month. Сравните это со стоимостью регрессии, которая 11 дней портит user satisfaction.
 
 ### Anti-Patterns
 
-**Vibes-based evaluation.** "I read 5 outputs and they looked good." You cannot perceive a 5% quality regression by reading examples. Your brain cherry-picks confirming evidence.
+**Vibes-based evaluation.** "I read 5 outputs and they looked good." Вы не заметите 5% quality regression, читая примеры. Мозг выбирает подтверждающие evidence.
 
-**Testing on training examples.** If your eval cases overlap with examples in your prompt or fine-tuning data, you are measuring memorization, not generalization. Keep eval data separate.
+**Testing on training examples.** Если eval cases пересекаются с примерами в prompt или fine-tuning data, вы измеряете memorization, а не generalization. Держите eval data отдельно.
 
-**Single-metric obsession.** Optimizing only for correctness while ignoring helpfulness produces terse, technically-accurate-but-useless answers. Always score multiple criteria.
+**Single-metric obsession.** Оптимизация только correctness при игнорировании helpfulness дает краткие, technically-accurate-but-useless answers. Всегда оценивайте несколько criteria.
 
-**Evaluating without baselines.** A score of 4.2/5 means nothing in isolation. Is that better or worse than yesterday? Better or worse than the competing prompt? Always compare.
+**Evaluating without baselines.** Score 4.2/5 ничего не значит в изоляции. Это лучше или хуже, чем вчера? Лучше или хуже конкурирующего prompt? Всегда сравнивайте.
 
-**Using a weak judge.** GPT-3.5 as a judge produces noisy, inconsistent scores. Use GPT-4o or Claude Sonnet. The judge must be at least as capable as the model being evaluated.
+**Using a weak judge.** GPT-3.5 как judge дает шумные, inconsistent scores. Используйте GPT-4o или Claude Sonnet. Judge должен быть как минимум так же capable, как оцениваемая model.
 
 ### Real Tools
 
-You do not have to build everything from scratch. These tools provide eval infrastructure:
+Не нужно строить все с нуля. Эти tools дают eval infrastructure:
 
 | Tool | What it does | Pricing |
 |------|-------------|---------|
@@ -216,13 +216,13 @@ You do not have to build everything from scratch. These tools provide eval infra
 | [DeepEval](https://deepeval.com) | Python eval framework, 14+ metrics, Pytest integration | Free (OSS) |
 | [Arize Phoenix](https://phoenix.arize.com) | Open-source observability + evals, tracing, span-level scoring | Free (OSS) |
 
-For this lesson, we build it from scratch so you understand every layer. In production, use one of these tools.
+В этом уроке мы строим с нуля, чтобы вы понимали каждый слой. В production используйте один из этих tools.
 
-## Build It
+## Соберите это
 
-### Step 1: Define the Eval Data Structures
+### Шаг 1: Определите структуры данных Eval
 
-Build the core types: test cases, eval results, and scoring rubrics.
+Постройте core types: test cases, eval results и scoring rubrics.
 
 ```python
 import json
@@ -274,9 +274,9 @@ class EvalResult:
         return sum(s.score for s in self.scores) / len(self.scores)
 ```
 
-### Step 2: Build the LLM-as-Judge Scorer
+### Шаг 2: Постройте LLM-as-Judge scorer
 
-This simulates a judge model scoring outputs against rubrics. In production, replace the simulation with actual GPT-4o or Claude API calls.
+Это симулирует judge model, оценивающую outputs по rubrics. В production замените simulation реальными GPT-4o или Claude API calls.
 
 ```python
 RUBRICS = {
@@ -375,9 +375,9 @@ def generate_judge_reasoning(input_text, model_output, criterion, score):
     return f"[{criterion.upper()}={score}/5] {description}. Output length: {len(model_output)} chars."
 ```
 
-### Step 3: Build Automated Metrics
+### Шаг 3: Постройте automated metrics
 
-Implement ROUGE-L and a simple semantic similarity score alongside the LLM judge.
+Реализуйте ROUGE-L и простой score semantic similarity рядом с LLM judge.
 
 ```python
 def rouge_l_score(reference, hypothesis):
@@ -417,9 +417,9 @@ def word_overlap_score(reference, hypothesis):
     return round(len(intersection) / len(union), 4) if union else 0.0
 ```
 
-### Step 4: Build the Confidence Interval Calculator
+### Шаг 4: Постройте calculator confidence intervals
 
-Statistical rigor separates real evaluation from vibes.
+Статистическая строгость отделяет настоящую evaluation от оценки «по ощущениям».
 
 ```python
 def wilson_confidence_interval(successes, total, z=1.96):
@@ -456,9 +456,9 @@ def bootstrap_confidence_interval(scores, n_bootstrap=1000, confidence=0.95):
     return (round(means[lower_idx], 4), round(mean, 4), round(means[upper_idx], 4))
 ```
 
-### Step 5: Build the Eval Runner and Comparison Report
+### Шаг 5: Постройте Eval Runner и Comparison Report
 
-This is the orchestration layer that ties everything together.
+Это orchestration layer, который связывает все вместе.
 
 ```python
 SIMULATED_MODELS = {
@@ -641,7 +641,7 @@ def print_comparison_report(report):
     print("=" * 70)
 ```
 
-### Step 6: Run the Demo
+### Шаг 6: Запустите демо
 
 ```python
 def run_demo():
@@ -726,7 +726,7 @@ if __name__ == "__main__":
     run_demo()
 ```
 
-## Use It
+## Используйте это
 
 ### promptfoo Integration
 
@@ -759,7 +759,7 @@ if __name__ == "__main__":
 # View: promptfoo view
 ```
 
-promptfoo is the fastest path from zero to eval pipeline. YAML config, built-in LLM-as-judge, web viewer, CI-friendly output. It supports 15+ providers out of the box and custom scoring functions in JavaScript or Python.
+promptfoo — самый быстрый путь от нуля к eval pipeline. YAML config, встроенный LLM-as-judge, web viewer, CI-friendly output. Он поддерживает 15+ providers из коробки и custom scoring functions на JavaScript или Python.
 
 ### DeepEval Integration
 
@@ -781,7 +781,7 @@ promptfoo is the fastest path from zero to eval pipeline. YAML config, built-in 
 # evaluate([test_case], [relevancy, faithfulness])
 ```
 
-DeepEval integrates with Pytest. Run `deepeval test run test_evals.py` to execute evals as part of your test suite. It includes 14 built-in metrics including hallucination detection, bias, and toxicity.
+DeepEval интегрируется с Pytest. Запустите `deepeval test run test_evals.py`, чтобы выполнять evals как часть test suite. Он включает 14 built-in metrics, включая hallucination detection, bias и toxicity.
 
 ### CI/CD Integration Pattern
 
@@ -810,50 +810,50 @@ DeepEval integrates with Pytest. Run `deepeval test run test_evals.py` to execut
 #           path: eval_results/
 ```
 
-Trigger evals on every PR that touches prompts or LLM code. Block the merge if any criterion regresses beyond the threshold. Upload results as artifacts for review.
+Запускайте evals на каждый PR, который меняет prompts или LLM code. Блокируйте merge, если любой criterion регрессирует сверх threshold. Загружайте results как artifacts для review.
 
-## Ship It
+## Что отправить
 
-This lesson produces `outputs/prompt-eval-designer.md` -- a reusable prompt template for designing evaluation rubrics. Give it a description of your LLM application and it produces tailored evaluation criteria with anchored scoring rubrics.
+Этот урок создает `outputs/prompt-eval-designer.md` — переиспользуемый prompt template для проектирования evaluation rubrics. Дайте ему описание вашего LLM application, и он выдаст tailored evaluation criteria с anchored scoring rubrics.
 
-It also produces `outputs/skill-eval-patterns.md` -- a decision framework for choosing the right evaluation strategy based on your use case, budget, and quality requirements.
+Он также создает `outputs/skill-eval-patterns.md` — decision framework для выбора правильной evaluation strategy по use case, budget и quality requirements.
 
-## Exercises
+## Упражнения
 
-1. **Add BERTScore.** Implement a simplified BERTScore using word embedding cosine similarity. Create a dictionary of 100 common words mapped to random 50-dimensional vectors. Compute the pairwise cosine similarity matrix between reference and hypothesis tokens. Use greedy matching (each hypothesis token matches its most similar reference token) to compute precision, recall, and F1.
+1. **Добавьте BERTScore.** Реализуйте упрощенный BERTScore через word embedding cosine similarity. Создайте dictionary из 100 common words, сопоставленных случайным 50-dimensional vectors. Посчитайте pairwise cosine similarity matrix между reference и hypothesis tokens. Используйте greedy matching (каждый hypothesis token сопоставляется с наиболее похожим reference token), чтобы посчитать precision, recall и F1.
 
-2. **Build pairwise comparison.** Modify the judge to compare two model outputs side-by-side instead of scoring individually. Given the same input and two outputs, the judge should return which output is better and why. Run pairwise comparison across your test suite with baseline-v1 vs baseline-v2 and compute the win rate with confidence intervals.
+2. **Постройте pairwise comparison.** Измените judge так, чтобы он сравнивал два model outputs side-by-side вместо индивидуального scoring. Для одного input и двух outputs judge должен вернуть, какой output лучше и почему. Запустите pairwise comparison по test suite с baseline-v1 vs baseline-v2 и посчитайте win rate с confidence intervals.
 
-3. **Implement stratified analysis.** Group test cases by category (factual, technical, safety, coding, summarization) and compute per-category scores with confidence intervals. Identify which categories improved and which regressed between prompt versions. A system can improve overall while regressing on a specific category.
+3. **Реализуйте stratified analysis.** Сгруппируйте test cases по category (factual, technical, safety, coding, summarization) и посчитайте per-category scores с confidence intervals. Определите, какие categories улучшились, а какие регрессировали между prompt versions. Система может улучшиться overall, но регрессировать по конкретной category.
 
-4. **Add inter-rater reliability.** Run the LLM judge 3 times on each test case (simulating different judge "raters"). Compute Cohen's kappa or Krippendorff's alpha between the three runs. If agreement is below 0.7, your rubric is too ambiguous -- rewrite it.
+4. **Добавьте inter-rater reliability.** Запустите LLM judge 3 раза на каждом test case (симулируя разных judge "raters"). Посчитайте Cohen's kappa или Krippendorff's alpha между тремя runs. Если agreement ниже 0.7, rubric слишком ambiguous — перепишите его.
 
-5. **Build a cost tracker.** Track the token usage and cost of every judge call. Each input to the judge includes the original prompt, the model output, and the rubric (~500 tokens input, ~100 tokens output). Compute the total eval cost across your test suite and project the monthly cost assuming 10 eval runs per week.
+5. **Постройте cost tracker.** Отслеживайте token usage и cost каждого judge call. Каждый input для judge включает original prompt, model output и rubric (~500 input tokens, ~100 output tokens). Посчитайте total eval cost по test suite и monthly cost при 10 eval runs в неделю.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Eval | "Testing" | Systematically scoring LLM outputs against defined criteria using automated metrics, LLM judges, or human review |
-| LLM-as-judge | "AI grading" | Using a strong model (GPT-4o, Claude) to score outputs against a rubric -- correlates 80-85% with human judgment |
-| Rubric | "Scoring guide" | Anchored descriptions for each score level (1-5) that reduce judge variance by defining exactly what each score means |
-| ROUGE-L | "Text overlap" | Longest Common Subsequence-based metric measuring how much of the reference appears in the output -- recall-oriented |
-| Confidence interval | "Error bars" | A range around your measured score that tells you how much uncertainty remains -- wider with fewer test cases |
-| Regression testing | "Before/after" | Running the same eval suite on old and new prompt versions to detect quality degradation before deployment |
-| Golden test set | "Core evals" | Curated input-output pairs representing your most important use cases -- every change must pass these |
-| Pairwise comparison | "A vs B" | Showing a judge two outputs and asking which is better -- eliminates scale calibration problems |
-| Bootstrap | "Resampling" | Estimating confidence intervals by repeatedly sampling from your scores with replacement -- works with any distribution |
-| Wilson interval | "Proportion CI" | A confidence interval for pass/fail rates that works correctly even with small sample sizes or extreme proportions |
+| Eval | "Testing" | Систематическое scoring LLM outputs по определенным criteria с automated metrics, LLM judges или human review |
+| LLM-as-judge | "AI grading" | Использование сильной model (GPT-4o, Claude) для scoring outputs по rubric; коррелирует на 80-85% с human judgment |
+| Rubric | "Scoring guide" | Anchored descriptions для каждого score level (1-5), уменьшающие judge variance за счет точного определения каждого score |
+| ROUGE-L | "Text overlap" | Метрика на основе Longest Common Subsequence, измеряющая, какая часть reference появляется в output; ориентирована на recall |
+| Confidence interval | "Error bars" | Диапазон вокруг измеренного score, показывающий оставшуюся uncertainty; шире при меньшем числе test cases |
+| Regression testing | "Before/after" | Запуск одного eval suite на старой и новой версиях prompt, чтобы обнаружить quality degradation до deployment |
+| Golden test set | "Core evals" | Curated input-output pairs, представляющие самые важные use cases; каждое изменение должно их проходить |
+| Pairwise comparison | "A vs B" | Показ judge двух outputs с вопросом, какой лучше; устраняет проблемы scale calibration |
+| Bootstrap | "Resampling" | Оценка confidence intervals повторным sampling ваших scores with replacement; работает с любым distribution |
+| Wilson interval | "Proportion CI" | Confidence interval для pass/fail rates, корректно работающий даже с small sample sizes или extreme proportions |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Zheng et al., 2023 -- "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"](https://arxiv.org/abs/2306.05685) -- the foundational paper on using LLMs to judge other LLMs, introducing MT-Bench and the pairwise comparison protocol
-- [promptfoo Documentation](https://promptfoo.dev/docs/intro) -- the most practical open-source eval framework with YAML config, 15+ providers, LLM-as-judge, and CI integration
-- [DeepEval Documentation](https://docs.confident-ai.com) -- Python-native eval framework with 14+ metrics, Pytest integration, and hallucination detection
-- [Braintrust Eval Guide](https://www.braintrust.dev/docs) -- production eval platform with experiment tracking, scoring functions, and dataset management
-- [Ribeiro et al., 2020 -- "Beyond Accuracy: Behavioral Testing of NLP Models with CheckList"](https://arxiv.org/abs/2005.04118) -- systematic behavioral testing methodology (minimum functionality, invariance, directional expectations) applicable to LLM evaluation
-- [LMSYS Chatbot Arena](https://chat.lmsys.org) -- live human evaluation platform where users vote on model outputs, the largest pairwise comparison dataset for LLMs
-- [Es et al., "RAGAS: Automated Evaluation of Retrieval Augmented Generation" (EACL 2024 demo)](https://arxiv.org/abs/2309.15217) -- reference-free metrics for RAG (faithfulness, answer relevancy, context precision/recall); the eval pattern that scales to prod without labelers.
-- [Liu et al., "G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment" (EMNLP 2023)](https://arxiv.org/abs/2303.16634) -- chain-of-thought + form-filling as a judge protocol; the calibration and bias results every judge-builder needs.
-- [Hugging Face LLM Evaluation Guidebook](https://huggingface.co/spaces/OpenEvals/evaluation-guidebook) -- practical advice on data contamination, metric selection, and reproducibility from the team maintaining the Open LLM Leaderboard.
-- [EleutherAI lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) -- the standard framework for automated benchmarks (MMLU, HellaSwag, TruthfulQA, BIG-Bench); the engine behind the Open LLM Leaderboard.
+- [Zheng et al., 2023 — "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"](https://arxiv.org/abs/2306.05685) — foundational paper об использовании LLM для judging других LLM, вводит MT-Bench и pairwise comparison protocol
+- [promptfoo Documentation](https://promptfoo.dev/docs/intro) — практичный open-source eval framework с YAML config, 15+ providers, LLM-as-judge и CI integration
+- [DeepEval Documentation](https://docs.confident-ai.com) — Python-native eval framework с 14+ metrics, Pytest integration и hallucination detection
+- [Braintrust Eval Guide](https://www.braintrust.dev/docs) — production eval platform с experiment tracking, scoring functions и dataset management
+- [Ribeiro et al., 2020 — "Beyond Accuracy: Behavioral Testing of NLP Models with CheckList"](https://arxiv.org/abs/2005.04118) — systematic behavioral testing methodology (minimum functionality, invariance, directional expectations), применимая к LLM evaluation
+- [LMSYS Chatbot Arena](https://chat.lmsys.org) — live human evaluation platform, где users голосуют за model outputs; крупнейший pairwise comparison dataset для LLM
+- [Es et al., "RAGAS: Automated Evaluation of Retrieval Augmented Generation" (EACL 2024 demo)](https://arxiv.org/abs/2309.15217) — reference-free metrics для RAG (faithfulness, answer relevancy, context precision/recall); eval pattern, масштабируемый в prod без labelers.
+- [Liu et al., "G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment" (EMNLP 2023)](https://arxiv.org/abs/2303.16634) — chain-of-thought + form-filling как judge protocol; calibration и bias results, которые нужны каждому judge-builder.
+- [Hugging Face LLM Evaluation Guidebook](https://huggingface.co/spaces/OpenEvals/evaluation-guidebook) — практические советы по data contamination, metric selection и reproducibility от команды, поддерживающей Open LLM Leaderboard.
+- [EleutherAI lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) — стандартный framework для automated benchmarks (MMLU, HellaSwag, TruthfulQA, BIG-Bench); engine за Open LLM Leaderboard.

@@ -1,39 +1,39 @@
-# Function Calling & Tool Use
+# Function Calling и использование инструментов
 
-> LLMs cannot do anything. They generate text. That is the entire capability. They cannot check the weather, query a database, send an email, run code, or read a file. Every "AI agent" you have ever seen is an LLM generating JSON that says which function to call -- and then your code actually calling it. The model is the brain. Tools are the hands. Function calling is the nervous system connecting them.
+> LLM ничего не могут делать сами. Они генерируют текст. Это вся их способность. Они не могут проверить погоду, запросить базу данных, отправить email, выполнить код или прочитать файл. Любой «AI-агент», которого вы когда-либо видели, — это LLM, генерирующая JSON с указанием, какую функцию вызвать, после чего ваш код фактически ее вызывает. Модель — это мозг. Инструменты — руки. Function calling — нервная система, которая их соединяет.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 Lesson 03 (Structured Outputs)
-**Time:** ~75 minutes
-**Related:** Phase 11 · 14 (Model Context Protocol) — when a tool is shared across hosts, graduate from inline function-calling to an MCP server. This lesson covers the inline case; MCP covers the protocol case.
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 11, урок 03 (Structured Outputs)
+**Время:** ~75 минут
+**Связано:** Фаза 11 · 14 (Model Context Protocol) — когда инструмент используется совместно разными хостами, переходите от inline function-calling к MCP server. Этот урок покрывает inline-сценарий; MCP покрывает протокольный сценарий.
 
-## Learning Objectives
+## Цели обучения
 
-- Implement a function calling loop: define tool schemas, parse the model's tool-call JSON, execute functions, and return results
-- Design tool schemas with clear descriptions and typed parameters that the model can reliably invoke
-- Build a multi-turn agent loop that chains multiple function calls to answer complex queries
-- Handle function calling edge cases: parallel tool calls, error propagation, and preventing infinite tool loops
+- Реализовать цикл function calling: определить схемы инструментов, разобрать JSON tool-call от модели, выполнить функции и вернуть результаты
+- Проектировать схемы инструментов с ясными описаниями и типизированными параметрами, которые модель сможет надежно вызывать
+- Построить многоходовый цикл агента, который связывает несколько вызовов функций для ответа на сложные запросы
+- Обрабатывать крайние случаи function calling: параллельные вызовы инструментов, распространение ошибок и предотвращение бесконечных циклов инструментов
 
-## The Problem
+## Проблема
 
-You build a chatbot. A user asks: "What's the weather in Tokyo right now?"
+Вы строите чатбота. Пользователь спрашивает: «Какая погода в Токио прямо сейчас?»
 
-The model responds: "I don't have access to real-time weather data, but based on the season, Tokyo is likely around 15 degrees Celsius..."
+Модель отвечает: «У меня нет доступа к погодным данным в реальном времени, но с учетом сезона в Токио, вероятно, около 15 градусов Цельсия...»
 
-That is a hallucination dressed in a disclaimer. The model does not know the weather. It never will. Weather changes every hour. The model's training data is months old.
+Это галлюцинация, переодетая в дисклеймер. Модель не знает погоду. И никогда не будет знать. Погода меняется каждый час. Обучающие данные модели устарели на месяцы.
 
-The correct answer requires calling the OpenWeatherMap API, getting the current temperature, and returning the real number. The model cannot call APIs. Your code can. The missing piece: a structured protocol that lets the model say "I need to call the weather API with these arguments" and lets your code execute it and feed the result back.
+Правильный ответ требует вызвать OpenWeatherMap API, получить текущую температуру и вернуть настоящее число. Модель не может вызывать API. Ваш код может. Недостающая часть — структурированный протокол, который позволяет модели сказать: «мне нужно вызвать weather API с такими аргументами», а вашему коду — выполнить вызов и вернуть результат обратно.
 
-This is function calling. The model outputs structured JSON describing which function to invoke with what arguments. Your application executes the function. The result goes back into the conversation. The model uses the result to produce its final answer.
+Это и есть function calling. Модель выводит структурированный JSON, описывающий, какую функцию вызвать и с какими аргументами. Ваше приложение выполняет функцию. Результат возвращается в диалог. Модель использует результат, чтобы сформировать финальный ответ.
 
-Without function calling, LLMs are encyclopedias. With it, they become agents.
+Без function calling LLM — энциклопедии. С ним они становятся агентами.
 
-## The Concept
+## Концепция
 
-### The Function Calling Loop
+### Цикл Function Calling
 
-Every tool-use interaction follows the same 5-step loop.
+Любое взаимодействие с использованием инструментов следует одному и тому же циклу из 5 шагов.
 
 ```mermaid
 sequenceDiagram
@@ -52,13 +52,13 @@ sequenceDiagram
     A->>U: Final response
 ```
 
-Step 1: the user sends a message. Step 2: the model receives the message along with tool definitions (JSON Schema describing available functions). Step 3: instead of responding with text, the model outputs a tool call -- a structured JSON object with the function name and arguments. Step 4: your code executes the function and captures the result. Step 5: the result goes back to the model, which now has real data to produce its final answer.
+Шаг 1: пользователь отправляет сообщение. Шаг 2: модель получает сообщение вместе с определениями инструментов (JSON Schema, описывающая доступные функции). Шаг 3: вместо текстового ответа модель выводит tool call — структурированный JSON-объект с именем функции и аргументами. Шаг 4: ваш код выполняет функцию и фиксирует результат. Шаг 5: результат возвращается модели, у которой теперь есть реальные данные для финального ответа.
 
-The model never executes anything. It only decides what to call and with what arguments. Your code is the executor.
+Модель никогда ничего не выполняет. Она только решает, что вызвать и с какими аргументами. Исполнитель — ваш код.
 
-### Tool Definitions: The JSON Schema Contract
+### Определения инструментов: контракт JSON Schema
 
-Each tool is defined by a JSON Schema that tells the model what the function does, what arguments it takes, and what types those arguments must be.
+Каждый инструмент определяется JSON Schema, которая сообщает модели, что делает функция, какие аргументы принимает и какими должны быть типы этих аргументов.
 
 ```json
 {
@@ -85,34 +85,34 @@ Each tool is defined by a JSON Schema that tells the model what the function doe
 }
 ```
 
-The `description` fields are critical. The model reads them to decide when and how to use the tool. A vague description like "gets weather" produces worse tool selection than "Get current weather for a city. Returns temperature in Celsius and conditions." The description is a prompt for tool selection.
+Поля `description` критически важны. Модель читает их, чтобы решить, когда и как использовать инструмент. Расплывчатое описание вроде «получает погоду» приводит к худшему выбору инструмента, чем «получает текущую погоду для города, возвращает температуру в градусах Цельсия и условия». Описание — это prompt для выбора инструмента.
 
-### Provider Comparison
+### Сравнение провайдеров
 
-Every major provider supports function calling, but the API surface differs.
+Все крупные провайдеры поддерживают function calling, но поверхность API различается.
 
-| Provider | API Parameter | Tool Call Format | Parallel Calls | Forced Calling |
+| Провайдер | Параметр API | Формат вызова инструмента | Параллельные вызовы | Принудительный вызов |
 |----------|--------------|-----------------|---------------|----------------|
-| OpenAI (GPT-5, o4) | `tools` | `tool_calls[].function` | Yes (multiple per turn) | `tool_choice="required"` |
-| Anthropic (Claude 4.6/4.7) | `tools` | `content[].type="tool_use"` | Yes (multiple blocks) | `tool_choice={"type":"any"}` |
-| Google (Gemini 3) | `function_declarations` | `functionCall` | Yes | `function_calling_config` |
-| Open-weight (Llama 4, Qwen3, DeepSeek-V3) | Native `tools` on Llama 4; Hermes or ChatML on others | Mixed | Model-dependent | Prompt-based or `tool_choice` if supported |
+| OpenAI (GPT-5, o4) | `tools` | `tool_calls[].function` | Да (несколько за ход) | `tool_choice="required"` |
+| Anthropic (Claude 4.6/4.7) | `tools` | `content[].type="tool_use"` | Да (несколько блоков) | `tool_choice={"type":"any"}` |
+| Google (Gemini 3) | `function_declarations` | `functionCall` | Да | `function_calling_config` |
+| Open-weight (Llama 4, Qwen3, DeepSeek-V3) | Нативное `tools` в Llama 4; Hermes или ChatML в остальных | Смешанный | Зависит от модели | На основе prompt или `tool_choice`, если поддерживается |
 
-By 2026 the three closed providers have converged on near-identical JSON-Schema-based formats. Llama 4 ships with a native `tools` field that matches OpenAI's shape. Open-weight fine-tunes still vary — the Hermes format (NousResearch) is the most common for third-party fine-tunes. For shared tools across hosts, prefer MCP (Phase 11 · 14) over inline function-calling — the server is the same for all of them.
+К 2026 году три закрытых провайдера сошлись к почти одинаковым форматам на основе JSON Schema. Llama 4 поставляется с нативным полем `tools`, которое совпадает с формой OpenAI. Fine-tune моделей с открытыми весами все еще различаются — формат Hermes (NousResearch) наиболее распространен для сторонних fine-tune. Для общих инструментов между хостами предпочитайте MCP (Фаза 11 · 14) вместо inline function-calling — сервер будет один и тот же для всех.
 
-### Tool Choice: Auto, Required, Specific
+### Выбор инструмента: Auto, Required, Specific
 
-You control when the model uses tools.
+Вы управляете тем, когда модель использует инструменты.
 
-**Auto** (default): the model decides whether to call a tool or respond directly. "What's 2+2?" -- responds directly. "What's the weather?" -- calls the tool.
+**Auto** (по умолчанию): модель сама решает, вызвать инструмент или ответить напрямую. «Сколько будет 2+2?» — отвечает напрямую. «Какая погода?» — вызывает инструмент.
 
-**Required**: the model must call at least one tool. Use this when you know the user's intent requires a tool. Prevents the model from guessing instead of looking up real data.
+**Required**: модель обязана вызвать хотя бы один инструмент. Используйте это, когда вы знаете, что намерение пользователя требует инструмента. Это не дает модели угадывать вместо обращения к реальным данным.
 
-**Specific function**: force the model to call a particular function. `tool_choice={"type":"function", "function": {"name": "get_weather"}}` guarantees the weather tool is called, regardless of the query. Use this for routing -- when upstream logic already determined which tool is needed.
+**Specific function**: принудительно заставить модель вызвать конкретную функцию. `tool_choice={"type":"function", "function": {"name": "get_weather"}}` гарантирует вызов weather tool независимо от запроса. Используйте это для routing, когда вышестоящая логика уже определила нужный инструмент.
 
-### Parallel Function Calling
+### Параллельный Function Calling
 
-GPT-4o and Claude can call multiple functions in a single turn. A user asks: "What's the weather in Tokyo and New York?" The model outputs two tool calls simultaneously:
+GPT-4o и Claude могут вызвать несколько функций за один ход. Пользователь спрашивает: «Какая погода в Токио и Нью-Йорке?» Модель одновременно выводит два tool calls:
 
 ```json
 [
@@ -121,37 +121,37 @@ GPT-4o and Claude can call multiple functions in a single turn. A user asks: "Wh
 ]
 ```
 
-Your code executes both (ideally concurrently), returns both results, and the model synthesizes a single response. This cuts round trips from 2 to 1. For agents with 5-10 tool calls per query, parallel calling reduces latency by 60-80%.
+Ваш код выполняет оба вызова (в идеале конкурентно), возвращает оба результата, а модель синтезирует один ответ. Это сокращает число сетевых раундов с 2 до 1. Для агентов с 5-10 tool calls на запрос параллельные вызовы уменьшают задержку на 60-80%.
 
-### Structured Outputs vs Function Calling
+### Structured Outputs и Function Calling
 
-Lesson 03 covered structured outputs. Function calling uses the same JSON Schema machinery, but for a different purpose.
+Урок 03 покрывал structured outputs. Function calling использует тот же механизм JSON Schema, но для другой цели.
 
-**Structured outputs**: force the model to produce data in a specific shape. The output is the final product. Example: extract product info from text as `{name, price, in_stock}`.
+**Structured outputs**: заставляют модель выдать данные в конкретной форме. Вывод является конечным продуктом. Пример: извлечь информацию о продукте из текста как `{name, price, in_stock}`.
 
-**Function calling**: the model declares an intent to execute an action. The output is an intermediate step. Example: `get_weather(city="Tokyo")` -- the model is requesting an action, not producing the final answer.
+**Function calling**: модель объявляет намерение выполнить действие. Вывод является промежуточным шагом. Пример: `get_weather(city="Tokyo")` — модель запрашивает действие, а не формирует финальный ответ.
 
-Use structured outputs when you want data extraction. Use function calling when you want the model to interact with external systems.
+Используйте structured outputs, когда вам нужно извлечение данных. Используйте function calling, когда хотите, чтобы модель взаимодействовала с внешними системами.
 
-### Security: The Non-Negotiable Rules
+### Безопасность: правила, которые нельзя обсуждать
 
-Function calling is the most dangerous capability you can give an LLM. The model chooses what to execute. If your tool set includes database queries, the model constructs the queries. If it includes shell commands, the model writes them.
+Function calling — самая опасная способность, которую можно дать LLM. Модель выбирает, что выполнять. Если набор инструментов включает запросы к базе данных, модель конструирует запросы. Если он включает shell-команды, модель их пишет.
 
-**Rule 1: Never pass model-generated SQL directly to a database.** The model can and will generate DROP TABLE, UNION injections, or queries that return every row. Always parameterize. Always validate. Always use an allowlist of operations.
+**Правило 1: никогда не передавайте SQL, сгенерированный моделью, напрямую в базу данных.** Модель может и будет генерировать DROP TABLE, UNION-инъекции или запросы, возвращающие все строки. Всегда параметризуйте. Всегда валидируйте. Всегда используйте allowlist операций.
 
-**Rule 2: Allowlist functions.** The model can only call functions you explicitly define. Never build a generic "execute any function by name" tool. If you have 50 internal functions, expose only the 5 the user needs.
+**Правило 2: используйте allowlist функций.** Модель может вызывать только функции, которые вы явно определили. Никогда не создавайте универсальный инструмент «выполнить любую функцию по имени». Если у вас 50 внутренних функций, откройте только 5, которые нужны пользователю.
 
-**Rule 3: Validate arguments.** The model might pass a city name of `"; DROP TABLE users; --"`. Validate every argument against expected types, ranges, and formats before execution.
+**Правило 3: валидируйте аргументы.** Модель может передать имя города `"; DROP TABLE users; --"`. Проверяйте каждый аргумент на ожидаемые типы, диапазоны и форматы до выполнения.
 
-**Rule 4: Sanitize tool results.** If a tool returns sensitive data (API keys, PII, internal errors), filter it before sending it back to the model. The model will include tool results in its response verbatim.
+**Правило 4: очищайте результаты инструментов.** Если инструмент возвращает чувствительные данные (API keys, PII, внутренние ошибки), фильтруйте их до отправки обратно модели. Модель может включить результаты инструмента в ответ дословно.
 
-**Rule 5: Rate limit tool calls.** A model in a loop can call tools hundreds of times. Set a maximum (10-20 calls per conversation is reasonable). Break infinite loops.
+**Правило 5: ограничивайте частоту tool calls.** Модель в цикле может вызвать инструменты сотни раз. Установите максимум (10-20 вызовов на диалог — разумно). Разрывайте бесконечные циклы.
 
-### Error Handling
+### Обработка ошибок
 
-Tools fail. APIs time out. Databases go down. Files do not exist. The model needs to know when a tool fails and why.
+Инструменты падают. API уходят в timeout. Базы данных недоступны. Файлы не существуют. Модель должна знать, когда инструмент не сработал и почему.
 
-Return errors as structured tool results, not exceptions:
+Возвращайте ошибки как структурированные результаты инструмента, а не исключения:
 
 ```json
 {
@@ -161,21 +161,21 @@ Return errors as structured tool results, not exceptions:
 }
 ```
 
-The model reads this, adjusts its arguments, and retries. Models are good at self-correcting from structured error messages. They are bad at recovering from empty responses or generic "something went wrong" errors.
+Модель читает это, корректирует аргументы и пробует снова. Модели хорошо самокорректируются по структурированным сообщениям об ошибках. Они плохо восстанавливаются после пустых ответов или общих ошибок вроде «что-то пошло не так».
 
 ### MCP: Model Context Protocol
 
-MCP is Anthropic's open standard for tool interoperability. Instead of every application defining its own tools, MCP provides a universal protocol: tools are served by MCP servers, consumed by MCP clients (like Claude Code, Cursor, or your application).
+MCP — открытый стандарт Anthropic для интероперабельности инструментов. Вместо того чтобы каждое приложение определяло свои инструменты, MCP дает универсальный протокол: инструменты обслуживаются MCP servers и потребляются MCP clients (например, Claude Code, Cursor или вашим приложением).
 
-One MCP server can expose tools to any compatible client. A Postgres MCP server gives any MCP-compatible agent database access. A GitHub MCP server gives any agent repository access. The tools are defined once, used everywhere.
+Один MCP server может открыть инструменты любому совместимому client. Postgres MCP server дает любому MCP-совместимому агенту доступ к базе данных. GitHub MCP server дает любому агенту доступ к репозиториям. Инструменты определяются один раз и используются везде.
 
-MCP is to function calling what HTTP is to networking. It standardizes the transport layer so tools become portable.
+MCP относится к function calling так же, как HTTP к сетевому взаимодействию. Он стандартизирует транспортный слой, чтобы инструменты стали переносимыми.
 
-## Build It
+## Собираем
 
-### Step 1: Define the Tool Registry
+### Шаг 1: Определите реестр инструментов
 
-Build a registry that stores tool definitions and their implementations. Each tool has a JSON Schema definition (what the model sees) and a Python function (what your code executes).
+Постройте реестр, который хранит определения инструментов и их реализации. У каждого инструмента есть определение JSON Schema (то, что видит модель) и функция Python (то, что выполняет ваш код).
 
 ```python
 import json
@@ -201,9 +201,9 @@ def register_tool(name, description, parameters, function):
     }
 ```
 
-### Step 2: Implement 5 Tools
+### Шаг 2: Реализуйте 5 инструментов
 
-Build a calculator, weather lookup, web search simulator, file reader, and code runner.
+Постройте калькулятор, поиск погоды, симулятор web search, file reader и code runner.
 
 ```python
 def calculator(expression, precision=2):
@@ -299,7 +299,7 @@ def run_code(code, language="python"):
         return {"error": True, "message": f"{type(e).__name__}: {e}"}
 ```
 
-### Step 3: Register All Tools
+### Шаг 3: Зарегистрируйте все инструменты
 
 ```python
 def register_all_tools():
@@ -330,9 +330,9 @@ def register_all_tools():
     )
 ```
 
-### Step 4: Build the Function Calling Loop
+### Шаг 4: Постройте цикл Function Calling
 
-This is the core engine. It simulates the model deciding which tool to call, executes the tool, and feeds results back.
+Это ядро движка. Оно симулирует, как модель решает, какой инструмент вызвать, выполняет инструмент и передает результаты обратно.
 
 ```python
 def simulate_model_decision(user_message, tools, conversation_history):
@@ -427,9 +427,9 @@ def run_function_calling_loop(user_message, max_iterations=5):
     return {"conversation": conversation, "tool_results": all_tool_results, "iterations": iteration + 1 if tool_calls else 0}
 ```
 
-### Step 5: Argument Validation
+### Шаг 5: Валидация аргументов
 
-Build a validator that checks tool call arguments against the JSON Schema before execution.
+Постройте валидатор, который проверяет аргументы tool call по JSON Schema до выполнения.
 
 ```python
 def validate_tool_arguments(tool_name, arguments):
@@ -466,7 +466,7 @@ def validate_tool_arguments(tool_name, arguments):
     return errors
 ```
 
-### Step 6: Run the Demo
+### Шаг 6: Запустите демо
 
 ```python
 def run_demo():
@@ -555,9 +555,9 @@ def run_demo():
         print(f"  {tool_name}({list(args.values())[0][:40]}): {'BLOCKED' if blocked else 'ALLOWED'}")
 ```
 
-## Use It
+## Использование
 
-### OpenAI Function Calling
+### Function Calling в OpenAI
 
 ```python
 # from openai import OpenAI
@@ -602,9 +602,9 @@ def run_demo():
 # print(final.choices[0].message.content)
 ```
 
-OpenAI returns tool calls as `response.choices[0].message.tool_calls`. Each call has an `id` you must include when returning the result. The model uses this ID to match results to calls. GPT-4o can return multiple tool calls in a single response -- iterate and execute all of them.
+OpenAI возвращает tool calls как `response.choices[0].message.tool_calls`. У каждого вызова есть `id`, который нужно включить при возврате результата. Модель использует этот ID, чтобы сопоставить результаты с вызовами. GPT-4o может вернуть несколько tool calls в одном ответе — пройдитесь по ним и выполните все.
 
-### Anthropic Tool Use
+### Использование инструментов в Anthropic
 
 ```python
 # import anthropic
@@ -644,9 +644,9 @@ OpenAI returns tool calls as `response.choices[0].message.tool_calls`. Each call
 # )
 ```
 
-Anthropic returns tool calls as content blocks with `type: "tool_use"`. The tool result goes in a user message with `type: "tool_result"`. Note the key difference: Anthropic uses `input_schema` for tool parameter definitions, while OpenAI uses `parameters`.
+Anthropic возвращает tool calls как блоки содержимого с `type: "tool_use"`. Результат инструмента помещается в сообщение пользователя с `type: "tool_result"`. Обратите внимание на ключевое отличие: Anthropic использует `input_schema` для определений параметров инструмента, а OpenAI использует `parameters`.
 
-### MCP Integration
+### Интеграция MCP
 
 ```python
 # MCP servers expose tools over a standardized protocol.
@@ -669,48 +669,48 @@ Anthropic returns tool calls as content blocks with `type: "tool_use"`. The tool
 #         result = await session.call_tool("query", {"sql": "SELECT count(*) FROM users"})
 ```
 
-MCP decouples tool implementation from tool consumption. The Postgres server knows SQL. The GitHub server knows the API. Your agent just discovers and calls tools -- it does not need provider-specific code for each integration.
+MCP отделяет реализацию инструмента от его потребления. Postgres server знает SQL. GitHub server знает API. Ваш агент просто обнаруживает и вызывает инструменты — ему не нужен код, специфичный для провайдера, для каждой интеграции.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/prompt-tool-designer.md` -- a reusable prompt template for designing tool definitions. Give it a description of what you want a tool to do, and it produces the complete JSON Schema definition with descriptions, types, and constraints.
+Этот урок создает `outputs/prompt-tool-designer.md` — переиспользуемый шаблон prompt для проектирования определений инструментов. Дайте ему описание того, что должен делать инструмент, и он выдаст полное определение JSON Schema с описаниями, типами и ограничениями.
 
-It also produces `outputs/skill-function-calling-patterns.md` -- a decision framework for implementing function calling in production, covering tool design, error handling, security, and provider-specific patterns.
+Он также создает `outputs/skill-function-calling-patterns.md` — фреймворк принятия решений для внедрения function calling в production, покрывающий проектирование инструментов, обработку ошибок, безопасность и паттерны, специфичные для провайдеров.
 
-## Exercises
+## Упражнения
 
-1. **Add a 6th tool: database query.** Implement a simulated SQL tool with an in-memory table. The tool accepts a table name and filter conditions (not raw SQL). Validate that the table name is in an allowlist and that filter operators are restricted to `=`, `>`, `<`, `>=`, `<=`. Return matching rows as JSON.
+1. **Добавьте 6-й инструмент: запрос к базе данных.** Реализуйте симулированный SQL tool с таблицей в памяти. Инструмент принимает имя таблицы и условия фильтрации (не raw SQL). Проверьте, что имя таблицы находится в allowlist, а операторы фильтра ограничены `=`, `>`, `<`, `>=`, `<=`. Верните подходящие строки как JSON.
 
-2. **Implement retry with error feedback.** When a tool call fails (e.g., city not found), feed the error message back to the model decision function and let it correct its arguments. Track how many retries each call takes. Set a maximum of 3 retries per tool call.
+2. **Реализуйте повторные попытки с обратной связью об ошибках.** Когда tool call завершается ошибкой (например, город не найден), передайте сообщение об ошибке обратно в функцию принятия решения моделью и дайте ей исправить аргументы. Отслеживайте, сколько повторных попыток занимает каждый вызов. Установите максимум 3 повторные попытки на tool call.
 
-3. **Build a multi-step agent.** Some queries require chaining tool calls: "Read the config file and tell me what model is configured, then search the web for that model's pricing." Implement a loop that runs until the model decides no more tools are needed, passing accumulated results into each decision step. Limit to 10 iterations to prevent infinite loops.
+3. **Постройте многошагового агента.** Некоторые запросы требуют цепочки tool calls: «прочитай файл конфигурации и скажи, какая модель настроена, затем поищи в интернете цены на эту модель». Реализуйте цикл, который работает, пока модель не решит, что больше инструменты не нужны, передавая накопленные результаты в каждый шаг принятия решения. Ограничьте 10 итерациями, чтобы предотвратить бесконечные циклы.
 
-4. **Measure tool selection accuracy.** Create 30 test queries with expected tool names. Run your decision function on all 30 and measure what percentage of the time it selects the correct tool. Identify which queries cause the most confusion between tools.
+4. **Измерьте точность выбора инструментов.** Создайте 30 тестовых запросов с ожидаемыми именами инструментов. Запустите вашу decision function на всех 30 и измерьте, в каком проценте случаев она выбирает правильный инструмент. Определите, какие запросы чаще всего вызывают путаницу между инструментами.
 
-5. **Implement tool call caching.** If the same tool is called with identical arguments within 60 seconds, return the cached result instead of re-executing. Use a dictionary keyed by `(tool_name, frozenset(args.items()))`. Measure cache hit rates across a conversation with 20 queries.
+5. **Реализуйте кэширование tool calls.** Если один и тот же инструмент вызывается с идентичными аргументами в течение 60 секунд, верните кэшированный результат вместо повторного выполнения. Используйте словарь с ключом `(tool_name, frozenset(args.items()))`. Измерьте долю попаданий в кэш в диалоге из 20 запросов.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| Function calling | "Tool use" | The model outputs structured JSON describing a function to invoke with specific arguments -- your code executes it, not the model |
-| Tool definition | "Function schema" | A JSON Schema object describing a tool's name, purpose, parameters, and types -- the model reads this to decide when and how to use the tool |
-| Tool choice | "Calling mode" | Controls whether the model must call a tool (required), may call a tool (auto), or must call a specific tool (named) |
-| Parallel calling | "Multi-tool" | The model outputs multiple tool calls in a single turn, reducing round trips -- GPT-4o and Claude both support this |
-| Tool result | "Function output" | The return value from executing a tool, sent back to the model as a message so it can use real data in its response |
-| Argument validation | "Input checking" | Verifying that model-generated arguments match the expected types, ranges, and constraints before executing the tool |
-| MCP | "Tool protocol" | Model Context Protocol -- Anthropic's open standard for exposing tools via servers that any compatible client can discover and call |
-| Agent loop | "ReAct loop" | The iterative cycle of model-decides-tool, code-executes-tool, result-feeds-back until the model has enough information to respond |
-| Tool poisoning | "Prompt injection via tools" | An attack where tool results contain instructions that manipulate the model's behavior -- sanitize all tool outputs |
-| Rate limiting | "Call budget" | Setting a maximum number of tool calls per conversation to prevent infinite loops and runaway API costs |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|------------------------------|
+| Function calling | «Tool use» | Модель выводит структурированный JSON, описывающий функцию для вызова с конкретными аргументами; выполняет ее ваш код, а не модель |
+| Tool definition | «Function schema» | Объект JSON Schema, описывающий имя, назначение, параметры и типы инструмента; модель читает его, чтобы решить, когда и как использовать инструмент |
+| Tool choice | «Calling mode» | Управляет тем, обязана ли модель вызвать инструмент (required), может ли вызвать инструмент (auto) или обязана вызвать конкретный инструмент (named) |
+| Parallel calling | «Multi-tool» | Модель выводит несколько tool calls за один ход, сокращая число сетевых раундов; GPT-4o и Claude оба это поддерживают |
+| Tool result | «Function output» | Возвращаемое значение после выполнения инструмента, отправляемое модели как сообщение, чтобы она могла использовать реальные данные в ответе |
+| Argument validation | «Input checking» | Проверка того, что сгенерированные моделью аргументы соответствуют ожидаемым типам, диапазонам и ограничениям до выполнения инструмента |
+| MCP | «Tool protocol» | Model Context Protocol — открытый стандарт Anthropic для публикации инструментов через servers, которые любой совместимый client может обнаружить и вызвать |
+| Agent loop | «ReAct loop» | Итеративный цикл: модель выбирает инструмент, код выполняет инструмент, результат возвращается, пока у модели не будет достаточно информации для ответа |
+| Tool poisoning | «Prompt injection via tools» | Атака, при которой результаты инструментов содержат инструкции, манипулирующие поведением модели; очищайте все outputs инструментов |
+| Rate limiting | «Call budget» | Установка максимального числа tool calls на диалог для предотвращения бесконечных циклов и неконтролируемых расходов на API |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling) -- the definitive reference for tool use with GPT-4o, including parallel calls, forced calling, and structured arguments
-- [Anthropic Tool Use Guide](https://docs.anthropic.com/en/docs/tool-use) -- Claude's tool use implementation with input_schema, multi-tool responses, and tool_choice configuration
-- [Model Context Protocol Specification](https://modelcontextprotocol.io) -- the open standard for tool interoperability across AI applications, with server/client architecture
-- [Schick et al., 2023 -- "Toolformer: Language Models Can Teach Themselves to Use Tools"](https://arxiv.org/abs/2302.04761) -- the foundational paper on training LLMs to decide when and how to call external tools
-- [Patil et al., 2023 -- "Gorilla: Large Language Model Connected with Massive APIs"](https://arxiv.org/abs/2305.15334) -- fine-tuning LLMs for accurate API calls across 1,645 APIs with hallucination reduction
-- [Berkeley Function Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html) -- real-time benchmark comparing function calling accuracy across GPT-4o, Claude, Gemini, and open models
-- [Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models" (ICLR 2023)](https://arxiv.org/abs/2210.03629) -- the Thought-Action-Observation loop that is the outer agent loop around every tool call; where this lesson ends, Phase 14 picks up.
-- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) -- five composable patterns (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer) built from the single tool-use primitive.
+- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling) — основной справочник по tool use с GPT-4o, включая параллельные вызовы, принудительные вызовы и структурированные аргументы
+- [Anthropic Tool Use Guide](https://docs.anthropic.com/en/docs/tool-use) — реализация tool use в Claude с input_schema, ответами с несколькими инструментами и настройкой tool_choice
+- [Model Context Protocol Specification](https://modelcontextprotocol.io) — открытый стандарт интероперабельности инструментов в AI-приложениях с архитектурой server/client
+- [Schick et al., 2023 — "Toolformer: Language Models Can Teach Themselves to Use Tools"](https://arxiv.org/abs/2302.04761) — основополагающая статья о тренировке LLM решать, когда и как вызывать внешние инструменты
+- [Patil et al., 2023 — "Gorilla: Large Language Model Connected with Massive APIs"](https://arxiv.org/abs/2305.15334) — fine-tuning LLM для точных API calls по 1,645 APIs со снижением hallucination
+- [Berkeley Function Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html) — real-time benchmark, сравнивающий точность function calling у GPT-4o, Claude, Gemini и открытых моделей
+- [Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models" (ICLR 2023)](https://arxiv.org/abs/2210.03629) — цикл Thought-Action-Observation, который является внешним циклом агента вокруг каждого tool call; там, где этот урок заканчивается, начинается Фаза 14.
+- [Anthropic — Building effective agents (Dec 2024)](https://www.anthropic.com/research/building-effective-agents) — пять компонуемых паттернов (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer), построенных из одного примитива tool-use.

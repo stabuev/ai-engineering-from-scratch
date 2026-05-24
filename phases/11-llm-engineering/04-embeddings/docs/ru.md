@@ -1,63 +1,63 @@
-# Embeddings & Vector Representations
+# Эмбеддинги и векторные представления
 
-> Text is discrete. Math is continuous. Every time you ask an LLM to find "similar" documents, compare meanings, or search beyond keywords, you're relying on a bridge between these two worlds. That bridge is an embedding. If you don't understand embeddings, you don't understand modern AI. You just use it.
+> Текст дискретен. Математика непрерывна. Каждый раз, когда вы просите LLM найти "похожие" документы, сравнить смыслы или искать шире ключевых слов, вы опираетесь на мост между этими двумя мирами. Этот мост и есть эмбеддинг. Если вы не понимаете эмбеддинги, вы не понимаете современный ИИ. Вы просто им пользуетесь.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11, Lesson 01 (Prompt Engineering)
-**Time:** ~75 minutes
-**Related:** Phase 5 · 22 (Embedding Models Deep Dive) covers dense vs sparse vs multi-vector, Matryoshka truncation, and per-axis model selection. This lesson focuses on the production pipeline (vector DBs, HNSW, similarity math). Read Phase 5 · 22 before picking a model.
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 11, Lesson 01 (Prompt Engineering)
+**Время:** ~75 минут
+**Связано:** Phase 5 · 22 (Embedding Models Deep Dive) разбирает dense vs sparse vs multi-vector, усечение Matryoshka и выбор модели по осям. Этот урок фокусируется на production-пайплайне (векторные БД, HNSW, математика сходства). Прочитайте Phase 5 · 22 перед выбором модели.
 
-## Learning Objectives
+## Цели обучения
 
-- Generate text embeddings using API providers and open-source models, and compute cosine similarity between them
-- Explain why embeddings solve the vocabulary mismatch problem that keyword search cannot handle
-- Build a semantic search index that retrieves documents by meaning rather than exact keyword match
-- Evaluate embedding quality using retrieval benchmarks (precision@k, recall) and choose the right embedding model for your task
+- Генерировать текстовые эмбеддинги с помощью API-провайдеров и open-source моделей, а также вычислять косинусное сходство между ними
+- Объяснять, почему эмбеддинги решают проблему несовпадения словаря, с которой не справляется поиск по ключевым словам
+- Построить индекс семантического поиска, который извлекает документы по смыслу, а не по точному совпадению ключевых слов
+- Оценивать качество эмбеддингов с помощью retrieval-бенчмарков (precision@k, recall) и выбирать подходящую embedding-модель для своей задачи
 
-## The Problem
+## Проблема
 
-You have 10,000 support tickets. A customer writes "my payment didn't go through." You need to find similar past tickets. Keyword search finds tickets containing "payment" and "didn't go through." It misses "transaction failed," "charge was declined," and "billing error." These tickets describe the exact same problem with completely different words.
+У вас есть 10,000 тикетов поддержки. Клиент пишет "my payment didn't go through." Вам нужно найти похожие прошлые тикеты. Поиск по ключевым словам находит тикеты, содержащие "payment" и "didn't go through." Он пропускает "transaction failed," "charge was declined," и "billing error." Эти тикеты описывают ровно ту же проблему совершенно другими словами.
 
-This is the vocabulary mismatch problem. Human language has dozens of ways to say the same thing. Keyword search treats each word as an independent symbol with no meaning. It cannot know that "declined" and "didn't go through" refer to the same concept.
+Это проблема несовпадения словаря. В человеческом языке есть десятки способов сказать одно и то же. Поиск по ключевым словам воспринимает каждое слово как независимый символ без смысла. Он не может знать, что "declined" и "didn't go through" относятся к одному и тому же понятию.
 
-You need a representation of text where meaning, not spelling, determines similarity. You need a way to place "my payment didn't go through" and "transaction was declined" close together in some mathematical space, while pushing "my payment arrived on time" far away despite sharing the word "payment."
+Вам нужно представление текста, где сходство определяется смыслом, а не написанием. Вам нужен способ разместить "my payment didn't go through" и "transaction was declined" близко друг к другу в некотором математическом пространстве, при этом отодвинув "my payment arrived on time" далеко, несмотря на общее слово "payment."
 
-That representation is an embedding.
+Такое представление называется эмбеддингом.
 
-## The Concept
+## Концепция
 
-### What Is an Embedding?
+### Что такое эмбеддинг?
 
-An embedding is a dense vector of floating-point numbers that represents the meaning of text. The word "dense" matters -- every dimension carries information, unlike sparse representations (bag-of-words, TF-IDF) where most dimensions are zero.
+Эмбеддинг — это плотный вектор чисел с плавающей точкой, представляющий смысл текста. Слово "плотный" важно -- каждое измерение несет информацию, в отличие от разреженных представлений (bag-of-words, TF-IDF), где большинство измерений равны нулю.
 
-"The cat sat on the mat" becomes something like `[0.023, -0.041, 0.087, ..., 0.012]` -- a list of 768 to 3072 numbers depending on the model. These numbers encode meaning. You never inspect them directly. You compare them.
+"The cat sat on the mat" превращается во что-то вроде `[0.023, -0.041, 0.087, ..., 0.012]` -- список из 768 до 3072 чисел в зависимости от модели. Эти числа кодируют смысл. Вы никогда не рассматриваете их напрямую. Вы их сравниваете.
 
-### The Word2Vec Breakthrough
+### Прорыв Word2Vec
 
-In 2013, Tomas Mikolov and colleagues at Google published Word2Vec. The core insight: train a neural network to predict a word from its neighbors (or neighbors from a word), and the hidden layer weights become meaningful vector representations.
+В 2013 году Tomas Mikolov и коллеги из Google опубликовали Word2Vec. Ключевая идея: обучить нейросеть предсказывать слово по его соседям (или соседей по слову), и веса скрытого слоя станут осмысленными векторными представлениями.
 
-The famous result:
+Знаменитый результат:
 
 ```
 king - man + woman = queen
 ```
 
-Vector arithmetic on word embeddings captures semantic relationships. The direction from "man" to "woman" is roughly the same as the direction from "king" to "queen." This was the moment the field realized that geometry could encode meaning.
+Векторная арифметика над эмбеддингами слов улавливает семантические отношения. Направление от "man" к "woman" примерно такое же, как направление от "king" к "queen." Это был момент, когда область поняла, что геометрия может кодировать смысл.
 
-Word2Vec produced 300-dimensional vectors. Each word got one vector regardless of context. "Bank" in "river bank" and "bank account" had the same embedding. This limitation drove the next decade of research.
+Word2Vec создавал 300-мерные векторы. Каждое слово получало один вектор независимо от контекста. "Bank" в "river bank" и "bank account" имел один и тот же эмбеддинг. Это ограничение определило следующее десятилетие исследований.
 
-### From Words to Sentences
+### От слов к предложениям
 
-Word embeddings represent single tokens. Production systems need to embed entire sentences, paragraphs, or documents. Four approaches emerged:
+Эмбеддинги слов представляют отдельные токены. Production-системам нужно встраивать целые предложения, абзацы или документы. Появились четыре подхода:
 
-**Averaging**: take the mean of all word vectors in the sentence. Cheap, lossy, surprisingly decent for short text. Loses word order entirely -- "dog bites man" and "man bites dog" get identical embeddings.
+**Усреднение**: взять среднее всех векторов слов в предложении. Дешево, с потерями, неожиданно неплохо для короткого текста. Полностью теряет порядок слов -- "dog bites man" и "man bites dog" получают одинаковые эмбеддинги.
 
-**CLS token**: transformer models (BERT, 2018) output a special [CLS] token embedding that represents the entire input. Better than averaging but the [CLS] token was trained for next-sentence prediction, not similarity.
+**CLS token**: transformer-модели (BERT, 2018) выдают специальный эмбеддинг [CLS] token, представляющий весь ввод. Лучше, чем усреднение, но [CLS] token обучался для предсказания следующего предложения, а не для сходства.
 
-**Contrastive learning**: train the model explicitly to push similar pairs together and dissimilar pairs apart. Sentence-BERT (Reimers & Gurevych, 2019) used this approach and became the foundation for modern embedding models. Given "How do I reset my password?" and "I need to change my password," the model learns these should have nearly identical vectors.
+**Контрастивное обучение**: обучать модель явно сближать похожие пары и отдалять непохожие. Sentence-BERT (Reimers & Gurevych, 2019) использовал этот подход и стал основой современных embedding-моделей. На примере "How do I reset my password?" и "I need to change my password," модель учится тому, что у них должны быть почти одинаковые векторы.
 
-**Instruction-tuned embeddings**: the latest approach. Models like E5 and GTE accept a task prefix ("search_query:", "search_document:") that tells the model what kind of embedding to produce. This lets one model serve multiple tasks.
+**Instruction-tuned embeddings**: новейший подход. Модели вроде E5 и GTE принимают префикс задачи ("search_query:", "search_document:"), который сообщает модели, какой тип эмбеддинга нужно создать. Это позволяет одной модели обслуживать несколько задач.
 
 ```mermaid
 graph LR
@@ -77,11 +77,11 @@ graph LR
     end
 ```
 
-### Modern Embedding Models
+### Современные embedding-модели
 
-The market has settled into a handful of production-grade options (MTEB scores as of early 2026, MTEB v2):
+Рынок сошелся к нескольким production-ready вариантам (оценки MTEB на начало 2026 года, MTEB v2):
 
-| Model | Provider | Dimensions | MTEB | Context | Cost / 1M tokens |
+| Модель | Провайдер | Размерности | MTEB | Контекст | Стоимость / 1M токенов |
 |-------|----------|-----------|------|---------|------------------|
 | Gemini Embedding 2 | Google | 3072 (Matryoshka) | 67.7 (retrieval) | 8192 | $0.15 |
 | embed-v4 | Cohere | 1024 (Matryoshka) | 65.2 | 128K | $0.12 |
@@ -92,51 +92,51 @@ The market has settled into a handful of production-grade options (MTEB scores a
 | Qwen3-Embedding | Alibaba | 4096 (Matryoshka) | 66.9 | 32K | Open-weight |
 | Nomic-embed-v2 | Nomic | 768 (Matryoshka) | 63.1 | 8192 | Open-weight |
 
-MTEB (Massive Text Embedding Benchmark) v2 covers 100+ tasks across retrieval, classification, clustering, reranking, and summarization. Higher is better. By 2026, open-weight models (Qwen3-Embedding, BGE-M3) match or beat closed hosted models on most axes. Gemini Embedding 2 leads pure retrieval; Voyage/Cohere lead specific domains (finance, law, code). Always benchmark on your own queries before committing.
+MTEB (Massive Text Embedding Benchmark) v2 охватывает 100+ задач по retrieval, классификации, кластеризации, reranking и суммаризации. Чем выше, тем лучше. К 2026 году open-weight модели (Qwen3-Embedding, BGE-M3) сравнялись с закрытыми hosted-моделями или превосходят их по большинству осей. Gemini Embedding 2 лидирует в чистом retrieval; Voyage/Cohere лидируют в отдельных доменах (финансы, право, код). Всегда проводите benchmark на собственных запросах перед окончательным выбором.
 
-### Similarity Metrics
+### Метрики сходства
 
-Given two embedding vectors, three ways to measure how similar they are:
+Для двух embedding-векторов есть три способа измерить, насколько они похожи:
 
-**Cosine similarity**: the cosine of the angle between two vectors. Ranges from -1 (opposite) to 1 (identical direction). Ignores magnitude -- a 10-word sentence and a 500-word document can score 1.0 if they point the same direction. This is the default for 90% of use cases.
+**Косинусное сходство**: косинус угла между двумя векторами. Диапазон от -1 (противоположные) до 1 (одинаковое направление). Игнорирует длину -- предложение из 10 слов и документ из 500 слов могут получить 1.0, если направлены одинаково. Это значение по умолчанию для 90% use cases.
 
 ```
 cosine_sim(a, b) = dot(a, b) / (||a|| * ||b||)
 ```
 
-**Dot product**: the raw inner product of two vectors. Identical to cosine similarity when vectors are normalized (unit length). Faster to compute. OpenAI's embeddings are normalized, so dot product and cosine give the same ranking.
+**Скалярное произведение**: сырое внутреннее произведение двух векторов. Идентично косинусному сходству, когда векторы нормализованы (единичной длины). Вычисляется быстрее. Эмбеддинги OpenAI нормализованы, поэтому dot product и cosine дают одинаковое ранжирование.
 
 ```
 dot(a, b) = sum(a_i * b_i)
 ```
 
-**Euclidean (L2) distance**: straight-line distance in the vector space. Smaller = more similar. Sensitive to magnitude differences. Use when the absolute position in space matters, not just the direction.
+**Евклидово (L2) расстояние**: расстояние по прямой в векторном пространстве. Меньше = более похоже. Чувствительно к различиям в длине. Используйте, когда важна абсолютная позиция в пространстве, а не только направление.
 
 ```
 L2(a, b) = sqrt(sum((a_i - b_i)^2))
 ```
 
-When to use which:
+Когда что использовать:
 
-| Metric | Use when | Avoid when |
+| Метрика | Используйте, когда | Избегайте, когда |
 |--------|----------|------------|
-| Cosine similarity | Comparing texts of different lengths; most retrieval tasks | Magnitude carries information |
-| Dot product | Embeddings are already normalized; maximum speed | Vectors have varying magnitudes |
-| Euclidean distance | Clustering; spatial nearest-neighbor problems | Comparing documents of wildly different lengths |
+| Косинусное сходство | Сравниваете тексты разной длины; большинство retrieval-задач | Длина вектора несет информацию |
+| Dot product | Эмбеддинги уже нормализованы; нужна максимальная скорость | У векторов разные длины |
+| Евклидово расстояние | Кластеризация; пространственные задачи ближайших соседей | Сравниваете документы сильно разной длины |
 
-### Vector Databases and HNSW
+### Векторные базы данных и HNSW
 
-A brute-force similarity search compares the query against every stored vector. At 1 million vectors with 1536 dimensions, that is 1.5 billion multiply-add operations per query. Too slow.
+Полный перебор для similarity search сравнивает запрос с каждым сохраненным вектором. При 1 миллионе векторов с 1536 измерениями это 1.5 миллиарда операций умножения-сложения на запрос. Слишком медленно.
 
-Vector databases solve this with Approximate Nearest Neighbor (ANN) algorithms. The dominant algorithm is HNSW (Hierarchical Navigable Small World):
+Векторные базы данных решают это с помощью алгоритмов Approximate Nearest Neighbor (ANN). Доминирующий алгоритм — HNSW (Hierarchical Navigable Small World):
 
-1. Build a multi-layer graph of vectors
-2. Top layers are sparse -- long-range connections between distant clusters
-3. Bottom layers are dense -- fine-grained connections between nearby vectors
-4. Search starts at the top layer, greedily descending to refine
-5. Returns approximate top-k results in O(log n) time instead of O(n)
+1. Построить многослойный граф векторов
+2. Верхние слои разрежены -- дальние связи между удаленными кластерами
+3. Нижние слои плотные -- детальные связи между близкими векторами
+4. Поиск начинается с верхнего слоя и жадно спускается для уточнения
+5. Возвращает приближенные top-k результаты за O(log n) вместо O(n)
 
-HNSW trades a small accuracy loss (typically 95-99% recall) for massive speed gains. At 10 million vectors, brute force takes seconds. HNSW takes milliseconds.
+HNSW обменивает небольшую потерю точности (обычно 95-99% recall) на огромный прирост скорости. На 10 миллионах векторов полный перебор занимает секунды. HNSW занимает миллисекунды.
 
 ```mermaid
 graph TD
@@ -149,45 +149,45 @@ graph TD
     L0 -->|"nearest neighbors"| R["Top-k results"]
 ```
 
-Production options:
+Production-варианты:
 
-| Database | Type | Best for | Max scale |
+| База данных | Тип | Лучше всего для | Максимальный масштаб |
 |----------|------|----------|-----------|
-| Pinecone | Managed SaaS | Zero-ops production | Billions |
-| Weaviate | Open source | Self-hosted, hybrid search | 100M+ |
-| Qdrant | Open source | High performance, filtering | 100M+ |
-| ChromaDB | Embedded | Prototyping, local dev | 1M |
-| pgvector | Postgres extension | Already using Postgres | 10M |
-| FAISS | Library | In-process, research | 1B+ |
+| Pinecone | Managed SaaS | Production без операционной нагрузки | Миллиарды |
+| Weaviate | Open source | Self-hosted, гибридный поиск | 100M+ |
+| Qdrant | Open source | Высокая производительность, фильтрация | 100M+ |
+| ChromaDB | Embedded | Прототипирование, локальная разработка | 1M |
+| pgvector | Postgres extension | Уже используете Postgres | 10M |
+| FAISS | Library | In-process, исследования | 1B+ |
 
-### Chunking Strategies
+### Стратегии chunking
 
-Documents are too long to embed as single vectors. A 50-page PDF covers dozens of topics -- its embedding becomes an average of everything, similar to nothing specific. You split documents into chunks and embed each one.
+Документы слишком длинные, чтобы встраивать их как одиночные векторы. PDF на 50 страниц охватывает десятки тем -- его эмбеддинг становится средним от всего и не похож ни на что конкретное. Вы разбиваете документы на chunks и встраиваете каждый chunk отдельно.
 
-**Fixed-size chunking**: split every N tokens with M-token overlap. Simple and predictable. Works well when documents have no clear structure. A 512-token chunk with 50-token overlap: chunk 1 is tokens 0-511, chunk 2 is tokens 462-973.
+**Fixed-size chunking**: разбивать каждые N токенов с перекрытием в M токенов. Просто и предсказуемо. Хорошо работает, когда у документов нет четкой структуры. Chunk из 512 токенов с перекрытием 50 токенов: chunk 1 — токены 0-511, chunk 2 — токены 462-973.
 
-**Sentence-based chunking**: split at sentence boundaries, grouping sentences until reaching the token limit. Each chunk is at least one complete sentence. Better than fixed-size because you never cut a thought in half.
+**Sentence-based chunking**: разбивать по границам предложений, группируя предложения до достижения лимита токенов. Каждый chunk содержит как минимум одно полное предложение. Лучше fixed-size, потому что вы никогда не разрезаете мысль пополам.
 
-**Recursive chunking**: try splitting at the largest boundary first (section headers). If still too large, try paragraph boundaries. Then sentence boundaries. Then character limits. This is LangChain's `RecursiveCharacterTextSplitter` and it works well for mixed-format corpora.
+**Recursive chunking**: сначала пытаться разбить по самой крупной границе (заголовки разделов). Если все еще слишком крупно, пробовать границы абзацев. Затем границы предложений. Затем лимиты символов. Это LangChain `RecursiveCharacterTextSplitter`, и он хорошо работает для корпусов смешанного формата.
 
-**Semantic chunking**: embed each sentence, then group consecutive sentences whose embeddings are similar. When the embedding similarity drops below a threshold, start a new chunk. Expensive (requires embedding every sentence individually) but produces the most coherent chunks.
+**Semantic chunking**: встроить каждое предложение, затем группировать соседние предложения, эмбеддинги которых похожи. Когда embedding similarity падает ниже порога, начинать новый chunk. Дорого (требует embedding каждого предложения отдельно), но дает самые связные chunks.
 
-| Strategy | Complexity | Quality | Best for |
+| Стратегия | Сложность | Качество | Лучше всего для |
 |----------|-----------|---------|----------|
-| Fixed-size | Low | Decent | Unstructured text, logs |
-| Sentence-based | Low | Good | Articles, emails |
-| Recursive | Medium | Good | Markdown, HTML, mixed docs |
-| Semantic | High | Best | Critical retrieval quality |
+| Fixed-size | Низкая | Приемлемое | Неструктурированный текст, логи |
+| Sentence-based | Низкая | Хорошее | Статьи, email |
+| Recursive | Средняя | Хорошее | Markdown, HTML, смешанные документы |
+| Semantic | Высокая | Лучшее | Критически важное качество retrieval |
 
-The sweet spot for most systems: 256-512 token chunks with 50-token overlap.
+Оптимальная точка для большинства систем: chunks по 256-512 токенов с перекрытием 50 токенов.
 
 ### Bi-Encoders vs Cross-Encoders
 
-A bi-encoder embeds the query and documents independently, then compares vectors. Fast -- you embed the query once and compare against pre-computed document embeddings. This is what you use for retrieval.
+Bi-encoder встраивает запрос и документы независимо, затем сравнивает векторы. Быстро -- вы встраиваете запрос один раз и сравниваете с заранее вычисленными эмбеддингами документов. Это используется для retrieval.
 
-A cross-encoder takes the query and a document as a single input and outputs a relevance score. Slow -- it processes each query-document pair through the full model. But far more accurate because it can attend across query and document tokens simultaneously.
+Cross-encoder принимает запрос и документ как единый ввод и выдает оценку релевантности. Медленно -- он прогоняет каждую пару запрос-документ через всю модель. Но гораздо точнее, потому что может одновременно учитывать токены запроса и документа.
 
-The production pattern: bi-encoder retrieves top-100 candidates, cross-encoder reranks them to top-10. This is the retrieve-then-rerank pipeline.
+Production-паттерн: bi-encoder извлекает top-100 кандидатов, cross-encoder reranks их до top-10. Это пайплайн retrieve-then-rerank.
 
 ```mermaid
 graph LR
@@ -197,29 +197,29 @@ graph LR
     CE --> R["Top 10 results"]
 ```
 
-Reranking models: Cohere Rerank 3.5 ($2 per 1000 queries), BGE-reranker-v2 (free, open source), Jina Reranker v2 (free, open source).
+Reranking-модели: Cohere Rerank 3.5 ($2 за 1000 запросов), BGE-reranker-v2 (бесплатная, open source), Jina Reranker v2 (бесплатная, open source).
 
 ### Matryoshka Embeddings
 
-Traditional embeddings are all-or-nothing. A 1536-dimensional vector uses 1536 floats. You cannot truncate to 256 dimensions without retraining.
+Традиционные эмбеддинги работают по принципу "все или ничего". 1536-мерный вектор использует 1536 floats. Вы не можете усечь его до 256 измерений без переобучения.
 
-Matryoshka Representation Learning (Kusupati et al., 2022) fixes this. The model is trained so that the first N dimensions capture the most important information, like a Russian nesting doll. Truncating a 1536-d Matryoshka embedding to 256 dimensions loses some accuracy but remains functional.
+Matryoshka Representation Learning (Kusupati et al., 2022) исправляет это. Модель обучается так, чтобы первые N измерений содержали самую важную информацию, как русская матрешка. Усечение 1536-d Matryoshka embedding до 256 измерений теряет часть точности, но остается работоспособным.
 
-OpenAI's text-embedding-3-small and text-embedding-3-large support Matryoshka truncation via the `dimensions` parameter. Requesting 256 dimensions instead of 1536 cuts storage by 6x with roughly 3-5% accuracy loss on MTEB benchmarks.
+OpenAI text-embedding-3-small и text-embedding-3-large поддерживают усечение Matryoshka через параметр `dimensions`. Запрос 256 измерений вместо 1536 сокращает хранение в 6x при примерно 3-5% потере точности на MTEB benchmarks.
 
 ### Binary Quantization
 
-A 1536-dimensional embedding stored as float32 uses 6,144 bytes. Multiply by 10 million documents: 61 GB just for vectors.
+1536-мерный эмбеддинг, сохраненный как float32, занимает 6,144 байта. Умножьте на 10 миллионов документов: 61 GB только на векторы.
 
-Binary quantization converts each float to a single bit: positive values become 1, negative values become 0. Storage drops from 6,144 bytes to 192 bytes -- a 32x reduction. Similarity is computed using Hamming distance (count differing bits), which CPUs can do in a single instruction.
+Binary quantization преобразует каждый float в один бит: положительные значения становятся 1, отрицательные — 0. Хранение падает с 6,144 байта до 192 байт -- сокращение в 32x. Сходство вычисляется через Hamming distance (подсчет отличающихся битов), что CPU умеют делать одной инструкцией.
 
-The accuracy hit is around 5-10% on retrieval recall. The common pattern: binary quantization for the first-pass search over millions of vectors, then rescore the top-1000 with full-precision vectors. This gets you 95%+ of full-precision accuracy at 32x less memory.
+Потеря точности составляет около 5-10% по retrieval recall. Общий паттерн: binary quantization для первого прохода поиска по миллионам векторов, затем пересчитать top-1000 с full-precision vectors. Это дает 95%+ точности full-precision при памяти в 32x меньше.
 
-## Build It
+## Собираем
 
-We build a semantic search engine from scratch. No vector database. No external embedding API. Pure Python with numpy for the math.
+Мы строим semantic search engine с нуля. Без векторной базы данных. Без внешнего embedding API. Чистый Python с numpy для математики.
 
-### Step 1: Text Chunking
+### Шаг 1: Нарезка текста
 
 ```python
 def chunk_text(text, chunk_size=200, overlap=50):
@@ -253,9 +253,9 @@ def chunk_by_sentences(text, max_chunk_tokens=200):
     return chunks
 ```
 
-### Step 2: Building Embeddings from Scratch
+### Шаг 2: Построение эмбеддингов с нуля
 
-We implement a simple dense embedding using TF-IDF with L2 normalization. This is not a neural embedding, but it follows the same contract: text in, fixed-size vector out, similar texts produce similar vectors.
+Мы реализуем простой плотный эмбеддинг с помощью TF-IDF и L2-нормализации. Это не нейросетевой эмбеддинг, но он следует тому же контракту: текст на входе, вектор фиксированного размера на выходе, похожие тексты дают похожие векторы.
 
 ```python
 import math
@@ -295,7 +295,7 @@ class SimpleEmbedder:
         return vec
 ```
 
-### Step 3: Similarity Functions
+### Шаг 3: Функции сходства
 
 ```python
 def cosine_similarity(a, b):
@@ -315,7 +315,7 @@ def euclidean_distance(a, b):
     return float(np.linalg.norm(a - b))
 ```
 
-### Step 4: Vector Index with Brute-Force Search
+### Шаг 4: Векторный индекс с brute-force search
 
 ```python
 class VectorIndex:
@@ -356,7 +356,7 @@ class VectorIndex:
         return len(self.vectors)
 ```
 
-### Step 5: The Semantic Search Engine
+### Шаг 5: Semantic Search Engine
 
 ```python
 class SemanticSearchEngine:
@@ -396,7 +396,7 @@ class SemanticSearchEngine:
         ]
 ```
 
-### Step 6: Comparing Similarity Metrics
+### Шаг 6: Сравнение метрик сходства
 
 ```python
 def compare_metrics(engine, query, top_k=3):
@@ -410,9 +410,9 @@ def compare_metrics(engine, query, top_k=3):
     return results
 ```
 
-## Use It
+## Используем
 
-With a production embedding API, the architecture stays identical. Only the embedder changes:
+С production embedding API архитектура остается идентичной. Меняется только embedder:
 
 ```python
 from openai import OpenAI
@@ -427,16 +427,16 @@ def openai_embed(texts, model="text-embedding-3-small", dimensions=None):
     return [item.embedding for item in response.data]
 ```
 
-Matryoshka truncation with OpenAI -- same model, fewer dimensions, lower storage:
+Усечение Matryoshka с OpenAI -- та же модель, меньше измерений, ниже затраты на хранение:
 
 ```python
 full = openai_embed(["semantic search query"], dimensions=1536)
 compact = openai_embed(["semantic search query"], dimensions=256)
 ```
 
-The 256-d vector uses 6x less storage. For 10 million documents, that is 10 GB vs 61 GB. The accuracy loss is roughly 3-5% on standard benchmarks.
+256-d вектор использует в 6x меньше места. Для 10 миллионов документов это 10 GB против 61 GB. Потеря точности составляет примерно 3-5% на стандартных benchmarks.
 
-For reranking with Cohere:
+Для reranking с Cohere:
 
 ```python
 import cohere
@@ -451,7 +451,7 @@ results = co.rerank(
 )
 ```
 
-For local embeddings with no API dependency:
+Для локальных эмбеддингов без зависимости от API:
 
 ```python
 from sentence_transformers import SentenceTransformer
@@ -460,50 +460,50 @@ model = SentenceTransformer("BAAI/bge-small-en-v1.5")
 embeddings = model.encode(["semantic search query", "another document"])
 ```
 
-The VectorIndex class from our build works with any of these. Swap the embedding function, keep the search logic.
+Класс VectorIndex из нашей сборки работает с любым из этих вариантов. Замените embedding function, оставьте search logic.
 
-## Ship It
+## Доводим до результата
 
-This lesson produces:
-- `outputs/prompt-embedding-advisor.md` -- a prompt for choosing embedding models and strategies for specific use cases
-- `outputs/skill-embedding-patterns.md` -- a skill that teaches agents how to use embeddings effectively in production
+Этот урок создает:
+- `outputs/prompt-embedding-advisor.md` -- промпт для выбора embedding-моделей и стратегий под конкретные use cases
+- `outputs/skill-embedding-patterns.md` -- skill, который обучает агентов эффективно использовать эмбеддинги в production
 
-## Exercises
+## Упражнения
 
-1. **Metric comparison**: run the same 5 queries against the sample documents using cosine similarity, dot product, and euclidean distance. Record the top-3 results for each. For which queries do the metrics disagree? Why?
+1. **Сравнение метрик**: запустите одни и те же 5 запросов по sample documents, используя cosine similarity, dot product и euclidean distance. Запишите top-3 results для каждой. Для каких запросов метрики расходятся? Почему?
 
-2. **Chunk size experiment**: index the sample documents with chunk sizes of 50, 100, 200, and 500 words. For each, run 5 queries and record the top-1 similarity score. Plot the relationship between chunk size and retrieval quality. Find the point where larger chunks start hurting.
+2. **Эксперимент с размером chunk**: проиндексируйте sample documents с размерами chunk 50, 100, 200 и 500 слов. Для каждого запустите 5 запросов и запишите top-1 similarity score. Постройте график зависимости между размером chunk и качеством retrieval. Найдите точку, где большие chunks начинают вредить.
 
-3. **Matryoshka simulation**: build a SimpleEmbedder that produces 500-d vectors. Truncate to 50, 100, 200, and 500 dimensions. Measure how retrieval recall degrades at each truncation. This simulates Matryoshka behavior without needing the real training trick.
+3. **Симуляция Matryoshka**: создайте SimpleEmbedder, который производит 500-d vectors. Усеките до 50, 100, 200 и 500 измерений. Измерьте, как retrieval recall ухудшается при каждом усечении. Это симулирует поведение Matryoshka без настоящего training trick.
 
-4. **Binary quantization**: take the embeddings from the search engine, convert them to binary (1 if positive, 0 if negative), and implement Hamming distance search. Compare the top-10 results against full-precision cosine similarity. Measure the overlap percentage.
+4. **Binary quantization**: возьмите эмбеддинги из search engine, преобразуйте их в binary (1 для положительных, 0 для отрицательных) и реализуйте поиск по Hamming distance. Сравните top-10 results с full-precision cosine similarity. Измерьте процент пересечения.
 
-5. **Sentence-based chunking**: replace fixed-size chunking with `chunk_by_sentences`. Run the same queries and compare retrieval scores. Does respecting sentence boundaries improve the results?
+5. **Sentence-based chunking**: замените fixed-size chunking на `chunk_by_sentences`. Запустите те же запросы и сравните retrieval scores. Улучшает ли учет границ предложений результаты?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Embedding | "Text to numbers" | A dense vector where geometric proximity encodes semantic similarity |
-| Word2Vec | "The OG embedding" | 2013 model that learned word vectors by predicting context words; proved vector arithmetic encodes meaning |
-| Cosine similarity | "How similar are two vectors" | Cosine of the angle between vectors; 1 = identical direction, 0 = orthogonal, -1 = opposite |
-| HNSW | "Fast vector search" | Hierarchical Navigable Small World graph -- multi-layer structure enabling O(log n) approximate nearest neighbor search |
-| Bi-encoder | "Embed separately, compare fast" | Encodes query and document independently into vectors; enables pre-computation and fast retrieval |
-| Cross-encoder | "Slow but accurate reranker" | Processes query-document pair jointly through the full model; higher accuracy, no pre-computation |
-| Matryoshka embeddings | "Truncatable vectors" | Embeddings trained so the first N dimensions capture the most important information, enabling variable-size storage |
-| Binary quantization | "1-bit embeddings" | Converting float vectors to binary (sign bit only) for 32x storage reduction with Hamming distance search |
-| Chunking | "Split docs for embedding" | Breaking documents into 256-512 token segments so each can be independently embedded and retrieved |
-| Vector database | "Search engine for embeddings" | Data store optimized for storing vectors and performing approximate nearest neighbor search at scale |
-| Contrastive learning | "Train by comparison" | Training approach that pushes similar pair embeddings together and dissimilar pair embeddings apart |
-| MTEB | "The embedding benchmark" | Massive Text Embedding Benchmark -- 56 datasets across 8 tasks; standard for comparing embedding models |
+| Embedding | "Текст в числа" | Плотный вектор, в котором геометрическая близость кодирует семантическое сходство |
+| Word2Vec | "Первый классический embedding" | Модель 2013 года, которая учила word vectors, предсказывая контекстные слова; доказала, что векторная арифметика кодирует смысл |
+| Cosine similarity | "Насколько похожи два вектора" | Косинус угла между векторами; 1 = одинаковое направление, 0 = ортогональны, -1 = противоположны |
+| HNSW | "Быстрый vector search" | Hierarchical Navigable Small World graph -- многослойная структура, обеспечивающая O(log n) приближенный поиск ближайших соседей |
+| Bi-encoder | "Встраивать отдельно, сравнивать быстро" | Кодирует запрос и документ независимо в векторы; позволяет pre-computation и быстрый retrieval |
+| Cross-encoder | "Медленный, но точный reranker" | Обрабатывает пару запрос-документ совместно через всю модель; выше точность, нет pre-computation |
+| Matryoshka embeddings | "Усекаемые векторы" | Эмбеддинги, обученные так, что первые N измерений содержат самую важную информацию, что позволяет хранение переменного размера |
+| Binary quantization | "1-битные embeddings" | Преобразование float-векторов в binary (только sign bit) для сокращения хранения в 32x с поиском по Hamming distance |
+| Chunking | "Разбить документы для embedding" | Разбиение документов на сегменты по 256-512 токенов, чтобы каждый можно было независимо встроить и извлечь |
+| Vector database | "Поисковик для embeddings" | Хранилище данных, оптимизированное для хранения векторов и выполнения приближенного nearest neighbor search в масштабе |
+| Contrastive learning | "Обучение через сравнение" | Подход к обучению, который сближает эмбеддинги похожих пар и отдаляет эмбеддинги непохожих пар |
+| MTEB | "Benchmark для embeddings" | Massive Text Embedding Benchmark -- 56 датасетов по 8 задачам; стандарт для сравнения embedding-моделей |
 
-## Further Reading
+## Дополнительное чтение
 
-- Mikolov et al., "Efficient Estimation of Word Representations in Vector Space" (2013) -- the Word2Vec paper that started the embedding revolution with the king-queen analogy
-- Reimers & Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019) -- how to train bi-encoders for sentence-level similarity, foundation of modern embedding models
-- Kusupati et al., "Matryoshka Representation Learning" (2022) -- the technique behind variable-dimension embeddings that OpenAI adopted for text-embedding-3
-- Malkov & Yashunin, "Efficient and Robust Approximate Nearest Neighbor using Hierarchical Navigable Small World Graphs" (2018) -- the HNSW paper, the algorithm behind most production vector search
-- OpenAI Embeddings Guide (platform.openai.com/docs/guides/embeddings) -- practical reference for text-embedding-3 models including Matryoshka dimension reduction
-- MTEB Leaderboard (huggingface.co/spaces/mteb/leaderboard) -- live benchmark comparing all embedding models across tasks and languages
-- [Muennighoff et al., "MTEB: Massive Text Embedding Benchmark" (EACL 2023)](https://arxiv.org/abs/2210.07316) -- the benchmark defining 8 task categories (classification, clustering, pair classification, reranking, retrieval, STS, summarization, bitext mining) that the leaderboard reports; read before trusting any single MTEB score.
-- [Sentence Transformers documentation](https://www.sbert.net/) -- canonical reference for bi-encoder vs cross-encoder, pooling strategies, and the ingest-split-embed-store RAG pipeline this lesson implements.
+- Mikolov et al., "Efficient Estimation of Word Representations in Vector Space" (2013) -- статья Word2Vec, начавшая революцию эмбеддингов с аналогией king-queen
+- Reimers & Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019) -- как обучать bi-encoders для сходства на уровне предложений, основа современных embedding-моделей
+- Kusupati et al., "Matryoshka Representation Learning" (2022) -- техника за эмбеддингами переменной размерности, которую OpenAI приняла для text-embedding-3
+- Malkov & Yashunin, "Efficient and Robust Approximate Nearest Neighbor using Hierarchical Navigable Small World Graphs" (2018) -- статья HNSW, алгоритма за большинством production vector search
+- OpenAI Embeddings Guide (platform.openai.com/docs/guides/embeddings) -- практический справочник по моделям text-embedding-3, включая уменьшение размерности Matryoshka
+- MTEB Leaderboard (huggingface.co/spaces/mteb/leaderboard) -- live benchmark, сравнивающий все embedding-модели по задачам и языкам
+- [Muennighoff et al., "MTEB: Massive Text Embedding Benchmark" (EACL 2023)](https://arxiv.org/abs/2210.07316) -- benchmark, задающий 8 категорий задач (classification, clustering, pair classification, reranking, retrieval, STS, summarization, bitext mining), которые показывает leaderboard; прочитайте перед тем, как доверять одному MTEB score.
+- [Sentence Transformers documentation](https://www.sbert.net/) -- канонический справочник по bi-encoder vs cross-encoder, pooling strategies и ingest-split-embed-store RAG pipeline, который реализует этот урок.

@@ -1,62 +1,62 @@
-# Fine-Tuning with LoRA & QLoRA
+# Fine-Tuning with LoRA и QLoRA
 
-> Full fine-tuning a 7B model requires 56GB of VRAM. You don't have that. Neither do most companies. LoRA lets you fine-tune the same model in 6GB by training less than 1% of the parameters. This isn't a compromise -- it matches full fine-tuning quality on most tasks. The entire open-source fine-tuning ecosystem runs on this one trick.
+> Полный fine-tuning модели на 7B параметров требует 56GB VRAM. У вас этого нет. У большинства компаний тоже. LoRA позволяет дообучать ту же модель в 6GB, обучая меньше 1% параметров. Это не компромисс: на большинстве задач качество совпадает с полным fine-tuning. Вся open-source экосистема fine-tuning держится на этом приеме.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 10, Lesson 06 (Instruction Tuning / SFT)
-**Time:** ~75 minutes
-**Related:** Phase 10 covers the SFT/DPO loops from scratch. This lesson plugs those into the 2026 PEFT toolkits (PEFT, TRL, Unsloth, Axolotl, LLaMA-Factory).
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 10, Lesson 06 (Instruction Tuning / SFT)
+**Время:** ~75 минут
+**Связано:** Phase 10 разбирает циклы SFT/DPO с нуля. Этот урок подключает их к PEFT-инструментам 2026 года: PEFT, TRL, Unsloth, Axolotl, LLaMA-Factory.
 
-## Learning Objectives
+## Цели обучения
 
-- Implement LoRA by injecting low-rank adapter matrices (A and B) into a pretrained model's attention layers
-- Calculate the parameter savings of LoRA vs full fine-tuning: rank r with d_model dimensions trains 2*r*d parameters instead of d^2
-- Fine-tune a model using QLoRA (4-bit quantized base + LoRA adapters) to fit within consumer GPU memory
-- Merge LoRA weights back into the base model for deployment and compare inference speed with and without adapters
+- Реализовать LoRA, внедряя low-rank adapter matrices (A и B) в attention-слои предобученной модели
+- Рассчитать экономию параметров LoRA по сравнению с полным fine-tuning: rank r при размерности d_model обучает 2*r*d параметров вместо d^2
+- Дообучить модель с QLoRA: 4-bit quantized base + LoRA adapters, чтобы уложиться в память потребительской GPU
+- Слить веса LoRA обратно в базовую модель для deployment и сравнить скорость inference с адаптерами и без них
 
-## The Problem
+## Проблема
 
-You have a base model. Llama 3 8B. You want it to answer customer support tickets in your company's voice. SFT is the answer. But SFT has a cost problem.
+У вас есть базовая модель: Llama 3 8B. Вы хотите, чтобы она отвечала на customer support tickets голосом вашей компании. SFT подходит, но у SFT есть проблема стоимости.
 
-Full fine-tuning updates every parameter in the model. Llama 3 8B has 8 billion parameters. In fp16, each parameter takes 2 bytes. That's 16GB just to load the weights. During training, you also need gradients (16GB), optimizer states for Adam (32GB for momentum + variance), and activations. Total: roughly 56GB of VRAM for a single 8B model.
+Полный fine-tuning обновляет каждый параметр модели. У Llama 3 8B восемь миллиардов параметров. В fp16 каждый параметр занимает 2 байта: 16GB только на загрузку весов. Во время обучения нужны еще gradients (16GB), optimizer states для Adam (32GB под momentum и variance) и activations. Итого примерно 56GB VRAM для одной модели 8B.
 
-An A100 80GB can barely fit this. Two A100s cost $3-4/hour on cloud providers. Training for 3 epochs on 50,000 examples takes 6-10 hours. That's $30-40 per experiment. Run 10 experiments to get the hyperparameters right and you've spent $400 before deploying anything.
+A100 80GB едва это вмещает. Две A100 стоят около $3-4/час в облаке. Обучение 3 эпох на 50,000 примерах занимает 6-10 часов. Это $30-40 за эксперимент. Десять экспериментов для подбора hyperparameters дают около $400 еще до deployment.
 
-Scale this to Llama 3 70B and the numbers get absurd. 140GB for weights alone. You need a cluster. $100+ per experiment.
+Для Llama 3 70B числа становятся абсурдными: около 140GB только на веса. Нужен кластер, и эксперимент стоит $100+.
 
-There's a deeper problem too. Full fine-tuning modifies every weight in the model. If you fine-tune on customer support data, you might degrade the model's general capabilities. It's called catastrophic forgetting. The model gets better at your task and worse at everything else.
+Есть и более глубокая проблема. Полный fine-tuning изменяет все веса модели. Если дообучить ее на данных поддержки клиентов, можно ухудшить общие способности модели. Это называется catastrophic forgetting: модель становится лучше на вашей задаче и хуже на всем остальном.
 
-You need a method that trains fewer parameters, uses less memory, and doesn't destroy the model's existing knowledge.
+Нужен метод, который обучает меньше параметров, использует меньше памяти и не разрушает уже имеющиеся знания модели.
 
-## The Concept
+## Концепция
 
 ### LoRA: Low-Rank Adaptation
 
-Edward Hu and colleagues at Microsoft published LoRA in June 2021. The paper's insight: the weight updates during fine-tuning have low intrinsic rank. You don't need to update all 16.7 million parameters in a 4096x4096 weight matrix. The useful information in the update can be captured by a matrix of rank 16 or 32.
+Edward Hu и коллеги из Microsoft опубликовали LoRA в июне 2021 года. Идея статьи: обновления весов при fine-tuning имеют низкий внутренний ранг. Не нужно обновлять все 16.7 миллионов параметров в матрице 4096x4096. Полезную информацию в обновлении можно выразить матрицей ранга 16 или 32.
 
-Here's the math. A standard linear layer computes:
+Обычный linear layer вычисляет:
 
 ```
 y = Wx
 ```
 
-Where W is a d_out x d_in matrix. For a 4096x4096 attention projection, that's 16,777,216 parameters.
+Где W - матрица d_out x d_in. Для attention projection 4096x4096 это 16,777,216 параметров.
 
-LoRA freezes W and adds a low-rank decomposition:
+LoRA замораживает W и добавляет low-rank decomposition:
 
 ```
 y = Wx + BAx
 ```
 
-Where B is (d_out x r) and A is (r x d_in). The rank r is much smaller than d -- typically 8, 16, or 32.
+Где B имеет размер (d_out x r), а A - (r x d_in). Rank r намного меньше d, обычно 8, 16 или 32.
 
-For r=16 on a 4096x4096 layer:
-- Original parameters: 4096 x 4096 = 16,777,216
-- LoRA parameters: (4096 x 16) + (16 x 4096) = 65,536 + 65,536 = 131,072
-- Reduction: 131,072 / 16,777,216 = 0.78%
+Для r=16 на слое 4096x4096:
+- Исходные параметры: 4096 x 4096 = 16,777,216
+- Параметры LoRA: (4096 x 16) + (16 x 4096) = 65,536 + 65,536 = 131,072
+- Сокращение: 131,072 / 16,777,216 = 0.78%
 
-You're training 0.78% of the parameters and getting 95-100% of the quality.
+Вы обучаете 0.78% параметров и получаете 95-100% качества.
 
 ```mermaid
 graph LR
@@ -72,56 +72,56 @@ graph LR
     style B fill:#0f3460,stroke:#16213e,color:#fff
 ```
 
-A is initialized with a random Gaussian. B is initialized to zero. This means the LoRA contribution starts at zero -- the model begins training from its original behavior and gradually learns the adaptation.
+A инициализируется случайной Gaussian-матрицей. B инициализируется нулями. Поэтому вклад LoRA в начале равен нулю: модель стартует с исходного поведения и постепенно учит адаптацию.
 
-### The Scaling Factor: Alpha
+### Scaling Factor: Alpha
 
-LoRA introduces a scaling factor alpha that controls how much the low-rank update affects the output:
+LoRA вводит scaling factor alpha, который управляет тем, насколько low-rank update влияет на выход:
 
 ```
 y = Wx + (alpha / r) * BAx
 ```
 
-When alpha = r, the scaling is 1x. When alpha = 2r (the common default), the scaling is 2x. This hyperparameter controls the learning rate of the LoRA path independently of the base learning rate.
+Если alpha = r, масштаб равен 1x. Если alpha = 2r, что часто используют по умолчанию, масштаб равен 2x. Этот hyperparameter управляет learning rate пути LoRA независимо от базового learning rate.
 
-Practical guidance:
-- alpha = 2 * rank is a common community convention (the original paper used alpha = rank in most experiments)
-- alpha = rank gives 1x scaling, conservative but stable
-- Higher alpha means larger updates per step, which can speed convergence or cause instability
+Практические ориентиры:
+- alpha = 2 * rank - распространенная convention в сообществе, хотя оригинальная статья чаще использовала alpha = rank
+- alpha = rank дает масштаб 1x: консервативно, но стабильно
+- Более высокий alpha дает более крупные обновления на шаг, что может ускорить convergence или вызвать нестабильность
 
-### Where to Apply LoRA
+### Где применять LoRA
 
-A transformer has many linear layers. You don't need to add LoRA to all of them. The original paper tested different combinations:
+В transformer много linear layers. Не обязательно добавлять LoRA во все. Оригинальная статья проверяла разные комбинации:
 
 | Target Layers | Trainable Params (7B) | Quality |
 |--------------|----------------------|---------|
-| q_proj only | 4.7M | Good |
-| q_proj + v_proj | 9.4M | Better |
-| q_proj + k_proj + v_proj + o_proj | 18.9M | Best for attention |
-| All linear (attention + MLP) | 37.7M | Marginal gain, 2x params |
+| q_proj only | 4.7M | Хорошо |
+| q_proj + v_proj | 9.4M | Лучше |
+| q_proj + k_proj + v_proj + o_proj | 18.9M | Лучшее качество для attention |
+| All linear (attention + MLP) | 37.7M | Небольшой выигрыш, 2x параметров |
 
-The sweet spot for most tasks: q_proj + v_proj. This targets the query and value projections in self-attention, which control what the model attends to and what information it extracts. Adding MLP layers helps for complex tasks like code generation but doubles the parameter count for diminishing returns on simpler tasks.
+Практический sweet spot для большинства задач: q_proj + v_proj. Это query и value projections в self-attention: они управляют тем, на что модель смотрит и какую информацию извлекает. Добавление MLP layers помогает на сложных задачах вроде code generation, но удваивает число параметров и часто дает убывающую отдачу.
 
-### Rank Selection
+### Выбор Rank
 
-The rank r controls the expressiveness of the adaptation:
+Rank r управляет выразительностью адаптации:
 
 | Rank | Trainable Params (per layer) | Best For |
 |------|---------------------------|----------|
-| 4 | 32,768 | Simple classification, sentiment |
+| 4 | 32,768 | Простая classification, sentiment |
 | 8 | 65,536 | Single-domain Q&A, summarization |
 | 16 | 131,072 | Multi-domain tasks, instruction following |
 | 32 | 262,144 | Complex reasoning, code generation |
-| 64 | 524,288 | Diminishing returns for most tasks |
-| 128 | 1,048,576 | Rarely justified |
+| 64 | 524,288 | Убывающая отдача для большинства задач |
+| 128 | 1,048,576 | Редко оправдано |
 
-Hu et al. showed that r=4 already captures most of the adaptation for simple tasks. r=8 and r=16 are the most common choices in practice. Going beyond r=64 rarely improves quality and starts to lose LoRA's memory advantage.
+Hu et al. показали, что r=4 уже захватывает большую часть адаптации для простых задач. r=8 и r=16 - самые частые практические выборы. Выше r=64 качество редко заметно растет, а преимущество LoRA по памяти начинает исчезать.
 
 ### QLoRA: 4-Bit Quantization + LoRA
 
-Tim Dettmers and colleagues at the University of Washington published QLoRA in May 2023. The idea: quantize the frozen base model to 4-bit precision, then attach LoRA adapters in fp16 on top.
+Tim Dettmers и коллеги из University of Washington опубликовали QLoRA в мае 2023 года. Идея: quantize замороженную базовую модель до 4-bit precision, а сверху подключить LoRA adapters в fp16.
 
-This changes the memory equation dramatically:
+Это резко меняет расчет памяти:
 
 | Method | Weight Memory (7B) | Training Memory (7B) | GPU Required |
 |--------|-------------------|---------------------|-------------|
@@ -129,17 +129,17 @@ This changes the memory equation dramatically:
 | LoRA (fp16 base) | 14GB | ~18GB | 1x A100 40GB |
 | QLoRA (4-bit base) | 3.5GB | ~6GB | 1x RTX 3090 24GB |
 
-QLoRA makes three technical contributions:
+QLoRA дает три технических вклада:
 
-**NF4 (Normal Float 4-bit)**: A new data type designed specifically for neural network weights. Neural network weights follow a roughly normal distribution. NF4 places its 16 quantization levels at the quantiles of a standard normal distribution. This is information-theoretically optimal for normally distributed data. It loses less information than uniform 4-bit quantization (INT4) or standard Float4.
+**NF4 (Normal Float 4-bit)**: новый тип данных специально для весов нейросетей. Веса примерно нормально распределены, поэтому NF4 размещает 16 уровней quantization в квантилях standard normal distribution. Для нормально распределенных данных это информационно оптимально и теряет меньше информации, чем uniform 4-bit quantization (INT4) или обычный Float4.
 
-**Double quantization**: The quantization constants themselves take memory. Each block of 64 weights needs a fp32 scale factor (4 bytes). For a 7B model, that's an extra 0.4GB. Double quantization quantizes these constants to fp8, reducing the overhead to 0.1GB. Small but it adds up.
+**Double quantization**: сами quantization constants тоже занимают память. Каждый блок из 64 весов требует fp32 scale factor (4 байта). Для модели 7B это еще около 0.4GB. Double quantization квантует эти constants до fp8 и снижает overhead до 0.1GB.
 
-**Paged optimizers**: During training, optimizer states (Adam's momentum and variance) can exceed GPU memory on long sequences. Paged optimizers use NVIDIA's unified memory to automatically page optimizer states to CPU RAM when GPU memory is exhausted, and page them back when needed. This prevents OOM crashes at the cost of some throughput.
+**Paged optimizers**: во время обучения optimizer states (momentum и variance Adam) могут превысить GPU memory на длинных sequences. Paged optimizers используют unified memory NVIDIA и автоматически выгружают optimizer states в CPU RAM при нехватке GPU memory, а затем возвращают их обратно. Это предотвращает OOM за счет части throughput.
 
-### The Quality Question
+### Вопрос качества
 
-Does reducing parameters or quantizing the base hurt quality? The results from multiple papers:
+Вредит ли снижение числа параметров или quantization базы качеству? Результаты нескольких papers:
 
 | Method | MMLU (5-shot) | MT-Bench | HumanEval |
 |--------|--------------|----------|-----------|
@@ -148,11 +148,11 @@ Does reducing parameters or quantizing the base hurt quality? The results from m
 | QLoRA r=16 (NF4) | 47.5 | 6.61 | 13.4 |
 | QLoRA r=64 (NF4) | 48.1 | 6.70 | 14.2 |
 
-LoRA at r=16 is within 1% of full fine-tuning on most benchmarks. QLoRA at r=16 loses another fraction of a percent. QLoRA at r=64 essentially matches full fine-tuning while using 90% less memory.
+LoRA при r=16 находится в пределах 1% от full fine-tuning на большинстве benchmarks. QLoRA при r=16 теряет еще доли процента. QLoRA при r=64 фактически совпадает с full fine-tuning, используя на 90% меньше памяти.
 
-### Real-World Costs
+### Реальные затраты
 
-Fine-tuning Llama 3 8B on 50,000 examples (3 epochs):
+Fine-tuning Llama 3 8B на 50,000 примерах, 3 эпохи:
 
 | Method | GPU | Time | Cost |
 |--------|-----|------|------|
@@ -162,46 +162,46 @@ Fine-tuning Llama 3 8B on 50,000 examples (3 epochs):
 | QLoRA r=16 (Unsloth) | 1x RTX 4090 24GB | 2.5 hours | ~$2 |
 | QLoRA r=16 | 1x T4 16GB | 12 hours | ~$4 |
 
-QLoRA on a single consumer GPU costs less than a lunch. This is why the open-weight fine-tuning community exploded in 2023 and why every training framework below ships QLoRA by default in 2026.
+QLoRA на одной consumer GPU стоит дешевле обеда. Поэтому open-weight fine-tuning community резко выросло в 2023 году, и поэтому каждый training framework ниже в 2026 году поставляет QLoRA по умолчанию.
 
-### The 2026 PEFT stack
+### PEFT stack 2026 года
 
-| Framework | What it is | Pick when |
+| Framework | Что это | Когда выбирать |
 |-----------|-----------|-----------|
-| **Hugging Face PEFT** | The canonical LoRA/QLoRA/DoRA/IA3 library | You want raw control and your training loop is already on `transformers.Trainer` |
-| **TRL** | HF's reinforcement-from-feedback trainers (SFT, DPO, GRPO, PPO, ORPO) | You need DPO/GRPO after SFT; built on top of PEFT |
-| **Unsloth** | Triton-kernel rewrite of the forward/backward pass | You want 2-5x speedup + half the VRAM with no accuracy loss; Llama/Mistral/Qwen family |
-| **Axolotl** | YAML-config wrapper over PEFT + TRL + DeepSpeed + Unsloth | You want reproducible, version-controlled training runs |
-| **LLaMA-Factory** | GUI/CLI/API over PEFT + TRL | You want zero-code fine-tuning; 100+ model families supported |
-| **torchtune** | Native PyTorch recipes, no `transformers` dep | You want minimal deps and your org already standardizes on PyTorch |
+| **Hugging Face PEFT** | Каноническая библиотека LoRA/QLoRA/DoRA/IA3 | Нужен полный контроль, а training loop уже на `transformers.Trainer` |
+| **TRL** | HF trainers для reinforcement-from-feedback: SFT, DPO, GRPO, PPO, ORPO | Нужен DPO/GRPO после SFT; построено поверх PEFT |
+| **Unsloth** | Переписанный forward/backward pass на Triton kernels | Нужно 2-5x ускорение и вдвое меньше VRAM без потери accuracy; семейства Llama/Mistral/Qwen |
+| **Axolotl** | YAML-config wrapper над PEFT + TRL + DeepSpeed + Unsloth | Нужны воспроизводимые training runs под version control |
+| **LLaMA-Factory** | GUI/CLI/API над PEFT + TRL | Нужен zero-code fine-tuning; поддержка 100+ model families |
+| **torchtune** | Native PyTorch recipes без зависимости от `transformers` | Нужны минимальные dependencies, и организация стандартизирована на PyTorch |
 
-Rule of thumb: research use or one-off experiment → PEFT. Repeatable production pipeline → Axolotl with Unsloth kernels enabled. Throwaway prototyping → LLaMA-Factory.
+Правило: research use или разовый эксперимент -> PEFT. Повторяемый production pipeline -> Axolotl с включенными Unsloth kernels. Быстрое прототипирование -> LLaMA-Factory.
 
 ### Merging Adapters
 
-After training, you have two things: the frozen base model and a small LoRA adapter (typically 10-100MB). You can either:
+После обучения у вас есть две вещи: замороженная базовая модель и маленький LoRA adapter, обычно 10-100MB. Можно:
 
-1. **Keep them separate**: Load the base model, load the adapter on top. Swap adapters for different tasks. This is how you serve multiple fine-tuned variants from one base model.
+1. **Оставить их отдельно**: загрузить base model и поверх нее adapter. Так можно переключать adapters для разных задач. Это способ обслуживать несколько fine-tuned variants из одной base model.
 
-2. **Merge them permanently**: Compute W' = W + (alpha/r) * BA and save the result as a new full model. The merged model is the same size as the original. No inference overhead. No adapter to manage.
+2. **Слить навсегда**: вычислить W' = W + (alpha/r) * BA и сохранить результат как новую full model. Merged model имеет тот же размер, что и исходная. Нет inference overhead и отдельного adapter.
 
-For serving multiple tasks (customer support adapter, code adapter, translation adapter), keep them separate. For deploying a single specialized model, merge.
+Для нескольких задач, например customer support adapter, code adapter, translation adapter, держите adapters отдельно. Для одной специализированной модели - merge.
 
-Advanced merging techniques for combining multiple adapters:
+Advanced merging techniques для объединения нескольких adapters:
 
-- **TIES-Merging** (Yadav et al. 2023): Trims small-magnitude parameters, resolves sign conflicts, then merges. Reduces interference between adapters.
-- **DARE** (Yu et al. 2023): Randomly drops adapter parameters before merging and rescales the rest. Surprisingly effective at combining capabilities.
-- **Task arithmetic**: Simply add or subtract adapter weights. Adding a "code" adapter and a "math" adapter often produces a model good at both.
+- **TIES-Merging** (Yadav et al. 2023): обрезает параметры малой величины, разрешает sign conflicts и затем сливает. Снижает interference между adapters.
+- **DARE** (Yu et al. 2023): случайно выбрасывает adapter parameters перед merging и масштабирует оставшиеся. Неожиданно хорошо объединяет capabilities.
+- **Task arithmetic**: просто складывать или вычитать adapter weights. Сложение "code" adapter и "math" adapter часто дает модель, сильную в обоих направлениях.
 
 ### When NOT to Fine-Tune
 
-Fine-tuning is the third option, not the first.
+Fine-tuning - третий вариант, не первый.
 
-**First: prompt engineering.** Write a better system prompt. Add few-shot examples. Use chain-of-thought. This costs nothing and takes minutes. If prompting gets you 80% of the way there, you probably don't need to fine-tune.
+**Сначала: prompt engineering.** Напишите лучший system prompt. Добавьте few-shot examples. Используйте chain-of-thought. Это ничего не стоит и занимает минуты. Если prompting дает 80% нужного результата, fine-tuning, вероятно, не нужен.
 
-**Second: RAG.** If the model needs to know about your specific data (documents, knowledge base, product catalog), retrieval is cheaper and more maintainable than baking it into weights. See Lesson 06.
+**Затем: RAG.** Если модель должна знать ваши конкретные данные: documents, knowledge base, product catalog, retrieval дешевле и проще в сопровождении, чем запекание этих знаний в weights. См. Lesson 06.
 
-**Third: fine-tuning.** Use this when you need the model to adopt a specific style, format, or reasoning pattern that cannot be achieved through prompting. When you need consistent structured output. When you need to distill a larger model into a smaller one. When latency matters and you can't afford the extra tokens from few-shot prompting.
+**Потом: fine-tuning.** Используйте его, когда нужно, чтобы модель приняла конкретный style, format или reasoning pattern, которых нельзя добиться prompting. Когда нужен стабильный structured output. Когда нужно distill большую модель в меньшую. Когда важна latency, и вы не можете позволить extra tokens от few-shot prompting.
 
 ```mermaid
 graph TD
@@ -218,11 +218,9 @@ graph TD
     style Done fill:#0f3460,stroke:#16213e,color:#fff
 ```
 
-## Build It
+## Собираем
 
-We implement LoRA from scratch in pure PyTorch. No libraries. No magic. You'll build the LoRA layer, inject it into a model, train it, and merge the weights back.
-
-### Step 1: The LoRA Layer
+### Шаг 1: LoRA layer
 
 ```python
 import torch
@@ -243,9 +241,7 @@ class LoRALayer(nn.Module):
         return (x @ self.A @ self.B) * self.scaling
 ```
 
-A is initialized with scaled random values. B is initialized to zero. The product BA starts at zero, so the model begins with its original behavior.
-
-### Step 2: LoRA-Wrapped Linear Layer
+### Шаг 2: Linear layer, обернутый LoRA
 
 ```python
 class LinearWithLoRA(nn.Module):
@@ -263,9 +259,7 @@ class LinearWithLoRA(nn.Module):
         return self.linear(x) + self.lora(x)
 ```
 
-The original linear layer is frozen. Only the LoRA parameters (A and B) are trainable.
-
-### Step 3: Inject LoRA into a Model
+### Step 3: Внедрение LoRA в модель
 
 ```python
 def inject_lora(model, target_modules, rank=8, alpha=16):
@@ -285,9 +279,7 @@ def inject_lora(model, target_modules, rank=8, alpha=16):
     return lora_layers
 ```
 
-First, freeze every parameter in the model. Then walk the model tree, find linear layers matching your target names, and replace them with LoRA-wrapped versions. The LoRA A and B matrices are the only trainable parameters in the entire model.
-
-### Step 4: Count Parameters
+### Step 4: Подсчет параметров
 
 ```python
 def count_parameters(model):
@@ -302,7 +294,7 @@ def count_parameters(model):
     }
 ```
 
-### Step 5: Merge Weights Back
+### Step 5: Слияние весов обратно
 
 ```python
 def merge_lora_weights(model):
@@ -322,9 +314,7 @@ def merge_lora_weights(model):
             setattr(parent, child_name, module.linear)
 ```
 
-After merging, the LoRA layers are gone. The model is the same size as the original with the adaptation baked into the weights. No inference overhead.
-
-### Step 6: Simulated QLoRA Quantization
+### Шаг 6: Симуляция QLoRA quantization
 
 ```python
 def quantize_to_nf4(tensor, block_size=64):
@@ -339,9 +329,7 @@ def dequantize_from_nf4(quantized, scales, original_shape):
     return dequantized.reshape(original_shape)
 ```
 
-This simulates 4-bit quantization by mapping weights into 16 discrete levels within blocks of 64. Production QLoRA uses the bitsandbytes library for true NF4 on GPU.
-
-### Step 7: Training Loop
+### Шаг 7: Training loop
 
 ```python
 def train_lora(model, data, epochs=5, lr=1e-3, batch_size=4):
@@ -377,7 +365,7 @@ def train_lora(model, data, epochs=5, lr=1e-3, batch_size=4):
     return losses
 ```
 
-### Step 8: Full Demo
+### Шаг 8: Полная demo
 
 ```python
 def demo():
@@ -421,11 +409,9 @@ def demo():
     }
 ```
 
-The demo creates a small model, injects LoRA into two layers, trains it, and merges the weights back. The parameter count drops from full trainable to ~1% trainable during LoRA training, then returns to the original architecture after merging.
+## Использование
 
-## Use It
-
-With the Hugging Face ecosystem, LoRA on a real model takes about 20 lines:
+В экосистеме Hugging Face LoRA на реальной модели занимает около 20 строк:
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -446,7 +432,7 @@ model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
 ```
 
-For QLoRA, add bitsandbytes quantization:
+Для QLoRA добавьте quantization через bitsandbytes:
 
 ```python
 from transformers import BitsAndBytesConfig
@@ -467,9 +453,9 @@ model = AutoModelForCausalLM.from_pretrained(
 model = get_peft_model(model, lora_config)
 ```
 
-That's it. Same training loop. Same data pipeline. The base model now lives in 4-bit, LoRA adapters train in fp16, and the whole thing fits in 6GB.
+Вот и все. Training loop и data pipeline остаются теми же. Base model теперь живет в 4-bit, LoRA adapters обучаются в fp16, и все помещается в 6GB.
 
-For training with the Hugging Face Trainer:
+Для обучения через Hugging Face Trainer:
 
 ```python
 from transformers import TrainingArguments, Trainer
@@ -500,48 +486,48 @@ trainer.train()
 model.save_pretrained("./lora-adapter")
 ```
 
-The saved adapter is 10-100MB. The base model stays untouched. You can share adapters on the Hugging Face Hub without redistributing the full model.
+Сохраненный adapter занимает 10-100MB. Base model остается нетронутой. Adapters можно публиковать на Hugging Face Hub без распространения полной модели.
 
-## Ship It
+## Результат
 
-This lesson produces:
-- `outputs/prompt-lora-advisor.md` -- a prompt that helps you decide LoRA rank, target modules, and hyperparameters for your specific task
-- `outputs/skill-fine-tuning-guide.md` -- a skill that teaches agents the decision tree for when and how to fine-tune
+Этот урок создает:
+- `outputs/prompt-lora-advisor.md` -- prompt, который помогает выбрать LoRA rank, target modules и hyperparameters под конкретную задачу
+- `outputs/skill-fine-tuning-guide.md` -- skill, который учит agents decision tree: когда и как выполнять fine-tuning
 
-## Exercises
+## Упражнения
 
-1. **Rank ablation study.** Run the demo with ranks 2, 4, 8, 16, 32, and 64. Plot final loss vs. rank. Find the point of diminishing returns where doubling the rank no longer halves the loss. For a simple classification task on 256-dim features, this should be around r=8-16.
+1. **Rank ablation study.** Запустите demo с ranks 2, 4, 8, 16, 32 и 64. Постройте график final loss vs. rank. Найдите точку убывающей отдачи, где удвоение rank уже не уменьшает loss вдвое. Для простой classification на 256-dim features это обычно r=8-16.
 
-2. **Target module comparison.** Modify inject_lora to target only layer "0", only layer "2", only layer "4", and all three. Train each variant for 20 epochs. Compare convergence speed and final loss. This mirrors the real decision of targeting q_proj vs v_proj vs all linear layers.
+2. **Target module comparison.** Измените inject_lora так, чтобы она таргетировала только layer "0", только layer "2", только layer "4" и все три слоя. Обучите каждый вариант 20 эпох. Сравните convergence speed и final loss. Это отражает реальное решение: q_proj, v_proj или all linear layers.
 
-3. **Quantization error analysis.** Take the trained model's weight matrices before and after quantize_to_nf4 / dequantize_from_nf4. Compute the mean squared error, max absolute error, and the correlation between original and reconstructed weights. Experiment with block_size values of 32, 64, 128, and 256.
+3. **Quantization error analysis.** Возьмите weight matrices обученной модели до и после quantize_to_nf4 / dequantize_from_nf4. Посчитайте mean squared error, max absolute error и correlation между исходными и восстановленными весами. Попробуйте block_size 32, 64, 128 и 256.
 
-4. **Multi-adapter serving.** Train two LoRA adapters on different subsets of the data (even indices vs odd indices). Save both adapters. Load the base model once, then swap adapters and verify that each produces different outputs on the same input. This is how production systems serve multiple fine-tuned models from one base.
+4. **Multi-adapter serving.** Обучите два LoRA adapters на разных подмножествах данных (even indices vs odd indices). Сохраните оба. Загрузите base model один раз, переключайте adapters и проверьте, что они дают разные outputs на одном input. Так production systems обслуживают несколько fine-tuned models из одной base.
 
-5. **Merge vs. unmerged inference.** Compare the output of the LoRA model before and after merge_lora_weights on the same 100 inputs. Verify the outputs are identical (within floating-point tolerance of 1e-5). Then benchmark inference speed for both -- merged should be slightly faster since it's a single matrix multiply instead of two.
+5. **Merge vs. unmerged inference.** Сравните output LoRA model до и после merge_lora_weights на одних и тех же 100 inputs. Убедитесь, что outputs идентичны в пределах floating-point tolerance 1e-5. Затем benchmark inference speed для обоих вариантов: merged должен быть немного быстрее, потому что это один matrix multiply вместо двух.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|----------------|----------------------|
-| LoRA | "Efficient fine-tuning" | Low-Rank Adaptation: freeze base weights, train two small matrices A and B whose product approximates the full weight update |
-| QLoRA | "Fine-tune on a laptop" | Quantized LoRA: load the base model in 4-bit NF4, train LoRA adapters in fp16 on top, enabling 7B fine-tuning in 6GB VRAM |
-| Rank (r) | "How much the model can learn" | The inner dimension of the A and B matrices; controls expressiveness vs. parameter count |
-| Alpha | "LoRA learning rate" | Scaling factor applied to the LoRA output; alpha/r scales the adaptation's contribution to the final output |
-| NF4 | "4-bit quantization" | Normal Float 4: a 4-bit data type with quantization levels at normal distribution quantiles, optimal for neural network weights |
-| Adapter | "The small trained part" | The LoRA A and B matrices saved as a separate file (10-100MB), loadable on top of any copy of the base model |
-| Target modules | "Which layers to LoRA" | The specific linear layers (q_proj, v_proj, etc.) where LoRA adapters are injected |
-| Merging | "Bake it in" | Computing W + (alpha/r) * BA and replacing the original weight, eliminating the adapter overhead at inference |
-| Paged optimizers | "Don't OOM during training" | Offloading optimizer states (Adam momentum, variance) to CPU when GPU memory is exhausted |
-| Catastrophic forgetting | "Fine-tuning broke everything else" | When updating all weights causes the model to lose previously learned capabilities |
+| Term | Как говорят | Что это на самом деле значит |
+|------|------------|------------------------------|
+| LoRA | "Efficient fine-tuning" | Low-Rank Adaptation: заморозить base weights и обучать две маленькие матрицы A и B, произведение которых аппроксимирует полное обновление весов |
+| QLoRA | "Fine-tune on a laptop" | Quantized LoRA: загрузить base model в 4-bit NF4 и обучать LoRA adapters в fp16 сверху, что позволяет fine-tuning 7B в 6GB VRAM |
+| Rank (r) | "Сколько модель может выучить" | Внутренняя размерность матриц A и B; управляет выразительностью и числом параметров |
+| Alpha | "LoRA learning rate" | Scaling factor для LoRA output; alpha/r масштабирует вклад адаптации в final output |
+| NF4 | "4-bit quantization" | Normal Float 4: 4-bit тип данных с уровнями quantization в квантилях normal distribution, оптимальный для neural network weights |
+| Adapter | "Маленькая обученная часть" | LoRA матрицы A и B, сохраненные отдельным файлом (10-100MB), который загружается поверх любой копии base model |
+| Target modules | "Куда ставить LoRA" | Конкретные linear layers (q_proj, v_proj и т.д.), куда внедряются LoRA adapters |
+| Merging | "Запечь в веса" | Вычислить W + (alpha/r) * BA и заменить исходный weight, убрав adapter overhead при inference |
+| Paged optimizers | "Не упасть с OOM при training" | Выгрузка optimizer states (Adam momentum, variance) в CPU, когда GPU memory исчерпана |
+| Catastrophic forgetting | "Fine-tuning сломал все остальное" | Ситуация, когда обновление всех весов заставляет модель терять ранее выученные способности |
 
-## Further Reading
+## Дополнительное чтение
 
-- Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models" (2021) -- the original paper introducing the low-rank decomposition method, tested on GPT-3 175B with rank as low as 4
-- Dettmers et al., "QLoRA: Efficient Finetuning of Quantized Language Models" (2023) -- introduces NF4, double quantization, and paged optimizers, enabling 65B fine-tuning on a single 48GB GPU
-- PEFT library documentation (huggingface.co/docs/peft) -- the standard library for LoRA, QLoRA, and other parameter-efficient methods in the Hugging Face ecosystem
-- Yadav et al., "TIES-Merging: Resolving Interference When Merging Models" (2023) -- techniques for combining multiple LoRA adapters without quality degradation
-- [Rafailov et al., "Direct Preference Optimization: Your Language Model is Secretly a Reward Model" (NeurIPS 2023)](https://arxiv.org/abs/2305.18290) -- DPO derivation; the preference-tuning stage that comes after SFT, no reward model needed.
-- [TRL documentation](https://huggingface.co/docs/trl/) -- official reference for `SFTTrainer`, `DPOTrainer`, `KTOTrainer`, and the integration surface with PEFT/bitsandbytes/Unsloth.
-- [Unsloth documentation](https://docs.unsloth.ai/) -- fused kernels that double fine-tuning throughput and halve memory; the performance layer under TRL.
-- [Axolotl documentation](https://axolotl-ai-cloud.github.io/axolotl/) -- YAML-configured multi-GPU SFT/DPO/QLoRA trainer; the config-as-code alternative to hand-written scripts.
+- Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models" (2021) -- оригинальная статья с low-rank decomposition, проверенной на GPT-3 175B с rank вплоть до 4
+- Dettmers et al., "QLoRA: Efficient Finetuning of Quantized Language Models" (2023) -- вводит NF4, double quantization и paged optimizers, позволяя fine-tuning 65B на одной 48GB GPU
+- PEFT library documentation (huggingface.co/docs/peft) -- стандартная библиотека для LoRA, QLoRA и других parameter-efficient методов в экосистеме Hugging Face
+- Yadav et al., "TIES-Merging: Resolving Interference When Merging Models" (2023) -- техники объединения нескольких LoRA adapters без деградации качества
+- [Rafailov et al., "Direct Preference Optimization: Your Language Model is Secretly a Reward Model" (NeurIPS 2023)](https://arxiv.org/abs/2305.18290) -- вывод DPO; стадия preference-tuning после SFT без reward model.
+- [TRL documentation](https://huggingface.co/docs/trl/) -- официальный reference для `SFTTrainer`, `DPOTrainer`, `KTOTrainer` и интеграции с PEFT/bitsandbytes/Unsloth.
+- [Unsloth documentation](https://docs.unsloth.ai/) -- fused kernels, которые удваивают throughput fine-tuning и уменьшают memory вдвое; performance layer под TRL.
+- [Axolotl documentation](https://axolotl-ai-cloud.github.io/axolotl/) -- YAML-configured multi-GPU SFT/DPO/QLoRA trainer; config-as-code альтернатива hand-written scripts.

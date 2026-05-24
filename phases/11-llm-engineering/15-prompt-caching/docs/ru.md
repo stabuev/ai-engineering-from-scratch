@@ -1,37 +1,37 @@
-# Prompt Caching and Context Caching
+# Кэширование промптов и контекста
 
-> Your system prompt is 4,000 tokens. Your RAG context is 20,000 tokens. You send both with every request. You also pay for both — every time. Prompt caching lets the provider keep that prefix warm on their side and bill you 10% of the normal rate on reuse. Used correctly, it cuts inference cost by 50–90% and first-token latency by 40–85%.
+> Ваш системный промпт занимает 4,000 токенов. Ваш RAG-контекст занимает 20,000 токенов. Вы отправляете оба с каждым запросом. И платите за оба — каждый раз. Кэширование промптов позволяет провайдеру держать этот префикс «прогретым» на своей стороне и брать с вас 10% обычной цены при повторном использовании. При правильном использовании оно снижает стоимость инференса на 50–90% и задержку до первого токена на 40–85%.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 · 01 (Prompt Engineering), Phase 11 · 05 (Context Engineering), Phase 11 · 11 (Caching and Cost)
-**Time:** ~60 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Phase 11 · 01 (проектирование промптов), Phase 11 · 05 (проектирование контекста), Phase 11 · 11 (кэширование и стоимость)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-A coding agent sends the same 15,000-token system prompt to Claude on every turn of a conversation. Twenty turns at $3/M input tokens is $0.90 in input cost alone — before any of the user's actual messages. Multiply by 10,000 daily conversations and the bill hits $9,000/day for text that never changes.
+Кодовый агент отправляет один и тот же системный промпт на 15,000 токенов в Claude на каждом ходе разговора. Двадцать ходов по $3/M входных токенов — это $0.90 только входной стоимости, еще до реальных сообщений пользователя. Умножьте на 10,000 ежедневных разговоров, и счет достигнет $9,000/day за текст, который никогда не меняется.
 
-You cannot shrink the prompt without hurting quality. You cannot avoid sending it — the model needs it on every turn. The only move is to stop paying full price for a prefix the provider has already seen.
+Вы не можете уменьшить промпт без потери качества. Вы не можете не отправлять его — модель нуждается в нем на каждом ходе. Единственный ход — перестать платить полную цену за префикс, который провайдер уже видел.
 
-That move is prompt caching. Anthropic shipped it in August 2024 (with a 1-hour extended-TTL variant in 2025), OpenAI automated it later that year, Google shipped explicit context caching alongside Gemini 1.5, and all three now offer it as a first-class feature on their frontier models.
+Этот ход называется кэшированием промптов. Anthropic выпустила его в августе 2024 года (с вариантом расширенного TTL на 1 час в 2025 году), OpenAI автоматизировала его позже в том же году, Google выпустила явное кэширование контекста вместе с Gemini 1.5, и теперь все три предлагают это как полноценную возможность в своих передовых моделях.
 
-## The Concept
+## Концепция
 
-![Prompt caching: write once, read cheap](../assets/prompt-caching.svg)
+![Кэширование промптов: записать один раз, читать дешево](../assets/prompt-caching.svg)
 
-**The mechanic.** When a request's prefix matches one from a recent request, the provider serves the KV-cache from the previous run instead of re-encoding the tokens. You pay a small write premium the first time and a large read discount every time after.
+**Механика.** Когда префикс запроса совпадает с префиксом недавнего запроса, провайдер обслуживает KV-кэш из предыдущего запуска вместо повторного кодирования токенов. В первый раз вы платите небольшую надбавку за запись, а каждый следующий раз — получаете большую скидку на чтение.
 
-**Three provider flavors in 2026.**
+**Три варианта у провайдеров в 2026 году.**
 
-| Provider | API style | Hit discount | Write premium | Default TTL | Min cacheable |
+| Провайдер | Стиль API | Скидка при попадании | Надбавка за запись | TTL по умолчанию | Минимум для кэширования |
 |---------|-----------|--------------|---------------|-------------|---------------|
-| Anthropic | Explicit `cache_control` markers on content blocks | 90% off input | 25% surcharge | 5 min (extendable to 1 hour) | 1,024 tokens (Sonnet/Opus), 2,048 (Haiku) |
-| OpenAI | Automatic prefix detection | 50% off input | none | Up to 1 hour (best-effort) | 1,024 tokens |
-| Google (Gemini) | Explicit `CachedContent` API | Storage-billed; read at ~25% of normal | Storage fee per token·hour | User-set (default 1 hour) | 4,096 tokens (Flash), 32,768 (Pro) |
+| Anthropic | Явные маркеры `cache_control` на блоках контента | 90% скидки на вход | 25% надбавки | 5 минут (можно продлить до 1 часа) | 1,024 токена (Sonnet/Opus), 2,048 (Haiku) |
+| OpenAI | Автоматическое обнаружение префикса | 50% скидки на вход | нет | До 1 часа (по возможности) | 1,024 токена |
+| Google (Gemini) | Явный API `CachedContent` | Оплата хранения; чтение примерно за 25% обычной цены | Плата за хранение за токен·час | Задает пользователь (по умолчанию 1 час) | 4,096 токенов (Flash), 32,768 (Pro) |
 
-**The invariant.** All three cache prefixes only. If any token differs between requests, everything after the first differing token is a miss. Put the *stable* parts at the top, the *variable* parts at the bottom.
+**Инвариант.** Все три кэшируют только префиксы. Если любой токен отличается между запросами, все после первого отличающегося токена — промах. Помещайте *стабильные* части наверх, *переменные* части вниз.
 
-### The cache-friendly layout
+### Раскладка, удобная для кэша
 
 ```
 [system prompt]          <-- cache this
@@ -42,15 +42,15 @@ That move is prompt caching. Anthropic shipped it in August 2024 (with a 1-hour 
 [current user message]   <-- never cache (different every time)
 ```
 
-Violate the order — put the user message above the system prompt, interleave dynamic retrievals between few-shots — and the cache never hits.
+Нарушьте порядок — поместите сообщение пользователя выше системного промпта, перемешайте динамическое извлечение с few-shot примерами — и кэш никогда не попадет.
 
-### The break-even calculation
+### Расчет окупаемости
 
-Anthropic's 25% write premium means a cached block has to be read at least twice to net-save money. 1 write + 1 read averages 0.675x cost per request (saves 32%); 1 write + 10 reads averages 0.205x (saves 80%). Rule of thumb: cache anything you expect to reuse at least 3 times within the TTL.
+25% надбавки Anthropic за запись означает, что кэшированный блок нужно прочитать минимум дважды, чтобы получить чистую экономию. 1 запись + 1 чтение в среднем дает 0.675x стоимости за запрос (экономия 32%); 1 запись + 10 чтений в среднем дает 0.205x (экономия 80%). Правило большого пальца: кэшируйте все, что ожидаете повторно использовать минимум 3 раза в пределах TTL.
 
-## Build It
+## Соберите это
 
-### Step 1: Anthropic prompt caching with explicit markers
+### Шаг 1: кэширование промптов Anthropic с явными маркерами
 
 ```python
 import anthropic
@@ -74,9 +74,9 @@ def review(code: str):
     )
 ```
 
-The `cache_control` marker tells Anthropic to store the block for 5 minutes. Reuse within that window hits; reuse after expires and writes again.
+Маркер `cache_control` говорит Anthropic сохранить блок на 5 минут. Повторное использование в этом окне дает попадание; повторное использование после истечения срока снова выполняет запись.
 
-**Response usage fields:**
+**Поля usage в ответе:**
 
 ```python
 response = review(code_a)
@@ -94,21 +94,21 @@ response_b.usage
 # cache_read_input_tokens=15023           # paid at 0.1x
 ```
 
-Check both fields in CI — if `cache_read_input_tokens` stays at zero across requests, your cache keys are drifting.
+Проверяйте оба поля в CI — если `cache_read_input_tokens` остается нулем между запросами, ваши ключи кэша дрейфуют.
 
-### Step 2: one-hour extended TTL
+### Шаг 2: расширенный TTL на один час
 
-For long-running batch jobs, the 5-minute default expires between jobs. Set `ttl`:
+Для долгих пакетных задач 5-минутное значение по умолчанию истекает между заданиями. Установите `ttl`:
 
 ```python
 {"type": "text", "text": RUBRIC, "cache_control": {"type": "ephemeral", "ttl": "1h"}}
 ```
 
-1-hour TTL costs 2x the write premium (50% over baseline instead of 25%) but pays back fast on any batch reusing the prefix more than 5 times.
+TTL на 1 час стоит 2x надбавки за запись (50% сверх базовой цены вместо 25%), но быстро окупается на любом пакете, который повторно использует префикс более 5 раз.
 
-### Step 3: OpenAI automatic caching
+### Шаг 3: автоматическое кэширование OpenAI
 
-OpenAI gives you nothing to configure. Any prefix over 1,024 tokens that matches a recent request gets a 50% discount automatically.
+OpenAI не требует никакой настройки. Любой префикс больше 1,024 токенов, совпадающий с недавним запросом, автоматически получает 50% скидки.
 
 ```python
 from openai import OpenAI
@@ -124,11 +124,11 @@ resp = client.chat.completions.create(
 resp.usage.prompt_tokens_details.cached_tokens  # the discounted portion
 ```
 
-Same cache-friendly layout rule applies. Two things kill OpenAI's cache that don't kill Anthropic's: changing the `user` field (used as a cache key component) and reordering tools.
+Применяется то же правило раскладки, удобной для кэша. Две вещи ломают кэш OpenAI, но не ломают Anthropic: изменение поля `user` (используется как компонент ключа кэша) и изменение порядка инструментов.
 
-### Step 4: Gemini explicit context caching
+### Шаг 4: явное кэширование контекста Gemini
 
-Gemini treats the cache as a first-class object you create and name:
+Gemini рассматривает кэш как полноценный объект, который вы создаете и называете:
 
 ```python
 from google import genai
@@ -153,37 +153,37 @@ resp = client.models.generate_content(
 )
 ```
 
-Gemini charges storage per token·hour for as long as the cache lives, and reads at ~25% of normal input rate. This is the right shape when you reuse the same giant prompt across many sessions over days.
+Gemini берет плату за хранение за токен·час, пока кэш живет, а чтения стоят ~25% обычной входной ставки. Это правильная форма, когда вы повторно используете один и тот же гигантский промпт во многих сессиях на протяжении дней.
 
-### Step 5: measuring hit rate in production
+### Шаг 5: измерение доли попаданий в продакшене
 
-See `code/main.py` for a simulated three-provider accountant that tracks write/read/miss counts and computes blended cost per 1K requests. Gate deploys on a target hit rate — most production Anthropic setups should see >80% read fraction after warmup.
+См. `code/main.py` для симулированного учетчика трех провайдеров, который отслеживает счетчики записей/чтений/промахов и вычисляет смешанную стоимость на 1K запросов. Блокируйте деплой по целевой доле попаданий — большинство продакшен-настроек Anthropic должны видеть >80% долю чтений после прогрева.
 
-## Pitfalls that still ship in 2026
+## Ошибки, которые все еще попадают в продакшен в 2026 году
 
-- **Dynamic timestamps at the top.** `"Current time: 2026-04-22 15:30:02"` at the top of the system prompt. Every request misses. Move timestamps below the cache breakpoint.
-- **Tool reordering.** Serialize tools in a stable order — a dict reshuffle between deploys breaks every hit.
-- **Free-text near-duplicates.** "You are helpful." vs "You are a helpful assistant." — one byte difference = full miss.
-- **Too-small blocks.** Anthropic enforces a 1,024-token floor (2,048 for Haiku). Smaller blocks silently do not cache.
-- **Blind cost dashboards.** Split "input tokens" into cached vs uncached. Otherwise a traffic drop looks like a cache win.
+- **Динамические метки времени наверху.** `"Текущее время: 2026-04-22 15:30:02"` наверху системного промпта. Каждый запрос получает промах. Переместите метки времени ниже точки отсечения кэша.
+- **Изменение порядка инструментов.** Сериализуйте инструменты в стабильном порядке — перестановка dict между деплоями ломает каждое попадание.
+- **Почти одинаковый свободный текст.** "Вы полезны." vs "Вы полезный ассистент." — отличие в один байт = полный промах.
+- **Слишком маленькие блоки.** Anthropic требует минимум 1,024 токена (2,048 для Haiku). Блоки меньше тихо не кэшируются.
+- **Слепые дашборды стоимости.** Разделяйте "входные токены" на кэшированные и некэшированные. Иначе падение трафика выглядит как победа кэша.
 
-## Use It
+## Используйте это
 
-The 2026 caching stack:
+Стек кэширования 2026 года:
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Agent with stable 10k+ system prompt, many turns | Anthropic `cache_control` with 5-min TTL |
-| Batch job reusing a prefix for 30+ minutes | Anthropic with `ttl: "1h"` |
-| Serverless endpoints on GPT-5, no custom infra | OpenAI automatic (just make your prefix stable and long) |
-| Multi-day reuse of a giant code/doc corpus | Gemini explicit `CachedContent` |
-| Cross-provider fallback | Keep the cacheable prefix layout identical across providers so any hit works |
+| Агент со стабильным системным промптом 10k+ и множеством ходов | Anthropic `cache_control` с 5-минутным TTL |
+| Пакетная задача, повторно использующая префикс 30+ минут | Anthropic с `ttl: "1h"` |
+| Бессерверные конечные точки на GPT-5, без собственной инфраструктуры | Автоматическое кэширование OpenAI (просто сделайте префикс стабильным и длинным) |
+| Многодневное повторное использование гигантского корпуса кода/документов | Явный `CachedContent` Gemini |
+| Резервирование между провайдерами | Держите кэшируемую раскладку префикса одинаковой у всех провайдеров, чтобы любое попадание работало |
 
-Combine with semantic caching (Phase 11 · 11) for the user-message layer: prompt caching handles *token-identical* reuse, semantic caching handles *meaning-identical* reuse.
+Сочетайте с семантическим кэшированием (Phase 11 · 11) для слоя пользовательских сообщений: кэширование промптов обрабатывает *токен-в-токен идентичное* повторное использование, семантическое кэширование обрабатывает *идентичное по смыслу* повторное использование.
 
-## Ship It
+## Отгрузите это
 
-Save `outputs/skill-prompt-caching-planner.md`:
+Сохраните `outputs/skill-prompt-caching-planner.md`:
 
 ```markdown
 ---
@@ -206,33 +206,33 @@ Given a prompt (system + tools + few-shot + retrieval + history + user) and a us
 Refuse to ship a cache plan that places a dynamic field above the breakpoint. Refuse to enable 1h TTL without a reuse count that makes the 2x write premium pay back.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Take a 10-turn conversation with a 5,000-token system prompt against Claude. Run it without `cache_control` and then with. Report the input-token bill for each.
-2. **Medium.** Write a test harness that, given a prompt template and a request log, computes the expected hit rate and dollar savings per provider (Anthropic 5m, Anthropic 1h, OpenAI automatic, Gemini explicit).
-3. **Hard.** Build a layout optimizer: given a prompt and a list of fields marked `stable=True/False`, rewrite the prompt to put a single cache breakpoint at the maximum cache-friendly position without losing information. Verify on a real Anthropic endpoint.
+1. **Легко.** Возьмите разговор на 10 ходов с системным промптом на 5,000 токенов против Claude. Запустите без `cache_control`, затем с ним. Сообщите счет за входные токены для каждого варианта.
+2. **Средне.** Напишите тестовый стенд, который по шаблону промпта и логу запросов вычисляет ожидаемую долю попаданий и экономию в долларах для каждого провайдера (Anthropic 5m, Anthropic 1h, автоматический OpenAI, явный Gemini).
+3. **Сложно.** Постройте оптимизатор раскладки: по промпту и списку полей, помеченных `stable=True/False`, перепишите промпт так, чтобы поставить единственную точку отсечения кэша в максимально удобную для кэша позицию без потери информации. Проверьте на реальной конечной точке Anthropic.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|-----------------------|
-| Prompt caching | "Makes long prompts cheap" | Reusing a provider-side KV-cache for matching prefixes; 50-90% discount on repeated input tokens. |
-| `cache_control` | "The Anthropic marker" | Content-block attribute that declares "everything up to here is cacheable"; `{"type": "ephemeral"}`. |
-| Cache write | "Paying the premium" | The first request that populates the cache; billed at ~1.25x input rate on Anthropic, free on OpenAI. |
-| Cache read | "The discount" | Subsequent requests matching the prefix; billed at 10% (Anthropic), 50% (OpenAI), ~25% (Gemini). |
-| TTL | "How long it lives" | Seconds the cache stays warm; Anthropic 5m default (extendable 1h), OpenAI best-effort up to 1h, Gemini user-set. |
-| Extended TTL | "1-hour Anthropic cache" | `{"type": "ephemeral", "ttl": "1h"}`; 2x write premium but worth it for batch reuse. |
-| Prefix match | "Why my cache missed" | Caches only hit when every token from the start up to the breakpoint is byte-identical. |
-| Context caching (Gemini) | "The explicit one" | Google's named, storage-billed cache object; best for multi-day reuse of large corpora. |
+| Кэширование промптов | "Делает длинные промпты дешевыми" | Повторное использование KV-кэша на стороне провайдера для совпадающих префиксов; скидка 50–90% на повторяющиеся входные токены. |
+| `cache_control` | "Маркер Anthropic" | Атрибут блока контента, который объявляет "все до этой точки можно кэшировать"; `{"type": "ephemeral"}`. |
+| Запись в кэш | "Оплата надбавки" | Первый запрос, который заполняет кэш; тарифицируется примерно по 1.25x входной ставки у Anthropic, бесплатно у OpenAI. |
+| Чтение из кэша | "Скидка" | Последующие запросы, совпадающие с префиксом; тарифицируются по 10% (Anthropic), 50% (OpenAI), ~25% (Gemini). |
+| TTL | "Сколько он живет" | Секунды, в течение которых кэш остается прогретым; Anthropic по умолчанию 5m (можно продлить до 1h), OpenAI по возможности до 1h, Gemini задает пользователь. |
+| Расширенный TTL | "1-часовой кэш Anthropic" | `{"type": "ephemeral", "ttl": "1h"}`; 2x надбавки за запись, но окупается для пакетного повторного использования. |
+| Совпадение префикса | "Почему мой кэш промахнулся" | Попадания в кэш происходят только когда каждый токен от начала до точки отсечения побайтно идентичен. |
+| Кэширование контекста (Gemini) | "Явный вариант" | Именованный объект кэша Google с оплатой хранения; лучше всего для многодневного повторного использования больших корпусов. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anthropic — Prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — `cache_control`, 1h TTL, break-even tables.
-- [OpenAI — Prompt caching](https://platform.openai.com/docs/guides/prompt-caching) — automatic prefix matching.
-- [Google — Context caching](https://ai.google.dev/gemini-api/docs/caching) — `CachedContent` API and storage pricing.
-- [Anthropic engineering — Prompt caching for long-context workloads](https://www.anthropic.com/news/prompt-caching) — original launch post with latency numbers.
-- Phase 11 · 05 (Context Engineering) — where to slice the prompt so the cache can land.
-- Phase 11 · 11 (Caching and Cost) — pair prompt caching with a semantic cache on user messages.
-- [Pope et al., "Efficiently Scaling Transformer Inference" (2022)](https://arxiv.org/abs/2211.05102) — the KV-cache memory model that prompt caching exposes to users; explains why a cached prefix is ~10× cheaper to reread than to recompute.
-- [Agrawal et al., "SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills" (2023)](https://arxiv.org/abs/2308.16369) — prefill is the phase prompt caching shortcuts; this paper explains why TTFT drops dramatically on cache hit while TPOT is unaffected.
-- [Leviathan et al., "Fast Inference from Transformers via Speculative Decoding" (2023)](https://arxiv.org/abs/2211.17192) — prompt caching sits alongside speculative decoding, Flash Attention, and MQA/GQA as levers that bend the inference cost curve; read this for the other three.
+- [Anthropic — кэширование промптов](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — `cache_control`, 1h TTL, таблицы окупаемости.
+- [OpenAI — кэширование промптов](https://platform.openai.com/docs/guides/prompt-caching) — автоматическое сопоставление префиксов.
+- [Google — кэширование контекста](https://ai.google.dev/gemini-api/docs/caching) — API `CachedContent` и цены на хранение.
+- [Инженерный блог Anthropic — кэширование промптов для нагрузок с длинным контекстом](https://www.anthropic.com/news/prompt-caching) — исходный пост запуска с числами по задержке.
+- Phase 11 · 05 (проектирование контекста) — где нарезать промпт, чтобы кэш мог сработать.
+- Phase 11 · 11 (кэширование и стоимость) — сочетайте кэширование промптов с семантическим кэшем для пользовательских сообщений.
+- [Pope et al., "Efficiently Scaling Transformer Inference" (2022)](https://arxiv.org/abs/2211.05102) — модель памяти KV-кэша, которую кэширование промптов раскрывает пользователям; объясняет, почему кэшированный префикс примерно в 10× дешевле перечитать, чем пересчитать.
+- [Agrawal et al., "SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills" (2023)](https://arxiv.org/abs/2308.16369) — prefill — это фаза, которую сокращает кэширование промптов; статья объясняет, почему TTFT резко падает при попадании в кэш, а TPOT не меняется.
+- [Leviathan et al., "Fast Inference from Transformers via Speculative Decoding" (2023)](https://arxiv.org/abs/2211.17192) — кэширование промптов стоит рядом со speculative decoding, Flash Attention и MQA/GQA как рычагами, изгибающими кривую стоимости инференса; прочитайте это для трех других.

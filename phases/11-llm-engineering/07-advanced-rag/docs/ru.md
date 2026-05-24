@@ -1,77 +1,77 @@
-# Advanced RAG (Chunking, Reranking, Hybrid Search)
+# Продвинутый RAG (чанкинг, реранжирование, гибридный поиск)
 
-> Basic RAG retrieves the top-k most similar chunks. That works for simple questions. It falls apart for multi-hop reasoning, ambiguous queries, and large corpora. Advanced RAG is the difference between a demo that works on 10 documents and a system that works on 10 million.
+> Базовый RAG извлекает top-k наиболее похожих чанков. Это работает для простых вопросов. Но разваливается на многошаговом рассуждении, неоднозначных запросах и больших корпусах. Продвинутый RAG — это разница между демо, которое работает на 10 документах, и системой, которая работает на 10 миллионах.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11, Lesson 06 (RAG)
-**Time:** ~90 minutes
-**Related:** Phase 5 · 23 (Chunking Strategies for RAG) covers all six chunking algorithms — recursive, semantic, sentence, parent-document, late chunking, contextual retrieval — with Vectara/Anthropic benchmarks. This lesson builds on top: hybrid search, reranking, query transformation.
+**Тип:** Build
+**Языки:** Python
+**Предварительные требования:** Phase 11, Lesson 06 (RAG)
+**Время:** ~90 минут
+**Связано:** Phase 5 · 23 (Chunking Strategies for RAG) покрывает все шесть алгоритмов чанкинга — recursive, semantic, sentence, parent-document, late chunking, contextual retrieval — с бенчмарками Vectara/Anthropic. Этот урок строится поверх них: гибридный поиск, реранжирование, трансформация запросов.
 
-## Learning Objectives
+## Цели обучения
 
-- Implement advanced chunking strategies (semantic, recursive, parent-child) that preserve document structure and context
-- Build a hybrid search pipeline combining BM25 keyword matching with semantic vector search and a cross-encoder reranker
-- Apply query transformation techniques (HyDE, multi-query, step-back) to improve retrieval on ambiguous or complex questions
-- Diagnose and fix common RAG failures: wrong chunk retrieved, answer not in context, multi-hop reasoning breakdown
+- Реализовать продвинутые стратегии чанкинга (semantic, recursive, parent-child), которые сохраняют структуру документа и контекст
+- Построить пайплайн гибридного поиска, объединяющий BM25 keyword matching с semantic vector search и cross-encoder reranker
+- Применить техники трансформации запросов (HyDE, multi-query, step-back), чтобы улучшить retrieval для неоднозначных или сложных вопросов
+- Диагностировать и исправлять типичные сбои RAG: извлечен неправильный чанк, ответа нет в контексте, многошаговое рассуждение разваливается
 
-## The Problem
+## Проблема
 
-You built a basic RAG pipeline in Lesson 06. It works for straightforward questions on a small corpus. Now try these:
+Вы построили базовый RAG-пайплайн в Lesson 06. Он работает для прямолинейных вопросов на небольшом корпусе. Теперь попробуйте эти:
 
-**Ambiguous query**: "What was revenue last quarter?" Semantic search returns chunks about revenue strategy, revenue projections, and the CFO's thoughts on revenue growth. All semantically similar to the word "revenue." None containing the actual number. The correct chunk says "$47.2M in Q3 2025" but uses the word "earnings" instead of "revenue." The embedding model thinks "revenue strategy" is closer to the query than "Q3 earnings were $47.2M."
+**Неоднозначный запрос**: "Какой была выручка в прошлом квартале?" Семантический поиск возвращает чанки о стратегии выручки, прогнозах выручки и мыслях CFO о росте выручки. Все они семантически похожи на слово "выручка." Ни один не содержит фактическое число. Правильный чанк говорит "$47.2M in Q3 2025", но использует слово "earnings" вместо "revenue." Embedding-модель считает, что "стратегия выручки" ближе к запросу, чем "прибыль Q3 составила $47.2M."
 
-**Multi-hop question**: "Which team had the highest customer satisfaction score improvement?" This requires finding the satisfaction scores for each team, comparing them, and identifying the maximum. No single chunk contains the answer. The information is scattered across team reports.
+**Многошаговый вопрос**: "У какой команды было самое большое улучшение оценки удовлетворенности клиентов?" Для этого нужно найти оценки удовлетворенности для каждой команды, сравнить их и определить максимум. Ни один отдельный чанк не содержит ответа. Информация разбросана по отчетам команд.
 
-**Large corpus problem**: You have 2 million chunks. The correct answer is in chunk #1,847,293. Your top-5 retrieval pulls chunks #14, #89,201, #1,200,000, #44, and #901,333. Close in embedding space, but none containing the answer. At this scale, approximate nearest neighbor search introduces enough error that relevant results get pushed out of the top-k.
+**Проблема большого корпуса**: У вас 2 миллиона чанков. Правильный ответ находится в chunk #1,847,293. Ваш top-5 retrieval вытаскивает chunks #14, #89,201, #1,200,000, #44 и #901,333. Они близки в embedding space, но ни один не содержит ответа. В таком масштабе approximate nearest neighbor search вносит достаточно ошибки, чтобы релевантные результаты вытеснялись из top-k.
 
-Basic RAG fails because vector similarity is not the same as relevance. A chunk can be semantically similar to a query without being useful for answering it. Advanced RAG addresses this with four techniques: hybrid search (add keyword matching), reranking (score candidates more carefully), query transformation (fix the query before searching), and better chunking (retrieve at the right granularity).
+Базовый RAG терпит неудачу, потому что vector similarity — не то же самое, что релевантность. Чанк может быть семантически похож на запрос, но бесполезен для ответа на него. Продвинутый RAG решает это четырьмя техниками: гибридный поиск (добавить keyword matching), реранжирование (оценивать кандидатов тщательнее), трансформация запросов (исправлять запрос до поиска) и более качественный чанкинг (извлекать на правильной гранулярности).
 
-## The Concept
+## Концепция
 
-### Hybrid Search: Semantic + Keyword
+### Гибридный поиск: семантический + keyword
 
-Semantic search (vector similarity) is good at understanding meaning. "How do I cancel my subscription?" matches "Steps to terminate your plan" even though they share no words. But it misses exact matches. "Error code E-4021" might not match a chunk containing "E-4021" if the embedding model treats it as noise.
+Семантический поиск (vector similarity) хорошо понимает смысл. "Как мне отменить подписку?" совпадает с "Шаги для прекращения вашего плана", хотя у них нет общих слов. Но он пропускает точные совпадения. "Код ошибки E-4021" может не совпасть с чанком, содержащим "E-4021", если embedding-модель считает это шумом.
 
-Keyword search (BM25) is the opposite. It excels at exact matches. "E-4021" matches perfectly. But "cancel my subscription" returns zero results if the document says "terminate your plan."
+Keyword search (BM25) работает наоборот. Он отлично справляется с точными совпадениями. "E-4021" совпадает идеально. Но "отменить подписку" вернет ноль результатов, если в документе написано "прекратить ваш план."
 
-Hybrid search runs both, then merges the results.
+Гибридный поиск запускает оба подхода, а затем объединяет результаты.
 
-**BM25** (Best Matching 25) is the standard keyword search algorithm. It has been the backbone of search engines since the 1990s. The formula:
+**BM25** (Best Matching 25) — стандартный алгоритм keyword search. Он был основой поисковых систем с 1990-х. Формула:
 
 ```
 BM25(q, d) = sum over terms t in q:
     IDF(t) * (tf(t,d) * (k1 + 1)) / (tf(t,d) + k1 * (1 - b + b * |d| / avgdl))
 ```
 
-Where tf(t,d) is the term frequency of t in document d, IDF(t) is the inverse document frequency, |d| is the document length, avgdl is the average document length, k1 controls term frequency saturation (default 1.2), and b controls length normalization (default 0.75).
+Где tf(t,d) — частота термина t в документе d, IDF(t) — обратная документная частота, |d| — длина документа, avgdl — средняя длина документа, k1 управляет насыщением частоты термина (по умолчанию 1.2), а b управляет нормализацией по длине (по умолчанию 0.75).
 
-In plain terms: BM25 scores documents higher when they contain query terms (especially rare ones), but with diminishing returns for repeated terms. A document with the word "revenue" 50 times is not 50x more relevant than one with it once.
+Простыми словами: BM25 дает документам более высокую оценку, когда они содержат термины запроса (особенно редкие), но с убывающей отдачей для повторяющихся терминов. Документ со словом "выручка" 50 раз не в 50 раз релевантнее документа, где оно встречается один раз.
 
 ### Reciprocal Rank Fusion (RRF)
 
-You have two ranked lists: one from vector search, one from BM25. How do you combine them? Reciprocal Rank Fusion is the standard approach.
+У вас есть два ранжированных списка: один от vector search, другой от BM25. Как их объединить? Reciprocal Rank Fusion — стандартный подход.
 
 ```
 RRF_score(d) = sum over rankings R:
     1 / (k + rank_R(d))
 ```
 
-Where k is a constant (typically 60) that prevents the top-ranked result from dominating.
+Где k — константа (обычно 60), которая не дает результату на первом месте доминировать.
 
-A document ranked #1 in vector search and #5 in BM25 gets: 1/(60+1) + 1/(60+5) = 0.0164 + 0.0154 = 0.0318
+Документ, ранжированный как #1 в vector search и #5 в BM25, получает: 1/(60+1) + 1/(60+5) = 0.0164 + 0.0154 = 0.0318
 
-A document ranked #3 in vector search and #2 in BM25 gets: 1/(60+3) + 1/(60+2) = 0.0159 + 0.0161 = 0.0320
+Документ, ранжированный как #3 в vector search и #2 в BM25, получает: 1/(60+3) + 1/(60+2) = 0.0159 + 0.0161 = 0.0320
 
-RRF naturally balances the two signals. A document that ranks highly in both lists gets the best score. A document that ranks #1 in one list but is absent from the other gets a moderate score. This is robust because it uses ranks, not raw scores, so differences in score distributions between the two systems do not matter.
+RRF естественно балансирует два сигнала. Документ, который высоко ранжируется в обоих списках, получает лучший score. Документ, который занимает #1 в одном списке, но отсутствует в другом, получает умеренный score. Это устойчиво, потому что используются ранги, а не сырые score, поэтому различия в распределениях score между двумя системами не имеют значения.
 
-### Reranking
+### Реранжирование
 
-Retrieval (whether vector, keyword, or hybrid) is fast but imprecise. It uses bi-encoders: the query and each document are embedded independently, then compared. The embeddings are computed once and cached. This scales to millions of documents.
+Retrieval (vector, keyword или hybrid) быстрый, но неточный. Он использует bi-encoders: запрос и каждый документ встраиваются независимо, затем сравниваются. Embeddings вычисляются один раз и кэшируются. Это масштабируется до миллионов документов.
 
-Reranking uses cross-encoders: the query and a candidate document are fed together into a model that outputs a relevance score. The model sees both texts simultaneously and can capture fine-grained interactions between them. A cross-encoder can understand that "What were Q3 earnings?" is highly relevant to a chunk containing "$47.2M in Q3" even if a bi-encoder missed the connection.
+Реранжирование использует cross-encoders: запрос и документ-кандидат подаются вместе в модель, которая выдает relevance score. Модель видит оба текста одновременно и может уловить тонкие взаимодействия между ними. Cross-encoder может понять, что "Какой была прибыль за Q3?" сильно релевантен чанку, содержащему "$47.2M in Q3", даже если bi-encoder пропустил эту связь.
 
-The trade-off: cross-encoders are 100-1000x slower than bi-encoders because they process the query-document pair jointly. You cannot pre-compute cross-encoder scores for a million documents. The solution: retrieve a larger candidate set (top-50 from hybrid search), then rerank with a cross-encoder to get the final top-5.
+Компромисс: cross-encoders в 100-1000 раз медленнее bi-encoders, потому что они обрабатывают пару query-document совместно. Нельзя заранее посчитать cross-encoder scores для миллиона документов. Решение: извлечь более широкий набор кандидатов (top-50 из hybrid search), а затем реранжировать с cross-encoder, чтобы получить финальный top-5.
 
 ```mermaid
 graph LR
@@ -83,26 +83,26 @@ graph LR
     P --> LLM["Generate answer"]
 ```
 
-Common reranking models (2026 lineup):
-- Cohere Rerank 3.5: managed API, multilingual, best recall gain on mixed corpora
-- Voyage rerank-2.5: managed API, lowest latency of the hosted options
+Распространенные модели для реранжирования (линейка 2026):
+- Cohere Rerank 3.5: managed API, multilingual, лучший прирост recall на смешанных корпусах
+- Voyage rerank-2.5: managed API, самая низкая latency среди hosted options
 - Jina-Reranker-v2 Multilingual: open-weight, 100+ languages
-- bge-reranker-v2-m3: open-weight, strong baseline
-- cross-encoder/ms-marco-MiniLM-L-6-v2: open-weight, runs on CPU for prototyping
+- bge-reranker-v2-m3: open-weight, сильный baseline
+- cross-encoder/ms-marco-MiniLM-L-6-v2: open-weight, работает на CPU для прототипирования
 - ColBERTv2 / Jina-ColBERT-v2: late-interaction multi-vector rerankers — O(tokens) not O(docs) at scoring time
 
-### Query Transformation
+### Трансформация запросов
 
-Sometimes the problem is not retrieval but the query itself. "What was that thing about the new policy change?" is a terrible search query. It contains no specific terms. The embedding is vague. No retrieval system can find the right documents from this.
+Иногда проблема не в retrieval, а в самом запросе. "Что там было про новое изменение политики?" — ужасный поисковый запрос. Он не содержит конкретных терминов. Embedding расплывчатый. Ни одна retrieval-система не сможет найти по нему правильные документы.
 
-**Query rewriting**: rephrase the user's query into a better search query. An LLM can do this:
+**Query rewriting**: переформулировать запрос пользователя в более хороший поисковый запрос. LLM может сделать это:
 
 ```
 User: "What was that thing about the new policy change?"
 Rewritten: "Recent policy changes and updates"
 ```
 
-**HyDE (Hypothetical Document Embeddings)**: instead of searching with the query, generate a hypothetical answer, embed that, and search for similar real documents.
+**HyDE (Hypothetical Document Embeddings)**: вместо поиска по запросу сгенерировать гипотетический ответ, embed его и искать похожие реальные документы.
 
 ```
 Query: "What is the refund policy for enterprise?"
@@ -111,15 +111,15 @@ within 60 days of purchase. Refunds are pro-rated based on the remaining
 subscription period and processed within 5-7 business days."
 ```
 
-Embed the hypothetical answer and search for real documents similar to it. The intuition: the hypothetical answer lives closer in embedding space to the real answer than the original question does. Questions and answers have different linguistic structures. By generating a hypothetical answer, you bridge the gap between "question space" and "answer space" in the embedding.
+Embed гипотетический ответ и найдите реальные документы, похожие на него. Интуиция: гипотетический ответ находится ближе в embedding space к реальному ответу, чем исходный вопрос. У вопросов и ответов разные языковые структуры. Генерируя гипотетический ответ, вы строите мост между "question space" и "answer space" в embedding.
 
-HyDE adds one LLM call before retrieval. This increases latency by 500-2000ms. Worth it when retrieval quality is poor on raw queries.
+HyDE добавляет один LLM-вызов перед retrieval. Это увеличивает latency на 500-2000ms. Оно того стоит, когда качество retrieval плохое на сырых запросах.
 
 ### Parent-Child Chunking
 
-Standard chunking forces a trade-off: small chunks for precise retrieval, large chunks for sufficient context. Parent-child chunking eliminates this trade-off.
+Стандартный чанкинг вынуждает идти на компромисс: маленькие чанки для точного retrieval, большие чанки для достаточного контекста. Parent-child chunking устраняет этот компромисс.
 
-Index small chunks (128 tokens) for retrieval. When a small chunk is retrieved, return its parent chunk (512 tokens) for the prompt. The small chunk matches the query precisely. The parent chunk provides enough context for the LLM to generate a good answer.
+Индексируйте маленькие чанки (128 tokens) для retrieval. Когда маленький чанк извлечен, возвращайте его parent chunk (512 tokens) в prompt. Маленький чанк точно совпадает с запросом. Parent chunk дает достаточно контекста, чтобы LLM сгенерировала хороший ответ.
 
 ```mermaid
 graph TD
@@ -138,27 +138,27 @@ graph TD
     C2 -.->|"return parent"| P
 ```
 
-The query "enterprise refund?" matches child chunk C2 precisely. But the prompt receives the full parent chunk P, which includes the surrounding context about processing time and submission process.
+Запрос "возврат для enterprise?" точно совпадает с child chunk C2. Но prompt получает полный parent chunk P, который включает окружающий контекст о времени обработки и процессе отправки запроса.
 
 ### Metadata Filtering
 
-Before running vector search, filter the corpus by metadata: date, source, category, author, language. This reduces the search space and prevents irrelevant results.
+Перед запуском vector search отфильтруйте корпус по metadata: date, source, category, author, language. Это уменьшает search space и предотвращает нерелевантные результаты.
 
-"What changed in the security policy last month?" should only search documents from the last 30 days in the security category. Without metadata filtering, you search the entire corpus and might retrieve a 2-year-old security document that happens to be semantically similar.
+"Что изменилось в политике безопасности в прошлом месяце?" должен искать только документы за последние 30 дней в категории security. Без metadata filtering вы ищете по всему корпусу и можете извлечь документ по security двухлетней давности, который случайно семантически похож.
 
-Production RAG systems store metadata alongside each chunk: source document, creation date, category, author, version. Vector databases support pre-filtering by metadata before similarity search, which is critical for performance at scale.
+Production RAG systems хранят metadata рядом с каждым чанком: source document, creation date, category, author, version. Vector databases поддерживают pre-filtering по metadata перед similarity search, что критично для производительности в масштабе.
 
 ### Evaluation
 
-You built a RAG system. How do you know if it works? Three metrics:
+Вы построили RAG-систему. Как понять, работает ли она? Три метрики:
 
-**Retrieval relevance (Recall@k)**: for a set of test questions with known relevant documents, what percentage of relevant documents appear in the top-k results? If the answer to a question is in chunk #47, does chunk #47 appear in the top-5?
+**Retrieval relevance (Recall@k)**: для набора тестовых вопросов с известными релевантными документами какой процент релевантных документов появляется в top-k results? Если ответ на вопрос находится в chunk #47, появляется ли chunk #47 в top-5?
 
-**Faithfulness**: is the generated answer grounded in the retrieved documents? If the retrieved chunks say "60-day refund window" and the model says "90-day refund window," that is a faithfulness failure. The model hallucinated despite having the correct context.
+**Faithfulness**: основан ли сгенерированный ответ на извлеченных документах? Если извлеченные чанки говорят "60-дневное окно возврата", а модель говорит "90-дневное окно возврата", это failure faithfulness. Модель сгаллюцинировала, несмотря на правильный контекст.
 
-**Answer correctness**: does the generated answer match the expected answer? This is the end-to-end metric. It combines retrieval quality and generation quality.
+**Answer correctness**: совпадает ли сгенерированный ответ с expected answer? Это end-to-end метрика. Она объединяет качество retrieval и качество generation.
 
-A simple faithfulness check: take each claim in the generated answer and verify it appears (in substance) in the retrieved chunks. If the answer contains a fact not in any retrieved chunk, it is likely hallucinated.
+Простая проверка faithfulness: возьмите каждое утверждение в сгенерированном ответе и проверьте, появляется ли оно (по сути) в извлеченных чанках. Если ответ содержит факт, которого нет ни в одном извлеченном чанке, он, вероятно, сгаллюцинирован.
 
 ```mermaid
 graph TD
@@ -170,9 +170,9 @@ graph TD
     end
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: BM25 Implementation
+### Шаг 1: Реализация BM25
 
 ```python
 import math
@@ -228,7 +228,7 @@ class BM25:
         return scores[:top_k]
 ```
 
-### Step 2: Reciprocal Rank Fusion
+### Шаг 2: Reciprocal Rank Fusion
 
 ```python
 def reciprocal_rank_fusion(ranked_lists, k=60):
@@ -242,7 +242,7 @@ def reciprocal_rank_fusion(ranked_lists, k=60):
     return fused
 ```
 
-### Step 3: Hybrid Search Pipeline
+### Шаг 3: Пайплайн гибридного поиска
 
 ```python
 def hybrid_search(query, chunks, vector_embeddings, vocab, idf, bm25_index, top_k=5, fusion_k=60):
@@ -253,9 +253,9 @@ def hybrid_search(query, chunks, vector_embeddings, vocab, idf, bm25_index, top_
     return fused[:top_k]
 ```
 
-### Step 4: Simple Reranker
+### Шаг 4: Простой reranker
 
-In production, you would use a cross-encoder model. Here we build a reranker that scores query-document relevance using word overlap, term importance, and phrase matching.
+В production вы использовали бы cross-encoder model. Здесь мы строим reranker, который оценивает query-document relevance с помощью word overlap, term importance и phrase matching.
 
 ```python
 def rerank(query, candidates, chunks):
@@ -297,7 +297,7 @@ def rerank(query, candidates, chunks):
     return scored
 ```
 
-### Step 5: HyDE (Hypothetical Document Embeddings)
+### Шаг 5: HyDE (Hypothetical Document Embeddings)
 
 ```python
 def hyde_generate_hypothesis(query):
@@ -329,7 +329,7 @@ def hyde_search(query, chunks, vector_embeddings, vocab, idf, top_k=5):
     return results, hypothesis
 ```
 
-### Step 6: Parent-Child Chunking
+### Шаг 6: Parent-Child Chunking
 
 ```python
 def create_parent_child_chunks(text, parent_size=200, child_size=50):
@@ -360,7 +360,7 @@ def create_parent_child_chunks(text, parent_size=200, child_size=50):
     return parents, children, child_to_parent
 ```
 
-### Step 7: Faithfulness Evaluation
+### Шаг 7: Оценка faithfulness
 
 ```python
 def evaluate_faithfulness(answer, retrieved_chunks):
@@ -415,9 +415,9 @@ def evaluate_retrieval_recall(queries_with_relevant, retrieval_fn, k=5):
     return avg_recall, results
 ```
 
-## Use It
+## Используйте это
 
-With a real cross-encoder for reranking:
+С реальным cross-encoder для реранжирования:
 
 ```python
 from sentence_transformers import CrossEncoder
@@ -432,7 +432,7 @@ def rerank_with_cross_encoder(query, candidates, chunks, top_k=5):
     return scored[:top_k]
 ```
 
-With Cohere's managed reranker:
+С managed reranker от Cohere:
 
 ```python
 import cohere
@@ -450,7 +450,7 @@ def rerank_with_cohere(query, candidates, chunks, top_k=5):
     return [(candidates[r.index][0], r.relevance_score) for r in response.results]
 ```
 
-For HyDE with a real LLM:
+Для HyDE с реальной LLM:
 
 ```python
 import anthropic
@@ -469,7 +469,7 @@ def hyde_with_llm(query):
     return response.content[0].text
 ```
 
-For production hybrid search with Weaviate:
+Для production hybrid search с Weaviate:
 
 ```python
 import weaviate
@@ -484,48 +484,48 @@ response = collection.query.hybrid(
 )
 ```
 
-The alpha parameter controls the balance: 0.0 = pure keyword (BM25), 1.0 = pure vector, 0.5 = equal weight. Most production systems use alpha between 0.3 and 0.7.
+Параметр alpha управляет балансом: 0.0 = чистый keyword (BM25), 1.0 = чистый vector, 0.5 = равный вес. Большинство production systems используют alpha между 0.3 и 0.7.
 
-## Ship It
+## Доведите до поставки
 
-This lesson produces:
-- `outputs/prompt-advanced-rag-debugger.md` -- a prompt for diagnosing and fixing RAG quality issues
-- `outputs/skill-advanced-rag.md` -- a skill for building production-grade RAG with hybrid search and reranking
+Этот урок создает:
+- `outputs/prompt-advanced-rag-debugger.md` -- prompt для диагностики и исправления проблем качества RAG
+- `outputs/skill-advanced-rag.md` -- skill для построения production-grade RAG с hybrid search и reranking
 
-## Exercises
+## Упражнения
 
-1. Compare BM25 vs vector search vs hybrid search on the sample documents. For each of the 5 test queries, record which approach returns the most relevant chunk in position #1. Hybrid search should win on at least 3 out of 5.
+1. Сравните BM25 vs vector search vs hybrid search на sample documents. Для каждого из 5 test queries запишите, какой подход возвращает самый релевантный чанк на позиции #1. Hybrid search должен победить минимум в 3 из 5.
 
-2. Implement a metadata filter. Add a "category" field to each document (security, billing, api, product). Before running vector search, filter chunks to only the relevant category. Test with "What encryption is used?" and verify it only searches security-category chunks.
+2. Реализуйте metadata filter. Добавьте поле "category" к каждому документу (security, billing, api, product). Перед запуском vector search фильтруйте чанки только до релевантной категории. Протестируйте с "Какое шифрование используется?" и убедитесь, что поиск идет только по чанкам категории security.
 
-3. Build a full HyDE pipeline using the simple generate function from Lesson 06. Compare retrieval quality (top-3 relevance) between direct query search and HyDE search on all 5 test queries. HyDE should improve results for vague queries.
+3. Постройте полный HyDE pipeline, используя простую generate function из Lesson 06. Сравните качество retrieval (top-3 relevance) между direct query search и HyDE search на всех 5 test queries. HyDE должен улучшить результаты для расплывчатых запросов.
 
-4. Implement the parent-child chunking strategy on the sample documents. Use child_size=30 and parent_size=100. Search with child chunks but return parent chunks in the prompt. Compare the generated answers to standard chunking with chunk_size=50.
+4. Реализуйте стратегию parent-child chunking на sample documents. Используйте child_size=30 и parent_size=100. Ищите по child chunks, но возвращайте parent chunks в prompt. Сравните сгенерированные ответы со стандартным чанкингом с chunk_size=50.
 
-5. Create an evaluation dataset: 10 questions with known answer chunks. Measure Recall@3, Recall@5, and Recall@10 for (a) vector search only, (b) BM25 only, (c) hybrid search, (d) hybrid + reranking. Plot the results and identify where reranking helps most.
+5. Создайте evaluation dataset: 10 вопросов с известными answer chunks. Измерьте Recall@3, Recall@5 и Recall@10 для (a) только vector search, (b) только BM25, (c) hybrid search, (d) hybrid + reranking. Постройте график результатов и определите, где reranking помогает сильнее всего.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Что говорят люди | Что это на самом деле означает |
 |------|----------------|----------------------|
-| BM25 | "Keyword search" | A probabilistic ranking algorithm that scores documents by term frequency, inverse document frequency, and document length normalization |
-| Hybrid search | "Best of both worlds" | Running semantic (vector) and keyword (BM25) search in parallel, then merging results with rank fusion |
-| Reciprocal Rank Fusion | "Merge ranked lists" | Combining multiple ranked lists by summing 1/(k + rank) for each document across all lists |
-| Reranking | "Second pass scoring" | Using a more expensive cross-encoder model to re-score a candidate set from initial retrieval |
-| Cross-encoder | "Joint query-document model" | A model that takes a query and document as a single input, producing a relevance score; more accurate than bi-encoders but too slow for full corpus search |
-| Bi-encoder | "Independent embedding model" | A model that embeds queries and documents independently; fast because embeddings are precomputed, but less accurate than cross-encoders |
-| HyDE | "Search with a fake answer" | Generate a hypothetical answer to the query, embed it, and search for real documents similar to it |
-| Parent-child chunking | "Small search, big context" | Index small chunks for precise retrieval but return the larger parent chunk to provide sufficient context |
-| Metadata filtering | "Narrow before searching" | Filtering documents by attributes (date, source, category) before running vector search to reduce the search space |
-| Faithfulness | "Did it stay grounded" | Whether the generated answer is supported by the retrieved documents, as opposed to hallucinated from the model's training data |
+| BM25 | "Keyword search" | Вероятностный алгоритм ранжирования, который оценивает документы по term frequency, inverse document frequency и нормализации длины документа |
+| Hybrid search | "Лучшее из двух миров" | Параллельный запуск semantic (vector) и keyword (BM25) search, затем объединение результатов с rank fusion |
+| Reciprocal Rank Fusion | "Объединение ранжированных списков" | Объединение нескольких ranked lists через суммирование 1/(k + rank) для каждого документа по всем спискам |
+| Reranking | "Оценка вторым проходом" | Использование более дорогой cross-encoder model для повторной оценки candidate set после initial retrieval |
+| Cross-encoder | "Совместная query-document модель" | Модель, которая принимает query и document как единый input и выдает relevance score; точнее bi-encoders, но слишком медленная для поиска по полному корпусу |
+| Bi-encoder | "Независимая embedding model" | Модель, которая встраивает queries и documents независимо; быстрая, потому что embeddings предвычислены, но менее точная, чем cross-encoders |
+| HyDE | "Поиск с фальшивым ответом" | Сгенерировать гипотетический ответ на запрос, embed его и искать реальные документы, похожие на него |
+| Parent-child chunking | "Маленький поиск, большой контекст" | Индексировать маленькие чанки для точного retrieval, но возвращать более крупный parent chunk, чтобы дать достаточный контекст |
+| Metadata filtering | "Сузить перед поиском" | Фильтрация документов по атрибутам (date, source, category) перед запуском vector search, чтобы уменьшить search space |
+| Faithfulness | "Остался ли ответ grounded" | Поддержан ли сгенерированный ответ извлеченными документами, в отличие от hallucination из training data модели |
 
-## Further Reading
+## Дополнительное чтение
 
-- Robertson & Zaragoza, "The Probabilistic Relevance Framework: BM25 and Beyond" (2009) -- the definitive reference for BM25, explaining the probabilistic foundations behind the formula
-- Cormack et al., "Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods" (2009) -- the original RRF paper showing it beats more complex fusion methods
-- Gao et al., "Precise Zero-Shot Dense Retrieval without Relevance Labels" (2022) -- the HyDE paper demonstrating that hypothetical document embeddings improve retrieval without any training data
-- Nogueira & Cho, "Passage Re-ranking with BERT" (2019) -- showed cross-encoder reranking on top of BM25 significantly improves retrieval quality
-- [Khattab et al., "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines" (2023)](https://arxiv.org/abs/2310.03714) -- treats prompt construction and weight selection as an optimization problem over retrieval pipelines; read this for "program LLMs" instead of "prompt LLMs."
-- [Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summarization" (Microsoft Research 2024)](https://arxiv.org/abs/2404.16130) -- GraphRAG paper: entity-relation extraction + Leiden community detection for query-focused summarization; the global vs local retrieval distinction.
-- [Asai et al., "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection" (ICLR 2024)](https://arxiv.org/abs/2310.11511) -- self-evaluating RAG with reflection tokens; the agentic frontier past static retrieve-then-generate.
-- [LangChain Query Construction blog](https://blog.langchain.dev/query-construction/) -- how to translate natural-language queries into structured database queries (Text-to-SQL, Cypher) as a pre-retrieval step.
+- Robertson & Zaragoza, "The Probabilistic Relevance Framework: BM25 and Beyond" (2009) -- исчерпывающий reference для BM25, объясняющий вероятностные основы формулы
+- Cormack et al., "Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods" (2009) -- оригинальная статья RRF, показывающая, что он превосходит более сложные методы fusion
+- Gao et al., "Precise Zero-Shot Dense Retrieval without Relevance Labels" (2022) -- статья HyDE, демонстрирующая, что hypothetical document embeddings улучшают retrieval без training data
+- Nogueira & Cho, "Passage Re-ranking with BERT" (2019) -- показали, что cross-encoder reranking поверх BM25 значительно улучшает качество retrieval
+- [Khattab et al., "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines" (2023)](https://arxiv.org/abs/2310.03714) -- рассматривает prompt construction и weight selection как задачу оптимизации над retrieval pipelines; прочитайте это для "program LLMs" вместо "prompt LLMs."
+- [Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summarization" (Microsoft Research 2024)](https://arxiv.org/abs/2404.16130) -- статья GraphRAG: entity-relation extraction + Leiden community detection для query-focused summarization; различие global vs local retrieval.
+- [Asai et al., "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection" (ICLR 2024)](https://arxiv.org/abs/2310.11511) -- self-evaluating RAG с reflection tokens; agentic frontier после static retrieve-then-generate.
+- [LangChain Query Construction blog](https://blog.langchain.dev/query-construction/) -- как переводить natural-language queries в structured database queries (Text-to-SQL, Cypher) как pre-retrieval step.
