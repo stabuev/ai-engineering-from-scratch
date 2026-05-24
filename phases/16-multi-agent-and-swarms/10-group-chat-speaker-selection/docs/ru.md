@@ -1,21 +1,21 @@
-# Group Chat and Speaker Selection
+# Group Chat и Speaker Selection
 
-> AutoGen GroupChat and AG2 GroupChat share one conversation across N agents; a selector function (LLM, round-robin, or custom) picks who speaks next. This is the archetype of emergent multi-agent conversation — agents do not know their role in a static graph, they just react to the shared pool. AutoGen v0.2's GroupChat semantics were preserved in the AG2 fork; AutoGen v0.4 rewrote it as an event-driven actor model. Microsoft put AutoGen into maintenance mode in February 2026 and merged it with Semantic Kernel into Microsoft Agent Framework (RC February 2026). The GroupChat primitive survives in both AG2 and Microsoft Agent Framework — learn it once, use it everywhere.
+> AutoGen GroupChat и AG2 GroupChat используют один общий conversation для N agents; selector function (LLM, round-robin или custom) выбирает, кто говорит следующим. Это архетип emergent multi-agent conversation - agents не знают своей роли в static graph, они просто реагируют на shared pool. Семантика GroupChat в AutoGen v0.2 была сохранена в форке AG2; AutoGen v0.4 переписал ее как event-driven actor model. Microsoft перевела AutoGen в maintenance mode в феврале 2026 года и объединила его с Semantic Kernel в Microsoft Agent Framework (RC February 2026). Примитив GroupChat сохраняется и в AG2, и в Microsoft Agent Framework - изучите один раз, используйте везде.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 04 (Primitive Model)
-**Time:** ~60 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Пререквизиты:** Phase 16 · 04 (Primitive Model)
+**Время:** ~60 минут
 
-## Problem
+## Проблема
 
-Static graphs (LangGraph) are great when the workflow is known. Real conversations are not static: sometimes the coder asks the reviewer, sometimes the researcher, sometimes the writer. Hardcoding every possible handoff produces an edge explosion. You want *agents reacting to a shared pool*, with some function deciding who talks next.
+Static graphs (LangGraph) отличны, когда workflow известен. Реальные conversations не static: иногда coder спрашивает reviewer, иногда researcher, иногда writer. Жестко прописывать every possible handoff создает edge explosion. Вам нужны *agents reacting to a shared pool*, с некоторой function, которая решает, кто говорит следующим.
 
-That is exactly what AutoGen GroupChat does.
+Именно это делает AutoGen GroupChat.
 
-## Concept
+## Концепция
 
-### The shape
+### Форма
 
 ```
               ┌─── shared pool ────┐
@@ -30,17 +30,17 @@ That is exactly what AutoGen GroupChat does.
                                   "next speaker = C"
 ```
 
-Every agent sees every message. A selector function is invoked at each turn to pick who speaks next.
+Каждый agent видит каждое message. Selector function вызывается на каждом turn, чтобы выбрать, кто говорит следующим.
 
-### The three selector flavors
+### Три варианта selector
 
-**Round-robin.** Fixed cycle. Deterministic. Scales linearly in N but ignores context — a coder gets the turn even when the topic is legal review.
+**Round-robin.** Fixed cycle. Deterministic. Масштабируется линейно по N, но игнорирует context - coder получает ход даже тогда, когда тема legal review.
 
-**LLM-selected.** A call to an LLM that reads the recent pool and returns the best next speaker. Context-aware but slow: every turn adds an LLM call. AutoGen's default.
+**LLM-selected.** Вызов LLM, которая читает recent pool и возвращает лучшего next speaker. Context-aware, но slow: каждый turn добавляет LLM call. Default в AutoGen.
 
-**Custom.** A Python function with whatever logic you want. Typical: LLM-selected with fallback rules (e.g., "always give the verifier the turn after the coder").
+**Custom.** Python function с любой нужной логикой. Типично: LLM-selected with fallback rules (например, "always give the verifier the turn after the coder").
 
-### The ConversableAgent API
+### ConversableAgent API
 
 ```
 agent = ConversableAgent(
@@ -52,94 +52,94 @@ chat = GroupChat(agents=[coder, reviewer, tester], messages=[])
 manager = GroupChatManager(groupchat=chat, llm_config={...})
 ```
 
-`GroupChatManager` holds the selector. When an agent completes a turn, the manager calls the selector, which returns the next agent. Loop continues until a termination condition.
+`GroupChatManager` содержит selector. Когда agent завершает turn, manager вызывает selector, который возвращает next agent. Loop продолжается до termination condition.
 
 ### Termination
 
-Three common patterns:
+Три распространенных паттерна:
 
-- **Max rounds.** Hard cap on total turns.
-- **"TERMINATE" token.** Agents can emit a sentinel message; the manager stops when one appears.
-- **Goal-reached check.** A lightweight verifier runs each turn and stops the chat when done.
+- **Max rounds.** Hard cap на total turns.
+- **"TERMINATE" token.** Agents могут выдать sentinel message; manager останавливается, когда оно появляется.
+- **Goal-reached check.** Lightweight verifier запускается на каждом turn и останавливает chat, когда задача выполнена.
 
-### The AutoGen → AG2 split and the Microsoft Agent Framework merge
+### Разделение AutoGen → AG2 и слияние с Microsoft Agent Framework
 
-In early 2025, Microsoft began a major rewrite of AutoGen (v0.4) around an event-driven actor model. The community forked AutoGen v0.2's GroupChat semantics as AG2, preserving the API that early adopters had integrated.
+В начале 2025 года Microsoft начала крупную переработку AutoGen (v0.4) вокруг event-driven actor model. Сообщество форкнуло семантику GroupChat из AutoGen v0.2 как AG2, сохранив API, который early adopters уже интегрировали.
 
-In February 2026, Microsoft announced AutoGen would go to maintenance mode, with the event-driven actor model merging into **Microsoft Agent Framework** (RC February 2026, now merged with Semantic Kernel). The GroupChat concept survives in both tracks; the implementation details differ. AG2 is the preferred upstream for v0.2-compatible code.
+В феврале 2026 года Microsoft объявила, что AutoGen перейдет в maintenance mode, а event-driven actor model войдет в **Microsoft Agent Framework** (RC February 2026, now merged with Semantic Kernel). Концепция GroupChat сохраняется в обеих ветках; детали реализации отличаются. AG2 - предпочтительный upstream для v0.2-compatible code.
 
-### When GroupChat fits
+### Когда GroupChat подходит
 
-- **Emergent conversations.** You do not want to pre-wire every possible next-speaker.
-- **Role-mixing tasks.** Coder asks researcher, researcher asks archivist, archivist asks coder back. Flow is not a DAG.
-- **Exploratory problem-solving.** Think "brainstorm meeting," not "assembly line."
+- **Emergent conversations.** Вы не хотите заранее wiring every possible next-speaker.
+- **Role-mixing tasks.** Coder спрашивает researcher, researcher спрашивает archivist, archivist спрашивает coder в ответ. Поток не является DAG.
+- **Exploratory problem-solving.** Думайте "brainstorm meeting", а не "assembly line."
 
-### When it fails
+### Когда это проваливается
 
-- **Strict determinism.** The LLM selector can be inconsistent. Same prompt, different runs, different next speakers.
-- **Sycophancy cascades.** Agents defer to whoever spoke most confidently. Counter-prompt explicitly.
-- **Context bloat.** Every agent reads every message; after 10 turns the context is huge. Use projections (Lesson 15) to scope views.
-- **Hot speakers.** One agent dominates the conversation because the selector favors its specialties. Introduce speaker balance as a selector feature.
+- **Строгий determinism.** LLM selector может быть inconsistent. Тот же prompt, разные runs, разные next speakers.
+- **Sycophancy cascades.** Agents уступают тому, кто говорил наиболее уверенно. Counter-prompt explicitly.
+- **Context bloat.** Каждый agent читает каждое message; после 10 turns context огромен. Используйте projections (Lesson 15), чтобы scope views.
+- **Hot speakers.** Один agent доминирует conversation, потому что selector предпочитает его specialties. Введите speaker balance как feature selector.
 
 ### Group chat vs supervisor
 
-Same primitives, different defaults:
+Те же primitives, другие defaults:
 
-- Supervisor: one agent plans and others execute. Selector is "ask the planner what to do."
-- Group chat: all agents are peers; selector is a function over the shared pool.
+- Supervisor: один agent планирует, остальные execute. Selector - "ask the planner what to do."
+- Group chat: все agents - peers; selector - function over the shared pool.
 
-Both use the four primitives from Lesson 04. Group chat defaults to LLM-selected orchestration and full-pool shared state.
+Оба используют четыре primitives из Lesson 04. Group chat по умолчанию использует LLM-selected orchestration и full-pool shared state.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a GroupChat from scratch in stdlib. Three agents (coder, reviewer, manager), round-robin and LLM-selected variants, and a termination on a `TERMINATE` token.
+`code/main.py` реализует GroupChat from scratch на stdlib. Три agents (coder, reviewer, manager), варианты round-robin и LLM-selected, и termination на `TERMINATE` token.
 
-The demo prints the conversation transcript plus the selector's decision trace for both variants.
+Демо печатает conversation transcript плюс decision trace selector для обоих вариантов.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-## Use It
+## Используйте это
 
-`outputs/skill-groupchat-selector.md` configures a GroupChat selector for a given task — round-robin vs LLM-selected vs custom, and what selector inputs (recent messages, agent specialties, turn counts) to use.
+`outputs/skill-groupchat-selector.md` настраивает GroupChat selector для заданной задачи - round-robin vs LLM-selected vs custom, и какие selector inputs (recent messages, agent specialties, turn counts) использовать.
 
-## Ship It
+## Доведите до production
 
-Checklist:
+Чеклист:
 
-- **Max rounds cap.** Always. 10-20 for typical tasks.
-- **Speaker-balance metric.** Track turns per agent; alert when imbalance exceeds a threshold.
-- **Termination token.** `TERMINATE` or a dedicated verifier agent.
-- **Projection or scoped memory.** After ~10 messages, consider giving each agent only a scoped view to prevent context bloat.
-- **Selector logging.** For LLM-selected variants, log both the selector's input and its choice. Otherwise debugging is impossible.
+- **Max rounds cap.** Всегда. 10-20 для типичных задач.
+- **Speaker-balance metric.** Отслеживайте turns per agent; alert, когда imbalance exceeds a threshold.
+- **Termination token.** `TERMINATE` или dedicated verifier agent.
+- **Projection or scoped memory.** После ~10 messages подумайте о том, чтобы давать каждому agent только scoped view для предотвращения context bloat.
+- **Selector logging.** Для LLM-selected variants логируйте и input selector, и его choice. Иначе debugging невозможен.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Compare the conversation under round-robin vs LLM-selected. Which agent dominates under each?
-2. Add a "max-speaks-per-agent" rule in the selector. How does it affect the transcript?
-3. Implement a goal-reached termination: stop when the reviewer returns "approved." How often does it trigger before the round cap?
-4. Read the AutoGen stable docs on GroupChat (https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/design-patterns/group-chat.html). Identify the default selector used by `GroupChatManager`.
-5. Read the AG2 repo (https://github.com/ag2ai/ag2) and compare its v0.2 GroupChat to the v0.4 event-driven version. What concrete property (throughput, fault-tolerance, composability) does v0.4 add?
+1. Запустите `code/main.py`. Сравните conversation при round-robin vs LLM-selected. Какой agent доминирует в каждом случае?
+2. Добавьте правило "max-speaks-per-agent" в selector. Как оно влияет на transcript?
+3. Реализуйте goal-reached termination: остановить, когда reviewer возвращает "approved." Как часто это срабатывает до round cap?
+4. Прочитайте stable docs AutoGen по GroupChat (https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/design-patterns/group-chat.html). Определите default selector, используемый `GroupChatManager`.
+5. Прочитайте repo AG2 (https://github.com/ag2ai/ag2) и сравните его v0.2 GroupChat с event-driven version v0.4. Какое конкретное свойство (throughput, fault-tolerance, composability) добавляет v0.4?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| GroupChat | "Agents in one chat room" | Shared message pool + selector function. AutoGen / AG2 primitive. |
-| Speaker selection | "Who talks next" | The function that picks the next agent. Round-robin, LLM-selected, or custom. |
-| GroupChatManager | "The meeting host" | AutoGen component that owns the selector and loops over turns. |
-| ConversableAgent | "The base agent" | AutoGen base class; an agent that can send and receive messages. |
-| Termination token | "The 'stop' word" | Sentinel string (usually `TERMINATE`) that ends the chat. |
-| Hot speaker | "One agent dominates" | Failure mode where the selector keeps picking the same agent. |
-| Context bloat | "Pool grows unbounded" | Each agent reads every prior message; context grows with turns. |
-| Projection | "Scoped view" | Role-specific view into the shared pool to prevent context bloat. |
+| GroupChat | "Agents in one chat room" | Shared message pool + selector function. Примитив AutoGen / AG2. |
+| Speaker selection | "Кто говорит следующим" | Function, выбирающая next agent. Round-robin, LLM-selected или custom. |
+| GroupChatManager | "Ведущий встречи" | Компонент AutoGen, который owns selector и loops over turns. |
+| ConversableAgent | "Базовый agent" | Базовый class AutoGen; agent, который может send and receive messages. |
+| Termination token | "Слово 'stop'" | Sentinel string (обычно `TERMINATE`), завершающая chat. |
+| Hot speaker | "Один agent доминирует" | Failure mode, где selector продолжает выбирать одного и того же agent. |
+| Context bloat | "Pool grows unbounded" | Каждый agent читает каждое prior message; context grows with turns. |
+| Projection | "Scoped view" | Role-specific view into the shared pool для предотвращения context bloat. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [AutoGen group chat docs](https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/design-patterns/group-chat.html) — the reference implementation
+- [AutoGen group chat docs](https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/design-patterns/group-chat.html) — reference implementation
 - [AG2 repo](https://github.com/ag2ai/ag2) — community AutoGen v0.2 continuation
-- [Microsoft Agent Framework docs](https://microsoft.github.io/agent-framework/) — the merged successor, RC February 2026
-- [AutoGen v0.4 release notes](https://microsoft.github.io/autogen/stable/) — event-driven actor model rewrite details
+- [Microsoft Agent Framework docs](https://microsoft.github.io/agent-framework/) — merged successor, RC February 2026
+- [AutoGen v0.4 release notes](https://microsoft.github.io/autogen/stable/) — детали event-driven actor model rewrite

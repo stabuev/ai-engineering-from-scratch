@@ -1,63 +1,63 @@
-# Theory of Mind and Emergent Coordination
+# Theory of Mind и эмерджентная координация
 
-> Li et al. (arXiv:2310.10701) showed that LLM agents in a cooperative text game exhibit **emergent high-order Theory of Mind** (ToM) — reasoning about what another agent believes about a third agent's beliefs — but fail on long-horizon planning due to context management and hallucination. Riedl (arXiv:2510.05174) measured higher-order synergy across a population and found that **only** the ToM-prompt condition produces identity-linked differentiation and goal-directed complementarity; lower-capacity LLMs show only spurious emergence. That is, coordination emergence is prompt-conditional and model-dependent, not free. This lesson implements a minimal ToM-aware agent, runs a cooperative task with and without ToM prompting, and measures the coordination delta against the Riedl 2025 protocol.
+> Li et al. (arXiv:2310.10701) показали, что LLM-агенты в кооперативной текстовой игре проявляют **эмерджентную Theory of Mind высокого порядка** (ToM) — рассуждение о том, что один агент думает об убеждениях третьего агента, — но проваливаются на долгосрочном планировании из-за управления контекстом и галлюцинаций. Riedl (arXiv:2510.05174) измерил higher-order synergy в популяции и обнаружил, что **только** условие с ToM-prompt порождает identity-linked differentiation и goal-directed complementarity; LLM меньшей емкости показывают только ложную эмерджентность. То есть эмерджентность координации зависит от prompt и модели, а не дается бесплатно. В этом уроке реализуется минимальный ToM-aware agent, запускается кооперативная задача с ToM prompting и без него, и измеряется coordination delta по протоколу Riedl 2025.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 07 (Society of Mind and Debate), Phase 16 · 17 (Generative Agents)
-**Time:** ~75 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Требования:** Фаза 16 · 07 (Society of Mind and Debate), Фаза 16 · 17 (Generative Agents)
+**Время:** ~75 минут
 
-## Problem
+## Задача
 
-Multi-agent coordination often looks magical: agents divide labor, anticipate each other, avoid redundancy. Usually this "emergence" is an artifact of prompt engineering — someone told the agents to "coordinate." Remove the prompt, remove the coordination.
+Многоагентная координация часто выглядит магически: агенты делят труд, предвосхищают друг друга, избегают дублирования. Обычно эта "эмерджентность" — артефакт prompt engineering: кто-то сказал агентам "coordinate." Уберите prompt — исчезнет координация.
 
-Riedl's 2025 finding is stricter: under controlled conditions, coordination only emerges when agents are prompted to reason about **other agents' minds** (ToM). Without the ToM prompt, even strong models show coordination patterns that do not survive statistical controls. This matters for production: teams ship "multi-agent coordination" features that are prompt-dependent and brittle.
+Вывод Riedl 2025 строже: в контролируемых условиях координация возникает только когда agents получают prompt рассуждать о **сознаниях других агентов** (ToM). Без ToM prompt даже сильные модели показывают паттерны координации, которые не выдерживают статистических контролей. Это важно для production: команды выпускают features "multi-agent coordination", которые зависят от prompt и хрупки.
 
-This lesson treats ToM as a specific capability (reasoning about beliefs about beliefs), builds a minimal ToM-aware agent, and measures what real coordination looks like vs. what prompt dressing looks like.
+В этом уроке ToM рассматривается как конкретная способность (рассуждать об убеждениях об убеждениях), строится минимальный ToM-aware agent и измеряется, как выглядит реальная координация по сравнению с prompt dressing.
 
-## Concept
+## Концепция
 
-### What ToM means
+### Что означает ToM
 
-Developmental psychology: a 3-year-old thinks anyone's inner world matches theirs. A 5-year-old understands others have different beliefs. A 7-year-old reasons about beliefs about beliefs ("she thinks that I think the ball is under the cup"). These are zeroth, first, and second-order ToM.
+Психология развития: трехлетний ребенок думает, что внутренний мир каждого совпадает с его собственным. Пятилетний понимает, что у других есть отличные убеждения. Семилетний рассуждает об убеждениях об убеждениях ("она думает, что я думаю, что шарик под чашкой"). Это нулевой, первый и второй порядок ToM.
 
-For LLM agents, ToM orders map to:
+Для LLM agents порядки ToM соответствуют:
 
-- **Zeroth-order:** no model of others. The agent acts on its own observations only.
-- **First-order:** the agent has a model of each other agent's beliefs. "Alice believes X."
-- **Second-order:** the agent models recursive beliefs. "Alice believes that Bob believes X."
+- **Zeroth-order:** нет модели других. Агент действует только на основе собственных наблюдений.
+- **First-order:** у агента есть модель убеждений каждого другого агента. "Alice believes X."
+- **Second-order:** агент моделирует рекурсивные убеждения. "Alice believes that Bob believes X."
 
-Li et al. 2023 found that first- and second-order ToM emerge in LLM agents in cooperative games but degrade with long horizon and unreliable communication.
+Li et al. 2023 обнаружили, что first- and second-order ToM появляются у LLM agents в кооперативных играх, но деградируют при длинном горизонте и ненадежной коммуникации.
 
-### The Sally-Anne test, in brief
+### Тест Sally-Anne вкратце
 
-A 1985 false-belief test: Sally puts a marble in basket A, leaves. Anne moves it to basket B. Where will Sally look when she returns? A child with first-order ToM says basket A (Sally's belief differs from reality). A child without says basket B.
+False-belief test 1985 года: Sally кладет мраморный шарик в корзину A и уходит. Anne перекладывает его в корзину B. Где Sally будет искать, когда вернется? Ребенок с first-order ToM говорит: корзина A (убеждение Sally отличается от реальности). Ребенок без него говорит: корзина B.
 
-GPT-4-era LLMs pass Sally-Anne-style tests when posed plainly. They fail when the narrative is long, the scene changes several times, or the question is phrased indirectly. That is the practical 2026 state of ToM in production LLMs.
+LLM эпохи GPT-4 проходят Sally-Anne-style tests, когда они сформулированы прямо. Они проваливаются, когда повествование длинное, сцена меняется несколько раз или вопрос задан косвенно. Это практическое состояние ToM в production LLMs в 2026 году.
 
-### Riedl's coordination measurement
+### Измерение координации у Riedl
 
-Riedl (arXiv:2510.05174) built a population-scale test: N agents, a cooperative objective, variable prompt conditions. Measure:
+Riedl (arXiv:2510.05174) построил population-scale test: N agents, кооперативная objective, переменные prompt conditions. Измеряются:
 
-1. **Identity-linked differentiation.** Do agents develop stable role distinctions over time?
-2. **Goal-directed complementarity.** Do agents' actions complement each other (different subtasks) rather than duplicate?
-3. **Higher-order synergy.** A statistical measure of whether the group achieves what no subset could.
+1. **Identity-linked differentiation.** Развивают ли agents устойчивые ролевые различия со временем?
+2. **Goal-directed complementarity.** Дополняют ли действия agents друг друга (разные subtasks), а не дублируют?
+3. **Higher-order synergy.** Статистическая мера того, достигает ли группа того, чего не могла бы ни одна подгруппа.
 
-Result: only under the ToM prompt condition do all three metrics produce signal above baseline. Without ToM prompting, metrics hover near chance for moderate-capacity models. Large models show some coordination without explicit ToM prompting but the effect is smaller than with explicit prompting.
+Результат: только при условии ToM prompt все три метрики дают сигнал выше baseline. Без ToM prompting метрики держатся около случайного уровня для моделей средней емкости. Крупные модели показывают некоторую координацию без явного ToM prompting, но эффект меньше, чем с явным prompting.
 
-### The coordination illusion
+### Иллюзия координации
 
-Without statistical controls, "emergent coordination" in demos often reflects:
+Без статистических контролей "emergent coordination" в демо часто отражает:
 
-- Prompt engineering that bakes in coordination (system prompts that say "work together").
-- Observer bias (we see patterns we expect).
-- Post-hoc selection of successful runs.
+- Prompt engineering, который заранее встраивает координацию (system prompts, где сказано "work together").
+- Observer bias (мы видим паттерны, которых ожидаем).
+- Post-hoc selection успешных runs.
 
-Production systems that market "emergent coordination" without measurable signal should be treated as marketing. Measure before claiming.
+Production-системы, которые продвигают "emergent coordination" без измеримого сигнала, стоит считать маркетингом. Сначала измеряйте, потом заявляйте.
 
-### A minimal ToM-aware agent
+### Минимальный ToM-aware agent
 
-Structure:
+Структура:
 
 ```
 agent state:
@@ -75,89 +75,89 @@ action selection:
   - pick action that maximizes joint outcome under those predictions
 ```
 
-The `other_models` attribute is the ToM state. First-order ToM keeps just one level. Second-order adds `other_models[i][other_models_of_j]` — what I think agent i thinks agent j believes.
+Атрибут `other_models` — это ToM state. First-order ToM хранит один уровень. Second-order добавляет `other_models[i][other_models_of_j]` — что, по моему мнению, агент i думает об убеждениях агента j.
 
-### Why long-horizon hurts
+### Почему длинный горизонт вредит
 
-Li et al. document: context limits cause agents to forget which belief belongs to whom. Hallucination adds false beliefs to other-agent models. Both produce "I thought he thought X" errors that compound over time.
+Li et al. документируют: ограничения context заставляют агентов забывать, какое убеждение кому принадлежит. Галлюцинация добавляет ложные beliefs в модели других агентов. Оба эффекта порождают ошибки "I thought he thought X", которые накапливаются со временем.
 
-Mitigations documented in the paper and in 2024-2026 follow-ups:
+Меры смягчения, задокументированные в статье и последующих работах 2024-2026:
 
-- **Explicit ToM state in the prompt.** Structured format: `{agent_id: belief_list}`. Forces retrieval to preserve identity-belief binding.
-- **Shorter reasoning chains.** Fewer ToM updates per turn reduce compounding hallucination.
-- **External ToM store.** Maintain the model outside the LLM context; inject only relevant parts per turn.
+- **Явное ToM state в prompt.** Структурированный формат: `{agent_id: belief_list}`. Принуждает retrieval сохранять связку identity-belief.
+- **Более короткие reasoning chains.** Меньше ToM updates за turn снижает накопление галлюцинаций.
+- **Внешнее ToM store.** Поддерживайте модель вне контекста LLM; вставляйте только релевантные части на turn.
 
-### Where ToM fails in production
+### Где ToM отказывает в production
 
-- **Adversarial settings.** Agents with good ToM are easier to manipulate (you can model what they model of you, then exploit).
-- **Heterogeneous teams.** When models are different, the ToM model that works for one opponent does not generalize.
-- **Ground-truth-dependent tasks.** ToM is about beliefs; if correctness depends on facts, ToM can be a distraction.
+- **Adversarial settings.** Агентов с хорошей ToM проще манипулировать (вы можете моделировать, что они моделируют о вас, затем эксплуатировать это).
+- **Heterogeneous teams.** Когда модели разные, ToM model, работающая для одного оппонента, не обобщается.
+- **Ground-truth-dependent tasks.** ToM про beliefs; если корректность зависит от фактов, ToM может отвлекать.
 
-### The coordination you can actually measure
+### Координация, которую можно реально измерить
 
-Three practical signals a team's coordination is real rather than prompt-dressed:
+Три практических сигнала того, что координация команды реальна, а не prompt-dressed:
 
-1. **Complementarity over time.** Over a multi-turn task, do agents' actions cover disjoint sub-tasks?
-2. **Anticipation.** Does agent A's action at turn T+1 depend on a prediction about B's action at T+2 that turned out correct?
-3. **Correction.** When A misreads B's belief at turn T, does A correct by turn T+2?
+1. **Complementarity over time.** В многоходовой задаче покрывают ли действия agents непересекающиеся sub-tasks?
+2. **Anticipation.** Зависит ли действие agent A на turn T+1 от предсказания действия B на turn T+2, которое оказалось верным?
+3. **Correction.** Когда A неверно читает belief B на turn T, исправляет ли A это к turn T+2?
 
-These are measurable in a logged multi-agent system. They are the substantive version of the "coordination" narrative.
+Это измеримо в логируемой многоагентной системе. Это содержательная версия нарратива "coordination".
 
-## Build It
+## Сборка
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `ToMAgent` — tracks own beliefs and per-other-agent belief models.
-- A cooperative task: three agents must collect three tokens from three boxes; each box can hold one token. Agents cannot communicate; they infer intent from each other's actions.
-- Two configurations: `zeroth_order` (no ToM) and `first_order` (ToM with one-level belief model).
-- Measurement over 200 randomized trials: completion rate, duplication rate (two agents targeting the same box), average turns to completion.
+- `ToMAgent` — отслеживает собственные beliefs и belief models по другим агентам.
+- Кооперативная задача: три agents должны собрать три tokens из трех boxes; каждая box может содержать один token. Агенты не могут общаться; они выводят намерения из действий друг друга.
+- Две конфигурации: `zeroth_order` (без ToM) и `first_order` (ToM с одноуровневой belief model).
+- Измерение на 200 randomized trials: completion rate, duplication rate (два agents нацеливаются на одну box), average turns to completion.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Expected output: zeroth-order agents duplicate effort at ~35% rate and complete ~60% of trials in 10 turns. First-order ToM agents duplicate at ~5% and complete ~95%. The delta is the measurable coordination effect.
+Ожидаемый вывод: zeroth-order agents дублируют усилия примерно в 35% случаев и завершают около 60% trials за 10 turns. First-order ToM agents дублируют около 5% и завершают около 95%. Разница — измеримый coordination effect.
 
-## Use It
+## Использование
 
-`outputs/skill-tom-auditor.md` is a skill that audits a multi-agent system's claim of "emergent coordination." Checks for prompt dressing, statistical significance against a control, and measured complementarity.
+`outputs/skill-tom-auditor.md` — skill, который аудирует заявление многоагентной системы об "emergent coordination." Проверяет prompt dressing, статистическую значимость относительно control и измеренную complementarity.
 
-## Ship It
+## Доставка
 
-Coordination claims checklist:
+Чеклист заявлений о координации:
 
-- **Control condition.** A version of your system without the coordination prompt. Measure both.
-- **Statistical test.** Is the difference between system and control significant at `p < 0.05` on your metric?
-- **Complementarity measure.** Action-disjointness over time, not just final success.
-- **Failure-case log.** When agents miscoordinate, what does the ToM state look like?
-- **Model-capacity disclosure.** If the effect vanishes on smaller models, say so.
+- **Control condition.** Версия вашей системы без coordination prompt. Измеряйте обе.
+- **Statistical test.** Значима ли разница между system и control при `p < 0.05` на вашей метрике?
+- **Complementarity measure.** Action-disjointness во времени, а не только финальный успех.
+- **Failure-case log.** Когда agents miscoordinate, как выглядит ToM state?
+- **Model-capacity disclosure.** Если эффект исчезает на меньших моделях, скажите об этом.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Confirm first-order ToM reduces duplication rate by ~7x. Does the gap persist when you scale to 5 agents and 5 boxes?
-2. Implement second-order ToM (agent A models what B thinks about C). Does it improve over first-order? On what tasks?
-3. Inject a **hallucination** into the ToM state: randomly flip one belief per turn. How much does this degrade first-order performance?
-4. Read Li et al. (arXiv:2310.10701). Reproduce the "long-horizon degradation" finding: as turns grow from 10 to 30, how does your first-order ToM performance change?
-5. Read Riedl 2025 (arXiv:2510.05174). Implement the higher-order synergy statistic on your simulation logs. Is the effect present without the ToM prompt condition?
+1. Запустите `code/main.py`. Убедитесь, что first-order ToM снижает duplication rate примерно в 7x. Сохраняется ли разрыв при масштабировании до 5 agents и 5 boxes?
+2. Реализуйте second-order ToM (agent A моделирует, что B думает о C). Улучшает ли это first-order? На каких задачах?
+3. Внесите **hallucination** в ToM state: случайно переворачивайте одно belief на turn. Насколько это ухудшает first-order performance?
+4. Прочитайте Li et al. (arXiv:2310.10701). Воспроизведите вывод "long-horizon degradation": как меняется first-order ToM performance при росте turns с 10 до 30?
+5. Прочитайте Riedl 2025 (arXiv:2510.05174). Реализуйте higher-order synergy statistic на ваших simulation logs. Присутствует ли эффект без ToM prompt condition?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Theory of Mind | "Understanding others' minds" | The capacity to model another agent's beliefs. Graded by order (0, 1, 2+). |
-| Sally-Anne test | "The false-belief test" | 1985 developmental psychology; LLMs pass plain versions, fail complex ones. |
-| First-order ToM | "A believes X" | Modeling one other's beliefs about facts. |
-| Second-order ToM | "A believes B believes X" | Recursive modeling one level deeper. |
-| Identity-linked differentiation | "Stable roles over time" | Riedl's metric: roles persist, not random. |
-| Goal-directed complementarity | "Disjoint actions" | Agents target different subtasks, not the same one. |
-| Higher-order synergy | "Group exceeds any subset" | Riedl's statistical measure for real coordination. |
-| Coordination illusion | "It looks coordinated" | Prompt-dressed appearance of coordination without measurable signal. |
+| Theory of Mind | "Понимание сознания других" | Способность моделировать убеждения другого агента. Градуируется по порядку (0, 1, 2+). |
+| Sally-Anne test | "Тест ложного убеждения" | Психология развития 1985 года; LLM проходят простые версии и проваливают сложные. |
+| First-order ToM | "A believes X" | Моделирование убеждений одного другого агента о фактах. |
+| Second-order ToM | "A believes B believes X" | Рекурсивное моделирование на один уровень глубже. |
+| Identity-linked differentiation | "Стабильные роли во времени" | Метрика Riedl: роли сохраняются, а не случайны. |
+| Goal-directed complementarity | "Непересекающиеся действия" | Agents нацеливаются на разные subtasks, а не на один и тот же. |
+| Higher-order synergy | "Группа превосходит любую подгруппу" | Статистическая мера Riedl для реальной координации. |
+| Coordination illusion | "Выглядит скоординированно" | Prompt-dressed видимость координации без измеримого сигнала. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Li et al. — Theory of Mind for Multi-Agent Collaboration via Large Language Models](https://arxiv.org/abs/2310.10701) — emergent ToM in cooperative games; long-horizon failure modes
-- [Riedl — Emergent Coordination in Multi-Agent Language Models](https://arxiv.org/abs/2510.05174) — population-scale measurement; ToM prompting is the load-bearing condition
-- [Premack & Woodruff — Does the chimpanzee have a theory of mind?](https://www.cambridge.org/core/journals/behavioral-and-brain-sciences/article/does-the-chimpanzee-have-a-theory-of-mind/1E96B02CD9850E69AF20F81FA7EB3595) — the 1978 origin of the ToM concept
-- [Baron-Cohen, Leslie, Frith — Does the autistic child have a theory of mind?](https://www.cambridge.org/core/journals/behavioral-and-brain-sciences/article/does-the-autistic-child-have-a-theory-of-mind/) — the Sally-Anne paper (1985)
+- [Li et al. — Theory of Mind for Multi-Agent Collaboration via Large Language Models](https://arxiv.org/abs/2310.10701) — эмерджентная ToM в кооперативных играх; long-horizon failure modes
+- [Riedl — Emergent Coordination in Multi-Agent Language Models](https://arxiv.org/abs/2510.05174) — population-scale measurement; ToM prompting является load-bearing condition
+- [Premack & Woodruff — Does the chimpanzee have a theory of mind?](https://www.cambridge.org/core/journals/behavioral-and-brain-sciences/article/does-the-chimpanzee-have-a-theory-of-mind/1E96B02CD9850E69AF20F81FA7EB3595) — происхождение концепции ToM в 1978 году
+- [Baron-Cohen, Leslie, Frith — Does the autistic child have a theory of mind?](https://www.cambridge.org/core/journals/behavioral-and-brain-sciences/article/does-the-autistic-child-have-a-theory-of-mind/) — статья Sally-Anne (1985)

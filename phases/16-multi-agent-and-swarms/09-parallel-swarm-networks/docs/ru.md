@@ -1,21 +1,21 @@
 # Parallel / Swarm / Networked Architectures
 
-> Contrast with supervisor: no central decider. Agents read a shared event bus, pick up work asynchronously, write results back. LangGraph explicitly supports "Swarm Architecture" for decentralized, dynamic environments. Matrix (arXiv:2511.21686) represents both control and data flow as serialized messages passed through distributed queues to eliminate the orchestrator bottleneck. The tradeoff is explicit: determinism and traceability for scalability. Swarm fits tasks with many independent sub-problems; it does not fit tasks that need a single coherent plan.
+> Контраст с supervisor: нет центрального решателя. Агенты читают общий event bus, асинхронно подхватывают работу, записывают результаты обратно. LangGraph явно поддерживает "Swarm Architecture" для децентрализованных, динамических environments. Matrix (arXiv:2511.21686) представляет и control flow, и data flow как serialized messages, передаваемые через distributed queues, чтобы устранить orchestrator bottleneck. Компромисс явный: determinism и traceability меняются на scalability. Swarm подходит задачам со многими независимыми подзадач; он не подходит задачам, которым нужен единый согласованный план.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib, `threading`, `queue`)
-**Prerequisites:** Phase 16 · 05 (Supervisor Pattern), Phase 16 · 04 (Primitive Model)
-**Time:** ~75 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib, `threading`, `queue`)
+**Пререквизиты:** Phase 16 · 05 (Supervisor Pattern), Phase 16 · 04 (Primitive Model)
+**Время:** ~75 минут
 
-## Problem
+## Проблема
 
-Supervisor scales to a few workers. What about hundreds? The supervisor itself becomes the bottleneck: every decision about who does what funnels through one agent. One slow plan step stalls the whole system.
+Supervisor масштабируется до нескольких workers. А что насчет сотен? Сам supervisor становится bottleneck: каждое решение о том, кто что делает, проходит через одного agent. Один медленный plan step задерживает всю систему.
 
-Swarm architectures flip the design. Instead of a central planner dispatching work, workers pick work off a shared queue. The "coordination" is baked into the event bus semantics. No orchestrator; the system scales until the queue does.
+Swarm architectures переворачивают дизайн. Вместо того чтобы central planner рассылал work, workers берут work из shared queue. "Coordination" зашита в semantics event bus. Нет orchestrator; система масштабируется до предела queue.
 
-## Concept
+## Концепция
 
-### The shape
+### Форма
 
 ```
                 ┌──── shared queue ────┐
@@ -31,99 +31,99 @@ Swarm architectures flip the design. Instead of a central planner dispatching wo
             results pool
 ```
 
-No orchestrator. Each worker repeats: pull a task, process, write result (and optionally enqueue follow-ups).
+Нет orchestrator. Каждый worker повторяет: взять task, обработать, записать result (и опционально поставить follow-ups в очередь).
 
-### When swarm fits
+### Когда swarm подходит
 
-- **Many independent tasks.** Scraping, transforming, classifying. Tasks do not depend on each other.
-- **Variable-duration work.** If some tasks take 100ms and others take 10s, a swarm balances load automatically — fast workers pull next jobs. A supervisor has to anticipate duration.
-- **Throughput over determinism.** You care about total completion time, not strict ordering.
+- **Много независимых задач.** Scraping, transforming, classifying. Tasks не зависят друг от друга.
+- **Работа с переменной длительностью.** Если одни tasks занимают 100ms, а другие 10s, swarm автоматически балансирует нагрузку - быстрые workers берут следующие jobs. Supervisor должен заранее предугадывать duration.
+- **Throughput важнее determinism.** Вам важно общее completion time, а не строгий ordering.
 
-### When swarm fails
+### Когда swarm проваливается
 
-- **Ordered workflows.** If step 3 needs step 2's output, a swarm risks step 3 firing before step 2 is done.
-- **Global-plan tasks.** Complex research questions benefit from a planner. A swarm of researchers produces independent facts, not a coherent report.
-- **Debugging.** With no central log and asynchronous work, reproducing a bug is expensive.
+- **Упорядоченные workflows.** Если step 3 нужен output step 2, swarm рискует запустить step 3 до завершения step 2.
+- **Задачи с global plan.** Сложные research questions выигрывают от planner. Swarm researchers производит независимые facts, а не coherent report.
+- **Debugging.** Без central log и с asynchronous work воспроизводить bug дорого.
 
 ### Matrix (arXiv:2511.21686)
 
-Matrix is the 2025 paper that takes swarm to its natural conclusion: both control flow and data flow are serialized messages on distributed queues. No central coordinator. Fault tolerance comes from message durability. Scalability is the message broker's problem, not the system's.
+Matrix - статья 2025 года, которая доводит swarm до естественного предела: и control flow, и data flow являются serialized messages в distributed queues. Нет central coordinator. Fault tolerance возникает из message durability. Scalability становится проблемой message broker, а не самой системы.
 
-Contribution: a programming model where multi-agent coordination is "what message topic does this agent subscribe to?" rather than "which agent does the supervisor pick next?" This makes the system look like a pub/sub event mesh.
+Вклад: programming model, где multi-agent coordination формулируется как "what message topic does this agent subscribe to?", а не "which agent does the supervisor pick next?" Из-за этого система выглядит как pub/sub event mesh.
 
 ### LangGraph's Swarm Architecture
 
-LangGraph 2025 docs explicitly describe "Swarm Architecture" as one of the multi-agent patterns: agents are nodes, but edges form a directed graph with cycles and any node can be activated from the pool. A worker picks from available work by condition, not by supervisor assignment.
+Документация LangGraph 2025 явно описывает "Swarm Architecture" как один из multi-agent patterns: agents - это nodes, но edges образуют directed graph with cycles, и любой node может активироваться из pool. Worker выбирает из available work по condition, а не по supervisor assignment.
 
-### Failure mode: starvation and hot-spotting
+### Режим отказа: starvation and hot-spotting
 
-If all workers pull the fastest-available task, long-running tasks never get picked until they are the only ones left. Classic queue starvation.
+Если все workers берут fastest-available task, long-running tasks могут не выбираться, пока не останутся единственными. Классическое queue starvation.
 
 Mitigations:
 - Priority queues with explicit aging (increase priority with wait time).
 - Worker specialization: some workers only take "long" tasks.
 - Back-pressure: limit how many fast tasks enter the queue.
 
-### The content-based routing link
+### Связь с content-based routing
 
-Swarm pairs naturally with content-based routing (Lesson 22). Instead of a generic queue, have one queue per message type. Specialist workers subscribe only to their type. This is the basis for message-bus architectures that scale to thousands of agents.
+Swarm естественно сочетается с content-based routing (Lesson 22). Вместо generic queue заведите одну queue на каждый message type. Specialist workers подписываются только на свой type. Это основа message-bus architectures, которые масштабируются до тысяч agents.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a swarm of 4 worker threads pulling from a shared `queue.Queue`. Tasks have variable durations (some fast, some slow). The demo contrasts:
+`code/main.py` реализует swarm из 4 worker threads, которые берут задачи из shared `queue.Queue`. Tasks имеют variable durations (одни быстрые, другие медленные). Демо сравнивает:
 
-- **Sequential baseline:** one worker processes all tasks serially.
-- **Fixed assignment:** each task pre-assigned to a specific worker (supervisor-style).
-- **Swarm:** workers pull from a shared queue.
+- **Sequential baseline:** один worker обрабатывает все tasks serially.
+- **Fixed assignment:** каждая task заранее assigned конкретному worker (supervisor-style).
+- **Swarm:** workers берут задачи из shared queue.
 
-Swarm balances load automatically; fixed assignment leaves fast workers idle when their assigned task is slow.
+Swarm автоматически балансирует load; fixed assignment оставляет быстрых workers idle, когда назначенная им task медленная.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Output shows per-worker task counts (swarm distributes unevenly but optimally) and wall-clock times.
+Вывод показывает per-worker task counts (swarm распределяет unevenly but optimally) и wall-clock times.
 
-## Use It
+## Используйте это
 
-`outputs/skill-swarm-fit.md` evaluates whether a task should use swarm vs supervisor. Inputs: task independence, duration variance, ordering requirements, debuggability needs.
+`outputs/skill-swarm-fit.md` оценивает, стоит ли задаче использовать swarm vs supervisor. Входы: task independence, duration variance, ordering requirements, debuggability needs.
 
-## Ship It
+## Доведите до production
 
-Checklist:
+Чеклист:
 
-- **Priority queue with aging.** Prevent long-task starvation.
-- **Worker idempotency.** A task may be pulled more than once if a worker crashes mid-run. Workers must be idempotent.
-- **Durable queue.** Use Kafka, Redis Streams, or a database-backed queue for production. `queue.Queue` is in-memory only.
-- **Observability per task.** Every task has a trace ID; every worker logs start/end with it.
-- **Back-pressure.** If the queue grows faster than workers drain it, slow the producer.
+- **Priority queue with aging.** Предотвращайте long-task starvation.
+- **Worker idempotency.** Task может быть pulled больше одного раза, если worker падает mid-run. Workers должны быть idempotent.
+- **Durable queue.** Используйте Kafka, Redis Streams или database-backed queue для production. `queue.Queue` только in-memory.
+- **Observability per task.** У каждой task есть trace ID; каждый worker логирует start/end с ним.
+- **Back-pressure.** Если queue растет быстрее, чем workers ее drain, замедляйте producer.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. How much faster is swarm than sequential on the variable-duration workload? How much faster than fixed assignment?
-2. Add a priority queue variant (use `queue.PriorityQueue`). Assign priority by task "importance" field. Observe whether low-priority tasks ever starve under continuous load.
-3. Implement a hot-spot detector: log when any worker processes 3× more tasks than the slowest worker. What does that indicate about task-duration distribution?
-4. Read the Matrix paper (arXiv:2511.21686) abstract and Section 3. Identify one specific tradeoff Matrix accepts (scalability gain) and one it gives up (traceability, determinism).
-5. Convert the swarm demo to use a `queue.Queue` of (task_type, payload) tuples, with workers subscribing only to specific types. What routing rules make sense when tasks are heterogeneous?
+1. Запустите `code/main.py`. Насколько swarm быстрее sequential на variable-duration workload? Насколько быстрее fixed assignment?
+2. Добавьте вариант priority queue (используйте `queue.PriorityQueue`). Назначьте priority по полю task "importance". Посмотрите, starve ли low-priority tasks при continuous load.
+3. Реализуйте hot-spot detector: логируйте, когда любой worker обрабатывает в 3× больше tasks, чем самый медленный worker. Что это говорит о task-duration distribution?
+4. Прочитайте abstract и Section 3 статьи Matrix (arXiv:2511.21686). Назовите один конкретный tradeoff, который принимает Matrix (scalability gain), и один, от которого он отказывается (traceability, determinism).
+5. Переделайте swarm demo так, чтобы использовать `queue.Queue` из tuples (task_type, payload), с workers, подписанными только на specific types. Какие routing rules имеют смысл, когда tasks heterogeneous?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Swarm architecture | "Decentralized agents" | Workers pull from shared queue; no central orchestrator. |
-| Event bus | "Agents subscribe to topics" | Message broker that routes tasks to workers by type or content. |
-| Starvation | "Task never runs" | Low-priority task never gets picked because higher-priority work arrives continuously. |
-| Hot-spotting | "One worker drowns" | Load imbalance where one worker gets most tasks. |
-| Back-pressure | "Slow down the producer" | Mechanism that signals upstream to stop producing when the queue fills up. |
-| Idempotent worker | "Safe to re-run" | A task processed twice produces the same result. Required because workers may crash mid-run. |
-| Durable queue | "Survives crashes" | Queue backed by disk or replicated storage; tasks are not lost when a worker crashes. |
-| Matrix framework | "Full message-passing swarm" | Both data and control flow are serialized messages on distributed queues. |
+| Swarm architecture | "Децентрализованные agents" | Workers берут задачи из shared queue; нет central orchestrator. |
+| Event bus | "Agents subscribe to topics" | Message broker, который routes tasks к workers по type или content. |
+| Starvation | "Task never runs" | Low-priority task никогда не выбирается, потому что higher-priority work поступает непрерывно. |
+| Hot-spotting | "Один worker захлебывается" | Load imbalance, когда один worker получает большинство tasks. |
+| Back-pressure | "Замедлить producer" | Механизм, который сигнализирует upstream прекратить production, когда queue заполняется. |
+| Idempotent worker | "Safe to re-run" | Task, обработанная дважды, дает тот же result. Требуется, потому что workers могут падать mid-run. |
+| Durable queue | "Переживает crashes" | Queue, backed by disk или replicated storage; tasks не теряются при падении worker. |
+| Matrix framework | "Full message-passing swarm" | И data, и control flow являются serialized messages в distributed queues. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [LangGraph workflows and agents — Swarm Architecture](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — explicit swarm support
-- [Matrix — A Decentralized Framework for Multi-Agent Systems](https://arxiv.org/abs/2511.21686) — full message-passing swarm
-- [Anthropic engineering — why supervisor not swarm in Research](https://www.anthropic.com/engineering/multi-agent-research-system) — why a specific production system explicitly chose supervisor over swarm
-- [AutoGen v0.4 actor-model docs](https://microsoft.github.io/autogen/stable/) — the event-driven actor rewrite, closer to swarm than v0.2's GroupChat
+- [LangGraph workflows and agents — Swarm Architecture](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — явная поддержка swarm
+- [Matrix — A Decentralized Framework for Multi-Agent Systems](https://arxiv.org/abs/2511.21686) — полный message-passing swarm
+- [Anthropic engineering — why supervisor not swarm in Research](https://www.anthropic.com/engineering/multi-agent-research-system) — почему конкретная production system явно выбрала supervisor вместо swarm
+- [AutoGen v0.4 actor-model docs](https://microsoft.github.io/autogen/stable/) — event-driven actor rewrite, ближе к swarm, чем GroupChat в v0.2

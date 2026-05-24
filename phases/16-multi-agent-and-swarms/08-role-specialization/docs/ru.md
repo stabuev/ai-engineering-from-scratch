@@ -1,129 +1,129 @@
-# Role Specialization — Planner, Critic, Executor, Verifier
+# Ролевая специализация — Planner, Critic, Executor, Verifier
 
-> The most common multi-agent decomposition in 2026: one agent plans, one executes, one critiques or verifies. MetaGPT (arXiv:2308.00352) formalizes this as SOPs encoded into role prompts — Product Manager, Architect, Project Manager, Engineer, QA Engineer — following `Code = SOP(Team)`. ChatDev (arXiv:2307.07924) chains designer, programmer, reviewer, tester through a "chat chain" with "communicative dehallucination" (agents explicitly request missing details). The verifier is load-bearing: Cemri et al. (MAST, arXiv:2503.13657) show every multi-agent failure can be traced to missing or broken verification. PwC reported 7× accuracy gain (10% → 70%) from structured validation loops in CrewAI.
+> Самая распространенная multi-agent декомпозиция в 2026 году: один агент планирует, один исполняет, один критикует или проверяет. MetaGPT (arXiv:2308.00352) формализует это как SOPs, закодированные в role prompts — Product Manager, Architect, Project Manager, Engineer, QA Engineer — следуя `Code = SOP(Team)`. ChatDev (arXiv:2307.07924) связывает designer, programmer, reviewer, tester через "chat chain" с "communicative dehallucination" (агенты явно запрашивают недостающие детали). Verifier является несущим элементом: Cemri et al. (MAST, arXiv:2503.13657) показывают, что каждый multi-agent failure можно проследить до отсутствующей или сломанной verification. PwC сообщила о 7× росте accuracy (10% → 70%) от structured validation loops в CrewAI.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 04 (Primitive Model), Phase 16 · 05 (Supervisor)
-**Time:** ~60 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Пререквизиты:** Phase 16 · 04 (Primitive Model), Phase 16 · 05 (Supervisor)
+**Время:** ~60 минут
 
-## Problem
+## Проблема
 
-Generic multi-agent systems produce generic output. Three coders in a group chat write three flavors of the same mediocre code. You can add more agents, add more rounds, and still not cross the quality threshold.
+Generic multi-agent systems производят generic output. Три кодера в group chat пишут три варианта одного и того же посредственного кода. Можно добавить больше агентов, больше раундов и все равно не перейти порог качества.
 
-The fix is not more agents — it is *different* agents. Assign distinct roles. Give the critic tools the planner does not have. Give the verifier an objective test suite. Now the system has internal disagreement with grounded correction, not just parallel guessing.
+Исправление - не больше агентов, а *разные* агенты. Назначьте разные роли. Дайте critic инструменты, которых нет у planner. Дайте verifier объективный test suite. Теперь у системы есть внутреннее несогласие с grounded correction, а не просто parallel guessing.
 
-## Concept
+## Концепция
 
-### The four canonical roles
+### Четыре канонические роли
 
-**Planner.** Reads the goal, produces a step list or a spec. Tools: knowledge retrieval, docs. Output: structured plan.
+**Planner.** Читает цель, выдает список шагов или spec. Инструменты: knowledge retrieval, docs. Выход: structured plan.
 
-**Executor.** Reads one plan step at a time, produces the artifact. Tools: the actual work tools (code compiler, shell, API client). Output: the artifact.
+**Executor.** Читает по одному шагу плана и создает artifact. Инструменты: реальные рабочие инструменты (code compiler, shell, API client). Выход: artifact.
 
-**Critic.** Reads the executor's output against the planner's intent. Tools: read-only access to the artifact, static analysis. Output: accept/reject with reasons.
+**Critic.** Читает output executor относительно intent planner. Инструменты: read-only доступ к artifact, static analysis. Выход: accept/reject с причинами.
 
-**Verifier.** Reads the artifact and runs a deterministic check. Tools: test runner, type checker, schema validator. Output: pass/fail with evidence.
+**Verifier.** Читает artifact и запускает deterministic check. Инструменты: test runner, type checker, schema validator. Выход: pass/fail с evidence.
 
-Critic is subjective, opinionated, often LLM-based. Verifier is objective, deterministic, often code-based. They are not the same role.
+Critic субъективен, opinionated, часто LLM-based. Verifier объективен, deterministic, часто code-based. Это не одна и та же роль.
 
-### MetaGPT's SOP pattern
+### SOP-паттерн MetaGPT
 
-MetaGPT (arXiv:2308.00352) encodes software engineering SOPs as role prompts:
+MetaGPT (arXiv:2308.00352) кодирует software engineering SOPs как role prompts:
 
-- **Product Manager** writes the PRD.
-- **Architect** produces the system design.
-- **Project Manager** splits tasks.
-- **Engineer** implements.
-- **QA Engineer** runs tests.
+- **Product Manager** пишет PRD.
+- **Architect** создает system design.
+- **Project Manager** разбивает задачи.
+- **Engineer** реализует.
+- **QA Engineer** запускает tests.
 
-Each role has a strict input/output schema. The role prompt says what the role *is* and what it *must produce*. The `Code = SOP(Team)` formulation — deterministic SOPs turn a team of LLMs into a predictable pipeline.
+У каждой роли строгая input/output schema. Role prompt говорит, чем роль *является* и что она *должна произвести*. Формулировка `Code = SOP(Team)` - deterministic SOPs превращают команду LLMs в предсказуемый pipeline.
 
-### ChatDev's communicative dehallucination
+### Communicative dehallucination в ChatDev
 
-ChatDev adds a key move: when an executor needs a specific detail that was not in the plan, it explicitly asks the designer before continuing. This prevents the classic LLM failure of plausibly inventing the detail.
+ChatDev добавляет ключевой ход: когда executor нужна конкретная деталь, которой не было в плане, он явно спрашивает designer перед продолжением. Это предотвращает классический отказ LLM - правдоподобно выдумать деталь.
 
-Implementation: the role prompt includes "when you need specific information you were not given, ask the relevant role by name before producing output."
+Реализация: role prompt включает "when you need specific information you were not given, ask the relevant role by name before producing output."
 
-### Why verifier matters most
+### Почему verifier важнее всего
 
-Cemri et al. (MAST) traced 1642 multi-agent execution failures. 21.3% were verification gaps — the system shipped an answer no one had checked. The remaining 79% often trace back to "there was a check that failed silently or was never run." Verification is the load-bearing role.
+Cemri et al. (MAST) проследили 1642 multi-agent execution failures. 21.3% были verification gaps - система отправила ответ, который никто не проверил. Оставшиеся 79% часто восходят к "была проверка, которая тихо провалилась или не была запущена." Verification - несущая роль.
 
-PwC reported (CrewAI deployments, 2025) that adding a structured validation loop moved accuracy from 10% to 70%. 7× gain from one role.
+PwC сообщила (CrewAI deployments, 2025), что добавление structured validation loop подняло accuracy с 10% до 70%. 7× gain от одной роли.
 
 ### Critic vs verifier
 
-- A critic is an LLM reviewing an artifact for quality. Subjective. Can be fooled by plausible prose.
-- A verifier is a deterministic program running on the artifact. Objective. Gives pass/fail with evidence.
+- Critic - это LLM, reviewing artifact на качество. Субъективен. Его можно обмануть правдоподобной прозой.
+- Verifier - это deterministic program, running on the artifact. Объективен. Дает pass/fail с evidence.
 
-Use both. Critic catches taste issues the verifier cannot articulate. Verifier catches bugs the critic cannot see because they show up only at runtime.
+Используйте оба. Critic ловит taste issues, которые verifier не может артикулировать. Verifier ловит bugs, которые critic не видит, потому что они проявляются только в runtime.
 
-### The anti-pattern
+### Антипаттерн
 
-Every role in your system is an LLM and every role's output is "looks good to me." Classic MAST failure mode. Add at least one verifier whose pass/fail is decided by code, not by an LLM.
+Каждая роль в вашей системе - LLM, и output каждой роли - "looks good to me." Классический режим отказа MAST. Добавьте хотя бы одного verifier, чей pass/fail определяется code, а не LLM.
 
-### Framework mappings
+### Соответствия фреймворкам
 
-- **CrewAI** — `Agent(role, goal, backstory)` is the textbook specialization surface.
-- **LangGraph** — nodes can have specialized prompts; edges enforce the pipeline.
-- **AutoGen** — role-specific ConversableAgents with one-word names in a GroupChat.
-- **OpenAI Agents SDK** — handoff tools between role-specialized Agents.
+- **CrewAI** — `Agent(role, goal, backstory)` является учебниковой поверхностью specialization.
+- **LangGraph** — nodes могут иметь specialized prompts; edges enforce the pipeline.
+- **AutoGen** — role-specific ConversableAgents с one-word names в GroupChat.
+- **OpenAI Agents SDK** — handoff tools между role-specialized Agents.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a 4-role pipeline building a simple Python function:
+`code/main.py` реализует 4-role pipeline, который строит простую Python function:
 
-- **Planner** produces a spec.
-- **Executor** generates a code string.
-- **Critic** (LLM-simulated) flags obvious issues.
-- **Verifier** runs the generated code in a sandbox (`exec`) against a test case.
+- **Planner** создает spec.
+- **Executor** генерирует code string.
+- **Critic** (LLM-simulated) отмечает очевидные issues.
+- **Verifier** запускает generated code в sandbox (`exec`) на test case.
 
-Demo runs twice: once where the executor produces correct code (critic + verifier both pass), once where the executor produces off-spec code (critic misses the bug because it looks plausible, verifier catches it because the test fails).
+Демо запускается дважды: один раз executor создает корректный code (critic + verifier оба pass), второй раз executor создает off-spec code (critic пропускает bug, потому что он выглядит plausible, verifier ловит его, потому что test fails).
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-## Use It
+## Используйте это
 
-`outputs/skill-role-designer.md` takes a task and produces the role roster (3-5 roles), the input/output schema per role, and the verifier check. Use this before wiring agents into a framework.
+`outputs/skill-role-designer.md` принимает задачу и выдает role roster (3-5 ролей), input/output schema для каждой роли и verifier check. Используйте это перед wiring agents into a framework.
 
-## Ship It
+## Доведите до production
 
-Checklist:
+Чеклист:
 
-- **At least one deterministic verifier.** Never all-LLM.
-- **Explicit I/O schema per role.** The planner returns a spec, not prose; the executor reads that schema.
-- **Communicative dehallucination.** Executor must ask the planner when info is missing; never invent it.
-- **Critic/verifier ordering.** Run critic first (cheap, catches design issues), verifier second (slow, catches bugs).
-- **Loop budget.** Max 2 critic-executor revision rounds before escalating to human.
+- **Минимум один deterministic verifier.** Никогда не all-LLM.
+- **Явная I/O schema для каждой роли.** Planner возвращает spec, а не prose; executor читает эту schema.
+- **Communicative dehallucination.** Executor должен спрашивать planner, когда информации не хватает; никогда не выдумывать ее.
+- **Порядок critic/verifier.** Запускайте critic первым (cheap, ловит design issues), verifier вторым (slow, ловит bugs).
+- **Loop budget.** Max 2 critic-executor revision rounds перед escalation to human.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` and observe how the verifier catches the bug the critic missed. Add a static-analysis check (count occurrences of `return`) as an additional verifier. What does it catch that the runtime test misses?
-2. Add a 5th role: "requirements analyst" that translates user wish into planner-ready spec. What communicative dehallucination requests should flow up to it?
-3. Read MetaGPT Section 3 ("Agents"). List the input/output schema of each of MetaGPT's 5 roles.
-4. Read ChatDev's chat-chain diagram (arXiv:2307.07924 Figure 3). Identify where communicative dehallucination breaks a loop that would otherwise be infinite.
-5. PwC's 7× accuracy gain came from verification loops. Hypothesize three tasks where adding a verifier would not help — where deterministic checking of correctness is impossible or prohibitively expensive.
+1. Запустите `code/main.py` и посмотрите, как verifier ловит bug, который critic пропустил. Добавьте static-analysis check (подсчет occurrences of `return`) как дополнительный verifier. Что он ловит из того, что runtime test пропускает?
+2. Добавьте 5-ю роль: "requirements analyst", которая переводит user wish в planner-ready spec. Какие communicative dehallucination requests должны подниматься к ней?
+3. Прочитайте MetaGPT Section 3 ("Agents"). Перечислите input/output schema каждой из 5 ролей MetaGPT.
+4. Прочитайте ChatDev's chat-chain diagram (arXiv:2307.07924 Figure 3). Определите, где communicative dehallucination разрывает loop, который иначе был бы infinite.
+5. 7× accuracy gain PwC пришел из verification loops. Предположите три задачи, где добавление verifier не поможет - где deterministic checking of correctness невозможна или чрезмерно дорога.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Role specialization | "Different agents, different jobs" | Distinct system prompts tuned for planner/executor/critic/verifier roles. |
-| SOP pattern | "Encoded standard operating procedure" | MetaGPT's framing: strict I/O schemas per role turn a team into a pipeline. |
-| Communicative dehallucination | "Ask before inventing" | ChatDev pattern: executor asks planner when a detail is missing rather than making one up. |
-| Critic | "LLM reviewer" | Subjective, opinionated reviewer. Catches taste issues. Can be fooled by plausible prose. |
-| Verifier | "Deterministic check" | Code-based pass/fail. Test runner, type checker, schema validator. Cannot be fooled. |
-| Verification gap | "No one checked" | 21.3% of MAST failures. Answer shipped without a check that would have caught the bug. |
-| Revision loop | "Critic sends it back" | Critic rejection triggers executor re-run with feedback. Needs a budget. |
-| All-LLM anti-pattern | "Looks good to me" | Every role is an LLM, no deterministic check. Classic MAST failure. |
+| Role specialization | "Разные агенты, разные работы" | Разные system prompts, настроенные под роли planner/executor/critic/verifier. |
+| SOP pattern | "Закодированная standard operating procedure" | Рамка MetaGPT: строгие I/O schemas по ролям превращают команду в pipeline. |
+| Communicative dehallucination | "Спроси перед тем, как выдумывать" | Паттерн ChatDev: executor спрашивает planner, когда деталь отсутствует, вместо того чтобы ее выдумывать. |
+| Critic | "LLM reviewer" | Субъективный, opinionated reviewer. Ловит taste issues. Может быть обманут plausible prose. |
+| Verifier | "Deterministic check" | Code-based pass/fail. Test runner, type checker, schema validator. Его нельзя обмануть. |
+| Verification gap | "Никто не проверил" | 21.3% failures в MAST. Ответ отправлен без проверки, которая поймала бы bug. |
+| Revision loop | "Critic отправляет назад" | Rejection от critic запускает executor re-run с feedback. Нужен budget. |
+| All-LLM anti-pattern | "Looks good to me" | Каждая роль - LLM, нет deterministic check. Классический failure MAST. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Hong et al. — MetaGPT: Meta Programming for Multi-Agent Collaboration](https://arxiv.org/abs/2308.00352) — the SOP-as-role-prompt reference paper
+- [Hong et al. — MetaGPT: Meta Programming for Multi-Agent Collaboration](https://arxiv.org/abs/2308.00352) — базовая статья по SOP-as-role-prompt
 - [Qian et al. — Communicative Agents for Software Development (ChatDev)](https://arxiv.org/abs/2307.07924) — chat chain + communicative dehallucination
-- [Cemri et al. — Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) — MAST taxonomy; verification gaps are 21.3% of failures
-- [CrewAI docs — Agent roles](https://docs.crewai.com/en/introduction) — production role specification surface
+- [Cemri et al. — Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) — таксономия MAST; verification gaps составляют 21.3% failures
+- [CrewAI docs — Agent roles](https://docs.crewai.com/en/introduction) — production-поверхность для specification of roles

@@ -1,41 +1,41 @@
-# Communication Protocols
+# Коммуникационные протоколы
 
-> Agents that can't speak the same language aren't a team. They're strangers shouting into the void.
+> Agents, которые не говорят на одном языке, не команда. Это незнакомцы, кричащие в пустоту.
 
-**Type:** Build
-**Languages:** TypeScript
-**Prerequisites:** Phase 14 (Agent Engineering), Lesson 16.01 (Why Multi-Agent)
-**Time:** ~120 minutes
+**Тип:** Build
+**Языки:** TypeScript
+**Предварительные требования:** Фаза 14 (Agent Engineering), Lesson 16.01 (Why Multi-Agent)
+**Время:** ~120 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Implement MCP tool discovery and invocation so agents can use tools exposed by external servers
-- Build an A2A agent card and task endpoint that allows one agent to delegate work to another over HTTP
-- Compare MCP (tool access), A2A (agent-to-agent), ACP (enterprise audit), and ANP (decentralized trust) and explain which protocol solves which problem
-- Wire multiple protocols together in a single system where agents discover tools via MCP and delegate tasks via A2A
+- Реализовать MCP tool discovery и invocation, чтобы agents могли использовать tools, exposed by external servers
+- Построить A2A Agent Card и task endpoint, позволяющий одному agent делегировать работу другому over HTTP
+- Сравнить MCP (tool access), A2A (agent-to-agent), ACP (enterprise audit) и ANP (decentralized trust) и объяснить, какой protocol решает какую проблему
+- Связать несколько protocols в одной системе, где agents discover tools через MCP и delegate tasks через A2A
 
-## The Problem
+## Проблема
 
-You split your system into multiple agents. A researcher, a coder, a reviewer. They're great at their individual jobs. But now you need them to actually talk to each other.
+Вы разделили систему на несколько agents. Researcher, coder, reviewer. Каждый отлично делает свою отдельную работу. Но теперь им нужно реально общаться друг с другом.
 
-Your first attempt is obvious: pass strings around. The researcher returns a blob of text, the coder parses it however it can. It works until the coder misinterprets a research summary, or two agents deadlock waiting for each other, or you need agents built by different teams to collaborate. Suddenly "just pass strings" falls apart.
+Первая попытка очевидна: передавать строки. Researcher возвращает кусок текста, coder парсит его как сможет. Это работает, пока coder не интерпретирует research summary неверно, или два agents не попадут в deadlock, ожидая друг друга, или вам не понадобятся agents от разных команд, работающие вместе. Внезапно "просто передавайте строки" разваливается.
 
-This is the communication protocol problem. Without a shared contract for how agents exchange information, multi-agent systems are fragile, unauditable, and impossible to scale beyond a handful of agents you personally wrote.
+Это проблема communication protocol. Без shared contract о том, как agents обмениваются information, multi-agent systems хрупкие, неаудируемые и не масштабируются дальше горстки agents, которые вы написали лично.
 
-The AI ecosystem has responded with four protocols, each solving a different slice of the problem:
+AI ecosystem ответила четырьмя protocols, каждый из которых решает свой срез проблемы:
 
-- **MCP** for tool access
-- **A2A** for agent-to-agent collaboration
-- **ACP** for enterprise auditability
-- **ANP** for decentralized identity and trust
+- **MCP** для tool access
+- **A2A** для agent-to-agent collaboration
+- **ACP** для enterprise auditability
+- **ANP** для decentralized identity and trust
 
-This lesson goes deep. You will read real wire formats from each spec, build working implementations, and connect all four into a unified system.
+Этот урок идет глубоко. Вы прочитаете реальные wire formats из каждой spec, построите working implementations и соедините все четыре в unified system.
 
-## The Concept
+## Концепция
 
-### The Protocol Landscape
+### Ландшафт протоколов
 
-Think of these four protocols as layers, each addressing a different question:
+Думайте об этих четырех protocols как о layers, каждый отвечает на отдельный вопрос:
 
 ```mermaid
 block-beta
@@ -55,11 +55,11 @@ block-beta
   style MCP fill:#d1fae5,stroke:#059669
 ```
 
-They're not competitors. They solve different problems at different levels.
+Они не конкуренты. Они решают разные проблемы на разных levels.
 
 ### MCP (Recap)
 
-MCP is covered in depth in Phase 13. Quick recap: MCP standardizes how an LLM connects to external tools and data sources. It's a **client-server** protocol where the agent (client) discovers and calls tools exposed by a server.
+MCP подробно покрыт в Phase 13. Кратко: MCP стандартизует, как LLM подключается к external tools и data sources. Это **client-server** protocol, где agent (client) discovers и calls tools, exposed by a server.
 
 ```mermaid
 sequenceDiagram
@@ -72,17 +72,17 @@ sequenceDiagram
     MCP1-->>Agent: result
 ```
 
-MCP is **agent-to-tool** communication. It doesn't help agents talk to each other.
+MCP — это **agent-to-tool** communication. Он не помогает agents общаться друг с другом.
 
 ### A2A (Agent2Agent Protocol)
 
 **Created by:** Google (now under Linux Foundation as `lf.a2a.v1`)
 **Spec version:** 1.0.0
-**Problem:** How do autonomous agents collaborate, negotiate, and delegate tasks to each other?
+**Problem:** Как autonomous agents collaborate, negotiate и delegate tasks друг другу?
 
-A2A is the protocol for **peer-to-peer agent collaboration**. Where MCP connects an agent to tools, A2A connects an agent to other agents. Each agent publishes an **Agent Card** at a well-known URL, and other agents discover, negotiate with, and delegate tasks to it.
+A2A — protocol для **peer-to-peer agent collaboration**. Если MCP соединяет agent с tools, A2A соединяет agent с другими agents. Каждый agent публикует **Agent Card** по well-known URL, а другие agents discover, negotiate и delegate tasks ему.
 
-#### How A2A Works
+#### Как работает A2A
 
 ```mermaid
 sequenceDiagram
@@ -106,9 +106,9 @@ sequenceDiagram
     end
 ```
 
-#### The Real Agent Card
+#### Реальная Agent Card
 
-This is what an A2A Agent Card actually looks like in the wild. Served at `GET /.well-known/agent-card.json`:
+Вот как A2A Agent Card выглядит в реальности. Served at `GET /.well-known/agent-card.json`:
 
 ```json
 {
@@ -166,14 +166,14 @@ This is what an A2A Agent Card actually looks like in the wild. Served at `GET /
 }
 ```
 
-Key things to notice:
-- **Skills** are what an agent can do. Each has an ID, tags, and supported input/output MIME types. This is how a client agent decides whether this remote agent can handle its request.
-- **supportedInterfaces** lists multiple protocol bindings. A single agent can speak JSON-RPC, REST, and gRPC simultaneously.
-- **Security** is built into the card. The client knows what auth it needs before making a single request.
+На что обратить внимание:
+- **Skills** — то, что agent умеет делать. У каждого есть ID, tags и supported input/output MIME types. Так client agent решает, может ли remote agent обработать его request.
+- **supportedInterfaces** перечисляет несколько protocol bindings. Один agent может одновременно говорить на JSON-RPC, REST и gRPC.
+- **Security** встроена в card. Client знает, какая auth нужна, еще до первого request.
 
-#### Task Lifecycle
+#### Жизненный цикл Task
 
-Tasks are the core unit of work in A2A. They move through defined states:
+Tasks — базовая единица work в A2A. Они проходят через определенные states:
 
 ```mermaid
 stateDiagram-v2
@@ -194,24 +194,24 @@ stateDiagram-v2
     note right of completed: Terminal states are immutable.\nFollow-ups create new tasks\nwithin the same contextId.
 ```
 
-All 8 states (the spec also defines `UNSPECIFIED` as a sentinel, omitted here):
+Все 8 states (spec также определяет `UNSPECIFIED` как sentinel, здесь опущен):
 
-| State | Terminal? | Meaning |
+| State | Terminal? | Значение |
 |---|---|---|
-| `TASK_STATE_SUBMITTED` | No | Acknowledged, not yet processing |
-| `TASK_STATE_WORKING` | No | Actively being processed |
-| `TASK_STATE_INPUT_REQUIRED` | No | Agent needs more info from client |
-| `TASK_STATE_AUTH_REQUIRED` | No | Authentication needed |
-| `TASK_STATE_COMPLETED` | Yes | Finished successfully |
-| `TASK_STATE_FAILED` | Yes | Finished with error |
-| `TASK_STATE_CANCELED` | Yes | Canceled before completion |
-| `TASK_STATE_REJECTED` | Yes | Agent declined the task |
+| `TASK_STATE_SUBMITTED` | No | Подтверждена, еще не обрабатывается |
+| `TASK_STATE_WORKING` | No | Активно обрабатывается |
+| `TASK_STATE_INPUT_REQUIRED` | No | Agent нужна дополнительная информация от client |
+| `TASK_STATE_AUTH_REQUIRED` | No | Требуется authentication |
+| `TASK_STATE_COMPLETED` | Yes | Успешно завершена |
+| `TASK_STATE_FAILED` | Yes | Завершена с ошибкой |
+| `TASK_STATE_CANCELED` | Yes | Отменена до completion |
+| `TASK_STATE_REJECTED` | Yes | Agent отклонил task |
 
-Once a task reaches a terminal state, it's immutable. No further messages. Follow-ups create a new task within the same `contextId`.
+Когда task достигает terminal state, она immutable. Никаких further messages. Follow-ups создают новую task в том же `contextId`.
 
 #### Wire Format
 
-A2A uses JSON-RPC 2.0. Here's what a real message exchange looks like:
+A2A использует JSON-RPC 2.0. Вот как выглядит реальный message exchange:
 
 **Client sends a task:**
 ```json
@@ -287,9 +287,9 @@ data: {"statusUpdate":{"taskId":"task-123","status":{"state":"TASK_STATE_COMPLET
 **Created by:** IBM / BeeAI
 **Spec version:** 0.2.0 (OpenAPI 3.1.1)
 **Status:** Merging into A2A under the Linux Foundation
-**Problem:** How do agents communicate with full auditability, session continuity, and trajectory tracking?
+**Problem:** Как agents общаются с полной auditability, session continuity и trajectory tracking?
 
-ACP is the **enterprise protocol**. Unlike what many summaries claim, ACP does **not** use JSON-LD. It's a straightforward REST/JSON API defined via OpenAPI. What makes it special is **TrajectoryMetadata**: every agent response can carry a detailed log of the reasoning steps and tool calls that produced it.
+ACP — это **enterprise protocol**. Вопреки многим summary, ACP **не** использует JSON-LD. Это прямой REST/JSON API, определенный через OpenAPI. Его особенность — **TrajectoryMetadata**: каждый agent response может нести detailed log reasoning steps и tool calls, которые его породили.
 
 ```mermaid
 sequenceDiagram
@@ -304,9 +304,9 @@ sequenceDiagram
     Note over Audit: Every step recorded:<br/>tool_name, tool_input,<br/>tool_output, reasoning
 ```
 
-#### Agent Discovery in ACP
+#### Agent Discovery в ACP
 
-ACP defines four discovery methods:
+ACP определяет четыре discovery methods:
 
 ```mermaid
 graph LR
@@ -321,7 +321,7 @@ graph LR
     style E fill:#f3e8ff,stroke:#7c3aed
 ```
 
-The **AgentManifest** is simpler than A2A's Agent Card:
+**AgentManifest** проще, чем Agent Card в A2A:
 
 ```json
 {
@@ -347,13 +347,13 @@ The **AgentManifest** is simpler than A2A's Agent Card:
 
 #### Run Lifecycle
 
-ACP uses "Runs" instead of "Tasks". A Run is an agent execution with three modes:
+ACP использует "Runs" вместо "Tasks". Run — это выполнение agent с тремя modes:
 
 | Mode | Behavior |
 |---|---|
-| `sync` | Blocking. Response contains the complete result. |
-| `async` | Returns 202 immediately. Poll `GET /runs/{id}` for status. |
-| `stream` | SSE stream. Events fire as the agent works. |
+| `sync` | Blocking. Response содержит complete result. |
+| `async` | Сразу возвращает 202. Poll `GET /runs/{id}` для status. |
+| `stream` | SSE stream. Events приходят по мере работы agent. |
 
 ```mermaid
 stateDiagram-v2
@@ -371,9 +371,9 @@ stateDiagram-v2
     cancelled --> [*]
 ```
 
-#### TrajectoryMetadata (The Audit Trail)
+#### TrajectoryMetadata (Audit Trail)
 
-This is ACP's key differentiator. Every message part can include metadata showing exactly what the agent did:
+Это ключевое отличие ACP. Каждая message part может включать metadata, показывающую, что именно сделал agent:
 
 ```json
 {
@@ -394,9 +394,9 @@ This is ACP's key differentiator. Every message part can include metadata showin
 }
 ```
 
-For regulated industries this is gold. Every answer comes with a provable chain of reasoning: which tools were called, what inputs were used, what outputs were received. No black box.
+Для regulated industries это золото. Каждый answer приходит с provable chain of reasoning: какие tools были called, какие inputs использовались, какие outputs были received. Никакого black box.
 
-ACP also supports **CitationMetadata** for source attribution:
+ACP также поддерживает **CitationMetadata** для source attribution:
 
 ```json
 {
@@ -412,11 +412,11 @@ ACP also supports **CitationMetadata** for source attribution:
 
 **Created by:** Open-source community (founded by GaoWei Chang)
 **Repo:** [github.com/agent-network-protocol/AgentNetworkProtocol](https://github.com/agent-network-protocol/AgentNetworkProtocol)
-**Problem:** How do agents from different organizations trust each other without a central authority?
+**Problem:** Как agents из разных organizations доверяют друг другу без central authority?
 
-ANP is the **decentralized identity protocol**. It builds trust using W3C Decentralized Identifiers (DIDs) and end-to-end encryption. Unlike A2A where you discover agents through known endpoints, ANP lets agents prove their identity cryptographically.
+ANP — это **decentralized identity protocol**. Он строит trust через W3C Decentralized Identifiers (DIDs) и end-to-end encryption. В отличие от A2A, где вы discover agents через known endpoints, ANP позволяет agents криптографически доказывать identity.
 
-ANP has three layers:
+ANP имеет три layers:
 
 ```mermaid
 graph TB
@@ -444,7 +444,7 @@ graph TB
 
 #### DID Documents (Real Structure)
 
-ANP uses a custom DID method called `did:wba` (Web-Based Agent). The DID `did:wba:example.com:user:alice` resolves to `https://example.com/user/alice/did.json`:
+ANP использует custom DID method под названием `did:wba` (Web-Based Agent). DID `did:wba:example.com:user:alice` resolves to `https://example.com/user/alice/did.json`:
 
 ```json
 {
@@ -492,15 +492,15 @@ ANP uses a custom DID method called `did:wba` (Web-Based Agent). The DID `did:wb
 }
 ```
 
-Key things to notice:
-- **Key separation** is enforced. Signing keys (secp256k1) are separate from encryption keys (X25519).
-- **`humanAuthorization`** is unique to ANP. These keys require explicit human approval (biometric, password, HSM) before use. High-risk operations like fund transfers go through this path.
-- **`keyAgreement`** keys are used for HPKE end-to-end encryption (RFC 9180).
-- The **service** section links to the Agent Description document.
+На что обратить внимание:
+- **Key separation** enforced. Signing keys (secp256k1) отделены от encryption keys (X25519).
+- **`humanAuthorization`** уникален для ANP. Эти keys требуют explicit human approval (biometric, password, HSM) перед использованием. High-risk operations вроде fund transfers идут через этот path.
+- **`keyAgreement`** keys используются для HPKE end-to-end encryption (RFC 9180).
+- Секция **service** ссылается на Agent Description document.
 
-#### How Trust Works in ANP
+#### Как работает Trust в ANP
 
-ANP does **not** use a web-of-trust or endorsement graph. Trust is bilateral and verified per-interaction:
+ANP **не** использует web-of-trust или endorsement graph. Trust bilateral и verified per-interaction:
 
 ```mermaid
 sequenceDiagram
@@ -517,16 +517,16 @@ sequenceDiagram
     Note over A,B: Trust = TLS domain verification<br/>+ DID signature verification<br/>+ Principle of least trust
 ```
 
-Trust comes from three sources:
-1. **Domain-level TLS** verifies the DID document host
-2. **DID cryptographic signatures** verify the agent's identity
+Trust приходит из трех sources:
+1. **Domain-level TLS** verifies host DID document
+2. **DID cryptographic signatures** verify identity agent
 3. **Principle of least trust** grants only minimum permissions
 
-There's no gossip-based trust propagation or PageRank scoring. You verify each agent directly through its DID.
+Нет gossip-based trust propagation или PageRank scoring. Вы проверяете каждого agent напрямую через его DID.
 
 #### Meta-Protocol Negotiation
 
-This is ANP's most novel feature. When two agents from different ecosystems meet, they don't need pre-agreed data formats. They negotiate in natural language:
+Это самая новая feature ANP. Когда два agents из разных ecosystems встречаются, им не нужны заранее согласованные data formats. Они negotiate на natural language:
 
 ```json
 {
@@ -549,11 +549,11 @@ sequenceDiagram
     Note over A,B: Agents dynamically generate code<br/>to handle the agreed format.<br/>Max 10 rounds, then timeout.
 ```
 
-The agents go back and forth (max 10 rounds) until they agree on a format, then dynamically generate code to handle it. Status values: `negotiating`, `rejected`, `accepted`, `timeout`.
+Агенты ходят туда-сюда (max 10 rounds), пока не согласуют format, затем динамически генерируют code для его обработки. Status values: `negotiating`, `rejected`, `accepted`, `timeout`.
 
-This means two agents that have never seen each other before can figure out how to communicate without anyone pre-defining a shared schema.
+Это означает, что два agents, которые никогда раньше не видели друг друга, могут выяснить, как общаться, без заранее заданной shared schema.
 
-### Comparison (Corrected)
+### Сравнение (исправленное)
 
 | | MCP | A2A | ACP | ANP |
 |---|---|---|---|---|
@@ -569,9 +569,9 @@ This means two agents that have never seen each other before can figure out how 
 | **Best for** | Tools & data | Dynamic collaboration | Regulated industries | Cross-org trust |
 | **Status** | Stable | Stable (v1.0) | Merging into A2A | Active development |
 
-### How They Work Together
+### Как они работают вместе
 
-These protocols are not mutually exclusive. A realistic enterprise system uses multiple:
+Эти protocols не являются mutually exclusive. Реалистичная enterprise system использует несколько:
 
 ```mermaid
 graph TB
@@ -595,16 +595,16 @@ graph TB
     style AUDIT fill:#fef3c7,stroke:#d97706
 ```
 
-- **MCP** connects each agent to its tools
-- **A2A** handles collaboration between agents (internal and external)
-- **ACP** wraps responses in trajectory metadata for auditability
-- **ANP** provides identity verification for agents you don't control
+- **MCP** соединяет каждого agent с его tools
+- **A2A** обрабатывает collaboration между agents (internal and external)
+- **ACP** wraps responses в trajectory metadata для auditability
+- **ANP** provides identity verification для agents, которых вы не контролируете
 
-## Build It
+## Соберите это
 
-### Step 1: Core Message Types
+### Шаг 1: Core Message Types
 
-Every multi-agent system starts with a message format. We define types that map to what the real protocols use:
+Каждая multi-agent system начинается с message format. Определим types, которые map to what real protocols use:
 
 ```typescript
 import crypto from "node:crypto";
@@ -652,11 +652,11 @@ function textMessage(role: MessageRole, text: string): AgentMessage {
 }
 ```
 
-Notice: `MessagePart` is multimodal (text, structured data, files) just like the real A2A and ACP specs. `TrajectoryEntry` captures the reasoning chain, matching ACP's TrajectoryMetadata.
+Заметьте: `MessagePart` multimodal (text, structured data, files), как в реальных A2A и ACP specs. `TrajectoryEntry` captures reasoning chain, matching ACP's TrajectoryMetadata.
 
-### Step 2: A2A Agent Card and Registry
+### Шаг 2: A2A Agent Card and Registry
 
-Build agent discovery that matches the real A2A spec:
+Построим agent discovery, matching real A2A spec:
 
 ```typescript
 type Skill = {
@@ -713,11 +713,11 @@ class AgentRegistry {
 }
 ```
 
-This is substantially richer than a simple name-to-capability map. You can discover agents by skill tags, by input MIME types, or by name, just like the real A2A spec supports.
+Это существенно богаче простой map name-to-capability. Можно discover agents по skill tags, input MIME types или name — как поддерживает реальная A2A spec.
 
-### Step 3: A2A Task Lifecycle
+### Шаг 3: A2A Task Lifecycle
 
-Build the full task state machine:
+Построим полную task state machine:
 
 ```typescript
 type TaskState =
@@ -898,11 +898,11 @@ class TaskManager {
 }
 ```
 
-This implements the real A2A task lifecycle: submitted, working, input-required, terminal states. Handlers are async generators that yield events (status updates and artifact chunks) matching the SSE streaming model.
+Это реализует реальный A2A task lifecycle: submitted, working, input-required, terminal states. Handlers — async generators, которые yield events (status updates и artifact chunks), matching SSE streaming model.
 
-### Step 4: ACP-Style Audit Trail
+### Шаг 4: ACP-Style Audit Trail
 
-Wrap communication with trajectory tracking:
+Обернем communication в trajectory tracking:
 
 ```typescript
 type AuditEntry = {
@@ -1001,11 +1001,11 @@ class AuditableRunner {
 }
 ```
 
-Every agent execution produces a full audit entry: what went in, what came out, and the complete trajectory of tool calls and reasoning steps in between. You can query by agent, by session, or by individual run.
+Каждый agent execution производит full audit entry: что вошло, что вышло и complete trajectory tool calls и reasoning steps между ними. Можно query by agent, by session или by individual run.
 
-### Step 5: ANP-Style Identity Verification
+### Шаг 5: ANP-Style Identity Verification
 
-Build DID-based identity and verification:
+Построим DID-based identity and verification:
 
 ```typescript
 type VerificationMethod = {
@@ -1124,11 +1124,11 @@ function signPayload(identity: AgentIdentity, payload: string): string {
 }
 ```
 
-This mirrors the real ANP identity model: agents have DID documents with separate authentication, key agreement, and human authorization keys. The `IdentityRegistry` simulates DID resolution (in production this would be HTTP fetches to the agent's domain).
+Это mirrors real ANP identity model: agents имеют DID documents с separate authentication, key agreement и human authorization keys. `IdentityRegistry` simulates DID resolution (в production это были бы HTTP fetches к domain agent).
 
-### Step 6: Protocol Gateway
+### Шаг 6: Protocol Gateway
 
-Connect all four protocols into a unified system:
+Соединим все четыре protocols в unified system:
 
 ```mermaid
 graph LR
@@ -1213,13 +1213,13 @@ class ProtocolGateway {
 }
 ```
 
-The gateway does four things in one call:
-1. **ANP**: Verifies the caller's identity via DID signature
-2. **A2A**: Discovers the target agent and checks capabilities
-3. **ACP**: Wraps the execution in an audit trail with trajectory
+Gateway делает четыре вещи за один call:
+1. **ANP**: Verifies caller identity через DID signature
+2. **A2A**: Discovers target agent и checks capabilities
+3. **ACP**: Wraps execution в audit trail with trajectory
 4. **A2A**: Creates a task with full lifecycle tracking
 
-### Step 7: Wire It All Together
+### Шаг 7: Связать все вместе
 
 ```typescript
 async function protocolDemo() {
@@ -1419,33 +1419,33 @@ protocolDemo().catch((err) => {
 });
 ```
 
-## What Goes Wrong
+## Что идет не так
 
-Protocols solve the happy path. Here's what breaks in production:
+Protocols решают happy path. Вот что ломается в production:
 
-**Schema drift.** Agent A publishes an Agent Card advertising `application/json` output. But the JSON schema changes between versions. Agent B parses the old format and gets garbage. Fix: version your skills and output schemas. The A2A spec supports `version` on Agent Cards for this reason.
+**Schema drift.** Agent A публикует Agent Card, рекламируя `application/json` output. Но JSON schema меняется между versions. Agent B парсит старый format и получает мусор. Fix: version your skills and output schemas. A2A spec поддерживает `version` на Agent Cards именно по этой причине.
 
-**State machine violations.** An agent handler yields a `completed` event, then tries to yield more artifacts. The task is immutable. Your code silently drops the updates or throws. Fix: check terminal state before yielding. The `TaskManager` above enforces this with the `break` after terminal states.
+**State machine violations.** Agent handler yield-ит event `completed`, затем пытается yield-ить еще artifacts. Task immutable. Ваш code silently drops updates или throws. Fix: check terminal state before yielding. `TaskManager` выше enforce-ит это через `break` после terminal states.
 
-**Trust resolution failures.** Agent A tries to verify Agent B's DID, but Agent B's domain is down. The DID document can't be fetched. Do you fail open (accept unverified agents) or fail closed (reject everything)? ANP recommends fail closed with the principle of least trust.
+**Trust resolution failures.** Agent A пытается verify DID Agent B, но domain Agent B недоступен. DID document нельзя fetched. Вы fail open (принимаете unverified agents) или fail closed (reject everything)? ANP recommends fail closed with principle of least trust.
 
-**Trajectory bloat.** ACP trajectory logging is powerful but expensive. A complex agent that makes 200 tool calls per run produces massive audit entries. Fix: log trajectory at configurable verbosity levels. Record tool names and IO for compliance, skip reasoning steps for non-regulated workloads.
+**Trajectory bloat.** ACP trajectory logging мощный, но дорогой. Complex agent, делающий 200 tool calls per run, производит massive audit entries. Fix: log trajectory на configurable verbosity levels. Записывайте tool names и IO для compliance, пропускайте reasoning steps для non-regulated workloads.
 
-**Discovery thundering herd.** 50 agents all query `GET /agents` simultaneously on startup. Fix: cache Agent Cards with TTL, stagger discovery intervals, or use push-based registration instead of polling.
+**Discovery thundering herd.** 50 agents одновременно делают query `GET /agents` on startup. Fix: cache Agent Cards with TTL, stagger discovery intervals или используйте push-based registration вместо polling.
 
-## Use It
+## Используйте это
 
-### Real Implementations
+### Реальные реализации
 
-**A2A** is the most mature. Google's [official spec](https://github.com/google/A2A) is open-source under the Linux Foundation. SDKs for Python and TypeScript. If your agents need dynamic discovery and collaboration, start here.
+**A2A** самый mature. Официальная [spec Google](https://github.com/google/A2A) open-source under the Linux Foundation. SDKs для Python и TypeScript. Если вашим agents нужны dynamic discovery and collaboration, начните здесь.
 
-**ACP** is merging into A2A. IBM's [BeeAI project](https://github.com/i-am-bee/acp) created ACP as a REST-first alternative, but the trajectory metadata concept is being absorbed into the A2A ecosystem. Use ACP patterns (trajectory logging, run lifecycle) even if you use A2A as the transport.
+**ACP** merges into A2A. Проект IBM [BeeAI](https://github.com/i-am-bee/acp) создал ACP как REST-first alternative, но concept trajectory metadata поглощается ecosystem A2A. Используйте ACP patterns (trajectory logging, run lifecycle), даже если используете A2A как transport.
 
-**ANP** is the most experimental. The [community repo](https://github.com/agent-network-protocol/AgentNetworkProtocol) has a Python SDK (AgentConnect). The meta-protocol negotiation concept is genuinely novel. Worth watching for cross-organizational agent deployments.
+**ANP** самый experimental. [Community repo](https://github.com/agent-network-protocol/AgentNetworkProtocol) имеет Python SDK (AgentConnect). Concept meta-protocol negotiation действительно novel. Стоит наблюдать для cross-organizational agent deployments.
 
-**MCP** is already covered in Phase 13. If you want agents to use tools, MCP is the standard.
+**MCP** уже covered in Phase 13. Если вы хотите, чтобы agents использовали tools, MCP — стандарт.
 
-### Picking the Right Protocol
+### Выбор правильного Protocol
 
 ```mermaid
 graph TD
@@ -1468,44 +1468,44 @@ graph TD
     style BROKER fill:#e0e7ff,stroke:#4338ca
 ```
 
-## Ship It
+## Доведите до production
 
-This lesson produces:
-- `code/main.ts` -- complete implementation of all four protocol patterns
-- `outputs/prompt-protocol-selector.md` -- a prompt that helps you choose protocols for your system
+Этот урок производит:
+- `code/main.ts` -- complete implementation всех четырех protocol patterns
+- `outputs/prompt-protocol-selector.md` -- prompt, который помогает выбрать protocols для вашей system
 
-## Exercises
+## Упражнения
 
-1. **Multi-hop task delegation.** Extend the `TaskManager` so an agent handler can delegate subtasks to other agents. The researcher receives a task, delegates "search" and "summarize" subtasks to two specialist agents, waits for both to complete, then merges the results into its own artifacts.
+1. **Multi-hop task delegation.** Расширьте `TaskManager`, чтобы agent handler мог delegate subtasks другим agents. Researcher получает task, delegates "search" и "summarize" subtasks двум specialist agents, waits for both to complete, затем merges results в свои artifacts.
 
-2. **Streaming audit trail.** Modify the `AuditableRunner` to support streaming mode. Instead of waiting for the full result, yield `AuditEntry` updates in real-time as trajectory entries are added. Use an async generator that produces audit snapshots.
+2. **Streaming audit trail.** Измените `AuditableRunner`, чтобы поддержать streaming mode. Вместо ожидания full result yield-ите `AuditEntry` updates in real-time по мере добавления trajectory entries. Используйте async generator, producing audit snapshots.
 
-3. **DID rotation.** Add key rotation to the `IdentityRegistry`. An agent should be able to publish a new DID document with updated keys while maintaining a `previousDid` reference. Verifiers should accept signatures from both the current and previous key during a grace period.
+3. **DID rotation.** Добавьте key rotation в `IdentityRegistry`. Agent должен уметь publish a new DID document with updated keys, сохраняя `previousDid` reference. Verifiers должны принимать signatures от current и previous key during grace period.
 
-4. **Protocol negotiation.** Implement ANP's meta-protocol concept. Two agents exchange `protocolNegotiation` messages with candidate formats (e.g., "I can speak JSON-RPC" vs "I prefer REST"). After max 3 rounds, they agree on a format or timeout. The agreed format determines which `TaskManager` or `AuditableRunner` they use.
+4. **Protocol negotiation.** Реализуйте concept ANP meta-protocol. Два agents обмениваются `protocolNegotiation` messages с candidate formats (например, "I can speak JSON-RPC" vs "I prefer REST"). После max 3 rounds они agree on a format или timeout. Agreed format определяет, какой `TaskManager` или `AuditableRunner` они используют.
 
-5. **Rate-limited discovery.** Add a `RateLimitedRegistry` wrapper that caches Agent Card lookups with a configurable TTL and limits discovery queries per agent per second. Simulate a thundering herd of 100 agents discovering each other on startup and measure the difference.
+5. **Rate-limited discovery.** Добавьте wrapper `RateLimitedRegistry`, который caches Agent Card lookups with configurable TTL и limits discovery queries per agent per second. Симулируйте thundering herd из 100 agents, discover each other on startup, и измерьте difference.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| MCP | "The protocol for AI tools" | A client-server protocol for agents to discover and use tools. Agent-to-tool, not agent-to-agent. |
-| A2A | "Google's agent protocol" | A peer-to-peer protocol for agent collaboration under the Linux Foundation. Discovery via Agent Cards, 9-state task lifecycle, streaming via SSE. Supports JSON-RPC, REST, and gRPC bindings. |
-| ACP | "Enterprise agent messaging" | IBM/BeeAI's REST API for agent runs with TrajectoryMetadata: every response carries the full chain of reasoning and tool calls. Merging into A2A. |
-| ANP | "Decentralized agent identity" | A community protocol using `did:wba` (DID) for cryptographic identity, HPKE for E2EE, and AI-powered meta-protocol negotiation for agents that have never seen each other. |
-| Agent Card | "An agent's business card" | A JSON document at `/.well-known/agent-card.json` describing skills, supported MIME types, security schemes, and protocol bindings. |
-| DID | "Decentralized ID" | W3C standard for cryptographically verifiable identities hosted on the agent's own domain. ANP uses `did:wba` method. |
-| TrajectoryMetadata | "The audit receipt" | ACP's mechanism for attaching reasoning steps, tool calls, and their inputs/outputs to every agent response. |
-| Meta-protocol | "Agents negotiating how to talk" | ANP's approach where agents use natural language to dynamically agree on data formats, then generate code to handle them. |
-| Task | "A unit of work" | A2A's stateful object tracking work from submission through completion. Immutable once terminal. |
+| MCP | "The protocol for AI tools" | Client-server protocol, с помощью которого agents discover и use tools. Agent-to-tool, not agent-to-agent. |
+| A2A | "Google's agent protocol" | Peer-to-peer protocol для agent collaboration under the Linux Foundation. Discovery via Agent Cards, 9-state task lifecycle, streaming via SSE. Supports JSON-RPC, REST, and gRPC bindings. |
+| ACP | "Enterprise agent messaging" | REST API IBM/BeeAI для agent runs с TrajectoryMetadata: каждый response несет full chain reasoning и tool calls. Merging into A2A. |
+| ANP | "Decentralized agent identity" | Community protocol, использующий `did:wba` (DID) для cryptographic identity, HPKE для E2EE и AI-powered meta-protocol negotiation для agents, которые никогда не видели друг друга. |
+| Agent Card | "An agent's business card" | JSON document at `/.well-known/agent-card.json`, описывающий skills, supported MIME types, security schemes и protocol bindings. |
+| DID | "Decentralized ID" | W3C standard для cryptographically verifiable identities, hosted on the agent's own domain. ANP uses `did:wba` method. |
+| TrajectoryMetadata | "The audit receipt" | Механизм ACP для attaching reasoning steps, tool calls и их inputs/outputs к каждому agent response. |
+| Meta-protocol | "Agents negotiating how to talk" | Подход ANP, где agents используют natural language, чтобы dynamically agree on data formats, затем generate code для их обработки. |
+| Task | "A unit of work" | Stateful object A2A, tracking work from submission through completion. Immutable once terminal. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Google A2A specification](https://github.com/google/A2A) -- official spec and SDKs (v1.0.0, Linux Foundation)
 - [IBM/BeeAI ACP specification](https://github.com/i-am-bee/acp) -- OpenAPI 3.1 spec for agent runs and trajectory metadata
 - [Agent Network Protocol](https://github.com/agent-network-protocol/AgentNetworkProtocol) -- DID-based identity, E2EE, meta-protocol negotiation
 - [Model Context Protocol docs](https://modelcontextprotocol.io/) -- Anthropic's MCP specification (covered in Phase 13)
-- [W3C Decentralized Identifiers](https://www.w3.org/TR/did-core/) -- the identity standard underpinning ANP
-- [RFC 9180 (HPKE)](https://www.rfc-editor.org/rfc/rfc9180) -- the encryption scheme ANP uses for E2EE
-- [FIPA Agent Communication Language](http://www.fipa.org/specs/fipa00061/SC00061G.html) -- the academic precursor to modern agent protocols
+- [W3C Decentralized Identifiers](https://www.w3.org/TR/did-core/) -- identity standard underpinning ANP
+- [RFC 9180 (HPKE)](https://www.rfc-editor.org/rfc/rfc9180) -- encryption scheme ANP uses for E2EE
+- [FIPA Agent Communication Language](http://www.fipa.org/specs/fipa00061/SC00061G.html) -- academic precursor to modern agent protocols

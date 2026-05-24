@@ -1,27 +1,27 @@
 # Handoffs and Routines — Stateless Orchestration
 
-> OpenAI's Swarm (October 2024) distilled multi-agent orchestration to two primitives: **routines** (instructions + tools as a system prompt) and **handoffs** (a tool that returns another Agent). No state machine, no branching DSL — the LLM routes by calling the right handoff tool. The OpenAI Agents SDK (March 2025) is the production successor. Swarm itself remains the cleanest conceptual reference — its entire source fits in a few hundred lines. The pattern is viral because the API surface is roughly "agent = prompt + tools; handoff = function returning agent." Limitation: stateless, so memory is the caller's problem.
+> OpenAI Swarm (октябрь 2024) свел multi-agent orchestration к двум примитивам: **routines** (инструкции + инструменты как system prompt) и **handoffs** (инструмент, который возвращает другого Agent). Без state machine, без branching DSL — LLM маршрутизирует, вызывая нужный handoff tool. OpenAI Agents SDK (март 2025) — production-преемник. Сам Swarm остается самой чистой концептуальной ссылкой — весь его исходный код помещается в несколько сотен строк. Паттерн стал вирусным, потому что поверхность API примерно такая: "agent = prompt + tools; handoff = function returning agent." Ограничение: stateless, поэтому memory — проблема вызывающей стороны.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 04 (Primitive Model)
-**Time:** ~60 minutes
+**Тип:** Learn + Build
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 16 · 04 (Primitive Model)
+**Время:** ~60 minutes
 
-## Problem
+## Проблема
 
-Every multi-agent framework wants you to learn its DSL: LangGraph nodes and edges, CrewAI crews and tasks, AutoGen GroupChat and managers. The DSLs are real abstractions, but they make the thing feel heavier than it needs to be.
+Каждый multi-agent framework хочет, чтобы вы выучили его DSL: nodes и edges в LangGraph, crews и tasks в CrewAI, GroupChat и managers в AutoGen. Эти DSL — реальные абстракции, но из-за них вещь ощущается тяжелее, чем должна.
 
-Swarm pushes in the opposite direction: use the tool-calling capability the model already has. Handoffs become tool calls. The orchestrator is whichever agent currently holds the conversation. The state machine is implicit in the agents' system prompts.
+Swarm движется в противоположную сторону: используйте tool-calling capability, которая уже есть у модели. Handoffs становятся tool calls. Orchestrator — это тот agent, который сейчас удерживает conversation. State machine неявно задана в system prompts агентов.
 
-## Concept
+## Концепция
 
 ### Two primitives
 
-**Routine.** A system prompt that defines an agent's role and available tools. Think of it like a scoped set of instructions: "you are a triage agent; if the user asks about refunds, hand off to the refund agent."
+**Routine.** System prompt, который определяет роль агента и доступные tools. Думайте об этом как о scoped-наборе инструкций: "you are a triage agent; if the user asks about refunds, hand off to the refund agent."
 
-**Handoff.** A tool the agent can call that returns a new Agent object. The Swarm runtime detects the Agent return value and switches the active agent for the next turn.
+**Handoff.** Tool, который агент может вызвать и который возвращает новый объект Agent. Swarm runtime обнаруживает возвращенное значение Agent и переключает active agent на следующий turn.
 
-That is the entire abstraction.
+Это вся абстракция.
 
 ```
 def transfer_to_refunds():
@@ -34,102 +34,102 @@ triage_agent = Agent(
 )
 ```
 
-The triage agent's system prompt makes it choose the right handoff based on the user message. The LLM's tool-calling does the routing.
+System prompt triage agent заставляет его выбрать правильный handoff на основе сообщения пользователя. Tool-calling LLM выполняет маршрутизацию.
 
 ### Why it is viral
 
-- **Small API.** Two concepts to learn.
-- **Uses what the model already does.** Tool calling is already production-grade across providers.
-- **No state-machine burden.** You do not describe the graph; the agents' prompts describe who they hand off to.
+- **Small API.** Нужно выучить две концепции.
+- **Uses what the model already does.** Tool calling уже production-grade у разных providers.
+- **No state-machine burden.** Вы не описываете graph; prompts агентов описывают, кому они делают hand off.
 
 ### The stateless trade
 
-Swarm is explicitly stateless between runs. The framework keeps a message history during a run, but it does not persist anything. Memory, continuity, long-running tasks — all the caller's problem.
+Swarm явно stateless между runs. Framework держит message history во время run, но ничего не сохраняет. Memory, continuity, long-running tasks — все это проблема вызывающей стороны.
 
-In production (OpenAI Agents SDK, March 2025) this was one of the main things that changed: the SDK adds built-in session management, guardrails, and tracing while keeping the handoff primitive.
+В production (OpenAI Agents SDK, март 2025) это было одной из главных вещей, которые изменились: SDK добавляет built-in session management, guardrails и tracing, сохраняя handoff primitive.
 
 ### When Swarm/handoffs fit
 
-- **Triage patterns.** Front-line agent routes user to a specialist.
+- **Triage patterns.** Front-line agent маршрутизирует пользователя к specialist.
 - **Skill-based handoffs.** "If the task needs code, call the coder; if it needs research, call the researcher."
-- **Short, bounded conversations.** Customer support, FAQ-to-ticket, simple workflows.
+- **Short, bounded conversations.** Customer support, FAQ-to-ticket, простые workflows.
 
 ### When Swarm struggles
 
-- **Long sessions with shared memory.** Handoffs reset the conversation state to the new agent's prompt plus history. No persistent state across agents without caller-managed memory.
-- **Parallel execution.** Handoff is one-at-a-time — the active agent switches. Parallelism requires the caller orchestrating multiple Swarm runs.
-- **Audit and replay.** Stateless runs are hard to replay exactly; the LLM's handoff choice is not deterministic.
+- **Long sessions with shared memory.** Handoffs сбрасывают conversation state к prompt нового агента плюс history. Нет persistent state между агентами без caller-managed memory.
+- **Parallel execution.** Handoff идет one-at-a-time — active agent переключается. Parallelism требует, чтобы caller orchestrated несколько Swarm runs.
+- **Audit and replay.** Stateless runs сложно точно replay; выбор handoff со стороны LLM недетерминирован.
 
 ### OpenAI Agents SDK (March 2025)
 
-The production successor adds:
+Production-преемник добавляет:
 
-- **Session state.** Persistent thread across runs.
-- **Guardrails.** Input/output validation hooks.
-- **Tracing.** Every tool call and handoff is logged.
-- **Handoff filters.** Control what context transfers on handoff.
+- **Session state.** Persistent thread между runs.
+- **Guardrails.** Hooks для input/output validation.
+- **Tracing.** Каждый tool call и handoff логируется.
+- **Handoff filters.** Контроль того, какой context переносится при handoff.
 
-The handoff primitive survives; production ergonomics get added around it.
+Handoff primitive сохраняется; production ergonomics добавляются вокруг него.
 
 ### Swarm vs GroupChat
 
-Both use LLM-driven routing, but they differ on **who picks next**:
+Оба используют LLM-driven routing, но различаются тем, **кто выбирает следующего**:
 
-- GroupChat: a selector (function or LLM) picks the next speaker from outside.
-- Swarm: the current agent picks its successor by calling a handoff tool.
+- GroupChat: selector (function или LLM) выбирает next speaker извне.
+- Swarm: current agent выбирает successor, вызывая handoff tool.
 
-Swarm is "agent decides what's next"; GroupChat is "manager decides what's next." Swarm's decision lives in the active agent's tool call; GroupChat's lives in the `GroupChatManager`.
+Swarm — это "agent decides what's next"; GroupChat — "manager decides what's next." Решение Swarm живет в tool call активного агента; решение GroupChat живет в `GroupChatManager`.
 
-## Build It
+## Соберите
 
-`code/main.py` implements Swarm from scratch: an Agent dataclass, a handoff mechanism (tool returns Agent), and a run loop that detects agent switches.
+`code/main.py` реализует Swarm from scratch: dataclass Agent, механизм handoff (tool возвращает Agent) и run loop, который обнаруживает agent switches.
 
-Demo: a triage agent routes to refund, sales, or support specialists. Each specialist has its own tools. The run loop prints each handoff.
+Демо: triage agent маршрутизирует к специалистам refund, sales или support. У каждого specialist есть свои tools. Цикл запуска печатает каждый handoff.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-## Use It
+## Используйте
 
-`outputs/skill-handoff-designer.md` designs a handoff topology for a given task: which agents exist, which handoffs they can call, what context transfers.
+`outputs/skill-handoff-designer.md` проектирует handoff topology для заданной задачи: какие agents существуют, какие handoffs они могут вызывать, какой context переносится.
 
-## Ship It
+## Запустите в production
 
-Checklist:
+Чеклист:
 
-- **Handoff logging.** Every handoff writes a trace event with from-agent, to-agent, context snapshot.
-- **Context transfer rules.** Decide what moves on handoff: full history (expensive), last N messages, or a summary.
-- **Guardrail on handoff.** A handoff to a specialist with different tool permissions must be authenticated — otherwise prompt injection can force unwanted handoffs.
-- **Loop detection.** Two agents handing back and forth is a common failure; detect with a simple last-K ring check.
-- **Fallback agent.** If a handoff target does not exist, fall back to a safe default.
+- **Handoff logging.** Каждый handoff пишет trace event с from-agent, to-agent, context snapshot.
+- **Context transfer rules.** Решите, что переносится при handoff: full history (дорого), last N messages или summary.
+- **Guardrail on handoff.** Handoff к specialist с другими tool permissions должен быть authenticated — иначе prompt injection может принудить нежелательные handoffs.
+- **Loop detection.** Два agents, передающие друг другу управление туда-сюда, — частый failure; обнаруживайте это простым last-K ring check.
+- **Fallback agent.** Если handoff target не существует, fallback к safe default.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`, triage to the refund agent. Confirm the second turn's active agent is refund.
-2. Add a loop-detection rule: if the same two agents have handed off 3 times in a row, force an exit. Design the fallback.
-3. Read the OpenAI Agents SDK docs on handoff filters. Implement a "summarize-on-handoff" version: the outgoing agent compresses context to a bullet summary before the incoming agent takes over.
-4. Compare the Swarm handoff to a GroupChatManager selector. Which pattern makes prompt injection worse, and why?
-5. Read the Swarm cookbook (https://developers.openai.com/cookbook/examples/orchestrating_agents). Identify one explicit design decision Swarm makes that OpenAI Agents SDK changed or kept.
+1. Запустите `code/main.py`, выполните triage к refund agent. Подтвердите, что active agent второго turn — refund.
+2. Добавьте правило loop-detection: если одна и та же пара agents сделала hand off 3 раза подряд, принудительно выйти. Спроектируйте fallback.
+3. Прочитайте docs OpenAI Agents SDK про handoff filters. Реализуйте версию "summarize-on-handoff": outgoing agent сжимает context до bullet summary перед тем, как incoming agent берет управление.
+4. Сравните Swarm handoff с selector в GroupChatManager. Какой pattern ухудшает prompt injection и почему?
+5. Прочитайте Swarm cookbook (https://developers.openai.com/cookbook/examples/orchestrating_agents). Найдите одно явное design decision в Swarm, которое OpenAI Agents SDK изменил или сохранил.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Routine | "The agent prompt" | System prompt + tool list. Defines role and available handoffs. |
-| Handoff | "Transfer to another agent" | A tool the active agent can call that returns a new Agent. The runtime switches active agent. |
-| Stateless | "No memory between runs" | Swarm does not persist anything; memory is the caller's responsibility. |
-| Active agent | "Who's speaking now" | The agent currently holding the conversation. Handoff changes this. |
-| Context transfer | "What moves on handoff" | Policy for what history the incoming agent sees: full, last N, or summarized. |
-| Handoff loop | "Agents ping-pong" | Failure mode where two agents keep handing back to each other. |
-| OpenAI Agents SDK | "Production Swarm" | March 2025 successor; adds sessions, guardrails, tracing on top of the handoff primitive. |
-| Handoff filter | "Gate on transfer" | SDK feature to inspect and modify context at the handoff boundary. |
+| Routine | "The agent prompt" | System prompt + tool list. Определяет роль и доступные handoffs. |
+| Handoff | "Transfer to another agent" | Tool, который active agent может вызвать и который возвращает новый Agent. Runtime переключает active agent. |
+| Stateless | "No memory between runs" | Swarm ничего не сохраняет; memory — ответственность caller. |
+| Active agent | "Who's speaking now" | Agent, который сейчас удерживает conversation. Handoff меняет его. |
+| Context transfer | "What moves on handoff" | Policy для того, какую history видит incoming agent: full, last N или summarized. |
+| Handoff loop | "Agents ping-pong" | Failure mode, при котором два agents продолжают передавать управление друг другу. |
+| OpenAI Agents SDK | "Production Swarm" | Преемник марта 2025; добавляет sessions, guardrails, tracing поверх handoff primitive. |
+| Handoff filter | "Gate on transfer" | Feature SDK для inspect и modify context на handoff boundary. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI cookbook — Orchestrating Agents: Routines and Handoffs](https://developers.openai.com/cookbook/examples/orchestrating_agents) — the reference articulation
+- [OpenAI cookbook — Orchestrating Agents: Routines and Handoffs](https://developers.openai.com/cookbook/examples/orchestrating_agents) — reference articulation
 - [OpenAI Swarm repo](https://github.com/openai/swarm) — original implementation, kept as conceptual reference
 - [OpenAI Agents SDK docs](https://openai.github.io/openai-agents-python/) — production successor with sessions and tracing
-- [Anthropic handoff-in-Claude notes](https://docs.anthropic.com/en/docs/claude-code) — how Claude Code subagents use a handoff-like pattern via `Task`
+- [Anthropic handoff-in-Claude notes](https://docs.anthropic.com/en/docs/claude-code) — как Claude Code subagents используют handoff-like pattern через `Task`
