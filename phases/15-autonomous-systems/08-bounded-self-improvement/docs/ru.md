@@ -1,118 +1,118 @@
-# Bounded Self-Improvement Designs
+# Проекты ограниченного самоулучшения
 
-> Research has converged on four primitives for bounding a self-improvement loop. Formal invariants that must hold across every edit. Alignment anchors that cannot be modified. Multi-objective constraints where every dimension (safety, fairness, robustness) must hold, not just performance. Regression detection that pauses the loop when historical metrics suggest capability loss. None of them is a proof of safety — information-theoretic results (Kolmogorov complexity, Lob's theorem) bound what any system can prove about its own successors. They are mitigations that raise the cost of silent failure.
+> Исследования сошлись на четырех примитивах для ограничения цикла самоулучшения. Формальные инварианты, которые должны сохраняться при каждой правке. Якоря выравнивания, которые нельзя изменять. Многоцелевые ограничения, где должно выполняться каждое измерение (безопасность, справедливость, робастность), а не только производительность. Обнаружение регрессий, которое приостанавливает цикл, когда исторические метрики указывают на потерю возможностей. Ни одно из них не является доказательством безопасности — информационно-теоретические результаты (колмогоровская сложность, теорема Лёба) ограничивают то, что любая система может доказать о своих преемниках. Это меры снижения риска, повышающие цену тихого отказа.
 
-**Type:** Learn
-**Languages:** Python (stdlib, bounded-loop with invariant check)
-**Prerequisites:** Phase 15 · 07 (RSI), Phase 15 · 04 (DGM)
-**Time:** ~60 minutes
+**Тип:** Обучение
+**Языки:** Python (stdlib, ограниченный цикл с проверкой инвариантов)
+**Предварительные требования:** Phase 15 · 07 (RSI), Phase 15 · 04 (DGM)
+**Время:** ~60 минут
 
-## The Problem
+## Проблема
 
-Lesson 7's race simulator showed that small rate differences compound into large gaps. Lesson 4's DGM case study showed that loops can actively game their own evaluators. Both results point to the same engineering question: what constraints can you put on a self-improvement loop such that the constraints cannot be silently weakened by the loop itself?
+Симулятор гонки из Lesson 7 показал, что небольшие различия скоростей накапливаются в большие разрывы. Разбор DGM из Lesson 4 показал, что циклы могут активно играть против собственных оценивателей. Оба результата указывают на один инженерный вопрос: какие ограничения можно наложить на цикл самоулучшения так, чтобы сам цикл не мог незаметно их ослабить?
 
-The ICLR 2026 RSI Workshop summary (openreview.net/pdf?id=OsPQ6zTQXV) identifies four such primitives. Anthropic's RSP v3.0 (Lesson 19) and DeepMind's FSF v3 (Lesson 20) both reference them in capability thresholds. The Meta HyperAgents work and community frameworks like SAHOO (March 2026) implement subsets in production.
+Сводка ICLR 2026 RSI Workshop (openreview.net/pdf?id=OsPQ6zTQXV) выделяет четыре таких примитива. RSP v3.0 от Anthropic (Lesson 19) и FSF v3 от DeepMind (Lesson 20) ссылаются на них в порогах возможностей. Работа Meta HyperAgents и сообществ вроде SAHOO (март 2026) внедряет их подмножества в production.
 
-The honest framing: these are mitigations. Information-theoretic results bound what any system can prove about its own successor, and no current design closes the problem formally. A well-bounded loop is safer than an unbounded one, not safe in absolute terms.
+Честная рамка: это меры снижения риска. Информационно-теоретические результаты ограничивают то, что любая система может доказать о своем преемнике, и ни один текущий дизайн формально не закрывает проблему. Хорошо ограниченный цикл безопаснее неограниченного, но не безопасен в абсолютном смысле.
 
-## The Concept
+## Концепция
 
-### Primitive 1: formal invariants
+### Примитив 1: формальные инварианты
 
-An invariant is a property that must hold before and after every self-modification. Examples:
+Инвариант — свойство, которое должно выполняться до и после каждой самомодификации. Примеры:
 
-- Output distribution is conditioned on a fixed constitution header (Lesson 17).
-- No tool call goes to an unauthorized endpoint.
-- Memory writes go through a logged, signed path.
-- The evaluator's module hash matches the approved version.
+- Распределение выходов обусловлено фиксированным конституционным заголовком (Lesson 17).
+- Ни один вызов инструмента не идет на неавторизованный endpoint.
+- Записи в память проходят через логируемый, подписанный путь.
+- Хэш модуля оценивателя совпадает с утвержденной версией.
 
-Invariants are checked by external code the loop cannot edit. If a proposed modification violates an invariant, it is rejected. This catches the DGM-style evaluator-tampering mode (Lesson 4).
+Инварианты проверяются внешним кодом, который цикл не может редактировать. Если предложенная модификация нарушает инвариант, она отклоняется. Это ловит DGM-подобный режим подмены оценивателя (Lesson 4).
 
-The hard part is choosing invariants that are necessary for safety and computable in reasonable time. Over-specifying stalls progress; under-specifying lets the loop walk past important properties.
+Сложность в том, чтобы выбрать инварианты, которые необходимы для безопасности и вычислимы за разумное время. Чрезмерная спецификация останавливает прогресс; недостаточная спецификация позволяет циклу пройти мимо важных свойств.
 
-### Primitive 2: alignment anchors
+### Примитив 2: якоря выравнивания
 
-An alignment anchor is an immutable representation of the loop's core objective, pinned outside the loop's edit surface. Examples:
+Якорь выравнивания — неизменяемое представление базовой цели цикла, закрепленное вне поверхности редактирования цикла. Примеры:
 
-- A constitutional text (Lesson 17) that is loaded from a read-only location on every invocation.
-- An evaluator in a separate repository with independent access control.
-- A tool-permission manifest signed by a human and re-verified each cycle.
+- Конституционный текст (Lesson 17), который при каждом запуске загружается из read-only расположения.
+- Оцениватель в отдельном репозитории с независимым контролем доступа.
+- Манифест разрешений инструментов, подписанный человеком и повторно проверяемый на каждом цикле.
 
-The anchor's role is to prevent objective drift. The loop may improve how it pursues the objective, but cannot edit what the objective is.
+Роль якоря — предотвращать дрейф цели. Цикл может улучшать то, как он преследует цель, но не может редактировать то, чем является цель.
 
-The subtle failure mode: an anchor the loop cannot edit can still be reinterpreted by a loop that drifts in how it reads the anchor. Constitutional AI (Lesson 17) is explicitly reason-based to handle novel situations; that reasoning layer is where interpretation drift lives. Anchors are necessary, not sufficient.
+Тонкий режим отказа: якорь, который цикл не может редактировать, все равно может быть переинтерпретирован циклом, если тот смещается в том, как читает якорь. Constitutional AI (Lesson 17) специально основан на рассуждениях, чтобы работать с новыми ситуациями; именно в этом слое рассуждений живет дрейф интерпретации. Якоря необходимы, но недостаточны.
 
-### Primitive 3: multi-objective constraints
+### Примитив 3: многоцелевые ограничения
 
-A loop that optimizes a single scalar score will find shortcuts. A loop that must simultaneously satisfy multiple hard constraints has fewer shortcuts available. Typical axes:
+Цикл, оптимизирующий один скалярный показатель, найдет обходные пути. У цикла, который должен одновременно удовлетворять нескольким жестким ограничениям, меньше доступных обходных путей. Типичные оси:
 
-- Performance (task-level benchmark)
-- Safety (red-team evaluations, refusal rate on known-bad)
-- Fairness (disparate-impact bounds on sensitive subgroups)
-- Robustness (OOD test sets, adversarial input handling)
+- Производительность (task-level benchmark)
+- Безопасность (red-team evaluations, refusal rate on known-bad)
+- Справедливость (пороги disparate impact для чувствительных подгрупп)
+- Робастность (OOD test sets, обработка adversarial input)
 
-A modification is accepted only if every constraint holds. Lesson 13's cost governor stacks this with financial constraints. Lesson 18's Llama Guard plugs in as a safety axis.
+Модификация принимается только если выполняется каждое ограничение. Cost governor из Lesson 13 накладывает это вместе с финансовыми ограничениями. Llama Guard из Lesson 18 подключается как ось безопасности.
 
-### Primitive 4: regression detection
+### Примитив 4: обнаружение регрессий
 
-Each cycle's scores are compared against historical distributions. A drop beyond configured tolerance pauses the loop. This catches silent capability loss that would otherwise be absorbed into the running average as the loop "improved past" it.
+Показатели каждого цикла сравниваются с историческими распределениями. Падение за пределы настроенного допуска приостанавливает цикл. Это ловит тихую потерю возможностей, которая иначе была бы поглощена скользящим средним, пока цикл «улучшался дальше».
 
-A practical implementation: store the last N cycles' per-task scores. Each new cycle computes a per-task delta. If any delta drops below a threshold, the cycle is rejected and a human reviews.
+Практическая реализация: хранить оценки по задачам за последние N циклов. Каждый новый цикл вычисляет изменение по каждой задаче. Если любое изменение падает ниже порога, цикл отклоняется, а человек проводит ревью.
 
-### Information-theoretic limits
+### Информационно-теоретические пределы
 
-Kolmogorov complexity and Lob's theorem set upper bounds on what a system can prove about itself. Schmidhuber's formal Godel Machine (Lesson 4) aimed for the highest such bound; nobody has completed a non-trivial proof. Lob's result says: if a system provably believes "I will do X if I prove I should do X," it will do X without proving it should, a well-known self-reference failure.
+Колмогоровская сложность и теорема Лёба задают верхние границы того, что система может доказать о самой себе. Формальная Godel Machine Шмидхубера (Lesson 4) стремилась к максимально возможной такой границе; никто не завершил нетривиальное доказательство. Результат Лёба говорит: если система доказуемо верит «я сделаю X, если докажу, что должен сделать X», она сделает X, не доказав, что должна, — известный отказ самореференции.
 
-The implication for our primitives: they cannot close the safety problem. They make silent failure more expensive. A malicious or drifted loop that would quietly bypass a missing check must now actively undermine an explicit one, which is a more detectable signature.
+Следствие для наших примитивов: они не могут закрыть проблему безопасности. Они делают тихий отказ дороже. Злонамеренный или смещенный цикл, который тихо обошел бы отсутствующую проверку, теперь должен активно подрывать явную проверку, а это более обнаруживаемая сигнатура.
 
-### A worked example
+### Рабочий пример
 
-Suppose an agent proposes an edit. The gating stack:
+Предположим, агент предлагает правку. Стек gating:
 
-1. Invariant checks: module hashes, tool-permission manifest, constitutional header.
-2. Anchor check: objective statement matches approved version (byte-wise or semantically).
-3. Multi-objective evaluation: performance, safety, fairness, robustness axes.
-4. Regression detection: no axis drops more than tolerance.
+1. Проверки инвариантов: хэши модулей, манифест разрешений инструментов, конституционный заголовок.
+2. Проверка якоря: формулировка цели совпадает с утвержденной версией (побайтно или семантически).
+3. Многоцелевая оценка: оси производительности, безопасности, справедливости, робастности.
+4. Обнаружение регрессий: ни одна ось не падает сильнее допуска.
 
-All four must pass for the edit to land. Any single failure pauses the loop.
+Все четыре проверки должны пройти, чтобы правка попала в систему. Любой одиночный отказ приостанавливает цикл.
 
-## Use It
+## Использование
 
-`code/main.py` runs a bounded self-improvement loop on the DGM-style toy from Lesson 4, but with the four primitives layered on top. Each primitive can be enabled or disabled individually. The demonstration is that each primitive catches a specific failure class, and that removing any one of them lets that failure class through.
+`code/main.py` запускает ограниченный цикл самоулучшения на DGM-подобной игрушечной задаче из Lesson 4, но с четырьмя примитивами, наложенными сверху. Каждый примитив можно включать или отключать отдельно. Демонстрация показывает, что каждый примитив ловит конкретный класс отказов, а удаление любого одного из них пропускает этот класс отказов.
 
-## Ship It
+## Результат
 
-`outputs/skill-bounded-loop-review.md` audits a proposed bounded loop and scores which of the four primitives it actually implements versus claims to.
+`outputs/skill-bounded-loop-review.md` аудитит предложенный ограниченный цикл и оценивает, какие из четырех примитивов он реально реализует, а какие только заявляет.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` with all primitives enabled. Confirm the loop still improves on the primary metric without letting the hack win.
+1. Запустите `code/main.py` со всеми включенными примитивами. Подтвердите, что цикл все еще улучшает основную метрику, не позволяя хаку победить.
 
-2. Disable regression detection. Construct an input where this leads to silent capability loss being accepted.
+2. Отключите обнаружение регрессий. Сконструируйте вход, где это приводит к принятию тихой потери возможностей.
 
-3. Disable the multi-objective constraint. Show the loop converges on the performance axis while a safety axis drops.
+3. Отключите многоцелевое ограничение. Покажите, что цикл сходится по оси производительности, пока ось безопасности падает.
 
-4. Design an alignment anchor for a coding agent. What text, stored where, checked how?
+4. Спроектируйте якорь выравнивания для coding agent. Какой текст, где хранится, как проверяется?
 
-5. Read the ICLR 2026 RSI Workshop summary. Pick one of the four primitives and propose a concrete improvement to the current state of the art.
+5. Прочитайте сводку ICLR 2026 RSI Workshop. Выберите один из четырех примитивов и предложите конкретное улучшение текущего state of the art.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |---|---|---|
-| Invariant | "Always-true property" | A property checked by external code before and after every edit |
-| Alignment anchor | "Pinned objective" | Immutable core-goal representation outside the loop's edit surface |
-| Multi-objective constraint | "All axes must hold" | Performance, safety, fairness, robustness — all required |
-| Regression detection | "Pause on drop" | Pause the loop when historical metric deltas suggest capability loss |
-| Kolmogorov bound | "Information-theoretic limit" | Limits what a system can prove about its own successor |
-| Lob's theorem | "Self-reference trap" | System can act on "I should" without proving it should |
-| Gate stack | "Layered check" | Multiple primitives combined; any failure rejects the edit |
-| Bounded improvement | "Mitigation, not proof" | Raises silent-failure cost; does not close the safety problem |
+| Invariant | «Всегда истинное свойство» | Свойство, проверяемое внешним кодом до и после каждой правки |
+| Alignment anchor | «Закрепленная цель» | Неизменяемое представление базовой цели вне поверхности редактирования цикла |
+| Multi-objective constraint | «Должны выполняться все оси» | Производительность, безопасность, справедливость, робастность — все обязательны |
+| Regression detection | «Пауза при падении» | Приостановка цикла, когда исторические изменения метрик указывают на потерю возможностей |
+| Kolmogorov bound | «Информационно-теоретический предел» | Ограничивает то, что система может доказать о собственном преемнике |
+| Lob's theorem | «Ловушка самореференции» | Система может действовать на основании «я должен» без доказательства, что должна |
+| Gate stack | «Слоистая проверка» | Несколько примитивов вместе; любой отказ отклоняет правку |
+| Bounded improvement | «Мера снижения риска, не доказательство» | Повышает цену тихого отказа; не закрывает проблему безопасности |
 
-## Further Reading
+## Дополнительное чтение
 
-- [ICLR 2026 RSI Workshop summary (OpenReview)](https://openreview.net/pdf?id=OsPQ6zTQXV) — the four-primitive convergence.
-- [Anthropic Responsible Scaling Policy v3.0](https://anthropic.com/responsible-scaling-policy/rsp-v3-0) — multi-objective capability thresholds.
-- [DeepMind Frontier Safety Framework v3](https://deepmind.google/blog/strengthening-our-frontier-safety-framework/) — deceptive-alignment monitoring as an invariant primitive.
-- [Schmidhuber (2003). Godel Machines](https://people.idsia.ch/~juergen/goedelmachine.html) — the formal-proof ancestor of these primitives.
-- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — the reason-based alignment anchor.
+- [ICLR 2026 RSI Workshop summary (OpenReview)](https://openreview.net/pdf?id=OsPQ6zTQXV) — сходимость к четырем примитивам.
+- [Anthropic Responsible Scaling Policy v3.0](https://anthropic.com/responsible-scaling-policy/rsp-v3-0) — многоцелевые пороги возможностей.
+- [DeepMind Frontier Safety Framework v3](https://deepmind.google/blog/strengthening-our-frontier-safety-framework/) — мониторинг deceptive-alignment как инвариантный примитив.
+- [Schmidhuber (2003). Godel Machines](https://people.idsia.ch/~juergen/goedelmachine.html) — предок этих примитивов на основе формальных доказательств.
+- [Anthropic — Claude's Constitution (January 2026)](https://www.anthropic.com/news/claudes-constitution) — основанный на рассуждениях якорь выравнивания.
