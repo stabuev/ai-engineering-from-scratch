@@ -1,168 +1,168 @@
-# Document and Diagram Understanding
+# Понимание документов и диаграмм
 
-> Documents are not photos. A PDF, scientific paper, invoice, or handwritten form has layout, tables, diagrams, footnotes, headers, and semantic structure that plain image understanding cannot capture. The pre-VLM stack was a pipeline: Tesseract OCR + LayoutLMv3 + table-extraction heuristics. The VLM wave replaced that with OCR-free models — Donut (2022), Nougat (2023), DocLLM (2023) — that emit structured markup directly. By 2026 the frontier is just "feed the page image to Claude Opus 4.7 at 2576px native," and the structured-markup output comes for free. This lesson reads the three-era arc of document AI.
+> Документы — это не фотографии. PDF, научная статья, счет или рукописная форма имеют layout, таблицы, диаграммы, сноски, заголовки и семантическую структуру, которую обычное понимание изображений не захватывает. Стек до VLM был конвейером: Tesseract OCR + LayoutLMv3 + эвристики извлечения таблиц. Волна VLM заменила это OCR-free моделями — Donut (2022), Nougat (2023), DocLLM (2023), — которые напрямую выдают структурированную разметку. К 2026 frontier — это просто "feed the page image to Claude Opus 4.7 at 2576px native," и structured-markup output получается бесплатно. Этот урок разбирает трехэпохальную дугу document AI.
 
-**Type:** Build
-**Languages:** Python (stdlib, layout-aware document parser skeleton)
-**Prerequisites:** Phase 12 · 05 (LLaVA), Phase 5 (NLP)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, скелет layout-aware document parser)
+**Предварительные требования:** Phase 12 · 05 (LLaVA), Phase 5 (NLP)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain the three eras of document AI: OCR pipeline, OCR-free, VLM-native.
-- Describe LayoutLMv3's three input streams: text, layout (bbox), image patches, with unified masking.
-- Compare Donut (OCR-free, image → markup), Nougat (scientific paper → LaTeX), DocLLM (layout-aware generative), PaliGemma 2 (VLM-native).
-- Pick a document model for a new task (invoices, scientific papers, handwritten forms, Chinese receipts).
+- Объяснить три эпохи document AI: OCR pipeline, OCR-free, VLM-native.
+- Описать три входных потока LayoutLMv3: text, layout (bbox), image patches, с unified masking.
+- Сравнить Donut (OCR-free, image → markup), Nougat (scientific paper → LaTeX), DocLLM (layout-aware generative), PaliGemma 2 (VLM-native).
+- Выбрать документную модель для новой задачи (invoices, scientific papers, handwritten forms, Chinese receipts).
 
-## The Problem
+## Проблема
 
-"Understand this PDF" is deceptively hard. The information sits in:
+"Понять этот PDF" обманчиво сложно. Информация находится в:
 
-- Text content (90% of the signal).
+- Текстовом содержимом (90% сигнала).
 - Layout (headers, footnotes, sidebars, two-column format).
-- Tables (rows, columns, merged cells).
-- Figures and diagrams.
-- Handwritten annotations.
-- Fonts and typography (title vs body).
+- Таблицах (rows, columns, merged cells).
+- Фигурах и диаграммах.
+- Рукописных аннотациях.
+- Шрифтах и типографике (title vs body).
 
-Raw OCR dumps the text and loses the rest. A system that cares about invoices needs to know "Total: $1,245" came from the bottom-right, not from a footnote.
+Сырой OCR выгружает текст и теряет все остальное. Система, которой важны счета, должна знать, что "Total: $1,245" пришло из bottom-right, а не из footnote.
 
-## The Concept
+## Концепция
 
-### Era 1 — OCR pipeline (pre-2021)
+### Эпоха 1 — OCR pipeline (до 2021)
 
-The classic stack:
+Классический стек:
 
 1. PDF → image per page.
-2. Tesseract (or commercial OCR) extracts text with per-word bounding boxes.
-3. Layout analyzer identifies blocks (header, table, paragraph).
-4. Table structure recognizer parses tables.
-5. Domain rules + regex extract fields.
+2. Tesseract (или коммерческий OCR) извлекает текст с per-word bounding boxes.
+3. Layout analyzer определяет блоки (header, table, paragraph).
+4. Table structure recognizer разбирает таблицы.
+5. Domain rules + regex извлекают поля.
 
-Works for clean printed text. Breaks on handwriting, skewed scans, complex tables, non-English scripts. Every failure mode requires a custom exception path.
+Работает для чистого печатного текста. Ломается на handwriting, skewed scans, complex tables, non-English scripts. Каждый режим отказа требует собственного exception path.
 
 ### TrOCR (2021)
 
-TrOCR (Li et al., arXiv:2109.10282) replaced Tesseract's classic CNN-CTC with a transformer encoder-decoder trained on synthetic + real text images. Clean win on handwritten and multilingual text. Still a pipeline (detector then TrOCR then layout), but the OCR step improved dramatically.
+TrOCR (Li et al., arXiv:2109.10282) заменил классический CNN-CTC в Tesseract на transformer encoder-decoder, обученный на synthetic + real text images. Чистая победа на рукописном и многоязычном тексте. Все еще pipeline (detector then TrOCR then layout), но шаг OCR резко улучшился.
 
-### Era 2 — OCR-free (2022-2023)
+### Эпоха 2 — OCR-free (2022-2023)
 
-The first OCR-free models said: skip detection entirely, map image pixels to structured output directly.
+Первые OCR-free модели сказали: полностью пропустить detection, отображать пиксели изображения напрямую в структурированный выход.
 
 Donut (Kim et al., arXiv:2111.15664):
 - Encoder-decoder transformer, encoder is Swin-B.
-- Output is JSON for form understanding, markdown for summarization, or any task-specific schema.
-- No OCR, no layout, no detection.
+- Выход — JSON для form understanding, markdown для summarization или любая task-specific schema.
+- Нет OCR, нет layout, нет detection.
 
 Nougat (Blecher et al., arXiv:2308.13418):
-- Trained specifically on scientific papers.
-- Output is LaTeX / markdown.
-- Handles equations, multi-column layout, figures.
-- The model every arXiv-parser calls.
+- Обучен специально на научных статьях.
+- Выход — LaTeX / markdown.
+- Обрабатывает equations, multi-column layout, figures.
+- Модель, которую вызывает каждый arXiv-parser.
 
-These are specialists, not generalists. Donut on a scientific paper fails; Nougat on an invoice fails.
+Это специалисты, а не универсалы. Donut на научной статье проваливается; Nougat на invoice проваливается.
 
 ### LayoutLMv3 (2022)
 
-A different track. LayoutLMv3 (Huang et al., arXiv:2204.08387) keeps OCR but adds layout understanding:
+Другой путь. LayoutLMv3 (Huang et al., arXiv:2204.08387) сохраняет OCR, но добавляет понимание layout:
 
-- Three input streams: OCR text tokens, per-token 2D bounding boxes, image patches.
-- Masked training objective across all three modalities (masked text, masked patches, masked layout).
+- Три входных потока: OCR text tokens, per-token 2D bounding boxes, image patches.
+- Masked training objective по всем трем модальностям (masked text, masked patches, masked layout).
 - Downstream: classification, entity extraction, table QA.
 
-LayoutLMv3 is the peak of OCR-based document understanding. Strong on forms and invoices. Requires OCR upstream. Best pre-VLM accuracy on standardized document benchmarks.
+LayoutLMv3 — вершина OCR-based document understanding. Сильна на forms и invoices. Требует OCR upstream. Лучшая pre-VLM точность на стандартизованных document benchmarks.
 
 ### DocLLM (2023)
 
-DocLLM (Wang et al., arXiv:2401.00908) is LayoutLM's generative sibling. Generates free-form answers conditioned on layout tokens. Better for QA on documents; still depends on OCR input.
+DocLLM (Wang et al., arXiv:2401.00908) — генеративный родственник LayoutLM. Генерирует свободные ответы, обусловленные layout tokens. Лучше для QA по документам; все еще зависит от OCR input.
 
-### Era 3 — VLM-native (2024+)
+### Эпоха 3 — VLM-native (2024+)
 
-2024 VLMs became good enough to replace the pipeline entirely. Feed the full page image at high resolution to a VLM, ask the question, get an answer.
+В 2024 VLM стали достаточно хороши, чтобы полностью заменить pipeline. Подайте полное изображение страницы в высоком разрешении VLM, задайте вопрос, получите ответ.
 
-- LLaVA-NeXT 336-tile AnyRes works for small documents.
-- Qwen2.5-VL dynamic-resolution handles 2048+ pixels natively.
-- Claude Opus 4.7 supports 2576px documents.
-- PaliGemma 2 (April 2025) trains specifically for documents + handwriting.
+- LLaVA-NeXT 336-tile AnyRes работает для небольших документов.
+- Qwen2.5-VL dynamic-resolution нативно обрабатывает 2048+ pixels.
+- Claude Opus 4.7 поддерживает 2576px documents.
+- PaliGemma 2 (апрель 2025) обучается специально для documents + handwriting.
 
-The gap between VLM-native and OCR-pipeline closed rapidly. By 2026, VLM-native wins on:
+Разрыв между VLM-native и OCR-pipeline быстро закрылся. К 2026 VLM-native побеждает на:
 
 - Scene text (hand-written + printed, mixed scripts).
 - Complex tables with merged cells.
 - Math equations embedded in text.
 - Figures with text annotations.
 
-OCR pipelines still win on:
+OCR pipelines все еще выигрывают на:
 
-- Pure-scan workloads at massive scale where per-page latency matters.
-- Pipeline reliability (deterministic failures vs VLM hallucinations).
-- Regulated environments requiring auditable OCR output.
+- Pure-scan workloads в огромном масштабе, где важна per-page latency.
+- Надежности pipeline (детерминированные отказы vs VLM hallucinations).
+- Регулируемых средах, требующих auditable OCR output.
 
-### The Claude 4.7 / GPT-5 frontier
+### Frontier Claude 4.7 / GPT-5
 
-At 2576-pixel native input, frontier VLMs do document understanding at near-human accuracy. The benchmark numbers from early 2026:
+При native input 2576 pixels frontier VLM выполняют document understanding с почти человеческой точностью. Бенчмарк-числа начала 2026:
 
 - DocVQA: Claude 4.7 ~95.1, PaliGemma 2 ~88.4, Nougat ~77.3, pipelined LayoutLMv3 ~83.
 - ChartQA: Claude 4.7 ~92.2, GPT-4V ~78.
 - VisualMRC: Claude 4.7 ~94.
 
-The closed-model gap is mostly resolution and base-LLM scale. Open models at 7B are a few points behind but catching up.
+Разрыв closed-model в основном связан с разрешением и масштабом base-LLM. Открытые модели на 7B отстают на несколько пунктов, но догоняют.
 
-### Math equations and LaTeX output
+### Математические уравнения и LaTeX output
 
-Scientific papers need exact LaTeX output for equations. Nougat was trained on this. VLMs trained with LaTeX targets (Qwen2.5-VL-Math, Nougat derivatives) produce usable LaTeX. Without explicit LaTeX training, VLMs produce readable but imprecise transcriptions.
+Научным статьям нужен точный LaTeX output для уравнений. Nougat обучался на этом. VLM, обученные с LaTeX targets (Qwen2.5-VL-Math, derivatives Nougat), выдают пригодный LaTeX. Без явного LaTeX training VLM выдают читаемые, но неточные транскрипции.
 
-For scientific-paper pipelines in 2026: chain Nougat on the PDF, then a VLM on tricky pages.
+Для scientific-paper pipelines в 2026: цепочка Nougat на PDF, затем VLM на сложных страницах.
 
-### Handwriting
+### Рукописный текст
 
-Still the hardest sub-task. Mixed printed + handwritten (doctors' notes, filled forms) is where OCR pipelines still beat VLMs for cost. Handwritten-only VLMs are improving (Claude 4.7, PaliGemma 2).
+Все еще самая сложная подзадача. Mixed printed + handwritten (doctors' notes, filled forms) — место, где OCR pipelines все еще выигрывают у VLM по стоимости. Handwritten-only VLM улучшаются (Claude 4.7, PaliGemma 2).
 
-### 2026 recipe
+### Рецепт 2026
 
-For a new document-AI project:
+Для нового document-AI project:
 
 - Pure-printed invoices at scale: LayoutLMv3 + rules, cost-efficient.
 - Mixed documents (scientific + handwritten + forms): VLM-native (PaliGemma 2 or Qwen2.5-VL).
 - Full arXiv ingestion: Nougat for math, VLM for figures.
 - Regulatory: OCR pipeline + VLM validator for cross-check.
 
-## Use It
+## Применение
 
 `code/main.py`:
 
-- A toy layout-aware tokenizer: given (text, bbox) pairs, produces the LayoutLMv3-style input.
-- A Donut-style task schema generator: JSON template for forms.
-- A comparison of token budgets per page across OCR-pipeline, Donut, Nougat, and VLM-native.
+- Игрушечный layout-aware tokenizer: по парам (text, bbox) создает вход в стиле LayoutLMv3.
+- Генератор task schema в стиле Donut: JSON template for forms.
+- Сравнение token budgets per page для OCR-pipeline, Donut, Nougat и VLM-native.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-document-ai-stack-picker.md`. Given a document-AI project (domain, scale, quality, regulatory), picks between OCR pipeline, OCR-free specialist, and VLM-native.
+Этот урок создает `outputs/skill-document-ai-stack-picker.md`. По document-AI project (domain, scale, quality, regulatory) выбирает между OCR pipeline, OCR-free specialist и VLM-native.
 
-## Exercises
+## Упражнения
 
-1. Your project is 10M invoices per day. Which stack minimizes cost-per-page without losing accuracy?
+1. Ваш проект обрабатывает 10M invoices per day. Какой стек минимизирует cost-per-page без потери accuracy?
 
-2. Why does LayoutLMv3 outperform pure-CLIP-VLMs on form QA but underperform at scene-text? What does the bbox stream give up?
+2. Почему LayoutLMv3 превосходит pure-CLIP-VLMs на form QA, но уступает на scene-text? Что дает и что теряет bbox stream?
 
-3. Nougat generates LaTeX. Propose a test case where VLM-native output beats Nougat on LaTeX fidelity, and a case where Nougat wins.
+3. Nougat генерирует LaTeX. Предложите тестовый случай, где VLM-native output превосходит Nougat по LaTeX fidelity, и случай, где выигрывает Nougat.
 
-4. Read PaliGemma 2 paper (Google, 2024). What was the key training-data addition that lifted document accuracy vs PaliGemma 1?
+4. Прочитайте статью PaliGemma 2 (Google, 2024). Какое ключевое добавление training-data подняло document accuracy по сравнению с PaliGemma 1?
 
-5. Design a regulatory-safe hybrid: OCR pipeline as primary, VLM as secondary cross-check. How do you resolve disagreement?
+5. Спроектируйте regulatory-safe hybrid: OCR pipeline как primary, VLM как secondary cross-check. Как вы разрешаете disagreement?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| OCR pipeline | "Tesseract-style" | Stage-wise stack: detect -> OCR -> layout -> rules; deterministic, fragile |
-| OCR-free | "Donut-style" | Image-to-output transformer that skips explicit OCR; single model |
-| Layout-aware | "LayoutLM" | Input includes per-token bbox coordinates; unified masking across modalities |
-| VLM-native | "Frontier VLM" | Feed page image directly to Claude/GPT/Qwen VLM at high resolution; no pipeline |
-| DocVQA | "Doc benchmark" | Document VQA standard; most-cited score |
-| Markup output | "LaTeX / MD" | Structured output format instead of free-form text; enables downstream automation |
+| OCR pipeline | "Tesseract-style" | Поэтапный стек: detect -> OCR -> layout -> rules; детерминированный, хрупкий |
+| OCR-free | "Donut-style" | Image-to-output transformer, который пропускает явный OCR; единая модель |
+| Layout-aware | "LayoutLM" | Вход включает per-token bbox coordinates; unified masking across modalities |
+| VLM-native | "Frontier VLM" | Подать page image напрямую в Claude/GPT/Qwen VLM в high resolution; без pipeline |
+| DocVQA | "Doc benchmark" | Стандарт document VQA; самая цитируемая метрика |
+| Markup output | "LaTeX / MD" | Structured output format вместо free-form text; включает downstream automation |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Li et al. — TrOCR (arXiv:2109.10282)](https://arxiv.org/abs/2109.10282)
 - [Blecher et al. — Nougat (arXiv:2308.13418)](https://arxiv.org/abs/2308.13418)

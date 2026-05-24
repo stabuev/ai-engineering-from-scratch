@@ -1,143 +1,143 @@
-# Chameleon and Early-Fusion Token-Only Multimodal Models
+# Chameleon и мультимодальные модели раннего слияния только на токенах
 
-> Every VLM we have seen so far keeps images and text separate. Visual tokens come from a vision encoder, flow into a projector, then meet text inside the LLM. The vision and text vocabularies never overlap. Chameleon (Meta, May 2024) asked: what if they did? Train a VQ-VAE that turns an image into a sequence of discrete tokens from a shared vocabulary. Every multimodal document is now one sequence — text tokens and image tokens interleaved, a single autoregressive loss. Side effect: the model can generate mixed-modality outputs — alternating text and image tokens in a single inference call. This lesson reads the early-fusion thesis and builds a toy version end to end.
+> Все VLM, которые мы видели до сих пор, держат изображения и текст отдельно. Визуальные токены поступают из vision encoder, проходят через projector, а затем встречаются с текстом внутри LLM. Словари зрения и текста никогда не пересекаются. Chameleon (Meta, май 2024) задал вопрос: а что, если пересекаются? Обучим VQ-VAE, который превращает изображение в последовательность дискретных токенов из общего словаря. Каждый мультимодальный документ теперь является одной последовательностью — текстовые токены и токены изображения чередуются, одна авторегрессионная функция потерь. Побочный эффект: модель может генерировать выходы смешанной модальности — чередующиеся текстовые токены и токены изображения в одном вызове инференса. В этом уроке мы разбираем тезис раннего слияния и строим игрушечную версию от начала до конца.
 
-**Type:** Build
-**Languages:** Python (stdlib, VQ-VAE tokenizer + interleaved decoder)
-**Prerequisites:** Phase 12 · 05, Phase 8 (Generative AI)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, VQ-VAE tokenizer + interleaved decoder)
+**Предварительные требования:** Phase 12 · 05, Phase 8 (Generative AI)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain why a shared vocabulary + single loss changes what the model can do.
-- Describe how a VQ-VAE tokenizes an image into a discrete sequence compatible with a transformer's next-token objective.
-- Name Chameleon's training-stability tricks: QK-Norm, dropout placement, LayerNorm ordering.
-- Compare Chameleon vs BLIP-2's Q-Former approach and describe when each is the right choice.
+- Объяснить, почему общий словарь + единая функция потерь меняют возможности модели.
+- Описать, как VQ-VAE токенизирует изображение в дискретную последовательность, совместимую с next-token objective трансформера.
+- Назвать приемы Chameleon для стабильности обучения: QK-Norm, размещение dropout, порядок LayerNorm.
+- Сравнить Chameleon с подходом Q-Former в BLIP-2 и описать, когда какой вариант является правильным выбором.
 
-## The Problem
+## Проблема
 
-Adapter-based VLMs (LLaVA, BLIP-2, Qwen-VL) treat text and image as two different things. A text token goes through `embed(text_token)`; an image goes through `visual_encoder(image) → projector → ... pseudo_tokens`. The model has two input paths that merge partway in.
+VLM на основе адаптеров (LLaVA, BLIP-2, Qwen-VL) рассматривают текст и изображение как две разные вещи. Текстовый токен проходит через `embed(text_token)`; изображение проходит через `visual_encoder(image) → projector → ... pseudo_tokens`. У модели есть два входных пути, которые сливаются на промежуточном этапе.
 
-Three consequences:
+Три последствия:
 
-1. The LLM can only consume images, not emit them. Output is text only.
-2. Mixed-modality documents (alternating paragraphs and images, as in an article) are awkward — you either parse the multimodal input outside the model or chain generations.
-3. Distributional mismatch. Visual tokens and text tokens live in different regions of the hidden space, creating subtle alignment issues.
+1. LLM может только потреблять изображения, но не выдавать их. Выход — только текст.
+2. Документы смешанной модальности (чередующиеся абзацы и изображения, как в статье) обрабатывать неудобно — нужно либо разбирать мультимодальный вход вне модели, либо связывать несколько генераций в цепочку.
+3. Распределительное несоответствие. Визуальные токены и текстовые токены живут в разных областях скрытого пространства, что создает тонкие проблемы выравнивания.
 
-Chameleon rejects the premise: images are just sequences of discrete tokens from a shared vocabulary. Train the model on interleaved documents, one loss, one autoregressive decoder, and you unlock mixed-modality generation for free.
+Chameleon отвергает исходную предпосылку: изображения — это просто последовательности дискретных токенов из общего словаря. Обучите модель на чередующихся документах, с одной функцией потерь и одним авторегрессионным декодером, и вы получите генерацию смешанной модальности бесплатно.
 
-## The Concept
+## Концепция
 
-### VQ-VAE as image tokenizer
+### VQ-VAE как токенизатор изображений
 
-The tokenizer is a vector-quantized variational autoencoder. The architecture:
+Токенизатор — это vector-quantized variational autoencoder. Архитектура:
 
-- Encoder: CNN + ViT that maps image to a spatial feature map, say 32x32 features of dim 256.
-- Codebook: a learned vocabulary of K vectors (Chameleon uses 8192), also dim 256.
-- Quantization: for each spatial feature, look up the nearest codebook entry by L2 distance. Replace the continuous feature with the integer index.
-- Decoder: CNN that takes quantized features back to pixels.
+- Encoder: CNN + ViT, который отображает изображение в пространственную карту признаков, например 32x32 признаков размерности 256.
+- Codebook: обучаемый словарь из K векторов (Chameleon использует 8192), также размерности 256.
+- Quantization: для каждого пространственного признака ищется ближайшая запись codebook по L2-расстоянию. Непрерывный признак заменяется целочисленным индексом.
+- Decoder: CNN, который преобразует квантованные признаки обратно в пиксели.
 
-Training: VAE reconstruction loss + commitment loss + codebook loss. The codebook indices form a discrete alphabet for images.
+Обучение: VAE reconstruction loss + commitment loss + codebook loss. Индексы codebook образуют дискретный алфавит для изображений.
 
-For Chameleon: one image becomes 32*32 = 1024 tokens drawn from a vocabulary of 8192. Concatenate with text tokens (from the LLM's BPE vocabulary, say 32000). Final vocabulary: 40192. The transformer sees one sequence, one loss.
+Для Chameleon одно изображение становится 32*32 = 1024 токенами из словаря размером 8192. Они конкатенируются с текстовыми токенами (из BPE-словаря LLM, скажем 32000). Итоговый словарь: 40192. Трансформер видит одну последовательность и одну функцию потерь.
 
-### The shared vocabulary
+### Общий словарь
 
-Chameleon's vocabulary combines text tokens, image tokens, and modality separators. Each token has a single ID. The input embedding layer maps every ID to a D-dim hidden vector. The output projection maps hidden back to vocab logits. Softmax picks the next token, whatever modality.
+Словарь Chameleon объединяет текстовые токены, токены изображений и разделители модальностей. У каждого токена один ID. Входной слой embedding отображает каждый ID в скрытый D-мерный вектор. Выходная проекция отображает скрытое состояние обратно в логиты словаря. Softmax выбирает следующий токен, какой бы модальности он ни был.
 
-Separators matter: `<image>` and `</image>` tags bracket the image-token sequence. At generation time, if the model emits `<image>`, downstream software knows the next 1024 tokens are VQ indices to send to the decoder for pixel rendering.
+Разделители важны: теги `<image>` и `</image>` обрамляют последовательность токенов изображения. Во время генерации, если модель выдает `<image>`, нижележащее ПО знает, что следующие 1024 токена — это VQ-индексы, которые нужно отправить в декодер для рендеринга пикселей.
 
-### Mixed-modality generation
+### Генерация смешанной модальности
 
-Inference is next-token prediction in the shared vocabulary. Example prompt: "Draw a cat and describe it." Chameleon emits:
+Инференс — это предсказание следующего токена в общем словаре. Пример prompt: "Draw a cat and describe it." Chameleon выдает:
 
 ```
 <image> 4821 1029 2891 ... (1024 image tokens) </image>
 The cat is orange, sitting on a windowsill...
 ```
 
-The model picks the order autonomously — it may produce image then text, text then image, or interleave. Same decoder, same loss.
+Модель выбирает порядок автономно — она может сначала создать изображение, потом текст, сначала текст, потом изображение, или чередовать их. Тот же декодер, та же функция потерь.
 
-Compare to adapter VLMs where generation is text-only. Chameleon reopens the question of model output modalities.
+Сравните с adapter VLM, где генерация ограничена текстом. Chameleon заново открывает вопрос о модальностях выхода модели.
 
-### Training stability — QK-Norm, dropout, LayerNorm ordering
+### Стабильность обучения — QK-Norm, dropout, порядок LayerNorm
 
-Early-fusion training is unstable at scale. Chameleon's paper documents three tricks:
+Обучение раннего слияния нестабильно в масштабе. В статье Chameleon описаны три приема:
 
-- QK-Norm. Apply LayerNorm to the query and key projections inside attention, before the dot product. Prevents logit magnitude explosion at depth. Used by multiple post-2024 large models.
-- Dropout placement. Dropout after every residual-add, not just after attention and MLP. More regularization required when gradients from image tokens can dominate.
-- LayerNorm ordering. Pre-LN on the residual branch (standard), plus an extra LN on the skip connection of the last block. Stabilizes final-layer gradient flow.
+- QK-Norm. Применять LayerNorm к проекциям query и key внутри attention, до скалярного произведения. Это предотвращает взрыв величины логитов на глубине. Используется несколькими крупными моделями после 2024 года.
+- Размещение dropout. Dropout после каждого residual-add, а не только после attention и MLP. Требуется больше регуляризации, когда градиенты от токенов изображения могут доминировать.
+- Порядок LayerNorm. Pre-LN на residual branch (стандартно) плюс дополнительная LN на skip connection последнего блока. Стабилизирует поток градиентов последнего слоя.
 
-Without these tricks, 34B-param Chameleon training diverged at multiple checkpoints. With them, it converges. The training recipe is as much of the contribution as the architecture.
+Без этих приемов обучение Chameleon с 34B параметров расходилось на нескольких checkpoints. С ними оно сходится. Рецепт обучения является не меньшим вкладом, чем архитектура.
 
-### The tokenizer's reconstruction ceiling
+### Потолок реконструкции токенизатора
 
-VQ-VAE is lossy. At 8192 codebook entries and 1024 tokens per 512x512 image, reconstruction PSNR caps around 26-28 dB. This is enough for recognizable image gen but visibly worse than continuous-space diffusion (Stable Diffusion 3 achieves 32+ dB).
+VQ-VAE дает потери. При 8192 записях codebook и 1024 токенах на изображение 512x512 reconstruction PSNR ограничивается примерно 26-28 dB. Этого достаточно для узнаваемой генерации изображений, но заметно хуже, чем diffusion в непрерывном пространстве (Stable Diffusion 3 достигает 32+ dB).
 
-The tokenizer is the bottleneck. Better tokenizers (MAGVIT-v2, IBQ, SBER-MoVQGAN) lift the ceiling. Emu3 (Lesson 12.12) achieves SDXL-quality generation via a better tokenizer alone.
+Токенизатор — узкое место. Лучшие токенизаторы (MAGVIT-v2, IBQ, SBER-MoVQGAN) поднимают потолок. Emu3 (Lesson 12.12) достигает качества генерации уровня SDXL только за счет лучшего токенизатора.
 
 ### Chameleon vs BLIP-2 / LLaVA
 
 Chameleon (early fusion, shared vocab):
-- One loss, one decoder.
-- Generates mixed-modality output.
-- Tokenizer is the quality ceiling.
-- Expensive: VQ-VAE decoder per generated image on inference path.
+- Одна функция потерь, один декодер.
+- Генерирует выход смешанной модальности.
+- Токенизатор задает потолок качества.
+- Дорого: VQ-VAE decoder для каждого сгенерированного изображения на пути инференса.
 
 BLIP-2 / LLaVA (late fusion, separate towers):
-- Vision in, text out only.
-- Reuses pretrained LLM.
-- No tokenizer bottleneck for understanding.
-- Cheap: single forward pass.
+- Изображение на входе, только текст на выходе.
+- Переиспользует pretrained LLM.
+- Нет узкого места токенизатора для понимания.
+- Дешево: один forward pass.
 
-Pick by task. If you need image generation, Chameleon family. If you only need understanding, adapter-VLM is simpler and reuses more pretrained compute.
+Выбирайте по задаче. Если нужна генерация изображений — семейство Chameleon. Если нужно только понимание, adapter-VLM проще и переиспользует больше pretrained compute.
 
-### Fuyu and AnyGPT
+### Fuyu и AnyGPT
 
-Fuyu (Adept, 2023) is a related approach: skip the separate vision encoder entirely, feed raw image patches through the LLM's input projection as if they were tokens, no tokenizer. Simpler than Chameleon, loses the shared-vocab output generation.
+Fuyu (Adept, 2023) — родственный подход: полностью отказаться от отдельного vision encoder, подавать сырые image patches через входную проекцию LLM так, будто это токены, без токенизатора. Он проще Chameleon, но теряет генерацию выхода через общий словарь.
 
-AnyGPT (Zhan et al., 2024) extends Chameleon to four modalities: text, image, speech, music. Same VQ-VAE trick for each, shared transformer. Any-to-any generation. Covered more in Lesson 12.16.
+AnyGPT (Zhan et al., 2024) расширяет Chameleon до четырех модальностей: текст, изображение, речь, музыка. Тот же прием VQ-VAE для каждой модальности, общий трансформер. Генерация any-to-any. Подробнее рассматривается в Lesson 12.16.
 
-## Use It
+## Использование
 
-`code/main.py` builds a toy end-to-end early-fusion model:
+`code/main.py` строит игрушечную end-to-end модель раннего слияния:
 
-- A tiny VQ-VAE-style quantizer that maps 8x8 patches to codebook indices (K=16).
-- A shared vocabulary of (text ids 0..31) + (image ids 32..47) + (separators 48, 49).
-- A toy autoregressive decoder (bigram table) trained on synthetic captions + image-token sequences.
-- Sampling loop that emits alternating text + image tokens given a prompt.
+- Крошечный VQ-VAE-style quantizer, который отображает 8x8 patches в индексы codebook (K=16).
+- Общий словарь из (text ids 0..31) + (image ids 32..47) + (separators 48, 49).
+- Игрушечный авторегрессионный декодер (таблица биграмм), обученный на синтетических captions + последовательностях токенов изображения.
+- Цикл sampling, который по prompt выдает чередующиеся текстовые токены и токены изображения.
 
-The code intentionally keeps the transformer tiny (bigrams) so you can trace the signal flow end to end.
+Код намеренно оставляет трансформер крошечным (биграммы), чтобы вы могли проследить поток сигнала от начала до конца.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-tokenizer-vs-adapter-picker.md`. Given a product spec (understand only vs understand + generate, required image quality, cost budget), it picks between Chameleon-family (early fusion) and LLaVA-family (late fusion) and justifies with quantitative rules of thumb.
+Этот урок создает `outputs/skill-tokenizer-vs-adapter-picker.md`. По product spec (только понимание vs понимание + генерация, требуемое качество изображений, бюджет стоимости) он выбирает между Chameleon-family (early fusion) и LLaVA-family (late fusion) и обосновывает выбор количественными практическими правилами.
 
-## Exercises
+## Упражнения
 
-1. Chameleon uses K=8192 codebook entries and 1024 tokens per 512x512 image. Estimate the compression ratio vs a 24-bit RGB image. Is it lossy? How lossy?
+1. Chameleon использует K=8192 записей codebook и 1024 токена на изображение 512x512. Оцените степень сжатия по сравнению с 24-bit RGB image. Есть ли потери? Насколько большие?
 
-2. A 4K image (3840x2160) at the same VQ-VAE density produces how many image tokens? Can a Chameleon-style model generate a 4K image in one inference call? What breaks first — context, tokenizer quality, or KV cache?
+2. 4K изображение (3840x2160) при той же плотности VQ-VAE дает сколько токенов изображения? Может ли модель в стиле Chameleon сгенерировать 4K изображение за один вызов инференса? Что сломается первым — context, качество токенизатора или KV cache?
 
-3. Implement QK-Norm in pure Python. Given a 64-dim query and key, show the dot product before and after LayerNorm. Why is magnitude control important at depth?
+3. Реализуйте QK-Norm на чистом Python. Для 64-мерных query и key покажите скалярное произведение до и после LayerNorm. Почему контроль величины важен на глубине?
 
-4. Read Chameleon Section 2.3 on training stability. Describe the exact failure mode the paper observed at 34B without QK-Norm. What was the "norm explosion" signature?
+4. Прочитайте Chameleon Section 2.3 о стабильности обучения. Опишите точный failure mode, который статья наблюдала на 34B без QK-Norm. Как выглядела сигнатура "norm explosion"?
 
-5. Extend the toy decoder to emit a mixed-modality response given a text-only prompt. Measure how often the model picks image-first vs text-first given training-data distribution 60% text-first / 40% image-first.
+5. Расширьте игрушечный декодер, чтобы он выдавал ответ смешанной модальности по text-only prompt. Измерьте, как часто модель выбирает image-first vs text-first при распределении обучающих данных 60% text-first / 40% image-first.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Early fusion | "Unified tokens" | Images converted to discrete tokens sharing the transformer's vocabulary from step one |
-| VQ-VAE | "Image tokenizer" | CNN + ViT + codebook that maps images to integer indices the transformer can predict |
-| Shared vocabulary | "One dictionary" | A single token ID space covering text + image + modality separators |
-| QK-Norm | "Attention stabilizer" | LayerNorm applied to query and key before their dot product, prevents norm blowup |
-| Mixed-modality generation | "Text + image output" | Inference that autonomously produces interleaved text and image tokens in one pass |
-| Codebook size | "K entries" | Number of discrete vectors the VQ-VAE can quantize to; trades compression for fidelity |
-| Tokenizer ceiling | "Reconstruction limit" | Best PSNR achievable by decoding VQ tokens; bounds the model's image quality |
+| Early fusion | "Unified tokens" | Изображения преобразуются в дискретные токены, которые с первого шага разделяют словарь трансформера |
+| VQ-VAE | "Image tokenizer" | CNN + ViT + codebook, отображающие изображения в целочисленные индексы, которые трансформер может предсказывать |
+| Shared vocabulary | "One dictionary" | Единое пространство token ID, покрывающее текст + изображение + разделители модальностей |
+| QK-Norm | "Attention stabilizer" | LayerNorm применяется к query и key перед их скалярным произведением, предотвращая взрыв норм |
+| Mixed-modality generation | "Text + image output" | Инференс, который автономно создает чередующиеся текстовые токены и токены изображения за один проход |
+| Codebook size | "K entries" | Число дискретных векторов, в которые VQ-VAE может квантовать; балансирует сжатие и точность |
+| Tokenizer ceiling | "Reconstruction limit" | Лучший PSNR, достижимый при декодировании VQ tokens; ограничивает качество изображений модели |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Chameleon Team — Chameleon: Mixed-Modal Early-Fusion Foundation Models (arXiv:2405.09818)](https://arxiv.org/abs/2405.09818)
 - [Aghajanyan et al. — CM3 (arXiv:2201.07520)](https://arxiv.org/abs/2201.07520)

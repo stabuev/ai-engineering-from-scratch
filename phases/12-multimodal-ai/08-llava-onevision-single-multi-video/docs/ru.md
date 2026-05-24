@@ -1,127 +1,127 @@
-# LLaVA-OneVision: Single-Image, Multi-Image, Video in One Model
+# LLaVA-OneVision: Single-Image, Multi-Image, Video в одной модели
 
-> Before LLaVA-OneVision (Li et al., August 2024) the open-VLM world had separate lineages: LLaVA-1.5 for single images, multi-image models like Mantis and VILA, video models like Video-LLaVA and Video-LLaMA. Each won its benchmark and failed at the others. LLaVA-OneVision argued a single curriculum could train one model to dominate all three scenarios, and that the emergent task-transfer effects (single-image skills exported to video, multi-image reasoning exported to single-image) beat the sum of specialists. The recipe is deceptively simple: a visual-token budget that stays constant across scenarios, plus an explicit curriculum that moves from single-image to OneVision (multi-image) to video. This lesson reads the budget, the curriculum, and the emergent behaviors.
+> До LLaVA-OneVision (Li et al., August 2024) мир open-VLM имел отдельные линии: LLaVA-1.5 для single images, multi-image models вроде Mantis и VILA, video models вроде Video-LLaVA и Video-LLaMA. Каждая побеждала на своем benchmark и проваливалась на остальных. LLaVA-OneVision утверждала, что один curriculum может обучить одну модель доминировать во всех трех сценариях, а emergent task-transfer effects (single-image skills exported to video, multi-image reasoning exported to single-image) превосходят сумму specialists. Recipe обманчиво прост: visual-token budget, который остается постоянным между сценариями, плюс явный curriculum, двигающийся от single-image к OneVision (multi-image) и затем к video. Этот урок разбирает budget, curriculum и emergent behaviors.
 
-**Type:** Build
-**Languages:** Python (stdlib, token budget solver + curriculum planner)
-**Prerequisites:** Phase 12 · 05 (LLaVA), Phase 12 · 06 (any-resolution)
-**Time:** ~180 minutes
+**Тип:** Практика
+**Языки:** Python (stdlib, token budget solver + curriculum planner)
+**Предварительные требования:** Phase 12 · 05 (LLaVA), Phase 12 · 06 (any-resolution)
+**Время:** ~180 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Design a visual-token budget that holds constant across single-image, multi-image, and video inputs.
-- Order a training curriculum that transfers skills from single-image to video without catastrophic forgetting.
-- Explain why a single model beats specialists at the same parameter count when curriculum is done right.
-- Name the three emergent capabilities reported by LLaVA-OneVision: multi-camera reasoning, set-of-mark prompting, iPhone-screenshot agent.
+- Проектировать visual-token budget, который остается постоянным для single-image, multi-image и video inputs.
+- Упорядочивать training curriculum, который переносит skills из single-image в video без catastrophic forgetting.
+- Объяснять, почему одна модель превосходит specialists при том же parameter count, если curriculum сделан правильно.
+- Называть три emergent capabilities, о которых сообщает LLaVA-OneVision: multi-camera reasoning, set-of-mark prompting, iPhone-screenshot agent.
 
-## The Problem
+## Проблема
 
-Image, multi-image, and video each stress a model differently.
+Image, multi-image и video по-разному нагружают модель.
 
-Single-image wants high-resolution tokens (AnyRes, ~2880 visual tokens) to catch OCR and fine detail. Budget per sample: one image, 2880 tokens.
+Single-image требует high-resolution tokens (AnyRes, ~2880 visual tokens), чтобы ловить OCR и мелкие детали. Budget per sample: one image, 2880 tokens.
 
-Multi-image wants several images at moderate resolution (~576 tokens each) so reasoning across images fits in context. Budget per sample: 4-8 images, 576 each, 2300-4600 tokens.
+Multi-image требует несколько изображений среднего разрешения (~576 tokens each), чтобы reasoning across images помещался в context. Budget per sample: 4-8 images, 576 each, 2300-4600 tokens.
 
-Video wants many frames at low resolution (~196 tokens per frame after pooling) to capture temporal dynamics. Budget per sample: 8-32 frames, 196 each, 1600-6200 tokens.
+Video требует много frames в low resolution (~196 tokens per frame after pooling), чтобы захватить temporal dynamics. Budget per sample: 8-32 frames, 196 each, 1600-6200 tokens.
 
-If you train separate models, you pick one budget. If you train one model, you need the budget to scale sensibly across scenarios without blowing context.
+Если вы обучаете отдельные модели, вы выбираете один budget. Если вы обучаете одну модель, budget должен масштабироваться осмысленно между сценариями, не взрывая context.
 
-Pre-OneVision, the default answer was "train one scenario, ignore the others." Video-LLaVA retrofitted video onto an image model with extra training stages. LLaVA-NeXT added multi-image support with tiling. None handled all three cleanly.
+До OneVision стандартный ответ был "train one scenario, ignore the others." Video-LLaVA дооснастил image model видео через extra training stages. LLaVA-NeXT добавил multi-image support with tiling. Ничто не обрабатывало все три чисто.
 
-## The Concept
+## Концепция
 
 ### The OneVision token budget
 
-LLaVA-OneVision picks a unified visual-token budget of approximately 3000-4000 tokens per sample, allocated differently per scenario:
+LLaVA-OneVision выбирает unified visual-token budget примерно 3000-4000 tokens per sample, распределенный по-разному для каждого сценария:
 
-- Single image: AnyRes-9 (3x3 tiles + thumbnail), each tile at 384 with 729 patches, aggressive bilinear pooling 2x2 → 182 per tile. Total: 9 * 182 + 182 = 1820 tokens. Or AnyRes-4 at 729-per-tile = 2916 + 729.
-- Multi-image: each image at moderate resolution (384, no tiling), 729 tokens with no pooling. Budget 6 images → 4374 tokens.
+- Single image: AnyRes-9 (3x3 tiles + thumbnail), каждый tile at 384 with 729 patches, aggressive bilinear pooling 2x2 → 182 per tile. Total: 9 * 182 + 182 = 1820 tokens. Или AnyRes-4 at 729-per-tile = 2916 + 729.
+- Multi-image: каждое изображение at moderate resolution (384, no tiling), 729 tokens with no pooling. Budget 6 images → 4374 tokens.
 - Video: 32 frames at 384 resolution with aggressive 3x3 bilinear pool → 81 tokens per frame. Total: 32 * 81 = 2592 tokens.
 
-The allocation maintains roughly constant total tokens. The LLM never sees a batch that blows its context. The encoder produces different geometry per scenario, but the LLM consumes the same budget.
+Распределение поддерживает примерно constant total tokens. LLM никогда не видит batch, который взрывает context. Encoder производит разную geometry по сценариям, но LLM потребляет тот же budget.
 
 ### The three-stage curriculum
 
-LLaVA-OneVision trains in three stages:
+LLaVA-OneVision обучается в три stage:
 
-1. Single-image SFT (stage SI). All data is single-image-plus-text. Train on high-resolution AnyRes input. This teaches perception, OCR, and fine-grained understanding. Uses LLaVA-NeXT data plus OneVision-specific single-image data.
-2. OneVision SFT (stage OV). Mix single-image + multi-image + video (uniformly sampled frames). Train on the unified token budget. This teaches the model to handle heterogeneous batch shapes. No weight reset — continues from stage SI.
-3. Task transfer (stage TT). Continue with a target task mix, typically heavier on multi-image or video depending on product. Optional fine-tune for deployment.
+1. Single-image SFT (stage SI). Все data — single-image-plus-text. Обучение на high-resolution AnyRes input. Это учит perception, OCR и fine-grained understanding. Использует LLaVA-NeXT data plus OneVision-specific single-image data.
+2. OneVision SFT (stage OV). Mix single-image + multi-image + video (uniformly sampled frames). Обучение на unified token budget. Это учит модель обрабатывать heterogeneous batch shapes. No weight reset — продолжает с stage SI.
+3. Task transfer (stage TT). Продолжение с target task mix, обычно более тяжелым по multi-image или video в зависимости от product. Optional fine-tune for deployment.
 
-Critical: the curriculum order matters. Training video-first or multi-image-first produces worse image performance than single-image-first, even with the same data. The paper ablates this explicitly.
+Критично: порядок curriculum важен. Training video-first или multi-image-first дает хуже image performance, чем single-image-first, даже с теми же data. Статья явно ablates this.
 
 ### Why curriculum works
 
-Single-image training builds the perceptual base. Patch tokens carry fine-grained visual features; the LLM learns to integrate them with text. Multi-image and video introduce structural challenges (which image is which, what happened first) that are hard to learn without a strong perceptual base.
+Single-image training строит perceptual base. Patch tokens несут fine-grained visual features; LLM учится интегрировать их с text. Multi-image и video вводят structural challenges (which image is which, what happened first), которые трудно выучить без сильной perceptual base.
 
-If you train all scenarios from scratch together, the model underfits perception (limited single-image data per batch) and overfits structure (lots of multi-image / video data). Result: a model that follows cross-image reasoning patterns but is visually shallow.
+Если обучать все сценарии с нуля вместе, модель недообучает perception (limited single-image data per batch) и переобучает structure (много multi-image / video data). Результат: модель следует cross-image reasoning patterns, но визуально поверхностна.
 
-Curriculum ordering gives you perception strength from stage SI, then compositional/temporal reasoning from stage OV, without losing either.
+Curriculum ordering дает perception strength из stage SI, затем compositional/temporal reasoning из stage OV, не теряя ни то ни другое.
 
 ### Emergent cross-scenario skills
 
-The LLaVA-OneVision paper reports three emergent capabilities:
+Статья LLaVA-OneVision сообщает о трех emergent capabilities:
 
-1. Multi-camera reasoning. Trained on multi-image + video separately; at inference, asked to reason about a multi-camera driving scene. The model correctly integrates the views despite never seeing that exact format in training.
-2. Set-of-mark prompting. User annotates objects in an image with numbered marks; the model reasons about "what is mark 3 doing relative to mark 7." Trained on neither marks nor annotation; learned from the combination of spatial grounding + multi-image reference.
-3. iPhone-screenshot agent. User provides a screenshot of an iPhone screen and asks to plan the next click. Trained on UI screenshots, video of user workflows, and multi-image before/after pairs. Generalizes to the agent use case.
+1. Multi-camera reasoning. Обучена на multi-image + video separately; на inference ее просят рассуждать о multi-camera driving scene. Модель правильно интегрирует views, хотя никогда не видела такой exact format in training.
+2. Set-of-mark prompting. Пользователь аннотирует объекты на изображении numbered marks; модель рассуждает о "what is mark 3 doing relative to mark 7." Не обучалась ни на marks, ни на annotation; learned from the combination of spatial grounding + multi-image reference.
+3. iPhone-screenshot agent. Пользователь дает screenshot iPhone screen и просит спланировать next click. Обучалась на UI screenshots, video of user workflows и multi-image before/after pairs. Generalizes to the agent use case.
 
-These are not trained tasks; they emerge from the curriculum's compositional structure.
+Это не trained tasks; они emerge from the curriculum's compositional structure.
 
 ### Visual-token pooling
 
-The token budget requires pooling. OneVision uses bilinear interpolation on the 2D patch grid: 24x24 = 576 patches becomes 12x12 = 144 (2x factor) or 8x8 = 64 (3x factor). Pooling is done in patch-grid space, not token space, to preserve locality.
+Token budget требует pooling. OneVision использует bilinear interpolation на 2D patch grid: 24x24 = 576 patches становится 12x12 = 144 (2x factor) или 8x8 = 64 (3x factor). Pooling выполняется в patch-grid space, а не token space, чтобы сохранить locality.
 
-The choice of pooling factor per scenario is itself a hyperparameter. Less pooling = more tokens = richer representation. More pooling = fewer tokens = more frames / images fit.
+Выбор pooling factor per scenario сам является hyperparameter. Less pooling = more tokens = richer representation. More pooling = fewer tokens = помещается больше frames / images.
 
 ### LLaVA-OneVision-1.5
 
-The 2025 follow-up (LLaVA-OneVision-1.5, arXiv 2509.23661) is "fully open" in training data, model weights, and code. Matches the proprietary gap on some benchmarks and democratizes the recipe. Same curriculum, more data, better base LLM. No architecture change.
+Follow-up 2025 года (LLaVA-OneVision-1.5, arXiv 2509.23661) является "fully open" в training data, model weights и code. Закрывает proprietary gap на некоторых benchmarks и democratizes the recipe. Тот же curriculum, больше data, лучший base LLM. Без architecture change.
 
 ### Contrast with Qwen2.5-VL
 
-Qwen2.5-VL (Lesson 12.09) makes different choices. It uses M-RoPE and dynamic FPS instead of fixed pooling. Its budget scales with input — a 1-minute video uses more tokens than a 5-second video. LLaVA-OneVision fixes the budget and scales the pooling. Both work; they trade configurability for predictability.
+Qwen2.5-VL (Lesson 12.09) делает другие выборы. Он использует M-RoPE и dynamic FPS вместо fixed pooling. Его budget масштабируется с input — 1-minute video использует больше tokens, чем 5-second video. LLaVA-OneVision фиксирует budget и масштабирует pooling. Оба подхода работают; они обменивают configurability на predictability.
 
-## Use It
+## Использование
 
-`code/main.py` is a curriculum and budget planner for a OneVision-style VLM. Given a token budget per sample and a target scenario mix (say 40% single-image, 30% multi-image, 30% video), it:
+`code/main.py` — это curriculum and budget planner для OneVision-style VLM. Для заданного token budget per sample и target scenario mix (say 40% single-image, 30% multi-image, 30% video) он:
 
-- Allocates resolution, pooling factor, and frames per scenario.
-- Checks that every scenario fits within the shared budget.
-- Reports expected token count, LLM FLOPs, and which scenarios are under-tokenized.
-- Prints a stage-by-stage training schedule.
+- Распределяет resolution, pooling factor и frames per scenario.
+- Проверяет, что каждый scenario помещается в shared budget.
+- Сообщает expected token count, LLM FLOPs и какие scenarios are under-tokenized.
+- Печатает stage-by-stage training schedule.
 
-Use it to plan a OneVision fine-tune or to sanity-check a VLM deployment's per-request cost.
+Используйте его, чтобы планировать OneVision fine-tune или sanity-check per-request cost VLM deployment.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-onevision-budget-planner.md`. Given a target task distribution and a per-sample budget, it emits the AnyRes factor, per-frame pooling, video frame count, and curriculum stage weights. Use this whenever you train or fine-tune a unified-scenario VLM.
+Этот урок создает `outputs/skill-onevision-budget-planner.md`. Для target task distribution и per-sample budget он выдает AnyRes factor, per-frame pooling, video frame count и curriculum stage weights. Используйте это всякий раз, когда train or fine-tune a unified-scenario VLM.
 
-## Exercises
+## Упражнения
 
-1. Your product supports 80% single-image, 10% multi-image (2-4 images), 10% video (8-16 frames). Design the token budget. Where would you put the extra budget you save from not doing heavy multi-image?
+1. Ваш product поддерживает 80% single-image, 10% multi-image (2-4 images), 10% video (8-16 frames). Спроектируйте token budget. Куда бы вы поместили extra budget, сэкономленный от отсутствия heavy multi-image?
 
-2. Read LLaVA-OneVision Section 4.3 (emergent capabilities). Propose a fourth emergent skill the curriculum would likely unlock but the paper did not report.
+2. Прочитайте LLaVA-OneVision Section 4.3 (emergent capabilities). Предложите fourth emergent skill, который curriculum, вероятно, открыл бы, но paper не сообщил.
 
-3. Swap the curriculum order — train multi-image first, then single-image, then video. Predict which benchmarks degrade and why.
+3. Поменяйте curriculum order — train multi-image first, then single-image, then video. Предскажите, какие benchmarks degrade и почему.
 
-4. The paper reports video benchmarks trained on only 8 frames per sample. Does that generalize to 30-second videos at inference? What breaks first — the token budget or the temporal reasoning?
+4. Paper reports video benchmarks trained on only 8 frames per sample. Обобщается ли это на 30-second videos at inference? Что ломается первым — token budget или temporal reasoning?
 
-5. Bilinear pooling of 24x24 patches to 12x12 is a 4x reduction per dim. Implement the pooling in stdlib Python and verify that the mean over each 2x2 block matches the bilinear output.
+5. Bilinear pooling of 24x24 patches to 12x12 is a 4x reduction per dim. Реализуйте pooling in stdlib Python и проверьте, что mean over each 2x2 block matches the bilinear output.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| OneVision scenario | "Single-image, multi-image, or video" | One of three input shapes the unified VLM handles; the budget stays constant across |
-| Token budget | "How many tokens per sample" | Total visual tokens the LLM sees per training / inference sample, typically 3000-4000 |
-| Curriculum | "Training order" | Stage ordering (single-image → multi-image → video) chosen for emergent transfer |
-| Bilinear pooling | "Token shrink" | Applying bilinear interpolation to the patch grid (2D) to reduce token count while preserving locality |
-| Emergent skill | "Not trained, still works" | Capability that appears at inference without matching training data, due to curriculum composition |
-| AnyRes-k | "k-tile setup" | k sub-tiles of fixed resolution plus one thumbnail, typical k ∈ {4, 9} |
-| Task transfer | "Cross-scenario generalization" | Skills learned on single-image that apply to video (and vice versa) via shared backbone |
+| OneVision scenario | "Single-image, multi-image, or video" | Одна из трех input shapes, которые unified VLM обрабатывает; budget остается постоянным across |
+| Token budget | "How many tokens per sample" | Total visual tokens, которые LLM видит per training / inference sample, обычно 3000-4000 |
+| Curriculum | "Training order" | Stage ordering (single-image → multi-image → video), выбранный для emergent transfer |
+| Bilinear pooling | "Token shrink" | Применение bilinear interpolation к patch grid (2D), чтобы уменьшить token count при сохранении locality |
+| Emergent skill | "Not trained, still works" | Capability, появляющаяся на inference без matching training data благодаря curriculum composition |
+| AnyRes-k | "k-tile setup" | k sub-tiles фиксированного разрешения плюс one thumbnail, typical k ∈ {4, 9} |
+| Task transfer | "Cross-scenario generalization" | Skills, learned on single-image, которые применяются к video (and vice versa) через shared backbone |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Li et al. — LLaVA-OneVision (arXiv:2408.03326)](https://arxiv.org/abs/2408.03326)
 - [LLaVA-OneVision-1.5: Fully Open Framework (arXiv:2509.23661)](https://arxiv.org/abs/2509.23661)

@@ -1,57 +1,57 @@
-# Multimodal Agents and Computer-Use (Capstone)
+# Мультимодальные агенты и computer-use (Capstone)
 
-> The 2026 frontier product is a multimodal agent that reads screenshots, clicks buttons, navigates web UIs, fills forms, and completes workflows end-to-end. SeeClick and CogAgent (2024) proved the GUI-grounding primitive. Ferret-UI added mobile. ChartAgent introduced visual tool-use for charts. VisualWebArena and AgentVista (2026) are the benchmarks the frontier chases — and even Gemini 3 Pro and Claude Opus 4.7 score ~30% on AgentVista's hard tasks. This capstone pulls together every thread of Phase 12: perception (high-res VLM), reasoning (LLM with tool use), grounding (coordinate output), long-horizon memory, and evaluation.
+> Frontier-продукт 2026 года — мультимодальный агент, который читает screenshots, кликает buttons, навигирует web UIs, заполняет forms и выполняет workflows end-to-end. SeeClick и CogAgent (2024) доказали примитив GUI-grounding. Ferret-UI добавил mobile. ChartAgent ввел visual tool-use для charts. VisualWebArena и AgentVista (2026) — бенчмарки, за которыми гонится frontier, и даже Gemini 3 Pro и Claude Opus 4.7 набирают ~30% на hard tasks AgentVista. Этот capstone собирает все линии Phase 12: perception (high-res VLM), reasoning (LLM with tool use), grounding (coordinate output), long-horizon memory и evaluation.
 
-**Type:** Capstone
-**Languages:** Python (stdlib, action schema + agent loop skeleton)
-**Prerequisites:** Phase 12 · 05 (LLaVA), Phase 12 · 09 (Qwen-VL JSON), Phase 14 (Agent Engineering)
-**Time:** ~240 minutes
+**Тип:** Capstone
+**Языки:** Python (stdlib, action schema + agent loop skeleton)
+**Предварительные требования:** Phase 12 · 05 (LLaVA), Phase 12 · 09 (Qwen-VL JSON), Phase 14 (Agent Engineering)
+**Время:** ~240 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Design a multimodal agent loop: perceive → reason → act → observe → repeat.
-- Build a GUI grounding output schema (click coordinates, type text, scroll, drag) the VLM can emit as JSON.
-- Compare screenshot-only agents vs accessibility-tree agents vs hybrid agents.
-- Set up a multimodal agent benchmark evaluation on a small VisualWebArena slice.
+- Спроектировать multimodal agent loop: perceive → reason → act → observe → repeat.
+- Построить GUI grounding output schema (click coordinates, type text, scroll, drag), которую VLM может выдавать как JSON.
+- Сравнить screenshot-only agents, accessibility-tree agents и hybrid agents.
+- Настроить multimodal agent benchmark evaluation на небольшом срезе VisualWebArena.
 
-## The Problem
+## Проблема
 
-A booking-site workflow: "find me a flight to Tokyo for April 15, aisle seat under $800, book it."
+Workflow сайта бронирования: "find me a flight to Tokyo for April 15, aisle seat under $800, book it."
 
-A multimodal agent needs to:
+Мультимодальному агенту нужно:
 
-1. Take a screenshot of the browser.
-2. Parse the screenshot + URL + goal into a plan.
-3. Emit a structured action: click (at x,y), type "Tokyo" (at element E), scroll down, select (radio button).
-4. Apply the action to the browser.
-5. Observe the new state (next screenshot).
-6. Repeat until the task is done.
+1. Сделать screenshot браузера.
+2. Разобрать screenshot + URL + goal в plan.
+3. Выдать structured action: click (at x,y), type "Tokyo" (at element E), scroll down, select (radio button).
+4. Применить action к браузеру.
+5. Наблюдать новое state (следующий screenshot).
+6. Повторять, пока задача не выполнена.
 
-Each step is a multimodal VLM call. The VLM output must be parseable JSON. Errors compound across steps, so recovery matters.
+Каждый шаг — мультимодальный VLM call. Выход VLM должен быть parseable JSON. Ошибки накапливаются по шагам, поэтому recovery важен.
 
-## The Concept
+## Концепция
 
-### GUI grounding — the primitive
+### GUI grounding — примитив
 
-GUI grounding is: given a screenshot and a natural language instruction, output the (x, y) coordinate to click (or other action).
+GUI grounding: по screenshot и инструкции на естественном языке выдать координату (x, y), куда кликнуть (или другое action).
 
-SeeClick (arXiv:2401.10935) was the first open result at scale: fine-tune a VLM on synthetic + real GUI data, output coordinates as plain text tokens. Works.
+SeeClick (arXiv:2401.10935) был первым открытым результатом в масштабе: fine-tune VLM на synthetic + real GUI data, output coordinates как plain text tokens. Работает.
 
-CogAgent (arXiv:2312.08914) added 1120x1120 high-resolution encoding for dense UIs. Score: ~84% on web navigation.
+CogAgent (arXiv:2312.08914) добавил high-resolution encoding 1120x1120 для dense UIs. Score: ~84% on web navigation.
 
-Ferret-UI (arXiv:2404.05719) focuses on mobile UIs, integrates with iOS accessibility data.
+Ferret-UI (arXiv:2404.05719) фокусируется на mobile UIs, интегрируется с iOS accessibility data.
 
-Output format is usually JSON:
+Output format обычно JSON:
 
 ```json
 {"action": "click", "x": 384, "y": 220, "element_desc": "Search button"}
 ```
 
-The `element_desc` helps recovery: if coordinates drift between screenshots, the semantic hint lets the system re-ground.
+`element_desc` помогает recovery: если coordinates drift между screenshots, semantic hint позволяет системе re-ground.
 
 ### Action schemas
 
-A typical action schema has 6-10 action types:
+Типичная action schema имеет 6-10 action types:
 
 - `click`: (x, y)
 - `type`: (text, x?, y?)
@@ -63,103 +63,103 @@ A typical action schema has 6-10 action types:
 - `wait`: (ms)
 - `done`: (success, explanation)
 
-The agent emits one action per step. The browser wrapper executes and returns the new state.
+Агент выдает одно action на step. Browser wrapper выполняет его и возвращает новое state.
 
 ### Screenshot-only vs accessibility-tree
 
-Two input modes:
+Два входных режима:
 
-- Screenshot-only: full image, no structural info. Most general; works on any app.
-- Accessibility tree: structured DOM / iOS accessibility info. Much more reliable for grounding; works where the tree is available.
-- Hybrid: both, with the tree as a reliable grounder for atomic actions and the screenshot for semantic context.
+- Screenshot-only: полное image, без структурной информации. Самый общий; работает в любом app.
+- Accessibility tree: структурированная DOM / iOS accessibility info. Намного надежнее для grounding; работает там, где tree доступно.
+- Hybrid: оба, с tree как надежным grounder для atomic actions и screenshot для semantic context.
 
-Production agents use hybrid when possible. Browser automation (Selenium + accessibility) always has the tree; desktop apps sometimes do.
+Production agents используют hybrid, когда возможно. Browser automation (Selenium + accessibility) всегда имеет tree; desktop apps иногда имеют.
 
 ### Long-horizon memory
 
-A 20-step workflow generates 20 screenshots. The VLM's context fills up fast. Three compression strategies:
+Workflow на 20 шагов создает 20 screenshots. Context VLM быстро заполняется. Три стратегии сжатия:
 
-- Summary-chain: after every 5 steps, summarize what has happened, drop old screenshots.
-- Skip-frame: keep the first, last, and every 3rd screenshot.
-- Tool-recorded log: execute actions, keep a text log of what was done; don't re-look at old screenshots.
+- Summary-chain: после каждых 5 steps суммировать, что произошло, удалить old screenshots.
+- Skip-frame: хранить first, last и every 3rd screenshot.
+- Tool-recorded log: выполнять actions, хранить text log сделанного; не пересматривать old screenshots.
 
-Claude's computer-use API uses the log pattern. Simpler, more reliable.
+Claude's computer-use API использует log pattern. Проще и надежнее.
 
 ### Visual tool use
 
-ChartAgent (arXiv:2510.04514) introduces visual tool use for chart understanding: crop, zoom, OCR, call external detection. The agent can output "crop to region (100, 200, 300, 400) then call OCR" as a tool call. The tool returns text; the VLM continues reasoning.
+ChartAgent (arXiv:2510.04514) вводит visual tool use для chart understanding: crop, zoom, OCR, call external detection. Агент может выдать "crop to region (100, 200, 300, 400) then call OCR" как tool call. Tool возвращает text; VLM продолжает reasoning.
 
-This pattern generalizes: set-of-mark prompting, region annotation, and external detection tools all fit the same "output a tool call, receive a structured response" schema.
+Этот паттерн обобщается: set-of-mark prompting, region annotation и external detection tools укладываются в одну схему "output a tool call, receive a structured response".
 
-### The 2026 benchmarks
+### Бенчмарки 2026
 
-- ScreenSpot-Pro. GUI grounding on ~1k web screenshots. Open SOTA Qwen2.5-VL-72B ~85%. Frontier ~90%.
+- ScreenSpot-Pro. GUI grounding на ~1k web screenshots. Open SOTA Qwen2.5-VL-72B ~85%. Frontier ~90%.
 - VisualWebArena. End-to-end web tasks (shop, forum, classifieds). Open SOTA ~20%. Gemini 3 Pro ~27%.
-- AgentVista (arXiv:2602.23166). The hardest 2026 benchmark. Realistic workflows across 12 domains. Frontier models score 27-40%; open models 10-20%.
-- WebArena / WebShop. Older benchmarks; saturated by frontier.
+- AgentVista (arXiv:2602.23166). Самый сложный benchmark 2026. Realistic workflows across 12 domains. Frontier models score 27-40%; open models 10-20%.
+- WebArena / WebShop. Старые benchmarks; saturated by frontier.
 
-### Why it's still hard
+### Почему это все еще сложно
 
-Agent performance bottlenecks:
+Узкие места производительности агента:
 
-1. Visual grounding at fine scale. "Click the small X" fails often at mobile resolution.
-2. Long-horizon planning. After 10 actions, the agent drifts from the goal.
-3. Error recovery. When a click fails (wrong button), detecting + recovering is rarely trained data.
-4. Cross-page context. Jumping between tabs or long forms loses state.
+1. Visual grounding at fine scale. "Click the small X" часто проваливается на mobile resolution.
+2. Long-horizon planning. После 10 actions агент отклоняется от goal.
+3. Error recovery. Когда click fails (wrong button), detecting + recovering редко присутствует в trained data.
+4. Cross-page context. Переходы между tabs или long forms теряют state.
 
-Research directions: memory architectures, explicit replanning, multimodal verification (screenshot match for action success).
+Направления исследований: memory architectures, explicit replanning, multimodal verification (screenshot match for action success).
 
-### The capstone build-it
+### Capstone build-it
 
-The capstone task: build a computer-use agent that:
+Задача capstone: построить computer-use agent, который:
 
-1. Reads the HTML + screenshot of a booking-site mock page.
-2. Plans a multi-step sequence: search → select → fill form → submit.
-3. Emits JSON actions matching the action schema.
-4. Evaluates on a fixed 10-task slice.
+1. Читает HTML + screenshot mock page сайта бронирования.
+2. Планирует multi-step sequence: search → select → fill form → submit.
+3. Выдает JSON actions, matching the action schema.
+4. Оценивается на fixed 10-task slice.
 
-The lesson provides scaffold code that is easy to extend into a real browser.
+Урок предоставляет scaffold code, который легко расширить до реального browser.
 
-## Use It
+## Применение
 
-`code/main.py` is the capstone scaffold:
+`code/main.py` — capstone scaffold:
 
 - Action schema JSON definition (10 actions).
 - Mock browser state as dict.
 - Agent loop skeleton: receive state, emit action, apply, loop.
-- 10-task mini-benchmark (synthetic pages) to measure end-to-end success rate.
-- Error-recovery hook for when an action fails.
+- 10-task mini-benchmark (synthetic pages) для измерения end-to-end success rate.
+- Error-recovery hook на случай, когда action fails.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-multimodal-agent-designer.md`. Given a computer-use product (domain, action set, evaluation target), designs the full agent loop, memory strategy, grounding mode, and expected benchmark score.
+Этот урок создает `outputs/skill-multimodal-agent-designer.md`. По computer-use product (domain, action set, evaluation target) проектирует полный agent loop, memory strategy, grounding mode и expected benchmark score.
 
-## Exercises
+## Упражнения
 
-1. Extend the action schema with a `screenshot_region` tool (crop + zoom). What tasks benefit?
+1. Расширьте action schema инструментом `screenshot_region` (crop + zoom). Какие tasks получают пользу?
 
-2. Read AgentVista (arXiv:2602.23166). Describe the hardest task category and why frontier models still fail.
+2. Прочитайте AgentVista (arXiv:2602.23166). Опишите самую сложную task category и почему frontier models все еще fail.
 
-3. Long-horizon memory compression: design a summary-chain with ≤4 screenshots kept live, any number logged.
+3. Long-horizon memory compression: спроектируйте summary-chain с ≤4 screenshots kept live, any number logged.
 
-4. Build an error-recovery hook: on action failure (button not found), what does the agent do next?
+4. Постройте error-recovery hook: при action failure (button not found), что агент делает дальше?
 
-5. Compare screenshot-only Claude 4.7 to hybrid screenshot + accessibility-tree Qwen2.5-VL on 10 web tasks. Which wins on which tasks?
+5. Сравните screenshot-only Claude 4.7 с hybrid screenshot + accessibility-tree Qwen2.5-VL на 10 web tasks. Какая система выигрывает на каких tasks?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| GUI grounding | "Click coordinates" | Model outputs (x,y) for the target of an instruction on a screenshot |
+| GUI grounding | "Click coordinates" | Модель выдает (x,y) для цели инструкции на screenshot |
 | Action schema | "Tool definitions" | JSON description of valid actions (click, type, scroll, drag) |
-| Accessibility tree | "Structured DOM" | Machine-readable UI hierarchy from browser/iOS APIs |
-| Hybrid agent | "Screenshot + tree" | Uses both image and structured info; more reliable than either alone |
-| Visual tool use | "Zoom/crop/detect" | Agent calls external vision tools (OCR, detection) mid-plan |
-| Summary-chain | "Memory compression" | Periodic text summaries replace long screenshot history |
-| VisualWebArena | "E2E web bench" | 2024 benchmark for end-to-end web tasks |
-| AgentVista | "2026 hard bench" | 12-domain realistic workflows; even Gemini 3 Pro scores ~30% |
+| Accessibility tree | "Structured DOM" | Машиночитаемая UI hierarchy из browser/iOS APIs |
+| Hybrid agent | "Screenshot + tree" | Использует и image, и structured info; надежнее каждого по отдельности |
+| Visual tool use | "Zoom/crop/detect" | Агент вызывает external vision tools (OCR, detection) в середине плана |
+| Summary-chain | "Memory compression" | Periodic text summaries заменяют long screenshot history |
+| VisualWebArena | "E2E web bench" | Benchmark 2024 для end-to-end web tasks |
+| AgentVista | "2026 hard bench" | 12-domain realistic workflows; даже Gemini 3 Pro набирает ~30% |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Cheng et al. — SeeClick (arXiv:2401.10935)](https://arxiv.org/abs/2401.10935)
 - [Hong et al. — CogAgent (arXiv:2312.08914)](https://arxiv.org/abs/2312.08914)
