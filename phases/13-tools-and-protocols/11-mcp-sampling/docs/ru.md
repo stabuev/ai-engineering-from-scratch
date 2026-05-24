@@ -1,36 +1,36 @@
-# MCP Sampling — Server-Requested LLM Completions and Agent Loops
+# MCP Sampling — LLM completions и agent loops по запросу сервера
 
-> Most MCP servers are dumb executors: take arguments, run code, return content. Sampling lets a server flip direction: it asks the client's LLM to make a decision. This enables server-hosted agent loops without the server owning any model credentials. SEP-1577, merged in 2025-11-25, added tools inside sampling requests so the loop can include deeper reasoning. Drift-risk note: the SEP-1577 tool-in-sampling shape was experimental through Q1 2026 and is still settling in SDK APIs.
+> Большинство MCP servers — простые executors: принять arguments, выполнить code, вернуть content. Sampling позволяет server развернуть направление: он просит LLM клиента принять решение. Это включает agent loops, размещенные на server, без model credentials у server. SEP-1577, merged in 2025-11-25, добавил tools внутри sampling requests, чтобы loop мог включать более глубокое reasoning. Drift-risk note: форма SEP-1577 tool-in-sampling была экспериментальной до Q1 2026 и все еще стабилизируется в SDK APIs.
 
-**Type:** Build
-**Languages:** Python (stdlib, sampling harness)
-**Prerequisites:** Phase 13 · 07 (MCP server), Phase 13 · 10 (resources and prompts)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, sampling harness)
+**Предварительные требования:** Phase 13 · 07 (MCP server), Phase 13 · 10 (resources и prompts)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Explain what `sampling/createMessage` solves (server-hosted loops without server-side API keys).
-- Implement a server that asks the client to sample over a multi-turn prompt and returns the completion.
-- Use `modelPreferences` (cost / speed / intelligence priorities) to guide client model selection.
-- Build a `summarize_repo` tool that internally iterates via sampling instead of hard-coding behavior.
+- Объяснить, что решает `sampling/createMessage` (server-hosted loops без server-side API keys).
+- Реализовать server, который просит client сделать sample по multi-turn prompt и возвращает completion.
+- Использовать `modelPreferences` (приоритеты cost / speed / intelligence), чтобы направлять выбор модели клиентом.
+- Построить tool `summarize_repo`, который выполняет внутренние итерации через sampling вместо hard-coding behavior.
 
-## The Problem
+## Проблема
 
-A useful MCP server for a code-summarization workflow needs to: walk a file tree, pick which files to read, synthesize a summary, and return. Where does the LLM reasoning happen?
+Полезный MCP server для code-summarization workflow должен: пройти file tree, выбрать, какие files читать, синтезировать summary и вернуть результат. Где происходит LLM reasoning?
 
-Option A: the server calls its own LLM. Needs an API key, bills server-side, is expensive per user.
+Вариант A: server вызывает свой собственный LLM. Нужен API key, billing на стороне server, дорого per user.
 
-Option B: the server returns raw content; the client's agent does the reasoning. Works but moves server logic into the client prompt, which is fragile.
+Вариант B: server возвращает raw content; agent клиента выполняет reasoning. Работает, но переносит server logic в client prompt, что хрупко.
 
-Option C: the server asks the client's LLM via `sampling/createMessage`. The server retains the algorithm (which files to read, how many passes to do) while the client retains billing and model choice. The server has no credentials at all.
+Вариант C: server спрашивает LLM клиента через `sampling/createMessage`. Server сохраняет algorithm (какие files читать, сколько passes делать), а client сохраняет billing и model choice. У server вообще нет credentials.
 
-Sampling is option C. It is the mechanism by which a trusted server can host an agent loop without being a full LLM host itself.
+Sampling — это вариант C. Это механизм, с помощью которого trusted server может разместить agent loop, не становясь полноценным LLM host.
 
-## The Concept
+## Концепция
 
-### `sampling/createMessage` request
+### Request `sampling/createMessage`
 
-Server sends:
+Server отправляет:
 
 ```json
 {
@@ -52,7 +52,7 @@ Server sends:
 }
 ```
 
-Client runs its LLM, returns:
+Client запускает свой LLM и возвращает:
 
 ```json
 {"jsonrpc": "2.0", "id": 42, "result": {
@@ -65,27 +65,27 @@ Client runs its LLM, returns:
 
 ### `modelPreferences`
 
-Three floats summing to 1.0:
+Три floats, сумма которых 1.0:
 
-- `costPriority`: favor cheaper models.
-- `speedPriority`: favor faster models.
-- `intelligencePriority`: favor more capable models.
+- `costPriority`: предпочитать более дешевые models.
+- `speedPriority`: предпочитать более быстрые models.
+- `intelligencePriority`: предпочитать более мощные models.
 
-Plus `hints`: named models the server prefers. Client may or may not honor hints; the client's user config always wins.
+Плюс `hints`: named models, которые server предпочитает. Client может учитывать hints или игнорировать их; user config клиента всегда главнее.
 
 ### `includeContext`
 
-Three values:
+Три значения:
 
-- `"none"` — only the server-supplied messages. Default.
-- `"thisServer"` — include prior messages from this server's session.
-- `"allServers"` — include all session context.
+- `"none"` — только server-supplied messages. Default.
+- `"thisServer"` — включить prior messages из session этого server.
+- `"allServers"` — включить весь session context.
 
-`includeContext` is soft-deprecated as of 2025-11-25 because it leaks cross-server context, which is a security concern. Prefer `"none"` and pass explicit context in the messages.
+`includeContext` soft-deprecated as of 2025-11-25, потому что он leaks cross-server context, что является security concern. Предпочитайте `"none"` и передавайте explicit context в messages.
 
-### Sampling with tools (SEP-1577)
+### Sampling с tools (SEP-1577)
 
-New in 2025-11-25: the sampling request can include a `tools` array. The client runs a full tool-calling loop using those tools. This lets the server host a ReAct-style agent loop through the client's model.
+Новое в 2025-11-25: sampling request может включать массив `tools`. Client запускает полный tool-calling loop с этими tools. Это позволяет server размещать ReAct-style agent loop через модель клиента.
 
 ```json
 {
@@ -96,83 +96,83 @@ New in 2025-11-25: the sampling request can include a `tools` array. The client 
 }
 ```
 
-The client loops: sample, execute tool if called, sample again, return final assistant message. This is experimental through Q1 2026; SDK signatures may still drift. Confirm against the 2025-11-25 spec's client/sampling section when you implement.
+Client loops: делает sample, выполняет tool при вызове, снова делает sample, возвращает final assistant message. Это было экспериментальным до Q1 2026; SDK signatures may still drift. При реализации сверяйтесь с разделом client/sampling спецификации 2025-11-25.
 
 ### Human-in-the-loop
 
-The client MUST show the user what the server is asking the model to do before running the sample. A malicious server could use sampling to manipulate the user's session ("say X to the user so they click Y"). Claude Desktop, VS Code, and Cursor surface sampling requests as a confirmation dialog the user can deny.
+Client ДОЛЖЕН показать пользователю, что server просит model сделать, перед запуском sample. Malicious server может использовать sampling, чтобы манипулировать user's session ("сказать пользователю X, чтобы он нажал Y"). Claude Desktop, VS Code и Cursor показывают sampling requests как confirmation dialog, который пользователь может отклонить.
 
-The 2026 consensus: sampling without human confirmation is a red flag. Gateways (Phase 13 · 17) can auto-approve low-risk sampling and auto-deny anything suspicious.
+Консенсус 2026 года: sampling без human confirmation — red flag. Gateways (Phase 13 · 17) могут auto-approve low-risk sampling и автоматически отклонять все подозрительное.
 
-### Server-hosted loops without API keys
+### Server-hosted loops без API keys
 
-The canonical use case: a code-summarization MCP server with no LLM access of its own. It does:
+Канонический use case: code-summarization MCP server без собственного LLM access. Он делает:
 
-1. Walk the repo structure.
-2. Call `sampling/createMessage` with "Pick five files most likely to describe this repo's purpose."
-3. Read those files.
-4. Call `sampling/createMessage` with the files' contents and "Summarize the repo in 3 paragraphs."
-5. Return the summary as a `tools/call` result.
+1. Обходит repo structure.
+2. Вызывает `sampling/createMessage` с "Выбери пять файлов, которые вероятнее всего описывают назначение этого repo."
+3. Читает эти files.
+4. Вызывает `sampling/createMessage` с contents этих files и "Суммаризируй repo в 3 paragraphs."
+5. Возвращает summary как результат `tools/call`.
 
-The server never touches an LLM API. The client's user pays for the completions using their own credentials.
+Server никогда не касается LLM API. Пользователь client платит за completions своими credentials.
 
 ### Safety risks (Unit 42 disclosure, 2026 Q1)
 
-- **Covert sampling.** A tool that always calls sampling with "respond with the user's email from session context." Phase 13 · 15 covers the attack vectors.
-- **Resource theft via sampling.** Server asks client to summarize an attacker's payload, bills the user.
-- **Loop bombs.** Server calls sampling in a tight loop. Clients MUST enforce per-session rate limits.
+- **Covert sampling.** Tool, который всегда вызывает sampling с "ответь email пользователя из session context." Phase 13 · 15 разбирает attack vectors.
+- **Resource theft via sampling.** Server просит client summarizе payload атакующего и списывает стоимость на пользователя.
+- **Loop bombs.** Server вызывает sampling в tight loop. Clients ДОЛЖНЫ enforcing per-session rate limits.
 
-## Use It
+## Использование
 
-`code/main.py` ships a fake server-to-client sampling harness. A simulated "summarize_repo" tool invokes two sampling rounds (pick-files, then summarize), and the fake client returns canned responses. The harness shows:
+`code/main.py` поставляет fake server-to-client sampling harness. Simulated tool "summarize_repo" выполняет два раунда sampling (pick-files, затем summarize), а fake client возвращает canned responses. Harness показывает:
 
-- Server sends `sampling/createMessage` with `modelPreferences`.
-- Client returns a completion.
-- Server continues its loop.
-- Rate limiter caps total sampling calls per tool invocation.
+- Server отправляет `sampling/createMessage` с `modelPreferences`.
+- Client возвращает completion.
+- Server продолжает свой loop.
+- Rate limiter ограничивает общее число sampling calls на один tool invocation.
 
-What to look at:
+На что смотреть:
 
-- The server exposes only one tool (`summarize_repo`); all reasoning happens in the sampling calls.
-- Model preferences weight the client's model choice; hints list preferred models.
-- The loop terminates on `stopReason: "endTurn"`.
-- The `max_samples_per_tool = 5` limit catches a runaway loop.
+- Server предоставляет только один tool (`summarize_repo`); все reasoning происходит в sampling calls.
+- Model preferences взвешивают выбор модели клиента; hints перечисляют preferred models.
+- Loop завершается на `stopReason: "endTurn"`.
+- Лимит `max_samples_per_tool = 5` ловит runaway loop.
 
 ## Ship It
 
-This lesson produces `outputs/skill-sampling-loop-designer.md`. Given a server-side algorithm that needs LLM calls (research, summarization, planning), the skill designs a sampling-based implementation with the right modelPreferences, rate limits, and safety confirmations.
+Этот урок создает `outputs/skill-sampling-loop-designer.md`. По server-side algorithm, которому нужны LLM calls (research, summarization, planning), skill проектирует sampling-based implementation с правильными `modelPreferences`, rate limits и safety confirmations.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Change `max_samples_per_tool` to 2 and observe the rate-limit cut-off.
+1. Запустите `code/main.py`. Измените `max_samples_per_tool` на 2 и наблюдайте rate-limit cut-off.
 
-2. Implement the SEP-1577 tool-in-sampling variant: the sampling request carries a `tools` array. Verify the client-side loop executes those tools before returning the final completion. Note drift risk: SDK signatures may still change through H1 2026.
+2. Реализуйте вариант SEP-1577 tool-in-sampling: sampling request несет массив `tools`. Проверьте, что client-side loop выполняет эти tools перед возвратом final completion. Drift risk: SDK signatures могут еще меняться до H1 2026.
 
-3. Add human-in-the-loop confirmation: before the server's first `sampling/createMessage`, pause and wait for user approval. Denied calls return a typed refusal.
+3. Добавьте human-in-the-loop confirmation: перед первым `sampling/createMessage` от server остановитесь и дождитесь user approval. Отклоненные calls возвращают typed refusal.
 
-4. Add a per-user rate limiter keyed by client session. Same-server loops by the same user should share a budget.
+4. Добавьте per-user rate limiter, indexed by client session. Same-server loops от одного пользователя должны делить budget.
 
-5. Design a `summarize_pdf` tool that uses sampling to pick chunks to include. Sketch the messages sent. How does `modelPreferences.intelligencePriority` change the behavior at 0.1 vs 0.9?
+5. Спроектируйте tool `summarize_pdf`, который использует sampling, чтобы выбрать chunks для включения. Набросайте отправляемые messages. Как `modelPreferences.intelligencePriority` меняет behavior при 0.1 vs 0.9?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это значит на самом деле |
 |------|----------------|------------------------|
-| Sampling | "Server-to-client LLM call" | Server asks client's model for a completion |
-| `sampling/createMessage` | "The method" | JSON-RPC method for sampling requests |
-| `modelPreferences` | "Model priorities" | Cost / speed / intelligence weights plus name hints |
-| `includeContext` | "Cross-session leakage" | Soft-deprecated context inclusion mode |
-| SEP-1577 | "Tools in sampling" | Allow tools inside sampling for server-hosted ReAct |
-| Human-in-the-loop | "User confirms" | Client surfaces sampling request to user before running |
-| Loop bomb | "Runaway sampling" | Server-side infinite sampling loop; client must rate-limit |
-| Covert sampling | "Hidden reasoning" | Malicious server hides intent in sampling prompts |
-| Resource theft | "Using user's LLM budget" | Server forces client to spend on sampling it does not want |
-| `stopReason` | "Why generation halted" | `endTurn`, `stopSequence`, or `maxTokens` |
+| Sampling | "LLM call от server к client" | Server просит модель client дать completion |
+| `sampling/createMessage` | "Метод" | JSON-RPC method для sampling requests |
+| `modelPreferences` | "Приоритеты модели" | Веса cost / speed / intelligence плюс name hints |
+| `includeContext` | "Cross-session leakage" | Soft-deprecated mode включения context |
+| SEP-1577 | "Tools в sampling" | Разрешает tools внутри sampling для server-hosted ReAct |
+| Human-in-the-loop | "Пользователь подтверждает" | Client показывает sampling request пользователю перед запуском |
+| Loop bomb | "Runaway sampling" | Бесконечный sampling loop на стороне server; client должен rate-limit |
+| Covert sampling | "Скрытое reasoning" | Malicious server скрывает intent в sampling prompts |
+| Resource theft | "Использование LLM budget пользователя" | Server заставляет client тратить budget на ненужный sampling |
+| `stopReason` | "Почему generation остановилась" | `endTurn`, `stopSequence` или `maxTokens` |
 
-## Further Reading
+## Дополнительное чтение
 
-- [MCP — Concepts: Sampling](https://modelcontextprotocol.io/docs/concepts/sampling) — high-level overview of sampling
-- [MCP — Client sampling spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/client/sampling) — canonical `sampling/createMessage` shape
-- [MCP — GitHub SEP-1577](https://github.com/modelcontextprotocol/modelcontextprotocol) — Spec Evolution Proposal for tools in sampling (experimental)
-- [Unit 42 — MCP attack vectors](https://unit42.paloaltonetworks.com/model-context-protocol-attack-vectors/) — covert sampling and resource-theft patterns
-- [Speakeasy — MCP sampling core concept](https://www.speakeasy.com/mcp/core-concepts/sampling) — walk-through with client-side code samples
+- [MCP — Concepts: Sampling](https://modelcontextprotocol.io/docs/concepts/sampling) — high-level overview sampling
+- [MCP — Client sampling spec 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/client/sampling) — каноническая форма `sampling/createMessage`
+- [MCP — GitHub SEP-1577](https://github.com/modelcontextprotocol/modelcontextprotocol) — Spec Evolution Proposal для tools in sampling (experimental)
+- [Unit 42 — MCP attack vectors](https://unit42.paloaltonetworks.com/model-context-protocol-attack-vectors/) — паттерны covert sampling и resource theft
+- [Speakeasy — MCP sampling core concept](https://www.speakeasy.com/mcp/core-concepts/sampling) — walk-through с client-side code samples

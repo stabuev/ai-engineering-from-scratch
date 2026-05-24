@@ -1,105 +1,105 @@
 # Function Calling Deep Dive — OpenAI, Anthropic, Gemini
 
-> The three frontier providers converged on the same tool-call loop in 2024 and then diverged on everything else. OpenAI uses `tools` and `tool_calls`. Anthropic uses `tool_use` and `tool_result` blocks. Gemini uses `functionDeclarations` and unique-id correlation. This lesson diffs the three side by side so code that ships on one provider does not break when you port it.
+> Три frontier providers в 2024 году сошлись на одном и том же цикле tool-call, а затем разошлись во всем остальном. OpenAI использует `tools` и `tool_calls`. Anthropic использует блоки `tool_use` и `tool_result`. Gemini использует `functionDeclarations` и корреляцию по unique-id. Этот урок сравнивает все три варианта рядом, чтобы код, который отправляется на одном provider, не ломался при переносе на другой.
 
-**Type:** Build
-**Languages:** Python (stdlib, schema translators)
-**Prerequisites:** Phase 13 · 01 (the tool interface)
-**Time:** ~75 minutes
+**Тип:** практика
+**Языки:** Python (stdlib, schema translators)
+**Предварительные знания:** Phase 13 · 01 (интерфейс инструментов)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- State the three shape differences between OpenAI, Anthropic, and Gemini function-calling payloads (declaration, call, result).
-- Translate one tool declaration across all three provider formats and predict where strict-mode constraints will differ.
-- Use `tool_choice` in each provider to force, forbid, or auto-pick tool calls.
-- Know the per-provider hard limits (tool count, schema depth, argument length) and the error signatures each one emits when limits are violated.
+- Назвать три различия формы между function-calling payloads OpenAI, Anthropic и Gemini (declaration, call, result).
+- Перевести одно объявление инструмента во все три формата provider и предсказать, где strict-mode constraints будут различаться.
+- Использовать `tool_choice` у каждого provider, чтобы принудительно выбрать, запретить или автоматически подобрать tool calls.
+- Знать жесткие лимиты каждого provider (число инструментов, глубина schema, длина arguments) и signatures ошибок, которые они выдают при нарушении лимитов.
 
-## The Problem
+## Проблема
 
-The shape of a function-calling request differs by provider. Three concrete examples from 2026 production stacks:
+Форма function-calling request различается у разных providers. Три конкретных примера из production-стеков 2026 года:
 
-**OpenAI Chat Completions / Responses API.** You pass `tools: [{type: "function", function: {name, description, parameters, strict}}]`. The model's response contains `choices[0].message.tool_calls: [{id, type: "function", function: {name, arguments}}]` where `arguments` is a JSON string you must parse. Strict mode (`strict: true`) enforces schema compliance via constrained decoding.
+**OpenAI Chat Completions / Responses API.** Вы передаете `tools: [{type: "function", function: {name, description, parameters, strict}}]`. Ответ модели содержит `choices[0].message.tool_calls: [{id, type: "function", function: {name, arguments}}]`, где `arguments` — JSON-строка, которую вы должны распарсить. Strict mode (`strict: true`) обеспечивает schema compliance через constrained decoding.
 
-**Anthropic Messages API.** You pass `tools: [{name, description, input_schema}]`. The response comes back as `content: [{type: "text"}, {type: "tool_use", id, name, input}]`. `input` is already parsed (an object, not a string). You reply with a new `user` message containing a `{type: "tool_result", tool_use_id, content}` block.
+**Anthropic Messages API.** Вы передаете `tools: [{name, description, input_schema}]`. Ответ приходит как `content: [{type: "text"}, {type: "tool_use", id, name, input}]`. `input` уже распарсен (объект, а не строка). Вы отвечаете новым сообщением `user`, содержащим блок `{type: "tool_result", tool_use_id, content}`.
 
-**Google Gemini API.** You pass `tools: [{functionDeclarations: [{name, description, parameters}]}]` (nested under `functionDeclarations`). The response arrives as `candidates[0].content.parts: [{functionCall: {name, args, id}}]` where `id` is unique in Gemini 3 and up for parallel-call correlation. You reply with `{functionResponse: {name, id, response}}`.
+**Google Gemini API.** Вы передаете `tools: [{functionDeclarations: [{name, description, parameters}]}]` (вложено под `functionDeclarations`). Ответ приходит как `candidates[0].content.parts: [{functionCall: {name, args, id}}]`, где `id` уникален в Gemini 3 и выше для correlation параллельных вызовов. Вы отвечаете `{functionResponse: {name, id, response}}`.
 
-Same loop. Different field names, different nesting, different string-vs-object conventions, different correlation mechanisms. A team that writes a weather agent on OpenAI pays a two-day port to Anthropic and another day to Gemini just for the plumbing.
+Один и тот же цикл. Разные имена полей, разная вложенность, разные соглашения string-vs-object, разные механизмы корреляции. Команда, написавшая weather agent на OpenAI, платит два дня за перенос plumbing на Anthropic и еще день на Gemini.
 
-This lesson builds a translator that unifies the three formats into one canonical tool declaration and routes at the edge. Phase 13 · 17 generalizes the same pattern into an LLM gateway.
+Этот урок строит translator, который сводит три формата к одному canonical tool declaration и маршрутизирует на границе. Phase 13 · 17 обобщает тот же паттерн в LLM gateway.
 
-## The Concept
+## Концепция
 
-### The common structure
+### Общая структура
 
-Every provider needs five things:
+Каждому provider нужны пять вещей:
 
-1. **Tool list.** Per-tool name, description, and input schema.
-2. **Tool choice.** Force a specific tool, forbid tools, or let the model decide.
-3. **Call emission.** Structured output naming the tool and arguments.
-4. **Call id.** Correlate the response to the right call (matters for parallel).
-5. **Result injection.** A message or block that ties the result back to the call.
+1. **Tool list.** Name, description и input schema для каждого tool.
+2. **Tool choice.** Force конкретный tool, forbid tools или дать модели решать.
+3. **Call emission.** Structured output с именем tool и arguments.
+4. **Call id.** Сопоставить response с правильным call (важно для parallel).
+5. **Result injection.** Message или block, который связывает result обратно с call.
 
-### Shape diffs, field by field
+### Различия формы, поле за полем
 
-| Aspect | OpenAI | Anthropic | Gemini |
+| Аспект | OpenAI | Anthropic | Gemini |
 |--------|--------|-----------|--------|
-| Declaration envelope | `{type: "function", function: {...}}` | `{name, description, input_schema}` | `{functionDeclarations: [{...}]}` |
-| Schema field | `parameters` | `input_schema` | `parameters` |
-| Response container | `tool_calls[]` on assistant message | `content[]` of type `tool_use` | `parts[]` of type `functionCall` |
-| Arguments type | stringified JSON | parsed object | parsed object |
-| Id format | `call_...` (OpenAI generates) | `toolu_...` (Anthropic) | UUID (Gemini 3+) |
-| Result block | role `tool`, `tool_call_id` | `user` with `tool_result`, `tool_use_id` | `functionResponse` with matching `id` |
+| Envelope объявления | `{type: "function", function: {...}}` | `{name, description, input_schema}` | `{functionDeclarations: [{...}]}` |
+| Поле schema | `parameters` | `input_schema` | `parameters` |
+| Контейнер response | `tool_calls[]` в assistant message | `content[]` с типом `tool_use` | `parts[]` с типом `functionCall` |
+| Тип arguments | JSON как строка | распарсенный объект | распарсенный объект |
+| Формат id | `call_...` (генерирует OpenAI) | `toolu_...` (Anthropic) | UUID (Gemini 3+) |
+| Блок result | role `tool`, `tool_call_id` | `user` с `tool_result`, `tool_use_id` | `functionResponse` с matching `id` |
 | Force-a-tool | `tool_choice: {type: "function", function: {name}}` | `tool_choice: {type: "tool", name}` | `tool_config: {function_calling_config: {mode: "ANY"}}` |
 | Forbid tools | `tool_choice: "none"` | `tool_choice: {type: "none"}` | `mode: "NONE"` |
 | Strict schema | `strict: true` | schema-is-schema (always enforced) | `responseSchema` at request level |
 
-### Limits you will actually hit
+### Лимиты, в которые вы реально упретесь
 
-- **OpenAI.** 128 tools per request. Schema depth 5. Argument string <= 8192 bytes. Strict mode requires no `$ref`, no `oneOf`/`anyOf`/`allOf` with overlap, every property listed in `required`.
-- **Anthropic.** 64 tools per request. Schema depth effectively unbounded but practical limit 10. No strict-mode flag; schema is a contract and the model tends to comply.
-- **Gemini.** 64 functions per request. Schema types are OpenAPI 3.0 subset (slight divergence from JSON Schema 2020-12). Parallel calls unique-id since Gemini 3.
+- **OpenAI.** 128 tools на request. Глубина schema 5. Строка arguments <= 8192 bytes. Strict mode требует: без `$ref`, без `oneOf`/`anyOf`/`allOf` с пересечениями, каждое property перечислено в `required`.
+- **Anthropic.** 64 tools на request. Глубина schema формально почти не ограничена, но практический лимит 10. Нет strict-mode flag; schema является contract, и модель обычно ему следует.
+- **Gemini.** 64 functions на request. Типы schema — подмножество OpenAPI 3.0 (небольшое расхождение с JSON Schema 2020-12). Unique-id для parallel calls начиная с Gemini 3.
 
-### `tool_choice` behavior
+### Поведение `tool_choice`
 
-Three modes everyone supports, named differently.
+Три режима поддерживают все, но называют по-разному.
 
-- **Auto.** Model picks tool or text. Default.
-- **Required / Any.** Model must call at least one tool.
-- **None.** Model must not call tools.
+- **Auto.** Модель выбирает tool или text. Режим по умолчанию.
+- **Required / Any.** Модель должна вызвать хотя бы один tool.
+- **None.** Модель не должна вызывать tools.
 
-Plus one mode unique to each provider:
+Плюс по одному уникальному режиму у каждого provider:
 
-- **OpenAI.** Force a specific tool by name.
-- **Anthropic.** Force a specific tool by name; `disable_parallel_tool_use` flag separates single vs multi.
-- **Gemini.** `mode: "VALIDATED"` routes every response through a schema validator regardless of model intent.
+- **OpenAI.** Force конкретный tool по name.
+- **Anthropic.** Force конкретный tool по name; флаг `disable_parallel_tool_use` отделяет single от multi.
+- **Gemini.** `mode: "VALIDATED"` прогоняет каждый response через schema validator независимо от намерения модели.
 
-### Parallel calls
+### Параллельные вызовы
 
-OpenAI's `parallel_tool_calls: true` (default) emits multiple calls in one assistant message. You run them all and reply with a batched tool-role message containing one entry per `tool_call_id`. Anthropic historically did single-call; `disable_parallel_tool_use: false` (default as of Claude 3.5) enables multi. Gemini 2 allowed parallel calls but did not give stable ids; Gemini 3 adds UUIDs so out-of-order responses correlate cleanly.
+OpenAI `parallel_tool_calls: true` (по умолчанию) выдает несколько calls в одном assistant message. Вы запускаете их все и отвечаете batched tool-role message с одной записью на каждый `tool_call_id`. Anthropic исторически делала single-call; `disable_parallel_tool_use: false` (по умолчанию начиная с Claude 3.5) включает multi. Gemini 2 позволяла parallel calls, но не давала stable ids; Gemini 3 добавляет UUIDs, чтобы out-of-order responses корректно сопоставлялись.
 
 ### Streaming
 
-All three support streamed tool calls. The wire format differs:
+Все три поддерживают streamed tool calls. Wire format различается:
 
-- **OpenAI.** Delta chunks of `tool_calls[i].function.arguments` arrive incrementally. You accumulate until `finish_reason: "tool_calls"`.
-- **Anthropic.** Block-start / block-delta / block-stop events. `input_json_delta` chunks carry partial arguments.
-- **Gemini.** `streamFunctionCallArguments` (new in Gemini 3) emits chunks with a `functionCallId` so multiple parallel calls can interleave.
+- **OpenAI.** Delta chunks `tool_calls[i].function.arguments` приходят постепенно. Вы накапливаете их до `finish_reason: "tool_calls"`.
+- **Anthropic.** События block-start / block-delta / block-stop. Chunks `input_json_delta` несут partial arguments.
+- **Gemini.** `streamFunctionCallArguments` (новое в Gemini 3) выдает chunks с `functionCallId`, чтобы несколько parallel calls могли перемежаться.
 
-Phase 13 · 03 goes deep on parallel + streaming reassembly. This lesson focuses on the declaration and single-call shapes.
+Phase 13 · 03 подробно разбирает parallel + streaming reassembly. Этот урок сосредоточен на declaration и single-call shapes.
 
-### Errors and repair
+### Ошибки и исправление
 
-Invalid-argument errors look different too.
+Ошибки invalid-argument тоже выглядят по-разному.
 
-- **OpenAI (non-strict).** Model returns `arguments: "{bad json}"`, your JSON parse fails, you inject an error message and re-call.
-- **OpenAI (strict).** Validation happens during decoding; invalid JSON is impossible but `refusal` can appear.
-- **Anthropic.** `input` may contain unexpected fields; schema is advisory. Validate server-side.
-- **Gemini.** OpenAPI 3.0 quirk: `enum` on object fields silently ignored; validate yourself.
+- **OpenAI (non-strict).** Модель возвращает `arguments: "{bad json}"`, парсинг JSON падает, вы добавляете error message и вызываете заново.
+- **OpenAI (strict).** Validation происходит во время decoding; invalid JSON невозможен, но может появиться `refusal`.
+- **Anthropic.** `input` может содержать неожиданные поля; schema advisory. Валидируйте на стороне server.
+- **Gemini.** Особенность OpenAPI 3.0: `enum` на object fields может silently ignored; валидируйте сами.
 
-### The translator pattern
+### Паттерн translator
 
-A canonical tool declaration in your code looks like this (you pick the shape):
+Canonical tool declaration в вашем коде выглядит так (форму выбираете вы):
 
 ```python
 Tool(
@@ -110,55 +110,55 @@ Tool(
 )
 ```
 
-Three tiny functions translate it to the three provider shapes. The harness in `code/main.py` does exactly this, then round-trips a fake tool call through each provider's response shape. No network required — this lesson teaches the shapes, not the HTTP.
+Три маленькие функции переводят его в три provider shapes. Harness в `code/main.py` делает именно это, затем round-trip-ит fake tool call через response shape каждого provider. Network не нужен — этот урок учит формам, а не HTTP.
 
-Production teams wrap this translator in `AbstractToolset` (Pydantic AI), `UniversalToolNode` (LangGraph), or `BaseTool` (LlamaIndex). Phase 13 · 17 ships a gateway that exposes an OpenAI-shaped API in front of any of the three.
+Production-команды заворачивают такой translator в `AbstractToolset` (Pydantic AI), `UniversalToolNode` (LangGraph) или `BaseTool` (LlamaIndex). Phase 13 · 17 ship-ит gateway, который предоставляет OpenAI-shaped API поверх любого из трех providers.
 
-## Use It
+## Используйте
 
-`code/main.py` defines one canonical `Tool` dataclass and three translators that emit the OpenAI, Anthropic, and Gemini declaration JSON. It then parses a hand-crafted provider response of each shape into the same canonical call object, demonstrating that the semantics are identical under the skin. Run it and diff the three declarations side by side.
+`code/main.py` определяет один canonical dataclass `Tool` и три translators, которые выдают declaration JSON для OpenAI, Anthropic и Gemini. Затем он парсит вручную созданный provider response каждой формы в один и тот же canonical call object, показывая, что semantics под поверхностью идентичны. Запустите его и сравните три declarations рядом.
 
-What to look at:
+На что смотреть:
 
-- The three declaration blocks differ only in envelope and field names.
-- The three response blocks differ in where the call lives (top-level `tool_calls`, `content[]` block, `parts[]` entry).
-- One `canonical_call()` function extracts `{id, name, args}` from all three response shapes.
+- Три declaration blocks отличаются только envelope и именами fields.
+- Три response blocks отличаются тем, где живет call (top-level `tool_calls`, block `content[]`, entry `parts[]`).
+- Одна функция `canonical_call()` извлекает `{id, name, args}` из всех трех response shapes.
 
-## Ship It
+## Отправьте
 
-This lesson produces `outputs/skill-provider-portability-audit.md`. Given a function-calling integration against one provider, the skill produces a portability audit: which provider limits it relies on, which fields need renaming, and what breaks when ported to each other provider.
+Этот урок создает `outputs/skill-provider-portability-audit.md`. Получив function-calling integration под одного provider, skill делает portability audit: на какие лимиты provider он опирается, какие fields нужно переименовать и что сломается при переносе на каждого другого provider.
 
 ## Exercises
 
-1. Run `code/main.py` and verify that the three provider declaration JSONs all serialize the same underlying `Tool` object. Modify the canonical tool to add an enum parameter and confirm only the Gemini translator needs to handle the OpenAPI quirk.
+1. Запустите `code/main.py` и проверьте, что все три provider declaration JSONs сериализуют один и тот же underlying объект `Tool`. Измените canonical tool, добавив enum parameter, и подтвердите, что только Gemini translator должен обработать OpenAPI quirk.
 
-2. Add a `ListToolsResponse` parser for each provider that extracts the tool list a model returns after a `list_tools` or discovery call. OpenAI does not have one natively; note this asymmetry.
+2. Добавьте parser `ListToolsResponse` для каждого provider, который извлекает tool list, возвращаемый моделью после `list_tools` или discovery call. У OpenAI такого нативно нет; отметьте эту асимметрию.
 
-3. Implement `tool_choice` conversion: map a canonical `ToolChoice(mode="force", tool_name="x")` into all three provider shapes. Then map `mode="any"` and `mode="none"`. Check the lesson's diff table.
+3. Реализуйте conversion для `tool_choice`: отобразите canonical `ToolChoice(mode="force", tool_name="x")` во все три provider shapes. Затем отобразите `mode="any"` и `mode="none"`. Проверьте diff table урока.
 
-4. Pick one of the three providers and read its function-calling guide end to end. Find one field in its schema spec that the other two do not support. Candidates: OpenAI `strict`, Anthropic `disable_parallel_tool_use`, Gemini `function_calling_config.allowed_function_names`.
+4. Выберите одного из трех providers и прочитайте его руководство по function calling от начала до конца. Найдите одно поле в его schema spec, которое два других не поддерживают. Кандидаты: OpenAI `strict`, Anthropic `disable_parallel_tool_use`, Gemini `function_calling_config.allowed_function_names`.
 
-5. Write a test vector: a tool call whose arguments violate the declared schema. Run it through each provider's validator (the stdlib one in Lesson 01 will do as a proxy) and record which errors fire. Document which provider you would use in production for strictness.
+5. Напишите test vector: tool call, чьи arguments нарушают declared schema. Прогоните его через validator каждого provider (stdlib-валидатор из Lesson 01 подойдет как proxy) и запишите, какие errors срабатывают. Документируйте, какого provider вы бы выбрали для production с точки зрения strictness.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Function calling | "Tool use" | Provider-level API for structured tool-call emission |
-| Tool declaration | "Tool spec" | Name + description + JSON Schema input payload |
-| `tool_choice` | "Force / forbid" | Auto / required / none / specific-name modes |
-| Strict mode | "Schema enforcement" | OpenAI flag that constrains decoding to match schema |
-| `tool_use` block | "Anthropic's call shape" | Inline content block with id, name, input |
-| `functionCall` part | "Gemini's call shape" | A `parts[]` entry containing name, args, and id |
-| Arguments-as-string | "Stringified JSON" | OpenAI returns args as a JSON string, not an object |
-| Parallel tool calls | "Fan-out in one turn" | Multiple tool calls in one assistant message |
-| Refusal | "Model declines" | Strict-mode-only refusal block instead of a call |
-| OpenAPI 3.0 subset | "Gemini schema quirk" | Gemini uses a JSON-Schema-like dialect with minor differences |
+| Function calling | "Использование инструментов" | Provider-level API для выдачи structured tool-call |
+| Tool declaration | "Спецификация инструмента" | Name + description + JSON Schema input payload |
+| `tool_choice` | "Принудить / запретить" | Режимы Auto / required / none / specific-name |
+| Strict mode | "Принудительная schema" | Флаг OpenAI, который ограничивает decoding соответствием schema |
+| `tool_use` block | "Форма вызова Anthropic" | Inline content block с id, name, input |
+| `functionCall` part | "Форма вызова Gemini" | Entry `parts[]`, содержащая name, args и id |
+| Arguments-as-string | "JSON в строке" | OpenAI возвращает args как JSON string, а не object |
+| Parallel tool calls | "Fan-out за один turn" | Несколько tool calls в одном assistant message |
+| Refusal | "Модель отказывается" | Strict-mode-only refusal block вместо call |
+| OpenAPI 3.0 subset | "Особенность schema в Gemini" | Gemini использует JSON-Schema-like dialect с небольшими отличиями |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI — Function calling guide](https://platform.openai.com/docs/guides/function-calling) — canonical reference including strict mode and parallel calls
-- [Anthropic — Tool use overview](https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview) — `tool_use` and `tool_result` block semantics
-- [Google — Gemini function calling](https://ai.google.dev/gemini-api/docs/function-calling) — parallel calls, unique ids, and OpenAPI subset
-- [Vertex AI — Function calling reference](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) — Gemini's enterprise surface
-- [OpenAI — Structured outputs](https://platform.openai.com/docs/guides/structured-outputs) — strict-mode schema enforcement details
+- [OpenAI — Function calling guide](https://platform.openai.com/docs/guides/function-calling) — канонический справочник, включая strict mode и parallel calls
+- [Anthropic — Tool use overview](https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview) — semantics блоков `tool_use` и `tool_result`
+- [Google — Gemini function calling](https://ai.google.dev/gemini-api/docs/function-calling) — parallel calls, unique ids и OpenAPI subset
+- [Vertex AI — Function calling reference](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) — enterprise surface Gemini
+- [OpenAI — Structured outputs](https://platform.openai.com/docs/guides/structured-outputs) — детали strict-mode schema enforcement

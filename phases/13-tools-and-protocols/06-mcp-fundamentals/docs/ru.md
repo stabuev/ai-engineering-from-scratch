@@ -1,54 +1,54 @@
-# MCP Fundamentals — Primitives, Lifecycle, JSON-RPC Base
+# Основы MCP — primitives, lifecycle, база JSON-RPC
 
-> Every integration before MCP was a one-off. The Model Context Protocol, first shipped by Anthropic in November 2024 and now stewarded by the Linux Foundation's Agentic AI Foundation, standardizes discovery and invocation so any client can speak to any server. The 2025-11-25 spec names six primitives (three server, three client), a three-phase lifecycle, and a JSON-RPC 2.0 wire format. Learn those and the rest of the MCP chapter of this phase becomes reading.
+> До MCP каждая integration была one-off. Model Context Protocol, впервые выпущенный Anthropic в ноябре 2024 года и теперь сопровождаемый Agentic AI Foundation при Linux Foundation, стандартизует discovery и invocation, чтобы любой client мог говорить с любым server. Spec 2025-11-25 называет шесть primitives (три server, три client), трехфазный lifecycle и wire format JSON-RPC 2.0. Освойте это, и остальная MCP-глава этой phase станет чтением.
 
-**Type:** Learn
-**Languages:** Python (stdlib, JSON-RPC parser)
-**Prerequisites:** Phase 13 · 01 through 05 (the tool interface and function calling)
-**Time:** ~45 minutes
+**Тип:** теория
+**Языки:** Python (stdlib, JSON-RPC parser)
+**Предварительные знания:** Phase 13 · 01-05 (интерфейс инструментов и function calling)
+**Время:** ~45 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Name all six MCP primitives (tools, resources, prompts on the server; roots, sampling, elicitation on the client) and give one use case each.
-- Walk through the three-phase lifecycle (initialize, operation, shutdown) and state who sends which message at each phase.
-- Parse and emit JSON-RPC 2.0 request, response, and notification envelopes.
-- Explain what capability negotiation at `initialize` is and what breaks without it.
+- Назвать все шесть MCP primitives (tools, resources, prompts на server; roots, sampling, elicitation на client) и дать по одному use case.
+- Пройти трехфазный lifecycle (initialize, operation, shutdown) и указать, кто отправляет какое message на каждой phase.
+- Парсить и выдавать JSON-RPC 2.0 request, response и notification envelopes.
+- Объяснить, что такое capability negotiation при `initialize` и что ломается без него.
 
-## The Problem
+## Проблема
 
-Before MCP, every tool-using agent had its own protocol. Cursor had an MCP-shaped but incompatible tool system. Claude Desktop shipped with a different one. VS Code's Copilot extension had a third. A team that built a "Postgres query" tool wrote the same tool three times, each to a different host's API. Reusing it required copying code.
+До MCP у каждого tool-using agent был собственный protocol. У Cursor была MCP-shaped, но incompatible tool system. Claude Desktop поставлялся с другой. Расширение Copilot в VS Code имело третью. Команда, построившая "Postgres query" tool, писала тот же tool три раза, каждый под API другого host. Reuse требовал копирования code.
 
-The result was a Cambrian explosion of one-off integrations and a ceiling on ecosystem velocity.
+Результатом был кембрийский взрыв one-off integrations и потолок скорости ecosystem.
 
-MCP fixes this by standardizing the wire format. A single MCP server works in every MCP client: Claude Desktop, ChatGPT, Cursor, VS Code, Gemini, Goose, Zed, Windsurf, 300+ clients by April 2026. 110M monthly SDK downloads. 10,000+ public servers. The Linux Foundation took stewardship in December 2025 under the new Agentic AI Foundation.
+MCP решает это через standardized wire format. Один MCP server работает в каждом MCP client: Claude Desktop, ChatGPT, Cursor, VS Code, Gemini, Goose, Zed, Windsurf, 300+ clients к апрелю 2026 года. 110M загрузок SDK в месяц. 10,000+ public servers. Linux Foundation взяла stewardship в декабре 2025 года под новой Agentic AI Foundation.
 
-The spec revision used in this phase is **2025-11-25**. It adds async Tasks (SEP-1686), URL-mode elicitation (SEP-1036), sampling with tools (SEP-1577), incremental scope consent (SEP-835), and OAuth 2.1 resource-indicator semantics. Phase 13 · 09 through 16 cover those extensions. This lesson stops at the base.
+Spec revision, используемая в этой phase, — **2025-11-25**. Она добавляет async Tasks (SEP-1686), URL-mode elicitation (SEP-1036), sampling with tools (SEP-1577), incremental scope consent (SEP-835) и OAuth 2.1 resource-indicator semantics. Phase 13 · 09-16 покрывают эти extensions. Этот урок останавливается на base.
 
-## The Concept
+## Концепция
 
-### Three server primitives
+### Три server primitives
 
-1. **Tools.** Callable actions. Same four-step loop from Phase 13 · 01.
-2. **Resources.** Exposed data. Read-only content addressable by URI: `file:///path`, `db://query/...`, custom schemes.
-3. **Prompts.** Reusable templates. Slash-commands in the host UI; server supplies the template, client fills arguments.
+1. **Tools.** Вызываемые действия. Тот же четырехшаговый цикл из Phase 13 · 01.
+2. **Resources.** Открытые данные. Read-only content, адресуемый по URI: `file:///path`, `db://query/...`, custom schemes.
+3. **Prompts.** Переиспользуемые templates. Slash-commands в host UI; server предоставляет template, client заполняет arguments.
 
-### Three client primitives
+### Три client primitives
 
-4. **Roots.** The set of URIs the server is allowed to touch. Client declares them; server respects them.
-5. **Sampling.** Server requests the client's model to perform a completion. Enables server-hosted agent loops without server-side API keys.
-6. **Elicitation.** Server asks the client's user for structured input mid-flight. Forms or URLs (SEP-1036).
+4. **Roots.** Набор URI, к которым server разрешено обращаться. Client объявляет их; server соблюдает границы.
+5. **Sampling.** Server просит модель клиента выполнить completion. Это включает server-hosted agent loops без server-side API keys.
+6. **Elicitation.** Server запрашивает у пользователя клиента structured input в процессе выполнения. Формы или URL (SEP-1036).
 
-Every capability in MCP belongs to exactly one of these six. Phase 13 · 10 through 14 cover each in depth.
+Каждая capability в MCP относится ровно к одной из этих шести. Phase 13 · 10-14 подробно покрывают каждую.
 
 ### Wire format: JSON-RPC 2.0
 
-Every message is a JSON object with these fields:
+Каждое message — JSON object с этими fields:
 
 - Requests: `{jsonrpc: "2.0", id, method, params}`.
 - Responses: `{jsonrpc: "2.0", id, result | error}`.
-- Notifications: `{jsonrpc: "2.0", method, params}` — no `id`, no response expected.
+- Notifications: `{jsonrpc: "2.0", method, params}` — нет `id`, response не ожидается.
 
-The base spec has ~15 methods, grouped by primitive. The important ones:
+Base spec имеет около 15 methods, сгруппированных по primitive. Важные:
 
 - `initialize` / `initialized` (handshake)
 - `tools/list`, `tools/call`
@@ -57,23 +57,23 @@ The base spec has ~15 methods, grouped by primitive. The important ones:
 - `sampling/createMessage` (server-to-client)
 - `notifications/tools/list_changed`, `notifications/resources/updated`, `notifications/progress`
 
-### Three-phase lifecycle
+### Трехфазный lifecycle
 
 **Phase 1: initialize.**
 
-Client sends `initialize` with its `capabilities` and `clientInfo`. Server responds with its own `capabilities`, `serverInfo`, and the spec version it speaks. Client sends `notifications/initialized` when it has digested the response. From here on, either side can send requests per the negotiated capabilities.
+Client отправляет `initialize` со своими `capabilities` и `clientInfo`. Server отвечает собственными `capabilities`, `serverInfo` и spec version, на которой он говорит. Client отправляет `notifications/initialized`, когда обработал response. С этого момента любая сторона может отправлять requests согласно согласованным capabilities.
 
 **Phase 2: operation.**
 
-Bidirectional. Client calls `tools/list` to discover, then `tools/call` to invoke. Server may send `sampling/createMessage` if it declared that capability. Server may send `notifications/tools/list_changed` when its tool set mutates. Client may send `notifications/roots/list_changed` when the user changes root scope.
+Двунаправленно. Client вызывает `tools/list` для discovery, затем `tools/call` для invocation. Server может отправить `sampling/createMessage`, если объявил эту capability. Server может отправить `notifications/tools/list_changed`, когда меняется его tool set. Client может отправить `notifications/roots/list_changed`, когда user меняет root scope.
 
 **Phase 3: shutdown.**
 
-Either side closes the transport. No structured shutdown method in MCP; the transport (stdio or Streamable HTTP, Phase 13 · 09) carries the end-of-connection signal.
+Любая сторона закрывает transport. В MCP нет structured shutdown method; transport (stdio или Streamable HTTP, Phase 13 · 09) несет сигнал конца соединения.
 
 ### Capability negotiation
 
-`capabilities` in the `initialize` handshake is the contract. Example from a server:
+`capabilities` в handshake `initialize` — это contract. Пример от server:
 
 ```json
 {
@@ -83,7 +83,7 @@ Either side closes the transport. No structured shutdown method in MCP; the tran
 }
 ```
 
-The server declares it can emit `tools/list_changed` notifications and supports `resources/subscribe`. The client agrees by declaring its own:
+Server declares, что он может emit `tools/list_changed` notifications и supports `resources/subscribe`. Client соглашается, объявляя свои:
 
 ```json
 {
@@ -93,70 +93,70 @@ The server declares it can emit `tools/list_changed` notifications and supports 
 }
 ```
 
-If the client does not declare `sampling`, the server must not call `sampling/createMessage`. Symmetric: if the server does not declare `resources.subscribe`, the client must not try to subscribe.
+Если client не declares `sampling`, server не должен вызывать `sampling/createMessage`. Симметрично: если server не declares `resources.subscribe`, client не должен пытаться subscribe.
 
-This is what prevents ecosystem drift. A client that does not support sampling is still a valid MCP client; a server that does not call `sampling` is still a valid MCP server. They just do not use that feature together.
+Именно это предотвращает ecosystem drift. Client, который не supports sampling, все еще valid MCP client; server, который не calls `sampling`, все еще valid MCP server. Они просто не используют эту feature вместе.
 
-### Structured content and error shapes
+### Structured content и формы ошибок
 
-`tools/call` returns a `content` array of typed blocks: `text`, `image`, `resource`. Phase 13 · 14 adds MCP Apps (`ui://` interactive UI) to that list.
+`tools/call` возвращает массив `content` из typed blocks: `text`, `image`, `resource`. Phase 13 · 14 добавляет MCP Apps (`ui://` interactive UI) в этот list.
 
-Errors use JSON-RPC error codes. The spec-defined additions: `-32002` "Resource not found", `-32603` "Internal error", plus MCP-specific error data as `error.data`.
+Errors используют JSON-RPC error codes. Дополнения, заданные spec: `-32002` "Resource not found", `-32603` "Internal error", плюс MCP-specific error data в `error.data`.
 
-### Client capabilities vs tool call details
+### Client capabilities vs детали tool call
 
-A common confusion: `capabilities.tools` is whether the client supports tool-list-changed notifications. Whether the client WILL call specific tools is a runtime choice driven by its model, not a capability flag. The capability flag is the spec-level contract. The model's choice is orthogonal.
+Частая путаница: `capabilities.tools` означает, поддерживает ли client notifications об изменении списка tools. То, будет ли client вызывать specific tools, — runtime choice, driven by its model, а не capability flag. Capability flag — spec-level contract. Выбор модели ортогонален.
 
-### Why JSON-RPC and not REST?
+### Почему JSON-RPC, а не REST?
 
-JSON-RPC 2.0 (2010) is a lightweight bidirectional protocol. REST is client-initiated. MCP needed server-initiated messages (sampling, notifications), so JSON-RPC with its symmetric request/response shape was a natural fit. JSON-RPC also composes cleanly over stdio and WebSocket/Streamable HTTP without re-inventing HTTP's request shape.
+JSON-RPC 2.0 (2010) — легковесный двунаправленный protocol. REST инициируется client. MCP требовал server-initiated messages (sampling, notifications), поэтому JSON-RPC с symmetric request/response shape естественно подошел. JSON-RPC также чисто компонуется поверх stdio и WebSocket/Streamable HTTP без переизобретения request shape HTTP.
 
-## Use It
+## Используйте
 
-`code/main.py` ships a minimal JSON-RPC 2.0 parser and emitter, then walks the `initialize` → `tools/list` → `tools/call` → `shutdown` sequence by hand, printing every message. No real transport; just the message shapes. Compare to the spec linked in Further Reading to verify each envelope.
+`code/main.py` поставляет минимальные JSON-RPC 2.0 parser and emitter, затем вручную проходит sequence `initialize` → `tools/list` → `tools/call` → `shutdown`, печатая каждое message. Real transport нет; только message shapes. Сравните со spec из Further Reading, чтобы проверить каждый envelope.
 
-What to look at:
+На что смотреть:
 
-- `initialize` declares capabilities both ways; the response has `serverInfo` and `protocolVersion: "2025-11-25"`.
-- `tools/list` returns a `tools` array; each entry has `name`, `description`, `inputSchema`.
-- `tools/call` uses `params.name` and `params.arguments`.
-- The response `content` is an array of `{type, text}` blocks.
+- `initialize` объявляет capabilities в обе стороны; response содержит `serverInfo` и `protocolVersion: "2025-11-25"`.
+- `tools/list` возвращает массив `tools`; каждая запись содержит `name`, `description`, `inputSchema`.
+- `tools/call` использует `params.name` и `params.arguments`.
+- Response `content` — это массив blocks `{type, text}`.
 
-## Ship It
+## Отправьте
 
-This lesson produces `outputs/skill-mcp-handshake-tracer.md`. Given a pcap-style transcript of an MCP client-server interaction, the skill annotates each message with which primitive, which lifecycle phase, and which capability it depends on.
+Этот урок создает `outputs/skill-mcp-handshake-tracer.md`. Получив pcap-style transcript взаимодействия MCP client-server, skill аннотирует каждое message: к какому primitive оно относится, в какой lifecycle phase находится и от какой capability зависит.
 
 ## Exercises
 
-1. Run `code/main.py`. Identify the line where capability negotiation happens and describe what would change if the server did not declare `tools.listChanged`.
+1. Запустите `code/main.py`. Найдите строку, где происходит capability negotiation, и опишите, что изменилось бы, если бы server не объявил `tools.listChanged`.
 
-2. Extend the parser to handle `notifications/progress`. The message shape: `{method: "notifications/progress", params: {progressToken, progress, total}}`. Emit it while a long-running `tools/call` is in progress and confirm the client handler would display a progress bar.
+2. Расширьте parser для обработки `notifications/progress`. Message shape: `{method: "notifications/progress", params: {progressToken, progress, total}}`. Emit it while a long-running `tools/call` is in progress и подтвердите, что client handler показал бы progress bar.
 
-3. Read the MCP 2025-11-25 spec top to bottom — the whole document is about 80 pages. Identify the one capability flag most servers do NOT need. Hint: it relates to resource subscription.
+3. Прочитайте spec MCP 2025-11-25 от начала до конца — весь document около 80 pages. Найдите один capability flag, который большинству servers НЕ нужен. Подсказка: он связан с resource subscription.
 
-4. Sketch on paper the primitive a hypothetical "cron job" feature would belong to. (Hint: the server wants the client to invoke it at a scheduled time. None of the six primitives fit today.) MCP's 2026 roadmap has a draft SEP for this.
+4. Нарисуйте на бумаге primitive, к которому принадлежала бы hypothetical feature "cron job". (Подсказка: server хочет, чтобы client invoked it at a scheduled time. Сегодня ни одна из шести primitives не подходит.) В roadmap MCP 2026 года есть draft SEP для этого.
 
-5. Parse one session log from an open MCP server on GitHub. Count request vs response vs notification messages. Compute what fraction of traffic is lifecycle vs operation.
+5. Распарсите один session log из open MCP server на GitHub. Посчитайте messages типа request, response и notification. Вычислите, какая доля traffic относится к lifecycle vs operation.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| MCP | "Model Context Protocol" | Open protocol for model-to-tool discovery and invocation |
-| Server primitive | "What a server exposes" | tools (actions), resources (data), prompts (templates) |
-| Client primitive | "What a client lets servers use" | roots (scope), sampling (LLM callbacks), elicitation (user input) |
-| JSON-RPC 2.0 | "The wire format" | Symmetric request/response/notification envelopes |
-| `initialize` handshake | "Capability negotiation" | First message pair; servers and clients declare features they support |
-| `tools/list` | "Discovery" | Client asks server for its current tool set |
-| `tools/call` | "Invocation" | Client asks server to execute a tool with arguments |
-| `notifications/*_changed` | "Mutation events" | Server tells client that its primitive list has changed |
+| MCP | "Model Context Protocol" | Open protocol для discovery и invocation между model и tool |
+| Server primitive | "Что server exposes" | tools (actions), resources (data), prompts (templates) |
+| Client primitive | "Что client lets servers use" | roots (scope), sampling (LLM callbacks), elicitation (user input) |
+| JSON-RPC 2.0 | "Wire format" | Симметричные envelopes request/response/notification |
+| `initialize` handshake | "Capability negotiation" | Первая пара messages; servers и clients объявляют поддерживаемые features |
+| `tools/list` | "Discovery" | Client запрашивает у server текущий tool set |
+| `tools/call` | "Invocation" | Client просит server выполнить tool с arguments |
+| `notifications/*_changed` | "Mutation events" | Server сообщает client, что список primitive изменился |
 | Content block | "Typed result" | `{type: "text" | "image" | "resource" | "ui_resource"}` in tool result |
-| SEP | "Spec Evolution Proposal" | Named draft proposal (e.g. SEP-1686 for async Tasks) |
+| SEP | "Spec Evolution Proposal" | Именованное draft proposal (например, SEP-1686 для async Tasks) |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Model Context Protocol — Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — the canonical spec document
-- [Model Context Protocol — Architecture concepts](https://modelcontextprotocol.io/docs/concepts/architecture) — the six-primitive mental model
-- [Anthropic — Introducing the Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) — November 2024 launch post
-- [MCP blog — First MCP anniversary](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) — one-year retrospective and the 2025-11-25 spec changes
-- [WorkOS — MCP 2025-11-25 spec update](https://workos.com/blog/mcp-2025-11-25-spec-update) — summary of SEP-1686, 1036, 1577, 835, and 1724
+- [Model Context Protocol — Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — канонический документ spec
+- [Model Context Protocol — Architecture concepts](https://modelcontextprotocol.io/docs/concepts/architecture) — mental model шести primitives
+- [Anthropic — Introducing the Model Context Protocol](https://www.anthropic.com/news/model-context-protocol) — launch post ноября 2024 года
+- [MCP blog — First MCP anniversary](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) — годовая ретроспектива и изменения spec 2025-11-25
+- [WorkOS — MCP 2025-11-25 spec update](https://workos.com/blog/mcp-2025-11-25-spec-update) — summary SEP-1686, 1036, 1577, 835 и 1724

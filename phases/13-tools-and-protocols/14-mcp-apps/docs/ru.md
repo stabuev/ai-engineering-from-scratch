@@ -1,32 +1,32 @@
-# MCP Apps — Interactive UI Resources via `ui://`
+# MCP Apps — интерактивные UI-ресурсы через `ui://`
 
-> Text-only tool output caps what agents can show. MCP Apps (SEP-1724, official January 26, 2026) let a tool return sandboxed interactive HTML rendered inline in Claude Desktop, ChatGPT, Cursor, Goose, and VS Code. Dashboards, forms, maps, 3D scenes, all through one extension. This lesson walks the `ui://` resource scheme, the `text/html;profile=mcp-app` MIME, the iframe-sandbox postMessage protocol, and the security surface that comes with letting a server render HTML.
+> Текстовый вывод инструмента ограничивает то, что агенты могут показывать. MCP Apps (SEP-1724, официальный статус с 2026-01-26) позволяют инструменту вернуть интерактивный HTML в sandbox, отображаемый inline в Claude Desktop, ChatGPT, Cursor, Goose и VS Code. Дашборды, формы, карты, 3D-сцены — все через одно расширение. В этом уроке рассматриваются схема ресурсов `ui://`, MIME `text/html;profile=mcp-app`, iframe-sandbox протокол postMessage и поверхность безопасности, которая появляется, когда серверу разрешают рендерить HTML.
 
-**Type:** Build
-**Languages:** Python (stdlib, UI resource emitter), HTML (sample app)
-**Prerequisites:** Phase 13 · 07 (MCP server), Phase 13 · 10 (resources)
-**Time:** ~75 minutes
+**Тип:** Build
+**Языки:** Python (stdlib, эмиттер UI-ресурсов), HTML (пример приложения)
+**Предварительные требования:** Phase 13 · 07 (MCP server), Phase 13 · 10 (resources)
+**Время:** ~75 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Return a `ui://` resource from a tool call and set the correct MIME and metadata.
-- Declare a tool's associated UI with `_meta.ui.resourceUri`, `_meta.ui.csp`, and `_meta.ui.permissions`.
-- Implement the iframe sandbox postMessage JSON-RPC for UI-to-host communication.
-- Apply CSP and permissions-policy defaults that defend against UI-originated attacks.
+- Возвращать ресурс `ui://` из вызова инструмента и задавать корректные MIME и metadata.
+- Объявлять связанный с инструментом UI через `_meta.ui.resourceUri`, `_meta.ui.csp` и `_meta.ui.permissions`.
+- Реализовать iframe sandbox postMessage JSON-RPC для связи UI с host.
+- Применять CSP и значения permissions-policy по умолчанию, защищающие от атак, исходящих из UI.
 
-## The Problem
+## Проблема
 
-A 2025-era `visualize_timeline` tool can return "Here are 14 notes organized chronologically: ...". That is a paragraph. Users actually want the interactive timeline. Before MCP Apps, the options were: client-specific widget APIs (Claude artifacts, OpenAI Custom GPT HTML), or no UI at all.
+Инструмент `visualize_timeline` эпохи 2025 может вернуть "Here are 14 notes organized chronologically: ...". Это абзац. Пользователи на самом деле хотят интерактивную timeline. До MCP Apps варианты были такими: специфичные для клиента widget APIs (Claude artifacts, OpenAI Custom GPT HTML) или вообще без UI.
 
-MCP Apps (SEP-1724, shipped January 26, 2026) standardize the contract. A tool result contains a `resource` whose URI is `ui://...` and whose MIME is `text/html;profile=mcp-app`. The host renders it in a sandboxed iframe with a limited CSP and no network access unless explicitly granted. The UI inside the iframe posts messages to the host via a tiny postMessage JSON-RPC dialect.
+MCP Apps (SEP-1724, shipped 2026-01-26) стандартизируют контракт. Результат инструмента содержит `resource`, URI которого равен `ui://...`, а MIME равен `text/html;profile=mcp-app`. Host отображает его в iframe с sandbox, ограниченным CSP и без сетевого доступа, если он явно не выдан. UI внутри iframe отправляет сообщения host через небольшой диалект postMessage JSON-RPC.
 
-Every compatible client (Claude Desktop, ChatGPT, Goose, VS Code) renders the same `ui://` resource the same way. One server, one HTML bundle, universal UI.
+Каждый совместимый клиент (Claude Desktop, ChatGPT, Goose, VS Code) отображает один и тот же ресурс `ui://` одинаково. Один сервер, один HTML bundle, универсальный UI.
 
-## The Concept
+## Концепция
 
-### The `ui://` resource scheme
+### Схема ресурсов `ui://`
 
-A tool returns:
+Инструмент возвращает:
 
 ```json
 {
@@ -48,7 +48,7 @@ A tool returns:
 }
 ```
 
-The host then calls `resources/read` on the `ui://notes/timeline` URI and gets back:
+Затем host вызывает `resources/read` для URI `ui://notes/timeline` и получает:
 
 ```json
 {
@@ -62,18 +62,18 @@ The host then calls `resources/read` on the `ui://notes/timeline` URI and gets b
 
 ### Iframe sandbox
 
-The host renders the HTML inside a sandboxed `<iframe>` with:
+Host отображает HTML внутри `<iframe>` с sandbox:
 
-- `sandbox="allow-scripts allow-same-origin"` (or stricter per server declaration)
-- Server-declared CSP applied via response headers.
-- No cookies, no localStorage from the host's origin.
-- Network access limited to `connectSrc` in CSP.
+- `sandbox="allow-scripts allow-same-origin"` (или строже согласно декларации сервера)
+- CSP, объявленным сервером и применяемым через response headers.
+- Без cookies, без localStorage из origin host.
+- Сетевым доступом, ограниченным `connectSrc` в CSP.
 
-### postMessage protocol
+### Протокол postMessage
 
-The iframe communicates with the host via `window.postMessage`. A tiny JSON-RPC 2.0 dialect:
+Iframe общается с host через `window.postMessage`. Небольшой диалект JSON-RPC 2.0:
 
-Always pin `targetOrigin` to the peer's exact origin, and on the receiving side validate `event.origin` against an allowlist before processing any payload. Never use `"*"` for either side of this channel — the body carries tool calls and resource reads.
+Всегда фиксируйте `targetOrigin` на точный origin другой стороны, а на принимающей стороне проверяйте `event.origin` по allowlist перед обработкой payload. Никогда не используйте `"*"` ни на одной стороне этого канала — тело переносит вызовы инструментов и чтение ресурсов.
 
 ```js
 // iframe to host  (pin to host origin)
@@ -98,115 +98,115 @@ window.addEventListener("message", (event) => {
 });
 ```
 
-Available host-side methods the UI can call:
+Доступные методы на стороне host, которые UI может вызывать:
 
-- `host.callTool(name, arguments)` — invokes a server tool.
-- `host.readResource(uri)` — reads an MCP resource.
-- `host.getPrompt(name, arguments)` — fetches a prompt template.
-- `host.close()` — dismisses the UI.
+- `host.callTool(name, arguments)` — вызывает инструмент сервера.
+- `host.readResource(uri)` — читает MCP resource.
+- `host.getPrompt(name, arguments)` — получает шаблон prompt.
+- `host.close()` — закрывает UI.
 
-Every call still goes through the MCP protocol and inherits the server's permissions.
+Каждый вызов все равно проходит через MCP protocol и наследует permissions сервера.
 
 ### Permissions
 
-The `_meta.ui.permissions` list requests extra capabilities:
+Список `_meta.ui.permissions` запрашивает дополнительные capabilities:
 
-- `camera` — access the user's camera (used for scan-a-document UIs).
-- `microphone` — voice input.
-- `geolocation` — location.
-- `network:*` — wider network access than `connectSrc` alone allows.
+- `camera` — доступ к камере пользователя (используется для UI сканирования документов).
+- `microphone` — голосовой ввод.
+- `geolocation` — местоположение.
+- `network:*` — более широкий сетевой доступ, чем разрешает один `connectSrc`.
 
-Each permission is a prompt the user sees before the UI renders.
+Каждое permission — это prompt, который пользователь видит перед рендерингом UI.
 
-### Security risks
+### Риски безопасности
 
-HTML in an iframe is still HTML. New attack surface:
+HTML в iframe все еще HTML. Новая поверхность атаки:
 
-- **Prompt-injection via UI.** A malicious server UI can show text that looks like a system message and tricks the user. Host rendering should visibly distinguish server UI from host UI.
-- **Exfiltration via `connectSrc`.** If CSP permits `connect-src: *`, the UI can send data anywhere. Default should be strict.
-- **Clickjacking.** The UI overlays host chrome. Hosts must prevent z-index manipulation and enforce opacity rules.
-- **Steal focus.** UI takes keyboard focus and captures the next message. Hosts must intercept.
+- **Prompt-injection через UI.** Вредоносный server UI может показать текст, похожий на system message, и обмануть пользователя. Рендеринг host должен заметно отличать server UI от host UI.
+- **Exfiltration через `connectSrc`.** Если CSP разрешает `connect-src: *`, UI может отправлять данные куда угодно. Значение по умолчанию должно быть строгим.
+- **Clickjacking.** UI перекрывает chrome host. Hosts должны предотвращать манипуляции z-index и принудительно применять правила opacity.
+- **Steal focus.** UI забирает keyboard focus и перехватывает следующее сообщение. Hosts должны это перехватывать.
 
-Phase 13 · 15 covers these in depth as part of MCP security; this lesson introduces them.
+Phase 13 · 15 подробно разбирает это как часть MCP security; этот урок вводит тему.
 
-### `ui/initialize` handshake
+### Handshake `ui/initialize`
 
-After the iframe loads, it sends `ui/initialize` over postMessage:
+После загрузки iframe отправляет `ui/initialize` через postMessage:
 
 ```json
 {"jsonrpc": "2.0", "id": 0, "method": "ui/initialize",
  "params": {"theme": "dark", "locale": "en-US", "sessionId": "..."}}
 ```
 
-Host responds with capabilities and a session token. The UI uses the session token on every subsequent host call.
+Host отвечает capabilities и session token. UI использует session token при каждом последующем вызове host.
 
-### AppRenderer / AppFrame SDK primitives
+### Примитивы SDK AppRenderer / AppFrame
 
-The ext-apps SDK exposes two convenience primitives:
+SDK ext-apps предоставляет два удобных примитива:
 
-- `AppRenderer` (server side) — wraps a React / Vue / Solid component and emits a `ui://` resource with the right MIME and metadata.
-- `AppFrame` (client side) — receives the resource, mounts the iframe, and mediates postMessage.
+- `AppRenderer` (server side) — оборачивает React / Vue / Solid component и эмитит ресурс `ui://` с правильными MIME и metadata.
+- `AppFrame` (client side) — получает ресурс, монтирует iframe и посредничает в postMessage.
 
-You can use these or hand-roll the HTML and JSON-RPC.
+Можно использовать их или вручную собрать HTML и JSON-RPC.
 
-### Ecosystem status
+### Статус экосистемы
 
-MCP Apps shipped January 26, 2026. Client support as of April 2026:
+MCP Apps shipped 2026-01-26. Поддержка клиентов на апрель 2026:
 
-- **Claude Desktop.** Full support since January 2026.
-- **ChatGPT.** Full support via the Apps SDK (same underlying MCP Apps protocol).
-- **Cursor.** Beta; enable via settings.
-- **VS Code.** Insider builds only.
-- **Goose.** Full support.
-- **Zed, Windsurf.** Roadmapped.
+- **Claude Desktop.** Полная поддержка с января 2026.
+- **ChatGPT.** Полная поддержка через Apps SDK (тот же базовый MCP Apps protocol).
+- **Cursor.** Beta; включается в settings.
+- **VS Code.** Только Insider builds.
+- **Goose.** Полная поддержка.
+- **Zed, Windsurf.** В roadmap.
 
-Servers in production: dashboards, map visualizations, data tables, chart builders, sandbox IDE previews.
+Production-серверы: дашборды, визуализации карт, таблицы данных, конструкторы графиков, IDE preview в sandbox.
 
-## Use It
+## Использование
 
-`code/main.py` extends the notes server with a `visualize_timeline` tool that returns a `ui://notes/timeline` resource, plus a handler for `resources/read` on that URI which returns a small but complete HTML bundle with an SVG timeline. The HTML is stdlib-templated — no build system. postMessage is sketched in JS comments since stdlib cannot drive a browser.
+`code/main.py` расширяет notes server инструментом `visualize_timeline`, который возвращает ресурс `ui://notes/timeline`, плюс handler для `resources/read` на этом URI, который возвращает небольшой, но полный HTML bundle с SVG timeline. HTML шаблонизируется через stdlib — без build system. postMessage набросан в комментариях JS, потому что stdlib не может управлять браузером.
 
-What to look at:
+На что смотреть:
 
-- `_meta.ui` on the tool response carries resourceUri, CSP, permissions.
-- The HTML renders without network access; all data is inlined.
-- JS calls `host.callTool` via `window.parent.postMessage` (documented but inert in this stdlib demo).
+- `_meta.ui` в ответе инструмента несет resourceUri, CSP, permissions.
+- HTML рендерится без сетевого доступа; все данные inlined.
+- JS вызывает `host.callTool` через `window.parent.postMessage` (задокументировано, но неактивно в этой stdlib demo).
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-mcp-apps-spec.md`. Given a tool that would benefit from an interactive UI, the skill produces the full MCP Apps contract: `ui://` URI, CSP, permissions, postMessage entrypoints, and a security checklist.
+Этот урок создает `outputs/skill-mcp-apps-spec.md`. Для инструмента, которому полезен интерактивный UI, skill выдает полный контракт MCP Apps: URI `ui://`, CSP, permissions, entrypoints postMessage и security checklist.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` and inspect the HTML emitted. Open the HTML directly in a browser; verify the SVG renders. Then sketch the postMessage contract the UI would use to call `host.callTool("notes_update", ...)`.
+1. Запустите `code/main.py` и изучите сгенерированный HTML. Откройте HTML напрямую в браузере; проверьте, что SVG рендерится. Затем набросайте контракт postMessage, который UI использовал бы для вызова `host.callTool("notes_update", ...)`.
 
-2. Tighten the CSP: remove `'unsafe-inline'` and use a nonce-based script policy. What changes in the HTML generation code?
+2. Ужесточите CSP: удалите `'unsafe-inline'` и используйте script policy на основе nonce. Что изменится в коде генерации HTML?
 
-3. Add a second UI resource `ui://notes/editor` with a form for editing a note in place. When the user submits, the iframe calls `host.callTool("notes_update", ...)`.
+3. Добавьте второй UI resource `ui://notes/editor` с формой для редактирования заметки на месте. Когда пользователь отправляет форму, iframe вызывает `host.callTool("notes_update", ...)`.
 
-4. Audit the UI's attack surface. Where could a malicious server inject content? What does the iframe sandbox defend against and what does it not?
+4. Проведите audit поверхности атаки UI. Где вредоносный сервер мог бы внедрить content? От чего iframe sandbox защищает и от чего нет?
 
-5. Read the SEP-1724 spec and identify one capability in the MCP Apps SDK that this toy implementation does not use. (Hint: component-level state sync.)
+5. Прочитайте спецификацию SEP-1724 и определите одну capability в MCP Apps SDK, которую эта игрушечная реализация не использует. (Hint: синхронизация состояния на уровне component.)
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| MCP Apps | "Interactive UI resources" | SEP-1724 extension shipped 2026-01-26 |
-| `ui://` | "App URI scheme" | Resource scheme for UI bundles |
-| `text/html;profile=mcp-app` | "The MIME" | Content-type for MCP App HTML |
-| Iframe sandbox | "Render container" | Browser sandboxing of the UI with CSP and permissions |
-| postMessage JSON-RPC | "UI-to-host wire" | Tiny JSON-RPC-over-postMessage dialect for host calls |
-| `_meta.ui` | "Tool-UI binding" | Metadata linking a tool result to a UI resource |
-| CSP | "Content-Security-Policy" | Declares allowed sources for scripts, network, styles |
-| AppRenderer | "Server SDK primitive" | Converts a framework component into a `ui://` resource |
-| AppFrame | "Client SDK primitive" | Iframe mount helper that mediates postMessage |
-| `ui/initialize` | "Handshake" | First postMessage from UI to host |
+| MCP Apps | "Интерактивные UI resources" | Расширение SEP-1724, shipped 2026-01-26 |
+| `ui://` | "App URI scheme" | Схема ресурсов для UI bundles |
+| `text/html;profile=mcp-app` | "The MIME" | Content-type для MCP App HTML |
+| Iframe sandbox | "Render container" | Browser sandboxing UI с CSP и permissions |
+| postMessage JSON-RPC | "UI-to-host wire" | Небольшой диалект JSON-RPC-over-postMessage для вызовов host |
+| `_meta.ui` | "Tool-UI binding" | Metadata, связывающие результат инструмента с UI resource |
+| CSP | "Content-Security-Policy" | Объявляет разрешенные источники для scripts, network, styles |
+| AppRenderer | "Server SDK primitive" | Преобразует framework component в ресурс `ui://` |
+| AppFrame | "Client SDK primitive" | Iframe mount helper, который посредничает в postMessage |
+| `ui/initialize` | "Handshake" | Первый postMessage от UI к host |
 
-## Further Reading
+## Дополнительное чтение
 
-- [MCP ext-apps — GitHub](https://github.com/modelcontextprotocol/ext-apps) — reference implementation and SDK
-- [MCP Apps specification 2026-01-26](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx) — formal spec document
-- [MCP — Apps extension overview](https://modelcontextprotocol.io/extensions/apps/overview) — high-level documentation
-- [MCP blog — MCP Apps launch](https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/) — January 2026 launch post
-- [MCP Apps API reference](https://apps.extensions.modelcontextprotocol.io/api/) — JSDoc-style SDK reference
+- [MCP ext-apps — GitHub](https://github.com/modelcontextprotocol/ext-apps) — reference implementation и SDK
+- [MCP Apps specification 2026-01-26](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx) — формальный документ спецификации
+- [MCP — Apps extension overview](https://modelcontextprotocol.io/extensions/apps/overview) — high-level документация
+- [MCP blog — MCP Apps launch](https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/) — launch post за январь 2026
+- [MCP Apps API reference](https://apps.extensions.modelcontextprotocol.io/api/) — справочник SDK в стиле JSDoc
