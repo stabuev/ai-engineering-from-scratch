@@ -1,27 +1,27 @@
-# Heritage of FIPA-ACL and Speech Acts
+# Наследие FIPA-ACL и речевых актов
 
-> Before MCP, before A2A, there was FIPA-ACL. In 2000 the IEEE Foundation for Intelligent Physical Agents ratified an agent communication language with twenty performatives, two content languages, and a set of interaction protocols — contract net, subscribe/notify, request-when. It faded from industry because the ontology overhead was too heavy for the web, but the LLM revival of multi-agent systems is quietly reimplementing the same ideas without the formal semantics: JSON contracts stand in for performatives, natural language stands in for ontologies. This lesson reads FIPA-ACL seriously so you can see which 2026 protocol decisions are reinvention, which are novelty, and where the current wave is going to rediscover problems the 2000s already solved.
+> До MCP, до A2A был FIPA-ACL. В 2000 году IEEE Foundation for Intelligent Physical Agents ратифицировала язык коммуникации агентов с двадцатью performatives, двумя content languages и набором interaction protocols — contract net, subscribe/notify, request-when. Он исчез из индустрии, потому что overhead онтологий был слишком тяжелым для web, но LLM-возрождение multi-agent систем тихо переизобретает те же идеи без формальной семантики: JSON contracts заменяют performatives, natural language заменяет ontologies. Этот урок серьезно читает FIPA-ACL, чтобы вы видели, какие protocol decisions 2026 года являются переизобретением, какие — новизной, и где текущая волна заново обнаружит проблемы, уже решенные в 2000-х.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 01 (Why Multi-Agent)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 16 · 01 (Why Multi-Agent)
+**Время:** ~60 минут
 
-## Problem
+## Проблема
 
-The 2026 agent-protocol landscape is busy: MCP for tools, A2A for agents, ACP for enterprise audit, ANP for decentralized trust, NLIP for natural-language content, plus CA-MCP and two dozen research proposals. Each spec announces itself as foundational.
+Ландшафт agent protocols в 2026 году перегружен: MCP для tools, A2A для agents, ACP для enterprise audit, ANP для decentralized trust, NLIP для natural-language content, плюс CA-MCP и две дюжины research proposals. Каждая спецификация объявляет себя фундаментальной.
 
-The honest read is that most of them are rediscovering a very specific twenty-year-old decision tree. Speech-act theory from Austin (1962) and Searle (1969) gave us "utterances are actions." KQML (1993) turned that into a wire protocol. FIPA-ACL (ratified 2000) produced the reference standardization: twenty performatives, content languages SL0/SL1, interaction protocols for contract-net and subscribe-notify. JADE and JACK were the Java reference platforms. The effort faded around 2010 because the ontology overhead was too heavy and the web was winning.
+Честное прочтение: большинство из них заново открывают очень конкретное двадцатилетнее дерево решений. Speech-act theory Остина (1962) и Серля (1969) дала нам идею "utterances are actions". KQML (1993) превратил это в wire protocol. FIPA-ACL (ратифицирован в 2000) дал эталонную стандартизацию: двадцать performatives, content languages SL0/SL1, interaction protocols для contract-net и subscribe-notify. JADE и JACK были Java reference platforms. Усилия сошли на нет примерно к 2010 году, потому что overhead онтологий был слишком тяжелым, а web побеждал.
 
-When you look at MCP's `tools/call`, A2A's task lifecycle, or CA-MCP's shared context store, you are looking at a softer, JSON-native rehash of FIPA decisions. Knowing the heritage tells you two things: which new "innovations" are actually reinventions, and which old failure modes the new specs will rediscover.
+Когда вы смотрите на MCP `tools/call`, A2A task lifecycle или CA-MCP shared context store, вы смотрите на более мягкий, JSON-native пересказ решений FIPA. Знание наследия дает две вещи: какие новые "innovations" на самом деле являются reinventions, и какие старые failure modes новые specs обнаружат снова.
 
-## Concept
+## Концепция
 
-### Speech acts, in one paragraph
+### Speech acts в одном абзаце
 
-Austin noticed that some sentences do not describe the world — they change it. "I promise." "I request." "I declare." He called these performative utterances. Searle formalized five categories: assertive, directive, commissive, expressive, declarative. KQML (Finin et al., 1993) made this operational for software agents: a message is a performative (the action) plus content (what the action is about). FIPA-ACL cleaned up KQML's gaps and standardized around twenty performatives.
+Остин заметил, что некоторые предложения не описывают мир — они меняют его. "I promise." "I request." "I declare." Он назвал их performative utterances. Серль формализовал пять категорий: assertive, directive, commissive, expressive, declarative. KQML (Finin et al., 1993) сделал это операциональным для software agents: message — это performative (действие) плюс content (то, о чем действие). FIPA-ACL закрыл пробелы KQML и стандартизовался вокруг двадцати performatives.
 
-### The twenty FIPA performatives (partial list)
+### Двадцать FIPA performatives (частичный список)
 
 | Performative | Intent |
 |---|---|
@@ -42,9 +42,9 @@ Austin noticed that some sentences do not describe the world — they change it.
 | `cancel` | "Cancel the ongoing X" |
 | `failure` | "I tried X and failed" |
 
-The full list is in `fipa00037.pdf` (FIPA ACL Message Structure). The point is not to memorize it — the point is that every one of these corresponds to a primitive an LLM protocol eventually re-adds.
+Полный список находится в `fipa00037.pdf` (FIPA ACL Message Structure). Смысл не в том, чтобы заучить его, а в том, что каждый элемент соответствует примитиву, который LLM protocol в итоге добавляет снова.
 
-### Canonical FIPA-ACL message
+### Каноническое сообщение FIPA-ACL
 
 ```
 (inform
@@ -59,26 +59,26 @@ The full list is in `fipa00037.pdf` (FIPA ACL Message Structure). The point is n
 )
 ```
 
-Seven fields carry the protocol envelope; one field (`content`) carries the payload. The rest of the fields are exactly what you reinvent every time you bolt retries, threading, and ontology onto a JSON protocol.
+Семь полей несут protocol envelope; одно поле (`content`) несет payload. Остальные поля — ровно то, что вы заново изобретаете каждый раз, когда прикручиваете retries, threading и ontology к JSON protocol.
 
-### The two legacy platforms
+### Две legacy platforms
 
-**JADE** (Java Agent DEvelopment framework, 1999–2020s) was the most-used FIPA-compliant runtime. Agents extended a base class, exchanged ACL messages, ran inside containers, and coordinated using "behaviors." The interaction-protocol library shipped with contract-net, subscribe-notify, request-when, and propose-accept.
+**JADE** (Java Agent DEvelopment framework, 1999–2020s) был самым используемым FIPA-compliant runtime. Агенты расширяли base class, обменивались ACL messages, работали внутри containers и координировались с помощью "behaviors". Библиотека interaction-protocol поставляла contract-net, subscribe-notify, request-when и propose-accept.
 
-**JACK** (Agent Oriented Software, commercial) emphasized BDI (Belief-Desire-Intention) reasoning on top of FIPA messages. More formal, less adopted.
+**JACK** (Agent Oriented Software, коммерческий) делал акцент на BDI (Belief-Desire-Intention) reasoning поверх FIPA messages. Более формальный, менее распространенный.
 
-Both declined once the web stack ate multi-agent use cases. MCP and A2A are the runtime "containers" of 2026.
+Оба пришли в упадок, когда web stack поглотил multi-agent use cases. MCP и A2A — runtime "containers" 2026 года.
 
-### Why FIPA faded
+### Почему FIPA исчез
 
-- **Ontology overhead.** FIPA required a shared ontology to parse `content`. Agreeing on ontologies is a years-long standards process. The web just used HTTP + JSON.
-- **Formal semantics nobody used.** SL (Semantic Language) gave rigorous truth conditions, but most production systems used free-form content and ignored the formalism.
-- **Tooling lock-in.** JADE was Java-only; JACK was commercial. Polyglot teams routed around both.
-- **The internet won the stack.** REST, then JSON-RPC, then gRPC replaced ACL's transport.
+- **Ontology overhead.** FIPA требовал shared ontology для parsing `content`. Согласование ontologies — процесс стандартизации длиной в годы. Web просто использовал HTTP + JSON.
+- **Formal semantics nobody used.** SL (Semantic Language) давал строгие truth conditions, но большинство production systems использовали free-form content и игнорировали formalism.
+- **Tooling lock-in.** JADE был Java-only; JACK был коммерческим. Polyglot teams обходили оба.
+- **The internet won the stack.** REST, затем JSON-RPC, затем gRPC заменили transport ACL.
 
-### The LLM revival is FIPA-lite
+### LLM-возрождение — это FIPA-lite
 
-Compare a FIPA `request` to an MCP `tools/call`:
+Сравните FIPA `request` с MCP `tools/call`:
 
 ```
 (request                                {
@@ -90,50 +90,50 @@ Compare a FIPA `request` to an MCP `tools/call`:
 )                                        }
 ```
 
-Same envelope, different syntax. Both carry: who, whom, intent, payload, correlation id. Neither is a revolution over the other — they are different trade-offs on the same design.
+Тот же envelope, другой syntax. Оба несут: who, whom, intent, payload, correlation id. Ни один не является революцией относительно другого — это разные trade-offs в одном design.
 
-The 2025 survey by Liu et al. ("A Survey of Agent Interoperability Protocols: MCP, ACP, A2A, ANP", arXiv:2505.02279) makes this lineage explicit: MCP corresponds to tool-use speech acts, A2A to agent-peer speech acts, ACP to audit-trail speech acts, ANP to decentralized-identity extensions. The new specs are ACL descendants with JSON syntax and looser semantics.
+Survey 2025 года Liu et al. ("A Survey of Agent Interoperability Protocols: MCP, ACP, A2A, ANP", arXiv:2505.02279) явно показывает эту lineage: MCP соответствует tool-use speech acts, A2A — agent-peer speech acts, ACP — audit-trail speech acts, ANP — decentralized-identity extensions. Новые specs — потомки ACL с JSON syntax и более свободной semantics.
 
-### The trade-off, stated plainly
+### Trade-off, прямо
 
-**What FIPA gave you and modern specs drop:**
+**Что FIPA давал, а современные specs отбрасывают:**
 
-- Formal semantics — you can prove `inform` implies the sender believes the content.
-- A canonical catalog of performatives — you do not have to re-argue "should we have a `cancel`?".
-- Decades of interaction-protocol patterns — contract-net, subscribe-notify, propose-accept — with known correctness properties.
+- Formal semantics — можно доказать, что `inform` подразумевает, что sender believes content.
+- Canonical catalog of performatives — не нужно заново спорить "should we have a `cancel`?".
+- Десятилетия interaction-protocol patterns — contract-net, subscribe-notify, propose-accept — с известными correctness properties.
 
-**What modern specs give you and FIPA did not:**
+**Что современные specs дают, а FIPA не давал:**
 
-- JSON-native payloads compatible with every modern tool.
-- Natural-language content that LLMs can interpret without a hand-coded ontology.
+- JSON-native payloads, совместимые с каждым современным tool.
+- Natural-language content, который LLMs могут интерпретировать без hand-coded ontology.
 - Web-stack transport (HTTP, SSE, WebSocket).
-- Capability discovery via self-describing documents (MCP `listTools`, A2A Agent Card).
+- Capability discovery через self-describing documents (MCP `listTools`, A2A Agent Card).
 
-Looser intent semantics for easier implementation. That is the exact trade.
+Более слабая semantics intent ради более простой implementation. Это ровно тот trade.
 
-### Interaction protocols worth porting
+### Interaction protocols, которые стоит перенести
 
-FIPA shipped ~15 interaction protocols. Three are worth carrying forward into LLM multi-agent systems:
+FIPA поставлял примерно 15 interaction protocols. Три стоит перенести в LLM multi-agent systems:
 
-1. **Contract Net Protocol (CNP).** Manager issues `cfp` (call for proposals); bidders respond with `propose`; manager accepts/rejects. This is the canonical task-market pattern (Phase 16 · 16 Negotiation).
-2. **Subscribe/Notify.** Subscriber sends `subscribe`; publisher sends `inform` whenever the topic changes. This is every event-bus in 2026.
-3. **Request-When.** "Do X when condition Y holds." Delayed-action with pre-conditions. The 2026 analog is deferred tasks in durable workflow engines (Phase 16 · 22 Production Scaling).
+1. **Contract Net Protocol (CNP).** Manager отправляет `cfp` (call for proposals); bidders отвечают `propose`; manager accepts/rejects. Это канонический task-market pattern (Phase 16 · 16 Negotiation).
+2. **Subscribe/Notify.** Subscriber отправляет `subscribe`; publisher отправляет `inform` всякий раз, когда topic меняется. Это каждый event-bus в 2026.
+3. **Request-When.** "Do X when condition Y holds." Delayed-action с pre-conditions. Аналог 2026 года — deferred tasks в durable workflow engines (Phase 16 · 22 Production Scaling).
 
-Each maps cleanly onto modern message queues, HTTP + polling, or SSE streaming.
+Каждый чисто ложится на современные message queues, HTTP + polling или SSE streaming.
 
-### What breaks when you drop the ontology
+### Что ломается, когда вы убираете ontology
 
-Without a shared ontology, agents infer meaning from natural-language content. The documented 2026 failure mode is **semantic drift**: two agents use the same word (`"customer"`) for subtly different concepts, the receiver's agent acts on the wrong interpretation, no schema validator catches it. FIPA's ontology requirement would have rejected the message at parse time.
+Без shared ontology agents выводят meaning из natural-language content. Документированный failure mode 2026 года — **semantic drift**: два agents используют одно слово (`"customer"`) для слегка разных concepts, receiver's agent действует по неправильной interpretation, и никакой schema validator это не ловит. Требование ontology в FIPA отклонило бы message на parse time.
 
-Mitigations without going full ontology:
+Mitigations без полного перехода в ontology:
 
-- JSON Schema on `content` — rejects structural errors at the wire.
-- Typed artifacts (A2A) — rejects wrong modality.
-- Explicit performative in the envelope — makes intent unambiguous even when content is natural language.
+- JSON Schema на `content` — отклоняет structural errors на wire.
+- Typed artifacts (A2A) — отклоняет wrong modality.
+- Explicit performative в envelope — делает intent однозначным, даже когда content на natural language.
 
-### The 2026 specs, mapped to speech-act heritage
+### Specs 2026, сопоставленные с speech-act heritage
 
-| Modern spec | FIPA analog | What it keeps | What it drops |
+| Modern spec | FIPA analog | Что сохраняет | Что отбрасывает |
 |---|---|---|---|
 | MCP `tools/call` | `request` | explicit intent, correlation id | formal semantics, ontology |
 | MCP `resources/read` | `query-ref` | explicit intent, correlation id | formal semantics |
@@ -142,66 +142,66 @@ Mitigations without going full ontology:
 | CA-MCP shared context | blackboard (Hayes-Roth 1985) | multi-writer shared memory | logical consistency model |
 | NLIP | natural-language content | LLM-native | schema |
 
-Reading the table top to bottom, the pattern is: keep the structural primitive, drop the formalism, let LLMs paper over the ambiguity.
+Если читать таблицу сверху вниз, pattern такой: сохранить structural primitive, отбросить formalism, позволить LLMs сгладить ambiguity.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a pure-stdlib FIPA-ACL translator. It encodes and decodes the canonical ACL envelope and shows how every MCP / A2A message shape reduces to the same seven fields. The demo:
+`code/main.py` реализует pure-stdlib FIPA-ACL translator. Он encodes и decodes canonical ACL envelope и показывает, как любая MCP / A2A message shape сводится к тем же семи полям. Demo:
 
-- Encodes five MCP-style and A2A-style messages as FIPA-ACL.
-- Decodes FIPA-ACL back to the modern equivalent.
-- Runs a toy Contract Net negotiation between one manager and three bidders using `cfp`, `propose`, `accept-proposal`, `reject-proposal`.
+- Encodes пять MCP-style и A2A-style messages как FIPA-ACL.
+- Decodes FIPA-ACL обратно в modern equivalent.
+- Запускает toy Contract Net negotiation между одним manager и тремя bidders с помощью `cfp`, `propose`, `accept-proposal`, `reject-proposal`.
 
-Run:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-The output is a side-by-side trace showing each modern message in both its 2026 JSON form and its FIPA-ACL form, then a round-trip of a contract-net bid. The same protocol primitives survive the round-trip; only the syntax differs.
+Вывод — side-by-side trace, показывающий каждое modern message и в его JSON form 2026 года, и в FIPA-ACL form, затем round-trip contract-net bid. Одни и те же protocol primitives переживают round-trip; отличается только syntax.
 
-## Use It
+## Используйте это
 
-`outputs/skill-fipa-mapper.md` is a skill that reads any agent-protocol spec and produces the FIPA-ACL mapping. Use it before adopting a new protocol to answer: "Is this genuinely new, or is it `inform` with JSON syntax?"
+`outputs/skill-fipa-mapper.md` — это skill, который читает любую agent-protocol spec и производит FIPA-ACL mapping. Используйте его перед adoption нового protocol, чтобы ответить: "Это действительно новое или это `inform` с JSON syntax?"
 
-## Ship It
+## Доведите до production
 
-Do not bring FIPA-ACL back. Bring back its checklist:
+Не возвращайте FIPA-ACL. Верните его checklist:
 
-- What is the intent primitive (performative) of each message?
-- Is there a correlation id for request-response and cancellation?
-- Is there an explicit content language (JSON-RPC, plain text, structured typed artifact)?
-- Are interaction protocols first-class, or are you re-implementing contract-net from scratch?
-- What happens when two agents disagree about content meaning (semantic drift)?
+- Какой intent primitive (performative) у каждого message?
+- Есть ли correlation id для request-response и cancellation?
+- Есть ли explicit content language (JSON-RPC, plain text, structured typed artifact)?
+- Interaction protocols first-class, или вы re-implementing contract-net from scratch?
+- Что происходит, когда два agents disagree about content meaning (semantic drift)?
 
-Document these five questions for any new protocol before you ship it into production.
+Задокументируйте эти пять вопросов для любого нового protocol до отправки в production.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Observe the round-trip encoding. Identify which FIPA performative corresponds to `tools/call`, `resources/read`, and A2A task creation.
-2. Extend the contract-net demo with a `cancel` performative that lets the manager withdraw the task mid-bid. What failure case does `cancel` solve that retries alone do not?
-3. Read FIPA ACL Message Structure (http://www.fipa.org/specs/fipa00037/) sections 4.1–4.3. Pick one performative not covered in this lesson and describe its modern JSON-RPC analog.
-4. Read Liu et al., arXiv:2505.02279. For each of MCP, A2A, ACP, ANP, list the FIPA performative families they keep and drop.
-5. Design a minimal JSON-Schema for the `content` field of a `request` performative in your own system. What does that schema give you that pure natural-language does not, and what does it cost?
+1. Запустите `code/main.py`. Посмотрите round-trip encoding. Определите, какой FIPA performative соответствует `tools/call`, `resources/read` и A2A task creation.
+2. Расширьте contract-net demo с performative `cancel`, который позволяет manager отозвать task в середине bidding. Какой failure case решает `cancel`, который retries alone не решают?
+3. Прочитайте FIPA ACL Message Structure (http://www.fipa.org/specs/fipa00037/) sections 4.1–4.3. Выберите один performative, не покрытый в этом уроке, и опишите его modern JSON-RPC analog.
+4. Прочитайте Liu et al., arXiv:2505.02279. Для каждого из MCP, A2A, ACP, ANP перечислите семьи FIPA performative, которые они keep и drop.
+5. Спроектируйте minimal JSON-Schema для поля `content` performative `request` в вашей системе. Что эта schema дает по сравнению с pure natural-language и сколько это стоит?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Speech act | "An utterance that does something" | Austin/Searle: utterances as actions. The theoretical parent of ACL. |
+| Speech act | "An utterance that does something" | Austin/Searle: utterances as actions. Теоретический предок ACL. |
 | FIPA | "That old XML thing" | IEEE Foundation for Intelligent Physical Agents. Standardized ACL in 2000. |
-| ACL | "Agent Communication Language" | FIPA's envelope format: performative + content + metadata. |
-| Performative | "The verb" | The intent class of a message: `inform`, `request`, `propose`, `cfp`, etc. |
-| KQML | "FIPA's predecessor" | Knowledge Query and Manipulation Language (1993). Simpler, narrower. |
-| Ontology | "Shared vocabulary" | A formal definition of the concepts the content language talks about. |
-| SL0 / SL1 | "FIPA content languages" | Semantic Language levels 0 and 1 — the formal content language family. |
-| Contract Net | "Task market" | Manager issues cfp; bidders propose; manager accepts. The canonical interaction protocol. |
-| Interaction protocol | "Pattern of messages" | A sequence of performatives with known correctness: request-when, subscribe-notify, etc. |
+| ACL | "Agent Communication Language" | Envelope format FIPA: performative + content + metadata. |
+| Performative | "The verb" | Класс intent message: `inform`, `request`, `propose`, `cfp`, etc. |
+| KQML | "FIPA's predecessor" | Knowledge Query and Manipulation Language (1993). Проще и уже. |
+| Ontology | "Shared vocabulary" | Formal definition concepts, о которых говорит content language. |
+| SL0 / SL1 | "FIPA content languages" | Semantic Language levels 0 and 1 — семейство formal content language. |
+| Contract Net | "Task market" | Manager отправляет cfp; bidders propose; manager accepts. Канонический interaction protocol. |
+| Interaction protocol | "Pattern of messages" | Последовательность performatives с известной correctness: request-when, subscribe-notify, etc. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Liu et al. — A Survey of Agent Interoperability Protocols: MCP, ACP, A2A, ANP](https://arxiv.org/html/2505.02279v1) — the canonical 2025 survey connecting modern specs to FIPA heritage
-- [FIPA ACL Message Structure Specification (fipa00037)](http://www.fipa.org/specs/fipa00037/) — the ratified 2000 envelope format
-- [FIPA Communicative Act Library Specification (fipa00037)](http://www.fipa.org/specs/fipa00037/) — the full performative catalog
-- [MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — the modern tool-use equivalent of `request`/`query-ref`
-- [A2A specification](https://a2a-protocol.org/latest/specification/) — the modern agent-peer equivalent of contract-net and subscribe-notify
+- [Liu et al. — A Survey of Agent Interoperability Protocols: MCP, ACP, A2A, ANP](https://arxiv.org/html/2505.02279v1) — canonical 2025 survey, связывающий modern specs с FIPA heritage
+- [FIPA ACL Message Structure Specification (fipa00037)](http://www.fipa.org/specs/fipa00037/) — ratified 2000 envelope format
+- [FIPA Communicative Act Library Specification (fipa00037)](http://www.fipa.org/specs/fipa00037/) — полный performative catalog
+- [MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — modern tool-use equivalent of `request`/`query-ref`
+- [A2A specification](https://a2a-protocol.org/latest/specification/) — modern agent-peer equivalent of contract-net and subscribe-notify

@@ -1,36 +1,36 @@
-# Why Multi-Agent?
+# Почему Multi-Agent?
 
-> One agent hits a wall. The smart move is not a bigger agent - it is more agents.
+> Один агент упирается в стену. Умный ход — не агент побольше, а больше агентов.
 
-**Type:** Learn
-**Languages:** TypeScript
-**Prerequisites:** Phase 14 (Agent Engineering)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** TypeScript
+**Предварительные требования:** Фаза 14 (Agent Engineering)
+**Время:** ~60 минут
 
-## Learning Objectives
+## Цели обучения
 
-- Identify the single-agent ceiling (context overflow, mixed expertise, sequential bottleneck) and explain when splitting into multiple agents is the right move
-- Compare orchestration patterns (pipeline, parallel fan-out, supervisor, hierarchical) and select the right one for a given task structure
-- Design a multi-agent system with clear role boundaries, shared state, and a communication contract
-- Analyze the tradeoffs of multi-agent complexity (latency, cost, debugging difficulty) versus single-agent simplicity
+- Определить потолок single-agent подхода (context overflow, смешанная экспертиза, sequential bottleneck) и объяснить, когда разделение на несколько agents — правильный ход
+- Сравнить orchestration patterns (pipeline, parallel fan-out, supervisor, hierarchical) и выбрать подходящий для заданной структуры задачи
+- Спроектировать multi-agent system с четкими границами ролей, shared state и communication contract
+- Проанализировать tradeoffs multi-agent complexity (latency, cost, debugging difficulty) по сравнению с single-agent simplicity
 
-## The Problem
+## Проблема
 
-You built a single agent in Phase 14. It works. It can read files, run commands, call APIs, and reason about results. Then you point it at a real codebase: 200 files, three languages, tests that depend on infrastructure, and a requirement to research external APIs before writing code.
+В Фазе 14 вы построили single agent. Он работает. Он умеет читать файлы, запускать команды, вызывать APIs и рассуждать о результатах. Потом вы направляете его на реальную codebase: 200 файлов, три языка, tests, зависящие от infrastructure, и требование исследовать external APIs перед написанием code.
 
-The agent chokes. Not because the LLM is dumb, but because the task exceeds what one agent loop can handle. The context window fills up with file contents. The agent forgets what it read 40 tool calls ago. It tries to be a researcher, a coder, and a reviewer all at once, and does all three poorly.
+Agent захлебывается. Не потому, что LLM глупая, а потому, что задача превышает то, с чем может справиться один agent loop. Context window заполняется содержимым файлов. Agent забывает, что читал 40 tool calls назад. Он пытается быть researcher, coder и reviewer одновременно и все три делает плохо.
 
-This is the single-agent ceiling. You hit it every time a task requires:
+Это потолок single-agent. Вы упираетесь в него каждый раз, когда задача требует:
 
-- **More context than fits in one window** - reading 50 files blows past 200k tokens
-- **Different expertise at different stages** - research requires different prompting than code generation
-- **Work that can happen in parallel** - why read three files sequentially when you can read them simultaneously?
+- **Больше context, чем помещается в одно окно** - чтение 50 файлов легко пробивает 200k tokens
+- **Разной экспертизы на разных stages** - research требует другого prompting, чем code generation
+- **Работы, которую можно выполнять параллельно** - зачем читать три файла последовательно, если можно читать их simultaneously?
 
-## The Concept
+## Концепция
 
-### The Single-Agent Ceiling
+### Потолок Single-Agent
 
-A single agent is one loop, one context window, one system prompt. Picture it:
+Single agent — это один loop, одно context window, один system prompt. Представьте:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -56,17 +56,17 @@ A single agent is one loop, one context window, one system prompt. Picture it:
 └─────────────────────────────────────────┘
 ```
 
-Three things break:
+Ломаются три вещи:
 
-1. **Context saturation** - tool results pile up. By turn 30, the agent has consumed 150k tokens of file contents, command outputs, and prior reasoning. Critical details from turn 5 get lost.
+1. **Context saturation** - tool results накапливаются. К 30-му turn agent уже потребил 150k tokens содержимого файлов, command outputs и предыдущих рассуждений. Критичные детали из 5-го turn теряются.
 
-2. **Role confusion** - a system prompt that says "you are a researcher, coder, reviewer, and tester" produces an agent that half-researches, half-codes, and never finishes reviewing.
+2. **Role confusion** - system prompt, который говорит "you are a researcher, coder, reviewer, and tester", порождает agent, который наполовину исследует, наполовину пишет код и так и не заканчивает review.
 
-3. **Sequential bottleneck** - the agent reads file A, then file B, then file C. Three serial LLM calls. Three serial tool executions. No parallelism.
+3. **Sequential bottleneck** - agent читает file A, затем file B, затем file C. Три serial LLM calls. Три serial tool executions. Нет parallelism.
 
-### The Multi-Agent Solution
+### Multi-Agent решение
 
-Split the work. Give each agent one job, one context window, and one system prompt tuned for that job:
+Разделите работу. Дайте каждому agent одну работу, одно context window и один system prompt, tuned for that job:
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -93,24 +93,24 @@ Split the work. Give each agent one job, one context window, and one system prom
 └──────────────────────────────────────────────────────────┘
 ```
 
-Each agent has:
-- A focused system prompt ("You are a code reviewer. Your only job is finding bugs.")
-- Its own context window (not polluted by other agents' work)
-- A clear input/output contract (receives research notes, outputs code)
+У каждого agent есть:
+- Сфокусированный system prompt ("You are a code reviewer. Your only job is finding bugs.")
+- Собственное context window (не загрязненное работой других agents)
+- Четкий input/output contract (получает research notes, выдает code)
 
-### Real Systems That Do This
+### Реальные системы, которые так делают
 
-**Claude Code subagents** - when Claude Code spawns a subagent with `Task`, it creates a child agent with a scoped task. The parent keeps its context clean. The child does focused work and returns a summary.
+**Claude Code subagents** - когда Claude Code spawn-ит subagent через `Task`, он создает child agent со scoped task. Parent сохраняет чистый context. Child выполняет focused work и возвращает summary.
 
-**Devin** - runs a planner agent, a coder agent, and a browser agent. The planner breaks work into steps. The coder writes code. The browser researches documentation. Each has separate context.
+**Devin** - запускает planner agent, coder agent и browser agent. Planner разбивает работу на steps. Coder пишет code. Browser исследует documentation. У каждого отдельный context.
 
-**Multi-agent coding teams (SWE-bench)** - top-performing systems on SWE-bench use a researcher that reads the codebase, a planner that designs the fix, and a coder that implements it. Single-agent systems score lower.
+**Multi-agent coding teams (SWE-bench)** - лучшие системы на SWE-bench используют researcher, который читает codebase, planner, который проектирует fix, и coder, который его реализует. Single-agent systems получают более низкие scores.
 
-**ChatGPT Deep Research** - spawns multiple search agents in parallel, each exploring a different angle, then synthesizes results.
+**ChatGPT Deep Research** - spawn-ит несколько search agents in parallel, каждый исследует свой angle, затем results синтезируются.
 
-### The Spectrum
+### Спектр
 
-Multi-agent is not binary. It is a spectrum:
+Multi-agent — не бинарный выбор. Это спектр:
 
 ```
 SIMPLE ──────────────────────────────────────────── COMPLEX
@@ -132,28 +132,28 @@ SIMPLE ────────────────────────�
                                        roles
 ```
 
-**Single agent** - one loop, one prompt. Good for simple tasks.
+**Single agent** - один loop, один prompt. Хорош для простых задач.
 
-**Subagents** - a parent spawns children for focused subtasks. The parent maintains the plan. Children report back. This is what Claude Code does.
+**Subagents** - parent spawn-ит children для focused subtasks. Parent поддерживает plan. Children отчитываются назад. Именно так работает Claude Code.
 
-**Pipeline** - agents run in sequence. Agent A's output becomes Agent B's input. Good for staged workflows: research -> code -> review -> test.
+**Pipeline** - agents запускаются по очереди. Вывод Agent A становится входом Agent B. Хорошо для staged workflows: research -> code -> review -> test.
 
-**Team** - agents run in parallel with a shared message bus. Each has a role. An orchestrator coordinates. Good when different skills are needed simultaneously.
+**Team** - agents запускаются параллельно с shared message bus. У каждого роль. Orchestrator координирует. Хорошо, когда разные skills нужны одновременно.
 
-**Swarm** - many identical or near-identical agents with shared state. No fixed orchestrator. Agents pick up work from a queue. Good for high-throughput parallel tasks.
+**Swarm** - множество одинаковых или почти одинаковых agents с shared state. Нет фиксированного orchestrator. Агенты забирают работу из queue. Хорошо для high-throughput parallel tasks.
 
-### The Four Multi-Agent Patterns
+### Четыре Multi-Agent паттерна
 
-#### Pattern 1: Pipeline
+#### Паттерн 1: Pipeline
 
 ```
 Input ──▶ Agent A ──▶ Agent B ──▶ Agent C ──▶ Output
           (research)  (code)      (review)
 ```
 
-Each agent transforms the data and passes it forward. Simple to reason about. Failure in one stage blocks the rest.
+Каждый agent преобразует данные и передает их дальше. Просто рассуждать. Failure на одном stage блокирует остальные.
 
-#### Pattern 2: Fan-out / Fan-in
+#### Паттерн 2: Fan-out / Fan-in
 
 ```
                 ┌──▶ Agent A ──┐
@@ -163,9 +163,9 @@ Input ──▶ Split ├──▶ Agent B ──├──▶ Merge ──▶ Ou
                 └──▶ Agent C ──┘
 ```
 
-Split work across parallel agents, then merge results. Good for tasks that decompose into independent subtasks.
+Разделите работу между parallel agents, затем merge results. Хорошо для задач, раскладывающихся на independent subtasks.
 
-#### Pattern 3: Orchestrator-Worker
+#### Паттерн 3: Orchestrator-Worker
 
 ```
                     ┌──────────┐
@@ -179,9 +179,9 @@ Split work across parallel agents, then merge results. Good for tasks that decom
            └──────────┘   └──────────┘
 ```
 
-A smart orchestrator decides what to do, delegates to workers, and synthesizes results. The orchestrator is itself an agent with tools for spawning workers.
+Smart orchestrator решает, что делать, delegates to workers и synthesizes results. Orchestrator сам является agent с tools для spawning workers.
 
-#### Pattern 4: Peer Swarm
+#### Паттерн 4: Peer Swarm
 
 ```
          ┌───┐ ◄──── msg ────▶ ┌───┐
@@ -199,31 +199,31 @@ A smart orchestrator decides what to do, delegates to workers, and synthesizes r
          └───┘                  └───┘
 ```
 
-No central orchestrator. Agents communicate peer-to-peer. Decisions emerge from interaction. Harder to debug, but scales to many agents.
+Нет центрального orchestrator. Агенты общаются peer-to-peer. Решения возникают из взаимодействия. Сложнее debugging, но масштабируется на many agents.
 
-### When NOT to Use Multi-Agent
+### Когда НЕ использовать Multi-Agent
 
-Multi-agent adds complexity. Every message between agents is a potential failure point. Debugging goes from "read one conversation" to "trace messages across five agents."
+Multi-agent добавляет complexity. Каждое message между agents — потенциальная failure point. Debugging превращается из "прочитать один conversation" в "проследить messages across five agents."
 
-**Stay single-agent when:**
-- The task fits in one context window (under ~100k tokens of working data)
-- You do not need different system prompts for different stages
-- Sequential execution is fast enough
-- The task is simple enough that splitting it adds more overhead than value
+**Оставайтесь на single-agent, когда:**
+- Задача помещается в одно context window (менее ~100k tokens working data)
+- Вам не нужны разные system prompts для разных stages
+- Sequential execution достаточно быстра
+- Задача достаточно проста, и splitting добавляет больше overhead, чем value
 
-**The complexity cost:**
-- Every agent boundary is a lossy compression step: agent A's full context gets summarized into a message for agent B
-- Coordination logic (who does what, when, in what order) is its own source of bugs
-- Latency increases: N agents means N serial LLM calls minimum, more if they need to talk back and forth
-- Cost multiplies: each agent burns tokens independently
+**Цена complexity:**
+- Каждая agent boundary — lossy compression step: полный context agent A summarizе-ится в message для agent B
+- Coordination logic (кто что делает, когда, в каком порядке) — собственный источник bugs
+- Latency растет: N agents означает минимум N serial LLM calls, больше, если им нужно общаться туда-сюда
+- Cost умножается: каждый agent независимо сжигает tokens
 
-Rule of thumb: if a task takes fewer than 20 tool calls and fits in 100k tokens, keep it single-agent.
+Правило большого пальца: если задача занимает меньше 20 tool calls и помещается в 100k tokens, оставляйте single-agent.
 
-## Build It
+## Соберите это
 
-### Step 1: The Overloaded Single Agent
+### Шаг 1: Перегруженный Single Agent
 
-Here is a single agent trying to do everything. It has one massive system prompt and one context window holding research, code, and reviews:
+Вот single agent, который пытается делать все. У него один massive system prompt и одно context window, где лежат research, code и reviews:
 
 ```typescript
 type AgentResult = {
@@ -273,14 +273,14 @@ Do ALL of these in a single conversation.`;
 }
 ```
 
-Problems with this approach:
-- The context window grows with every stage. By the review step, it contains research notes AND code AND prior reasoning.
-- The system prompt is generic. It cannot be tuned for each stage.
-- Nothing runs in parallel.
+Проблемы этого подхода:
+- Context window растет на каждом stage. К review step оно содержит research notes И code И previous reasoning.
+- System prompt generic. Его нельзя tuned для каждого stage.
+- Ничего не выполняется параллельно.
 
-### Step 2: Specialist Agents
+### Шаг 2: Specialist Agents
 
-Now split it. Each agent gets one job:
+Теперь разделим. Каждый agent получает одну работу:
 
 ```typescript
 type SpecialistAgent = {
@@ -320,11 +320,11 @@ const reviewer = createSpecialist(
 );
 ```
 
-Each specialist has a focused prompt. Each gets a clean context window with only the input it needs.
+У каждого specialist focused prompt. Каждый получает clean context window только с input, который ему нужен.
 
-### Step 3: Coordinate Through Messages
+### Шаг 3: Координация через Messages
 
-Wire the specialists together with explicit message passing:
+Свяжем specialists явной message passing:
 
 ```typescript
 type AgentMessage = {
@@ -387,9 +387,9 @@ async function multiAgentApproach(task: string): Promise<AgentResult> {
 }
 ```
 
-Each agent receives only the messages addressed to it. No context pollution. The researcher's 50k tokens of documentation reading never enter the reviewer's context.
+Каждый agent получает только messages, адресованные ему. Никакого context pollution. 50k tokens documentation reading researcher никогда не попадают в context reviewer.
 
-### Step 4: Compare
+### Шаг 4: Сравнение
 
 ```typescript
 async function compare() {
@@ -407,33 +407,33 @@ async function compare() {
 }
 ```
 
-The multi-agent version uses more total tokens (three agents, three separate LLM calls) but each agent's context stays clean. The quality of each stage improves because the system prompt is specialized.
+Multi-agent version использует больше total tokens (три agents, три отдельных LLM calls), но context каждого agent остается чистым. Quality каждого stage улучшается, потому что system prompt specialized.
 
-## Use It
+## Используйте это
 
-This lesson produces a reusable prompt for deciding when to go multi-agent. See `outputs/prompt-multi-agent-decision.md`.
+Этот урок производит reusable prompt для решения, когда переходить на multi-agent. См. `outputs/prompt-multi-agent-decision.md`.
 
-## Exercises
+## Упражнения
 
-1. Add a fourth specialist: a "tester" agent that receives code from the coder and review feedback from the reviewer, then writes tests
-2. Modify the pipeline so the reviewer can send feedback back to the coder for a revision loop (max 2 rounds)
-3. Convert the sequential pipeline into a fan-out: run the researcher and a "requirements analyzer" agent in parallel, then merge their outputs before passing to the coder
+1. Добавьте четвертого specialist: agent "tester", который получает code от coder и review feedback от reviewer, затем пишет tests
+2. Измените pipeline так, чтобы reviewer мог отправлять feedback обратно coder для revision loop (max 2 rounds)
+3. Превратите sequential pipeline в fan-out: запустите researcher и agent "requirements analyzer" параллельно, затем merge их outputs перед передачей coder
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
-| Swarm | "A hive mind of AI agents" | A set of peer agents with shared state and no fixed leader. Behavior emerges from local interactions. |
-| Orchestrator | "The boss agent" | An agent whose tools include spawning and managing other agents. It plans and delegates but may not do the actual work. |
-| Coordinator | "The traffic cop" | A non-agent component (often just code, not an LLM) that routes messages between agents based on rules. |
-| Consensus | "The agents agree" | A protocol where multiple agents must reach agreement before proceeding. Used when conflicting outputs need resolution. |
-| Emergent behavior | "The agents figured it out themselves" | System-level patterns that arise from agent interactions but were not explicitly programmed. Can be useful or harmful. |
-| Fan-out / fan-in | "Map-reduce for agents" | Splitting a task across parallel agents (fan-out), then combining their results (fan-in). |
-| Message passing | "Agents talk to each other" | The communication mechanism between agents: structured data sent from one agent to another, replacing shared context windows. |
+| Swarm | "A hive mind of AI agents" | Набор peer agents с shared state и без fixed leader. Behavior возникает из local interactions. |
+| Orchestrator | "The boss agent" | Agent, чьи tools включают spawning and managing other agents. Он plans и delegates, но может не делать actual work. |
+| Coordinator | "The traffic cop" | Non-agent component (часто просто code, не LLM), который routes messages between agents based on rules. |
+| Consensus | "The agents agree" | Protocol, где multiple agents должны reach agreement before proceeding. Используется, когда conflicting outputs need resolution. |
+| Emergent behavior | "The agents figured it out themselves" | System-level patterns, возникающие из agent interactions, но не запрограммированные явно. Могут быть useful or harmful. |
+| Fan-out / fan-in | "Map-reduce for agents" | Splitting task across parallel agents (fan-out), затем combining results (fan-in). |
+| Message passing | "Agents talk to each other" | Communication mechanism между agents: structured data, отправляемые от одного agent к другому, заменяют shared context windows. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [The Landscape of Emerging AI Agent Architectures](https://arxiv.org/abs/2409.02977) - survey of multi-agent patterns
 - [AutoGen: Enabling Next-Gen LLM Applications](https://arxiv.org/abs/2308.08155) - Microsoft's multi-agent conversation framework
-- [Claude Code subagents documentation](https://docs.anthropic.com/en/docs/claude-code) - how Claude Code delegates with Task
+- [Claude Code subagents documentation](https://docs.anthropic.com/en/docs/claude-code) - как Claude Code delegates with Task
 - [CrewAI documentation](https://docs.crewai.com/) - role-based multi-agent framework

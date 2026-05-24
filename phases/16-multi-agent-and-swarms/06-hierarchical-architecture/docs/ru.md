@@ -1,21 +1,21 @@
-# Hierarchical Architecture and Its Failure Mode
+# Иерархическая архитектура и ее режим отказа
 
-> Hierarchical is supervisor nested. Manager agents over sub-managers over workers. CrewAI `Process.hierarchical` is the textbook version: a `manager_llm` dynamically delegates tasks and validates outputs. The LangGraph equivalent is `create_supervisor(create_supervisor(...))`. It is the natural pattern when the task is a real org chart. It is also the pattern most likely to collapse into managerial looping — manager agents assign work poorly, misinterpret sub-outputs, or fail to reach consensus. Sequential often beats it.
+> Иерархическая архитектура - это вложенные супервизоры. Агенты-менеджеры над подменеджерами над исполнителями. CrewAI `Process.hierarchical` - учебниковая версия: `manager_llm` динамически делегирует задачи и проверяет результаты. Эквивалент в LangGraph - `create_supervisor(create_supervisor(...))`. Это естественный паттерн, когда задача действительно похожа на оргструктуру. И это же паттерн, который чаще всего схлопывается в управленческий цикл: агенты-менеджеры плохо распределяют работу, неверно интерпретируют результаты подчиненных или не могут прийти к консенсусу. Sequential часто выигрывает.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 05 (Supervisor Pattern)
-**Time:** ~60 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Пререквизиты:** Phase 16 · 05 (Supervisor Pattern)
+**Время:** ~60 минут
 
-## Problem
+## Проблема
 
-Once the supervisor pattern clicks, the natural next step is "what if the workers are themselves supervisors?" Teams have sub-teams; companies have departments of departments. Hierarchical architectures mirror that.
+Когда паттерн supervisor становится понятен, естественный следующий вопрос: "а что если workers сами являются supervisors?" У команд есть подкоманды; у компаний есть департаменты внутри департаментов. Иерархические архитектуры это отражают.
 
-The issue: LLM managers are not the same as human managers. A human manager has stable priors about what their reports know. An LLM manager re-reasons the org every turn from whatever is in its context. Tiny drift in that context, and the whole tree misallocates work.
+Проблема: LLM-менеджеры не то же самое, что люди-менеджеры. У человека-менеджера есть устойчивые априорные представления о том, что знают его подчиненные. LLM-менеджер заново рассуждает об организации на каждом ходе, исходя из того, что есть в его контексте. Небольшой дрейф в этом контексте - и все дерево неправильно распределяет работу.
 
-## Concept
+## Концепция
 
-### The shape
+### Форма
 
 ```
                  Manager
@@ -31,96 +31,96 @@ The issue: LLM managers are not the same as human managers. A human manager has 
        W1  W2  W3         W4  W5
 ```
 
-Every internal node plans, delegates, and synthesizes. Only leaves do work.
+Каждый внутренний узел планирует, делегирует и синтезирует. Работу выполняют только листья.
 
-### Where it shines
+### Где это хорошо работает
 
-- **Clear org mapping.** If the real task is departmental ("legal review the doc, finance review the doc, engineering review the doc, then summarize for exec"), the hierarchy is explicit.
-- **Local summarization.** Each sub-manager synthesizes its team's output before the top manager sees it. Top manager sees three sub-manager summaries, not fifteen worker outputs.
+- **Ясное соответствие оргструктуре.** Если реальная задача департаментная ("юристы проверяют документ, финансы проверяют документ, инженеры проверяют документ, затем резюме для руководства"), иерархия явная.
+- **Локальная суммаризация.** Каждый подменеджер синтезирует результаты своей команды до того, как их увидит верхний менеджер. Верхний менеджер видит три сводки подменеджеров, а не пятнадцать результатов workers.
 
-### Where it breaks
+### Где это ломается
 
-Three failure modes the 2026 post-mortems keep finding:
+Три режима отказа, которые продолжают находить post-mortems 2026 года:
 
-1. **Task assignment error.** The manager reads the goal, hallucinates a decomposition, and delegates to the wrong sub-manager. Because the sub-manager obediently works on what it was given, the error only surfaces at the top synthesis — one level removed from where a human could have caught it.
-2. **Output misinterpretation.** Sub-manager returns "unable to verify claim X." Top manager summarizes as "claim X not confirmed." Meaning drifts at every level.
-3. **Consensus loops.** Two sub-managers disagree; top manager asks them to reconcile; they re-delegate down; workers re-run; sub-managers return slightly different answers; loop. CrewAI's `Process.hierarchical` guards against this with step limits, but the limit itself is now a hyperparameter.
+1. **Ошибка назначения задачи.** Менеджер читает цель, галлюцинирует декомпозицию и делегирует не тому подменеджеру. Поскольку подменеджер послушно работает над тем, что ему дали, ошибка всплывает только на верхнем синтезе - на один уровень дальше от места, где человек мог бы ее поймать.
+2. **Неверная интерпретация результата.** Подменеджер возвращает "unable to verify claim X." Верхний менеджер суммирует это как "claim X not confirmed." Смысл дрейфует на каждом уровне.
+3. **Циклы согласования.** Два подменеджера не согласны; верхний менеджер просит их согласовать позиции; они снова делегируют вниз; workers запускаются повторно; подменеджеры возвращают слегка разные ответы; цикл. CrewAI `Process.hierarchical` защищается от этого лимитами шагов, но сам лимит теперь становится гиперпараметром.
 
-### The deciding question
+### Решающий вопрос
 
-Sequential (linear pipeline) vs hierarchical: does your task actually have independent sub-teams, or is it one linear flow pretending to be a tree? If the latter, use sequential. If the former, use hierarchical but budget explicit reconciliation rules.
+Sequential (линейный pipeline) vs hierarchical: у вашей задачи действительно есть независимые подкоманды, или это один линейный поток, притворяющийся деревом? Если второе, используйте sequential. Если первое, используйте hierarchical, но закладывайте явные правила согласования.
 
-### CrewAI's implementation
+### Реализация в CrewAI
 
-`Process.hierarchical` wires a manager LLM over specialist crews. The manager:
+`Process.hierarchical` соединяет manager LLM со специализированными crews. Менеджер:
 
-- receives the top-level task,
-- assigns subtasks to crews,
-- evaluates crew outputs,
-- decides whether to accept, re-delegate, or iterate.
+- получает задачу верхнего уровня,
+- назначает подзадачи crews,
+- оценивает результаты crews,
+- решает, принять, делегировать повторно или итерировать.
 
-Documentation: https://docs.crewai.com/en/introduction (look for "Hierarchical Process" under Core Concepts).
+Документация: https://docs.crewai.com/en/introduction (ищите "Hierarchical Process" в Core Concepts).
 
-### LangGraph's implementation
+### Реализация в LangGraph
 
-LangGraph uses nested `create_supervisor` calls. The inner supervisor has its own graph; the outer supervisor treats the inner graph as an opaque node. This is cleaner than CrewAI for debugging (you can step through each graph separately) but harder to express dynamic reshaping of the tree.
+LangGraph использует вложенные вызовы `create_supervisor`. Внутренний supervisor имеет собственный graph; внешний supervisor рассматривает внутренний graph как непрозрачный узел. Это чище, чем CrewAI, для отладки (можно пошагово проходить каждый graph отдельно), но сложнее выражать динамическую перестройку дерева.
 
-Reference: https://reference.langchain.com/python/langgraph-supervisor.
+Справочник: https://reference.langchain.com/python/langgraph-supervisor.
 
-## Build It
+## Соберите это
 
-`code/main.py` runs a 3-level hierarchy:
+`code/main.py` запускает 3-уровневую иерархию:
 
-- top manager: splits a task into "engineering" and "legal" branches,
-- engineering sub-manager: splits into "frontend" and "backend" workers,
-- legal sub-manager: one worker.
+- верхний менеджер: разделяет задачу на ветки "engineering" и "legal",
+- engineering sub-manager: разделяет на workers "frontend" и "backend",
+- legal sub-manager: один worker.
 
-Demo contrasts happy path (everyone agrees) against a **perturbed path** where the top manager's decomposition mislabels "legal" as "finance" and watches the error cascade — the sub-manager obediently does finance work, the top synthesizer reports finance findings, the original legal question goes unanswered.
+Демо сравнивает happy path (все согласны) с **возмущенным путем**, где декомпозиция верхнего менеджера ошибочно помечает "legal" как "finance", и показывает каскад ошибки: подменеджер послушно делает финансовую работу, верхний синтезатор сообщает финансовые выводы, исходный юридический вопрос остается без ответа.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Output shows both paths with a clear side-by-side of "what was asked" vs "what was delivered."
+Вывод показывает оба пути с ясным сопоставлением "что было запрошено" и "что было доставлено."
 
-## Use It
+## Используйте это
 
-`outputs/skill-hierarchy-fitness.md` evaluates whether a given task should use hierarchical, sequential, or flat supervisor. Inputs: task description, org structure, reconciliation budget. Output: pattern recommendation with the specific failure modes to guard against.
+`outputs/skill-hierarchy-fitness.md` оценивает, стоит ли для заданной задачи использовать hierarchical, sequential или flat supervisor. Входы: описание задачи, оргструктура, бюджет согласования. Выход: рекомендация паттерна с конкретными режимами отказа, от которых нужно защищаться.
 
-## Ship It
+## Доведите до production
 
-If you ship hierarchical:
+Если вы поставляете hierarchical:
 
-- **Cap tree depth at 2.** Three levels already hides most errors from observability.
-- **Explicit reconciliation budget.** Set max rounds before the top manager must commit. Usually 2.
-- **Provenance on every synthesis.** Each node's summary must cite which leaf outputs produced it.
-- **Alert on decomposition drift.** Log the manager's decomposition per step; diff against the user query. If the decomposition no longer covers the query, fire an alert.
+- **Ограничьте глубину дерева 2 уровнями.** Три уровня уже скрывают большинство ошибок от наблюдаемости.
+- **Явный бюджет согласования.** Задайте max rounds до того, как верхний менеджер обязан принять решение. Обычно 2.
+- **Provenance на каждом синтезе.** Сводка каждого узла должна ссылаться на leaf outputs, из которых она получена.
+- **Алерт на decomposition drift.** Логируйте декомпозицию менеджера на каждом шаге; сравнивайте с запросом пользователя. Если декомпозиция больше не покрывает запрос, поднимайте alert.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` and compare happy vs perturbed. How many levels of manager hand-off does it take before the top output fully diverges from the user's question?
-2. Add a third level (top → sub → sub-sub → worker). Measure how often the perturbed path corrects itself vs fully diverges as depth grows.
-3. Implement a "canary" worker at each sub-manager that is always asked the original user question unchanged. Use the canary answer to detect decomposition drift. How should the manager react when the canary disagrees with the synthesized answer?
-4. Read CrewAI's `Process.hierarchical` docs. Identify one concrete guardrail CrewAI applies (step limit, manager_llm constraint) and describe what failure mode it targets.
-5. Compare nested LangGraph supervisors to CrewAI hierarchical. Which makes reconciliation loops cheaper to detect?
+1. Запустите `code/main.py` и сравните happy vs perturbed. Сколько уровней manager hand-off требуется, прежде чем верхний output полностью разойдется с вопросом пользователя?
+2. Добавьте третий уровень (top → sub → sub-sub → worker). Измерьте, как часто perturbed path исправляет себя vs полностью расходится по мере роста глубины.
+3. Реализуйте "canary" worker у каждого sub-manager, которому всегда задается исходный вопрос пользователя без изменений. Используйте canary answer для обнаружения decomposition drift. Как должен реагировать manager, когда canary не согласен с synthesized answer?
+4. Прочитайте документацию CrewAI `Process.hierarchical`. Найдите один конкретный guardrail, который применяет CrewAI (step limit, manager_llm constraint), и опишите, на какой режим отказа он нацелен.
+5. Сравните вложенные LangGraph supervisors с CrewAI hierarchical. Где дешевле обнаруживать reconciliation loops?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Hierarchical | "Org chart pattern" | Supervisors over supervisors; only leaves do work. |
-| Manager LLM | "The boss" | The LLM that decomposes, assigns, and validates at an internal node. |
-| Decomposition drift | "The boss lost the plot" | Top manager's split no longer covers the original question. |
-| Reconciliation loop | "Endless meetings" | Sub-managers disagree; top re-delegates; workers re-run; loop until budget exhausted. |
-| Depth-2 ceiling | "Don't go deeper than 2 levels" | Empirical guardrail: 3+ levels collapses observability. |
-| Canary question | "Ground truth at every level" | A worker that is always asked the original query unchanged, to detect drift. |
-| Provenance chain | "Who said what" | Trace from each synthesis back to the leaf outputs that produced it. |
+| Hierarchical | "Паттерн оргструктуры" | Supervisors над supervisors; работу выполняют только листья. |
+| Manager LLM | "Начальник" | LLM, которая декомпозирует, назначает и валидирует во внутреннем узле. |
+| Decomposition drift | "Начальник потерял нить" | Разбиение верхнего менеджера больше не покрывает исходный вопрос. |
+| Reconciliation loop | "Бесконечные совещания" | Подменеджеры не согласны; верхний делегирует повторно; workers запускаются снова; цикл до исчерпания бюджета. |
+| Depth-2 ceiling | "Не углубляйтесь дальше 2 уровней" | Эмпирический guardrail: 3+ уровня рушат наблюдаемость. |
+| Canary question | "Ground truth на каждом уровне" | Worker, которому всегда задают исходный query без изменений, чтобы обнаружить drift. |
+| Provenance chain | "Кто что сказал" | Трасса от каждого синтеза обратно к leaf outputs, которые его породили. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [CrewAI introduction — Process.hierarchical](https://docs.crewai.com/en/introduction) — textbook hierarchical with a manager LLM
-- [LangGraph supervisor reference](https://reference.langchain.com/python/langgraph-supervisor) — nested supervisor via `create_supervisor`
-- [Anthropic engineering — Research system](https://www.anthropic.com/engineering/multi-agent-research-system) — why Anthropic deliberately chose flat supervisor over hierarchical
-- [Cemri et al. — Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) — MAST taxonomy; section on coordination failures documents decomposition drift
+- [CrewAI introduction — Process.hierarchical](https://docs.crewai.com/en/introduction) — учебниковая иерархия с manager LLM
+- [LangGraph supervisor reference](https://reference.langchain.com/python/langgraph-supervisor) — вложенный supervisor через `create_supervisor`
+- [Anthropic engineering — Research system](https://www.anthropic.com/engineering/multi-agent-research-system) — почему Anthropic сознательно выбрала flat supervisor вместо hierarchical
+- [Cemri et al. — Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) — таксономия MAST; раздел о coordination failures документирует decomposition drift

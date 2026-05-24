@@ -1,35 +1,35 @@
-# Negotiation and Bargaining
+# Переговоры и торг
 
-> Agents negotiate resources, prices, task allocations, and terms. The 2026 benchmark set is clear: NegotiationArena (arXiv:2402.05863) shows LLMs can improve payoffs ~20% via persona manipulation ("desperation"); "Measuring Bargaining Abilities" (arXiv:2402.15813) shows buyer is harder than seller and scale does not help — their **OG-Narrator** (deterministic offer generator + LLM narrator) pushed deal rate from 26.67% to 88.88%; the Large-Scale Autonomous Negotiation Competition (arXiv:2503.06416) ran ~180k negotiations and found that **chain-of-thought-concealing** agents win by hiding reasoning from counterparts; Bhattacharya et al. 2025 on Harvard Negotiation Project metrics ranked Llama-3 most-effective, Claude-3 aggressive, GPT-4 fairest. This lesson implements Contract Net Protocol (the FIPA ancestor, Lesson 02), wires an LLM-style buyer/seller, runs an OG-Narrator-style decomposition, and measures how deal rate changes with each structural choice.
+> Агенты договариваются о ресурсах, ценах, распределении задач и условиях. Набор бенчмарков 2026 года показывает ясную картину: NegotiationArena (arXiv:2402.05863) демонстрирует, что LLM могут повышать выигрыш примерно на 20% за счет манипуляции персоной ("desperation"); "Measuring Bargaining Abilities" (arXiv:2402.15813) показывает, что роль покупателя сложнее роли продавца, а масштаб модели не помогает — их **OG-Narrator** (детерминированный генератор предложений + LLM-нарратор) поднял долю заключенных сделок с 26.67% до 88.88%; Large-Scale Autonomous Negotiation Competition (arXiv:2503.06416) провела около 180k переговоров и обнаружила, что агенты с **chain-of-thought-concealing** выигрывают, скрывая рассуждения от контрагентов; Bhattacharya et al. 2025 по метрикам Harvard Negotiation Project ранжировали Llama-3 как наиболее результативную, Claude-3 как агрессивную, GPT-4 как самую справедливую. В этом уроке реализуется Contract Net Protocol (предшественник FIPA, урок 02), подключается LLM-стиль покупателя/продавца, запускается декомпозиция в стиле OG-Narrator и измеряется, как доля сделок меняется при каждом структурном выборе.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 02 (FIPA-ACL Heritage), Phase 16 · 09 (Parallel Swarm Networks)
-**Time:** ~75 minutes
+**Тип:** Изучение + сборка
+**Языки:** Python (stdlib)
+**Требования:** Фаза 16 · 02 (FIPA-ACL Heritage), Фаза 16 · 09 (Parallel Swarm Networks)
+**Время:** ~75 минут
 
-## Problem
+## Задача
 
-Two agents need to agree on a price. Left to themselves with pure language prompts, 2024-2026 LLMs close deals at surprisingly low rates (~27% on tightly-parameterized bargains in arXiv:2402.15813). Scale does not fix it: GPT-4 is not structurally better at bargaining than GPT-3.5; it is better at the *language* of bargaining.
+Двум агентам нужно договориться о цене. Если оставить их наедине с чисто языковыми промптами, LLM 2024-2026 годов закрывают сделки с удивительно низкой частотой (~27% на строго параметризованных торгах в arXiv:2402.15813). Масштаб не исправляет проблему: GPT-4 не является структурно лучшим переговорщиком, чем GPT-3.5; он лучше владеет *языком* переговоров.
 
-The root issue is that LLMs conflate two jobs — deciding the offer and narrating the offer. OG-Narrator separated these: a deterministic offer generator computes numeric moves; the LLM only narrates. Deal rate jumps to ~89%.
+Корневая проблема в том, что LLM смешивают две работы — выбор предложения и изложение предложения. OG-Narrator разделил их: детерминированный генератор предложений вычисляет числовые ходы; LLM только формулирует текст. Доля сделок подскакивает примерно до 89%.
 
-This mirrors a classical multi-agent finding: decoupling the mechanism from the communication layer wins. Contract Net Protocol (FIPA, 1996; Smith, 1980) is the reference task-market mechanism. Plug an LLM into the narration slot and you get a modern LLM-powered task market.
+Это повторяет классический вывод из многоагентных систем: отделение механизма от коммуникационного слоя выигрывает. Contract Net Protocol (FIPA, 1996; Smith, 1980) — эталонный механизм рынка задач. Поместите LLM в слот наррации, и вы получите современный рынок задач на базе LLM.
 
-## Concept
+## Концепция
 
-### Contract Net, in one paragraph
+### Contract Net в одном абзаце
 
-Smith's 1980 Contract Net Protocol: a **manager** broadcasts a **call for proposals (cfp)**; **bidders** respond with **propose** messages containing their offers; the manager picks a winner and sends **accept-proposal** to the winner and **reject-proposal** to the losers. The winner performs the work. Optional message: **refuse** (bidder declines to propose). FIPA codified this as `fipa-contract-net` interaction protocol.
+Contract Net Protocol Смита 1980 года: **manager** рассылает **call for proposals (cfp)**; **bidders** отвечают сообщениями **propose** со своими предложениями; manager выбирает победителя и отправляет **accept-proposal** победителю и **reject-proposal** проигравшим. Победитель выполняет работу. Необязательное сообщение: **refuse** (bidder отказывается предлагать). FIPA кодифицировала это как протокол взаимодействия `fipa-contract-net`.
 
-### Why OG-Narrator wins
+### Почему OG-Narrator выигрывает
 
-"Measuring Bargaining Abilities of Language Models" (arXiv:2402.15813) observed that:
+"Measuring Bargaining Abilities of Language Models" (arXiv:2402.15813) обнаружила, что:
 
-- LLMs often break the bargaining rules (offer at nonsensical prices, ignore the other side's ZOPA).
-- They anchor poorly (accept bad first offers; counter-offer at symbolic rather than strategic amounts).
-- Scale alone does not fix these. Larger models make more-plausible language with similar strategic error.
+- LLM часто нарушают правила торга (предлагают бессмысленные цены, игнорируют ZOPA другой стороны).
+- Они плохо выбирают якоря (принимают плохие первые предложения; делают контрпредложения с символическими, а не стратегическими суммами).
+- Один масштаб это не исправляет. Более крупные модели создают более правдоподобный язык при похожей стратегической ошибке.
 
-The OG-Narrator decomposition:
+Декомпозиция OG-Narrator:
 
 ```
            ┌──────────────────┐        ┌──────────────────┐
@@ -40,126 +40,126 @@ The OG-Narrator decomposition:
                                        └──────────────────┘
 ```
 
-The offer generator is a classical negotiation strategy: a Rubinstein bargaining model, a Zeuthen strategy, or a simple tit-for-tat over price. The LLM narrates. The message contains the deterministic price and the natural-language framing.
+Генератор предложений — это классическая стратегия переговоров: модель торга Рубинштейна, стратегия Цойтена или простой tit-for-tat по цене. LLM пишет наррацию. Сообщение содержит детерминированную цену и естественно-языковую рамку.
 
-Deal rate jumps because:
-- Prices stay in the bargaining zone.
-- Anchors are strategic, not emotional.
-- The LLM does what it is good at: writing.
+Доля сделок растет, потому что:
+- Цены остаются в зоне торга.
+- Якоря стратегические, а не эмоциональные.
+- LLM делает то, в чем силен: пишет.
 
-### NegotiationArena findings
+### Выводы NegotiationArena
 
-arXiv:2402.05863 provides the canonical benchmark. Headline findings:
+arXiv:2402.05863 дает канонический бенчмарк. Главные результаты:
 
-- LLMs can improve payoffs ~20% by adopting personas ("I am desperate to sell this by Friday") — persona manipulation is a real tactic.
-- Fair/cooperative agents are exploited by adversarial ones; defense requires explicit counter-posturing.
-- Symmetric pair-ups converge to inequitable outcomes on about 40% of the benchmark scenarios.
+- LLM могут повышать выигрыш примерно на 20%, принимая персоны ("I am desperate to sell this by Friday") — манипуляция персоной является реальной тактикой.
+- Справедливых/кооперативных агентов эксплуатируют состязательные; защита требует явного контрпозиционирования.
+- Симметричные пары сходятся к неравным исходам примерно в 40% сценариев бенчмарка.
 
-This is not "LLMs are bad negotiators." It is "LLMs negotiate too much like humans, including the exploitable parts."
+Это не "LLM плохие переговорщики". Это "LLM ведут переговоры слишком по-человечески, включая эксплуатируемые части".
 
-### Chain-of-thought concealment
+### Сокрытие chain-of-thought
 
-The Large-Scale Autonomous Negotiation Competition (arXiv:2503.06416) ran ~180k negotiations across many LLM strategies. Winners concealed their reasoning from counterparts:
+Large-Scale Autonomous Negotiation Competition (arXiv:2503.06416) провела около 180k переговоров среди множества LLM-стратегий. Победители скрывали свои рассуждения от контрагентов:
 
-- If an agent prints "I will only go to $75; my reservation price is $70" into a publicly visible scratchpad, the opponent reads it.
-- Winners compute strategy privately; the output channel contains only the offer and minimum required narration.
+- Если агент печатает "I will only go to $75; my reservation price is $70" в публично видимый scratchpad, оппонент это читает.
+- Победители вычисляют стратегию приватно; выходной канал содержит только предложение и минимально необходимую наррацию.
 
-This is a 2026 echo of classical game theory (Aumann 1976 on rationality and information): revealing your private valuation costs payoff. LLMs do not intuit this and happily type their reservations in reasoning traces that become visible to the counterpart.
+Это отголосок 2026 года классической теории игр (Aumann 1976 о рациональности и информации): раскрытие вашей частной оценки стоит выигрыша. LLM этого интуитивно не понимают и охотно печатают свои резервные цены в трассах рассуждений, которые становятся видимыми контрагенту.
 
-Engineering takeaway: separate private-scratchpad context from public-message context. Not optional.
+Инженерный вывод: отделяйте приватный scratchpad-контекст от публичного контекста сообщений. Это обязательно.
 
-### Bhattacharya et al. 2025 — model rankings
+### Bhattacharya et al. 2025 — рейтинги моделей
 
-On Harvard Negotiation Project metrics (principled negotiation, BATNA respect, interest reciprocity):
+По метрикам Harvard Negotiation Project (principled negotiation, уважение BATNA, взаимность интересов):
 
-- **Llama-3** was most-effective at striking bargains (deal rate + payoff).
-- **Claude-3** was the most-aggressive negotiator (high anchors, late concessions).
-- **GPT-4** was the fairest (smallest variance in payoff across pairings).
+- **Llama-3** была наиболее результативной в заключении сделок (доля сделок + выигрыш).
+- **Claude-3** была самым агрессивным переговорщиком (высокие якоря, поздние уступки).
+- **GPT-4** была самой справедливой (минимальная дисперсия выигрыша между парами).
 
-This is a 2025 snapshot. The point is not which model wins in April 2026 — it is that different base models have persistent negotiation styles. Heterogeneous ensembles (Lesson 15) include this as a diversity source.
+Это снимок 2025 года. Суть не в том, какая модель выигрывает в апреле 2026 года, а в том, что разные базовые модели имеют устойчивые стили переговоров. Гетерогенные ансамбли (урок 15) используют это как источник разнообразия.
 
-### Task allocation via Contract Net + LLM
+### Распределение задач через Contract Net + LLM
 
-The modern re-use of Contract Net for LLM multi-agent:
+Современное повторное использование Contract Net для LLM multi-agent:
 
-1. Manager agent decomposes a task into units.
-2. Broadcasts `cfp` with task description to worker agents.
-3. Each worker returns an offer: `(price, eta, confidence)` where price could be tokens, compute units, or dollars.
-4. Manager picks winners (single or multiple, depending on task) and awards.
-5. Rejected workers are free to bid on other tasks.
+1. Агент-manager декомпозирует задачу на единицы.
+2. Рассылает `cfp` с описанием задачи worker-агентам.
+3. Каждый worker возвращает предложение: `(price, eta, confidence)`, где price может означать токены, вычислительные единицы или доллары.
+4. Manager выбирает победителей (одного или нескольких, в зависимости от задачи) и назначает работу.
+5. Отклоненные workers свободны делать ставки на другие задачи.
 
-This scales well past 100 workers because coordination is broadcast-and-respond, not synchronous chat. Used in production: Microsoft Agent Framework's orchestration patterns, some LangGraph implementations.
+Это масштабируется далеко за 100 workers, потому что координация устроена как broadcast-and-respond, а не синхронный чат. Используется в production: orchestration patterns Microsoft Agent Framework, некоторые реализации LangGraph.
 
 ### LLM-Stakeholders Interactive Negotiation
 
-NeurIPS 2024 (https://proceedings.neurips.cc/paper_files/paper/2024/file/984dd3db213db2d1454a163b65b84d08-Paper-Datasets_and_Benchmarks_Track.pdf) introduces multi-party scorable games with **secret scores** and **minimum-acceptance thresholds**. Each stakeholder has private utilities; the LLM must infer them from messages. This is the generalization of two-party bargaining to N-party coalition formation. Relevant for production task markets with heterogeneous worker capabilities.
+NeurIPS 2024 (https://proceedings.neurips.cc/paper_files/paper/2024/file/984dd3db213db2d1454a163b65b84d08-Paper-Datasets_and_Benchmarks_Track.pdf) вводит многосторонние оцениваемые игры с **secret scores** и **minimum-acceptance thresholds**. У каждого stakeholder есть приватные полезности; LLM должна выводить их из сообщений. Это обобщение двустороннего торга на N-стороннее формирование коалиций. Актуально для production-рынков задач с гетерогенными возможностями workers.
 
-### The narration-vs-mechanism rule
+### Правило наррация-против-механизма
 
-Across all 2024-2026 negotiation benchmarks, the consistent engineering rule is:
+Во всех бенчмарках переговоров 2024-2026 годов постоянное инженерное правило такое:
 
-> Let the LLM narrate. Do not let the LLM compute the offer.
+> Пусть LLM пишет наррацию. Не позволяйте LLM вычислять предложение.
 
-If the offer needs to be a number (price, ETA, quantity), generate it deterministically from the negotiation state and have the LLM produce the framing. If the offer needs to be a proposal structure (task decomposition, role assignment), let the LLM draft it, but validate it against a schema and constraint-check before sending.
+Если предложение должно быть числом (цена, ETA, количество), генерируйте его детерминированно из состояния переговоров и поручайте LLM только формулировку. Если предложение должно быть структурой (декомпозиция задачи, назначение ролей), пусть LLM набросает его, но перед отправкой проверьте по схеме и ограничениям.
 
-## Build It
+## Сборка
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `ContractNetManager`, `ContractNetTask`, `Bid` — manager + bidders, broadcast cfp, collect proposals, award.
-- `og_narrator_bargain(state, rng)` — OG-Narrator buyer: deterministic Zeuthen-style concession toward the midpoint.
-- `seller_response(state, rng)` — deterministic seller counter-offer policy (the structural ground truth for both styles).
-- `naive_llm_bargain(state, rng)` — simulates an all-LLM bargainer: picks prices with high variance, often outside the ZOPA.
-- Measurement: deal rate over 1000 trials with fresh reservation prices sampled per trial.
+- `ContractNetManager`, `ContractNetTask`, `Bid` — manager + bidders, broadcast cfp, сбор proposals, назначение.
+- `og_narrator_bargain(state, rng)` — покупатель OG-Narrator: детерминированная уступка в стиле Цойтена к midpoint.
+- `seller_response(state, rng)` — детерминированная политика контрпредложения продавца (структурная ground truth для обоих стилей).
+- `naive_llm_bargain(state, rng)` — симулирует all-LLM bargainer: выбирает цены с высокой дисперсией, часто вне ZOPA.
+- Измерение: доля сделок на 1000 trials со свежими резервными ценами, выбираемыми в каждом trial.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Expected output: naive-LLM deal rate ~65-75%; OG-Narrator deal rate ~85-95%; the 15-25 point gap is the structural advantage of decomposing offer-generation from narration. Plus a Contract Net task-market allocation example with three bidders and one task.
+Ожидаемый вывод: доля сделок naive-LLM ~65-75%; доля сделок OG-Narrator ~85-95%; разрыв в 15-25 пунктов — структурное преимущество отделения генерации предложений от наррации. Плюс пример распределения на рынке задач Contract Net с тремя bidders и одной задачей.
 
-## Use It
+## Использование
 
-`outputs/skill-bargainer-designer.md` designs a bargaining protocol: who generates offers (deterministic or LLM), who narrates, how private scratchpads separate from public messages, and how deal rate is monitored.
+`outputs/skill-bargainer-designer.md` проектирует протокол торга: кто генерирует предложения (детерминированно или LLM), кто пишет наррацию, как приватные scratchpads отделяются от публичных сообщений и как мониторится доля сделок.
 
-## Ship It
+## Доставка
 
-Production bargaining checklist:
+Чеклист production-переговоров:
 
-- **Separate scratchpad.** Private state never reaches the counterpart's context. This is non-negotiable.
-- **Deterministic offer generation.** Prices, quantities, ETAs: compute, do not prompt.
-- **Validate all incoming offers** against a schema. Reject out-of-ZOPA offers at the protocol boundary.
-- **Bound rounds.** 3-5 rounds maximum; escalate to mediator on deadlock.
-- **Measure deal rate and payoff variance** continuously. A falling deal rate is a symptom — often a prompt drift or a counterpart-side attack.
-- **Log all rejected proposals** with the deterministic rationale. For Contract Net managers, losing bidders need to understand why.
+- **Отделяйте scratchpad.** Приватное состояние никогда не попадает в контекст контрагента. Это не обсуждается.
+- **Детерминированная генерация предложений.** Цены, количества, ETAs: вычисляйте, а не промптите.
+- **Валидируйте все входящие предложения** по схеме. Отклоняйте предложения вне ZOPA на границе протокола.
+- **Ограничивайте раунды.** Максимум 3-5 раундов; при тупике эскалация к mediator.
+- **Непрерывно измеряйте долю сделок и дисперсию выигрыша.** Падение доли сделок — симптом, часто drift промпта или атака со стороны контрагента.
+- **Логируйте все отклоненные proposals** с детерминированным обоснованием. Для managers Contract Net проигравшие bidders должны понимать почему.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Confirm OG-Narrator beats naive-LLM on deal rate. By how much?
-2. Implement **persona-based payoff improvement** (arXiv:2402.05863) — the buyer adopts a "desperate to buy this week" persona in the narration only, offer generator unchanged. Does the deal rate or payoff change?
-3. Implement chain-of-thought **concealment**: maintain a private scratchpad string that is not passed to the counterpart. What happens if you accidentally leak it (simulate by swapping the channels)?
-4. Extend Contract Net to N-bidder auction with reserve price. When bids all exceed reserve, how does the manager decide between lowest-price and highest-quality? Which award rule do you pick and why?
-5. Read Bhattacharya et al. 2025 on Harvard Negotiation Project metrics. Implement two bargainers with different styles (aggressive vs fair). Measure payoff variance under symmetric and asymmetric pairings.
+1. Запустите `code/main.py`. Убедитесь, что OG-Narrator превосходит naive-LLM по доле сделок. Насколько?
+2. Реализуйте **persona-based payoff improvement** (arXiv:2402.05863) — покупатель принимает персону "desperate to buy this week" только в наррации, генератор предложений не меняется. Меняется ли доля сделок или выигрыш?
+3. Реализуйте **concealment** для chain-of-thought: поддерживайте приватную строку scratchpad, которая не передается контрагенту. Что произойдет, если случайно утечь ее (симулируйте, поменяв каналы местами)?
+4. Расширьте Contract Net до N-bidder auction с reserve price. Когда все bids превышают reserve, как manager выбирает между lowest-price и highest-quality? Какое правило назначения вы выбираете и почему?
+5. Прочитайте Bhattacharya et al. 2025 о метриках Harvard Negotiation Project. Реализуйте двух bargainers с разными стилями (aggressive vs fair). Измерьте дисперсию выигрыша при симметричных и асимметричных парах.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| Contract Net | "Task market" | Smith 1980, FIPA 1996. cfp + propose + accept/reject. The canonical task-market. |
-| ZOPA | "Zone of possible agreement" | Overlap between buyer's max and seller's min. Offers outside it cannot close. |
-| BATNA | "Best alternative to a negotiated agreement" | Your fallback if this deal fails. Sets your reservation price. |
-| OG-Narrator | "Offer generator + narrator" | Decomposition: deterministic offer, LLM narration. |
-| Zeuthen strategy | "Risk-minimizing concession" | Classical offer-generator that concedes based on risk limits. |
-| Rubinstein bargaining | "Alternating-offer equilibrium" | Game-theoretic model for infinite-horizon bargaining with discounting. |
-| CoT concealment | "Hide your reasoning" | Winners in arXiv:2503.06416 kept private scratchpads; public channel shows offer only. |
-| Persona manipulation | "Emotional posturing" | arXiv:2402.05863: ~20% payoff gain from desperation/urgency personas. |
+| Contract Net | "Рынок задач" | Smith 1980, FIPA 1996. cfp + propose + accept/reject. Канонический рынок задач. |
+| ZOPA | "Zone of possible agreement" | Перекрытие между максимумом покупателя и минимумом продавца. Предложения вне нее не могут закрыться. |
+| BATNA | "Best alternative to a negotiated agreement" | Ваш fallback, если сделка сорвется. Задает вашу резервную цену. |
+| OG-Narrator | "Offer generator + narrator" | Декомпозиция: детерминированное предложение, LLM-наррация. |
+| Zeuthen strategy | "Уступка с минимизацией риска" | Классический генератор предложений, который уступает на основе пределов риска. |
+| Rubinstein bargaining | "Равновесие чередующихся предложений" | Теоретико-игровая модель бесконечного торга с дисконтированием. |
+| CoT concealment | "Скрывайте свои рассуждения" | Победители в arXiv:2503.06416 держали приватные scratchpads; публичный канал показывает только предложение. |
+| Persona manipulation | "Эмоциональное позиционирование" | arXiv:2402.05863: ~20% прироста выигрыша от персон отчаяния/срочности. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [NegotiationArena](https://arxiv.org/abs/2402.05863) — the benchmark; persona manipulation and exploitation findings
-- [Measuring Bargaining Abilities of Language Models](https://arxiv.org/abs/2402.15813) — OG-Narrator and the buyer-harder-than-seller result
-- [Large-Scale Autonomous Negotiation Competition](https://arxiv.org/abs/2503.06416) — ~180k negotiations; chain-of-thought concealment wins
-- [LLM-Stakeholders Interactive Negotiation (NeurIPS 2024)](https://proceedings.neurips.cc/paper_files/paper/2024/file/984dd3db213db2d1454a163b65b84d08-Paper-Datasets_and_Benchmarks_Track.pdf) — multi-party scorable games with secret utilities
-- [Smith 1980 — The Contract Net Protocol](https://ieeexplore.ieee.org/document/1675516) — the classical mechanism, IEEE Transactions on Computers
+- [NegotiationArena](https://arxiv.org/abs/2402.05863) — бенчмарк; выводы о манипуляции персоной и эксплуатации
+- [Measuring Bargaining Abilities of Language Models](https://arxiv.org/abs/2402.15813) — OG-Narrator и результат о том, что роль покупателя сложнее роли продавца
+- [Large-Scale Autonomous Negotiation Competition](https://arxiv.org/abs/2503.06416) — ~180k переговоров; побеждает сокрытие chain-of-thought
+- [LLM-Stakeholders Interactive Negotiation (NeurIPS 2024)](https://proceedings.neurips.cc/paper_files/paper/2024/file/984dd3db213db2d1454a163b65b84d08-Paper-Datasets_and_Benchmarks_Track.pdf) — многосторонние оцениваемые игры с secret utilities
+- [Smith 1980 — The Contract Net Protocol](https://ieeexplore.ieee.org/document/1675516) — классический механизм, IEEE Transactions on Computers

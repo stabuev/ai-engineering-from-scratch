@@ -1,32 +1,32 @@
-# The Multi-Agent Primitive Model
+# Модель примитивов multi-agent систем
 
-> Every multi-agent framework shipping in 2026 — AutoGen, LangGraph, CrewAI, OpenAI Agents SDK, Microsoft Agent Framework — is a point in a four-dimensional design space. Four primitives, nothing more: the agent, the handoff, the shared state, the orchestrator. This lesson builds them from zero, runs a toy system on all four, then maps every major framework onto the same axes so you can read any new release in one paragraph.
+> Каждый multi-agent фреймворк, поставляемый в 2026 году — AutoGen, LangGraph, CrewAI, OpenAI Agents SDK, Microsoft Agent Framework — это точка в четырехмерном пространстве проектирования. Четыре примитива, и ничего больше: агент, handoff, shared state, orchestrator. В этом уроке мы построим их с нуля, запустим игрушечную систему на всех четырех, а затем сопоставим каждый крупный фреймворк с теми же осями, чтобы вы могли понять любой новый релиз по одному абзацу.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 14 (Agent Engineering), Phase 16 · 01 (Why Multi-Agent)
-**Time:** ~60 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Фаза 14 (Agent Engineering), Фаза 16 · 01 (Why Multi-Agent)
+**Время:** ~60 минут
 
-## Problem
+## Проблема
 
-Every six months a new multi-agent framework ships. AutoGen in 2023. CrewAI in 2024. LangGraph and OpenAI Swarm in 2024. Google ADK in April 2025. Microsoft Agent Framework RC in February 2026. Each press release claims to be "the right abstraction."
+Каждые шесть месяцев выходит новый multi-agent фреймворк. AutoGen в 2023. CrewAI в 2024. LangGraph и OpenAI Swarm в 2024. Google ADK в апреле 2025. Microsoft Agent Framework RC в феврале 2026. Каждый пресс-релиз утверждает, что это "правильная абстракция".
 
-If you try to learn them one at a time you will burn out. The APIs look different. The docs disagree about what an "agent" is. One framework calls its shared memory a "blackboard," another calls it a "message pool," a third calls it a "StateGraph." You start suspecting the field is just churning.
+Если пытаться изучать их по одному, вы быстро выгорите. API выглядят по-разному. Документация расходится в том, что такое "agent". Один фреймворк называет общую память "blackboard", другой — "message pool", третий — "StateGraph". Начинает казаться, что область просто бесконечно перетряхивается.
 
-It is not. Underneath the marketing, the four primitives are stable. Learn them once, read every new framework in one paragraph.
+Это не так. Под маркетингом четыре примитива остаются стабильными. Выучите их один раз — и будете понимать каждый новый фреймворк по одному абзацу.
 
-## Concept
+## Концепция
 
-### The four primitives
+### Четыре примитива
 
-1. **Agent** — a system prompt plus a tool list. Stateless; every run starts from its system prompt and the current message history.
-2. **Handoff** — a structured transfer of control from one agent to another. Mechanically, a tool call that returns a new agent or a graph edge that follows a condition.
-3. **Shared state** — any data structure that more than one agent can read (sometimes write). Message pool, blackboard, key-value store, vector memory.
-4. **Orchestrator** — whoever decides who speaks next. Options: an explicit graph (deterministic), an LLM speaker-selector (soft), the last speaker's handoff call (OpenAI Swarm), or a scheduler over a queue (swarm architecture).
+1. **Agent** — системный промпт плюс список инструментов. Stateless; каждый запуск начинается с системного промпта и текущей истории сообщений.
+2. **Handoff** — структурированная передача управления от одного агента к другому. Механически это tool call, который возвращает нового агента, или ребро графа, выбираемое по условию.
+3. **Shared state** — любая структура данных, которую может читать больше одного агента (иногда и писать). Message pool, blackboard, key-value store, vector memory.
+4. **Orchestrator** — тот, кто решает, кто говорит следующим. Варианты: явный граф (детерминированный), LLM speaker-selector (мягкий), handoff call последнего говорящего (OpenAI Swarm) или scheduler над очередью (swarm architecture).
 
-That is the entire design space. Every framework picks defaults for each axis; the rest is surface syntax.
+Это и есть все пространство проектирования. Каждый фреймворк выбирает значения по умолчанию для каждой оси; остальное — поверхностный синтаксис.
 
-### How every 2026 framework maps to it
+### Как каждый фреймворк 2026 года ложится на эту модель
 
 | Framework | Agent | Handoff | Shared state | Orchestrator |
 |-----------|-------|---------|--------------|--------------|
@@ -37,25 +37,25 @@ That is the entire design space. Every framework picks defaults for each axis; t
 | Microsoft Agent Framework | agent + orchestration patterns | pattern-specific | thread / context | pattern-specific |
 | Google ADK | agent + A2A card | A2A task | A2A artifacts | host decides |
 
-Surface differences look huge. Underneath: same four knobs.
+Поверхностные различия выглядят огромными. Под ними: те же четыре ручки настройки.
 
-### Why this matters
+### Почему это важно
 
-Once you see the primitives, framework comparison becomes a short checklist:
+Когда вы видите примитивы, сравнение фреймворков превращается в короткий checklist:
 
-- Does the orchestrator trust the LLM to route (Swarm) or does it pin routing in code (LangGraph)?
-- Is shared state full-history (GroupChat) or projected (StateGraph reducer)?
-- Can agents modify each other's prompts (CrewAI manager) or only hand off (Swarm)?
+- Доверяет ли orchestrator LLM маршрутизацию (Swarm) или фиксирует routing в коде (LangGraph)?
+- Shared state хранит полную историю (GroupChat) или проекцию (StateGraph reducer)?
+- Могут ли агенты изменять промпты друг друга (CrewAI manager) или только передавать управление (Swarm)?
 
-Those three questions answer 80% of which framework fits a given problem. You stop shopping for "the best multi-agent framework" and start designing for the axis you actually care about.
+Эти три вопроса дают 80% ответа, какой фреймворк подходит конкретной задаче. Вы перестаете искать "лучший multi-agent фреймворк" и начинаете проектировать под ось, которая действительно важна.
 
-### The stateless insight
+### Stateless-инсайт
 
-Every primitive except shared state is stateless. Agent is a function of (prompt, tools). Handoff is a function call. Orchestrator is a scheduler. **The only stateful thing in the system is shared state.** That is where all the interesting bugs live: memory poisoning (Lesson 15), message ordering, versioning, write contention.
+Каждый примитив, кроме shared state, stateless. Agent — это функция от (prompt, tools). Handoff — это function call. Orchestrator — это scheduler. **Единственная stateful часть системы — shared state.** Именно там живут все интересные баги: memory poisoning (Lesson 15), порядок сообщений, версионирование, конкуренция записей.
 
-Frameworks that hide shared state (Swarm) push the problem to the caller. Frameworks that centralize it (LangGraph checkpoint, AutoGen pool) make it inspectable but shift coordination cost onto the shared-state implementation.
+Фреймворки, которые скрывают shared state (Swarm), перекладывают проблему на вызывающую сторону. Фреймворки, которые централизуют его (LangGraph checkpoint, AutoGen pool), делают его наблюдаемым, но переносят координационные издержки в реализацию shared-state.
 
-### Anatomy of a single primitive
+### Анатомия одного примитива
 
 #### Agent
 
@@ -63,7 +63,7 @@ Frameworks that hide shared state (Swarm) push the problem to the caller. Framew
 Agent = (system_prompt, tools, model, optional_name)
 ```
 
-No memory. No state. Two agents with the same system prompt and tools are interchangeable. Everything that looks like per-agent state is actually in shared state or the handoff protocol.
+Нет памяти. Нет состояния. Два агента с одинаковым system prompt и tools взаимозаменяемы. Все, что выглядит как per-agent state, на самом деле находится в shared state или в handoff protocol.
 
 #### Handoff
 
@@ -71,11 +71,11 @@ No memory. No state. Two agents with the same system prompt and tools are interc
 Handoff = (from_agent, to_agent, reason, payload)
 ```
 
-Three implementations dominate:
+Доминируют три реализации:
 
-- **Function return** — the tool returns the next agent. This is the OpenAI Swarm pattern. Agents carry routing in their tool schemas.
-- **Graph edge** — LangGraph. Edges are declarative. The LLM produces a value; a condition selects the next node.
-- **Speaker selection** — AutoGen GroupChat. A selector function (sometimes itself an LLM call) reads the pool and picks who speaks next.
+- **Function return** — tool возвращает следующего агента. Это паттерн OpenAI Swarm. Агенты несут routing в своих tool schemas.
+- **Graph edge** — LangGraph. Ребра декларативны. LLM производит значение; условие выбирает следующий node.
+- **Speaker selection** — AutoGen GroupChat. Selector function (иногда сам LLM call) читает pool и выбирает, кто говорит следующим.
 
 #### Shared state
 
@@ -83,9 +83,9 @@ Three implementations dominate:
 SharedState = { messages: [], artifacts: {}, context: {} }
 ```
 
-At minimum, a list of messages. Often more: structured artifacts (CrewAI Task outputs), typed context (LangGraph reducers), external memory (MCP, vector DB).
+Минимум — список сообщений. Часто больше: structured artifacts (CrewAI Task outputs), typed context (LangGraph reducers), external memory (MCP, vector DB).
 
-Two topologies: **full pool** (every agent sees every message) and **projected** (agents see a role-scoped view). Full pools are simple and scale badly. Projected pools scale but require upfront schema design.
+Две топологии: **full pool** (каждый агент видит каждое сообщение) и **projected** (агенты видят role-scoped view). Full pools просты и плохо масштабируются. Projected pools масштабируются, но требуют предварительного проектирования схемы.
 
 #### Orchestrator
 
@@ -93,80 +93,80 @@ Two topologies: **full pool** (every agent sees every message) and **projected**
 Orchestrator = ({state, last_speaker}) -> next_agent
 ```
 
-Four flavors:
+Четыре разновидности:
 
-- **Static** — the graph is fixed at build time (LangGraph deterministic, CrewAI Sequential).
-- **LLM-selected** — an LLM reads the pool and picks the next speaker (AutoGen, CrewAI Hierarchical).
-- **Handoff-driven** — the current agent decides by calling a handoff tool (Swarm).
-- **Queue-driven** — workers pull from a shared queue; no explicit next-speaker (swarm architectures, Matrix).
+- **Static** — граф фиксирован во время сборки (LangGraph deterministic, CrewAI Sequential).
+- **LLM-selected** — LLM читает pool и выбирает следующего speaker (AutoGen, CrewAI Hierarchical).
+- **Handoff-driven** — текущий агент решает, вызывая handoff tool (Swarm).
+- **Queue-driven** — workers забирают задачи из общей очереди; явного next-speaker нет (swarm architectures, Matrix).
 
-### What changes between frameworks
+### Что меняется между фреймворками
 
-Once the primitives are fixed, the remaining design decisions are:
+Когда примитивы зафиксированы, остаются такие проектные решения:
 
 - **Memory strategy** — ephemeral vs durable checkpointing (LangGraph checkpointer).
-- **Safety boundary** — who can approve a handoff (human-in-the-loop).
-- **Cost accounting** — per-agent token budgets.
-- **Observability** — tracing handoffs, persisting state for replay.
+- **Safety boundary** — кто может approve handoff (human-in-the-loop).
+- **Cost accounting** — token budgets по агентам.
+- **Observability** — tracing handoffs, сохранение state для replay.
 
-All implementable on top of the primitives. None of them are new primitives.
+Все это реализуется поверх примитивов. Ничто из этого не является новым примитивом.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements the four primitives in ~150 lines of stdlib Python. No real LLM — each agent is a scripted policy so the focus stays on the coordination structure.
+`code/main.py` реализует четыре примитива примерно в 150 строках stdlib Python. Реальной LLM нет — каждый agent является scripted policy, чтобы фокус оставался на координационной структуре.
 
-The file exports:
+Файл экспортирует:
 
-- `Agent` — a dataclass of name, system prompt, tools, policy function.
-- `Handoff` — a function that returns a new agent.
-- `SharedState` — a thread-safe message pool.
-- `Orchestrator` — three variants: `StaticOrchestrator`, `HandoffOrchestrator`, `LLMSelectorOrchestrator` (simulated).
+- `Agent` — dataclass из name, system prompt, tools, policy function.
+- `Handoff` — функция, которая возвращает нового агента.
+- `SharedState` — thread-safe message pool.
+- `Orchestrator` — три варианта: `StaticOrchestrator`, `HandoffOrchestrator`, `LLMSelectorOrchestrator` (simulated).
 
-The demo runs the same three-agent pipeline (research → write → review) through all three orchestrator types and prints the message pool at the end. You can see that the outputs differ only in *who picks next*; the agents and shared state are identical across runs.
+Демо прогоняет один и тот же трехагентный pipeline (research → write → review) через все три типа orchestrator и в конце печатает message pool. Вы увидите, что outputs различаются только тем, *кто выбирает следующего*; agents и shared state идентичны между запусками.
 
-Run it:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Expected output: three orchestrator runs, one per pattern. Each prints the final message pool. The handoff-driven run reaches fewer agents if the researcher decides it is done early — that is the LLM-routing tradeoff in miniature.
+Ожидаемый output: три запуска orchestrator, по одному на pattern. Каждый печатает финальный message pool. Handoff-driven запуск достигает меньшего числа агентов, если researcher решает, что работа завершена рано — это миниатюрная версия tradeoff LLM-routing.
 
-## Use It
+## Используйте это
 
-`outputs/skill-primitive-mapper.md` is a skill that reads any multi-agent codebase or framework doc and returns the four-primitive mapping. Run it on a new framework release to get a one-paragraph understanding before reading docs in depth.
+`outputs/skill-primitive-mapper.md` — это skill, который читает любую multi-agent codebase или framework doc и возвращает mapping на четыре примитива. Запустите его на новом релизе фреймворка, чтобы получить понимание в один абзац до глубокого чтения документации.
 
-## Ship It
+## Доведите до production
 
-Before adopting a new framework, write the primitive mapping for it. If you cannot, the docs are incomplete or the framework is inventing a fifth primitive (rare — check for a shared-state flavor you have not seen).
+Перед внедрением нового фреймворка напишите для него primitive mapping. Если не можете, документация неполна или фреймворк изобретает пятый примитив (редко — проверьте, не является ли это разновидностью shared-state, которую вы еще не видели).
 
-Pin the mapping in your architecture doc. When a new team member joins, send them the mapping before the API docs. When framework versions change, diff the mapping, not the changelog.
+Зафиксируйте mapping в architecture doc. Когда в команду приходит новый участник, отправьте ему mapping до API docs. Когда меняются версии фреймворка, diff-айте mapping, а не changelog.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py` three times with different agent policies. Observe how the orchestrator choice changes which agents run.
-2. Implement a fourth orchestrator type: a queue-driven one where agents poll shared state for work. What deadlock can happen, and how do you detect it?
-3. Take the LangGraph quickstart (https://docs.langchain.com/oss/python/langgraph/workflows-agents) and rewrite it as the four primitives. Which of LangGraph's abstractions map 1:1 and which are convenience wrappers?
-4. Read the OpenAI Swarm cookbook (https://developers.openai.com/cookbook/examples/orchestrating_agents). Identify which of the four primitives Swarm makes most ergonomic, and which one it pushes to the caller.
-5. Find one framework in this table that hides shared state entirely. Explain what breaks when agents need to coordinate across handoffs without re-reading history.
+1. Запустите `code/main.py` три раза с разными agent policies. Понаблюдайте, как выбор orchestrator меняет то, какие agents запускаются.
+2. Реализуйте четвертый тип orchestrator: queue-driven вариант, где agents опрашивают shared state на наличие работы. Какой deadlock может возникнуть и как его обнаружить?
+3. Возьмите LangGraph quickstart (https://docs.langchain.com/oss/python/langgraph/workflows-agents) и перепишите его как четыре примитива. Какие абстракции LangGraph отображаются 1:1, а какие являются convenience wrappers?
+4. Прочитайте OpenAI Swarm cookbook (https://developers.openai.com/cookbook/examples/orchestrating_agents). Определите, какой из четырех примитивов Swarm делает самым эргономичным, а какой перекладывает на caller.
+5. Найдите в этой таблице один фреймворк, который полностью скрывает shared state. Объясните, что ломается, когда agents должны координироваться между handoffs без повторного чтения history.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Agent | "An LLM with tools" | A `(system_prompt, tools, model)` triple. Stateless. |
-| Handoff | "Transfer of control" | A structured call that names the next agent and optional payload. Three implementations: function return, graph edge, speaker selection. |
-| Shared state | "Memory" / "context" | The only stateful part of a multi-agent system. Message pool or blackboard. |
-| Orchestrator | "Coordinator" | Whoever decides who runs next. Static graph, LLM selector, handoff-driven, or queue-driven. |
-| Primitive | "Abstraction" | One of the four axes every framework parameterizes. Not a framework feature. |
-| Message pool | "Shared chat history" | Full-history shared state. Easy to reason about, scales badly. |
-| Projected state | "Scoped view" | Role-specific view into shared state. Scales, requires schema design. |
-| Speaker selection | "Who talks next" | Orchestrator pattern where a function (often an LLM) picks the next agent from a group. |
+| Agent | "LLM с tools" | Тройка `(system_prompt, tools, model)`. Stateless. |
+| Handoff | "Передача управления" | Структурированный call, который называет следующего агента и optional payload. Три реализации: function return, graph edge, speaker selection. |
+| Shared state | "Memory" / "context" | Единственная stateful часть multi-agent системы. Message pool или blackboard. |
+| Orchestrator | "Coordinator" | Тот, кто решает, кто запускается следующим. Static graph, LLM selector, handoff-driven или queue-driven. |
+| Primitive | "Abstraction" | Одна из четырех осей, которые параметризует каждый framework. Не feature фреймворка. |
+| Message pool | "Shared chat history" | Shared state с полной историей. Прост для рассуждения, плохо масштабируется. |
+| Projected state | "Scoped view" | Role-specific view в shared state. Масштабируется, требует проектирования схемы. |
+| Speaker selection | "Who talks next" | Orchestrator pattern, где функция (часто LLM) выбирает следующего agent из группы. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [OpenAI cookbook: Orchestrating Agents — Routines and Handoffs](https://developers.openai.com/cookbook/examples/orchestrating_agents) — the clearest articulation of handoff-driven orchestration
-- [AutoGen stable docs](https://microsoft.github.io/autogen/stable/) — GroupChat + speaker selection is the reference for LLM-selected orchestration
-- [LangGraph workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — graph-edge orchestration and reducer-based shared state
+- [OpenAI cookbook: Orchestrating Agents — Routines and Handoffs](https://developers.openai.com/cookbook/examples/orchestrating_agents) — самое ясное изложение handoff-driven orchestration
+- [AutoGen stable docs](https://microsoft.github.io/autogen/stable/) — GroupChat + speaker selection как референс для LLM-selected orchestration
+- [LangGraph workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — graph-edge orchestration и reducer-based shared state
 - [CrewAI introduction](https://docs.crewai.com/en/introduction) — role-goal-backstory agents, Sequential / Hierarchical processes
-- [AG2 (community AutoGen continuation)](https://github.com/ag2ai/ag2) — the live AutoGen v0.2 line after Microsoft moved v0.4 into maintenance
+- [AG2 (community AutoGen continuation)](https://github.com/ag2ai/ag2) — живая линия AutoGen v0.2 после того, как Microsoft перевела v0.4 в maintenance

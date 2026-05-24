@@ -1,23 +1,23 @@
-# Supervisor / Orchestrator-Worker Pattern
+# Паттерн Supervisor / Orchestrator-Worker
 
-> One lead agent plans and delegates; specialized workers execute in parallel contexts and report back. This is the pattern behind Anthropic's Research system (Claude Opus 4 as lead, Sonnet 4 as subagents), measured at +90.2% over single-agent Opus 4 on internal research evals. Anthropic's engineering post reports that 80% of the variance on BrowseComp is explained by token usage alone — multi-agent wins largely because each subagent gets a fresh context window. This lesson builds the supervisor pattern from the primitives and covers the 2026 engineering lessons from production deployments.
+> Один lead agent планирует и делегирует; специализированные workers выполняют работу в параллельных контекстах и возвращают отчеты. Это паттерн за Research system Anthropic (Claude Opus 4 как lead, Sonnet 4 как subagents), где на внутренних research evals измерено +90.2% относительно single-agent Opus 4. В инженерном посте Anthropic сообщается, что 80% дисперсии на BrowseComp объясняется одной лишь token usage — multi-agent выигрывает в основном потому, что каждый subagent получает свежий context window. В этом уроке мы построим supervisor pattern из примитивов и разберем инженерные уроки 2026 года из production deployments.
 
-**Type:** Learn + Build
-**Languages:** Python (stdlib, `threading`)
-**Prerequisites:** Phase 16 · 04 (Primitive Model)
-**Time:** ~75 minutes
+**Тип:** Изучение + Build
+**Языки:** Python (stdlib, `threading`)
+**Предварительные требования:** Фаза 16 · 04 (Primitive Model)
+**Время:** ~75 минут
 
-## Problem
+## Проблема
 
-Research is the prototypical task that single-agent systems fail. You ask "what changed in multi-agent systems between 2023 and 2026?" A single agent reads five papers sequentially, fills half its context with their text, and then has to reason about all of them together. It forgets the first paper by the time it reaches the fifth. It cannot parallelize.
+Research — прототипическая задача, на которой single-agent системы проваливаются. Вы спрашиваете: "что изменилось в multi-agent systems между 2023 и 2026?" Single agent читает пять papers последовательно, забивает половину context их текстом, а затем должен рассуждать обо всех сразу. К моменту пятой статьи он забывает первую. Параллелить он не может.
 
-The supervisor pattern fixes this: one lead agent plans the search, delegates each sub-question to a worker, and synthesizes. Each worker gets its own 200k-token window for a narrow question. The lead never sees the raw papers — only the worker summaries.
+Supervisor pattern исправляет это: один lead agent планирует поиск, делегирует каждый sub-question worker-у и синтезирует результат. Каждый worker получает собственное окно на 200k tokens для узкого вопроса. Lead никогда не видит raw papers — только summaries от workers.
 
-Anthropic's production Research system reports +90.2% on internal research evals vs a single Opus 4. The same post notes that 80% of the BrowseComp variance is explained by *token usage alone*. Fresh context per subagent is the main mechanism.
+Production Research system Anthropic сообщает +90.2% на внутренних research evals против single Opus 4. В том же посте отмечено, что 80% дисперсии BrowseComp объясняется *одной лишь token usage*. Fresh context на subagent — главный механизм.
 
-## Concept
+## Концепция
 
-### The pattern
+### Паттерн
 
 ```
                  ┌──────────────┐
@@ -35,97 +35,97 @@ Anthropic's production Research system reports +90.2% on internal research evals
          context     context      context
 ```
 
-The lead never reads the raw materials. The workers never see each other's work until the lead synthesizes. Each arrow is a handoff with a narrow artifact.
+Lead никогда не читает raw materials. Workers не видят работу друг друга до synthesis у lead. Каждая стрелка — handoff с узким artifact.
 
-### Why it wins
+### Почему он выигрывает
 
-Three mechanisms:
+Три механизма:
 
-1. **Fresh context per subagent.** A worker exploring "FIPA-ACL heritage" does not carry the 40k tokens the lead spent planning. It gets a 200k window for one question.
-2. **Specialization via prompt.** The lead's prompt is "decompose and synthesize," not "research." Each worker's prompt is narrow: "find what changed in X." Focused prompts produce focused outputs.
-3. **Parallelism.** Workers run concurrently. Wall-clock time is roughly `max(worker_times) + plan + synthesis`, not `sum(worker_times)`.
+1. **Fresh context per subagent.** Worker, исследующий "FIPA-ACL heritage", не несет 40k tokens, которые lead потратил на planning. Он получает окно 200k для одного вопроса.
+2. **Specialization via prompt.** Prompt lead — "decompose and synthesize", а не "research". Prompt каждого worker узкий: "find what changed in X". Фокусированные prompts дают фокусированные outputs.
+3. **Parallelism.** Workers запускаются concurrently. Wall-clock time примерно `max(worker_times) + plan + synthesis`, а не `sum(worker_times)`.
 
-### Engineering lessons (Anthropic 2025)
+### Инженерные уроки (Anthropic 2025)
 
-The Anthropic post lists several production lessons that are still 2026-relevant:
+Пост Anthropic перечисляет несколько production lessons, актуальных и в 2026:
 
-- **Scale effort to query complexity.** Simple queries: one agent, 3-10 tool calls. Complex queries: 10+ agents. The lead must estimate this, not the caller.
-- **Broad then narrow.** Decompose into broad sub-questions first, then spawn more workers per sub-question if the answer warrants depth.
-- **Rainbow deployments.** Agents are long-running and stateful. Traditional blue-green does not work. Anthropic uses rainbow: gradual rollout of new versions while old ones drain.
-- **Token usage dominates.** Multi-agent is ~15× the tokens of single-agent. Only run it when the task value justifies the cost.
+- **Scale effort to query complexity.** Простые queries: один agent, 3-10 tool calls. Сложные queries: 10+ agents. Оценивать это должен lead, а не caller.
+- **Broad then narrow.** Сначала decomposе на широкие sub-questions, затем spawn больше workers по sub-question, если ответ требует глубины.
+- **Rainbow deployments.** Agents long-running и stateful. Traditional blue-green не работает. Anthropic использует rainbow: постепенный rollout новых versions, пока старые drain.
+- **Token usage dominates.** Multi-agent стоит примерно в 15× tokens от single-agent. Запускайте его только когда value задачи оправдывает cost.
 
-### The LangGraph turn
+### Поворот LangGraph
 
-LangGraph originally shipped a `langgraph-supervisor` library with a high-level `create_supervisor` helper. In 2025 LangChain moved the recommendation to implementing the supervisor pattern via tool-calling directly, because tool calls give more control over *what the supervisor sees* (context engineering). The library still works; the docs now recommend the tool-calling form.
+LangGraph изначально поставлял библиотеку `langgraph-supervisor` с high-level helper `create_supervisor`. В 2025 LangChain перенес рекомендацию на реализацию supervisor pattern напрямую через tool-calling, потому что tool calls дают больше контроля над тем, *что видит supervisor* (context engineering). Библиотека все еще работает; docs теперь рекомендуют форму tool-calling.
 
-### The failure modes
+### Failure modes
 
-- **Lead hallucinates the plan.** If the lead generates sub-questions that do not decompose the real question, workers do precise research on the wrong target.
-- **Workers over-explore.** Without explicit scope boundaries, workers drift beyond their assigned sub-question and pollute the synthesis step.
-- **Synthesis conflicts.** Two workers return contradictory facts. The lead must either re-ask (add a round) or note the disagreement explicitly. Silent picking of one side is the worst failure: the user never knows disagreement happened.
+- **Lead hallucinates the plan.** Если lead генерирует sub-questions, которые не декомпозируют реальный вопрос, workers проводят точное исследование не той цели.
+- **Workers over-explore.** Без явных scope boundaries workers уходят за пределы assigned sub-question и загрязняют synthesis step.
+- **Synthesis conflicts.** Два workers возвращают противоречащие факты. Lead должен либо переспросить (добавить round), либо явно отметить disagreement. Молчаливо выбрать одну сторону — худший failure: user никогда не узнает, что disagreement был.
 
-### When supervisor is wrong
+### Когда supervisor не подходит
 
-- **Sequential tasks.** If step 2 literally needs step 1's output, parallelism buys nothing. Use a pipeline (CrewAI Sequential, LangGraph linear graph).
-- **Simple queries.** Single-agent handles them faster and cheaper. Use the lead's "scale effort" check before spawning workers.
-- **Strict determinism.** Supervisor uses LLM-selected delegation. Static graphs are better when audit/replay matter more than adaptability.
+- **Sequential tasks.** Если step 2 буквально требует output step 1, parallelism ничего не дает. Используйте pipeline (CrewAI Sequential, LangGraph linear graph).
+- **Simple queries.** Single-agent обработает их быстрее и дешевле. Используйте проверку lead "scale effort" перед spawning workers.
+- **Strict determinism.** Supervisor использует LLM-selected delegation. Static graphs лучше, когда audit/replay важнее adaptability.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements a supervisor of three parallel workers using `threading`. The lead decomposes a query into sub-questions, workers run concurrently on each sub-question, and the lead synthesizes. No real LLMs — the workers are scripted to simulate fetch-and-summarize.
+`code/main.py` реализует supervisor из трех parallel workers с помощью `threading`. Lead decomposes query на sub-questions, workers concurrently работают над каждым sub-question, а lead synthesizes. Реальных LLM нет — workers scripted и имитируют fetch-and-summarize.
 
-Key structure:
+Ключевая структура:
 
-- `Lead.plan(query)` splits a query into 3 sub-questions.
-- `Worker.run(sub_q)` returns a fake summary (could be any tool-using agent in production).
-- `Lead.run(query)` kicks off workers in threads, joins, and synthesizes.
+- `Lead.plan(query)` делит query на 3 sub-questions.
+- `Worker.run(sub_q)` возвращает fake summary (в production это мог бы быть любой tool-using agent).
+- `Lead.run(query)` запускает workers в threads, делает joins и synthesizes.
 
-Run:
+Запустите:
 
 ```
 python3 code/main.py
 ```
 
-Output shows the plan, the parallel worker traces with start/end timestamps, and the final synthesis. You can see the wall-clock wins: three 0.3-second workers run in ~0.35 seconds, not 0.9.
+Вывод показывает plan, parallel worker traces с start/end timestamps и final synthesis. Видна победа по wall-clock: три worker по 0.3 seconds выполняются примерно за 0.35 seconds, а не за 0.9.
 
-## Use It
+## Используйте это
 
-`outputs/skill-supervisor-designer.md` takes a user query and produces a supervisor-pattern design: lead system prompt, worker roles, sub-question decomposition rules, and the synthesis template. Use this before building a new research-style agent system.
+`outputs/skill-supervisor-designer.md` принимает user query и производит supervisor-pattern design: lead system prompt, worker roles, правила decomposition на sub-questions и synthesis template. Используйте это перед построением новой research-style agent system.
 
-## Ship It
+## Доведите до production
 
-Checklist before deploying a supervisor pattern:
+Чеклист перед deployment supervisor pattern:
 
-- **Model pairing.** Lead on a reasoning-tier model (Opus class, `o3` class). Workers on a faster, cheaper model (Sonnet, `o4-mini`).
-- **Worker timeout.** Any worker that exceeds 2× median runtime gets killed; the lead either re-spawns with narrower scope or proceeds without it.
-- **Token cap per worker.** Hard limit (say 10× the expected synthesis input) prevents a runaway worker from blowing the budget.
-- **Observability.** Trace the lead's plan, each worker's tool calls, and the synthesis. This is the basis for any post-hoc debugging.
-- **Rainbow rollout.** Stateful long-running agents need gradual version transition, not hot swap.
+- **Model pairing.** Lead на reasoning-tier model (Opus class, `o3` class). Workers на более быстрой и дешевой model (Sonnet, `o4-mini`).
+- **Worker timeout.** Любой worker, превышающий 2× median runtime, убивается; lead либо re-spawns его с narrower scope, либо продолжает без него.
+- **Token cap per worker.** Hard limit (скажем, 10× expected synthesis input) не дает runaway worker взорвать budget.
+- **Observability.** Trace plan lead, tool calls каждого worker и synthesis. Это основа любого post-hoc debugging.
+- **Rainbow rollout.** Stateful long-running agents требуют gradual version transition, а не hot swap.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`, then modify the lead to spawn 5 workers instead of 3. Observe the wall-clock effect. At what worker count does spawn overhead exceed parallel savings in this demo?
-2. Implement a worker timeout: kill any worker that runs longer than 0.5 seconds and have the lead synthesize the remaining results. What observability do you need to know a worker was cut?
-3. Add a conflict-detection step to the lead's synthesis: if two workers return contradictory answers, the lead notes the disagreement rather than picking one. How do you detect contradiction without calling an LLM?
-4. Read Anthropic's Research-system engineering post. List three practices that this toy demo would need to adopt to run in production.
-5. Compare LangGraph's `create_supervisor` (legacy) vs the new tool-calling recommendation. Which gives you better control over what the supervisor sees? Why does Anthropic explicitly pass only sub-answers and not raw worker context into synthesis?
+1. Запустите `code/main.py`, затем измените lead так, чтобы он spawn-ил 5 workers вместо 3. Понаблюдайте wall-clock effect. При каком worker count spawn overhead превышает parallel savings в этом demo?
+2. Реализуйте worker timeout: убивайте любого worker, который работает дольше 0.5 seconds, и пусть lead synthesizes remaining results. Какая observability нужна, чтобы знать, что worker был cut?
+3. Добавьте conflict-detection step в synthesis lead: если два workers возвращают contradictory answers, lead отмечает disagreement, а не выбирает один. Как обнаружить contradiction без вызова LLM?
+4. Прочитайте engineering post Anthropic о Research system. Перечислите три practices, которые этому toy demo нужно было бы принять для production.
+5. Сравните LangGraph `create_supervisor` (legacy) и новую рекомендацию tool-calling. Что дает лучший контроль над тем, что видит supervisor? Почему Anthropic явно передает в synthesis только sub-answers, а не raw worker context?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
-| Supervisor | "Lead agent" | An orchestrator agent that plans, delegates, and synthesizes. Does not do the work itself. |
-| Worker | "Subagent" | A focused agent invoked by the supervisor with narrow scope and its own context window. |
-| Orchestrator-worker | "Supervisor pattern" | Same thing, different name. The 2026 literature uses both. |
-| Fresh context | "Clean window" | A worker's context starts from its system prompt and assigned question, not the lead's history. |
-| Rainbow deployment | "Gradual rollout" | Long-running stateful agents need versioned drain-and-replace, not blue-green. |
-| Token dominance | "Context is the variable" | 80% of research-eval variance comes from total tokens used, not model choice, per Anthropic. |
-| Scale effort | "Match agent count to complexity" | Lead estimates query difficulty, spawns 1 vs 10+ workers accordingly. |
-| Synthesis conflict | "Workers disagree" | Two workers return contradictory facts; the lead must surface disagreement, not silently pick one. |
+| Supervisor | "Lead agent" | Orchestrator agent, который планирует, делегирует и synthesizes. Сам работу не делает. |
+| Worker | "Subagent" | Фокусированный agent, вызываемый supervisor с narrow scope и собственным context window. |
+| Orchestrator-worker | "Supervisor pattern" | То же самое, другое имя. Литература 2026 использует оба. |
+| Fresh context | "Clean window" | Context worker начинается с его system prompt и assigned question, а не с history lead. |
+| Rainbow deployment | "Gradual rollout" | Long-running stateful agents требуют versioned drain-and-replace, а не blue-green. |
+| Token dominance | "Context is the variable" | По Anthropic, 80% дисперсии research-eval приходит из total tokens used, а не из выбора model. |
+| Scale effort | "Match agent count to complexity" | Lead оценивает difficulty query и соответственно spawn-ит 1 vs 10+ workers. |
+| Synthesis conflict | "Workers disagree" | Два workers возвращают contradictory facts; lead должен показать disagreement, а не молча выбрать один. |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anthropic engineering — How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) — the production reference for supervisor pattern
-- [LangGraph workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — tool-calling supervisor is now the recommended form
-- [LangGraph supervisor reference](https://reference.langchain.com/python/langgraph-supervisor) — the legacy helper, still used in 2026 production
+- [Anthropic engineering — How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) — production reference для supervisor pattern
+- [LangGraph workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents) — tool-calling supervisor теперь recommended form
+- [LangGraph supervisor reference](https://reference.langchain.com/python/langgraph-supervisor) — legacy helper, все еще используется в production 2026
 - [OpenAI cookbook — Orchestrating Agents: Routines and Handoffs](https://developers.openai.com/cookbook/examples/orchestrating_agents) — handoff-based supervisor variant

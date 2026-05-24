@@ -1,74 +1,74 @@
-# Failure Modes — MAST, Groupthink, Monoculture, Cascading Errors
+# Failure Modes — MAST, groupthink, monoculture, cascading errors
 
-> The reference taxonomy for 2026 is **MAST** (Cemri et al., NeurIPS 2025, arXiv:2503.13657), derived from 1642 execution traces across 7 state-of-the-art open-source MAS showing **41–86.7% failure rate**. Three root categories: **Specification Problems** (41.77%) — role ambiguity, unclear task definitions; **Coordination Failures** (36.94%) — communication breakdowns, state desync; **Verification Gaps** (21.30%) — missing validation, absent quality checks. The **Groupthink** family (arXiv:2508.05687) adds: monoculture collapse (same base model → correlated failures), conformity bias (agents reinforce each other's errors), deficient theory of mind, mixed-motive dynamics, cascading reliability failures. Cascading example: retry storms where a payment failure triggers order retries, which trigger inventory retries, which overwhelm inventory service (10x load in seconds — needs circuit breakers). Memory poisoning: one agent's hallucination enters shared memory, downstream agents treat it as fact; accuracy decays gradually, making root-cause diagnosis painful. **STRATUS** (NeurIPS 2025) reports 1.5x mitigation-success improvement via specialized detection / diagnosis / validation agents. This lesson treats failure modes as first-class engineering targets.
+> Эталонная таксономия на 2026 год — **MAST** (Cemri et al., NeurIPS 2025, arXiv:2503.13657), выведенная из 1642 execution traces по 7 state-of-the-art open-source MAS и показывающая **41–86.7% failure rate**. Три корневые категории: **Specification Problems** (41.77%) — role ambiguity, неясные task definitions; **Coordination Failures** (36.94%) — communication breakdowns, state desync; **Verification Gaps** (21.30%) — missing validation, absent quality checks. Семейство **Groupthink** (arXiv:2508.05687) добавляет: monoculture collapse (одна base model → correlated failures), conformity bias (агенты усиливают ошибки друг друга), deficient theory of mind, mixed-motive dynamics, cascading reliability failures. Пример cascade: retry storms, где payment failure вызывает order retries, которые вызывают inventory retries, которые перегружают inventory service (10x load за секунды — нужны circuit breakers). Memory poisoning: галлюцинация одного агента попадает в shared memory, downstream agents воспринимают ее как факт; accuracy постепенно падает, что делает root-cause diagnosis болезненной. **STRATUS** (NeurIPS 2025) сообщает о 1.5x improvement mitigation success через specialized detection / diagnosis / validation agents. Этот урок рассматривает failure modes как первоклассные engineering targets.
 
-**Type:** Learn
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 16 · 13 (Shared Memory), Phase 16 · 14 (Consensus and BFT), Phase 16 · 15 (Voting and Debate Topology)
-**Time:** ~75 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib)
+**Предварительные требования:** Phase 16 · 13 (Shared Memory), Phase 16 · 14 (Consensus and BFT), Phase 16 · 15 (Voting and Debate Topology)
+**Время:** ~75 минут
 
-## Problem
+## Проблема
 
-Multi-agent systems fail 41-86.7% of the time on real tasks (Cemri et al. 2025 measured this across 7 open-source MAS). That is not debuggable by "just add more agents." The failures have structural causes. The MAST taxonomy gives you the categories. This lesson maps each category to a concrete detection, diagnosis, and mitigation pattern so the numbers stop looking arbitrary.
+Multi-agent systems fail 41-86.7% of the time на реальных задачах (Cemri et al. 2025 измерили это на 7 open-source MAS). Это нельзя отладить подходом "just add more agents." У failures есть структурные причины. Таксономия MAST дает категории. Этот урок сопоставляет каждую категорию с конкретным detection, diagnosis и mitigation pattern, чтобы числа перестали выглядеть произвольными.
 
-The 2026 production practice is to treat failure modes as design inputs. Your architecture is not "good enough" until you can point to each MAST category and name the mitigation you deployed.
+Production practice 2026 года — рассматривать failure modes как design inputs. Ваша architecture не "good enough", пока вы не можете указать на каждую категорию MAST и назвать mitigation, который развернули.
 
-## Concept
+## Концепция
 
-### MAST categories
+### Категории MAST
 
-**Specification Problems (41.77% of failures).** The agent's task was not defined tightly enough. Examples:
+**Specification Problems (41.77% of failures).** Задача агента была определена недостаточно строго. Примеры:
 
-- Role ambiguity: two agents both think they are the reviewer.
-- Task underspecified: "summarize this" when the user wanted a specific angle.
-- Success criteria implicit: the agent cannot tell if it succeeded.
+- Role ambiguity: два агента оба считают, что они reviewer.
+- Task underspecified: "summarize this", когда пользователь хотел конкретный angle.
+- Success criteria implicit: агент не может понять, succeeded ли он.
 
 Mitigations:
-- Write explicit role contracts. Each agent's prompt states what it does *and what it does not do*.
-- Acceptance tests per task. Before the agent starts, define "done looks like X."
-- Pre-flight spec check: a separate agent reviews the task definition before dispatch.
+- Пишите explicit role contracts. Prompt каждого агента говорит, что он делает *и чего не делает*.
+- Acceptance tests per task. До старта агента определите "done looks like X."
+- Pre-flight spec check: отдельный агент проверяет task definition перед dispatch.
 
-**Coordination Failures (36.94%).** Communication or state breakdowns.
+**Coordination Failures (36.94%).** Communication или state breakdowns.
 
-Examples:
-- Two agents update shared state without synchronization.
+Примеры:
+- Два агента обновляют shared state без synchronization.
 - Message lost between agents (queue failure, timeout).
-- State drift: agent A thinks the task is done; agent B is still executing.
+- State drift: agent A считает задачу завершенной; agent B все еще executing.
 
 Mitigations:
 - Versioned shared state with optimistic concurrency.
-- Explicit acknowledgment for critical messages (retry until acked).
+- Explicit acknowledgment для critical messages (retry until acked).
 - Periodic state-sync checkpoints; detect drift early.
 
-**Verification Gaps (21.30%).** No independent check on outputs.
+**Verification Gaps (21.30%).** Нет независимой проверки outputs.
 
-Examples:
-- One agent claims success; no one verifies.
-- Chain of agents each trusts the prior's output.
+Примеры:
+- Один агент заявляет success; никто не verifies.
+- Chain of agents каждый доверяет output предыдущего.
 - Test coverage missing on the emergent composed behavior.
 
 Mitigations:
-- Independent verifier agent (Lesson 13). Read-only, independent source access.
+- Independent verifier agent (Lesson 13). Только чтение, независимый доступ к source.
 - Explicit handoff contract: "A's output must pass checker C before B starts."
 - Outcome logging for post-hoc analysis.
 
 ### Groupthink family (arXiv:2508.05687)
 
-Five related failures when agents homogenize or mimic each other:
+Пять связанных failures, когда агенты homogenize или mimic each other:
 
-**Monoculture collapse.** Same base model or training data → correlated errors. When three agents share an LLM, they share its hallucinations.
+**Monoculture collapse.** Одна base model или training data → correlated errors. Когда три агента используют одну LLM, они разделяют ее hallucinations.
 
-**Conformity bias.** Agents adjust toward the loudest or most-confident peer, even when wrong.
+**Conformity bias.** Агенты смещаются к самому громкому или most-confident peer, даже когда он ошибается.
 
-**Deficient ToM.** Agents fail to model each other's beliefs; coordination falls apart (Lesson 18).
+**Deficient ToM.** Агенты не моделируют beliefs друг друга; coordination разваливается (Lesson 18).
 
-**Mixed-motive dynamics.** Agents with partially-aligned incentives drift toward compromise-middle, which satisfies no one.
+**Mixed-motive dynamics.** Агенты с partially-aligned incentives дрейфуют к compromise-middle, который не удовлетворяет никого.
 
-**Cascading reliability failures.** One component's error pattern triggers error patterns in dependent components.
+**Cascading reliability failures.** Error pattern одного компонента запускает error patterns в зависимых компонентах.
 
-### Cascading example — the retry storm
+### Cascading example — retry storm
 
-A classic 2026 incident pattern:
+Классический incident pattern 2026 года:
 
 ```
 payment service fails 10% of requests
@@ -88,113 +88,113 @@ inventory service sees 10x normal load
 cluster goes down
 ```
 
-The fix is classical: **circuit breakers**. When downstream error rate exceeds threshold, short-circuit with cached or default results. Plus capped retry budgets per request.
+Исправление классическое: **circuit breakers**. Когда downstream error rate превышает threshold, short-circuit с cached или default results. Плюс capped retry budgets per request.
 
-Circuit breakers are one of the few multi-agent failure mitigations you borrow directly from distributed systems without modification.
+Circuit breakers — один из немногих multi-agent failure mitigations, которые вы напрямую заимствуете из distributed systems без модификаций.
 
 ### Memory poisoning (revisited)
 
-From Lesson 13: one agent's hallucination becomes shared-memory fact; downstream agents reason on the poisoned fact. In MAST terms, this is a verification gap at the shared-memory layer.
+Из Lesson 13: hallucination одного агента становится shared-memory fact; downstream agents рассуждают на основе poisoned fact. В терминах MAST это verification gap на shared-memory layer.
 
-Gradual accuracy decay is the symptom. You do not get a crash; you get slow drift that is hard to root-cause.
+Gradual accuracy decay — симптом. Вы не получаете crash; вы получаете slow drift, который трудно root-cause.
 
-Mitigation: append-only log, provenance, unwritable verifier. Already covered in Lesson 13.
+Mitigation: append-only log, provenance, unwritable verifier. Уже разобрано в Lesson 13.
 
-### STRATUS — specialized agents for failure detection
+### STRATUS — специализированные агенты для failure detection
 
-STRATUS (NeurIPS 2025) reports 1.5x mitigation-success improvement when you deploy:
+STRATUS (NeurIPS 2025) сообщает о 1.5x mitigation-success improvement, когда вы разворачиваете:
 
-- **Detection agent.** Watches for symptom patterns (high disagreement, retry spikes, accuracy drift).
-- **Diagnosis agent.** Given symptoms, infers likely root cause from the MAST taxonomy.
-- **Validation agent.** After a mitigation is applied, checks that symptoms clear.
+- **Detection agent.** Наблюдает symptom patterns (high disagreement, retry spikes, accuracy drift).
+- **Diagnosis agent.** По symptoms выводит likely root cause из таксономии MAST.
+- **Validation agent.** После применения mitigation проверяет, что symptoms clear.
 
-This is SRE-style incident response, applied to agent systems. The three roles can all be LLM agents with specialized prompts.
+Это SRE-style incident response, примененный к agent systems. Все три роли могут быть LLM agents со специализированными prompts.
 
-### The failure-mode audit
+### Failure-mode audit
 
-A 2026 best practice is an annual (or per-major-release) failure-mode audit:
+Best practice 2026 года — annual (или per-major-release) failure-mode audit:
 
-1. **Trace sample.** Collect ~1000 real execution traces.
-2. **Categorize.** For each trace's failures, map to MAST + Groupthink categories.
-3. **Compute failure-by-category rate.** Which categories dominate your system?
-4. **Rank mitigations.** Which fix would eliminate the most failures?
-5. **Pick 2-3 mitigations.** Implement; re-audit next quarter.
+1. **Trace sample.** Соберите ~1000 real execution traces.
+2. **Categorize.** Для failures в каждом trace сопоставьте MAST + Groupthink categories.
+3. **Compute failure-by-category rate.** Какие categories доминируют в вашей системе?
+4. **Rank mitigations.** Какой fix устранит больше всего failures?
+5. **Pick 2-3 mitigations.** Реализуйте; re-audit next quarter.
 
-The discipline is more important than the specific choices. Without audits, failures blend into noise and never get systematically addressed.
+Дисциплина важнее конкретных choices. Без audits failures сливаются в noise и никогда не решаются системно.
 
-### When systems fail silently
+### Когда systems fail silently
 
-The most dangerous failure category is silent correctness failure. A system that fails loudly (crash, exception, alert) can be monitored. A system that produces plausible-but-wrong outputs cannot be detected by exception logs. This is why verification gaps are the most expensive category per-failure even though they are only 21.30% by count.
+Самая опасная category failures — silent correctness failure. Систему, которая fails loudly (crash, exception, alert), можно мониторить. Систему, которая выдает plausible-but-wrong outputs, нельзя обнаружить по exception logs. Поэтому verification gaps — самая дорогая category per-failure, хотя по count это только 21.30%.
 
-Invest in:
+Инвестируйте в:
 - Sample-based human review.
 - Golden-dataset regression tests.
 - Cross-agent cross-checking on important outputs.
 
 ### Failure vs slow failure
 
-Some failures are immediate; some are slow. Immediate failures (timeout, schema mismatch, auth error) are cheap to detect. Slow failures (memory poisoning, monoculture drift, role ambiguity) are expensive to detect and prevent.
+Некоторые failures немедленные; некоторые медленные. Immediate failures (timeout, schema mismatch, auth error) дешевы в detection. Slow failures (memory poisoning, monoculture drift, role ambiguity) дороги в detection и prevention.
 
-The 2026 engineering move: instrument slow-failure proxies so you can catch drift before it becomes a visible error. Agreement rate, retry rate, output-length distribution, and edit-distance between consecutive agent versions are all useful proxies.
+Engineering move 2026 года: instrument slow-failure proxies, чтобы ловить drift до того, как он станет visible error. Agreement rate, retry rate, output-length distribution и edit-distance between consecutive agent versions — полезные proxies.
 
-## Build It
+## Соберите
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
 - `FailureTaxonomy` — categorizes simulated incidents into MAST + Groupthink categories.
 - `CircuitBreaker` — classic pattern; opens when error rate exceeds threshold.
-- `RetryStormSimulator` — shows the cascading failure; toggles circuit breaker on / off.
+- `RetryStormSimulator` — показывает cascading failure; toggles circuit breaker on / off.
 - `DetectionAgent` — scripted STRATUS-style symptom matcher.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Expected output:
-- retry storm with no circuit breaker: inventory errors blow up (simulated).
-- with circuit breaker: cap at threshold; degraded-mode responses served.
+Ожидаемый output:
+- retry storm без circuit breaker: inventory errors blow up (simulated).
+- с circuit breaker: cap at threshold; degraded-mode responses served.
 - detection agent flags the pattern and names the MAST category.
 
-## Use It
+## Используйте
 
-`outputs/skill-mast-auditor.md` runs a MAST-style failure-mode audit on a multi-agent system. Traces → categorization → mitigation ranking.
+`outputs/skill-mast-auditor.md` запускает MAST-style failure-mode audit на multi-agent system. Traces → categorization → mitigation ranking.
 
-## Ship It
+## Запустите в production
 
 Failure-mode discipline in production:
 
-- **MAST audit per quarter.** Not annual. Categories shift as your system grows.
-- **Circuit breakers everywhere.** Each outbound call to any dependent service. Default open threshold at 5-10% error rate.
-- **Golden datasets.** Small, high-quality, hand-audited. Regression-test against them weekly.
-- **STRATUS trio.** Detection + Diagnosis + Validation agents monitoring production. Start with the detection agent only; add diagnosis when symptoms are noisy.
-- **Failure budget.** Explicit SLO for failure rate by category. Exceeding budget triggers a stop-shipping conversation.
+- **MAST audit per quarter.** Не annual. Categories shift as your system grows.
+- **Circuit breakers everywhere.** Каждый outbound call к любому dependent service. Default open threshold на 5-10% error rate.
+- **Golden datasets.** Маленькие, high-quality, hand-audited. Regression-test against them weekly.
+- **STRATUS trio.** Detection + Diagnosis + Validation agents monitoring production. Начните только с detection agent; добавьте diagnosis, когда symptoms noisy.
+- **Failure budget.** Explicit SLO для failure rate by category. Exceeding budget triggers a stop-shipping conversation.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Confirm the circuit breaker caps the retry storm. Vary the failure threshold and observe the tradeoff.
-2. Implement a **slow-failure proxy**: agreement rate across 3 parallel agents. When it drops sharply, trigger an alert. Simulate a monoculture drift by gradually correlating agent outputs.
-3. Read Cemri et al. (arXiv:2503.13657). Pick one of their 7 MAS systems and map its top 3 failure categories. How do these compare to what MAST predicts?
-4. Read the Groupthink paper (arXiv:2508.05687). Identify which of the five patterns is hardest to detect in production. Propose a proxy metric.
-5. Design a STRATUS-style detection-diagnosis-validation trio for a specific multi-agent system you know. Which symptoms does detection watch for? What mitigations does diagnosis recommend? How does validation confirm they work?
+1. Запустите `code/main.py`. Подтвердите, что circuit breaker caps the retry storm. Меняйте failure threshold и наблюдайте tradeoff.
+2. Реализуйте **slow-failure proxy**: agreement rate across 3 parallel agents. Когда он резко падает, trigger an alert. Симулируйте monoculture drift, постепенно коррелируя agent outputs.
+3. Прочитайте Cemri et al. (arXiv:2503.13657). Выберите одну из их 7 MAS systems и сопоставьте ее top 3 failure categories. Как они сравниваются с тем, что предсказывает MAST?
+4. Прочитайте Groupthink paper (arXiv:2508.05687). Определите, какой из пяти patterns труднее всего detect in production. Предложите proxy metric.
+5. Спроектируйте STRATUS-style detection-diagnosis-validation trio для конкретной multi-agent system, которую знаете. За какими symptoms следит detection? Какие mitigations рекомендует diagnosis? Как validation подтверждает, что они работают?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
 | MAST | "The 2026 taxonomy" | Cemri 2025; 3 root categories + 14 sub-types of failures. |
-| Specification Problem | "Role ambiguity" | Task or role under-defined; agents do not know what to do. |
-| Coordination Failure | "State drift" | Communication or sync breakdown between agents. |
+| Specification Problem | "Role ambiguity" | Task или role under-defined; agents do not know what to do. |
+| Coordination Failure | "State drift" | Communication или sync breakdown между agents. |
 | Verification Gap | "No one checked" | Outputs accepted without independent validation. |
 | Groupthink family | "Homogeneity failures" | Monoculture, conformity, deficient ToM, mixed-motive, cascading. |
 | Monoculture collapse | "Same model, same hallucinations" | Correlated errors from shared base model or training data. |
-| Retry storm | "Cascading error amplification" | One failure triggers retries which amplify load downstream. |
+| Retry storm | "Cascading error amplification" | Один failure triggers retries, которые amplify load downstream. |
 | Circuit breaker | "Fail fast on error rate" | Open when error rate exceeds threshold; short-circuit with default. |
 | STRATUS | "Incident response trio" | Detection + diagnosis + validation agents. 1.5x mitigation success. |
 | Memory poisoning | "Hallucinations propagate" | Shared-memory fact tainted; downstream agents reason on poison. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Cemri et al. — Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657) — MAST taxonomy, NeurIPS 2025
 - [Groupthink failures in multi-agent LLMs](https://arxiv.org/abs/2508.05687) — monoculture, conformity, and the five-family taxonomy

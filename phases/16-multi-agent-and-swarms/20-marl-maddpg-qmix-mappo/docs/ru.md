@@ -1,162 +1,162 @@
 # MARL — MADDPG, QMIX, MAPPO
 
-> The reinforcement-learning heritage of multi-agent coordination, which still informs LLM-agent systems in 2026. **MADDPG** (Lowe et al., NeurIPS 2017, arXiv:1706.02275) introduced Centralized Training, Decentralized Execution (CTDE): each critic sees all agents' states and actions during training; at test time only local actors run. Works for cooperative, competitive, and mixed settings. **QMIX** (Rashid et al., ICML 2018, arXiv:1803.11485) is value-decomposition with a monotonic mixing network; per-agent Qs combine into joint Q so `argmax` distributes cleanly — dominant on StarCraft Multi-Agent Challenge (SMAC). **MAPPO** (Yu et al., NeurIPS 2022, arXiv:2103.01955) is PPO with a centralized value function; "surprisingly effective" on particle-world, SMAC, Google Research Football, Hanabi with minimal tuning. These underpin training policies for agent teams that must act decentrally. MAPPO is the **default 2026 cooperative-MARL baseline**. This lesson builds each from a small grid-world toy and lands the three ideas in muscle memory before touching LLM-agent training.
+> Наследие reinforcement learning в многоагентной координации, которое все еще влияет на LLM-agent systems в 2026 году. **MADDPG** (Lowe et al., NeurIPS 2017, arXiv:1706.02275) ввел Centralized Training, Decentralized Execution (CTDE): каждый critic видит состояния и действия всех agents во время training; во время test запускаются только local actors. Работает для cooperative, competitive и mixed settings. **QMIX** (Rashid et al., ICML 2018, arXiv:1803.11485) — value-decomposition с monotonic mixing network; per-agent Qs объединяются в joint Q так, что `argmax` аккуратно распределяется — доминирующий подход на StarCraft Multi-Agent Challenge (SMAC). **MAPPO** (Yu et al., NeurIPS 2022, arXiv:2103.01955) — PPO с centralized value function; "surprisingly effective" на particle-world, SMAC, Google Research Football, Hanabi с минимальной настройкой. Эти идеи лежат в основе training policies для agent teams, которые должны действовать децентрализованно. MAPPO — **default 2026 cooperative-MARL baseline**. В этом уроке каждая идея строится на маленькой grid-world toy, чтобы CTDE, value decomposition и centralized critics стали привычными до перехода к LLM-agent training.
 
-**Type:** Learn
-**Languages:** Python (stdlib, small NumPy-free implementations)
-**Prerequisites:** Phase 09 (Reinforcement Learning), Phase 16 · 09 (Parallel Swarm Networks)
-**Time:** ~90 minutes
+**Тип:** Изучение
+**Языки:** Python (stdlib, small NumPy-free implementations)
+**Требования:** Фаза 09 (Reinforcement Learning), Фаза 16 · 09 (Parallel Swarm Networks)
+**Время:** ~90 минут
 
-## Problem
+## Задача
 
-LLM-agent systems increasingly train policies for inter-agent coordination: when to defer, when to act, which peer to call. The literature that tells you how to train such policies is Multi-Agent Reinforcement Learning (MARL), which predates the LLM wave and has a small set of dominant algorithms.
+LLM-agent systems все чаще обучают policies для межагентной координации: когда уступить, когда действовать, к какому peer обратиться. Литература, которая объясняет, как обучать такие policies, — это Multi-Agent Reinforcement Learning (MARL), возникшая до волны LLM и имеющая небольшой набор доминирующих алгоритмов.
 
-Reading MARL papers without the pattern vocabulary is painful. Centralized training with decentralized execution (CTDE), value decomposition, and centralized critics are not buzzwords — they are specific answers to specific problems:
+Читать статьи по MARL без словаря паттернов болезненно. Centralized training with decentralized execution (CTDE), value decomposition и centralized critics — не модные слова, а конкретные ответы на конкретные проблемы:
 
-- Independent RL (each agent learns alone) is non-stationary from each agent's perspective. Bad.
-- Centralized RL (one agent controls all) does not scale and violates execution constraints.
-- CTDE gets the best of both: train with global information, deploy with local policies.
+- Independent RL (каждый agent учится один) нестационарен с точки зрения каждого agent. Плохо.
+- Centralized RL (один agent управляет всем) не масштабируется и нарушает execution constraints.
+- CTDE берет лучшее из обоих: обучение с global information, deployment с local policies.
 
-## Concept
+## Концепция
 
-### Three environments the papers use
+### Три среды, которые используют статьи
 
-- **Particle World (multi-agent particle env).** Simple 2D physics with cooperative/competitive tasks. MADDPG's original testbed.
-- **StarCraft Multi-Agent Challenge (SMAC).** Cooperative micro-management, partial observation. QMIX's testbed. Discrete actions, continuous states.
-- **Google Research Football, Hanabi, MPE.** MAPPO baselines.
+- **Particle World (multi-agent particle env).** Простая 2D physics с cooperative/competitive tasks. Исходный testbed MADDPG.
+- **StarCraft Multi-Agent Challenge (SMAC).** Cooperative micro-management, partial observation. Testbed QMIX. Discrete actions, continuous states.
+- **Google Research Football, Hanabi, MPE.** Baselines MAPPO.
 
-Different envs have different action/observation types. The algorithms pick accordingly.
+У разных envs разные action/observation types. Алгоритмы выбираются соответственно.
 
-### MADDPG (2017) — the CTDE pattern
+### MADDPG (2017) — паттерн CTDE
 
-Each agent `i` has an actor `mu_i(o_i)` that maps its own observation to action. Each agent also has a critic `Q_i(x, a_1, ..., a_n)` that sees all observations and all actions during training. The actor is updated by policy gradient against the critic's evaluation.
+У каждого agent `i` есть actor `mu_i(o_i)`, который отображает собственное observation в action. У каждого agent также есть critic `Q_i(x, a_1, ..., a_n)`, который видит все observations и все actions во время training. Actor обновляется policy gradient относительно оценки critic.
 
 ```
 actor update:    grad_theta_i J = E[grad_theta mu_i(o_i) * grad_a_i Q_i(x, a_1..n) at a_i=mu_i(o_i)]
 critic update:   TD on Q_i(x, a_1..n) given next-state joint estimate
 ```
 
-Why CTDE: at training time, we know everyone's actions; we use that to reduce variance in each critic. At deploy time, each agent only sees `o_i` and calls `mu_i(o_i)`.
+Почему CTDE: во время training мы знаем действия всех; используем это, чтобы уменьшить variance в каждом critic. Во время deploy каждый agent видит только `o_i` и вызывает `mu_i(o_i)`.
 
-Failure mode: critics grow with N agents (input includes all actions). Does not scale past ~10 agents without approximations.
+Режим отказа: critics растут с N agents (input включает все actions). Без аппроксимаций плохо масштабируется дальше ~10 agents.
 
 ### QMIX (2018) — value decomposition
 
-Cooperative only. Global reward is the sum of a monotone function of per-agent Q-values:
+Только cooperative. Global reward — сумма монотонной функции per-agent Q-values:
 
 ```
 Q_tot(tau, a) = f(Q_1(tau_1, a_1), ..., Q_n(tau_n, a_n)),   df/dQ_i >= 0
 ```
 
-The monotonicity guarantees `argmax_a Q_tot` can be computed by each agent choosing `argmax_{a_i} Q_i` independently. That is **exactly the decentralized execution property** you need. At training time, a mixing network produces `Q_tot` from the per-agent Qs.
+Монотонность гарантирует, что `argmax_a Q_tot` можно вычислить, когда каждый agent независимо выбирает `argmax_{a_i} Q_i`. Это **именно то свойство decentralized execution**, которое вам нужно. Во время training mixing network производит `Q_tot` из per-agent Qs.
 
-Why QMIX wins on SMAC: cooperative StarCraft micro-management has homogeneous agents, local obs, global reward — perfect fit for value decomposition.
+Почему QMIX выигрывает на SMAC: cooperative StarCraft micro-management имеет homogeneous agents, local obs, global reward — идеальное соответствие для value decomposition.
 
-Failure mode: the monotonicity constraint is restrictive; some tasks have reward structures that are not monotone decomposable (one agent sacrificing for the team). Extensions (QTRAN, QPLEX) relax this.
+Режим отказа: ограничение монотонности жесткое; некоторые задачи имеют reward structures, которые не являются monotone decomposable (один agent жертвует собой ради команды). Расширения (QTRAN, QPLEX) ослабляют это.
 
-### MAPPO (2022) — the overlooked default
+### MAPPO (2022) — недооцененный дефолт
 
-Multi-Agent PPO: PPO with a centralized value function. Each agent has its own policy; all agents share (or have per-agent) value functions that see the full state. Yu et al. 2022 benchmarked MAPPO against MADDPG, QMIX, and their extensions on five benchmarks and found:
+Multi-Agent PPO: PPO с centralized value function. У каждого agent своя policy; все agents разделяют (или имеют per-agent) value functions, которые видят full state. Yu et al. 2022 сравнили MAPPO с MADDPG, QMIX и их расширениями на пяти benchmarks и обнаружили:
 
-- MAPPO matches or beats off-policy MARL methods on particle-world, SMAC, Google Research Football, Hanabi, MPE.
-- Minimal hyperparameter tuning required.
-- Stable training; reproducible across seeds.
+- MAPPO не уступает или превосходит off-policy MARL methods на particle-world, SMAC, Google Research Football, Hanabi, MPE.
+- Требует минимальной hyperparameter tuning.
+- Стабильное training; воспроизводимо по seeds.
 
-The community underrated on-policy MARL until this paper. In 2026, MAPPO is the default baseline for cooperative MARL; any new method must beat it.
+Сообщество недооценивало on-policy MARL до этой статьи. В 2026 году MAPPO — default baseline для cooperative MARL; любой новый method должен его превзойти.
 
-### Why LLM-agent engineers should care
+### Почему LLM-agent engineers должны об этом заботиться
 
-Three direct uses:
+Три прямых применения:
 
-1. **Router training.** A meta-agent chooses which sub-agent handles a task. This is a MARL problem with N decentralized sub-agents and one centralized router. MAPPO fits.
-2. **Role emergence.** In generative-agent simulations, training agents to adopt complementary roles over time is a MARL problem in disguise. QMIX-style value decomposition forces complementarity by construction.
-3. **Multi-agent tool use.** When agents share tools and compete for budget, training them via CTDE produces deployable local policies that respect resource constraints.
+1. **Router training.** Meta-agent выбирает, какой sub-agent обработает task. Это MARL problem с N decentralized sub-agents и одним centralized router. MAPPO подходит.
+2. **Role emergence.** В generative-agent simulations обучение agents принимать взаимодополняющие роли со временем — скрытая MARL problem. QMIX-style value decomposition принудительно задает complementarity конструкцией.
+3. **Multi-agent tool use.** Когда agents делят tools и конкурируют за budget, обучение через CTDE дает deployable local policies, которые соблюдают resource constraints.
 
-Practical caveat: in 2026, most production LLM-agent systems prompt their policies rather than train them. MARL comes in when you have (a) lots of interaction data, (b) a clear reward signal, and (c) willingness to invest in training infrastructure.
+Практическая оговорка: в 2026 году большинство production LLM-agent systems промптят свои policies, а не обучают их. MARL нужен, когда у вас есть (a) много interaction data, (b) четкий reward signal и (c) готовность инвестировать в training infrastructure.
 
-### CTDE as a design pattern beyond RL
+### CTDE как design pattern за пределами RL
 
-Even without training, CTDE is a useful architectural pattern:
+Даже без training CTDE полезен как архитектурный паттерн:
 
-- During *design*, assume full team visibility.
-- At *runtime*, enforce decentralized execution: each agent sees only `o_i`.
+- Во время *design* предполагайте полную видимость команды.
+- Во время *runtime* обеспечивайте decentralized execution: каждый agent видит только `o_i`.
 
-The pattern forces you to keep per-agent state explicit and to think about partial observability up front. Many production multi-agent systems silently assume shared state everywhere — CTDE discipline prevents that.
+Паттерн заставляет явно держать per-agent state и заранее думать о partial observability. Многие production multi-agent systems молча предполагают общий state везде — дисциплина CTDE предотвращает это.
 
-### The non-stationarity problem
+### Проблема нестационарности
 
-When multiple agents learn simultaneously, each agent's environment (which includes others' policies) is non-stationary. Classical single-agent RL proofs break. The MARL algorithms in this lesson all address this:
+Когда несколько agents учатся одновременно, environment каждого agent (включая policies других) нестационарна. Классические доказательства single-agent RL ломаются. Все MARL algorithms в этом уроке решают это:
 
-- MADDPG: global critic sees all actions, so its value estimate is stationary.
-- QMIX: value decomposition moves learning to a joint-Q space where optimality is well-defined.
-- MAPPO: the centralized value function dampens variance from others' policy changes.
+- MADDPG: global critic видит все actions, поэтому его value estimate стационарнее.
+- QMIX: value decomposition переносит learning в joint-Q space, где optimality хорошо определена.
+- MAPPO: centralized value function сглаживает variance от изменений policies других.
 
-In LLM-agent systems, non-stationarity manifests as "my agent worked last month, now that other agent upstream changed, mine misbehaves." Training MARL with CTDE is the principled fix; prompt-level fixes are faster but less durable.
+В LLM-agent systems нестационарность проявляется как "мой agent работал в прошлом месяце, теперь upstream agent изменился, и мой ведет себя неправильно." Training MARL with CTDE — принципиальное исправление; prompt-level fixes быстрее, но менее долговечны.
 
-### What this lesson does NOT cover
+### Что этот урок НЕ покрывает
 
-Training actual networks is a Phase 09 topic. This lesson builds scripted-policy versions that demonstrate the CTDE, value-decomposition, and centralized-value patterns without gradient updates. The goal is to internalize the patterns before you pick up a full MARL library (PyMARL, MARLlib, RLlib multi-agent).
+Training actual networks — тема Фазы 09. Этот урок строит scripted-policy versions, которые демонстрируют CTDE, value-decomposition и centralized-value patterns без gradient updates. Цель — усвоить паттерны до выбора полноценной MARL library (PyMARL, MARLlib, RLlib multi-agent).
 
-## Build It
+## Сборка
 
-`code/main.py` implements three pattern demonstrations, all on a tiny 2-agent cooperative grid-world:
+`code/main.py` реализует три демонстрации паттернов, все на tiny 2-agent cooperative grid-world:
 
-- Environment: 2 agents on a 4x4 grid, one reward pellet. Reward = 1 if any agent reaches pellet; task finishes.
-- `IndependentAgents` — each agent treats others as environment. Baseline.
-- `MADDPGStyle` — centralized critic computes a joint value; actor policies update from it. Scripted policy improvement.
-- `QMIXStyle` — value decomposition with a monotone mixer.
-- `MAPPOStyle` — centralized value function; policies update against the shared baseline.
+- Environment: 2 agents на 4x4 grid, одна reward pellet. Reward = 1, если любой agent достигает pellet; task завершается.
+- `IndependentAgents` — каждый agent считает других частью environment. Baseline.
+- `MADDPGStyle` — centralized critic вычисляет joint value; actor policies обновляются от него. Scripted policy improvement.
+- `QMIXStyle` — value decomposition с monotone mixer.
+- `MAPPOStyle` — centralized value function; policies обновляются относительно shared baseline.
 
-All four run the same episodes and report average steps-to-goal. The CTDE variants converge to shorter paths than the independent baseline.
+Все четыре запускают одинаковые episodes и сообщают average steps-to-goal. Варианты CTDE сходятся к более коротким paths, чем independent baseline.
 
-Run:
+Запуск:
 
 ```
 python3 code/main.py
 ```
 
-Expected output: independent agents take ~6 steps on average; CTDE variants converge toward ~3.5 steps (optimal for the 4x4 grid is 3). The pattern difference shows up despite scripted policies.
+Ожидаемый вывод: independent agents в среднем требуют ~6 steps; CTDE variants сходятся к ~3.5 steps (optimal для 4x4 grid — 3). Разница паттернов проявляется несмотря на scripted policies.
 
-## Use It
+## Использование
 
-`outputs/skill-marl-picker.md` is a skill that picks a MARL algorithm for a given multi-agent task: cooperative vs competitive, homogeneous vs heterogeneous, action-space type, scale, reward signal.
+`outputs/skill-marl-picker.md` — skill, который выбирает MARL algorithm для заданной multi-agent task: cooperative vs competitive, homogeneous vs heterogeneous, action-space type, scale, reward signal.
 
-## Ship It
+## Доставка
 
-MARL in production is rare. When you do use it:
+MARL в production встречается редко. Когда вы его используете:
 
-- **Start with MAPPO.** The 2022 paper established this as the baseline; reproducing it first saves weeks of chasing fancier methods.
-- **Log every agent's observation and action stream.** Debugging MARL without per-agent traces is hopeless.
-- **Separate training code from execution code.** CTDE is a discipline; let the execution path really only see `o_i`.
-- **Reward shaping warning.** MARL is exquisitely sensitive to reward design. One coordination bug in the shaping and agents learn to exploit it. Run adversarial tests.
-- **For LLM agents**, consider prompt-level policies first. Only invest in MARL training when interaction data + reward signal + infrastructure are all present.
+- **Начните с MAPPO.** Статья 2022 года установила его как baseline; сначала воспроизвести его — значит сэкономить недели охоты за более сложными methods.
+- **Логируйте stream наблюдений и действий каждого agent.** Отладка MARL без per-agent traces безнадежна.
+- **Отделяйте training code от execution code.** CTDE — дисциплина; пусть execution path действительно видит только `o_i`.
+- **Предупреждение о reward shaping.** MARL исключительно чувствителен к reward design. Один coordination bug в shaping, и agents научатся его эксплуатировать. Запускайте adversarial tests.
+- **Для LLM agents** сначала рассмотрите prompt-level policies. Инвестируйте в MARL training только когда interaction data + reward signal + infrastructure уже есть.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Measure the steps-to-goal gap between independent and MAPPO-style agents. Does the gap grow or shrink on a 6x6 grid?
-2. Implement a competitive variant: two agents, one pellet, only the first to reach gets reward. Which pattern handles competition cleanly? MADDPG historically.
-3. Read MADDPG (arXiv:1706.02275) Section 3. Implement the exact critic update rule symbolically in pseudocode in your own words.
-4. Read MAPPO (arXiv:2103.01955). Why do the authors argue centralized value + PPO beats off-policy MARL on their benchmarks? List the three strongest claims.
-5. Apply CTDE as a design pattern to a hypothetical LLM-agent system (e.g., research agent + summarizer + coder). What is the joint information available at design time that is not available at runtime?
+1. Запустите `code/main.py`. Измерьте разрыв steps-to-goal между independent и MAPPO-style agents. Растет или уменьшается разрыв на 6x6 grid?
+2. Реализуйте competitive variant: два agents, одна pellet, reward получает только первый достигший. Какой pattern чисто обрабатывает competition? Исторически MADDPG.
+3. Прочитайте MADDPG (arXiv:1706.02275) Section 3. Реализуйте точное critic update rule символически в pseudocode своими словами.
+4. Прочитайте MAPPO (arXiv:2103.01955). Почему авторы утверждают, что centralized value + PPO превосходит off-policy MARL на их benchmarks? Перечислите три сильнейших claims.
+5. Примените CTDE как design pattern к гипотетической LLM-agent system (например, research agent + summarizer + coder). Какая joint information доступна во время design, но недоступна во время runtime?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|------------------------|
-| MARL | "Multi-Agent RL" | Reinforcement learning for multi-agent systems. |
-| CTDE | "Centralized Training, Decentralized Execution" | Train with global info; deploy with local policies. |
-| MADDPG | "Multi-Agent DDPG" | CTDE with per-agent critic seeing all observations + actions. |
-| QMIX | "Value decomposition" | Monotonic mixing of per-agent Qs. Cooperative. |
-| MAPPO | "Multi-Agent PPO" | PPO with centralized value function. 2026 default baseline. |
-| Value decomposition | "Sum of individual Qs" | Joint Q represented as a monotone function of per-agent Qs. |
-| Non-stationarity | "Moving targets" | Each agent's env changes as others learn. The core MARL problem. |
-| On-policy / off-policy | "Learn from current / replay" | PPO is on-policy (MAPPO); DDPG and Q-learning are off-policy. |
-| SMAC | "StarCraft Multi-Agent Challenge" | Cooperative micromanagement benchmark; QMIX's homegrown ground. |
+| MARL | "Multi-Agent RL" | Reinforcement learning для многоагентных систем. |
+| CTDE | "Centralized Training, Decentralized Execution" | Обучение с global info; deployment с local policies. |
+| MADDPG | "Multi-Agent DDPG" | CTDE с per-agent critic, который видит все observations + actions. |
+| QMIX | "Value decomposition" | Монотонное смешивание per-agent Qs. Cooperative. |
+| MAPPO | "Multi-Agent PPO" | PPO с centralized value function. Дефолтный baseline 2026 года. |
+| Value decomposition | "Сумма individual Qs" | Joint Q представлен как monotone function от per-agent Qs. |
+| Non-stationarity | "Движущиеся цели" | Env каждого agent меняется, пока другие учатся. Центральная проблема MARL. |
+| On-policy / off-policy | "Учиться на current / replay" | PPO является on-policy (MAPPO); DDPG и Q-learning являются off-policy. |
+| SMAC | "StarCraft Multi-Agent Challenge" | Cooperative micromanagement benchmark; родная площадка QMIX. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Lowe et al. — Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments](https://arxiv.org/abs/1706.02275) — MADDPG; NeurIPS 2017
 - [Rashid et al. — QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning](https://arxiv.org/abs/1803.11485) — QMIX; ICML 2018
 - [Yu et al. — The Surprising Effectiveness of PPO in Cooperative Multi-Agent Games](https://arxiv.org/abs/2103.01955) — MAPPO; NeurIPS 2022
-- [BAIR blog post on MAPPO](https://bair.berkeley.edu/blog/2021/07/14/mappo/) — readable framing of the MAPPO result
+- [BAIR blog post on MAPPO](https://bair.berkeley.edu/blog/2021/07/14/mappo/) — readable framing результата MAPPO
 - [SMAC repository](https://github.com/oxwhirl/smac) — StarCraft Multi-Agent Challenge
