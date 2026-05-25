@@ -159,7 +159,7 @@ while True:
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Turn | User + assistant round-trip | Один VAD-bounded user speech + один LLM-TTS response. |
 | Barge-in | Interruption | Пользователь говорит, пока ассистент говорит; ассистент останавливается. |
 | Wake word | "Hey assistant" | Короткий keyword detector; Porcupine, Snowboy, openWakeWord. |

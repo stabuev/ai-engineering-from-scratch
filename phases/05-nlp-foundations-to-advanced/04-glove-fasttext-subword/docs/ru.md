@@ -21,7 +21,7 @@ Word2Vec оставил два открытых вопроса.
 
 ## Концепция
 
-![Three embedding approaches: GloVe co-occurrence, FastText subwords, BPE merges](./assets/embeddings.svg)
+![Три подхода к эмбеддингам: совместные появления GloVe, подслова FastText, слияния BPE](./assets/embeddings.svg)
 
 **GloVe (Global Vectors).** Постройте word-word co-occurrence matrix `X`, где `X[i][j]` — как часто слово `j` встречается в контексте слова `i`. Обучите vectors так, чтобы `v_i · v_j + b_i + b_j ≈ log(X[i][j])`. Взвесьте loss так, чтобы frequent pairs не доминировали. Готово.
 
@@ -81,7 +81,7 @@ def glove_train(vocab, pair_counts, dim=16, epochs=100, lr=0.05, x_max=100, alph
 
 Здесь стоит назвать две движущие части. Weighting function `f(x) = (x/x_max)^alpha` уменьшает вес очень frequent pairs (например `(the, and)`), чтобы они не доминировали в loss. Final embedding — сумма таблиц `W` (center) и `W_tilde` (context). Суммирование обеих — опубликованный трюк, который обычно превосходит использование только одной.
 
-### FastText: subword-aware embeddings
+### FastText: эмбеддинги с учетом подслов
 
 ```python
 def char_ngrams(word, n_min=3, n_max=6):
@@ -111,7 +111,7 @@ def fasttext_vector(word, ngram_table):
 
 Для unseen word вы все равно получите vector, пока известна хотя бы часть его n-grams. `whereupon` делит `<wh`, `her`, `ere` и `<where` с `where`, поэтому они оказываются рядом.
 
-### BPE: learned subword vocabulary
+### BPE: выученный подсловный словарь
 
 ```python
 def learn_bpe(corpus, k_merges):
@@ -203,13 +203,13 @@ print(tok.tokenize("unbelievably tokenized"))
 
 ### Что выбирать и когда
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Pretrained general-purpose word vectors, no OOV tolerance needed | GloVe 300d |
-| Pretrained general-purpose word vectors, must handle misspellings / neologisms / morphologically rich languages | FastText |
-| Anything going into a transformer (training or inference) | Whatever tokenizer the model shipped with. Never swap. |
-| Training your own language model from scratch | Train a BPE or SentencePiece tokenizer on your corpus first |
-| Production text classification with a linear model | Still TF-IDF. Lesson 02. |
+| Предобученные векторы слов общего назначения, устойчивость к OOV не нужна | GloVe 300d |
+| Предобученные векторы слов общего назначения, нужно обрабатывать опечатки / неологизмы / морфологически богатые языки | FastText |
+| Все, что идет в transformer (обучение или инференс) | Тот токенизатор, с которым поставляется модель. Никогда не заменяйте. |
+| Обучение собственной языковой модели с нуля | Сначала обучите BPE- или SentencePiece-токенизатор на своем корпусе |
+| Production-классификация текста с линейной моделью | Все еще TF-IDF. Урок 02. |
 
 ## Доставка
 
@@ -237,14 +237,14 @@ Refuse to recommend training a custom tokenizer when the user is fine-tuning a p
 
 ## Упражнения
 
-1. **Easy.** Запустите `char_ngrams("playing")` и `char_ngrams("played")`. Вычислите Jaccard overlap двух n-gram sets. Вы должны увидеть много общих частей (`pla`, `lay`, `play`), поэтому FastText хорошо переносится между morphological variants.
-2. **Medium.** Расширьте `learn_bpe`, чтобы отслеживать vocabulary growth. Постройте график tokens-per-corpus-character как функцию number of merges. Вы должны увидеть rapid compression сначала и asymptoting около ~2-3 chars per token.
-3. **Hard.** Обучите 1k-merge BPE на complete works of Shakespeare. Сравните tokenization common words и rare proper nouns. Измерьте average tokens per word before and after. Опишите, что вас удивило.
+1. **Легко.** Запустите `char_ngrams("playing")` и `char_ngrams("played")`. Вычислите Jaccard overlap двух n-gram sets. Вы должны увидеть много общих частей (`pla`, `lay`, `play`), поэтому FastText хорошо переносится между morphological variants.
+2. **Средне.** Расширьте `learn_bpe`, чтобы отслеживать vocabulary growth. Постройте график tokens-per-corpus-character как функцию number of merges. Вы должны увидеть rapid compression сначала и asymptoting около ~2-3 chars per token.
+3. **Сложно.** Обучите 1k-merge BPE на complete works of Shakespeare. Сравните tokenization common words и rare proper nouns. Измерьте average tokens per word before and after. Опишите, что вас удивило.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | Co-occurrence matrix | Word-word frequency table | `X[i][j]` = как часто слово `j` встречается в окне вокруг слова `i`. |
 | Subword | Piece of a word | Character n-gram (FastText) или learned token (BPE/WordPiece/SentencePiece). |
 | BPE | Byte-pair encoding | Итеративное объединение most-frequent adjacent pairs, пока vocabulary не достигнет target size. |

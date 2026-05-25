@@ -26,14 +26,14 @@ AI-код ломается не так, как обычный код. Веб-п�
 
 ```mermaid
 graph TD
-    L3["3. Динамика обучения<br/>Кривые loss, нормы градиентов, активации"] --> L2
-    L2["2. Операции с тензорами<br/>Формы, типы данных, устройства, значения NaN/Inf"] --> L1
-    L1["1. Стандартный Python<br/>Breakpoints, логирование, профилирование, память"]
+    L3["3. Training Dynamics<br/>Loss curves, gradient norms, activations"] --> L2
+    L2["2. Tensor Operations<br/>Shapes, dtypes, devices, NaN/Inf values"] --> L1
+    L1["1. Standard Python<br/>Breakpoints, logging, profiling, memory"]
 ```
 
 Большинство людей сразу прыгают на уровень 3 (смотрят в TensorBoard). Но 80% AI-багов живут на уровнях 1 и 2.
 
-## Build It
+## Практика
 
 ### Часть 1: Отладка через print (да, это работает)
 
@@ -364,7 +364,7 @@ tensorboard --logdir=runs
 
 Это полезно для пошаговой проверки data preprocessing pipelines, когда нужно видеть каждое преобразование.
 
-## Use It
+## Использование
 
 Вот рабочий процесс отладки, который ловит большинство AI-багов:
 
@@ -374,7 +374,7 @@ tensorboard --logdir=runs
 4. **Когда что-то ломается**: поставьте `breakpoint()` в точке сбоя. Интерактивно исследуйте тензоры.
 5. **Для производительности**: измеряйте время data loading, forward pass и backward pass. Профилируйте память, если приближаетесь к OOM.
 
-## Ship It
+## Результат
 
 Запустите скрипт с набором инструментов для отладки:
 

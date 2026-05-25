@@ -1,4 +1,4 @@
-# Text Summarization
+# Суммаризация текста
 
 > Extractive systems говорят вам, что сказал документ. Abstractive systems говорят, что имел в виду автор. Разные задачи, разные pitfalls.
 
@@ -19,7 +19,7 @@ Abstractive summarization - задача генерации. Transformer про�
 
 ## Концепция
 
-![Extractive TextRank vs abstractive transformer](../assets/summarization.svg)
+![Экстрактивный TextRank и абстрактивный transformer](../assets/summarization.svg)
 
 **Extractive.** Рассматривайте article как graph, где nodes - sentences, а edges - similarities. Запустите PageRank (или что-то похожее) по graph, чтобы оценить sentences по тому, насколько они связаны со всем остальным. Highest-scoring sentences становятся summary. Каноническая реализация - **TextRank** (Mihalcea and Tarau, 2004).
 
@@ -145,12 +145,12 @@ Evaluation approaches, которые работают:
 
 Stack 2026 года:
 
-| Use case | Recommended |
+| Сценарий | Рекомендация |
 |---------|-------------|
-| News, 3-5 sentence summary, English | `facebook/bart-large-cnn` |
+| Новости, summary на 3-5 предложений, английский | `facebook/bart-large-cnn` |
 | Scientific papers | `google/pegasus-pubmed` или tuned T5 |
 | Multi-document, long-form | Любая LLM с 32k+ context, prompted |
-| Dialog summarization | `philschmid/bart-large-cnn-samsum` |
+| Суммаризация диалогов | `philschmid/bart-large-cnn-samsum` |
 | Extractive, low hallucination risk by construction | TextRank или `sumy`'s LSA / LexRank |
 
 LLMs с long context часто превосходят specialized models в 2026 году, когда compute не является ограничением. Tradeoff - cost и reproducibility; specialized models дают более consistent outputs.
@@ -181,14 +181,14 @@ Refuse abstractive summarization for medical, legal, financial, or regulated con
 
 ## Упражнения
 
-1. **Easy.** Запустите TextRank на 5 news articles. Сравните top-3 sentences с reference summary. Измерьте ROUGE-L. Вы должны увидеть 30-45 ROUGE-L на articles в стиле CNN/DailyMail.
-2. **Medium.** Реализуйте entity-level factuality: извлеките named entities из source и summary (spaCy), вычислите recall source entities в summary и precision summary entities относительно source. High precision и low recall означают safe but terse; low precision означает hallucinated entities.
-3. **Hard.** Сравните BART-large-CNN с LLM (Claude или GPT-4) на 50 CNN/DailyMail articles. Report ROUGE-L, factuality (by entity F1) и cost per summary. Document where each wins.
+1. **Легко.** Запустите TextRank на 5 news articles. Сравните top-3 sentences с reference summary. Измерьте ROUGE-L. Вы должны увидеть 30-45 ROUGE-L на articles в стиле CNN/DailyMail.
+2. **Средне.** Реализуйте entity-level factuality: извлеките named entities из source и summary (spaCy), вычислите recall source entities в summary и precision summary entities относительно source. High precision и low recall означают safe but terse; low precision означает hallucinated entities.
+3. **Сложно.** Сравните BART-large-CNN с LLM (Claude или GPT-4) на 50 CNN/DailyMail articles. Report ROUGE-L, factuality (by entity F1) и cost per summary. Document where each wins.
 
 ## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Extractive | Pick sentences | Вернуть sentences дословно из source. Никогда не hallucinate. |
 | Abstractive | Rewrite | Generate new text conditioned on source. Может hallucinate. |
 | ROUGE | Summary metric | N-gram / LCS overlap между system output и reference. |

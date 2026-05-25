@@ -17,7 +17,7 @@ Bahdanau, Cho и Bengio в 2014 году опубликовали исправл
 
 ## Концепция
 
-![Bahdanau attention: decoder queries all encoder states](../assets/attention.svg)
+![Attention Бахданау: decoder запрашивает все состояния encoder](../assets/attention.svg)
 
 На каждом шаге decoder `t`:
 
@@ -41,7 +41,7 @@ Bahdanau, Cho и Bengio в 2014 году опубликовали исправл
 | Attention weight `α_{t,i}` | scalar | После softmax по всем `i` |
 | Context vector `c_t` | `(d_h,)` | Такая же shape, как у состояния encoder |
 
-**Bahdanau (additive) score.** `e_{t,i} = v_α^T * tanh(W_a * s_{t-1} + U_a * h_i)`.
+**Оценка Bahdanau (additive).** `e_{t,i} = v_α^T * tanh(W_a * s_{t-1} + U_a * h_i)`.
 
 - `s_{t-1}` имеет shape `(d_s,)`, `h_i` имеет shape `(d_h,)`.
 - `W_a` имеет shape `(d_attn, d_s)`. `U_a` имеет shape `(d_attn, d_h)`.
@@ -196,17 +196,17 @@ For Bahdanau confusion, insist the decoder input is `s_{t-1}` (pre-step state). 
 
 ## Упражнения
 
-1. **Easy.** Реализуйте masking для `softmax`, чтобы padding tokens в encoder получали attention weight zero. Проверьте на batch с последовательностями переменной длины.
-2. **Medium.** Добавьте multi-head attention к форме Luong `general`. Разбейте `d_h` на `n_heads` groups, выполните attention по каждой head, concatenate. Проверьте, что single-head case совпадает с вашей предыдущей реализацией.
-3. **Hard.** Обучите GRU encoder-decoder с Bahdanau attention на игрушечной задаче копирования из урока 09. Постройте accuracy vs sequence length. Сравните с baseline без attention. Вы должны увидеть, как gap растет с увеличением length, подтверждая, что attention снимает bottleneck.
+1. **Легко.** Реализуйте masking для `softmax`, чтобы padding tokens в encoder получали attention weight zero. Проверьте на batch с последовательностями переменной длины.
+2. **Средне.** Добавьте multi-head attention к форме Luong `general`. Разбейте `d_h` на `n_heads` groups, выполните attention по каждой head, concatenate. Проверьте, что single-head case совпадает с вашей предыдущей реализацией.
+3. **Сложно.** Обучите GRU encoder-decoder с Bahdanau attention на игрушечной задаче копирования из урока 09. Постройте accuracy vs sequence length. Сравните с baseline без attention. Вы должны увидеть, как gap растет с увеличением length, подтверждая, что attention снимает bottleneck.
 
 ## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Attention | Смотреть на вещи | Взвешенное среднее последовательности values; веса вычисляются по similarity между query и key. |
 | Query, Key, Value | QKV | Три проекции: Q спрашивает, K - то, с чем сопоставлять, V - то, что возвращать. |
-| Additive attention | Bahdanau | Feed-forward score: `v^T tanh(W q + U k)`. |
+| Additive attention | Bahdanau | Feed-forward оценка: `v^T tanh(W q + U k)`. |
 | Multiplicative attention | Luong dot / general | Score - это `q^T k` или `q^T W k`. Дешевле, та же accuracy на большинстве задач. |
 | Alignment matrix | Красивая картинка | Attention weights как grid `(T_dec, T_enc)`. Читайте ее, чтобы увидеть, на что модель обращала внимание. |
 

@@ -44,9 +44,9 @@ graph LR
         direction TB
         A["w^T x + b = +1"] ~~~ B["w^T x + b = 0"] ~~~ C["w^T x + b = -1"]
     end
-    D["Точки класса +"] --> A
-    E["Точки класса -"] --> C
-    B --- F["Граница решений"]
+    D["+ class points"] --> A
+    E["- class points"] --> C
+    B --- F["Decision boundary"]
 ```
 
 Задача оптимизации:
@@ -70,11 +70,11 @@ subject to  y_i * (w^T x_i + b) >= 1  for all i
 ```mermaid
 graph TD
     subgraph Classification
-        SV1["Опорный вектор (+ класс)<br>y(w'x+b) = 1"] --- DB["Граница решений<br>w'x+b = 0"]
-        DB --- SV2["Опорный вектор (- класс)<br>y(w'x+b) = 1"]
+        SV1["Support Vector (+ class)<br>y(w'x+b) = 1"] --- DB["Decision Boundary<br>w'x+b = 0"]
+        DB --- SV2["Support Vector (- class)<br>y(w'x+b) = 1"]
     end
-    O1["Другие + точки<br>(не влияют на границу)"] -.-> SV1
-    O2["Другие - точки<br>(не влияют на границу)"] -.-> SV2
+    O1["Other + points<br>(do not affect boundary)"] -.-> SV1
+    O2["Other - points<br>(do not affect boundary)"] -.-> SV2
 ```
 
 Большинство обучающих точек нерелевантны. Важны только опорные векторы. Поэтому SVM экономны по памяти во время предсказания: нужно хранить опорные векторы, а не весь обучающий набор.
@@ -177,11 +177,11 @@ RBF-ядро отображает данные в бесконечномерно
 
 ```mermaid
 graph LR
-    subgraph "Входное пространство (неразделимо)"
-        A["Точки данных в 2D<br>круговая граница"]
+    subgraph "Input Space (not separable)"
+        A["Data points in 2D<br>circular boundary"]
     end
-    subgraph "Пространство признаков (разделимо)"
-        B["Точки данных в большей размерности<br>линейная граница"]
+    subgraph "Feature Space (separable)"
+        B["Data points in higher dim<br>linear boundary"]
     end
     A -->|"Kernel trick<br>K(x,z) = phi(x).phi(z)"| B
 ```

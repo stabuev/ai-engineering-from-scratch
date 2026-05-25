@@ -104,7 +104,7 @@ Production remote MCP servers в 2026 году работают на Cloudflare 
 - Проверка `Origin` отклоняет default `http://evil.example` probe, но принимает `http://localhost`.
 - Session ids — random 128-bit hex strings; server хранит per-session state в памяти.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-mcp-transport-migrator.md`. По legacy MCP server на HTTP+SSE skill создает migration plan на Streamable HTTP с session-id continuity, проверками Origin и поддержкой backwards-compatible probe.
 

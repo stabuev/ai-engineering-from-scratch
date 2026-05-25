@@ -97,7 +97,7 @@ Sim-to-real stack 2026 года:
 
 Для control на любых масштабах workflow одинаков: подгоните sim как можно лучше, рандомизируйте то, что не можете подогнать, обучите огромные политики, дистиллируйте, deploy с safety shield.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-sim2real-planner.md`:
 
@@ -124,14 +124,14 @@ Refuse to deploy without (a) a zero-shot sim-variant test, (b) a safety shield, 
 
 ## Упражнения
 
-1. **Easy.** Обучите Q-learning agent на fixed-slip GridWorld (slip=0.0). Оцените на slip ∈ {0.0, 0.1, 0.3, 0.5}. Постройте график return vs slip.
-2. **Medium.** Обучите DR Q-learning agent, сэмплирующий `slip ~ Uniform[0, 0.3]`. Оцените тот же sweep. Сколько DR дает на slip=0.5 (out-of-distribution)?
-3. **Hard.** Реализуйте curriculum: начните со slip=0.0, расширяйте диапазон DR каждый раз, когда policy достигает 90% от optimal. Измерьте общее число environment steps, чтобы достичь slip=0.3 zero-shot, и сравните с fixed DR baseline.
+1. **Легко.** Обучите Q-learning agent на fixed-slip GridWorld (slip=0.0). Оцените на slip ∈ {0.0, 0.1, 0.3, 0.5}. Постройте график return vs slip.
+2. **Средне.** Обучите DR Q-learning agent, сэмплирующий `slip ~ Uniform[0, 0.3]`. Оцените тот же sweep. Сколько DR дает на slip=0.5 (out-of-distribution)?
+3. **Сложно.** Реализуйте curriculum: начните со slip=0.0, расширяйте диапазон DR каждый раз, когда policy достигает 90% от optimal. Измерьте общее число environment steps, чтобы достичь slip=0.3 zero-shot, и сравните с fixed DR baseline.
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Reality gap | "Sim-to-real difference" | Distribution shift между физикой/сенсорами в training и deployment. |
 | Domain randomization (DR) | "Train across random sims" | Рандомизировать sim parameters во время обучения, чтобы policy обобщала. |
 | System identification (SI) | "Measure real and fit sim" | Оценить реальные физические параметры; настроить sim под них. |

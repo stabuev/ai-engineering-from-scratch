@@ -11,9 +11,9 @@
 
 Пользователь произносит passphrase. Вы хотите понять: это тот человек, за которого он себя выдает (*verification*, 1:1), или это первый человек в вашем enrollment bank (*identification*, 1:N)? Или ни то ни другое — это неизвестный говорящий (*open-set*)?
 
-До 2018: GMM-UBM + i-vectors. Приемлемый EER, но хрупкость к channel shift (телефон против ноутбука) и эмоциям. 2018–2022: x-vectors (TDNN backbone, обученный с angular margin). 2022+: ECAPA-TDNN и WavLM-large embeddings. К 2026 году область держится на трех моделях и одной метрике.
+До 2018: GMM-UBM + i-vectors. Приемлемый EER, но хрупкость к сдвигу канала (телефон против ноутбука) и эмоциям. 2018–2022: x-vectors (TDNN backbone, обученный с angular margin). 2022+: ECAPA-TDNN и WavLM-large embeddings. К 2026 году область держится на трех моделях и одной метрике.
 
-Метрика — **EER**, Equal Error Rate. Настройте threshold решения так, чтобы False Accept Rate = False Reject Rate. Точка пересечения — EER. Используется в каждой статье, каждом leaderboard и каждом procurement call.
+Метрика — **EER**, Equal Error Rate. Настройте threshold решения так, чтобы False Accept Rate = False Reject Rate. Точка пересечения — EER. Используется в каждой статье, каждом leaderboard и каждом закупочном обсуждении.
 
 ## Концепция
 
@@ -29,11 +29,11 @@
 
 **AAM-softmax.** Обычный softmax с добавленным margin `m` в angular space: `cos(θ + m)` для правильного класса. Принуждает межклассовое угловое разделение. Типично `m=0.2`, scale `s=30`.
 
-### Scoring
+### Скоринг
 
 - **Cosine** между enrollment и test embeddings. Решение по threshold.
 - **PLDA (Probabilistic LDA).** Проецирует embeddings в latent space, где same-speaker vs different-speaker имеет closed-form likelihood ratio. Добавляется поверх cosine для снижения EER на +10–20%. Стандарт до 2020; теперь только для closed-set setups.
-- **Score normalization.** `S-norm` или `AS-norm`: нормализует каждый score относительно cohort of imposter means and stds. Критично для cross-domain eval.
+- **Нормализация score.** `S-norm` или `AS-norm`: нормализует каждый score относительно cohort of imposter means and stds. Критично для cross-domain eval.
 
 ### Числа, которые нужно знать (2026)
 
@@ -142,7 +142,7 @@ for turn, _, speaker in diarization.itertracks(yield_label=True):
 
 ## Доведите до результата
 
-Сохраните как `outputs/skill-speaker-verifier.md`. Выберите модель, протокол enrollment, план настройки threshold и fraud safeguards.
+Сохраните как `outputs/skill-speaker-verifier.md`. Выберите модель, протокол enrollment, план настройки threshold и защиту от мошенничества.
 
 ## Упражнения
 
@@ -153,7 +153,7 @@ for turn, _, speaker in diarization.itertracks(yield_label=True):
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | EER | Главная метрика | Threshold, где False Accept = False Reject. |
 | Verification | 1:1 | "Is this Alice?" |
 | Identification | 1:N | "Who is speaking?" |

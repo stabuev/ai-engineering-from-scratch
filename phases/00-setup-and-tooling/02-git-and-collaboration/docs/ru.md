@@ -63,7 +63,7 @@ git push origin main
 ```bash
 git checkout -b experiment/new-optimizer
 
-# ... внесите изменения, сделайте commit ...
+# ... make changes, commit ...
 
 git checkout main
 git merge experiment/new-optimizer
@@ -76,7 +76,7 @@ git clone https://github.com/stabuev/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
 
 git checkout -b my-progress
-# проходите уроки курса и коммитьте свой код
+# work through lessons, commit your code
 git push origin my-progress
 ```
 

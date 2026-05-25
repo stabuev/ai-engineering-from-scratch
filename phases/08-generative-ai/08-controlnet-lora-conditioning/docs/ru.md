@@ -126,7 +126,7 @@ h = base(x) + gated
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | ControlNet | "Spatial control" | Cloned encoder + zero-conv skips; читает conditioning image. |
 | Zero convolution | "Starts as identity" | 1×1 conv initialized to zero; ControlNet starts as no-op. |
 | LoRA | "Low-rank adapter" | `W + B @ A`, `r << d`; в 100x меньше params, чем full fine-tune. |

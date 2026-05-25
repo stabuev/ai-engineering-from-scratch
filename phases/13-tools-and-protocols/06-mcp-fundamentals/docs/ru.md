@@ -126,7 +126,7 @@ JSON-RPC 2.0 (2010) — легковесный двунаправленный pr
 
 Этот урок создает `outputs/skill-mcp-handshake-tracer.md`. Получив pcap-style transcript взаимодействия MCP client-server, skill аннотирует каждое message: к какому primitive оно относится, в какой lifecycle phase находится и от какой capability зависит.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`. Найдите строку, где происходит capability negotiation, и опишите, что изменилось бы, если бы server не объявил `tools.listChanged`.
 

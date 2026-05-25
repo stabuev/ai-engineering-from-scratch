@@ -4,12 +4,12 @@
 
 **Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 02 (Self-Attention), Фаза 7 · 03 (Multi-Head), Фаза 7 · 12 (KV Cache / Flash Attention)
+**Предварительные требования:** Фаза 7 · 02 (self-attention), Фаза 7 · 03 (multi-head), Фаза 7 · 12 (KV cache / Flash Attention)
 **Время:** ~60 минут
 
 ## Проблема
 
-Full attention стоит `O(N²)` memory и `O(N²)` compute по длине sequence. Для 128K-context Llama 3 70B это 16 billion attention entries per layer, умножить на 80 layers. Flash Attention (Lesson 12) скрывает `O(N²)` activation memory, но не меняет arithmetic cost — каждый token все еще attends to every other token.
+Full attention стоит `O(N²)` memory и `O(N²)` compute по длине sequence. Для 128K-context Llama 3 70B это 16 billion attention entries per layer, умножить на 80 layers. Flash Attention (Урок 12) скрывает `O(N²)` activation memory, но не меняет arithmetic cost — каждый token все еще attends to every other token.
 
 Три класса вариантов меняют саму topology attention matrix:
 
@@ -41,9 +41,9 @@ positions 0-7          positions 0-7, W=4
 
 Для `N = 8192` и `W = 1024` score matrix имеет 1024 × 8192 non-zero rows in expectation — reduction 8×.
 
-**KV cache shrinks with SWA.** Нужно хранить только последние `W` tokens K и V на layer. Для Gemma-3-ish config (1024 window, 128K context) KV cache падает в 128×.
+**KV cache уменьшается с SWA.** Нужно хранить только последние `W` tokens K и V на layer. Для Gemma-3-ish config (1024 window, 128K context) KV cache падает в 128×.
 
-**Quality cost.** SWA-only transformers struggle with long-range retrieval. Исправление: interleave SWA layers with full-attention layers. Gemma 3 использует 5:1 SWA:global. Mistral 7B использовал causal-SWA stack, где information "flows forward" through overlapping windows — каждый layer расширяет effective receptive field на `W`, и после `L` layers модель может attend на `L × W` tokens назад.
+**Цена в качестве.** SWA-only transformers struggle with long-range retrieval. Исправление: interleave SWA layers with full-attention layers. Gemma 3 использует 5:1 SWA:global. Mistral 7B использовал causal-SWA stack, где information "flows forward" through overlapping windows — каждый layer расширяет effective receptive field на `W`, и после `L` layers модель может attend на `L × W` tokens назад.
 
 ### Sparse / Block Attention
 
@@ -69,18 +69,18 @@ DiffAttn = (A1 - λ · A2) V
 
 где `λ` — learned scalar (обычно 0.5–0.8). A1 захватывает real content weights; A2 захватывает sink. Вычитание отменяет sink и перераспределяет weight к relevant tokens.
 
-Reported results (Microsoft 2024): 5–10% lower perplexity, 1.5–2× longer effective context at same trained length, sharper needle-in-haystack retrieval.
+Reported results (Microsoft 2024): perplexity ниже на 5–10%, effective context в 1.5–2× длиннее при той же trained length, needle-in-haystack retrieval точнее.
 
 ### Сравнение вариантов
 
-| Variant | Compute | KV cache | Quality vs full | Production use |
-|---------|---------|----------|-----------------|----------------|
-| Full attention | O(N²) | O(N) per layer | baseline | every model's default layer |
-| SWA (window 1024) | O(N·W) | O(W) per layer | -0.1 ppl, good with global layers | Gemma 2/3, Phi-3-Long |
-| Local + strided sparse | O(N·√N) | mixed | similar to SWA | OpenAI sparse transformer, Longformer |
-| BigBird (local + global + random) | O(N) approx | mixed | matches full at 2× context | early long-context BERT |
-| Native Sparse (DeepSeek-V3.2) | O(N · active fraction) | O(N) | within 0.05 ppl | DeepSeek-V3.2, 2025 |
-| Differential | O(2·N²) | O(2N) | -5 to -10% ppl | DIFF Transformer, early 2026 models |
+| Вариант | Вычисления | KV cache | Качество относительно full attention | Использование в production |
+|---------|------------|----------|-------------------------------------|----------------|
+| Full attention | O(N²) | O(N) на layer | baseline | default layer почти каждой модели |
+| SWA (window 1024) | O(N·W) | O(W) на layer | -0.1 ppl, хорошо с global layers | Gemma 2/3, Phi-3-Long |
+| Local + strided sparse | O(N·√N) | mixed | похоже на SWA | OpenAI sparse transformer, Longformer |
+| BigBird (local + global + random) | O(N) approx | mixed | соответствует full attention при 2× context | early long-context BERT |
+| Native Sparse (DeepSeek-V3.2) | O(N · active fraction) | O(N) | в пределах 0.05 ppl | DeepSeek-V3.2, 2025 |
+| Differential | O(2·N²) | O(2N) | -5 до -10% ppl | DIFF Transformer, early 2026 models |
 
 ## Соберите это
 
@@ -93,9 +93,9 @@ def causal_mask(n):
     return [[0.0 if j <= i else float("-inf") for j in range(n)] for i in range(n)]
 ```
 
-Baseline из Lesson 07. Lower triangular; zero weight above the diagonal.
+Baseline из Урок 07. Lower triangular; zero weight above the diagonal.
 
-### Шаг 2: sliding window causal mask
+### Шаг 2: sliding-window causal mask
 
 ```python
 def swa_mask(n, window):
@@ -179,22 +179,22 @@ out = flex_attention(q, k, v, block_mask=mask)
 ## Упражнения
 
 1. **Легко.** Запустите `code/main.py`. Проверьте, что SWA при `window=4` zeroes everything outside the last 4 tokens per row. Проверьте, что `window=n` воспроизводит full causal attention bit-identically.
-2. **Средне.** Реализуйте causal SWA с `window=1024` поверх capstone Lesson 07. Обучите 1 000 steps на tinyshakespeare. Насколько val loss регрессирует относительно full attention? Насколько падает peak memory?
+2. **Средне.** Реализуйте causal SWA с `window=1024` поверх capstone Урок 07. Обучите 1 000 steps на tinyshakespeare. Насколько val loss регрессирует относительно full attention? Насколько падает peak memory?
 3. **Сложно.** Реализуйте Gemma-3-style 5:1 layer mix (5 SWA, 1 global) в capstone model. Сравните loss, memory и generation quality с pure-SWA и pure-global baselines при matched parameters.
 4. **Сложно.** Реализуйте differential attention с learned `λ` per head. Обучите на synthetic retrieval task (one needle, 2 000 distractors). Измерьте retrieval accuracy vs single-attention baseline при matched parameters.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Sliding window attention (SWA) | "Local attention" | Каждый query attends to its last `W` tokens; KV cache shrinks to `O(W)`. |
-| Effective receptive field | "How far back the model sees" | В `L`-layer SWA stack с window `W`, до `L × W` tokens. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Sliding window attention (SWA) | "Локальное attention" | Каждый query attends to its last `W` tokens; KV cache shrinks to `O(W)`. |
+| Effective receptive field | "Как далеко назад видит модель" | В `L`-layer SWA stack с window `W`, до `L × W` tokens. |
 | Longformer / BigBird | "Local + global + random" | Sparse patterns с несколькими always-attending global tokens; ранний long-context approach. |
-| Native Sparse Attention | "DeepSeek's kernel trick" | Learn block-level sparsity; skip zero blocks at kernel level while keeping quality. |
-| Differential attention | "Two maps, one subtracts" | DIFF Transformer: вычитает learned `λ` times a second attention map из первой, чтобы отменить attention sinks. |
-| Attention sink | "Weight bleeds to token 0" | Softmax normalization forces rows to sum to 1; uninformative queries dump weight on position 0. |
-| FlexAttention | "Mask-as-Python" | PyTorch 2.5+ API, который compiles arbitrary mask functions into FlashAttention-shape kernels. |
-| Layer type mix | "5:1 SWA-to-global" | Interleave sparse and full attention layers in a stack, чтобы удержать quality при lower memory. |
+| Native Sparse Attention | "Kernel-трюк DeepSeek" | Learn block-level sparsity; skip zero blocks at kernel level while keeping quality. |
+| Differential attention | "Две карты, одна вычитается" | DIFF Transformer: вычитает learned `λ` times a second attention map из первой, чтобы отменить attention sinks. |
+| Attention sink | "Вес утекает в token 0" | Softmax normalization forces rows to sum to 1; uninformative queries dump weight on position 0. |
+| FlexAttention | "Маска как Python" | PyTorch 2.5+ API, который compiles arbitrary mask functions into FlashAttention-shape kernels. |
+| Layer type mix | "5:1 SWA к global" | Interleave sparse and full attention layers in a stack, чтобы удержать quality при lower memory. |
 
 ## Дополнительное чтение
 

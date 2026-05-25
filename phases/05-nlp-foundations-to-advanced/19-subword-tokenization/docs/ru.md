@@ -122,11 +122,11 @@ print(len(enc.encode("Hello, world!")))   # 4
 
 | Ситуация | Выбор |
 |-----------|------|
-| Training a monolingual model from scratch | HF Tokenizers (BPE) |
-| Training a multilingual model | SentencePiece (Unigram, `character_coverage=0.9995`) |
-| Serving an OpenAI-compatible API | tiktoken (`o200k_base` for GPT-4+) |
-| Domain-specific vocab (code, math, protein) | Обучите custom BPE на доменном корпусе, объедините с base vocab |
-| Edge inference, small model | Unigram (меньшие словари работают лучше) |
+| Обучение одноязычной модели с нуля | HF Tokenizers (BPE) |
+| Обучение многоязычной модели | SentencePiece (Unigram, `character_coverage=0.9995`) |
+| Обслуживание OpenAI-compatible API | tiktoken (`o200k_base` for GPT-4+) |
+| Доменный словарь (code, math, protein) | Обучите custom BPE на доменном корпусе, объедините с base vocab |
+| Edge-инференс, малая модель | Unigram (меньшие словари работают лучше) |
 
 Размер словаря - это решение о масштабировании, а не константа. Грубая эвристика: 32k для <1B params, 50-100k для 1-10B, 200k+ для multilingual/frontier.
 
@@ -157,14 +157,14 @@ Refuse to train a character-coverage <0.995 tokenizer on corpora with rare-scrip
 
 ## Упражнения
 
-1. **Easy.** Обучите BPE с 500 слияниями на маленьком корпусе из `code/main.py`. Закодируйте три отложенных слова. Сколько из них дали ровно 1 токен, а сколько >1 токена?
-2. **Medium.** Сравните число токенов на 100 английских предложениях из Wikipedia между `cl100k_base`, `o200k_base` и SentencePiece BPE, который вы обучите с vocab=32k. Сообщите compression ratio для каждого.
-3. **Hard.** Обучите один и тот же корпус с BPE, Unigram и WordPiece. Измерьте downstream accuracy при использовании каждого на небольшом классификаторе тональности. Сдвигает ли выбор результат больше чем на 1 point F1?
+1. **Легко.** Обучите BPE с 500 слияниями на маленьком корпусе из `code/main.py`. Закодируйте три отложенных слова. Сколько из них дали ровно 1 токен, а сколько >1 токена?
+2. **Средне.** Сравните число токенов на 100 английских предложениях из Wikipedia между `cl100k_base`, `o200k_base` и SentencePiece BPE, который вы обучите с vocab=32k. Сообщите compression ratio для каждого.
+3. **Сложно.** Обучите один и тот же корпус с BPE, Unigram и WordPiece. Измерьте downstream accuracy при использовании каждого на небольшом классификаторе тональности. Сдвигает ли выбор результат больше чем на 1 point F1?
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | BPE | Byte-Pair Encoding | Жадное слияние самых частых пар символов до достижения целевого размера словаря. |
 | Byte-level BPE | Неизвестных токенов никогда нет | BPE поверх сырых 256 bytes; GPT-2 / Llama используют это. |
 | Unigram | Вероятностный токенизатор | Удаляет из большого набора кандидатов по log-likelihood; используется T5, Gemma. |

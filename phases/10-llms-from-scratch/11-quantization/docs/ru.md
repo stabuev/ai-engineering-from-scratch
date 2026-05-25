@@ -222,7 +222,7 @@ FP16 to INT4 (GGUF Q4_K_M): уменьшение memory в 3.5 раза, пот�
 
 FP16 to INT2: уменьшение memory в 8 раз, потеря качества 5-15%. Жизнеспособно только для узких специфических задач, где допустима деградация. Это research frontier, а не production-ready решение общего назначения.
 
-## Build It
+## Практика
 
 ### Step 1: Number Format Representations
 
@@ -770,7 +770,7 @@ if __name__ == "__main__":
     print("=" * 70)
 ```
 
-## Use It
+## Использование
 
 ### Quantizing with AutoGPTQ
 
@@ -826,7 +826,7 @@ if __name__ == "__main__":
 
 vLLM нативно поддерживает AWQ и GPTQ models. Он выполняет dequantization во время matrix multiplication и использует paged attention для KV cache. Для FP8 на H100 добавьте `--dtype float8_e4m3fn`.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-quantization.md` — decision framework для выбора правильной quantization strategy. По размеру модели, target hardware и требованиям к quality он подсказывает, какой format, method и validation steps использовать. В него входят memory budget calculations, рекомендации по precision для отдельных компонентов и deployment recipes для vLLM, llama.cpp и TensorRT-LLM.
 
@@ -844,7 +844,7 @@ vLLM нативно поддерживает AWQ и GPTQ models. Он выпол
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | FP16 | "Half precision" | 16-битный float с 5 битами exponent и 10 битами mantissa, максимальное значение 65,504, стандартный inference format |
 | BF16 | "Brain float" | 16-битный float с 8 битами exponent (тот же диапазон, что FP32) и 7 битами mantissa, разработан Google для training |

@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 5 · 05 (Sentiment), Phase 9 · 08 (PPO)
 **Time:** ~45 minutes
 
-## The Problem
+## Проблема
 
 Вы обучили language model на objective next-token prediction. Она пишет грамматический английский. Но она также лжет, растекается мыслью и отказывается отказываться. Это нельзя исправить дополнительным pretraining: web text — это проблема, а не лекарство.
 
@@ -17,7 +17,7 @@ RLHF (Christiano et al. 2017; Ouyang et al. 2022) превращает preferenc
 
 В 2026 шаг PPO в основном заменяют DPO (Phase 10 · 08), потому что он дешевле и почти так же хорош для alignment tuning. Но часть с *reward model* по-прежнему лежит в основе каждого Best-of-N sampler, каждого RL-from-verifiable-rewards pipeline и каждой reasoning model, использующей process reward model. Поймите RLHF — и вы поймете весь alignment stack.
 
-## The Concept
+## Концепция
 
 ![Three-stage RLHF: SFT, RM training on pairwise prefs, PPO with KL penalty](../assets/rlhf.svg)
 
@@ -54,7 +54,7 @@ RLHF (Christiano et al. 2017; Ouyang et al. 2022) превращает preferenc
 - **Process reward models (PRMs):** оценивают partial solutions (каждый reasoning step), используются и в RLHF, и в вариантах GRPO для reasoning.
 - **Constitutional AI / RLAIF:** используют aligned LLM для генерации preferences вместо людей. Масштабирует preference budget.
 
-## Build It
+## Практика
 
 Этот урок использует маленькие синтетические "prompts" и "responses", представленные строками. RM — это linear scorer поверх bag-of-tokens представления. Никакой настоящей LLM: важна *форма* pipeline, а не масштаб. См. `code/main.py`.
 
@@ -166,7 +166,7 @@ for batch in dataloader:
 - **Preference-data noise.** ~30% human labels шумные или неоднозначные. Калибруйте, обучая RM на agreement-filtered data, или используйте temperature в BT.
 - **Off-policy problems.** PPO data становится слегка off-policy после первой epoch. Следите за clip fraction, как в Lesson 08.
 
-## Use It
+## Использование
 
 RLHF в 2026 устроен слоями:
 
@@ -181,7 +181,7 @@ RLHF в 2026 устроен слоями:
 
 RLHF был *тем самым* методом в 2022–2024. В 2026 production alignment pipelines в первую очередь используют DPO, а PPO оставляют только для RM-intensive или safety-critical шагов.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-rlhf-architect.md`:
 
@@ -206,16 +206,16 @@ Given a base LM, a target behavior (alignment / reasoning / refusal / agent), an
 Refuse to ship RLHF-PPO without a KL monitor. Refuse to use an RM smaller than the target policy. Refuse length-only rewards. Flag any pipeline that does not hold back a blind human-eval set as lacking over-optimization protection.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Обучите Bradley-Terry reward model в `code/main.py` на 500 synthetic preference pairs. Измерьте pairwise accuracy на held-out 100 pairs. Должно быть выше 90%.
-2. **Medium.** Запустите toy PPO-RLHF loop с `β ∈ {0.0, 0.1, 1.0}`. Для каждого варианта постройте график RM score vs KL-to-reference по updates. Какие runs дают reward-hack?
-3. **Hard.** Реализуйте DPO (closed-form preference-likelihood loss) на тех же preference data и сравните с RLHF-PPO pipeline по использованному compute и достигнутому final RM score.
+1. **Легко.** Обучите Bradley-Terry reward model в `code/main.py` на 500 synthetic preference pairs. Измерьте pairwise accuracy на held-out 100 pairs. Должно быть выше 90%.
+2. **Средне.** Запустите toy PPO-RLHF loop с `β ∈ {0.0, 0.1, 1.0}`. Для каждого варианта постройте график RM score vs KL-to-reference по updates. Какие runs дают reward-hack?
+3. **Сложно.** Реализуйте DPO (closed-form preference-likelihood loss) на тех же preference data и сравните с RLHF-PPO pipeline по использованному compute и достигнутому final RM score.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | RLHF | "Alignment RL" | Трехэтапный pipeline SFT + RM + PPO (Christiano 2017, Ouyang 2022). |
 | Reward Model (RM) | "The scoring net" | Learned scalar function, обученная на pairwise preferences через Bradley-Terry. |
 | Bradley-Terry | "Pairwise logistic loss" | `P(y_+ ≻ y_-) = σ(R(y_+) - R(y_-))`; стандартная RM objective. |
@@ -225,7 +225,7 @@ Refuse to ship RLHF-PPO without a KL monitor. Refuse to use an RM smaller than t
 | PRM | "Process Reward Model" | Оценивает partial reasoning steps; используется в reasoning pipelines. |
 | Constitutional AI | "Anthropic's method" | AI-generated preferences, направляемые явными правилами. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Christiano et al. (2017). Deep Reinforcement Learning from Human Preferences](https://arxiv.org/abs/1706.03741) — статья, с которой начался RLHF.
 - [Ouyang et al. (2022). InstructGPT — Training language models to follow instructions with human feedback](https://arxiv.org/abs/2203.02155) — рецепт, лежащий за ChatGPT.

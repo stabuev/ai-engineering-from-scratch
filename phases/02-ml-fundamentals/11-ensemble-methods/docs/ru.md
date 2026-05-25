@@ -45,22 +45,22 @@ Bagging создает разнообразие, обучая каждую мо�
 
 ```mermaid
 flowchart TD
-    D[Обучающие данные] --> B1[Bootstrap-выборка 1]
-    D --> B2[Bootstrap-выборка 2]
-    D --> B3[Bootstrap-выборка 3]
-    D --> BN[Bootstrap-выборка N]
+    D[Training Data] --> B1[Bootstrap Sample 1]
+    D --> B2[Bootstrap Sample 2]
+    D --> B3[Bootstrap Sample 3]
+    D --> BN[Bootstrap Sample N]
 
-    B1 --> M1[Модель 1]
-    B2 --> M2[Модель 2]
-    B3 --> M3[Модель 3]
-    BN --> MN[Модель N]
+    B1 --> M1[Model 1]
+    B2 --> M2[Model 2]
+    B3 --> M3[Model 3]
+    BN --> MN[Model N]
 
-    M1 --> V[Среднее или Majority Vote]
+    M1 --> V[Average or Majority Vote]
     M2 --> V
     M3 --> V
     MN --> V
 
-    V --> P[Финальное предсказание]
+    V --> P[Final Prediction]
 ```
 
 Bootstrap-выборка берется с возвращением из исходных данных и имеет тот же размер, что исходный набор. Около 63.2% уникальных примеров попадает в каждый bootstrap. Оставшиеся 36.8% (out-of-bag samples) дают бесплатную validation set.
@@ -75,14 +75,14 @@ Boosting обучает модели последовательно. Кажда�
 
 ```mermaid
 flowchart LR
-    D[Данные с весами] --> M1[Модель 1]
-    M1 --> E1[Найти ошибки]
-    E1 --> W1[Увеличить веса ошибок]
-    W1 --> M2[Модель 2]
-    M2 --> E2[Найти ошибки]
-    E2 --> W2[Увеличить веса ошибок]
-    W2 --> M3[Модель 3]
-    M3 --> F[Взвешенная сумма всех моделей]
+    D[Data with weights] --> M1[Model 1]
+    M1 --> E1[Find errors]
+    E1 --> W1[Increase weights on errors]
+    W1 --> M2[Model 2]
+    M2 --> E2[Find errors]
+    E2 --> W2[Increase weights on errors]
+    W2 --> M3[Model 3]
+    M3 --> F[Weighted sum of all models]
 ```
 
 Boosting снижает bias. Каждая новая модель исправляет систематические ошибки текущего ансамбля. Финальное предсказание — взвешенная сумма всех моделей, где лучшие модели получают большие веса.
@@ -155,19 +155,19 @@ Stacking использует предсказания нескольких base
 
 ```mermaid
 flowchart TD
-    D[Обучающие данные] --> M1[Модель 1: Random Forest]
-    D --> M2[Модель 2: SVM]
-    D --> M3[Модель 3: Logistic Regression]
+    D[Training Data] --> M1[Model 1: Random Forest]
+    D --> M2[Model 2: SVM]
+    D --> M3[Model 3: Logistic Regression]
 
-    M1 --> P1[Предсказания 1]
-    M2 --> P2[Предсказания 2]
-    M3 --> P3[Предсказания 3]
+    M1 --> P1[Predictions 1]
+    M2 --> P2[Predictions 2]
+    M3 --> P3[Predictions 3]
 
     P1 --> META[Meta-Learner]
     P2 --> META
     P3 --> META
 
-    META --> F[Финальное предсказание]
+    META --> F[Final Prediction]
 ```
 
 Meta-learner учится, какой base model доверять для каких входов. Если random forest лучше в одних областях, а SVM — в других, meta-learner научится соответствующей маршрутизации.

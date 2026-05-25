@@ -149,7 +149,7 @@ results = evaluation.run(encoder, output_folder="./mteb-results")
 | Открытые веса, английский | `BAAI/bge-large-en-v1.5` |
 | Открытые веса, многоязычность | `BAAI/bge-m3` или `Qwen3-Embedding-8B` |
 | Длинный контекст (32k+) | Voyage-3-large, Cohere embed-v4, Qwen3-Embedding-8B |
-| CPU-only deployment | Nomic Embed v2 (137M params, MoE) |
+| Развертывание только на CPU | Nomic Embed v2 (137M параметров, MoE) |
 | Ограничено хранение | Matryoshka-truncated + int8 quantization |
 | Запросы с большим количеством ключевых слов | Добавьте SPLADE sparse, RRF-fuse with dense |
 
@@ -189,7 +189,7 @@ Refuse recommendations that truncate Matryoshka to <64 dims without domain valid
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Плотный эмбеддинг (dense embedding) | Вектор | Один вектор фиксированного размера на текст. Косинусное сходство для ранжирования. |
 | Разреженный эмбеддинг (sparse embedding) | Обученный BM25 | Один вес на токен словаря; в основном нули; обучается end-to-end. |
 | Мультивекторный (multi-vector) | В стиле ColBERT | Один вектор на токен; скоринг MaxSim; индекс больше, recall лучше. |

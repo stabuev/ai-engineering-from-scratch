@@ -133,7 +133,7 @@ Elicitation plus sampling together enable MCP's "human-in-the-loop" model. Agent
 
 Demo запускает три scenarios: happy path (one match), disambiguation (three matches, elicitation fires), out-of-root-write (rejected).
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-elicitation-form-designer.md`. По tool, которому может понадобиться user confirmation или disambiguation, skill проектирует elicitation form schema и message template.
 

@@ -108,7 +108,7 @@ Prompts в MCP — не system prompts. System prompt host (его собств�
 
 Запустите demo, чтобы увидеть полный flow.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-primitive-splitter.md`. По proposed MCP server skill классифицирует каждую capability как tool / resource / prompt с обоснованием.
 

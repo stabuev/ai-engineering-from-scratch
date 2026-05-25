@@ -168,7 +168,7 @@ print(f"Accuracy: {correct / len(mmau['test']):.3f}")
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | LALM | Audio ChatGPT | Audio encoder + projector + LLM decoder. |
 | Projector | Adapter | Маленький MLP, отображающий audio features в LLM embedding space. |
 | MMAU | Benchmark | 10k audio-QA pairs по speech, sound, music. |

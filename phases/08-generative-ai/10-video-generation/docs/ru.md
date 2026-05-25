@@ -123,7 +123,7 @@ Cost per second of video at quality parity упала в 20x между 2024 и 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Video VAE | "3-D VAE" | Encoder, который сжимает `(T, H, W, C)` → spatiotemporal latent. |
 | Patches | "The tokens" | Fixed-size 3-D blocks of latent; input to DiT. |
 | Factorized attention | "Spatial + temporal" | Attention over space, then over time; skip full 3-D attention. |

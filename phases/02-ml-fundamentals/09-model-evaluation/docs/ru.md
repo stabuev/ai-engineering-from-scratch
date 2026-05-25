@@ -28,16 +28,16 @@
 
 ```mermaid
 flowchart LR
-    A[Полный набор данных] --> B[Train Set 60-70%]
+    A[Full Dataset] --> B[Train Set 60-70%]
     A --> C[Validation Set 15-20%]
     A --> D[Test Set 15-20%]
-    B --> E[Обучить модель]
+    B --> E[Fit Model]
     E --> C
-    C --> F[Настроить гиперпараметры]
+    C --> F[Tune Hyperparameters]
     F --> E
-    F --> G[Финальная модель]
+    F --> G[Final Model]
     G --> D
-    D --> H[Сообщить качество]
+    D --> H[Report Performance]
 ```
 
 Три разбиения, три назначения:
@@ -74,7 +74,7 @@ flowchart TB
         direction LR
         T5a["Train"] --- T5b["Train"] --- T5c["Train"] --- T5d["Train"] --- V5["Val"]
     end
-    Fold1 --> R["Усреднить scores"]
+    Fold1 --> R["Average scores"]
     Fold2 --> R
     Fold3 --> R
     Fold4 --> R

@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 9 · 06 (REINFORCE), Phase 9 · 07 (Actor-Critic)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 A2C (Lesson 07) является on-policy: gradient `E_{π_θ}[A · ∇ log π_θ]` требует данные, sampled from текущей `π_θ`. Сделайте один update, и `π_θ` изменится; данные, которые вы использовали, теперь off-policy. Повторное использование даст biased gradient.
 
@@ -17,7 +17,7 @@ Trust Region Policy Optimization (TRPO, Schulman 2015) был первым ис�
 
 PPO (Schulman et al. 2017) заменяет жесткое trust-region constraint простым clipped objective. Одна дополнительная строка кода. Десять epochs на rollout. Без conjugate gradients. Достаточно хорошие theoretical guarantees. Девять лет спустя это все еще default policy-gradient algorithm для всего, от MuJoCo до RLHF.
 
-## The Concept
+## Концепция
 
 ![PPO clipped surrogate objective: ratio clipping at 1 ± ε](../assets/ppo.svg)
 
@@ -61,7 +61,7 @@ PPO (Schulman et al. 2017) заменяет жесткое trust-region constrai
 
 **KL-penalty variant.** В оригинальной paper была предложена альтернатива с adaptive KL penalty: `L = L^{PG} - β · KL(π_θ || π_old)` с `β`, adjusted на основе observed KL. Clipping version стала доминирующей; KL variant сохранился в RLHF (где KL к reference policy — отдельное constraint, которое вам все равно всегда нужно).
 
-## Build It
+## Практика
 
 ### Step 1: capture `log π_old(a | s)` at rollout time
 
@@ -134,7 +134,7 @@ for _ in range(K_EPOCHS):
 - **Importance ratio math errors.** Всегда `exp(log_new - log_old)` для numerical stability, не `new / old`.
 - **Wrong gradient sign.** Maximize surrogate = *minimize* `-L^{CLIP}`. Перевернутый sign — самый частый PPO bug.
 
-## Use It
+## Использование
 
 PPO — default RL algorithm 2026 года в удивительно большом числе domains:
 
@@ -149,7 +149,7 @@ PPO — default RL algorithm 2026 года в удивительно больш�
 
 *Loss shape* PPO — clipped surrogate + value + entropy — это scaffolding для DPO, GRPO и почти каждого RLHF pipeline.
 
-## Ship It
+## Результат
 
 Save as `outputs/skill-ppo-trainer.md`:
 
@@ -174,16 +174,16 @@ Given an environment and training budget, output:
 Refuse `K > 30` or `ε > 0.3` (unsafe trust region). Refuse any PPO run without advantage normalization or KL/clip monitoring. Flag clip fraction sustained above 0.4 as drift.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Запустите PPO на 4×4 GridWorld с `ε=0.2, K=4`. Сравните sample efficiency с A2C (one epoch per rollout) при одинаковом числе env steps.
-2. **Medium.** Переберите `K ∈ {1, 4, 10, 30}`. Постройте return vs env steps и отслеживайте mean KL на update. При каком `K` KL взрывается на этой задаче?
-3. **Hard.** Замените clipped surrogate на adaptive KL penalty (`β` doubled if `KL > 2·target`, halved if `KL < target/2`). Сравните final return, stability и clip-free-ness.
+1. **Легко.** Запустите PPO на 4×4 GridWorld с `ε=0.2, K=4`. Сравните sample efficiency с A2C (one epoch per rollout) при одинаковом числе env steps.
+2. **Средне.** Переберите `K ∈ {1, 4, 10, 30}`. Постройте return vs env steps и отслеживайте mean KL на update. При каком `K` KL взрывается на этой задаче?
+3. **Сложно.** Замените clipped surrogate на adaptive KL penalty (`β` doubled if `KL > 2·target`, halved if `KL < target/2`). Сравните final return, stability и clip-free-ness.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Importance ratio | "r_t(θ)" | `π_θ(a|s) / π_old(a|s)`; отклонение от policy, которая собрала данные. |
 | Clipped surrogate | "PPO's main trick" | `min(r·A, clip(r, 1-ε, 1+ε)·A)`; flat gradient beyond the clip on beneficial side. |
 | Trust region | "TRPO / PPO intent" | Ограничить KL каждого update, чтобы гарантировать monotone improvement. |
@@ -193,7 +193,7 @@ Refuse `K > 30` or `ε > 0.3` (unsafe trust region). Refuse any PPO run without 
 | On-policy-ish | "Mostly on-policy" | PPO номинально on-policy, но K>1 epochs uses slightly-off-policy data safely. |
 | PPO-KL | "The other PPO" | KL-penalty variant; используется в RLHF, где KL-to-reference уже является constraint. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Schulman et al. (2017). Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347) — paper.
 - [Schulman et al. (2015). Trust Region Policy Optimization](https://arxiv.org/abs/1502.05477) — TRPO, predecessor PPO.

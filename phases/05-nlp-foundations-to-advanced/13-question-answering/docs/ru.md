@@ -1,4 +1,4 @@
-# Question Answering Systems
+# Системы ответов на вопросы
 
 > Три системы сформировали modern QA. Extractive находила spans. Retrieval-augmented grounded them in documents. Generative производила answers. Каждый современный AI assistant - смесь этих трех.
 
@@ -21,7 +21,7 @@
 
 ## Концепция
 
-![QA architectures: extractive, retrieval-augmented, generative](../assets/qa.svg)
+![Архитектуры QA: экстрактивная, retrieval-augmented, генеративная](../assets/qa.svg)
 
 **Extractive.** Encode question и passage вместе с transformer (семейство BERT). Обучите две heads, которые predict start и end token indices of the answer. Loss - cross-entropy по valid positions. Output - span из passage. Никогда не hallucinate (by construction), никогда не обрабатывает questions, на которые passage не может ответить (by construction).
 
@@ -134,13 +134,13 @@ Reference-free scoring позволяет evaluate на live production traffic 
 
 Stack 2026 года.
 
-| Use case | Recommended |
+| Сценарий | Рекомендация |
 |---------|-------------|
-| Given passage, find answer span | `deepset/roberta-base-squad2` |
-| Over a fixed corpus, closed-book not acceptable | RAG: dense retriever + LLM reader |
-| Real-time over a document store | RAG with hybrid (BM25 + dense) retriever + reranker (lesson 14) |
-| Conversational QA (follow-up questions) | LLM with conversation history + RAG on each turn |
-| Highly factual, regulated domains | Extractive over an authoritative corpus; never generative alone |
+| Дан passage, нужно найти answer span | `deepset/roberta-base-squad2` |
+| По фиксированному корпусу, closed-book недопустим | RAG: dense retriever + LLM reader |
+| Real-time по хранилищу документов | RAG с hybrid (BM25 + dense) retriever + reranker (урок 14) |
+| Диалоговый QA (уточняющие вопросы) | LLM с историей разговора + RAG на каждом ходу |
+| Строго фактические, регулируемые домены | Экстрактивный подход по авторитетному корпусу; никогда не только генеративный |
 
 Extractive QA немоден в 2026 году, потому что RAG with LLMs покрывает больше cases. Он все еще shipped там, где требуется literal quotation: legal research, regulatory compliance, audit tools.
 
@@ -170,24 +170,24 @@ Refuse closed-book LLM answers for regulatory or compliance-sensitive questions.
 
 ## Упражнения
 
-1. **Easy.** Настройте SQuAD extractive pipeline выше на 10 Wikipedia passages. Hand-craft 10 questions. Измерьте, как часто answer correct. Вы должны увидеть 7-9 correct, если passages и questions clean.
-2. **Medium.** Добавьте refusal classifier. Когда top retrieval score ниже threshold (скажем, 0.3 cosine), возвращайте "I don't know" вместо вызова reader. Tune threshold на held-out set.
-3. **Hard.** Постройте RAG pipeline по corpus из 10,000 documents на ваш выбор. Реализуйте hybrid retrieval (BM25 + dense) с RRF fusion (см. урок 14). Измерьте answer accuracy with and without hybrid step. Document, какие question types выигрывают больше всего.
+1. **Легко.** Настройте SQuAD extractive pipeline выше на 10 Wikipedia passages. Hand-craft 10 questions. Измерьте, как часто answer correct. Вы должны увидеть 7-9 correct, если passages и questions clean.
+2. **Средне.** Добавьте refusal classifier. Когда top retrieval score ниже threshold (скажем, 0.3 cosine), возвращайте "I don't know" вместо вызова reader. Tune threshold на held-out set.
+3. **Сложно.** Постройте RAG pipeline по corpus из 10,000 documents на ваш выбор. Реализуйте hybrid retrieval (BM25 + dense) с RRF fusion (см. урок 14). Измерьте answer accuracy with and without hybrid step. Document, какие question types выигрывают больше всего.
 
 ## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Extractive QA | Find the answer span | Predict start и end indices answer внутри given passage. |
 | Open-domain QA | QA over a corpus | Passage не дан; нужно сначала retrieve, затем answer. |
 | RAG | Retrieve then generate | Retrieval-augmented generation. Pipeline retriever + reader. |
 | SQuAD | Canonical benchmark | Stanford Question Answering Dataset. Metrics EM + F1. |
 | Hallucination | Made-up answer | Reader output, не поддержанный retrieved context. |
-| Refusal calibration | Know when to shut up | System correctly says "I don't know" when unable to answer. |
+| Калибровка отказа | Знать, когда промолчать | Система корректно говорит "I don't know", когда не может ответить. |
 
 ## Дополнительное чтение
 
 - [Rajpurkar et al. (2016). SQuAD: 100,000+ Questions for Machine Comprehension of Text](https://arxiv.org/abs/1606.05250) — benchmark paper.
 - [Karpukhin et al. (2020). Dense Passage Retrieval for Open-Domain QA](https://arxiv.org/abs/2004.04906) — DPR, canonical dense retriever for QA.
 - [Lewis et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401) — статья, которая дала имя RAG.
-- [Gao et al. (2023). Retrieval-Augmented Generation for Large Language Models: A Survey](https://arxiv.org/abs/2312.10997) — comprehensive RAG survey.
+- [Gao et al. (2023). Retrieval-Augmented Generation for Large Language Models: A Survey](https://arxiv.org/abs/2312.10997) — подробный обзор RAG.

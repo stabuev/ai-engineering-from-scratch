@@ -152,7 +152,7 @@ class Dialog:
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Ring buffer | Circular queue | Fixed-size, lock-free (or SPSC-locked) FIFO для audio frames. |
 | VAD | Silence gate | Модель или heuristic, маркирующая speech vs non-speech. |
 | Streaming ASR | Real-time STT | Выдает partial text по мере прихода audio; bounded lookahead. |

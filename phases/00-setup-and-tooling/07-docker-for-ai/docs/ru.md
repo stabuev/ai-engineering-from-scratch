@@ -20,18 +20,22 @@
 
 AI-проекты — это настоящий кошмар зависимостей. Типичный стек включает Python, PyTorch, CUDA-драйверы, cuDNN, системные C-библиотеки и специализированные пакеты вроде flash-attn, которым нужны строго определённые версии компиляторов. Docker упаковывает всё это в единый образ, который запускается одинаково везде.
 
+## Концепция
+
+Docker упаковывает ваш код, runtime, библиотеки и системные инструменты в изолированную единицу, которая называется container. Думайте о нем как о легкой virtual machine, но он делит kernel host OS вместо запуска собственного, поэтому стартует за секунды, а не за минуты.
+
 ```mermaid
 graph TD
-    subgraph without["Без Docker"]
-        A1["Ваша машина<br/>Python 3.12<br/>CUDA 12.4<br/>PyTorch 2.3"] -->|падает| X1["???"]
-        A2["Их машина<br/>Python 3.10<br/>CUDA 11.8<br/>PyTorch 2.1"] -->|падает| X2["???"]
-        A3["Сервер<br/>Python 3.11<br/>CUDA 12.1<br/>PyTorch 2.2"] -->|падает| X3["???"]
+    subgraph without["Without Docker"]
+        A1["Your machine<br/>Python 3.12<br/>CUDA 12.4<br/>PyTorch 2.3"] -->|crashes| X1["???"]
+        A2["Their machine<br/>Python 3.10<br/>CUDA 11.8<br/>PyTorch 2.1"] -->|crashes| X2["???"]
+        A3["Server<br/>Python 3.11<br/>CUDA 12.1<br/>PyTorch 2.2"] -->|crashes| X3["???"]
     end
 
-    subgraph with_docker["С Docker — один и тот же образ везде"]
-        B1["Ваша машина<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Ваш код"]
-        B2["Их машина<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Ваш код"]
-        B3["Сервер<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Ваш код"]
+    subgraph with_docker["With Docker — Same image everywhere"]
+        B1["Your machine<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Your code"]
+        B2["Their machine<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Your code"]
+        B3["Server<br/>Python 3.12 | CUDA 12.4<br/>PyTorch 2.3 | Your code"]
     end
 ```
 
@@ -57,16 +61,16 @@ graph TD
 
 ```
 Dev Container
-  Полный набор инструментов. Поддержка редактора. Jupyter. Инструменты отладки.
-  Используется во время разработки и экспериментов.
+  Full toolkit. Editor support. Jupyter. Debugging tools.
+  Used during development and experimentation.
 
 Training Container
-  Минималистичный. Только training-скрипт и зависимости.
-  Запускается на GPU-кластерах. Без редактора и Jupyter.
+  Minimal. Just the training script and dependencies.
+  Runs on GPU clusters. No editor, no Jupyter.
 
 Inference Container
-  Оптимизирован для инференса. Небольшой образ. Быстрый cold start.
-  Работает за балансировщиком нагрузки в production.
+  Optimized for serving. Small image. Fast cold start.
+  Runs behind a load balancer in production.
 ```
 
 ## Собираем
@@ -81,7 +85,7 @@ open /Applications/Docker.app
 # Ubuntu
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
-# Выйдите из системы и войдите снова, чтобы изменения группы вступили в силу
+# Log out and back in for group change to take effect
 ```
 
 Проверка:
@@ -122,24 +126,24 @@ docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
 
 ```
 nvidia/cuda:12.4.1-devel-ubuntu22.04
-  Полный CUDA Toolkit. Включает компиляторы.
-  Использование: сборка пакетов, которым нужен nvcc (flash-attn, bitsandbytes)
-  Размер: ~4 ГБ
+  Full CUDA toolkit. Compilers included.
+  Use for: building packages that need nvcc (flash-attn, bitsandbytes)
+  Size: ~4 GB
 
 nvidia/cuda:12.4.1-runtime-ubuntu22.04
-  Только CUDA runtime. Без компиляторов.
-  Использование: запуск уже собранного кода
-  Размер: ~1.5 ГБ
+  CUDA runtime only. No compilers.
+  Use for: running pre-built code
+  Size: ~1.5 GB
 
 pytorch/pytorch:2.3.1-cuda12.4-cudnn9-runtime
-  PyTorch уже установлен поверх CUDA.
-  Использование: чтобы пропустить шаг установки PyTorch
-  Размер: ~6 ГБ
+  PyTorch pre-installed on top of CUDA.
+  Use for: skipping the PyTorch install step
+  Size: ~6 GB
 
 python:3.12-slim
-  Без CUDA. Только CPU.
-  Использование: инференс на CPU, лёгкие утилиты
-  Размер: ~150 МБ
+  No CUDA. CPU only.
+  Use for: inference on CPU, lightweight tools
+  Size: ~150 MB
 ```
 
 ### Шаг 4: Напишите Dockerfile для AI-разработки
@@ -224,13 +228,13 @@ docker run --rm -it --gpus all \
 Volume mounts критически важны для AI-разработки. Без них скачанные 14 ГБ модели исчезнут после остановки контейнера.
 
 ```bash
-# Подключить ваш код
+# Mount your code
 -v $(pwd):/workspace
 
-# Подключить общую директорию с моделями
+# Mount a shared models directory
 -v ~/models:/models
 
-# Подключить датасеты
+# Mount datasets
 -v ~/datasets:/data
 ```
 
@@ -318,22 +322,22 @@ docker compose down -v
 ### Шаг 7: Полезные Docker-команды для AI
 
 ```bash
-# Список запущенных контейнеров
+# List running containers
 docker ps
 
-# Список всех образов и их размеров
+# List all images and their sizes
 docker images
 
-# Удалить неиспользуемые образы (освободить место)
+# Remove unused images (reclaim disk space)
 docker system prune -a
 
-# Проверить использование GPU внутри работающего контейнера
+# Check GPU usage inside a running container
 docker exec -it <container_id> nvidia-smi
 
-# Скопировать файл из контейнера на хост
+# Copy a file from container to host
 docker cp <container_id>:/workspace/results.csv ./results.csv
 
-# Просмотр логов контейнера
+# View container logs
 docker logs -f <container_id>
 ```
 

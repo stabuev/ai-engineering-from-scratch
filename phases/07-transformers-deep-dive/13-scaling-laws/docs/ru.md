@@ -1,10 +1,10 @@
-# Scaling Laws
+# Законы масштабирования
 
 > Статья Kaplan 2020 сказала: больше model, ниже loss. Статья Hoffmann 2022 сказала: вы недообучали. Compute уходит в две корзины — parameters and tokens — и split не очевиден.
 
 **Тип:** Изучение
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 05 (Full Transformer), Фаза 7 · 07 (GPT)
+**Предварительные требования:** Фаза 7 · 05 (полный transformer), Фаза 7 · 07 (GPT)
 **Время:** ~45 минут
 
 ## Проблема
@@ -74,13 +74,13 @@ Schaeffer et al. (2023) возразили, что это measurement artifact: 
 
 Scaling laws все еще работают, но:
 
-| Factor | Changed how |
-|--------|-------------|
-| Data quality | Curating "good" tokens (Phi-style) shifts curves by >2× effective compute |
-| MoE | Total params decouple from active FLOPs; scaling laws per-active-FLOP |
-| Post-training | Some capabilities (instruction following, code) shift with SFT+RLHF more than pretraining |
-| Multimodality | Image + text tokens scale together; separate curves per modality |
-| Synthetic data | Models generate training data; effective compute can compound |
+| Фактор | Как изменилось |
+|--------|---------------|
+| Data quality | Отбор "хороших" tokens (в стиле Phi) сдвигает curves более чем на 2× effective compute |
+| MoE | Total params отделяются от active FLOPs; scaling laws считаются per-active-FLOP |
+| Post-training | Некоторые capabilities (instruction following, code) сдвигаются через SFT+RLHF сильнее, чем через pretraining |
+| Multimodality | Image + text tokens масштабируются вместе; отдельные curves для каждой modality |
+| Synthetic data | Модели генерируют обучающие данные; effective compute может накапливаться |
 
 Optimizer Muon (Kimi Moonlight, 2024) показал ~2× effective-compute gain over AdamW при matched data. Некоторые training runs 2026 года используют Muon по умолчанию. Это меняет absolute constant в scaling law, не ее shape.
 
@@ -101,7 +101,7 @@ def chinchilla_loss(N, D, A=406.4, B=410.7, alpha=0.34, beta=0.28, E=1.69):
 
 Для compute budgets от `1e17` до `1e25` FLOPs найдите `(N, D)`, которые minimize loss при условии `6ND = C`. Проверьте ratio `D/N ≈ 20`.
 
-### Шаг 3: cost over-training
+### Шаг 3: стоимость over-training
 
 Вычислите extra loss, который вы платите, обучая модель в 10× меньше (1/10 optimal N, 10× optimal D). Выведите inference FLOP savings (proportional to N) взамен.
 
@@ -117,7 +117,7 @@ def chinchilla_loss(N, D, A=406.4, B=410.7, alpha=0.34, beta=0.28, E=1.69):
 2. **Выбирать ли bigger base model.** Если весь budget уходит на inference, предпочитайте smaller, longer-trained model.
 3. **Где returns diminish.** За пределами 1000× Chinchilla-optimal изменения log-loss превращаются в шум.
 
-**Research trajectory in 2026:**
+**Research trajectory в 2026 году:**
 
 - **Data-constrained regime.** У web конечное число high-quality tokens (~5–10 trillion English after filtering). Frontier pretraining приближается к этому потолку. Synthetic data, multilingual, multimodal и RLHF-scaled fine-tuning — следующие levers.
 - **Compute-multiplier tricks.** Muon optimizer, MoE, better data curation — каждый сдвигает absolute constants, а не asymptote.
@@ -135,16 +135,16 @@ def chinchilla_loss(N, D, A=406.4, B=410.7, alpha=0.34, beta=0.28, E=1.69):
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Parameters (N) | "Model size" | Число non-embedding weights; определяет capacity. |
-| Tokens (D) | "Training data" | Число training tokens seen; определяет, насколько хорошо используются parameters. |
-| Compute (C) | "FLOPs spent" | Примерно `6 × N × D` для standard transformer. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Parameters (N) | "Размер модели" | Число non-embedding weights; определяет capacity. |
+| Tokens (D) | "Обучающие данные" | Число training tokens seen; определяет, насколько хорошо используются parameters. |
+| Compute (C) | "Потраченные FLOPs" | Примерно `6 × N × D` для standard transformer. |
 | Chinchilla-optimal | "D/N ≈ 20" | Ratio, который минимизирует loss per FLOP of pretraining. |
-| Over-training | "Past Chinchilla" | Потратить extra training FLOPs, чтобы сэкономить inference FLOPs; D/N >> 20. |
-| Irreducible loss | "The floor" | Term `E` в scaling law; entropy of the data itself. |
-| Emergent capability | "Sudden jumps at scale" | Часто scorer artifact; continuous loss smooth. |
-| Effective compute | "Training-efficiency multiplier" | Better data / optimizer / architecture умножает, насколько далеко идет FLOP. |
+| Over-training | "За пределами Chinchilla" | Потратить extra training FLOPs, чтобы сэкономить inference FLOPs; D/N >> 20. |
+| Irreducible loss | "Нижняя граница" | Term `E` в scaling law; entropy of the data itself. |
+| Emergent capability | "Внезапные скачки при масштабировании" | Часто scorer artifact; continuous loss smooth. |
+| Effective compute | "Множитель эффективности обучения" | Better data / optimizer / architecture умножает, насколько далеко идет FLOP. |
 
 ## Дополнительное чтение
 

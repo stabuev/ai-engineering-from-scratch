@@ -3,8 +3,8 @@
 > Каждая важная CNN за последние тридцать лет — это один и тот же рецепт conv–nonlinearity–downsample с одной добавленной новой идеей. Изучайте идеи по порядку.
 
 **Type:** Изучение + сборка
-**Languages:** Python
-**Prerequisites:** Phase 3 Lesson 11 (PyTorch), Phase 4 Lesson 01 (Image Fundamentals), Phase 4 Lesson 02 (Convolutions from Scratch)
+**Языки:** Python
+**Предварительные требования:** Phase 3 Lesson 11 (PyTorch), Phase 4 Lesson 01 (Image Fundamentals), Phase 4 Lesson 02 (Convolutions from Scratch)
 **Time:** ~75 минут
 
 ## Цели обучения

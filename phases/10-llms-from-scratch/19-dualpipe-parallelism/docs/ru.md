@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 10 · 05 (distributed training, FSDP, DeepSpeed), Phase 10 · 14 (open-model architectures and MoE)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Назвать четыре components DualPipe forward-backward chunk и почему каждая получает собственное overlap window.
 - Объяснить pipeline bubble problem в масштабе и что "bubble-free" означает на практике, а не в маркетинге.
 - Вручную пройти DualPipe schedule для 8 PP ranks и 16 micro-batches и подтвердить, что forward и reverse streams заполняют idle slots друг друга.
 - Сформулировать tradeoff DualPipeV (Sea AI Lab, 2025): убирает 2x parameter replication ценой чуть большего bubble, когда Expert Parallelism неактивен.
 
-## The Problem
+## Проблема
 
 Training 671B MoE model на 2k H800 GPUs упирается в три взаимно усиливающихся bottlenecks:
 
@@ -26,7 +26,7 @@ Training 671B MoE model на 2k H800 GPUs упирается в три взаи�
 
 Reported result: почти устранение pipeline bubbles, более 95% GPU utilization в 14.8T-token training run DeepSeek-V3.
 
-## The Concept
+## Концепция
 
 ### Pipeline parallelism refresher
 
@@ -108,7 +108,7 @@ Pre-training DeepSeek-V3 потребил 14.8T tokens на 2,048 H800 GPUs пр
 - Compatible with **ZeRO-3** gradient sharding. Bookkeeping для two-copy replication должен взаимодействовать с sharded gradients ZeRO.
 - Requires **custom all-to-all kernels**, tuned под конкретную cluster topology. Open-source kernels DeepSeek — reference implementation.
 
-## Use It
+## Использование
 
 `code/main.py` — pipeline schedule simulator. Он принимает `(P, n_micro_batches, schedule)` и печатает stable-phase utilization для 1F1B, Zero Bubble, DualPipe и DualPipeV. Это teaching tool — числа совпадают с qualitative claims в papers, но не являются claim о production measured speedup.
 
@@ -121,11 +121,11 @@ Integration considerations для real training run:
 - Заложите неделю debugging time на сам schedule в первый раз. Bookkeeping fiddly.
 - Monitor GPU utilization per rank, не только aggregate. Выигрыш DualPipe приходит от tightening stragglers.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-dualpipe-planner.md`. По training cluster specification (GPU count, topology, interconnect, model shape) он рекомендует pipeline parallelism strategy, scheduling algorithm и expected bubble fraction в целевом масштабе.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py` на `(P=8, micro_batches=16, schedule=dualpipe)` и `(P=8, micro_batches=16, schedule=1f1b)`. Посчитайте GPU utilization difference и выразите его как recovered GPU-hours per million tokens of training.
 
@@ -137,9 +137,9 @@ Integration considerations для real training run:
 
 5. Сравните DualPipe с Chimera (конкурирующим bidirectional scheduler 2021 года). Назовите два конкретных свойства, которые DualPipe добавил, а Chimera не имела, используя Section 3.4 paper как reference.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Pipeline bubble | "Idle time per rank" | GPU cycles, потраченные впустую, потому что pipeline stage ждет input или gradient |
 | 1F1B | "Default pipeline schedule" | One forward / one backward interleaved scheduling; baseline, который обгоняет DualPipe |
@@ -153,7 +153,7 @@ Integration considerations для real training run:
 | Pipeline Parallelism (PP) | "Layers across GPUs" | Shards model layers across ranks; dimension, которую schedules DualPipe |
 | Bubble fraction | "Wasted GPU time" | (bubble_time / total_time); доля, которую DualPipe стремится к нулю |
 
-## Further Reading
+## Дополнительное чтение
 
 - [DeepSeek-AI — DeepSeek-V3 Technical Report (arXiv:2412.19437), Section 3.3.2 and Figure 5](https://arxiv.org/abs/2412.19437) — основной reference по DualPipe
 - [DeepSeek — DualPipe GitHub repository](https://github.com/deepseek-ai/DualPipe) — open-source reference implementation, включая режим DualPipeV (Cut-in-half)

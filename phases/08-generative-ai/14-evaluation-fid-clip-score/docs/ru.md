@@ -153,7 +153,7 @@ All four pillars in one report = claim. Any one alone = marketing.
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | FID | "Fréchet Inception Distance" | Fréchet distance of Gaussian fits to real vs gen Inception features. |
 | CLIP score | "Text-image similarity" | Cosine similarity between CLIP image and text embeddings. |
 | CMMD | "FID's replacement" | CLIP-feature MMD; less biased, no Gaussian assumption. |

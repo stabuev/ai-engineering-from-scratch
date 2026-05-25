@@ -115,7 +115,7 @@ Pix2Pix остается правильным инструментом, когд
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Conditional GAN | "GAN with labels" | G(z, c), D(x, c). Обе сети видят condition. |
 | Pix2Pix | "Image-to-image GAN" | Paired cGAN с U-Net G и PatchGAN D + L1 loss. |
 | U-Net | "Encoder-decoder with skips" | Симметричная conv network; skips сохраняют high-freq. |

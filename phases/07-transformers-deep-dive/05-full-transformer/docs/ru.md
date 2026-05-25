@@ -1,11 +1,11 @@
-# The Full Transformer — Encoder + Decoder
+# Полный Transformer — Encoder + Decoder
 
 > Attention — главный элемент. Все остальное — residuals, normalization, feed-forward, cross-attention — это каркас, который позволяет складывать его глубоко.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 03 (Multi-Head Attention), Phase 7 · 04 (Positional Encoding)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 7 · 02 (self-attention), Фаза 7 · 03 (multi-head attention), Фаза 7 · 04 (positional encoding)
+**Время:** ~75 минут
 
 ## Проблема
 
@@ -28,7 +28,7 @@
 5. **Layer normalization.** `LayerNorm` или `RMSNorm` (современно). Стабилизирует residual stream.
 6. **Cross-attention (только decoder).** Queries приходят из decoder, keys и values — из выхода encoder.
 
-### Encoder block (used by BERT, T5 encoder)
+### Encoder block (используется в BERT и T5 encoder)
 
 ```
 x → LN → MHA(self) → + → LN → FFN → + → out
@@ -39,7 +39,7 @@ x → LN → MHA(self) → + → LN → FFN → + → out
 
 Encoder двунаправленный. Без masking. Все позиции видят все позиции.
 
-### Decoder block (used by GPT, T5 decoder)
+### Decoder block (используется в GPT и T5 decoder)
 
 ```
 x → LN → MHA(masked self) → + → LN → MHA(cross to encoder) → + → LN → FFN → + → out
@@ -51,18 +51,18 @@ Decoder имеет три sublayers на block. Средний — cross-attenti
 
 Оригинальная статья: `x + sublayer(LN(x))` против `LN(x + sublayer(x))`. Post-norm вышел из моды примерно в 2019 году — глубокие модели с ним сложнее обучать без аккуратного warmup. Pre-norm (`LN` *до* sublayer) — default 2026 года: Llama, Qwen, GPT-3+, Mistral используют его.
 
-### Modernized block 2026 года
+### Модернизированный block 2026 года
 
 Vaswani 2017 использовал LayerNorm + ReLU. Современные стеки заменили оба. Вот как реально выглядят production blocks:
 
-| Component | 2017 | 2026 |
+| Компонент | 2017 | 2026 |
 |-----------|------|------|
 | Normalization | LayerNorm | RMSNorm |
 | FFN activation | ReLU | SwiGLU |
-| FFN expansion | 4× | 2.6× (SwiGLU uses three matrices, total params match) |
+| FFN expansion | 4× | 2.6× (SwiGLU использует три матрицы, total params совпадают) |
 | Position | Sinusoidal absolute | RoPE |
 | Attention | Full MHA | GQA (or MLA) |
-| Bias terms | Yes | No |
+| Bias terms | Да | Нет |
 
 RMSNorm убирает mean-centering из LayerNorm (на одно вычитание меньше), что экономит compute и эмпирически не хуже по stability. SwiGLU (`Swish(W1 x) ⊙ W3 x`) стабильно превосходит ReLU/GELU FFN примерно на ~0.5 point ppl в статьях Llama, PaLM и Qwen.
 
@@ -76,11 +76,11 @@ RMSNorm убирает mean-centering из LayerNorm (на одно вычита
 
 При `d = 4096, r = 2.6, layers = 32` (примерно Llama 3 8B), total: `32 · (4·4096² + 3·2.6·4096²) ≈ 32 · (16 + 32) M = ~1.5B parameters per layer × 32 ≈ 7B` (плюс embeddings и head). Это совпадает с опубликованными числами.
 
-## Build It
+## Соберите это
 
-### Step 1: building blocks
+### Шаг 1: строительные блоки
 
-Используя маленький класс `Matrix` из Lesson 03 (скопирован сюда для независимости):
+Используя маленький класс `Matrix` из Урок 03 (скопирован сюда для независимости):
 
 - `layer_norm(x, eps=1e-5)` — вычесть mean, поделить на std.
 - `rms_norm(x, eps=1e-6)` — поделить на RMS. Без вычитания mean.
@@ -90,7 +90,7 @@ RMSNorm убирает mean-centering из LayerNorm (на одно вычита
 
 Полную проводку см. в `code/main.py`.
 
-### Step 2: соедините 2-layer encoder и 2-layer decoder
+### Шаг 2: соедините 2-layer encoder и 2-layer decoder
 
 Сложите их в стек. Передайте выход encoder в каждый decoder cross-attention. Добавьте final LN перед output projection.
 
@@ -108,15 +108,15 @@ def decode(target_tokens, encoder_out, params):
     return x
 ```
 
-### Step 3: run forward on a toy example
+### Шаг 3: запустите forward на toy example
 
 Пропустите 6-token source и 5-token target через модель. Проверьте, что форма выхода равна `(5, vocab)`. Без обучения — этот урок про архитектуру, а не про loss.
 
-### Step 4: замените на RMSNorm + SwiGLU
+### Шаг 4: замените на RMSNorm + SwiGLU
 
 Замените LayerNorm и ReLU-FFN на RMSNorm и SwiGLU. Подтвердите, что shapes все еще совпадают. Это modernization 2026 года через замену одной функции.
 
-## Use It
+## Используйте это
 
 Референсные реализации PyTorch/TF: `nn.TransformerEncoderLayer`, `nn.TransformerDecoderLayer`. Но большинство production-кода 2026 года пишет свой block, потому что:
 
@@ -128,36 +128,36 @@ def decode(target_tokens, encoder_out, params):
 
 **Encoder vs decoder vs encoder-decoder — когда что выбирать:**
 
-| Need | Pick | Example |
+| Потребность | Выбор | Пример |
 |------|------|---------|
-| Classification, embeddings, QA over text | Encoder-only | BERT, DeBERTa, ModernBERT |
-| Text generation, chat, code, reasoning | Decoder-only | GPT, Llama, Claude, Qwen |
-| Structured input → structured output (translation, summarization) | Encoder-decoder | T5, BART, Whisper |
+| Classification, embeddings, QA по тексту | Encoder-only | BERT, DeBERTa, ModernBERT |
+| Генерация текста, чат, код, reasoning | Decoder-only | GPT, Llama, Claude, Qwen |
+| Структурированный input → структурированный output (translation, summarization) | Encoder-decoder | T5, BART, Whisper |
 
 Decoder-only победил в языке, потому что масштабируется чище всего и обрабатывает и понимание, и генерацию. Encoder-decoder все еще лучше, когда вход имеет явную идентичность "source sequence" (translation, speech recognition, structured tasks).
 
-## Ship It
+## Доведите до поставки
 
 См. `outputs/skill-transformer-block-reviewer.md`. Skill проверяет новую реализацию transformer block против defaults 2026 года и отмечает пропущенные части (pre-norm, RoPE, RMSNorm, GQA, FFN expansion ratio).
 
 ## Упражнения
 
-1. **Easy.** Посчитайте параметры в вашем `encoder_block` при `d_model=512, n_heads=8, ffn_expansion=4, swiglu=True`. Проверьте, реализовав block и используя `sum(p.numel() for p in block.parameters())`.
-2. **Medium.** Переключитесь с post-norm на pre-norm. Инициализируйте оба варианта и измерьте activation norm после 12 stacked layers на random input. У post-norm activations должны взрываться; у pre-norm оставаться bounded.
-3. **Hard.** Реализуйте 4-layer encoder-decoder на toy copy task (копировать `x` в обратном порядке). Обучите 100 steps. Сообщите loss. Замените на RMSNorm + SwiGLU + RoPE — падает ли loss?
+1. **Легко.** Посчитайте параметры в вашем `encoder_block` при `d_model=512, n_heads=8, ffn_expansion=4, swiglu=True`. Проверьте, реализовав block и используя `sum(p.numel() for p in block.parameters())`.
+2. **Средне.** Переключитесь с post-norm на pre-norm. Инициализируйте оба варианта и измерьте activation norm после 12 stacked layers на random input. У post-norm activations должны взрываться; у pre-norm оставаться bounded.
+3. **Сложно.** Реализуйте 4-layer encoder-decoder на toy copy task (копировать `x` в обратном порядке). Обучите 100 steps. Сообщите loss. Замените на RMSNorm + SwiGLU + RoPE — падает ли loss?
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Block | "One transformer layer" | Стек norm + attention + norm + FFN, обернутый residual connections. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Block | "Один слой transformer" | Стек norm + attention + norm + FFN, обернутый residual connections. |
 | Residual | "Skip connection" | Выход `x + f(x)`; обеспечивает gradient flow через глубокие стеки. |
-| Pre-norm | "Normalize before, not after" | Современный вариант: `x + sublayer(LN(x))`. Обучает более глубокие модели без gymnastics с warmup. |
-| RMSNorm | "LayerNorm without the mean" | Деление на RMS; на одну операцию меньше, та же эмпирическая stability. |
-| SwiGLU | "The FFN everyone switched to" | `Swish(W1 x) ⊙ W3 x → W2`. Лучше ReLU/GELU по LM ppl. |
-| Cross-attention | "How the decoder sees the encoder" | MHA с Q из decoder, K/V из encoder outputs. |
-| FFN expansion | "How wide the middle MLP is" | Отношение hidden-size к d_model, обычно 4 (LayerNorm) или 2.6 (SwiGLU). |
-| Bias-free | "Drop the +b terms" | Современные стеки опускают biases в linear layers; небольшое улучшение ppl, меньшая модель. |
+| Pre-norm | "Нормализовать до, а не после" | Современный вариант: `x + sublayer(LN(x))`. Обучает более глубокие модели без gymnastics с warmup. |
+| RMSNorm | "LayerNorm без среднего" | Деление на RMS; на одну операцию меньше, та же эмпирическая stability. |
+| SwiGLU | "FFN, на который все перешли" | `Swish(W1 x) ⊙ W3 x → W2`. Лучше ReLU/GELU по LM ppl. |
+| Cross-attention | "Как decoder видит encoder" | MHA с Q из decoder, K/V из encoder outputs. |
+| FFN expansion | "Насколько широк средний MLP" | Отношение hidden-size к d_model, обычно 4 (LayerNorm) или 2.6 (SwiGLU). |
+| Bias-free | "Убрать члены +b" | Современные стеки опускают biases в linear layers; небольшое улучшение ppl, меньшая модель. |
 
 ## Дополнительное чтение
 

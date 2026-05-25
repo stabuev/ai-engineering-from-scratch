@@ -150,7 +150,7 @@ Refuse LLM-only coref for documents over 2,000 tokens without sliding-window mer
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Упоминание | Отсылка | Отрезок текста, который относится к сущности (имя, местоимение, именная группа). |
 | Антецедент | То, к чему относится "it" | Более раннее упоминание, с которым более позднее кореферентно. |
 | Кластер | Упоминания сущности | Множество упоминаний, которые все относятся к одной и той же сущности реального мира. |
@@ -162,7 +162,7 @@ Refuse LLM-only coref for documents over 2,000 tokens without sliding-window mer
 ## Дополнительное чтение
 
 - [Jurafsky & Martin, SLP3 Ch. 26 — Coreference Resolution and Entity Linking](https://web.stanford.edu/~jurafsky/slp3/26.pdf) — каноническая глава учебника.
-- [Lee et al. (2017). End-to-end Neural Coreference Resolution](https://arxiv.org/abs/1707.07045) — span-based end-to-end.
+- [Lee et al. (2017). End-to-end Neural Coreference Resolution](https://arxiv.org/abs/1707.07045) — span-based end-to-end подход.
 - [Joshi et al. (2020). SpanBERT](https://arxiv.org/abs/1907.10529) — предобучение, улучшающее coref.
 - [Pradhan et al. (2012). CoNLL-2012 Shared Task](https://aclanthology.org/W12-4501/) — бенчмарк.
 - [Hobbs (1978). Resolving Pronoun References](https://www.sciencedirect.com/science/article/pii/0024384178900064) — классика на правилах.

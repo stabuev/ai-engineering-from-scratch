@@ -162,7 +162,7 @@ Moshi не выигрывает:
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Full-duplex | Слушает и говорит одновременно | Два audio streams активны одновременно в одной модели. |
 | Inner monologue | Text stream модели | Moshi выдает text tokens рядом с audio output. |
 | Depth transformer | Inter-codebook predictor | Маленький transformer, предсказывающий 8 codebooks внутри одного 80 ms frame. |

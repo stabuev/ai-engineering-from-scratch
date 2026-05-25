@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 10 · 04 (pre-training a mini GPT), Phase 10 · 15 (speculative decoding)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Сформулировать MTP training objective и вывести joint loss по prediction depths.
 - Объяснить различие между parallel MTP heads Gloeckle et al. (2024) и sequential MTP modules DeepSeek-V3, а также почему sequential design сохраняет causal chain.
 - Посчитать parameter и memory overhead от добавления MTP modules в pre-training run.
 - Реализовать один MTP module с нуля: shared embedding, per-depth transformer block, projection и shared output head.
 
-## The Problem
+## Проблема
 
 Next-token prediction — стандартная training objective для LLM. Каждый hidden state supervised предсказывать ровно одну вещь: непосредственно следующий token. Это удивительно слабый signal. Большая часть информации в sequence выходит за один token — структура, связность, factuality, arithmetic flow. Модель должна выучить это, накапливая много однотокенных сигналов на триллионах tokens.
 
@@ -24,7 +24,7 @@ DeepSeek-V3 (декабрь 2024) переработала MTP как sequential
 
 Этот урок строит single MTP module и D-depth loss с нуля. Математика аккуратная. Implementation занимает 150 строк.
 
-## The Concept
+## Концепция
 
 ### The sequential MTP recipe
 
@@ -105,7 +105,7 @@ EAGLE обучает небольшой draft model ОТДЕЛЬНО после 
 | Acceptance rate | 0.88-0.92 | 0.80+ at depth 1 |
 | Benefit beyond speedup | Speculative decoding only | Denser training signal + speedup |
 
-## Build It
+## Практика
 
 `code/main.py` строит single MTP module end to end: shared embedding, projection, transformer block, shared output head. Затем считает per-depth cross-entropy loss на короткой synthetic sequence и печатает parameter count по components. Toy vocabulary из 32 tokens делает числа читаемыми.
 
@@ -141,7 +141,7 @@ Cross-entropy of softmax(logits) против ground-truth token с offset `k`. 
 
 Напечатайте total parameter count, shared (embedding, head) count и per-module extra count. Покажите ratio MTP extra к main-model size.
 
-## Use It
+## Использование
 
 MTP интегрирован в DeepSeek-V3 (декабрь 2024) и series DeepSeek-R1. На inference:
 
@@ -160,11 +160,11 @@ MTP интегрирован в DeepSeek-V3 (декабрь 2024) и series Deep
 - Fine-tuning существующей pre-trained dense model. MTP module не обучен.
 - Research models, где нужен чистый baseline для сравнения. MTP меняет architecture.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-mtp-planner.md`. По спецификации pre-training run (model size, data, compute) он возвращает план интеграции MTP: число depths D, schedule для `lambda`, memory overhead и inference-time speculative-decoding wiring.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`. Покажите, что per-depth loss монотонно уменьшается по мере усиления synthetic signal. Измените synthetic так, чтобы использовать fixed pattern, и проверьте, что и depth-1, и depth-2 losses сходятся.
 
@@ -176,9 +176,9 @@ MTP интегрирован в DeepSeek-V3 (декабрь 2024) и series Deep
 
 5. Используйте обученный MTP module как EAGLE-style draft: вызовите module k, чтобы предложить `t_{i+k}` на inference. Измерьте acceptance rate этих draft tokens против predictions main model на held-out sequence. Если на toy вы получите 50%+, вы воспроизвели эмпирическое свойство MTP-as-draft.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | MTP module | "Extra loss block" | Небольшой transformer block плюс projection, предсказывающий token на `k` позиций вперед от main model |
 | Prediction depth | "Which offset" | Целое `k`, такое что module `k` предсказывает `t_{i+k}` по prefix до position `i` |
@@ -191,7 +191,7 @@ MTP интегрирован в DeepSeek-V3 (декабрь 2024) и series Deep
 | Acceptance rate at depth 1 | "How often MTP draft is right" | Доля случаев, где top-1 prediction D=1 MTP module равна top-1 prediction main model; 80%+ на DeepSeek-V3 |
 | Lambda weighting | "Extra-loss importance" | Per-depth scaling factor; 0.3 в начале training, 0.1 позже на DeepSeek-V3 |
 
-## Further Reading
+## Дополнительное чтение
 
 - [DeepSeek-AI — DeepSeek-V3 Technical Report (arXiv:2412.19437)](https://arxiv.org/abs/2412.19437) — полное описание sequential MTP (Section 2.2), включая joint-loss equations и speedup 1.8× на inference
 - [Gloeckle et al. — Better & Faster Large Language Models via Multi-token Prediction (arXiv:2404.19737)](https://arxiv.org/abs/2404.19737) — parallel MTP baseline, который улучшает дизайн DeepSeek

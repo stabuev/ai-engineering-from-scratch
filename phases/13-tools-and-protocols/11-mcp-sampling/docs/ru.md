@@ -138,7 +138,7 @@ Server никогда не касается LLM API. Пользователь cl
 - Loop завершается на `stopReason: "endTurn"`.
 - Лимит `max_samples_per_tool = 5` ловит runaway loop.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-sampling-loop-designer.md`. По server-side algorithm, которому нужны LLM calls (research, summarization, planning), skill проектирует sampling-based implementation с правильными `modelPreferences`, rate limits и safety confirmations.
 

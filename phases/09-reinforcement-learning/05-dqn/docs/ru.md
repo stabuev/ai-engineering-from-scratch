@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 04 (Q-learning, SARSA)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Tabular Q-learning требует отдельный Q-value для каждой пары (state, action). В шахматах примерно ~10⁴³ states. Atari frame имеет 210×160×3 = 100,800 features. Tabular RL умирает уже на тысячах states, не говоря о миллиардах.
 
@@ -19,7 +19,7 @@ Tabular Q-learning требует отдельный Q-value для каждой
 
 DQN на Atari был первым случаем, когда одна architecture с одним набором hyperparameters решила десятки control problems from raw pixels. Все "deep-RL", построенное позже — DDQN, Rainbow, Dueling, Distributional, R2D2, Agent57 — стоит поверх этой базы из трех tricks.
 
-## The Concept
+## Концепция
 
 ![DQN training loop: env, replay buffer, online net, target net, Bellman TD loss](../assets/dqn.svg)
 
@@ -45,7 +45,7 @@ Drop-in replacement, стабильно лучше. Используйте по 
 
 **Other improvements (Rainbow, 2017):** prioritized replay (чаще sample high-TD-error transitions), dueling architecture (отдельные `V(s)` и advantage heads), noisy networks (learned exploration), n-step returns, distributional Q (C51/QR-DQN), multi-step bootstrapping. Каждый добавляет несколько процентов; gains примерно additive.
 
-## Build It
+## Практика
 
 Код здесь stdlib-only и numpy-free — hand-rolled single-hidden-layer MLP на tiny continuous GridWorld, чтобы каждый training step выполнялся за микросекунды. Algorithm идентичен Atari DQN в масштабе.
 
@@ -132,7 +132,7 @@ for episode in range(N):
 - **Target sync frequency.** Слишком часто ≈ no target net; слишком редко ≈ stale targets. Atari DQN использует 10,000 env steps. Правило: sync каждые ~1/100 training horizon.
 - **Observation preprocessing.** Atari DQN stacks 4 frames, чтобы state был Markov. Любая env с velocity info требует frame-stacking или recurrent state.
 
-## Use It
+## Использование
 
 В 2026 DQN редко state-of-the-art, но остается reference off-policy algorithm:
 
@@ -147,7 +147,7 @@ for episode in range(N):
 
 Уроки сохраняются. Replay и target networks встречаются в SAC, TD3, DDPG, SAC-X, AlphaZero self-play buffer и каждом offline RL method. Reward clipping живет как advantage normalization в PPO. Architecture — это blueprint.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-dqn-trainer.md`:
 
@@ -173,16 +173,16 @@ Given a discrete-action environment (observation shape, action count, horizon, r
 Refuse to ship a DQN with no target network, no replay buffer, or ε held at 1. Refuse continuous-action tasks (route to SAC / TD3). Flag any reward range > 10× per-step mean as needing clipping or scale normalization.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Запустите `code/main.py`. Постройте per-episode return curve. Сколько episodes нужно, пока running mean превысит -10?
-2. **Medium.** Отключите target network (используйте online net по обе стороны Bellman target). Измерьте training instability — return осциллирует или расходится?
-3. **Hard.** Добавьте Double DQN: online net выбирает `argmax a'`, target net оценивает. Сравните bias `Q(s_0, best_a)` vs true `V*(s_0)` after 1,000 episodes with vs without Double DQN на noisy-reward GridWorld.
+1. **Легко.** Запустите `code/main.py`. Постройте per-episode return curve. Сколько episodes нужно, пока running mean превысит -10?
+2. **Средне.** Отключите target network (используйте online net по обе стороны Bellman target). Измерьте training instability — return осциллирует или расходится?
+3. **Сложно.** Добавьте Double DQN: online net выбирает `argmax a'`, target net оценивает. Сравните bias `Q(s_0, best_a)` vs true `V*(s_0)` after 1,000 episodes with vs without Double DQN на noisy-reward GridWorld.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | DQN | "Deep Q-learning" | Q-learning with a neural Q-function, replay buffer, and target network. |
 | Experience replay | "Shuffled transitions" | Ring buffer, sampled uniformly each gradient step; decorrelates data. |
 | Target network | "Frozen bootstrap" | Periodic copy of Q used in Bellman target; stabilizes training. |
@@ -192,7 +192,7 @@ Refuse to ship a DQN with no target network, no replay buffer, or ε held at 1. 
 | Rainbow | "All the tricks" | DDQN + PER + dueling + n-step + noisy + distributional in one. |
 | PER | "Prioritized Replay" | Sample transitions proportional to TD-error magnitude. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Mnih et al. (2013). Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602) — 2013 NeurIPS workshop paper, с которой стартовал deep RL.
 - [Mnih et al. (2015). Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236) — Nature paper, 49-game DQN.

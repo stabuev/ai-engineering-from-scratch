@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 7 · 12 (KV cache, flash-attention), Phase 7 · 15 (attention variants), Phase 10 · 16 (differential attention)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Назвать три NSA attention branches и что захватывает каждая из них.
 - Объяснить, почему NSA является "natively trainable", тогда как прежние sparse-attention methods были inference-only.
 - Посчитать экономию attention compute у NSA против full attention на 64k context как функцию compression block size и selection top-k.
 - Реализовать three-branch combination на stdlib Python для короткой синтетической последовательности и проверить, что gating weights ведут себя разумно.
 
-## The Problem
+## Проблема
 
 Full attention при sequence length N стоит `O(N^2)` времени и `O(N)` KV cache на layer. На 64k токенов compute и memory bandwidth становятся катастрофическими. Теоретическая оценка из NSA paper: attention дает 70-80% полной decode latency на 64k. Все downstream — TTFT, tokens/sec, cost per million tokens — доминируется стоимостью attention.
 
@@ -22,7 +22,7 @@ Sparse attention — очевидный ответ. Предыдущие поп�
 
 Native Sparse Attention (Yuan et al., DeepSeek + PKU + UW, ACL 2025 best paper, arXiv:2502.11089) делает оба: sparsity pattern, который модель учит во время pre-training, реализован как kernel-aligned algorithm, действительно дающий compute savings на inference. Через два года NSA или его прямой потомок будет default attention в каждом frontier long-context model.
 
-## The Concept
+## Концепция
 
 ### Three parallel branches
 
@@ -82,7 +82,7 @@ NSA kernel спроектирован под современные GPU memory h
 
 MoBA (Moonshot, arXiv:2502.13189) была опубликована параллельно и использует похожий подход "три лучше одного", применяя MoE principle к attention blocks. NSA и MoBA — две architecture, которые нужно знать для long-context pre-training 2026 года.
 
-## Build It
+## Практика
 
 `code/main.py` реализует три branches на короткой синтетической последовательности и показывает:
 
@@ -127,7 +127,7 @@ def compress(K, l):
 
 Напечатайте число keys attended per query для каждой branch и total. Сравните с `N` (full attention). На синтетике 1024 tokens с `l = 32, k = 4, w = 128` NSA видит `32 + 128 + 128 = 288` keys на query против 1024 для full attention — в 3.5x меньше.
 
-## Use It
+## Использование
 
 NSA поставляется в собственном long-context pre-training pipeline DeepSeek. Статус интеграции в публичных inference stacks по состоянию на апрель 2026:
 
@@ -147,11 +147,11 @@ NSA поставляется в собственном long-context pre-training
 - Контекст меньше 16k. Overhead трех branches доминирует над savings.
 - Batch-1 interactive chat. Latency-sensitive decode выигрывает, но только на длинных контекстах.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-nsa-integrator.md`. По спецификации long-context pre-training run он строит NSA integration plan: compression block size, top-k, sliding window, gate MLP width, kernel choice и конкретные long-context evals, которые оправдали бы смену architecture.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py` на синтетике 1024 tokens. Sweep `(l, k, w)` по трем presets и напечатайте compute counts. Найдите preset с минимальным key-count per query при сохранении 95% recall против full attention на needle-in-haystack test.
 
@@ -163,9 +163,9 @@ NSA поставляется в собственном long-context pre-training
 
 5. Прочитайте Section 4 статьи NSA (arXiv:2502.11089) и объясните в трех предложениях, почему attention scores compressed branch повторно используются для top-k selection вместо вычисления отдельного routing score. Свяжите ответ с gradient flow.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Compressed branch | "Coarse view" | Attention по block-averaged keys, дающее global context за O(N/l) keys на query |
 | Selected branch | "Top-k blocks" | Fine-grained attention по `k` blocks с highest compressed-branch scores |
@@ -178,7 +178,7 @@ NSA поставляется в собственном long-context pre-training
 | Hardware alignment | "Kernel-friendly sparsity" | Sparse pattern выбран так, чтобы реальный GPU kernel достигал теоретического speedup |
 | DSA | "NSA's successor" | Deepseek Sparse Attention, architecture, последовавшая за NSA в lineage DeepSeek |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Yuan et al. — Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention (arXiv:2502.11089, ACL 2025 Best Paper)](https://arxiv.org/abs/2502.11089) — статья
 - [DeepSeek-V3 Technical Report (arXiv:2412.19437)](https://arxiv.org/abs/2412.19437) — architecture family, на которую нацелен NSA

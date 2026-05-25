@@ -30,12 +30,12 @@
 
 ```mermaid
 graph TD
-    A["Возраст < 30?"] -->|Да| B["Доход > 50k?"]
-    A -->|Нет| C["Кредитный рейтинг > 700?"]
-    B -->|Да| D["Одобрить"]
-    B -->|Нет| E["Отказать"]
-    C -->|Да| F["Одобрить"]
-    C -->|Нет| G["Отказать"]
+    A["Age < 30?"] -->|Yes| B["Income > 50k?"]
+    A -->|No| C["Credit Score > 700?"]
+    B -->|Yes| D["Approve"]
+    B -->|No| E["Deny"]
+    C -->|Yes| F["Approve"]
+    C -->|No| G["Deny"]
 ```
 
 Каждый внутренний узел проверяет признак относительно порога. Каждый лист делает предсказание. Чтобы классифицировать новую точку данных, вы начинаете с корня и идете по веткам, пока не дойдете до листа.
@@ -137,15 +137,15 @@ VR(S, feature, threshold) = Var(S) - weighted_avg(Var(S_left), Var(S_right))
 
 ```mermaid
 graph TD
-    D["Обучающие данные"] --> B1["Bootstrap-выборка 1"]
-    D --> B2["Bootstrap-выборка 2"]
-    D --> B3["Bootstrap-выборка 3"]
-    D --> BN["Bootstrap-выборка N"]
-    B1 --> T1["Дерево 1<br>(случайное подмножество признаков)"]
-    B2 --> T2["Дерево 2<br>(случайное подмножество признаков)"]
-    B3 --> T3["Дерево 3<br>(случайное подмножество признаков)"]
-    BN --> TN["Дерево N<br>(случайное подмножество признаков)"]
-    T1 --> V["Агрегировать предсказания<br>(majority vote или average)"]
+    D["Training Data"] --> B1["Bootstrap Sample 1"]
+    D --> B2["Bootstrap Sample 2"]
+    D --> B3["Bootstrap Sample 3"]
+    D --> BN["Bootstrap Sample N"]
+    B1 --> T1["Tree 1<br>(random feature subset)"]
+    B2 --> T2["Tree 2<br>(random feature subset)"]
+    B3 --> T3["Tree 3<br>(random feature subset)"]
+    BN --> TN["Tree N<br>(random feature subset)"]
+    T1 --> V["Aggregate Predictions<br>(majority vote or average)"]
     T2 --> V
     T3 --> V
     TN --> V

@@ -115,7 +115,7 @@ Sigma per-channel обучаема.
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Mapping network | "The MLP" | `f: Z → W`, 8 layers, отделяет latent geometry от data statistics. |
 | W space | "The style space" | Output mapping network; примерно disentangled. |
 | AdaIN | "Adaptive instance norm" | Normalize feature map, затем scale + shift через `w`-projection. |

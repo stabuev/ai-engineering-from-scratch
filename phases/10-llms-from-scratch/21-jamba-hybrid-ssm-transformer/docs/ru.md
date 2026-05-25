@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 10 · 14 (open-model architectures), Phase 10 · 17 (native sparse attention)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Объяснить три primitives в Jamba block — Transformer layers, Mamba layers, MoE — и рецепт interleaving 1:7:even.
 - Сформулировать на высоком уровне, как выглядит recurrence SSM и почему она дает constant-memory inference.
 - Посчитать KV cache footprint Jamba model на 256k context и сравнить с pure-Transformer model.
 - Назвать три innovations Mamba-3 (exponential-trapezoidal discretization, complex-valued state update, MIMO) и проблему, на которую нацелена каждая.
 
-## The Problem
+## Проблема
 
 Attention квадратично по sequence length. State space models линейны. Эта разница накапливается: на 256k tokens attention map Transformer содержит 65B entries на head; recurrent state SSM имеет фиксированный размер независимо от sequence length.
 
@@ -24,7 +24,7 @@ Pure-SSM models (Mamba, Mamba-2) совпадают с Transformer perplexity н
 
 Этот урок читает все три papers и дает mental model для "pick the right ratio."
 
-## The Concept
+## Концепция
 
 ### An SSM in one page
 
@@ -122,7 +122,7 @@ Hybrids проигрывают, когда:
 
 Ландшафт 2026: pure-Transformer MoE доминирует на frontier, но hybrids владеют нишей 256k+ context. State-tracking wins Mamba-3 могут сдвинуть hybrid ratios ниже (больше SSM, меньше attention) в следующем поколении.
 
-## Use It
+## Использование
 
 `code/main.py` — memory calculator для hybrid architectures. По SSM-Transformer ratio и hidden-size / layer-count config он считает:
 
@@ -144,11 +144,11 @@ Integration considerations для real deployment:
 - На 256k context memory advantage Jamba проявляется в concurrent-request throughput. На той же VRAM помещается больше Jamba sequences, чем Transformer sequences.
 - Mamba-3 как standalone model пока не shipped in production — research preview at 1.5B.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-hybrid-picker.md`. По workload specification (context length profile, task mix, memory budget) он рекомендует pure Transformer, Jamba-style hybrid или pure SSM, с явным reasoning о memory and quality tradeoffs.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`, чтобы посчитать KV cache на 256k context для 32-layer pure Transformer (hidden 4096, 32 heads) и для Jamba-1 hybrid той же формы. Проверьте ~8x memory reduction, заявленный paper AI21.
 
@@ -160,9 +160,9 @@ Integration considerations для real deployment:
 
 5. Прочитайте Section 3 paper Mamba-3 (arXiv:2603.15569). В трех предложениях объясните, почему complex-valued state update эквивалентен data-dependent rotary embedding. Свяжите ответ с выводом RoPE в Phase 7 · Lesson 04.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | State space model (SSM) | "Recurrence with a fixed state" | Layer с learned recurrence `h_t = A h_{t-1} + B x_t`; constant memory per token |
 | Selective SSM | "Mamba's trick" | Data-dependent A, B, C parameters, дающие model gating-like selectivity at linear time |
@@ -175,7 +175,7 @@ Integration considerations для real deployment:
 | Exponential-trapezoidal discretization | "Mamba-3's recurrence" | Более expressive recurrence, subsuming Euler-method discretization Mamba-2 |
 | Hybrid architecture | "Mix attention and SSM" | Любая model, interleaving Transformer and SSM layers; Jamba — production archetype |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Lieber et al. — Jamba: A Hybrid Transformer-Mamba Language Model (arXiv:2403.19887)](https://arxiv.org/abs/2403.19887) — original Jamba paper, ratio ablations, claim 256k context
 - [AI21 — Jamba 1.5: Hybrid Transformer-Mamba at Scale (arXiv:2408.12570)](https://arxiv.org/abs/2408.12570) — scaled-up family, 398B/94B и 12B/52B public releases

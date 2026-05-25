@@ -40,7 +40,7 @@ Text → музыкальный клип от 30 секунд до 4 минут,
 - **FAD (Fréchet Audio Distance).** Расстояние на уровне embeddings между generated и real audio distribution с VGGish или PANNs features. Ниже лучше. MusicGen small: 4.5 FAD на MusicCaps; SOTA ~3.0.
 - **Musicality (subjective).** Человеческие предпочтения. Suno v5 ELO 1293 лидирует.
 - **Text-audio alignment.** CLAP score между prompt и output.
-- **Musicality artifacts.** Сбитые переходы, дрейф вокальных фраз, потеря structure после 30 s.
+- **Артефакты музыкальности.** Сбитые переходы, дрейф вокальных фраз, потеря структуры после 30 s.
 
 ## Карта моделей 2026 года
 
@@ -61,7 +61,7 @@ Text → музыкальный клип от 30 секунд до 4 минут,
 - **EU AI Act** + **California SB 942**: AI-generated music должна маркироваться.
 - **Riffusion / MusicGen** под MIT не несут compliance baggage, но и не дают коммерческих vocals.
 
-Safe-to-ship patterns:
+Паттерны, пригодные к выпуску:
 
 1. Генерировать только instrumental (MusicGen, Stable Audio Open, MIT/CC0 outputs).
 2. Использовать commercial APIs (Suno, Udio, ElevenLabs Music) с per-generation license.
@@ -139,7 +139,7 @@ music = musicgen.generate([description], duration=30)
 
 ## Доведите до результата
 
-Сохраните как `outputs/skill-music-designer.md`. Выберите модель, license strategy, length / structure plan и disclosure metadata для music-gen deployment.
+Сохраните как `outputs/skill-music-designer.md`. Выберите модель, стратегию лицензирования, план длины/структуры и disclosure metadata для music-gen deployment.
 
 ## Упражнения
 
@@ -150,7 +150,7 @@ music = musicgen.generate([description], duration=30)
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | FAD | Audio FID | Fréchet distance между embedding distributions real vs generated. |
 | Chromagram | Melody как pitches | 12-dim per-frame vector; вход для melody conditioning. |
 | Stems | Instrument tracks | Разделенные bass / drums / vocals / melody как WAV. |

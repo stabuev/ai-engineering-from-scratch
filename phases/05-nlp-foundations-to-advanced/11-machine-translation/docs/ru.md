@@ -1,4 +1,4 @@
-# Machine Translation
+# Машинный перевод
 
 > Translation - это задача, которая тридцать лет оплачивала NLP research и продолжает оплачивать его сейчас.
 
@@ -17,7 +17,7 @@ Machine translation - задача, которая заставила NLP изо
 
 ## Концепция
 
-![MT pipeline: tokenize → encode → decode with attention → detokenize](../assets/mt-pipeline.svg)
+![Конвейер MT: токенизация → кодирование → декодирование с attention → детокенизация](../assets/mt-pipeline.svg)
 
 Современный MT - это transformer encoder-decoder, обученный на parallel text. Encoder читает source в tokenization своего языка. Decoder генерирует target по одному subword за раз, используя output encoder через cross-attention (урок 10). Decoding использует beam search, чтобы избежать ловушки greedy-decoding. Output detokenize-ится, detruecase-ится и оценивается относительно reference.
 
@@ -135,13 +135,13 @@ Trainer(model=model, args=args, train_dataset=ds).train()
 
 Production stack 2026 года для MT:
 
-| Use case | Recommended starting point |
+| Сценарий | Рекомендуемая отправная точка |
 |---------|---------------------------|
-| Any-to-any, 200 languages | `facebook/nllb-200-distilled-600M` (laptop) или `nllb-200-3.3B` (production) |
-| English-centric, high quality, 50 languages | `facebook/mbart-large-50-many-to-many-mmt` |
-| Short runs, cheap inference, English-French/German/Spanish | Helsinki-NLP / Marian models |
-| Latency-critical browser-side | ONNX-quantized Marian (~50 MB) |
-| Maximum quality, willing to pay | GPT-4 / Claude / Gemini with translation prompts |
+| Any-to-any, 200 языков | `facebook/nllb-200-distilled-600M` (laptop) или `nllb-200-3.3B` (production) |
+| Ориентация на английский, высокое качество, 50 языков | `facebook/mbart-large-50-many-to-many-mmt` |
+| Короткие прогоны, дешевый инференс, English-French/German/Spanish | Helsinki-NLP / Marian models |
+| Критичная задержка на стороне браузера | ONNX-квантованный Marian (~50 MB) |
+| Максимальное качество, готовы платить | GPT-4 / Claude / Gemini с промптами для перевода |
 
 LLMs теперь превосходят specialized MT models на нескольких language pairs по состоянию на 2026 год, особенно на idiomatic content и long context. Tradeoff - per-token cost и latency. Выбирайте LLM, когда context length, stylistic consistency или domain adaptation через prompting важнее throughput.
 
@@ -171,14 +171,14 @@ Refuse to ship a translation without a language-ID check on output. Refuse to ev
 
 ## Упражнения
 
-1. **Easy.** Переведите 5-sentence English paragraph на French и обратно на English с помощью `nllb-200-distilled-600M`. Измерьте, насколько round-trip близок к original. Вы должны увидеть semantic preservation с word-choice drift.
-2. **Medium.** Реализуйте language-ID check на translation outputs с помощью `fasttext lid.176` или `langdetect`. Интегрируйте в MT call, чтобы off-target generations ловились до возврата.
-3. **Hard.** Fine-tune `nllb-200-distilled-600M` на 5,000-pair domain corpus по вашему выбору. Измерьте BLEU на held-out set до и после fine-tuning. Report, какие типы sentences улучшились, а какие regressed.
+1. **Легко.** Переведите 5-sentence English paragraph на French и обратно на English с помощью `nllb-200-distilled-600M`. Измерьте, насколько round-trip близок к original. Вы должны увидеть semantic preservation с word-choice drift.
+2. **Средне.** Реализуйте language-ID check на translation outputs с помощью `fasttext lid.176` или `langdetect`. Интегрируйте в MT call, чтобы off-target generations ловились до возврата.
+3. **Сложно.** Fine-tune `nllb-200-distilled-600M` на 5,000-pair domain corpus по вашему выбору. Измерьте BLEU на held-out set до и после fine-tuning. Report, какие типы sentences улучшились, а какие regressed.
 
 ## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | BLEU | Translation score | N-gram precision с brevity penalty. [0, 100]. |
 | chrF | Character F-score | Character-level F-score. Более чувствителен для morphologically rich languages. |
 | NMT | Neural MT | Transformer encoder-decoder, обученный на parallel text. Default с 2017+. |

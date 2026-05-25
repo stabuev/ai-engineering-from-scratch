@@ -114,12 +114,12 @@ def is_faithful(answer, context, threshold=0.5):
 
 | Сценарий | Модель |
 |---------|-------|
-| General-purpose NLI | `microsoft/deberta-v3-large-mnli` |
-| Fast / edge | `cross-encoder/nli-deberta-v3-base` |
-| Zero-shot classification (lightweight) | `facebook/bart-large-mnli` |
-| Document-level NLI | `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli` |
-| Multilingual | `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` |
-| Hallucination detection in RAG | NLI layer inside RAGAS / DeepEval |
+| NLI общего назначения | `microsoft/deberta-v3-large-mnli` |
+| Быстро / edge | `cross-encoder/nli-deberta-v3-base` |
+| Zero-shot классификация (легкая) | `facebook/bart-large-mnli` |
+| NLI на уровне документа | `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli` |
+| Многоязычность | `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` |
+| Обнаружение галлюцинаций в RAG | NLI-слой внутри RAGAS / DeepEval |
 
 Мета-паттерн 2026 года: NLI — duct tape понимания текста. Когда вам нужно "does A support B?" или "does A contradict B?" — беритесь за NLI до того, как делать еще один LLM-вызов.
 
@@ -156,7 +156,7 @@ Refuse to ship zero-shot classification without a 100-example labeled sanity che
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | NLI | Natural Language Inference | 3-классовая классификация отношения premise-hypothesis. |
 | RTE | Recognizing Textual Entailment | Более старое название NLI; та же задача. |
 | Entailment | "t implies h" | Типичный читатель заключил бы, что h истинно, если дано t. |

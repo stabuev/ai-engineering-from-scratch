@@ -124,7 +124,7 @@ Harness в `code/main.py` симулирует три executors с latency 400, 
 
 Этот урок создает `outputs/skill-parallel-call-safety-check.md`. Получив tool registry, skill проверяет, какие tools безопасно запускать параллельно, какие имеют зависимости порядка и какие перегрузят downstream rate limits, возвращая revised registry с флагами `parallel_safe` для каждого tool.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py` и меняйте simulated latencies. Подтвердите, что parallel-to-sequential ratio примерно равен `max/sum` (real runs слегка отклоняются от идеала из-за thread scheduling, serialization и overhead harness). При каком latency distribution parallel перестает иметь значение?
 

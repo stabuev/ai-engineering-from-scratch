@@ -2,10 +2,10 @@
 
 > ELIZA отвечала совпадениями шаблонов. DialogFlow сопоставлял intents. GPT отвечал из весов. Claude запускает инструменты и проверяет. Каждая эпоха решала худший провал предыдущей.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 14 (Information Retrieval)
-**Time:** ~75 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 5 · 13 (Question Answering), Фаза 5 · 14 (Information Retrieval)
+**Время:** ~75 минут
 
 ## Проблема
 
@@ -17,7 +17,7 @@
 
 ## Концепция
 
-![Chatbot evolution: rule-based → retrieval → neural → agent](../assets/chatbot.svg)
+![Эволюция чатботов: rule-based → retrieval → neural → agent](../assets/chatbot.svg)
 
 **На основе правил (ELIZA, AIML, DialogFlow).** Написанные вручную шаблоны сопоставляются с пользовательским вводом и порождают ответы. Классификаторы intents направляют в предопределенные flows. Конечные автоматы slot filling собирают нужную информацию. Великолепно работает внутри узкой области, для которой было спроектировано. Немедленно ломается за ее пределами. Все еще поставляется в safety-critical доменах (банковская аутентификация, бронирование авиабилетов), где галлюцинации недопустимы.
 
@@ -164,7 +164,7 @@ def is_destructive_action(text):
 
 Стек 2026 года:
 
-| Use case | Architecture |
+| Сценарий | Архитектура |
 |---------|---------------|
 | Бронирование, оплата, аутентификация | Rule-based state machines + slot filling |
 | FAQ поддержки клиентов | Retrieval по курируемым ответам |
@@ -214,14 +214,14 @@ Refuse to recommend a pure-LLM agent for any destructive action (payments, accou
 
 ## Упражнения
 
-1. **Easy.** Реализуйте приведенный выше rule-based respond с 10 шаблонами для бота заказа в кофейне. Проверьте крайние случаи: двойные заказы, изменения, отмена, неясный intent.
-2. **Medium.** Постройте гибрид FAQ + LLM fallback. 50 заготовленных FAQ-записей для SaaS-продукта, LLM fallback с retrieval по сайту документации. Измерьте refusal rate и accuracy на 100 реальных вопросах поддержки.
-3. **Hard.** Реализуйте приведенный выше agent loop с тремя инструментами (search, read-user-data, send-email). Запустите evaluation с 50 тестовыми сценариями, включая попытки prompt injection. Сообщите off-task rate, failed task rate и любой успех injection.
+1. **Легко.** Реализуйте приведенный выше rule-based respond с 10 шаблонами для бота заказа в кофейне. Проверьте крайние случаи: двойные заказы, изменения, отмена, неясный intent.
+2. **Средне.** Постройте гибрид FAQ + LLM fallback. 50 заготовленных FAQ-записей для SaaS-продукта, LLM fallback с retrieval по сайту документации. Измерьте refusal rate и accuracy на 100 реальных вопросах поддержки.
+3. **Сложно.** Реализуйте приведенный выше agent loop с тремя инструментами (search, read-user-data, send-email). Запустите evaluation с 50 тестовыми сценариями, включая попытки prompt injection. Сообщите off-task rate, failed task rate и любой успех injection.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | Intent | Чего хочет пользователь | Категориальная метка (book_flight, reset_password). Маршрутизируется в handler. |
 | Slot | Часть информации | Параметр, который нужен боту (date, destination). Slot filling — последовательность вопросов. |
 | RAG | Retrieval плюс generation | Извлечь релевантные документы, затем заземлить ответ LLM. |

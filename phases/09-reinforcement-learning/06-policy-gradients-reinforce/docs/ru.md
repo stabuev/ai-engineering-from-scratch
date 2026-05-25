@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 03 (Monte Carlo), Phase 9 · 04 (TD Learning)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Q-learning и DQN параметризуют *value* function. Actions выбираются через `argmax Q`. Это нормально для discrete actions и discrete states. Но ломается, когда actions continuous (какой `argmax` по 10-dimensional torque?) или когда нужна stochastic policy (`argmax` по конструкции deterministic).
 
@@ -17,7 +17,7 @@ Policy gradients параметризуют *policy* вместо value. `π_θ(
 
 Каждый LLM-RL algorithm в 2026 — PPO, DPO, GRPO — refinement of REINFORCE. Понять его руками — prerequisite для остальной части фазы, а также для Phase 10 · 07 (RLHF implementation) и Phase 10 · 08 (DPO).
 
-## The Concept
+## Концепция
 
 ![Policy gradient: softmax policy, log-π gradient, return-weighted update](../assets/policy-gradient.svg)
 
@@ -52,7 +52,7 @@ Policy gradients параметризуют *policy* вместо value. `π_θ(
 
 **Gaussian policy for continuous actions.** `π_θ(a | s) = N(μ_θ(s), σ_θ(s))`. `∇ log N(a; μ, σ)` имеет closed form. Этого достаточно для SAC в Phase 9 · 07.
 
-## Build It
+## Практика
 
 ### Step 1: softmax policy network
 
@@ -130,7 +130,7 @@ Running mean of `G` по recent episodes уже достаточно снижа�
 - **Non-stationary gradients.** Gradient из 100 episodes назад использует old `π`. Поэтому on-policy methods обновляются каждые несколько rollouts.
 - **Credit assignment.** Без reward-to-go past rewards добавляют noise. Всегда используйте reward-to-go.
 
-## Use It
+## Использование
 
 В 2026 REINFORCE редко запускают напрямую, но его gradient formula везде:
 
@@ -145,7 +145,7 @@ Running mean of `G` по recent episodes уже достаточно снижа�
 
 Когда в training script 2026 года видите `loss = -advantage * log_prob`, это REINFORCE with a baseline. Целые papers (DPO, GRPO, RLOO) — variance-reduction tricks поверх одной строки.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-policy-gradient-trainer.md`:
 
@@ -170,16 +170,16 @@ Given an environment (discrete / continuous actions, horizon, reward stats), out
 Refuse REINFORCE-no-baseline on horizons > 500 steps. Refuse continuous-action control with a softmax head. Flag any run with `β = 0` and observed policy entropy < 0.1 as entropy-collapsed.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Реализуйте REINFORCE на 4×4 GridWorld с linear softmax policy. Train for 1,000 episodes без baseline. Постройте learning curve; измерьте variance (std of returns).
-2. **Medium.** Добавьте running-mean baseline. Train again. Сравните sample efficiency и variance с vanilla run. Насколько baseline уменьшает steps to convergence?
-3. **Hard.** Добавьте entropy bonus `β · H(π)`. Sweep `β ∈ {0, 0.01, 0.1, 1.0}`. Постройте final return and policy entropy. Где sweet spot on this task?
+1. **Легко.** Реализуйте REINFORCE на 4×4 GridWorld с linear softmax policy. Train for 1,000 episodes без baseline. Постройте learning curve; измерьте variance (std of returns).
+2. **Средне.** Добавьте running-mean baseline. Train again. Сравните sample efficiency и variance с vanilla run. Насколько baseline уменьшает steps to convergence?
+3. **Сложно.** Добавьте entropy bonus `β · H(π)`. Sweep `β ∈ {0, 0.01, 0.1, 1.0}`. Постройте final return and policy entropy. Где sweet spot on this task?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Policy gradient | "Train the policy directly" | `∇J(θ) = E[G · ∇ log π_θ(a|s)]`; derived from log-derivative trick. |
 | REINFORCE | "The original PG algorithm" | Williams (1992); Monte Carlo returns multiplied by log-policy gradient. |
 | Log-derivative trick | "Score function estimator" | `∇P(τ;θ) = P(τ;θ) · ∇ log P(τ;θ)`; makes gradients of expectations tractable. |
@@ -189,7 +189,7 @@ Refuse REINFORCE-no-baseline on horizons > 500 steps. Refuse continuous-action c
 | On-policy | "Train on what you just saw" | Gradient expectation is w.r.t. current policy — old data cannot be reused directly. |
 | Advantage | "How much better than average" | `A(s, a) = G(s, a) - V(s)`; signed quantity multiplied by REINFORCE-with-baseline. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Williams (1992). Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning](https://link.springer.com/article/10.1007/BF00992696) — original REINFORCE paper.
 - [Sutton et al. (2000). Policy Gradient Methods for Reinforcement Learning with Function Approximation](https://papers.nips.cc/paper_files/paper/1999/hash/464d828b85b0bed98e80ade0a5c43b0f-Abstract.html) — modern policy-gradient theorem with function approximation.

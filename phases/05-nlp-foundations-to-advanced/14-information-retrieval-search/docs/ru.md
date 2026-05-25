@@ -17,7 +17,7 @@ IR — это pipeline под каждой RAG-системой, каждой п
 
 ## Концепция
 
-![Hybrid retrieval: BM25 + dense + RRF + cross-encoder rerank](../assets/retrieval.svg)
+![Гибридный retrieval: BM25 + dense + RRF + cross-encoder rerank](../assets/retrieval.svg)
 
 Четыре слоя. Выберите те, которые нужны.
 
@@ -144,7 +144,7 @@ def hybrid_search(query, bm25, encoder, dense_embeddings, corpus, top_k=5, pool_
 
 ### Шаг 5: оценка
 
-| Metric | Meaning |
+| Метрика | Значение |
 |--------|---------|
 | Recall@k | Среди запросов, где правильный документ существует, как часто он попадает в top-k? |
 | MRR (Mean Reciprocal Rank) | Среднее значение 1/rank первого релевантного документа. |
@@ -158,12 +158,12 @@ def hybrid_search(query, bm25, encoder, dense_embeddings, corpus, top_k=5, pool_
 
 Стек 2026 года:
 
-| Scale | Stack |
+| Масштаб | Стек |
 |-------|-------|
 | 1k-100k docs | In-memory BM25 + `all-MiniLM-L6-v2` embeddings + RRF. Без отдельной DB. |
 | 100k-10M docs | FAISS или pgvector для dense + Elasticsearch / OpenSearch для BM25. Запускать параллельно. |
 | 10M+ docs | Qdrant / Weaviate / Vespa / Milvus с hybrid support. Cross-encoder rerank на top-30. |
-| Best-quality frontier | Three-way (BM25 + dense + SPLADE) + ColBERT late-interaction reranking |
+| Максимальное качество на frontier-уровне | Трехкомпонентный стек (BM25 + dense + SPLADE) + ColBERT late-interaction reranking |
 
 Что бы вы ни выбрали, заложите бюджет на оценку. Сначала бенчмарк retrieval recall, потом бенчмарк end-to-end RAG accuracy. Reader не исправит то, что retriever пропустил.
 
@@ -206,14 +206,14 @@ Refuse to recommend dense-only for corpora with named entities, error codes, or 
 
 ## Упражнения
 
-1. **Easy.** Реализуйте `hybrid_search` выше на корпусе из 500 документов. Протестируйте 20 запросов. Сравните recall at 5 между BM25-only, dense-only и hybrid.
-2. **Medium.** Добавьте расчет MRR. Для каждого тестового запроса с известным правильным документом найдите rank правильного doc в ранжированиях BM25, dense и hybrid. Сообщите MRR для каждого.
-3. **Hard.** Fine-tune dense encoder на вашем домене с MultipleNegativesRankingLoss (Sentence Transformers). Соберите training set из 500 пар query-document. Сравните recall до и после fine-tune.
+1. **Легко.** Реализуйте `hybrid_search` выше на корпусе из 500 документов. Протестируйте 20 запросов. Сравните recall at 5 между BM25-only, dense-only и hybrid.
+2. **Средне.** Добавьте расчет MRR. Для каждого тестового запроса с известным правильным документом найдите rank правильного doc в ранжированиях BM25, dense и hybrid. Сообщите MRR для каждого.
+3. **Сложно.** Fine-tune dense encoder на вашем домене с MultipleNegativesRankingLoss (Sentence Transformers). Соберите training set из 500 пар query-document. Сравните recall до и после fine-tune.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | BM25 | Keyword search | Okapi BM25. Оценивает документы по term frequency, IDF и длине. |
 | Dense retrieval | Vector search | Кодирует query + doc в векторы, ищет ближайших соседей. |
 | Bi-encoder | Embedding model | Кодирует query и doc независимо. Быстр во время запроса. |
@@ -227,4 +227,4 @@ Refuse to recommend dense-only for corpora with named entities, error codes, or 
 - [Karpukhin et al. (2020). Dense Passage Retrieval for Open-Domain QA](https://arxiv.org/abs/2004.04906) — DPR, канонический bi-encoder.
 - [Formal et al. (2021). SPLADE: Sparse Lexical and Expansion Model](https://arxiv.org/abs/2107.05720) — learned-sparse retriever, закрывающий разрыв с dense.
 - [Cormack, Clarke, Büttcher (2009). Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) — статья RRF.
-- [Khattab and Zaharia (2020). ColBERT: Efficient and Effective Passage Search](https://arxiv.org/abs/2004.12832) — late-interaction retrieval.
+- [Khattab and Zaharia (2020). ColBERT: Efficient and Effective Passage Search](https://arxiv.org/abs/2004.12832) — retrieval с late interaction.

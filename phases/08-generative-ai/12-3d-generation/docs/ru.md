@@ -132,7 +132,7 @@ for step in range(steps):
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | 3D Gaussian Splatting | "3DGS" | Scene as cloud of 3D Gaussians; differentiable alpha-composite render. |
 | NeRF | "Neural radiance field" | MLP outputs color + density at 3D point; render by ray integration. |
 | Triplane | "Three 2-D planes" | Factor 3D into three 2-D axis-aligned feature grids; cheaper than volumetric. |

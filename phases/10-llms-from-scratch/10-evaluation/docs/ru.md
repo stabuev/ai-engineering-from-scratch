@@ -135,7 +135,7 @@ graph LR
 | LLM-as-judge | ~$0.01 | ~80% | Open-ended generation |
 | Human eval | $0.10-$2.00 | N/A (is the ground truth) | Ambiguous, high-stakes tasks |
 
-## Build It
+## Практика
 
 ### Step 1: A Minimal Eval Framework
 
@@ -410,7 +410,7 @@ for quality, label in [(0.9, "Strong model"), (0.7, "Medium model"), (0.4, "Weak
     print(f"  {label} (quality={quality}): perplexity = {ppl:.2f}")
 ```
 
-## Use It
+## Использование
 
 ### lm-evaluation-harness (EleutherAI)
 
@@ -474,13 +474,13 @@ tests:
 
 RAGAS измеряет то, что generic evals пропускают: grounded ли ответ модели в retrieved context, а не просто "correct" ли answer in the abstract.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-eval-designer.md` -- reusable prompt, который проектирует custom eval suites для любой задачи. Дайте ему task description, и он сгенерирует test cases, scoring functions и recommendation для pass/fail threshold.
 
 Он также создает `outputs/skill-evaluation.md` -- decision framework для выбора правильной evaluation strategy с учетом task type, budget и latency requirements.
 
-## Exercises
+## Упражнения
 
 1. Добавьте "consistency" scorer, который прогоняет один и тот же input через model 5 раз и измеряет, как часто outputs совпадают. Inconsistent answers on deterministic inputs выявляют fragile prompts или high temperature settings.
 
@@ -492,9 +492,9 @@ RAGAS измеряет то, что generic evals пропускают: grounded
 
 5. Постройте "model diff" tool. Имея eval results from two model versions, highlight which specific test cases improved, which regressed, and which stayed the same. Это eval equivalent of a code diff -- essential for understanding whether a change helped or hurt.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | MMLU | "The benchmark" | Massive Multitask Language Understanding -- 15,908 multiple choice questions across 57 subjects, saturated above 88% by 2025 |
 | HumanEval | "Code eval" | 164 Python function-completion problems from OpenAI, tests only isolated function generation |
@@ -507,7 +507,7 @@ RAGAS измеряет то, что generic evals пропускают: grounded
 | Pass rate | "What percentage it gets right" | Fraction of eval cases scoring above a threshold -- more actionable than mean score because it measures reliability |
 | Chatbot Arena | "Model ranking website" | LMSYS platform with 2M+ human preference votes, producing the most trusted LLM leaderboard via ELO ratings |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Hendrycks et al., 2021 -- "Measuring Massive Multitask Language Understanding"](https://arxiv.org/abs/2009.03300) -- статья MMLU, все еще самый цитируемый LLM benchmark несмотря на saturation
 - [Chen et al., 2021 -- "Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374) -- статья HumanEval от OpenAI, established code generation evaluation methodology

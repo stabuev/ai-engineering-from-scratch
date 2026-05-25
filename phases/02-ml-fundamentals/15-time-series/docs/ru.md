@@ -68,13 +68,13 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Наблюдаемый временной ряд] --> B[Trend]
+    A[Observed Time Series] --> B[Trend]
     A --> C[Seasonality]
     A --> D[Residual/Noise]
 
-    B --> E[Долгосрочное направление: вверх, вниз, плоско]
-    C --> F[Повторяющиеся patterns: daily, weekly, yearly]
-    D --> G[Случайная вариация после удаления trend и seasonality]
+    B --> E[Long-term direction: up, down, flat]
+    C --> F[Repeating patterns: daily, weekly, yearly]
+    D --> G[Random variation after removing trend and seasonality]
 ```
 
 - **Trend**: долгосрочное направление. Revenue растет на 10% в год. Global temperature повышается.

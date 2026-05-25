@@ -166,7 +166,7 @@ N_tokens = 10 * 12.5 * 8 = 1000 tokens
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | RVQ | Residual quantization | Каскад маленьких codebooks; каждый квантует предыдущий residual. |
 | Frame rate | Codec speed | Сколько token-frames в секунду. Ниже = быстрее LM. |
 | Semantic codebook | Codebook 0 (Mimi) | Codebook distilled from SSL features; кодирует content. |

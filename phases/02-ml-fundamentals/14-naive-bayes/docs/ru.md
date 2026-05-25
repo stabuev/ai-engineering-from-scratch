@@ -208,7 +208,7 @@ Matrix multiplication. Поэтому prediction в Naive Bayes такой бы�
 
 ```mermaid
 flowchart LR
-    A[Сырой текст] --> B[Tokenize]
+    A[Raw Text] --> B[Tokenize]
     B --> C[Build Vocabulary]
     C --> D[Count Word Frequencies]
     D --> E[Apply Smoothing]

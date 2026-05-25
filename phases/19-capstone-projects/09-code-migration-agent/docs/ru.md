@@ -96,7 +96,7 @@ $ migrate legacy-java-service --target java17
 
 ## Сдайте
 
-`outputs/skill-migration-агент.md` - deliverable. Для заданного repo он выполняет deterministic recipes, затем agent loop, чтобы создать зеленую мигрированную ветку, либо помещает repo в класс таксономии.
+`outputs/skill-migration-agent.md` - deliverable. Для заданного repo он выполняет deterministic recipes, затем agent loop, чтобы создать зеленую мигрированную ветку, либо помещает repo в класс таксономии.
 
 | Вес | Критерий | Как измеряется |
 |:-:|---|---|

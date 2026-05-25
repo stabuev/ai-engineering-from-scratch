@@ -115,7 +115,7 @@ Constrained decoding работает на small models. Open model на 3B para
 
 Этот урок создает `outputs/skill-structured-output-designer.md`. Получив free-text extraction target (invoices, support tickets, resumes, etc.), skill создает JSON Schema 2020-12, совместимую со strict mode, и Pydantic model, которая mirrors it, со stub-ами typed refusal и retry handling.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`. Добавьте четвертый test case, где `total_usd` является negative number. Подтвердите, что validator отклоняет его с path constraint `minimum`.
 

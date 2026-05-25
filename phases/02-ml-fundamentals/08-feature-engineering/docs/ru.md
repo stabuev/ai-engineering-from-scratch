@@ -30,15 +30,15 @@ Feature engineering — процесс преобразования сырых �
 
 ```mermaid
 flowchart LR
-    A[Сырые данные] --> B[Обработать пропуски]
-    B --> C[Числовые преобразования]
-    B --> D[Кодирование категорий]
-    B --> E[Текстовые признаки]
-    C --> F[Взаимодействия признаков]
+    A[Raw Data] --> B[Handle Missing Values]
+    B --> C[Numerical Transforms]
+    B --> D[Categorical Encoding]
+    B --> E[Text Features]
+    C --> F[Feature Interactions]
     D --> F
     E --> F
-    F --> G[Отбор признаков]
-    G --> H[Данные, готовые для модели]
+    F --> G[Feature Selection]
+    G --> H[Model-Ready Data]
 ```
 
 ### Числовые признаки

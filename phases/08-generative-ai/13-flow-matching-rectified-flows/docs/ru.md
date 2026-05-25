@@ -142,7 +142,7 @@ def sample(net, num_steps):
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Flow matching | "Straight-line diffusion" | Train `v_θ(x, t)` to match `x_1 - x_0` along an interpolant. |
 | Rectified flow | "Reflow" | Iterative procedure that straightens learned flows. |
 | Velocity field | "v_θ" | Output of model — direction to move `x_t`. |

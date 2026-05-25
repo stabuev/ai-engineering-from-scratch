@@ -19,7 +19,7 @@
 
 ## Концепция
 
-![BoW vs TF-IDF representation flow](./assets/bow-tfidf.svg)
+![Поток представления BoW и TF-IDF](./assets/bow-tfidf.svg)
 
 **Bag of Words (BoW)** отбрасывает порядок. Для каждого документа посчитайте, сколько раз встречается каждое слово словаря. Длина вектора равна размеру словаря. Позиция `i` — это счетчик слова `i`.
 
@@ -160,7 +160,7 @@ print(tfidf.toarray().round(3))
 
 Параметры, которые меняют все:
 
-| Arg | Effect |
+| Аргумент | Эффект |
 |-----|--------|
 | `ngram_range=(1, 2)` | Включить bigrams. Обычно улучшает классификацию. |
 | `min_df=2` | Убрать слова, встречающиеся менее чем в 2 документах. Сокращает словарь на шумных данных. |
@@ -186,7 +186,7 @@ Failure из-за семантической слепоты. Рассмотри�
 
 Другая ошибка: out-of-vocabulary words при inference. BoW model, обученная на IMDb reviews, не знает, что делать с `Zoomer-approved`, если этот token никогда не встречался при обучении. Subword embeddings (урок 04) справляются с этим. TF-IDF — нет.
 
-### Hybrid: TF-IDF weighted embeddings
+### Гибрид: эмбеддинги, взвешенные TF-IDF
 
 Прагматичный default 2026 года для medium-data classification: использовать TF-IDF weights как attention over word embeddings.
 
@@ -240,14 +240,14 @@ Example output:
 
 ## Упражнения
 
-1. **Easy.** Реализуйте `cosine_similarity(doc_vec_a, doc_vec_b)` на L2-normalized TF-IDF output. Проверьте, что идентичные документы дают score 1.0, а документы с непересекающимся словарем дают 0.0.
-2. **Medium.** Добавьте поддержку `n-gram` в `bag_of_words`. Параметр `n` создает counts over `n`-grams. Проверьте, что `n=2` на `["the", "cat", "sat"]` создает bigram counts для `["the cat", "cat sat"]`.
-3. **Hard.** Постройте TF-IDF-weighted-embedding hybrid выше, используя GloVe 100d vectors (download once, cache). Сравните classification accuracy с plain TF-IDF и plain mean-pooled embeddings на датасете 20 Newsgroups. Сообщите, что где побеждает.
+1. **Легко.** Реализуйте `cosine_similarity(doc_vec_a, doc_vec_b)` на L2-normalized TF-IDF output. Проверьте, что идентичные документы дают score 1.0, а документы с непересекающимся словарем дают 0.0.
+2. **Средне.** Добавьте поддержку `n-gram` в `bag_of_words`. Параметр `n` создает counts over `n`-grams. Проверьте, что `n=2` на `["the", "cat", "sat"]` создает bigram counts для `["the cat", "cat sat"]`.
+3. **Сложно.** Постройте TF-IDF-weighted-embedding hybrid выше, используя GloVe 100d vectors (download once, cache). Сравните classification accuracy с plain TF-IDF и plain mean-pooled embeddings на датасете 20 Newsgroups. Сообщите, что где побеждает.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | BoW | Word frequency vector | Счетчики слов словаря в одном документе. Отбрасывает порядок. |
 | TF | Term frequency | Счетчик слова в документе, опционально нормализованный на длину документа. |
 | DF | Document frequency | Количество документов, содержащих слово хотя бы один раз. |

@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 10 Lesson 12 (Inference Optimization), Phase 10 Lesson 04 (Pre-training Mini-GPT)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Decode throughput для модели класса 70B на H100 обычно 40-80 tokens/second. Каждый token требует полного forward pass, читающего все model weights из HBM. Нельзя сделать model меньше без изменения output. Нельзя увеличить batch size beyond memory. Вы застряли — если только не позволить model output more than one token per forward pass.
 
@@ -15,7 +15,7 @@ Autoregressive generation выглядит intrinsically serial: `x_{t+1} = samp
 
 Leviathan, Kalai, Matias (2023, "Fast Inference from Transformers via Speculative Decoding") сделали это точным через clever accept/reject rule, сохраняющее target model sampling distribution. Та же output distribution, 2-4× быстрее.
 
-## The Concept
+## Концепция
 
 ### The Two-Model Setup
 
@@ -114,7 +114,7 @@ EAGLE-3 (Li et al. 2025, "EAGLE-3: Scaling up Inference Acceleration of Large La
 
 Production shops обычно report 2-3× wall-clock speedup на chat, 3-5× на code generation и near-zero на creative writing.
 
-## Build It
+## Практика
 
 `code/main.py`:
 
@@ -156,18 +156,18 @@ def speculative_step(p_target, q_draft, K, temperature=1.0):
     return accepted
 ```
 
-## Use It
+## Использование
 
 - **vLLM** и **SGLang** ship first-class speculative decoding. Flags: `--speculative_model`, `--num_speculative_tokens`. EAGLE-2/3 support через flag `--spec_decoding_algorithm eagle`.
 - **NVIDIA TensorRT-LLM** поддерживает Medusa and EAGLE trees natively.
 - **Reference draft models**: `Qwen/Qwen3-0.6B-spec` (drafts for Qwen3-32B), `meta-llama/Llama-3.2-1B-Instruct-spec` (drafts for 70B).
 - **Medusa heads** (Cai et al. 2024, "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads"): вместо draft model добавляет K parallel prediction heads к самому target. Simpler to deploy, slightly lower acceptance than EAGLE.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-speculative-tuning.md` — skill, который profiles target model's workload и выбирает: draft model, K (draft length), tree width, temperature и when to fall back to plain decode.
 
-## Exercises
+## Упражнения
 
 1. Реализуйте exact rejection rule и empirically verify it. Запустите 10K samples через `speculative_decode` и через plain target sampling; посчитайте TV distance между двумя output distributions. Должно быть < 0.01.
 
@@ -179,9 +179,9 @@ def speculative_step(p_target, q_draft, K, temperature=1.0):
 
 5. Измерьте failure modes. Запустите speculative decode при temperature=1.5 (high stochasticity). Покажите, что α collapses и algorithm slower than plain decode из-за draft overhead.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | Target model | "The big model" | Slow, high-quality model, из которой нужны samples (p distribution) |
 | Draft model | "The speculator" | Small, fast predictor (q distribution); в 5-30x меньше |
@@ -195,7 +195,7 @@ def speculative_step(p_target, q_draft, K, temperature=1.0):
 | EAGLE feature reuse | "Hidden-state draft" | Draft input is target's last hidden state, not raw tokens, shrinking the draft |
 | Test-time simulation loss | "EAGLE-3 training" | Train draft on outputs matching target's test-time distribution, not teacher forcing |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Leviathan, Kalai, Matias, 2023 — "Fast Inference from Transformers via Speculative Decoding"](https://arxiv.org/abs/2211.17192) — exact rejection rule и theoretical speedup analysis
 - [Chen, Borgeaud, Irving et al., 2023 — "Accelerating Large Language Model Decoding with Speculative Sampling"](https://arxiv.org/abs/2302.01318) — concurrent speculative-sampling paper at DeepMind

@@ -1,6 +1,6 @@
 # Whisper — архитектура и дообучение
 
-> Whisper — transformer encoder-decoder с 30-секундным окном, обученный на 680k часах многоязычных слабо размеченных audio-text пар. Одна архитектура, много задач, устойчивость на 99 языках. Эталонный ASR 2026 года.
+> Whisper — transformer encoder-decoder с 30-секундным окном, обученный на 680k часах многоязычных слабо размеченных пар аудио-текст. Одна архитектура, много задач, устойчивость на 99 языках. Эталонный ASR 2026 года.
 
 **Тип:** Сборка
 **Языки:** Python
@@ -23,7 +23,7 @@ Whisper, выпущенный OpenAI в сентябре 2022 года, был �
 
 **Архитектура.** Стандартный transformer encoder-decoder.
 
-- Вход: 30-секундная log-mel спектрограмма, 80 mels, hop 10 ms → 3000 фреймов. Более короткие клипы дополняются нулями, более длинные режутся на chunks.
+- Вход: 30-секундная log-mel спектрограмма, 80 mels, шаг 10 ms → 3000 фреймов. Более короткие клипы дополняются нулями, более длинные режутся на chunks.
 - Encoder: conv-downsample (stride 2) + `N` transformer blocks. Для Large-v3: 32 layers, 1280-dim, 20 heads.
 - Decoder: `N` transformer blocks с causal self-attn + cross-attn к encoder output. Тот же размер, что у encoder.
 - Выход: BPE-токены над словарем 51,865 токенов.
@@ -42,7 +42,7 @@ Large-v3 имеет 1.55B параметров. Turbo использует 4-lay
 
 Prompt позволяет одной модели выполнять много задач. Замените `<|en|>` на `<|fr|>`, и она будет транскрибировать французский.
 
-**30-секундное окно.** Все привязано к 30 секундам. Более длинные клипы нужно chunking; более короткие — padding. Окна не streamable нативно — поэтому существуют WhisperX, Whisper-Streaming и faster-whisper.
+**30-секундное окно.** Все привязано к 30 секундам. Более длинные клипы нужно разбивать на chunks; более короткие — дополнять padding. Окна нативно не поддерживают streaming — поэтому существуют WhisperX, Whisper-Streaming и faster-whisper.
 
 **Log-mel нормализация.** `(log_mel - mean) / std`, где статистики взяты из обучающего корпуса Whisper. Вы *обязаны* использовать preprocessing Whisper (`whisper.audio.log_mel_spectrogram`), а не `librosa.feature.melspectrogram`.
 
@@ -64,7 +64,7 @@ Prompt позволяет одной модели выполнять много 
 
 1. Соберите 10–100 часов аудио целевого домена с выровненными транскриптами.
 2. Запустите `transformers.Seq2SeqTrainer` с callback `generate_with_loss`.
-3. Parameter-efficient: LoRA на `q_proj`, `k_proj`, `v_proj` attention layers снижает память GPU в 4× с ценой <0.3 WER.
+3. Parameter-efficient: LoRA на attention layers `q_proj`, `k_proj`, `v_proj` снижает память GPU в 4× с ценой <0.3 WER.
 4. Заморозьте encoder, если у вас <10 часов. Дообучайте только decoder.
 5. Используйте собственный tokenizer и prompt format Whisper; никогда не меняйте tokenizer.
 
@@ -89,7 +89,7 @@ for seg in result["segments"]:
     print(f"[{seg['start']:.2f}–{seg['end']:.2f}] {seg['text']}")
 ```
 
-Ключевые defaults, которые стоит переопределять всегда: `temperature=0.0` (sampling по умолчанию использует fallback chain 0.0 → 0.2 → 0.4 …), `condition_on_previous_text=False` (предотвращает каскадные галлюцинации) и `no_speech_threshold=0.6` (детекция тишины).
+Ключевые значения по умолчанию, которые стоит переопределять всегда: `temperature=0.0` (sampling по умолчанию использует fallback chain 0.0 → 0.2 → 0.4 …), `condition_on_previous_text=False` (предотвращает каскадные галлюцинации) и `no_speech_threshold=0.6` (детекция тишины).
 
 ### Шаг 2: chunked long-form
 
@@ -117,7 +117,7 @@ model = get_peft_model(model, lora)
 # model.print_trainable_parameters()  -> ~3M trainable / 809M total
 ```
 
-Дальше стандартный Trainer loop. Checkpoint каждые 1000 шагов. Оценивайте WER на held-out.
+Дальше стандартный цикл Trainer. Checkpoint каждые 1000 шагов. Оценивайте WER на held-out.
 
 ### Шаг 4: посмотрите, что учит каждый слой
 
@@ -132,7 +132,7 @@ with torch.inference_mode():
 # out.cross_attentions: layer × head × step × src_len
 ```
 
-Визуализируйте heatmap — вы увидите диагональное выравнивание, пока decoder steps сканируют encoder frames. Эта диагональ — представление Whisper о word timestamps.
+Визуализируйте heatmap — вы увидите диагональное выравнивание, пока шаги decoder сканируют encoder frames. Эта диагональ — представление Whisper о word timestamps.
 
 ## Используйте это
 
@@ -147,14 +147,14 @@ with torch.inference_mode():
 | Streaming (2 s latency) | Whisper-Streaming или Parakeet-TDT |
 | Word-level timestamps | WhisperX (forced alignment через wav2vec 2.0) |
 
-`faster-whisper` (CTranslate2 backend) — самый быстрый CPU+GPU runtime для инференса в 2026 году: 4× быстрее vanilla при идентичном output.
+`faster-whisper` (backend CTranslate2) — самый быстрый CPU+GPU runtime для инференса в 2026 году: 4× быстрее vanilla при идентичном output.
 
 ## Ловушки, которые все еще попадают в продакшен в 2026 году
 
 - **Галлюцинации текста на тишине.** Whisper обучался на captions и включает "Thanks for watching!", "Subscribe!", lyrics. Всегда используйте VAD-gate перед вызовом.
 - **Каскад `condition_on_previous_text`.** Одна галлюцинация загрязняет последующие окна. Ставьте `False`, если вам не нужна fluency между chunks.
 - **Padding коротких клипов.** 2-секундный клип, дополненный до 30 секунд, может галлюцинировать в хвостовой тишине. Используйте `pad=False` или VAD-gate.
-- **Неверные mel stats.** Использование mels из librosa вместо Whisper дает почти случайный output. Используйте `whisper.audio.log_mel_spectrogram`.
+- **Неверные статистики mel.** Использование mels из librosa вместо Whisper дает почти случайный output. Используйте `whisper.audio.log_mel_spectrogram`.
 
 ## Доведите до результата
 
@@ -169,7 +169,7 @@ with torch.inference_mode():
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | 30-sec window | Лимит Whisper | Жесткий входной предел; режьте длинное аудио на chunks. |
 | SOT | Start-of-transcript | `<|startoftranscript|>` запускает decoder prompt. |
 | Timestamps token | Временное выравнивание | Каждое смещение 0.02 s — специальный токен в словаре 51k. |

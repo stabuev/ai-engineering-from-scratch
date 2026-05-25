@@ -193,7 +193,7 @@ graph LR
 
 Числа меняются каждые шесть месяцев. Skeleton -- нет.
 
-## Build It
+## Практика
 
 Код урока -- это orchestrator и manifest checker, а не двенадцать training scripts. Каждая стадия симулируется placeholder, который создает output artifact правильной формы и hash. Запуск orchestrator end-to-end доказывает, что plumbing пайплайна работает, прежде чем вы потратите GPU money на настоящие стадии.
 
@@ -208,7 +208,7 @@ graph LR
 
 Pipeline в `main.py` запускает двенадцать placeholder stages, создает manifest и упражняет failing eval gate, чтобы показать, как выглядит held run. Замените каждый placeholder на настоящий training script из соответствующего урока, и у вас будет skeleton, который использует реальный frontier pipeline.
 
-## Use It
+## Использование
 
 Canonical workflow состоит из трех команд.
 
@@ -222,11 +222,11 @@ python code/main.py gate    # read manifest.out.yaml, apply eval gates, ship-or-
 
 Output `gate` -- либо `SHIP`, либо `HOLD: <reason>`. Held run -- не failure; это decision point. Named reviewer либо overrides (и override логируется), либо approves rollback.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-llm-pipeline-reviewer.md`. Передайте ему proposed pipeline manifest, и он проверит все contracts: stage typing, hash chain, gates, rollback plan, cost estimate. Он отказывается approve manifest с missing eval gate, unbounded KL budget или run, который смешивает eval и training data.
 
-## Exercises
+## Упражнения
 
 1. Расширьте orchestrator для поддержки parallel execution стадий 07 и 08. Используйте stdlib module `concurrent.futures`. Подтвердите, что final manifest записывает outputs обеих стадий и что input hash стадии 09 -- deterministic combination обоих.
 
@@ -238,9 +238,9 @@ Output `gate` -- либо `SHIP`, либо `HOLD: <reason>`. Held run -- не fa
 
 5. Добавьте observability. Emit OpenTelemetry spans для каждой стадии, с attributes для params, tokens seen, loss и cost. Pipe spans to a local collector. Смысл не в dashboards; смысл в том, что health каждой стадии traceable из одного trace ID.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | Manifest | "The recipe file" | YAML или JSON, описывающий pipeline version, seed, per-stage config и gate thresholds — достаточный для replay run |
 | Content-addressed | "By hash not name" | Artifacts хранятся по SHA-256 своего contents, поэтому нельзя спутать version A с version B |
@@ -253,7 +253,7 @@ Output `gate` -- либо `SHIP`, либо `HOLD: <reason>`. Held run -- не fa
 | Reproducible | "Same metrics on replay" | Bit-level weights могут отличаться, но downstream metrics эквивалентны — реалистичная цель для distributed LLM training |
 | Cost gate | "You cannot exceed X" | Pre-run cost estimate плюс in-run tracker — pipeline не стартует, если estimate превышает budget |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Dubey et al., 2024 -- "The Llama 3 Herd of Models"](https://arxiv.org/abs/2407.21783) -- самое подробное public description frontier pipeline, включая data, training, alignment, eval
 - [DeepSeek-AI, 2024 -- "DeepSeek-V3 Technical Report"](https://arxiv.org/abs/2412.19437) -- efficiency-first pipeline примерно за 1/10 стоимости training класса Llama 3

@@ -220,7 +220,7 @@ Learning rate schedule важнее, чем может показаться. GPT
 
 Output projection (logits head) использует общие веса с token embedding matrix. Это называется weight tying: оно уменьшает число параметров на 38M и улучшает качество, потому что заставляет модель использовать одно и то же representation space для входа и выхода.
 
-## Build It
+## Практика
 
 ### Step 1: Embedding Layer
 
@@ -464,7 +464,7 @@ Temperature управляет случайностью. Temperature 1.0 исп�
 
 Окно `tokens[-seq_len:]` необходимо, потому что у модели есть максимальная длина контекста (1024 для GPT-2). Когда вы превышаете ее, старейшие токены приходится отбрасывать. Это и есть "context window", о котором все говорят.
 
-## Use It
+## Использование
 
 ### Full Training and Generation Demo
 
@@ -492,11 +492,11 @@ print(f"\nGenerated: {generated_text}")
 
 На маленьком корпусе и маленькой модели сгенерированный текст в лучшем случае будет полусвязным. Модель выучит некоторые byte-level patterns из training text, но не сможет обобщать так, как GPT-2 с 40GB обучающих данных и полной архитектурой на 124M параметров. Цель не в качестве output. Цель в том, что вы можете проследить каждый шаг: embedding lookup, attention computation, feedforward transformation, logit projection, softmax и sampling. Каждая операция видна.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-gpt-architecture-analyzer.md` -- prompt, который анализирует architectural choices в любой GPT-style model. Подайте ему model card или technical report, и он разберет parameter allocation, attention design и scaling decisions.
 
-## Exercises
+## Упражнения
 
 1. Измените модель так, чтобы она использовала 24 layers и 16 heads вместо 12/12. Посчитайте параметры. Как удвоение глубины соотносится с удвоением ширины (embedding dimension)?
 
@@ -508,7 +508,7 @@ print(f"\nGenerated: {generated_text}")
 
 5. Постройте plotter для training loss curve. Обучайте модель 1000 steps и постройте loss vs step. Найдите три фазы: быстрый начальный descent (изучение частых bytes), более медленная middle phase (изучение byte patterns) и plateau (overfitting на маленьком corpus). Форма этой кривой одинакова независимо от того, обучаете ли вы 128-dim model или GPT-4.
 
-## Key Terms
+## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
@@ -523,7 +523,7 @@ print(f"\nGenerated: {generated_text}")
 | Layer normalization | "Normalizing activations" | Нормализация по feature dimension к mean 0 и variance 1, с learnable scale и bias parameters |
 | Cross-entropy loss | "Насколько ошибаются predictions" | -log(probability assigned to the correct next token), усредненный по всем positions -- стандартная LLM training objective |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Radford et al., 2019 -- "Language Models are Unsupervised Multitask Learners" (GPT-2)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) -- статья GPT-2, представившая семейство от 124M до 1.5B параметров
 - [Vaswani et al., 2017 -- "Attention Is All You Need"](https://arxiv.org/abs/1706.03762) -- оригинальная статья о transformer со scaled dot-product attention и multi-head attention

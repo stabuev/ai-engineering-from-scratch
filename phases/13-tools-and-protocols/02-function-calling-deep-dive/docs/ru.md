@@ -128,7 +128,7 @@ Production-команды заворачивают такой translator в `Abs
 
 Этот урок создает `outputs/skill-provider-portability-audit.md`. Получив function-calling integration под одного provider, skill делает portability audit: на какие лимиты provider он опирается, какие fields нужно переименовать и что сломается при переносе на каждого другого provider.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py` и проверьте, что все три provider declaration JSONs сериализуют один и тот же underlying объект `Tool`. Измените canonical tool, добавив enum parameter, и подтвердите, что только Gemini translator должен обработать OpenAPI quirk.
 

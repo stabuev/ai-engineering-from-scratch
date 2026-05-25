@@ -9,26 +9,26 @@
 
 ## Цели обучения
 
-- Реализовать filter methods (variance threshold, mutual information, chi-squared) и wrapper methods (RFE, forward selection) с нуля
-- Объяснить, почему mutual information улавливает нелинейные feature-target relationships, которые correlation пропускает
-- Сравнить L1 regularization (embedded selection) с RFE (wrapper selection) и оценить computational tradeoffs
-- Построить feature selection pipeline, объединяющий несколько методов, и показать улучшение generalization на held-out data
+- Реализовать методы-фильтры (variance threshold, mutual information, chi-squared) и wrapper-методы (RFE, forward selection) с нуля
+- Объяснить, почему mutual information улавливает нелинейные связи между признаками и целевой переменной, которые пропускает correlation
+- Сравнить L1 regularization (embedded selection) с RFE (wrapper selection) и оценить вычислительные компромиссы
+- Построить pipeline отбора признаков, объединяющий несколько методов, и показать улучшение обобщения на отложенных данных
 
 ## Проблема
 
-У вас 500 features. Model обучается медленно, постоянно переобучается, и никто не может объяснить, что она выучила. Вы добавляете больше features, надеясь улучшить performance. Становится хуже.
+У вас 500 признаков. Модель обучается медленно, постоянно переобучается, и никто не может объяснить, что она выучила. Вы добавляете больше признаков, надеясь улучшить качество. Становится хуже.
 
-Это curse of dimensionality в действии. С ростом числа features объем feature space взрывается. Data points становятся sparse. Distances между points сходятся. Model нужны exponentially more data, чтобы найти real patterns. Noise features заглушают signal features. Overfitting становится default.
+Это проклятие размерности в действии. С ростом числа признаков объем пространства признаков взрывается. Точки данных становятся разреженными. Расстояния между точками сходятся. Модели нужно экспоненциально больше данных, чтобы найти реальные закономерности. Шумовые признаки заглушают сигнальные признаки. Переобучение становится поведением по умолчанию.
 
-Feature selection — противоядие. Уберите noise. Удалите redundancy. Оставьте features, несущие реальную информацию о target. Результат: быстрее training, лучше generalization и models, которые можно объяснить.
+Отбор признаков — противоядие. Уберите шум. Удалите избыточность. Оставьте признаки, несущие реальную информацию о целевой переменной. Результат: быстрее обучение, лучше обобщение и модели, которые можно объяснить.
 
 Цель не в использовании всей доступной информации. Цель — использовать правильную информацию.
 
 ## Концепция
 
-### Три категории Feature Selection
+### Три категории отбора признаков
 
-Каждый feature selection method относится к одной из трех категорий:
+Каждый метод отбора признаков относится к одной из трех категорий:
 
 ```mermaid
 flowchart TD
@@ -50,41 +50,41 @@ flowchart TD
     D --> D3["Elastic Net"]
 ```
 
-**Filter methods** оценивают каждый feature независимо с помощью statistical measure. Они не используют model. Быстрые, но пропускают feature interactions.
+**Filter methods** оценивают каждый признак независимо с помощью статистической меры. Они не используют модель. Быстрые, но пропускают взаимодействия признаков.
 
-**Wrapper methods** обучают model, чтобы оценивать feature subsets. Score — performance модели. Результаты лучше, но дорого, потому что model переобучается много раз.
+**Wrapper methods** обучают модель, чтобы оценивать подмножества признаков. Оценка — качество модели. Результаты лучше, но это дорого, потому что модель переобучается много раз.
 
-**Embedded methods** выбирают features как часть model training. L1 regularization зануляет weights. Decision trees split по самым полезным features. Selection происходит во время fitting, а не отдельным шагом.
+**Embedded methods** выбирают признаки как часть обучения модели. L1 regularization зануляет веса. Деревья решений делают разбиения по самым полезным признакам. Отбор происходит во время подгонки, а не отдельным шагом.
 
-### Variance Threshold
+### Порог дисперсии
 
-Самый простой filter. Если feature почти не меняется между samples, он почти не несет информации.
+Самый простой фильтр. Если признак почти не меняется между объектами, он почти не несет информации.
 
-Представьте feature, равный 0.0 для 999 из 1000 samples. Его variance почти zero. Ни одна model не может использовать его, чтобы различать classes. Удалите его.
+Представьте признак, равный 0.0 для 999 из 1000 объектов. Его дисперсия почти нулевая. Ни одна модель не может использовать его, чтобы различать классы. Удалите его.
 
 ```
 variance(x) = mean((x - mean(x))^2)
 ```
 
-Задайте threshold (например, 0.01). Drop every feature with variance below it. Это удаляет constant или near-constant features вообще без обращения к target variable.
+Задайте порог (например, 0.01). Удалите каждый признак с дисперсией ниже этого порога. Это удаляет постоянные или почти постоянные признаки вообще без обращения к целевой переменной.
 
-Когда использовать: как preprocessing step перед другими methods. Он ловит очевидно useless features почти бесплатно.
+Когда использовать: как шаг предобработки перед другими методами. Он почти бесплатно ловит очевидно бесполезные признаки.
 
-Ограничение: feature может иметь high variance и все равно быть pure noise. Variance threshold необходим, но недостаточен.
+Ограничение: признак может иметь высокую дисперсию и все равно быть чистым шумом. Порог дисперсии необходим, но недостаточен.
 
-### Mutual Information
+### Взаимная информация
 
-Mutual information измеряет, насколько знание value feature X снижает uncertainty about target Y.
+Mutual information измеряет, насколько знание значения признака X снижает неопределенность относительно целевой переменной Y.
 
 ```
 I(X; Y) = sum_x sum_y p(x, y) * log(p(x, y) / (p(x) * p(y)))
 ```
 
-Если X и Y independent, p(x, y) = p(x) * p(y), log term zero и I(X; Y) = 0. Чем больше X сообщает о Y, тем выше mutual information.
+Если X и Y независимы, p(x, y) = p(x) * p(y), логарифмический член равен нулю, и I(X; Y) = 0. Чем больше X сообщает о Y, тем выше mutual information.
 
-Главное преимущество перед correlation: mutual information улавливает nonlinear relationships. Feature может иметь zero correlation с target, но high mutual information из-за quadratic или periodic relationship.
+Главное преимущество перед correlation: mutual information улавливает нелинейные связи. Признак может иметь нулевую correlation с целевой переменной, но высокую mutual information из-за квадратичной или периодической зависимости.
 
-Для continuous features сначала discretize into bins (histogram-based estimation). Number of bins влияет на estimate: слишком мало bins теряют information, слишком много добавляют noise. Частый выбор: sqrt(n) bins или Sturges' rule (1 + log2(n)).
+Для непрерывных признаков сначала выполните дискретизацию по корзинам (оценивание на основе гистограммы). Число корзин влияет на оценку: слишком мало корзин теряют информацию, слишком много добавляют шум. Частый выбор: sqrt(n) корзин или правило Стерджеса (1 + log2(n)).
 
 ```mermaid
 flowchart LR
@@ -97,12 +97,12 @@ flowchart LR
 
 ### Recursive Feature Elimination (RFE)
 
-RFE — wrapper method. Он использует feature importance самой модели, чтобы iteratively prune:
+RFE — wrapper-метод. Он использует важность признаков самой модели, чтобы итеративно отсекать признаки:
 
-1. Train model со всеми features
-2. Rank features by importance (coefficients для linear models, impurity reduction для trees)
-3. Remove least important feature(s)
-4. Repeat until desired number of features remains
+1. Обучить модель со всеми признаками
+2. Ранжировать признаки по важности (coefficients для linear models, impurity reduction для trees)
+3. Удалить наименее важный признак или признаки
+4. Повторять, пока не останется нужное число признаков
 
 ```mermaid
 flowchart TD
@@ -114,31 +114,31 @@ flowchart TD
     E -->|Yes| F["Return Selected Features"]
 ```
 
-RFE учитывает feature interactions, потому что model видит все remaining features вместе. Removing one feature changes importance of others. Это делает его thorough по сравнению с filter methods.
+RFE учитывает взаимодействия признаков, потому что модель видит все оставшиеся признаки вместе. Удаление одного признака меняет важность других. Это делает его более тщательным по сравнению с filter methods.
 
-Стоимость: model обучается N - target раз. При 500 features и target 10 это 490 training runs. Для expensive models это медленно. Можно ускорить, удаляя multiple features per step (например, bottom 10% each round).
+Стоимость: модель обучается N - target раз. При 500 признаках и target 10 это 490 запусков обучения. Для дорогих моделей это медленно. Можно ускорить, удаляя несколько признаков за шаг (например, нижние 10% на каждом раунде).
 
 ### L1 (Lasso) Regularization
 
-L1 regularization добавляет absolute value weights к loss function:
+L1 regularization добавляет сумму абсолютных значений весов к функции потерь:
 
 ```
 loss = prediction_error + alpha * sum(|w_i|)
 ```
 
-Параметр alpha управляет тем, насколько агрессивно features prune. Более высокий alpha значит, что больше weights становятся exactly zero.
+Параметр alpha управляет тем, насколько агрессивно отсекаются признаки. Более высокий alpha значит, что больше весов становятся ровно нулевыми.
 
-Почему exactly zero? L1 penalty создает diamond-shaped constraint region в weight space. Optimal solution склонен попадать в corner этого diamond, где один или несколько weights zero. L2 regularization (ridge) создает circular constraint, где weights shrink, но редко становятся zero.
+Почему ровно ноль? L1 penalty создает ромбовидную область ограничений в пространстве весов. Оптимальное решение часто попадает в угол этого ромба, где один или несколько весов равны нулю. L2 regularization (ridge) создает круглое ограничение, где веса уменьшаются, но редко становятся нулевыми.
 
-Это embedded feature selection: model learns during training, какие features игнорировать. Features with zero weight effectively removed.
+Это embedded feature selection: во время обучения модель узнает, какие признаки игнорировать. Признаки с нулевым весом фактически удалены.
 
-Преимущества: single training run, handles correlated features (выбирает один и зануляет другие), встроено в большинство linear model implementations.
+Преимущества: один запуск обучения, работает с коррелированными признаками (выбирает один и зануляет другие), встроено в большинство реализаций линейных моделей.
 
-Ограничение: работает только для linear models. Не улавливает nonlinear feature importance.
+Ограничение: работает только для линейных моделей. Не улавливает нелинейную важность признаков.
 
-### Tree-Based Feature Importance
+### Важность признаков на основе деревьев
 
-Decision trees и их ensembles (random forests, gradient boosting) naturally rank features. Каждый split reduces impurity (Gini или entropy для classification, variance для regression). Features, которые дают larger impurity reductions, важнее.
+Деревья решений и их ансамбли (random forests, gradient boosting) естественно ранжируют признаки. Каждое разбиение снижает impurity (Gini или entropy для classification, variance для regression). Признаки, которые дают большее снижение impurity, важнее.
 
 Для random forest с T trees:
 
@@ -148,35 +148,35 @@ importance(feature_j) = (1/T) * sum over all trees of
         (n_samples * impurity_decrease)
 ```
 
-Это дает normalized importance score для каждого feature. Метод автоматически handles nonlinear relationships и feature interactions.
+Это дает нормализованную оценку важности для каждого признака. Метод автоматически обрабатывает нелинейные связи и взаимодействия признаков.
 
-Осторожно: tree-based importance biased toward features with many unique values (high cardinality). Random ID column будет выглядеть important, потому что perfectly splits every sample. Используйте permutation importance как sanity check.
+Осторожно: важность на основе деревьев смещена в сторону признаков с большим числом уникальных значений (высокой кардинальностью). Случайный столбец ID будет выглядеть важным, потому что идеально разделяет каждый объект. Используйте permutation importance как проверку здравого смысла.
 
 ### Permutation Importance
 
-Model-agnostic method:
+Метод, не зависящий от модели:
 
-1. Train model и record baseline performance на validation data
-2. Для каждого feature: shuffle its values randomly, measure drop in performance
-3. Чем больше drop, тем важнее feature
+1. Обучить модель и зафиксировать базовое качество на валидационных данных
+2. Для каждого признака: случайно перемешать его значения и измерить падение качества
+3. Чем больше падение, тем важнее признак
 
-Если shuffling feature не ухудшает performance, model от него не зависит. Если performance collapses, feature critical.
+Если перемешивание признака не ухудшает качество, модель от него не зависит. Если качество рушится, признак критически важен.
 
-Permutation importance избегает cardinality bias tree-based importance. Но он slow: one full evaluation per feature, repeated multiple times for stability.
+Permutation importance избегает смещения tree-based importance по кардинальности. Но этот метод медленный: одна полная оценка на признак, повторенная несколько раз для устойчивости.
 
-### Comparison Table
+### Сравнительная таблица
 
-| Метод | Тип | Speed | Nonlinear | Feature Interactions |
+| Метод | Тип | Скорость | Нелинейность | Взаимодействия признаков |
 |-------|-----|-------|-----------|----------------------|
-| Variance threshold | Filter | Very fast | No | No |
-| Mutual information | Filter | Fast | Yes | No |
-| Correlation filter | Filter | Fast | No | No |
-| RFE | Wrapper | Slow | Depends on model | Yes |
-| L1 / Lasso | Embedded | Fast | No (linear) | No |
-| Tree importance | Embedded | Medium | Yes | Yes |
-| Permutation importance | Model-agnostic | Slow | Yes | Yes |
+| Variance threshold | Filter | Очень быстро | Нет | Нет |
+| Mutual information | Filter | Быстро | Да | Нет |
+| Correlation filter | Filter | Быстро | Нет | Нет |
+| RFE | Wrapper | Медленно | Зависит от модели | Да |
+| L1 / Lasso | Embedded | Быстро | Нет (линейный метод) | Нет |
+| Tree importance | Embedded | Средне | Да | Да |
+| Permutation importance | Model-agnostic | Медленно | Да | Да |
 
-### Decision Flowchart
+### Блок-схема принятия решений
 
 ```mermaid
 flowchart TD
@@ -204,7 +204,7 @@ flowchart TD
 
 ## Соберите это
 
-### Шаг 1: сгенерировать synthetic data с известной feature structure
+### Шаг 1: сгенерировать синтетические данные с известной структурой признаков
 
 ```python
 import numpy as np
@@ -243,9 +243,9 @@ def make_feature_selection_data(n_samples=500, seed=42):
     return X, y, feature_names
 ```
 
-Мы знаем ground truth: features 0-4 informative (плюс 3 и 4 — correlated copies 0 и 1), features 5-9 correlated with informative features, features 10-19 pure noise. Хороший selection method должен rank 0-4 highest и 10-19 lowest.
+Мы знаем ground truth: признаки 0-4 информативны (плюс 3 и 4 — коррелированные копии 0 и 1), признаки 5-9 коррелируют с информативными признаками, признаки 10-19 — чистый шум. Хороший метод отбора должен ранжировать 0-4 выше всего, а 10-19 ниже всего.
 
-### Шаг 2: Variance threshold
+### Шаг 2: порог дисперсии
 
 ```python
 def variance_threshold(X, threshold=0.01):
@@ -254,7 +254,7 @@ def variance_threshold(X, threshold=0.01):
     return mask, variances
 ```
 
-### Шаг 3: Mutual information (discrete)
+### Шаг 3: mutual information (дискретная)
 
 ```python
 def discretize(x, n_bins=10):
@@ -332,7 +332,7 @@ def rfe(X, y, n_features_to_select=5, lr=0.1, epochs=100):
     return selected_mask, rankings
 ```
 
-### Шаг 5: L1 feature selection
+### Шаг 5: отбор признаков через L1
 
 ```python
 def soft_threshold(w, alpha):
@@ -360,7 +360,7 @@ def l1_feature_selection(X, y, alpha=0.1, lr=0.01, epochs=500):
     return selected_mask, w
 ```
 
-### Шаг 6: Tree-based importance (simple decision tree)
+### Шаг 6: важность на основе деревьев (простое дерево решений)
 
 ```python
 def gini_impurity(y):
@@ -457,11 +457,11 @@ def _build_tree_importance(X, y, feature_subset, max_depth, depth=0):
 
 ### Шаг 7: запустить все методы и сравнить
 
-Код file запускает все пять methods на одном synthetic dataset и печатает comparison table, показывающую, какие features выбирает каждый method.
+Файл с кодом запускает все пять методов на одном синтетическом наборе данных и печатает сравнительную таблицу, показывающую, какие признаки выбирает каждый метод.
 
 ## Используйте это
 
-Со scikit-learn feature selection встроен в pipeline:
+В scikit-learn отбор признаков встроен в pipeline:
 
 ```python
 from sklearn.feature_selection import (
@@ -492,45 +492,45 @@ rf.fit(X, y)
 importances = rf.feature_importances_
 ```
 
-Реализации с нуля показывают, что происходит внутри каждого method. Variance threshold — просто computing `var(X, axis=0)` и applying mask. Mutual information — counting joint and marginal frequencies in contingency table. RFE — loop, который trains, ranks и prunes. L1 — gradient descent с soft-thresholding step. Tree importance accumulates impurity reductions across splits. Никакой магии — только statistics и loops.
+Реализации с нуля показывают, что происходит внутри каждого метода. Variance threshold — это просто вычисление `var(X, axis=0)` и применение маски. Mutual information — подсчет совместных и маргинальных частот в contingency table. RFE — цикл, который обучает, ранжирует и отсекает. L1 — gradient descent с шагом soft-thresholding. Tree importance накапливает снижения impurity по разбиениям. Никакой магии — только статистика и циклы.
 
-Sklearn versions добавляют robustness (например, mutual_info_classif uses k-NN density estimation instead of binning), speed (C implementations) и pipeline integration.
+Версии sklearn добавляют устойчивость (например, mutual_info_classif использует k-NN density estimation вместо binning), скорость (реализации на C) и интеграцию с pipeline.
 
 ## Доведите до результата
 
 Этот урок создает:
-- `outputs/skill-feature-selector.md` — quick reference decision tree для выбора правильного feature selection method
+- `outputs/skill-feature-selector.md` — краткое справочное дерево решений для выбора правильного метода отбора признаков
 
 ## Упражнения
 
-1. **Forward selection**: реализуйте противоположность RFE. Начните с zero features. На каждом step добавляйте feature, который сильнее всего улучшает model performance. Остановитесь, когда добавление features перестанет помогать. Сравните selected features с RFE results. Что быстрее? Что дает лучший результат?
+1. **Forward selection**: реализуйте противоположность RFE. Начните с нуля признаков. На каждом шаге добавляйте признак, который сильнее всего улучшает качество модели. Остановитесь, когда добавление признаков перестанет помогать. Сравните выбранные признаки с результатами RFE. Что быстрее? Что дает лучший результат?
 
-2. **Stability selection**: запустите L1 feature selection 50 раз, каждый раз на random 80% subsample data, со слегка разными alpha values. Посчитайте, как часто каждый feature selected. Features selected in > 80% runs считаются "stable." Сравните stable features с single-run L1 selection. Что надежнее?
+2. **Stability selection**: запустите L1 feature selection 50 раз, каждый раз на случайной 80% подвыборке данных, со слегка разными значениями alpha. Посчитайте, как часто выбирается каждый признак. Признаки, выбранные более чем в 80% запусков, считаются "stable." Сравните устойчивые признаки с однократным запуском L1 selection. Что надежнее?
 
-3. **Multicollinearity detection**: вычислите correlation matrix для всех features. Реализуйте function, которая при заданном correlation threshold (например, 0.9) удаляет один feature из каждой highly-correlated pair (оставляя тот, у которого выше mutual information with target). Проверьте на synthetic dataset и убедитесь, что redundant correlated features удалены.
+3. **Multicollinearity detection**: вычислите correlation matrix для всех признаков. Реализуйте функцию, которая при заданном correlation threshold (например, 0.9) удаляет один признак из каждой сильно коррелированной пары (оставляя тот, у которого выше mutual information with target). Проверьте на синтетическом наборе данных и убедитесь, что избыточные коррелированные признаки удалены.
 
-4. **Feature selection pipeline**: объедините variance threshold, mutual information filter и RFE в один pipeline. Сначала удалите near-zero-variance features, затем оставьте top 50% by mutual information, затем запустите RFE на survivors. Сравните с RFE alone on all features. Pipeline быстрее? Так же accurate?
+4. **Feature selection pipeline**: объедините variance threshold, mutual information filter и RFE в один pipeline. Сначала удалите признаки с почти нулевой дисперсией, затем оставьте верхние 50% по mutual information, затем запустите RFE на оставшихся признаках. Сравните с RFE alone on all features. Pipeline быстрее? Точность такая же?
 
-5. **Permutation importance from scratch**: реализуйте permutation importance. Для каждого feature shuffle values 10 раз, measure average drop in F1 score. Сравните ranking с tree-based importance. Найдите случаи, где они disagree, и объясните почему (hint: correlated features).
+5. **Permutation importance from scratch**: реализуйте permutation importance. Для каждого признака перемешайте значения 10 раз и измерьте среднее падение F1 score. Сравните ranking с tree-based importance. Найдите случаи, где они расходятся, и объясните почему (hint: correlated features).
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
 |--------|-------------|------------------------------|
-| Filter method | «Score features independently» | Feature selection approach, который ranks features using statistical measure without training a model, оценивая каждый feature in isolation |
-| Wrapper method | «Use the model to pick features» | Feature selection approach, который evaluates feature subsets by training a model and using its performance as selection criterion |
-| Embedded method | «The model selects features during training» | Feature selection, happening as part of model fitting, например L1 regularization driving weights to zero |
-| Mutual information | «Насколько one variable tells you about another» | Мера reduction in uncertainty about Y given knowledge of X, capturing both linear and nonlinear dependencies |
-| Recursive Feature Elimination | «Train, rank, prune, repeat» | Iterative wrapper method: trains a model, removes least important feature(s), repeats until target count reached |
-| L1 / Lasso regularization | «Penalty that kills features» | Adding sum of absolute weight values to loss function, driving unimportant feature weights exactly to zero |
-| Variance threshold | «Remove constant features» | Dropping features whose variance across samples falls below specified threshold, filtering out features with no information |
-| Feature importance | «Какие features важнее всего» | Score, indicating how much each feature contributes to model predictions, computed from split gains (trees) or coefficient magnitudes (linear) |
-| Permutation importance | «Shuffle and measure the damage» | Evaluating feature importance by randomly shuffling each feature's values and measuring resulting drop in model performance |
-| Curse of dimensionality | «Too many features, not enough data» | Phenomenon where adding features increases feature space volume exponentially, making data sparse and distances meaningless |
+| Filter method | «Оценить признаки независимо» | Подход к отбору признаков, который ранжирует признаки статистической мерой без обучения модели, оценивая каждый признак отдельно |
+| Wrapper method | «Использовать модель для выбора признаков» | Подход к отбору признаков, который оценивает подмножества признаков через обучение модели и ее качество как критерий выбора |
+| Embedded method | «Модель выбирает признаки во время обучения» | Отбор признаков, происходящий как часть подгонки модели, например L1 regularization, зануляющая веса |
+| Mutual information | «Насколько одна переменная сообщает о другой» | Мера снижения неопределенности о Y при знании X, улавливающая и линейные, и нелинейные зависимости |
+| Recursive Feature Elimination | «Обучить, ранжировать, отсечь, повторить» | Итеративный wrapper-метод: обучает модель, удаляет наименее важные признаки и повторяет до нужного числа признаков |
+| L1 / Lasso regularization | «Штраф, убивающий признаки» | Добавление суммы абсолютных значений весов к функции потерь, из-за чего веса неважных признаков становятся ровно нулевыми |
+| Variance threshold | «Удалить постоянные признаки» | Удаление признаков, чья дисперсия по объектам ниже заданного порога, что отфильтровывает признаки без информации |
+| Feature importance | «Какие признаки важнее всего» | Оценка вклада каждого признака в предсказания модели, вычисляемая по выигрышам разбиений (деревья) или модулям коэффициентов (линейные модели) |
+| Permutation importance | «Перемешать и измерить ущерб» | Оценка важности признака через случайное перемешивание его значений и измерение падения качества модели |
+| Curse of dimensionality | «Слишком много признаков, слишком мало данных» | Явление, при котором добавление признаков экспоненциально увеличивает объем пространства признаков, делая данные разреженными, а расстояния бессмысленными |
 
 ## Дополнительное чтение
 
-- [An Introduction to Variable and Feature Selection (Guyon & Elisseeff, 2003)](https://jmlr.org/papers/v3/guyon03a.html) — foundational survey по feature selection methods
-- [scikit-learn Feature Selection Guide](https://scikit-learn.org/stable/modules/feature_selection.html) — practical reference для filter, wrapper и embedded methods с code examples
-- [Stability Selection (Meinshausen & Buhlmann, 2010)](https://arxiv.org/abs/0809.2932) — combines subsampling with feature selection для robust, reproducible results
-- [Beware Default Random Forest Importances (Strobl et al., 2007)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-25) — показывает cardinality bias в tree-based importance и предлагает conditional importance как alternative
+- [An Introduction to Variable and Feature Selection (Guyon & Elisseeff, 2003)](https://jmlr.org/papers/v3/guyon03a.html) — фундаментальный обзор методов отбора признаков
+- [scikit-learn Feature Selection Guide](https://scikit-learn.org/stable/modules/feature_selection.html) — практический справочник по filter, wrapper и embedded methods с примерами кода
+- [Stability Selection (Meinshausen & Buhlmann, 2010)](https://arxiv.org/abs/0809.2932) — объединяет subsampling с feature selection для устойчивых, воспроизводимых результатов
+- [Beware Default Random Forest Importances (Strobl et al., 2007)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-25) — показывает cardinality bias в tree-based importance и предлагает conditional importance как альтернативу

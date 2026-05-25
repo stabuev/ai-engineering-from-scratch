@@ -562,7 +562,7 @@ The model learns to predict the next token given all previous tokens."""
             print(f"  Steps {i:3d}-{i + len(chunk) - 1:3d}: avg loss = {avg:.4f}")
 ```
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-sft-data-curator.md` — prompt, который помогает проектировать и курировать instruction datasets для SFT. По заданной целевой способности (code generation, math, conversation) он выдает план сбора данных со спецификацией формата, критериями качества и требованиями к разнообразию.
 

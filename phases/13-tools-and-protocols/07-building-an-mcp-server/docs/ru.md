@@ -134,7 +134,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | python main.
 - Каждый tool executor возвращает список content blocks, а не голую строку.
 - `isError: true` выставляется, когда executor выбрасывает исключение.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-mcp-server-scaffolder.md`. По заданному domain (notes, tickets, files, database) skill scaffolds MCP server с правильным разделением tools / resources / prompts и путем перехода на SDK.
 

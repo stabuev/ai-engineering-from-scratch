@@ -17,7 +17,7 @@ Word2Vec дал нам это пространство. Двухслойная n
 
 ## Концепция
 
-![Skip-gram window and embedding space](./assets/word2vec.svg)
+![Окно Skip-gram и пространство эмбеддингов](./assets/word2vec.svg)
 
 **Distributional hypothesis** (Firth, 1957): "You shall know a word by the company it keeps." Если два слова встречаются в похожих контекстах, они, вероятно, имеют похожий смысл.
 
@@ -243,14 +243,14 @@ Refuse to declare a model good on analogy accuracy alone. Analogy benchmarks are
 
 ## Упражнения
 
-1. **Easy.** Запустите training loop на tiny corpus (20 предложений про cats and dogs). После 200 epochs проверьте, что `nearest(vocab, W, W[vocab["cat"]])` возвращает `dog` в top 3. Если нет, увеличьте epochs или vocabulary.
-2. **Medium.** Добавьте subsampling of frequent words. Words with frequency above `10^-5` are dropped from training pairs with probability proportional to their frequency. Измерьте влияние на rare-word similarity.
-3. **Hard.** Обучите модель на корпусе 20 Newsgroups. Вычислите две bias axes: `he - she` и `doctor - nurse`. Спроецируйте occupation words на обе axes. Сообщите, у каких occupations самый большой bias gap. Это тип probe, который используют fairness researchers.
+1. **Легко.** Запустите training loop на tiny corpus (20 предложений про cats and dogs). После 200 epochs проверьте, что `nearest(vocab, W, W[vocab["cat"]])` возвращает `dog` в top 3. Если нет, увеличьте epochs или vocabulary.
+2. **Средне.** Добавьте subsampling of frequent words. Words with frequency above `10^-5` are dropped from training pairs with probability proportional to their frequency. Измерьте влияние на rare-word similarity.
+3. **Сложно.** Обучите модель на корпусе 20 Newsgroups. Вычислите две bias axes: `he - she` и `doctor - nurse`. Спроецируйте occupation words на обе axes. Сообщите, у каких occupations самый большой bias gap. Это тип probe, который используют fairness researchers.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | Word embedding | Word as a vector | Плотное low-dim (обычно 100-300) представление, выученное из контекста. |
 | Skip-gram | Word2Vec trick | Предсказывать context words по center word. Медленнее CBOW, лучше для rare words. |
 | Negative sampling | Training shortcut | Заменяет softmax по полному vocab на binary classification против `k` random words. |

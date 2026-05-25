@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 10 · 12 (inference optimization), Phase 10 · 15 (speculative decoding)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Описать три common parallel-LLM topologies (voting, sub-task, Hogwild!) и назвать, какие problems решает каждая.
 - Сформулировать core Hogwild! setup: multiple workers, one shared KV cache, emergent coordination via self-prompting.
 - Посчитать wall-time speedup Hogwild! как функцию worker count `N`, task-level parallelism `p` и coordination overhead `c`.
 - Реализовать two-worker Hogwild! simulator на toy problem и наблюдать emergent task division.
 
-## The Problem
+## Проблема
 
 Современные LLMs решают сложные problems, производя длинные chains of reasoning — 5000 tokens пошаговой логики обычны, десятки тысяч tokens встречаются на глубоких math problems. При 35 tokens/sec decode на 70B model 50k tokens — это 24 минуты. Interactive model такой не является.
 
@@ -28,7 +28,7 @@ Hogwild! Inference выбирает другой подход. N workers раз�
 
 Speedup workload-dependent и экспериментальный по состоянию на апрель 2026. Но идею нужно знать, потому что она открывает новую ось inference parallelism.
 
-## The Concept
+## Концепция
 
 ### The setup
 
@@ -102,7 +102,7 @@ Reasoning problem: 10k tokens chain-of-thought. Пусть problem имеет `p
 
 Стоит знать. Стоит экспериментировать. Пока не стоит ставить на него product.
 
-## Build It
+## Практика
 
 `code/main.py` реализует toy Hogwild! simulator:
 
@@ -141,7 +141,7 @@ List, в который оба workers append. Simple locking (Python `threading
 
 Уменьшите sensitivity coordination heuristic. Запустите снова. Наблюдайте, что без хорошей coordination N=2 redundantly produces same tokens и speedup падает ниже 1. Это совпадает с observation paper: trick работает только если workers имеют reasoning capacity для self-coordinate.
 
-## Use It
+## Использование
 
 Hogwild! integration in production по состоянию на апрель 2026 — research-grade. Reference implementation от Yandex/HSE/IST основана на PyTorch и нацелена на single-node multi-process setups на DeepSeek-R1 и QwQ models.
 
@@ -154,11 +154,11 @@ Hogwild! integration in production по состоянию на апрель 202
 
 Combine with speculative decoding: каждый Hogwild! worker может independently use spec decode. Два speedups умножаются (roughly), превращая 3x spec decode и 1.8x Hogwild! в effective 5.4x относительно naive single-worker decoding.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-parallel-inference-router.md`. По reasoning workload profile (token budget, task parallelism profile, model family, deployment target) он routes between voting, tree-of-thought, multi-agent, Hogwild!, and speculative decoding strategies.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py` с default settings. Подтвердите, что N=2 Hogwild! configuration производит больше work-tokens, чем N=1 baseline за то же wall time.
 
@@ -170,9 +170,9 @@ Combine with speculative decoding: каждый Hogwild! worker может indep
 
 5. Combine Hogwild! with speculative decoding в toy: каждый worker использует 2-token spec-decode internally. Report multiplicative speedup. Какая bookkeeping problem возникает, когда два workers оба хотят extend same shared-cache prefix?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Hogwild! | "Parallel workers, shared cache" | N instances одной LLM running concurrently с одним shared KV cache; emergent coordination via self-prompting |
 | Shared KV cache | "The coordination medium" | Один растущий KV buffer, который все workers read and write; дает instant token visibility across workers |
@@ -184,7 +184,7 @@ Combine with speculative decoding: каждый Hogwild! worker может indep
 | Tree of thought | "Branch and prune" | Reasoning strategy, explores multiple branches and prunes; explicit coordination logic |
 | Multi-agent framework | "Assign sub-tasks" | Каждый agent получает role; coordinator orchestrates; heavy protocol overhead |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Rodionov et al. — Hogwild! Inference: Parallel LLM Generation via Concurrent Attention (arXiv:2504.06261)](https://arxiv.org/abs/2504.06261) — paper Hogwild!, preliminary evaluation на QwQ и DeepSeek-R1
 - [Recht, Re, Wright, Niu — Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient Descent (arXiv:1106.5730, NeurIPS 2011)](https://arxiv.org/abs/1106.5730) — original Hogwild!, origin naming

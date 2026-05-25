@@ -614,7 +614,7 @@ if __name__ == "__main__":
     print("    - Many production systems use both: RLHF first, DPO to refine.")
 ```
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-alignment-method-selector.md` — prompt, который помогает выбрать подходящий alignment method (SFT, RLHF, DPO, KTO, ORPO, SimPO) для вашего use case. По доступности данных, compute budget и alignment goals он рекомендует метод и training plan.
 

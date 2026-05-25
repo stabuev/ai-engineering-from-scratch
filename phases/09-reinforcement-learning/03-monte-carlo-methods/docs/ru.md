@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 9 · 01 (MDPs), Phase 9 · 02 (Dynamic Programming)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Dynamic programming элегантен, но предполагает, что можно запросить `P(s' | s, a)` для каждого состояния и действия. Почти ничто в реальном мире так не работает. Робот не может аналитически вычислить распределение пикселей камеры после torque в суставе. Pricing algorithm не может проинтегрировать все возможные реакции клиентов. LLM не может перечислить все возможные продолжения после токена.
 
@@ -15,7 +15,7 @@ Dynamic programming элегантен, но предполагает, что м
 
 Переход от DP к MC важен концептуально: мы переходим от *known model + exact backup* к *sampled rollouts + averaged return*. Variance растет, но применимость резко расширяется. Каждый RL-алгоритм после этого урока — TD, Q-learning, REINFORCE, PPO, GRPO — в основе является Monte Carlo estimator, иногда с bootstrapping поверх.
 
-## The Concept
+## Концепция
 
 ![Monte Carlo: rollout, compute returns, average; first-visit vs every-visit](../assets/monte-carlo.svg)
 
@@ -44,7 +44,7 @@ Dynamic programming элегантен, но предполагает, что м
 
 Сходится к `Q*` и `π*` с вероятностью 1 при мягких условиях (каждая пара посещается бесконечно часто, `α` удовлетворяет Robbins-Monro).
 
-## Build It
+## Практика
 
 ### Step 1: rollout → list of (s, a, r)
 
@@ -136,7 +136,7 @@ def mc_control(env, episodes, gamma=0.99, epsilon=0.1):
 - **Non-stationary policies.** Если `π` меняется (как в MC control), старые returns пришли от другой policy. Constant-α MC справляется; sample-average MC — нет.
 - **Off-policy importance sampling.** Веса `π(a|s)/μ(a|s)` перемножаются вдоль trajectory. Variance взрывается с horizon. Ограничивайте per-decision weighted IS или переходите к TD.
 
-## Use It
+## Использование
 
 Роль Monte Carlo methods в 2026:
 
@@ -151,7 +151,7 @@ def mc_control(env, episodes, gamma=0.99, epsilon=0.1):
 
 Современные deep-RL algorithms (PPO, SAC) интерполируют между pure MC (full returns) и pure TD (one-step bootstrap) через `n`-step returns или GAE. Оба конца — экземпляры одного estimator.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-mc-evaluator.md`:
 
@@ -176,16 +176,16 @@ Given an environment (episodic, with reset+step API) and a policy, output:
 Refuse to run MC on non-episodic tasks without a finite horizon cap. Refuse to report V^π estimates from fewer than 100 episodes per state for tabular tasks. Flag any policy with zero-variance actions as an exploration risk.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Реализуйте first-visit MC evaluation для uniform-random policy на 4×4 GridWorld. Запустите 10,000 episodes. Постройте `V(0,0)` как функцию episode count против DP answer.
-2. **Medium.** Реализуйте ε-greedy MC control с `ε ∈ {0.01, 0.1, 0.3}`. Сравните mean return после 20,000 episodes. Как выглядит кривая? Где находится bias-variance tradeoff?
-3. **Hard.** Реализуйте *off-policy* MC с importance sampling: collect data under uniform-random policy `μ`, estimate `V^π` для deterministic optimal policy `π`. Сравните plain IS vs per-decision IS vs weighted IS. У какого variance меньше?
+1. **Легко.** Реализуйте first-visit MC evaluation для uniform-random policy на 4×4 GridWorld. Запустите 10,000 episodes. Постройте `V(0,0)` как функцию episode count против DP answer.
+2. **Средне.** Реализуйте ε-greedy MC control с `ε ∈ {0.01, 0.1, 0.3}`. Сравните mean return после 20,000 episodes. Как выглядит кривая? Где находится bias-variance tradeoff?
+3. **Сложно.** Реализуйте *off-policy* MC с importance sampling: collect data under uniform-random policy `μ`, estimate `V^π` для deterministic optimal policy `π`. Сравните plain IS vs per-decision IS vs weighted IS. У какого variance меньше?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Monte Carlo | "Random sampling" | Оценка expectations усреднением iid samples из distribution. |
 | Return `G_t` | "Future reward" | Сумма discounted rewards от шага `t` до конца episode: `Σ_{k≥0} γ^k r_{t+k+1}`. |
 | First-visit MC | "Count each state once" | Только первое посещение в episode вносит вклад в value estimate. |
@@ -195,7 +195,7 @@ Refuse to run MC on non-episodic tasks without a finite horizon cap. Refuse to r
 | On-policy | "Learn from my own data" | Target policy = behavior policy. Vanilla MC, PPO, SARSA. |
 | Off-policy | "Learn from someone else's data" | Target policy ≠ behavior policy. Importance-sampled MC, Q-learning, DQN. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Sutton & Barto (2018). Ch. 5 — Monte Carlo Methods](http://incompleteideas.net/book/RLbook2020.pdf) — каноническое изложение.
 - [Singh & Sutton (1996). Reinforcement Learning with Replacing Eligibility Traces](https://link.springer.com/article/10.1007/BF00114726) — анализ first-visit vs every-visit.

@@ -76,8 +76,8 @@ where:
 
 ```mermaid
 graph LR
-    A[Простая модель] -->|увеличить сложность| B[Золотая середина]
-    B -->|увеличить сложность| C[Сложная модель]
+    A[Simple Model] -->|increase complexity| B[Sweet Spot]
+    B -->|increase complexity| C[Complex Model]
 
     style A fill:#f9f,stroke:#333
     style B fill:#9f9,stroke:#333
@@ -109,9 +109,9 @@ graph LR
 
 ```mermaid
 graph LR
-    A[Зона underfit] --> B[Классическая золотая середина]
+    A[Underfit Zone] --> B[Classical Sweet Spot]
     B --> C[Interpolation Threshold]
-    C --> D[Double Descent - ошибка снова падает]
+    C --> D[Double Descent - Error Drops Again]
 
     style A fill:#fdd,stroke:#333
     style B fill:#dfd,stroke:#333
@@ -141,15 +141,15 @@ graph LR
 
 ```mermaid
 flowchart TD
-    A[Сравнить train error и test error] --> B{Большой разрыв?}
-    B -->|Да| C[High variance - overfitting]
-    B -->|Нет| D{Обе ошибки высокие?}
-    D -->|Да| E[High bias - underfitting]
-    D -->|Нет| F[Хорошая подгонка]
+    A[Compare train error vs test error] --> B{Large gap?}
+    B -->|Yes| C[High variance - overfitting]
+    B -->|No| D{Both errors high?}
+    D -->|Yes| E[High bias - underfitting]
+    D -->|No| F[Good fit]
 
-    C --> G[Больше данных / регуляризация / проще модель]
-    E --> H[Больше признаков / сложнее модель / меньше регуляризации]
-    F --> I[Развернуть]
+    C --> G[More data / Regularize / Simpler model]
+    E --> H[More features / Complex model / Less regularization]
+    F --> I[Deploy]
 ```
 
 | Симптом | Диагноз | Исправление |
@@ -201,22 +201,22 @@ Learning curves строят training и validation error как функцию 
 flowchart TD
     subgraph HB["High Bias Learning Curve"]
         direction LR
-        HB1["Малый N: обе ошибки высокие"]
-        HB2["Большой N: обе ошибки сходятся к ВЫСОКОЙ ошибке"]
+        HB1["Small N: both errors high"]
+        HB2["Large N: both errors converge to HIGH error"]
         HB1 --> HB2
     end
 
     subgraph HV["High Variance Learning Curve"]
         direction LR
-        HV1["Малый N: train низкая, test высокая (большой разрыв)"]
-        HV2["Большой N: разрыв сокращается, но медленно"]
+        HV1["Small N: train low, test high (big gap)"]
+        HV2["Large N: gap shrinks but slowly"]
         HV1 --> HV2
     end
 
     subgraph GF["Good Fit Learning Curve"]
         direction LR
-        GF1["Малый N: есть некоторый разрыв"]
-        GF2["Большой N: обе сходятся к НИЗКОЙ ошибке"]
+        GF1["Small N: some gap"]
+        GF2["Large N: both converge to LOW error"]
         GF1 --> GF2
     end
 ```
@@ -245,13 +245,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Модель работает недостаточно хорошо] --> B[Построить learning curve]
-    B --> C{Разрыв между train и val?}
-    C -->|Большой разрыв, val еще падает| D[Больше данных поможет]
-    C -->|Малый разрыв, обе высокие| E[Больше данных НЕ поможет]
-    C -->|Большой разрыв, val плоская| F[Регуляризовать или упростить]
-    E --> G[Построить validation curve]
-    G --> H[Попробовать более сложную модель]
+    A[Model underperforming] --> B[Generate learning curve]
+    B --> C{Gap between train and val?}
+    C -->|Large gap, val still decreasing| D[More data will help]
+    C -->|Small gap, both high| E[More data will NOT help]
+    C -->|Large gap, val flat| F[Regularize or simplify]
+    E --> G[Generate validation curve]
+    G --> H[Try more complex model]
 ```
 
 ## Соберите это

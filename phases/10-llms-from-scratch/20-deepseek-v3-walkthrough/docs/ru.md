@@ -7,20 +7,20 @@
 **Prerequisites:** Phase 10 · 14 (open-model walkthroughs), Phase 10 · 17 (NSA), Phase 10 · 18 (MTP), Phase 10 · 19 (DualPipe)
 **Time:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Прочитать config DeepSeek-V3 сверху вниз и объяснить каждое поле через шесть knobs GPT-2 плюс четыре добавления DeepSeek.
 - Вывести total parameter count (671B), active parameter count (37B) и components, которые дают каждый из них.
 - Посчитать footprint KV cache у MLA на 128k context и сравнить с тем, что заплатила бы dense model с GQA при тех же active params.
 - Назвать четыре DeepSeek-specific innovations (MLA, MTP, auxiliary-loss-free routing, DualPipe) и указать, на какую часть architecture/training stack нацелена каждая.
 
-## The Problem
+## Проблема
 
 DeepSeek-V3 — первая frontier open model, architecture которой существенно отличается от семейства Llama. Llama 3 405B — это "GPT-2 с шестью повернутыми knobs". DeepSeek-V3 — GPT-2 со всеми шестью knobs плюс еще четыре. Чтение config Llama 3 — разминка перед чтением DeepSeek config, но глубокая структура — форма attention block, routing logic, training-time objective — достаточно другая, чтобы требовать отдельный walkthrough.
 
 Зачем это учить: release open weights DeepSeek-V3 сдвинул смысл "frontier capability" в open models. Architecture стала blueprint, который копируют многие training runs 2026 года. Понимание ее — базовое требование для любой роли, связанной с frontier LLM training или inference.
 
-## The Concept
+## Концепция
 
 ### The invariant core, again
 
@@ -139,7 +139,7 @@ DeepSeek-R1 (2025) — reasoning-training run на V3 backbone. R1 исполь�
 
 DeepSeek-V4 (если выйдет) ожидаемо сохранит MLA + MoE + MTP и добавит DSA (DeepSeek Sparse Attention), successor NSA из Phase 10 · 17. Lineage стабилен: architecture-level innovations накапливаются; каждая version крутит дополнительные knobs.
 
-## Use It
+## Использование
 
 `code/main.py` — parameter calculator, специализированный под форму DeepSeek-V3. Запустите его, сравните output с numbers из paper и примените к hypothetical variants (256 experts vs 512, top-8 vs top-16, MLA rank 512 vs 1024).
 
@@ -150,11 +150,11 @@ DeepSeek-V4 (если выйдет) ожидаемо сохранит MLA + MoE 
 - KV cache at 128k context — сравнение MLA vs GQA.
 - Per-layer breakdown, чтобы увидеть, куда реально уходит parameter budget.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-deepseek-v3-reader.md`. По DeepSeek-family model (V3, R1 или будущий variant) он строит component-by-component architecture reading, называя каждое поле config, выводя parameter counts по component и определяя, какие из четырех DeepSeek-specific innovations использует model.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`. Сравните total-parameter estimate calculator с published 671B и определите, откуда берется delta. Section 2 paper содержит полную itemization.
 
@@ -166,9 +166,9 @@ DeepSeek-V4 (если выйдет) ожидаемо сохранит MLA + MoE 
 
 5. DeepSeek-V3 использует FP8 training для большинства operations. Посчитайте memory savings FP8 vs BF16 для хранения 671B weights. Как это пересекается с 14.8T-token training budget?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | MLA | "Multi-Head Latent Attention" | Сжимает K и V в shared low-rank latent (kv_lora_rank, обычно 512), decompressed per head on-the-fly; KV cache хранит только latent |
 | kv_lora_rank | "MLA compression dim" | Размер shared latent для K и V; DeepSeek-V3 использует 512 |
@@ -181,7 +181,7 @@ DeepSeek-V4 (если выйдет) ожидаемо сохранит MLA + MoE 
 | Active parameter ratio | "Sparsity" | active_params / total_params; DeepSeek-V3 достигает 5.5% |
 | FP8 training | "8-bit training" | Training storage и многие compute ops в FP8; roughly halves memory vs BF16 with small quality cost |
 
-## Further Reading
+## Дополнительное чтение
 
 - [DeepSeek-AI — DeepSeek-V3 Technical Report (arXiv:2412.19437)](https://arxiv.org/abs/2412.19437) — полный документ по architecture, training и results
 - [DeepSeek-V3 model card on Hugging Face](https://huggingface.co/deepseek-ai/DeepSeek-V3) — config files и deployment notes

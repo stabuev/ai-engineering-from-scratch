@@ -80,7 +80,7 @@ while True:
 - *Perfect-information games with long horizons* (Go, chess): все еще search-based. Доминируют AlphaZero / MuZero.
 - *LLM reasoning*: MCTS пока нет в production; GRPO на full rollouts, best-of-N для inference compute. Process reward models (PRMs) намекают, что step-level search будет добавлен обратно.
 
-## Build It
+## Практика
 
 Код в `code/main.py` реализует **GRPO в миниатюре** — bandit с несколькими группами samples. Algorithm тот же, что и на LLM; проще только policy и environment. Он показывает *loss* и *group-relative advantage*, то есть инновацию 2025 года.
 
@@ -147,7 +147,7 @@ Group-relative advantage — прием DeepSeek 2024 года. Critic не ну
 - **Compute floor.** MuZero / AlphaZero требуют огромного compute. Одна ablation часто стоит сотни GPU-hours. Для обучения есть миниатюрные demos (например, AlphaZero на Connect Four).
 - **Verifier coverage.** Unit tests, которые проходят для buggy solution, reinforce bug. Проектируйте verifiers, которые ловят edge cases.
 
-## Use It
+## Использование
 
 Ландшафт game-RL в 2026 году по domain:
 
@@ -164,7 +164,7 @@ Group-relative advantage — прием DeepSeek 2024 года. Critic не ну
 
 *Рецепт* — self-play, search-augmented improvement, policy distillation — охватывает текст, pixels и physical control. GRPO — самый молодой пример; будут и другие.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-game-rl-designer.md`:
 
@@ -191,14 +191,14 @@ Refuse AlphaZero on imperfect-info games (route to CFR). Refuse GRPO without a t
 
 ## Упражнения
 
-1. **Easy.** Реализуйте GRPO bandit в `code/main.py`. Обучите на 2 prompts × 4 answer tokens каждый. Добейтесь сходимости за < 1,000 updates с `G=8`.
-2. **Medium.** Подключите PPO (clipped) и vanilla REINFORCE. Сравните sample efficiency и reward variance с GRPO на том же bandit.
-3. **Hard.** Расширьте до length-2 "reasoning chain": agent emits two tokens, а verifier rewards the pair. Измерьте, как GRPO справляется с credit assignment across two-step sequences. (Hint: compute group advantage per *full sequence*, propagate to both token positions.)
+1. **Легко.** Реализуйте GRPO bandit в `code/main.py`. Обучите на 2 prompts × 4 answer tokens каждый. Добейтесь сходимости за < 1,000 updates с `G=8`.
+2. **Средне.** Подключите PPO (clipped) и vanilla REINFORCE. Сравните sample efficiency и reward variance с GRPO на том же bandit.
+3. **Сложно.** Расширьте до length-2 "reasoning chain": agent emits two tokens, а verifier rewards the pair. Измерьте, как GRPO справляется с credit assignment across two-step sequences. (Hint: compute group advantage per *full sequence*, propagate to both token positions.)
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | MCTS | "Tree search with learned net" | Monte Carlo Tree Search; UCB1/PUCT selection with learned `(p, v)` priors. |
 | AlphaZero | "Self-play + MCTS" | Policy-value net trained to match MCTS visits and game outcome. |
 | MuZero | "Learned-model AlphaZero" | Same loop but in latent space via learned dynamics. |

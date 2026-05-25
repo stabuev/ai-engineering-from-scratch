@@ -4,7 +4,7 @@
 
 **Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 02 (Self-Attention), Фаза 7 · 05 (Full Transformer), Фаза 7 · 07 (GPT)
+**Предварительные требования:** Фаза 7 · 02 (self-attention), Фаза 7 · 05 (полный transformer), Фаза 7 · 07 (GPT)
 **Время:** ~75 минут
 
 ## Проблема
@@ -84,12 +84,12 @@ for each block of Q (tile size ~128 × 128):
 
 **Эволюция версий:**
 
-| Version | Year | Key change | Speedup on reference hardware |
+| Версия | Год | Ключевое изменение | Ускорение на reference hardware |
 |---------|------|-----------|-------------------------------|
-| Flash 1 | 2022 | Tiled SRAM kernel | 2× on A100 |
-| Flash 2 | 2023 | Better parallelism, causal-first ordering | 3× on A100 |
-| Flash 3 | 2024 | Hopper asynchrony, FP8 | 1.5–2× on H100 (~740 TFLOPs FP16) |
-| Flash 4 | 2026 | Blackwell 5-stage pipeline, software exp2 | Inference-first (forward only initially) |
+| Flash 1 | 2022 | Tiled SRAM kernel | 2× на A100 |
+| Flash 2 | 2023 | Лучше parallelism, causal-first ordering | 3× на A100 |
+| Flash 3 | 2024 | Hopper asynchrony, FP8 | 1.5–2× на H100 (~740 TFLOPs FP16) |
+| Flash 4 | 2026 | Blackwell 5-stage pipeline, software exp2 | Inference-first (сначала только forward) |
 
 Flash 4 на запуске только для forward-pass. Training все еще использует Flash 3. Поддержка GQA и varlen для Flash 4 ожидается (mid-2026).
 
@@ -162,7 +162,7 @@ def tiled_softmax_dot(q, K, V, tile=4):
 
 Bit-identical output к `softmax(qK) V` за один проход, но в любой момент working set — это block `tile × d_head`, а не полный `N × d_head`.
 
-### Шаг 3: сравнить naive vs cached decoding на generation 100 токенов
+### Шаг 3: сравните naive vs cached decoding при generation 100 токенов
 
 Посчитайте attention operations. Naive: `O(N²)` = 5050. Cached: `O(N)` = 100. Код печатает оба значения.
 
@@ -179,7 +179,7 @@ model = AutoModelForCausalLM.from_pretrained(
 # generate() uses KV cache automatically
 ```
 
-vLLM production:
+Production в vLLM:
 
 ```bash
 pip install vllm
@@ -204,16 +204,16 @@ Prefix caching across requests — большой выигрыш 2026 года: 
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| KV cache | "The trick that makes decoding fast" | Сохраненные K и V от каждого prefix token; новые queries attend к ним вместо пересчета. |
-| HBM | "GPU main memory" | High Bandwidth Memory; 80 GB на H100, 192 GB на B200. ~3 TB/s bandwidth. |
-| SRAM | "On-chip memory" | Быстрая per-SM memory, ~256 KB per SM на H100. ~30 TB/s bandwidth. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| KV cache | "Трюк, ускоряющий decoding" | Сохраненные K и V от каждого prefix token; новые queries attend к ним вместо пересчета. |
+| HBM | "Основная память GPU" | High Bandwidth Memory; 80 GB на H100, 192 GB на B200. ~3 TB/s bandwidth. |
+| SRAM | "Память на чипе" | Быстрая per-SM memory, ~256 KB per SM на H100. ~30 TB/s bandwidth. |
 | Flash Attention | "Tiled attention kernel" | Вычисляет attention без материализации N×N в HBM. |
-| Continuous batching | "No-wait batching" | Swap finished sequences out, new ones in, без draining batch. |
-| PagedAttention | "vLLM's headline" | KV cache в fixed blocks с page table; устраняет fragmentation. |
-| Prefix caching | "Reuse long prompts" | Cache KV для shared prefix across requests; major cost cut для agents. |
-| Speculative decoding | "Draft + verify" | Cheap draft model предлагает tokens; big model проверяет k за один pass. |
+| Continuous batching | "Batching без ожидания" | Swap finished sequences out, new ones in, без draining batch. |
+| PagedAttention | "Главная идея vLLM" | KV cache в fixed blocks с page table; устраняет fragmentation. |
+| Prefix caching | "Переиспользовать длинные prompts" | Cache KV для shared prefix across requests; major cost cut для agents. |
+| Speculative decoding | "Черновик + проверка" | Cheap draft model предлагает tokens; big model проверяет k за один pass. |
 
 ## Дополнительное чтение
 

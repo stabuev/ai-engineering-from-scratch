@@ -30,11 +30,11 @@ Pipeline — это упорядоченная последовательнос�
 
 ```mermaid
 flowchart LR
-    A[Сырые данные] --> B[Заполнить пропуски]
-    B --> C[Масштабировать числовые признаки]
-    C --> D[Закодировать категории]
-    D --> E[Обучить модель]
-    E --> F[Предсказание]
+    A[Raw Data] --> B[Impute Missing Values]
+    B --> C[Scale Numeric Features]
+    C --> D[Encode Categoricals]
+    D --> E[Train Model]
+    E --> F[Prediction]
 ```
 
 Pipeline гарантирует:
@@ -224,13 +224,13 @@ def set_seed(seed=42):
 
 ```mermaid
 flowchart TD
-    A[Jupyter Notebook] --> B[Вынести functions]
-    B --> C[Построить Pipeline object]
-    C --> D[Добавить config file для hyperparameters]
-    D --> E[Добавить experiment tracking]
-    E --> F[Добавить data validation]
-    F --> G[Добавить tests]
-    G --> H[Упаковать для deployment]
+    A[Jupyter Notebook] --> B[Extract functions]
+    B --> C[Build Pipeline object]
+    C --> D[Add config file for hyperparameters]
+    D --> E[Add experiment tracking]
+    E --> F[Add data validation]
+    F --> G[Add tests]
+    G --> H[Package for deployment]
 
     style A fill:#fdd,stroke:#333
     style H fill:#dfd,stroke:#333
