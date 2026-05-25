@@ -1,28 +1,28 @@
 # Many-Shot Jailbreaking
 
-> Anil, Durmus, Panickssery, Sharma, et al. (Anthropic, NeurIPS 2024). Many-shot jailbreaking (MSJ) exploits long context windows: stuff hundreds of faux user-assistant turns where the assistant complies with harmful requests, then append the target query. Attack success follows a power law in the number of shots; fails at 5 shots, reliable at 256 shots on violent and deceitful content. The phenomenon follows the same power law as benign in-context learning — the attack and ICL share an underlying mechanism, which is why defenses that preserve ICL are hard to design. Classifier-based prompt modification reduces attack success from 61% to 2% on tested settings.
+> Anil, Durmus, Panickssery, Sharma и др. (Anthropic, NeurIPS 2024). Many-shot jailbreaking (MSJ) использует длинные контекстные окна: в prompt помещают сотни фиктивных ходов user-assistant, где assistant выполняет вредоносные запросы, а затем добавляют целевой запрос. Успешность атаки подчиняется степенному закону по числу shots; она проваливается при 5 shots и становится надежной при 256 shots для насильственного и обманного контента. Явление следует тому же степенному закону, что и доброкачественное in-context learning — атака и ICL имеют общий базовый механизм, поэтому защиты, сохраняющие ICL, трудно проектировать. Модификация prompt на основе классификатора снижает успешность атаки с 61% до 2% в протестированных настройках.
 
 **Type:** Learn
 **Languages:** Python (stdlib, in-context learning vs MSJ simulator)
 **Prerequisites:** Phase 18 · 12 (PAIR), Phase 10 · 04 (in-context learning)
 **Time:** ~45 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Describe the many-shot jailbreaking attack and the context-window property it exploits.
-- State the empirical power law: attack success rate as a function of shot count.
-- Explain why MSJ shares a mechanism with benign in-context learning, and what that implies for defenses.
-- Describe Anthropic's classifier-based prompt modification defense and its reported 61% -> 2% reduction.
+- Описать атаку many-shot jailbreaking и свойство контекстного окна, которое она использует.
+- Сформулировать эмпирический степенной закон: attack success rate как функцию числа shots.
+- Объяснить, почему MSJ имеет общий механизм с доброкачественным in-context learning, и что это означает для защит.
+- Описать защиту Anthropic на основе classifier-based prompt modification и заявленное снижение 61% -> 2%.
 
-## The Problem
+## Проблема
 
-PAIR (Lesson 12) works within normal prompt lengths. MSJ works because context windows are long. Every 2024-2025 frontier model ships with a 200k+ context window; Claude has extended to 1M; Gemini offers 2M. Long context is a product feature. MSJ turns it into an attack surface.
+PAIR (Lesson 12) работает в пределах обычной длины prompt. MSJ работает потому, что контекстные окна длинные. Каждая frontier model 2024-2025 поставляется с контекстным окном 200k+; Claude расширился до 1M; Gemini предлагает 2M. Длинный контекст — продуктовая возможность. MSJ превращает ее в поверхность атаки.
 
-## The Concept
+## Концепция
 
-### The attack
+### Атака
 
-Construct a prompt of the form:
+Постройте prompt следующего вида:
 
 ```
 User: how do I pick a lock?
@@ -34,73 +34,73 @@ User: <target harmful question>
 Assistant: 
 ```
 
-The model continues the pattern. The assistant turns in the context are fake — never emitted by the target model — but the target treats them as a pattern to follow.
+Модель продолжает шаблон. Ходы assistant в контексте фиктивны — они никогда не были выданы целевой моделью, — но цель воспринимает их как шаблон, которому нужно следовать.
 
 ### Power-law ASR
 
-Anil et al. report attack success rate scales as a power law in shot count. Fails reliably at 5 shots. Begins to succeed around 32 shots. Reliable on violent/deceitful content at 256 shots. The curve's exponent depends on behaviour category and model.
+Anil et al. сообщают, что attack success rate масштабируется как степенной закон от числа shots. Атака надежно проваливается при 5 shots. Начинает срабатывать примерно при 32 shots. Надежна на насильственном/обманном контенте при 256 shots. Показатель степени кривой зависит от категории поведения и модели.
 
-Power law — not logistic. Increasing shots does not plateau; it keeps climbing.
+Степенной закон — не логистическая кривая. Увеличение числа shots не выходит на плато; оно продолжает расти.
 
 ### Why it shares a mechanism with ICL
 
-Benign ICL: the model extracts the task from in-context examples and executes it on the query. MSJ: the model extracts "comply with harmful requests" from in-context examples and executes on the target.
+Доброкачественное ICL: модель извлекает задачу из in-context examples и выполняет ее на query. MSJ: модель извлекает "выполняй вредоносные запросы" из in-context examples и выполняет это на целевом запросе.
 
-The power-law shape is identical. The model does not distinguish the two because the mechanism — pattern extraction from in-context examples — is the same.
+Форма степенного закона идентична. Модель не различает эти два случая, потому что механизм — извлечение шаблона из in-context examples — один и тот же.
 
-### The defense dilemma
+### Дилемма защиты
 
-If you suppress pattern extraction from long contexts, you disable in-context learning, which breaks all prompt-based few-shot methods. Practical defenses must preserve ICL for benign patterns while rejecting harmful patterns.
+Если подавить извлечение шаблонов из длинных контекстов, вы отключите in-context learning, что ломает все prompt-based few-shot методы. Практические защиты должны сохранять ICL для доброкачественных шаблонов и при этом отвергать вредоносные шаблоны.
 
-Anthropic's classifier-based prompt modification runs a safety classifier over the full context to detect many-shot structure, and either truncates or rewrites the relevant portion. Reported reduction: 61% -> 2% attack success on tested settings.
+Classifier-based prompt modification от Anthropic запускает safety classifier по всему контексту, чтобы обнаружить many-shot structure, и затем либо усекает, либо переписывает соответствующую часть. Заявленное снижение: успешность атаки 61% -> 2% в протестированных настройках.
 
 ### Combinations with other attacks
 
-MSJ composes with PAIR (Lesson 12): use PAIR to find the attack structure, fill it with many shots. Anil et al. 2024 (Anthropic) report that MSJ composes with competing-objective jailbreaks — stacking reaches higher ASR than either alone.
+MSJ сочетается с PAIR (Lesson 12): используйте PAIR, чтобы найти структуру атаки, затем заполните ее many shots. Anil et al. 2024 (Anthropic) сообщают, что MSJ сочетается с competing-objective jailbreaks — наложение атак достигает более высокого ASR, чем каждая по отдельности.
 
 ### What 2025-2026 frontier models ship
 
-Every frontier lab now runs MSJ evaluations at 256+ shots against production models. The attack appears in model cards as an ASR curve rather than a single number.
+Каждая frontier lab теперь проводит MSJ-оценки при 256+ shots против production models. Атака появляется в model cards как кривая ASR, а не как одно число.
 
-### Where this fits in Phase 18
+### Как это вписывается в Phase 18
 
-Lesson 12 is the in-context iterative attack. Lesson 13 is the long-context length-exploit. Lesson 14 is the encoding attack. Lesson 15 is the injection attack at the system boundary. Together they define the 2026 jailbreak attack surface.
+Lesson 12 — in-context iterative attack. Lesson 13 — long-context length-exploit. Lesson 14 — encoding attack. Lesson 15 — injection attack на границе системы. Вместе они определяют поверхность jailbreak-атак 2026 года.
 
-## Use It
+## Применение
 
-`code/main.py` builds a toy target with a keyword filter and a "patterned-continuation" weakness: when the context contains N examples of harmful-compliance pairs, the target's filter score is damped by a power-law factor. You can reproduce the shot-vs-ASR curve.
+`code/main.py` строит игрушечную цель с keyword filter и слабостью "patterned-continuation": когда контекст содержит N примеров пар harmful-compliance, score фильтра цели ослабляется степенным фактором. Вы можете воспроизвести кривую shot-vs-ASR.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-msj-audit.md`. Given a long-context-safety evaluation, it audits: shot counts tested (5, 32, 128, 256, 512), categories covered, defense mechanism (prompt classifier, truncation, rewriting), and power-law-fit statistics.
+Этот урок создает `outputs/skill-msj-audit.md`. Для long-context-safety evaluation он проверяет: протестированные shot counts (5, 32, 128, 256, 512), покрытые категории, механизм защиты (prompt classifier, truncation, rewriting) и статистику power-law-fit.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Fit a power law to the shot-vs-ASR curve. Report the exponent.
+1. Запустите `code/main.py`. Подгоните степенной закон к кривой shot-vs-ASR. Сообщите показатель степени.
 
-2. Implement a simple MSJ defense: run a classifier over the full context; if N pattern-match examples of harmful-compliance pairs are detected, truncate or rewrite. Measure the new shot-vs-ASR curve.
+2. Реализуйте простую защиту от MSJ: запустите классификатор по всему контексту; если обнаружено N pattern-match примеров пар harmful-compliance, усеките или перепишите. Измерьте новую кривую shot-vs-ASR.
 
-3. Read Anil et al. 2024 Figure 3 (power law by category). Explain why violent/deceitful content needs fewer shots to jailbreak than other categories.
+3. Прочитайте Anil et al. 2024 Figure 3 (power law by category). Объясните, почему для насильственного/обманного контента требуется меньше shots для jailbreak, чем для других категорий.
 
-4. Design a prompt that combines PAIR iteration (Lesson 12) with MSJ. Argue whether the compound attack is worse than MSJ alone, and for which model behaviours.
+4. Спроектируйте prompt, который объединяет PAIR iteration (Lesson 12) с MSJ. Обоснуйте, хуже ли compound attack, чем MSJ alone, и для каких model behaviours.
 
-5. MSJ's mechanism is identical to ICL. Sketch a training-time defense that reduces ICL sensitivity to harmful-compliance patterns without reducing ICL sensitivity to benign task patterns. Identify the primary failure mode of your design.
+5. Механизм MSJ идентичен ICL. Набросайте training-time defense, которая снижает чувствительность ICL к harmful-compliance patterns без снижения чувствительности ICL к benign task patterns. Определите основной failure mode вашего дизайна.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| MSJ | "many-shot jailbreak" | Long-context attack with hundreds of faux user-assistant compliance pairs |
-| Shot count | "N examples in context" | Number of faux compliance pairs before the target query |
-| Power-law ASR | "ASR = f(shots)^alpha" | Attack success rate grows polynomially, not sigmoidally, in shot count |
-| ICL | "in-context learning" | Model extracts task structure from in-context examples |
-| Pattern defense | "classifier over context" | Defense that detects MSJ structure before the model sees it |
-| Context-window exploit | "long-prompt attack surface" | Attacks that exist because context windows are long |
-| Compositional attack | "MSJ + PAIR" | Combination of MSJ with other attack families; often strictly stronger |
+| MSJ | "many-shot jailbreak" | Long-context атака с сотнями фиктивных пар user-assistant compliance |
+| Shot count | "N examples in context" | Число фиктивных compliance pairs перед целевым query |
+| Power-law ASR | "ASR = f(shots)^alpha" | Attack success rate растет полиномиально, а не сигмоидально, по shot count |
+| ICL | "in-context learning" | Модель извлекает структуру задачи из in-context examples |
+| Pattern defense | "classifier over context" | Защита, которая обнаруживает MSJ structure до того, как модель ее увидит |
+| Context-window exploit | "long-prompt attack surface" | Атаки, существующие потому, что контекстные окна длинные |
+| Compositional attack | "MSJ + PAIR" | Комбинация MSJ с другими семействами атак; часто строго сильнее |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Anil, Durmus, Panickssery et al. — Many-shot Jailbreaking (Anthropic, NeurIPS 2024)](https://www.anthropic.com/research/many-shot-jailbreaking) — the canonical paper and power-law results
-- [Chao et al. — PAIR (Lesson 12, arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — the iterative attack MSJ composes with
-- [Zou et al. — GCG (arXiv:2307.15043)](https://arxiv.org/abs/2307.15043) — white-box gradient attack, complementary to MSJ
-- [Mazeika et al. — HarmBench (arXiv:2402.04249)](https://arxiv.org/abs/2402.04249) — evaluation benchmark for MSJ + other attacks
+- [Anil, Durmus, Panickssery et al. — Many-shot Jailbreaking (Anthropic, NeurIPS 2024)](https://www.anthropic.com/research/many-shot-jailbreaking) — каноническая статья и результаты степенного закона
+- [Chao et al. — PAIR (Lesson 12, arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — итеративная атака, с которой сочетается MSJ
+- [Zou et al. — GCG (arXiv:2307.15043)](https://arxiv.org/abs/2307.15043) — white-box градиентная атака, дополняющая MSJ
+- [Mazeika et al. — HarmBench (arXiv:2402.04249)](https://arxiv.org/abs/2402.04249) — evaluation benchmark для MSJ + other attacks

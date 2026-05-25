@@ -1,44 +1,44 @@
-# The Direct Preference Optimization Family
+# Семейство Direct Preference Optimization
 
-> Rafailov et al. (2023) showed RLHF's optimum has a closed form in terms of the preference data, so you can skip the explicit reward model and optimize the policy directly. That insight spawned a family — IPO, KTO, SimPO, ORPO, BPO — each fixing a failure mode of DPO. In 2026, direct alignment algorithms ship more frontier post-training runs than PPO. But the over-optimization curve from Lesson 2 still applies: DAAs do not escape Goodhart, they just move where it bites.
+> Rafailov et al. (2023) показали, что оптимум RLHF имеет замкнутую форму через данные предпочтений, поэтому можно пропустить явную модель вознаграждения и оптимизировать политику напрямую. Это наблюдение породило семейство - IPO, KTO, SimPO, ORPO, BPO, - где каждый метод исправляет отдельный режим отказа DPO. В 2026 году direct alignment algorithms используются в большем числе frontier post-training-запусков, чем PPO. Но over-optimization curve из Lesson 2 все еще применима: DAAs не избегают Goodhart, они лишь меняют место, где он проявляется.
 
 **Type:** Learn
 **Languages:** Python (stdlib, six-variant preference-loss comparator)
 **Prerequisites:** Phase 18 · 01 (InstructGPT), Phase 18 · 02 (Reward hacking), Phase 10 · 08 (DPO basics)
 **Time:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Derive the DPO closed form from the RLHF-with-KL optimum.
-- State the failure mode each of IPO, KTO, SimPO, ORPO, BPO fixes in DPO.
-- Distinguish "implicit reward gap" from "preference strength" and explain why IPO's identity mapping matters.
-- Explain why Rafailov et al. (NeurIPS 2024) prove DAAs over-optimize despite having no explicit RM.
+- Вывести замкнутую форму DPO из оптимума RLHF-with-KL.
+- Сформулировать, какой режим отказа DPO исправляет каждый из IPO, KTO, SimPO, ORPO, BPO.
+- Отличать "implicit reward gap" от "preference strength" и объяснить, почему identity mapping в IPO важен.
+- Объяснить, почему Rafailov et al. (NeurIPS 2024) доказывают, что DAAs over-optimize, несмотря на отсутствие явной RM.
 
-## The Problem
+## Проблема
 
-The RLHF objective (Lesson 1):
+Целевая функция RLHF (Lesson 1):
 
 ```
 max_pi E_{x,y~pi} [ r(x, y) ] - beta * KL(pi || pi_ref)
 ```
 
-has a known optimum:
+имеет известный оптимум:
 
 ```
 pi*(y|x) = (1/Z(x)) * pi_ref(y|x) * exp(r(x, y) / beta)
 ```
 
-So the reward is implicitly defined by the ratio of the optimal policy to the reference:
+Значит, вознаграждение неявно задается отношением оптимальной политики к reference:
 
 ```
 r(x, y) = beta * log(pi*(y|x) / pi_ref(y|x)) + beta * log Z(x)
 ```
 
-Substitute this into the Bradley-Terry preference likelihood and the partition function `Z(x)` cancels because it depends only on `x`. What remains is a loss in the policy parameters alone — no reward model needed. That is DPO.
+Подставьте это в likelihood предпочтений Брэдли-Терри, и partition function `Z(x)` сократится, потому что зависит только от `x`. Останется loss только по параметрам политики - модель вознаграждения не нужна. Это и есть DPO.
 
-The wrinkle: the derivation assumes the optimum is reachable, the preference data is in-distribution, and the reference policy is the true mode anchor. None of these hold exactly. Every family member fixes a different violated assumption.
+Сложность в том, что вывод предполагает: оптимум достижим, данные предпочтений находятся in-distribution, а reference policy является истинным mode anchor. Ничего из этого не выполняется точно. Каждый член семейства исправляет свое нарушенное предположение.
 
-## The Concept
+## Концепция
 
 ### DPO (Rafailov et al., 2023)
 
@@ -49,35 +49,35 @@ L_DPO = -log sigmoid(
 )
 ```
 
-What can go wrong:
+Что может пойти не так:
 
-- The implicit reward gap `beta * (log(pi/pi_ref)_w - log(pi/pi_ref)_l)` is unbounded. A tiny preference can produce an arbitrarily large gap.
-- The loss drives chosen and rejected log-probs in opposite directions. It can push the chosen absolute log-prob down as long as the rejected falls faster. This is the Degraded Chosen Response phenomenon.
-- Out-of-distribution preferences (rare rare pair vs rare rare pair) produce arbitrary implicit rewards.
+- Implicit reward gap `beta * (log(pi/pi_ref)_w - log(pi/pi_ref)_l)` неограничен. Крошечное предпочтение может породить произвольно большой разрыв.
+- Loss толкает chosen и rejected log-probs в противоположные стороны. Он может снижать absolute log-prob chosen-ответа, пока rejected падает быстрее. Это феномен Degraded Chosen Response.
+- Out-of-distribution preferences (редкая-редкая пара против редкой-редкой пары) порождают произвольные implicit rewards.
 
 ### IPO (Azar et al., 2024)
 
-Identity Preference Optimization replaces the log-sigmoid with an identity mapping on the preference probability. The loss becomes a squared-error on a bounded target:
+Identity Preference Optimization заменяет log-sigmoid на identity mapping по вероятности предпочтения. Loss становится squared-error по ограниченной цели:
 
 ```
 L_IPO = (log(pi(y_w | x) / pi_ref(y_w | x)) - log(pi(y_l | x) / pi_ref(y_l | x)) - 1/(2 beta))^2
 ```
 
-The margin is bounded by `1/(2 beta)`. Preference strength and implicit-reward gap are proportional. No blow-up.
+Margin ограничен `1/(2 beta)`. Preference strength и implicit-reward gap пропорциональны. Раздувания нет.
 
 ### KTO (Ethayarajh et al., 2024)
 
-Kahneman-Tversky Optimization drops pairwise structure entirely. Given a single labeled output and a binary "desirable" or "undesirable" signal, it maps to a prospect-theory utility:
+Kahneman-Tversky Optimization полностью отказывается от попарной структуры. Для одного размеченного выхода и бинарного сигнала "desirable" или "undesirable" он отображает это в utility из prospect theory:
 
 ```
 v(x, y) = sigma(beta * log(pi(y|x) / pi_ref(y|x)) - z_ref)
 ```
 
-with different weights for gains and losses (loss aversion). Benefit: you can use unpaired data, which is far more plentiful.
+с разными весами для gains и losses (loss aversion). Польза: можно использовать unpaired data, которых намного больше.
 
 ### SimPO (Meng et al., 2024)
 
-Simple Preference Optimization aligns the training signal with generation. Remove the reference policy entirely and normalize log-likelihood by length:
+Simple Preference Optimization выравнивает обучающий сигнал с генерацией. Уберите reference policy полностью и нормализуйте log-likelihood по длине:
 
 ```
 L_SimPO = -log sigmoid(
@@ -87,74 +87,74 @@ L_SimPO = -log sigmoid(
 )
 ```
 
-with a margin `gamma` to stabilize. The length normalization removes the incentive to exploit DPO's length-bias failure mode (longer `y_w` gives a larger log-prob gap by construction).
+с margin `gamma` для стабилизации. Нормализация по длине убирает стимул эксплуатировать DPO length-bias failure mode (более длинный `y_w` по построению дает больший log-prob gap).
 
 ### ORPO (Hong et al., 2024)
 
-Odds-Ratio Preference Optimization adds a preference term to the standard SFT negative log-likelihood:
+Odds-Ratio Preference Optimization добавляет preference term к стандартному SFT negative log-likelihood:
 
 ```
 L_ORPO = L_NLL(y_w) + lambda * L_OR
 L_OR = -log sigmoid(log(odds(y_w) / odds(y_l)))
 ```
 
-No reference policy — the SFT term is the regularizer. Train in a single stage from the base model to the aligned model. No separate SFT checkpoint.
+Без reference policy - SFT-член является регуляризатором. Обучение в один этап от base model до aligned model. Отдельный SFT checkpoint не нужен.
 
 ### BPO (ICLR 2026 submission, OpenReview id=b97EwMUWu7)
 
-Identifies the Degraded Chosen Responses problem: DPO preserves the ranking `y_w > y_l` but the absolute log-prob of `y_w` can drop. BPO adds a single-line correction that penalizes downward moves on the chosen response. Reported +10.1% accuracy on Llama-3.1-8B-Instruct on math reasoning over DPO.
+Выявляет проблему Degraded Chosen Responses: DPO сохраняет ранжирование `y_w > y_l`, но absolute log-prob `y_w` может падать. BPO добавляет однострочную поправку, которая штрафует движения вниз для chosen response. Сообщается о +10.1% accuracy на Llama-3.1-8B-Instruct в math reasoning относительно DPO.
 
-### The universal result: DAAs still over-optimize
+### Универсальный результат: DAAs все равно over-optimize
 
-Rafailov et al. "Scaling Laws for Reward Model Overoptimization in Direct Alignment Algorithms" (NeurIPS 2024) trained policies with DPO, IPO, SLiC on multiple datasets across KL budgets. The gold-reward-vs-KL curves have the same Gao et al. peak-and-collapse shape. The implicit reward queries out-of-distribution samples during training; KL regularization does not stabilize this.
+Rafailov et al. "Scaling Laws for Reward Model Overoptimization in Direct Alignment Algorithms" (NeurIPS 2024) обучали политики с DPO, IPO, SLiC на нескольких датасетах и KL budgets. Кривые gold-reward-vs-KL имеют ту же форму peak-and-collapse, что у Gao et al. Implicit reward обращается к out-of-distribution samples во время обучения; KL-регуляризация это не стабилизирует.
 
-DAAs do not escape Goodhart. They change the surface where it bites from "reward model over-optimized" to "reference policy ratio over-optimized." The universal fix — better data, ensembles, early stopping — applies to both.
+DAAs не избегают Goodhart. Они меняют поверхность, где он проявляется, с "reward model over-optimized" на "reference policy ratio over-optimized." Универсальное исправление - лучшие данные, ансамбли, early stopping - применимо к обоим.
 
-### Choosing among them (2026)
+### Как выбирать между ними (2026)
 
-- If you have large paired preference data: DPO with conservative beta, SimPO if length bias is evident.
-- If you have unpaired binary feedback: KTO.
-- If you want a single-stage pipeline from a base model: ORPO.
-- If you see degraded chosen log-probs in DPO logs: BPO.
-- If preference strengths vary widely and DPO is saturating: IPO.
+- Если у вас много paired preference data: DPO с консервативным beta, SimPO, если виден length bias.
+- Если у вас unpaired binary feedback: KTO.
+- Если вам нужен single-stage pipeline от base model: ORPO.
+- Если в DPO logs видны degraded chosen log-probs: BPO.
+- Если preference strengths широко варьируют и DPO насыщается: IPO.
 
-Every lab runs all five on a battery and picks the winner per task. There is no reason the optimum is the same for math reasoning and safety.
+Каждая лаборатория запускает все пять на battery и выбирает победителя под задачу. Нет причины ожидать, что optimum одинаков для math reasoning и safety.
 
-## Use It
+## Использование
 
-`code/main.py` compares six losses (DPO, IPO, KTO, SimPO, ORPO, BPO) on a toy preference dataset where the true preference strength varies by pair. Each loss is optimized against the same 500-pair sample with a small softmax policy. Plots final win rate, chosen-log-prob drift, and implicit-reward spread per method.
+`code/main.py` сравнивает шесть losses (DPO, IPO, KTO, SimPO, ORPO, BPO) на игрушечном датасете предпочтений, где истинная preference strength меняется от пары к паре. Каждый loss оптимизируется на одной и той же выборке из 500 пар с маленькой softmax policy. Строятся final win rate, chosen-log-prob drift и implicit-reward spread по методам.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-preference-loss-selector.md`. Given dataset statistics (paired vs unpaired, variable vs uniform preference strength, length distribution) and a target (single-stage or SFT-then-preference), recommend a preference loss and report the failure mode it protects against.
+Этот урок создает `outputs/skill-preference-loss-selector.md`. По статистикам датасета (paired vs unpaired, variable vs uniform preference strength, length distribution) и цели (single-stage или SFT-then-preference) он рекомендует preference loss и сообщает режим отказа, от которого тот защищает.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Report the final chosen-log-prob drop for DPO and BPO. BPO should retain higher chosen absolute probability — verify this.
+1. Запустите `code/main.py`. Сообщите final chosen-log-prob drop для DPO и BPO. BPO должен сохранять более высокую absolute probability для chosen - проверьте это.
 
-2. Modify the preference data so that all pairs have equal strength. Which of the six methods is most robust? Which degrades? Explain IPO's advantage here.
+2. Модифицируйте данные предпочтений так, чтобы все пары имели одинаковую strength. Какой из шести методов наиболее устойчив? Какой деградирует? Объясните преимущество IPO здесь.
 
-3. Make the rejected responses on average 2x longer than chosen. Without changing anything else, show DPO's length exploitation numerically and SimPO's fix.
+3. Сделайте rejected responses в среднем в 2x длиннее, чем chosen. Не меняя ничего больше, численно покажите length exploitation у DPO и исправление SimPO.
 
-4. Rafailov et al. (NeurIPS 2024) claim DAAs over-optimize. Reproduce a single-point version: plot chosen-minus-rejected KL divergence and observe over-optimization in DPO at large beta.
+4. Rafailov et al. (NeurIPS 2024) утверждают, что DAAs over-optimize. Воспроизведите single-point version: постройте chosen-minus-rejected KL divergence и наблюдайте over-optimization в DPO при большом beta.
 
-5. Read the BPO paper abstract (OpenReview b97EwMUWu7). Write down the one-line correction BPO adds to DPO. Confirm against the implementation in `code/main.py`.
+5. Прочитайте аннотацию статьи BPO (OpenReview b97EwMUWu7). Запишите однострочную поправку, которую BPO добавляет к DPO. Сверьте с реализацией в `code/main.py`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| DPO | "RLHF without a reward model" | Loss derived from the closed-form RLHF optimum; policy parameters only |
-| Implicit reward | "the log-ratio" | `beta * log(pi(y|x) / pi_ref(y|x))` — the DPO-implied reward |
-| IPO | "bounded DPO" | Replaces log-sigmoid with identity; implicit reward gap capped by `1/(2 beta)` |
-| KTO | "unpaired DPO" | Prospect-theory utility over single labels with loss aversion |
-| SimPO | "reference-free DPO" | Length-normalized log-likelihood + margin; no reference policy |
-| ORPO | "one-stage DPO" | NLL + odds-ratio preference term; trains from base model in one pass |
-| BPO | "chosen-preserving DPO" | DPO plus a penalty for decreasing the chosen response's absolute log-prob |
-| Degraded Chosen | "chosen goes down" | DPO decreases chosen log-prob so long as rejected falls faster |
-| DAA | "direct alignment algorithm" | Any preference-loss method that skips an explicit RM |
+| DPO | "RLHF without a reward model" | Loss, выведенный из замкнутого оптимума RLHF; только параметры политики |
+| Implicit reward | "the log-ratio" | `beta * log(pi(y|x) / pi_ref(y|x))` - вознаграждение, подразумеваемое DPO |
+| IPO | "bounded DPO" | Заменяет log-sigmoid на identity; implicit reward gap ограничен `1/(2 beta)` |
+| KTO | "unpaired DPO" | Prospect-theory utility по одиночным меткам с loss aversion |
+| SimPO | "reference-free DPO" | Length-normalized log-likelihood + margin; без reference policy |
+| ORPO | "one-stage DPO" | NLL + odds-ratio preference term; обучает base model за один проход |
+| BPO | "chosen-preserving DPO" | DPO плюс штраф за снижение absolute log-prob chosen response |
+| Degraded Chosen | "chosen goes down" | DPO снижает chosen log-prob, пока rejected падает быстрее |
+| DAA | "direct alignment algorithm" | Любой preference-loss метод, который пропускает явную RM |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Rafailov et al. — Direct Preference Optimization (NeurIPS 2023, arXiv:2305.18290)](https://arxiv.org/abs/2305.18290)
 - [Azar et al. — A General Theoretical Paradigm to Understand Learning from Human Preferences (AISTATS 2024, arXiv:2310.12036)](https://arxiv.org/abs/2310.12036) — IPO

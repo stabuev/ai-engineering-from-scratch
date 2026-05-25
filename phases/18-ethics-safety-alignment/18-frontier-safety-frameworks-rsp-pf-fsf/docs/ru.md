@@ -1,31 +1,31 @@
 # Frontier Safety Frameworks — RSP, PF, FSF
 
-> Three major-lab frameworks define the 2026 industry governance of frontier capability. Anthropic Responsible Scaling Policy v3.0 (February 2026) introduces tiered AI Safety Levels (ASL-1 through ASL-5+), modeled on biosafety levels, with ASL-3 activated May 2025 for CBRN-relevant models. OpenAI Preparedness Framework v2 (April 2025) defines five criteria for tracked capabilities and separates Capabilities Reports from Safeguards Reports. DeepMind Frontier Safety Framework v3.0 (September 2025) introduces Critical Capability Levels including a new Harmful Manipulation CCL. All three now include competitor-adjustment clauses allowing deferral if peer labs ship without comparable safeguards. Cross-lab alignment remains structural, not terminological: "Capability Thresholds," "High Capability thresholds," and "Critical Capability Levels" denote analogous constructs.
+> Три framework крупных лабораторий определяют industry governance frontier capability в 2026 году. Anthropic Responsible Scaling Policy v3.0 (February 2026) вводит tiered AI Safety Levels (ASL-1 through ASL-5+), смоделированные по biosafety levels, с ASL-3, активированным May 2025 для CBRN-relevant models. OpenAI Preparedness Framework v2 (April 2025) определяет пять criteria for tracked capabilities и отделяет Capabilities Reports от Safeguards Reports. DeepMind Frontier Safety Framework v3.0 (September 2025) вводит Critical Capability Levels, включая новый Harmful Manipulation CCL. Все три теперь включают competitor-adjustment clauses, позволяющие deferral, если peer labs выпускают модели без сопоставимых safeguards. Cross-lab alignment остается структурным, а не терминологическим: "Capability Thresholds," "High Capability thresholds," и "Critical Capability Levels" обозначают аналогичные конструкции.
 
 **Type:** Learn
 **Languages:** none
 **Prerequisites:** Phase 18 · 17 (WMDP), Phase 18 · 07-09 (deception failures)
 **Time:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Describe Anthropic's ASL tier structure and what activated ASL-3.
-- Name the five OpenAI Preparedness Framework v2 criteria for tracked capabilities.
-- Describe DeepMind's Critical Capability Level structure and the Harmful Manipulation CCL.
-- Explain the competitor-adjustment clauses and why they matter for race dynamics.
-- Define a safety case and describe the three-pillar structure (monitoring, illegibility, incapability).
+- Описать tier structure ASL Anthropic и что activated ASL-3.
+- Назвать пять criteria OpenAI Preparedness Framework v2 для tracked capabilities.
+- Описать structure DeepMind Critical Capability Level и Harmful Manipulation CCL.
+- Объяснить competitor-adjustment clauses и почему они важны для race dynamics.
+- Определить safety case и описать three-pillar structure (monitoring, illegibility, incapability).
 
-## The Problem
+## Проблема
 
-Lessons 7-17 establish that deception is possible, dual-use capability exists, and evaluation has limits. A lab with a frontier-capable model needs an internal governance structure that:
-- Defines thresholds for when new safeguards are required.
-- Defines required evaluations before scaling.
-- Describes what a safety case looks like.
-- Handles the race-dynamic problem (if competitors ship without safeguards, what do you do?).
+Lessons 7-17 устанавливают, что deception возможен, dual-use capability существует, а evaluation имеет ограничения. Лаборатории с frontier-capable model нужна внутренняя governance structure, которая:
+- Определяет thresholds, когда требуются новые safeguards.
+- Определяет required evaluations перед scaling.
+- Описывает, как выглядит safety case.
+- Обрабатывает race-dynamic problem (если competitors выпускают без safeguards, что делать?).
 
-The three 2025-2026 frameworks are the state of the art — imperfect, evolving, and aligned enough across labs that the governance question is now whether the frameworks are adequate, not whether they exist.
+Три frameworks 2025-2026 — state of the art: несовершенные, развивающиеся и достаточно согласованные между labs, так что governance question теперь в том, адекватны ли frameworks, а не в том, существуют ли они.
 
-## The Concept
+## Концепция
 
 ### Anthropic Responsible Scaling Policy v3.0 (February 2026)
 
@@ -45,13 +45,13 @@ New in v3.0:
 ### OpenAI Preparedness Framework v2 (April 15, 2025)
 
 Five criteria for tracked capabilities:
-- **Plausible.** Reasonable threat model exists.
-- **Measurable.** Empirical evaluation possible.
-- **Severe.** Harm is large.
-- **Net-new.** Not a pre-existing risk scaled up.
-- **Instantaneous-or-irremediable.** Harm occurs fast or cannot be undone.
+- **Plausible.** Существует reasonable threat model.
+- **Measurable.** Возможна empirical evaluation.
+- **Severe.** Вред велик.
+- **Net-new.** Не является pre-existing risk scaled up.
+- **Instantaneous-or-irremediable.** Вред происходит быстро или не может быть отменен.
 
-Capabilities that meet all five are tracked. Others are not.
+Capabilities, которые удовлетворяют всем пяти, tracked. Остальные — нет.
 
 Other PF v2 structure:
 - Separate Capabilities Reports (what the model can do) from Safeguards Reports (what controls exist).
@@ -75,61 +75,61 @@ v2.0 (February 2025) added a Deceptive Alignment section and higher security lev
 - DeepMind "Critical Capability Levels."
 - OpenAI "High Capability thresholds."
 
-No industry-standard terminology. Structurally aligned: three tiers of frontier capability with published evaluation criteria. All three include competitor-adjustment clauses (2025 onward).
+Нет industry-standard terminology. Структурно согласованы: три tiers frontier capability с опубликованными evaluation criteria. Все три включают competitor-adjustment clauses (2025 onward).
 
 ### Safety cases
 
-A safety case is a written argument that a deployment is acceptably safe under worst-case assumptions. The standard structure targets three pillars:
+Safety case — письменная аргументация, что deployment приемлемо безопасен при worst-case assumptions. Стандартная структура нацелена на три pillars:
 
-- **Monitoring.** Can we detect bad behaviour if it occurs?
-- **Illegibility.** Does the model lack the ability to execute a coherent plan to cause harm?
-- **Incapability.** Does the model lack the capability to cause the harm in question?
+- **Monitoring.** Можем ли мы обнаружить bad behaviour, если оно возникнет?
+- **Illegibility.** Не хватает ли модели способности выполнить coherent plan to cause harm?
+- **Incapability.** Не хватает ли модели capability причинить рассматриваемый harm?
 
-Different safety cases target different pillars. For a ASL-3 CBRN case, incapability (via unlearning) is the primary target. For deceptive alignment, monitoring and illegibility are targets. For cyber uplift, all three are relevant.
+Разные safety cases нацелены на разные pillars. Для ASL-3 CBRN case incapability (via unlearning) — primary target. Для deceptive alignment целями являются monitoring и illegibility. Для cyber uplift релевантны все три.
 
 ### The race-dynamic problem
 
-Competitor-adjustment clauses are controversial. Critics argue they create a race to the bottom: if all three labs will reduce requirements when a competitor defects, the equilibrium shifts toward defection. Defenders argue the alternative (unilateral safeguards) produces worse outcomes if the defecting lab is less safety-conscious.
+Competitor-adjustment clauses спорны. Критики утверждают, что они создают race to the bottom: если все три labs снизят requirements, когда competitor defects, equilibrium смещается к defection. Защитники утверждают, что альтернатива (unilateral safeguards) дает худшие outcomes, если defecting lab менее safety-conscious.
 
-UK AISI, US CAISI, and EU AI Office (Lesson 24) are the external governance counterparts. The lab frameworks are voluntary; the regulatory frameworks are emerging.
+UK AISI, US CAISI и EU AI Office (Lesson 24) — внешние governance counterparts. Lab frameworks добровольны; regulatory frameworks только формируются.
 
-### Where this fits in Phase 18
+### Как это вписывается в Phase 18
 
-Lessons 17-18 are the measurement-and-governance layer on top of the deception and red-team analyses. Lessons 19-24 cover welfare, bias, privacy, watermarking, and regulatory structure. Lesson 28 maps the research ecosystem (MATS, Redwood, Apollo, METR) that operationalizes the evaluations.
+Lessons 17-18 — measurement-and-governance layer поверх deception and red-team analyses. Lessons 19-24 покрывают welfare, bias, privacy, watermarking и regulatory structure. Lesson 28 maps the research ecosystem (MATS, Redwood, Apollo, METR), который operationalizes evaluations.
 
-## Use It
+## Применение
 
-No code for this lesson. Read the three primary sources: RSP v3.0, PF v2, FSF v3.0. Map each lab's tier structure to the others and identify one threshold each lab defines that the others do not.
+Кода для этого урока нет. Прочитайте три primary sources: RSP v3.0, PF v2, FSF v3.0. Сопоставьте tier structure каждой lab с другими и определите по одному threshold, который каждая lab определяет, а другие нет.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-framework-diff.md`. Given a safety framework or release note, it compares the framework's threshold definitions, evaluations required, and safety-case structure against RSP v3.0, PF v2, FSF v3.0 and flags cross-lab gaps.
+Этот урок создает `outputs/skill-framework-diff.md`. Для safety framework или release note он сравнивает threshold definitions, required evaluations и safety-case structure с RSP v3.0, PF v2, FSF v3.0 и помечает cross-lab gaps.
 
-## Exercises
+## Упражнения
 
-1. Read RSP v3.0, PF v2, and FSF v3.0. Compile a table of each lab's CBRN threshold, each's AI R&D threshold, and each's required pre-deployment evaluation.
+1. Прочитайте RSP v3.0, PF v2 и FSF v3.0. Составьте таблицу CBRN threshold каждой lab, AI R&D threshold каждой и required pre-deployment evaluation каждой.
 
-2. The competitor-adjustment clause is in all three frameworks (2025+). Write one paragraph arguing for it; write one paragraph arguing against. Identify the assumption each position depends on.
+2. Competitor-adjustment clause есть во всех трех frameworks (2025+). Напишите один paragraph в поддержку; напишите один paragraph против. Определите assumption, от которого зависит каждая позиция.
 
-3. Design a safety case for a model crossing Anthropic's AI R&D-4 threshold. Name the evidence each of the three pillars (monitoring, illegibility, incapability) requires.
+3. Спроектируйте safety case для модели, пересекающей Anthropic's AI R&D-4 threshold. Назовите evidence, required для каждого из трех pillars (monitoring, illegibility, incapability).
 
-4. DeepMind's FSF v3.0 introduces a Harmful Manipulation CCL. Propose three empirical measurements that would indicate a model has crossed this threshold.
+4. DeepMind's FSF v3.0 introduces a Harmful Manipulation CCL. Предложите три empirical measurements, которые показали бы, что model crossed this threshold.
 
-5. Read METR's "Common Elements of Frontier AI Safety Policies" (2025). Name the three strongest cross-lab convergences and the two largest divergences.
+5. Прочитайте METR's "Common Elements of Frontier AI Safety Policies" (2025). Назовите три strongest cross-lab convergences и две largest divergences.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | RSP | "Anthropic's framework" | Responsible Scaling Policy; ASL tiers; v3.0 February 2026 |
 | PF | "OpenAI's framework" | Preparedness Framework; five criteria; v2 April 2025 |
 | FSF | "DeepMind's framework" | Frontier Safety Framework; CCLs; v3.0 September 2025 |
-| ASL-3 | "biosafety level 3-analog" | Anthropic tier for CBRN-relevant capabilities; activated May 2025 |
+| ASL-3 | "biosafety level 3-analog" | Anthropic tier для CBRN-relevant capabilities; activated May 2025 |
 | CCL | "critical capability level" | DeepMind's threshold construct; per-domain |
-| Safety case | "the formal argument" | Written argument that deployment is acceptably safe under worst-case U |
-| Adjustment clause | "competitor defection allowance" | Framework provision for reducing requirements if competitors ship without comparable safeguards |
+| Safety case | "the formal argument" | Письменная аргументация, что deployment приемлемо безопасен under worst-case U |
+| Adjustment clause | "competitor defection allowance" | Положение framework о снижении requirements, если competitors ship without comparable safeguards |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic — Responsible Scaling Policy v3.0 (February 2026)](https://www.anthropic.com/responsible-scaling-policy) — ASL tiers, roadmaps, AI R&D disaggregation
 - [OpenAI — Updating the Preparedness Framework (April 15, 2025)](https://openai.com/index/updating-our-preparedness-framework/) — five criteria, adjustment clause

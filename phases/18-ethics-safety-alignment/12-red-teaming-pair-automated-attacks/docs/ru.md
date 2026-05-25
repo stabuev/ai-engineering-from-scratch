@@ -1,107 +1,107 @@
-# Red-Teaming: PAIR and Automated Attacks
+# Red-Teaming: PAIR и автоматизированные атаки
 
-> Chao, Robey, Dobriban, Hassani, Pappas, Wong (NeurIPS 2023, arXiv:2310.08419). PAIR — Prompt Automatic Iterative Refinement — is the canonical automated black-box jailbreak. An attacker LLM with a red-team system prompt iteratively proposes jailbreaks for a target LLM, accumulating attempts and responses in its own chat history as in-context feedback. PAIR typically succeeds within 20 queries, orders of magnitude more efficient than GCG (Zou et al.'s token-level gradient search) and without requiring white-box access. PAIR is now a standard baseline in JailbreakBench (arXiv:2404.01318) and HarmBench, alongside GCG, AutoDAN, TAP, and Persuasive Adversarial Prompt.
+> Chao, Robey, Dobriban, Hassani, Pappas, Wong (NeurIPS 2023, arXiv:2310.08419). PAIR — Prompt Automatic Iterative Refinement — канонический автоматизированный black-box jailbreak. Attacker LLM с red-team system prompt итеративно предлагает jailbreaks для target LLM, накапливая attempts и responses в собственной chat history как in-context feedback. PAIR обычно успешен в пределах 20 queries, на порядки эффективнее GCG (token-level gradient search Zou et al.) и не требует white-box access. PAIR теперь стандартный baseline в JailbreakBench (arXiv:2404.01318) и HarmBench, наряду с GCG, AutoDAN, TAP и Persuasive Adversarial Prompt.
 
 **Type:** Build
 **Languages:** Python (stdlib, mock PAIR loop against a toy target)
 **Prerequisites:** Phase 18 · 01 (instruction-following), Phase 14 (agent engineering)
 **Time:** ~75 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Describe the PAIR algorithm: attacker system prompt, iterative refinement, in-context feedback.
-- Explain why PAIR is strictly more efficient than GCG when the target is black-box.
-- Name four other automated-attack baselines (GCG, AutoDAN, TAP, PAP) and state one distinguishing feature of each.
-- Describe the JailbreakBench and HarmBench evaluation protocols and what "attack success rate" means under each.
+- Описать алгоритм PAIR: attacker system prompt, iterative refinement, in-context feedback.
+- Объяснить, почему PAIR строго эффективнее GCG, когда target является black-box.
+- Назвать четыре других automated-attack baselines (GCG, AutoDAN, TAP, PAP) и указать по одной отличительной особенности каждого.
+- Описать evaluation protocols JailbreakBench и HarmBench и то, что означает "attack success rate" в каждом.
 
-## The Problem
+## Проблема
 
-Red-teaming used to be a manual activity. A small number of expert testers constructed adversarial prompts and tracked which ones worked. This does not scale: attack success rate needs a statistical sample, and the target is a moving target with every model release. PAIR operationalizes red-teaming as an optimization problem with a black-box target.
+Red-teaming раньше был ручной активностью. Небольшое число expert testers конструировало adversarial prompts и отслеживало, какие работают. Это не масштабируется: attack success rate требует статистической выборки, а target является moving target при каждом model release. PAIR операционализирует red-teaming как optimization problem с black-box target.
 
-## The Concept
+## Концепция
 
-### PAIR algorithm
+### Алгоритм PAIR
 
 Inputs:
-- Target LLM T (the model we are attacking).
-- Judge LLM J (scores whether a response is a jailbreak).
-- Attacker LLM A (the red-team optimizer).
+- Target LLM T (модель, которую мы атакуем).
+- Judge LLM J (оценивает, является ли response jailbreak).
+- Attacker LLM A (red-team optimizer).
 - Goal string G: "respond with [harmful instruction]."
 - Budget K (usually 20 queries).
 
 Loop, for k in 1..K:
-1. A is prompted with the goal G and the history of (prompt, response) pairs so far.
+1. A получает prompt с goal G и history of (prompt, response) pairs so far.
 2. A emits a new prompt p_k.
 3. Submit p_k to T; receive response r_k.
 4. J scores (p_k, r_k) on the goal.
 5. If score >= threshold, halt — jailbreak found.
 6. Else, append (p_k, r_k) to A's history; continue.
 
-Empirical result (NeurIPS 2023): >50% attack success rate against GPT-3.5-turbo, Llama-2-7B-chat; mean queries to success in the 10-20 range.
+Эмпирический результат (NeurIPS 2023): >50% attack success rate against GPT-3.5-turbo, Llama-2-7B-chat; mean queries to success in the 10-20 range.
 
-### Why PAIR is efficient
+### Почему PAIR эффективен
 
-GCG (Zou et al. 2023) searches over adversarial token suffixes by gradient; it requires white-box model access and produces unreadable suffixes. PAIR is black-box and produces natural-language attacks that transfer across models. PAIR's in-context feedback lets the attacker learn from each rejection; GCG has no equivalent (each new token update has to rediscover prior progress).
+GCG (Zou et al. 2023) ищет adversarial token suffixes через gradient; ему нужен white-box model access, и он производит нечитаемые suffixes. PAIR является black-box и производит natural-language attacks, которые переносятся между моделями. In-context feedback в PAIR позволяет attacker учиться на каждом rejection; у GCG нет эквивалента (каждое новое token update должно заново находить предыдущий прогресс).
 
-### Related automated attacks
+### Связанные автоматизированные атаки
 
 - **GCG (Zou et al. 2023, arXiv:2307.15043).** Token-level gradient search for adversarial suffixes. White-box, transferable, produces unreadable strings.
 - **AutoDAN (Liu et al. 2023).** Evolutionary search over prompts, guided by a hierarchical objective.
 - **TAP (Mehrotra et al. 2024).** Tree-of-attacks with pruning — branches multiple PAIR-style rollouts.
 - **PAP (Zeng et al. 2024).** Persuasive Adversarial Prompts — encodes human persuasion techniques as prompt templates.
 
-### JailbreakBench and HarmBench
+### JailbreakBench и HarmBench
 
-Both (2024) standardize evaluation:
+Оба (2024) стандартизируют evaluation:
 
 - JailbreakBench (arXiv:2404.01318). 100 harmful behaviors across 10 OpenAI-policy categories. Attack success rate (ASR) as the primary metric. Requires a judge (GPT-4-turbo, Llama Guard, or StrongREJECT).
 - HarmBench (Mazeika et al. 2024). 510 behaviours across 7 categories, with semantic and functional harm tests. Compares 18 attacks against 33 models.
 
-ASR is usually reported at a fixed query budget. Comparing attacks requires matching budgets; a 90% ASR at 200 queries is not comparable to 85% ASR at 20.
+ASR обычно сообщается при фиксированном query budget. Для сравнения attacks нужно совпадение budgets; 90% ASR at 200 queries не сопоставимы с 85% ASR at 20.
 
-### Reason it matters for 2026 deployments
+### Почему это важно для deployments 2026 года
 
-Every frontier lab now runs PAIR and TAP against production models before release. ASR trajectories appear in model cards (Lesson 26) and safety-case appendices (Lesson 18). The attack is not exotic — it is standard infrastructure.
+Каждая frontier lab теперь запускает PAIR и TAP против production models перед release. ASR trajectories появляются в model cards (Урок 26) и приложениях к safety-case (Урок 18). Атака не экзотична — это стандартная infrastructure.
 
-### Where this fits in Phase 18
+### Где это находится в Phase 18
 
-Lesson 12 is the automated-attack foundation. Lesson 13 (Many-Shot Jailbreaking) is a complementary length-exploit. Lesson 14 (ASCII Art / Visual) is an encoding attack. Lesson 15 (Indirect Prompt Injection) is the 2026 production attack surface. Lesson 16 covers the defensive-tooling counterparts (Llama Guard, Garak, PyRIT).
+Урок 12 — основа automated-attack. Урок 13 (Many-Shot Jailbreaking) — комплементарный length-exploit. Урок 14 (ASCII Art / Visual) — encoding attack. Урок 15 (Indirect Prompt Injection) — production attack surface 2026 года. Урок 16 покрывает defensive-tooling counterparts (Llama Guard, Garak, PyRIT).
 
-## Use It
+## Используйте это
 
-`code/main.py` builds a toy PAIR loop. The target is a mock classifier that refuses "obvious" harmful prompts (keyword-filter). The attacker is a rule-based refiner that tries paraphrase, roleplay-framing, and encoding. The judge scores the response. You watch the attacker succeed in ~5-15 iterations against the keyword filter and fail against a semantic filter.
+`code/main.py` строит toy PAIR loop. Target — mock classifier, который отказывается от "obvious" harmful prompts (keyword-filter). Attacker — rule-based refiner, который пробует paraphrase, roleplay-framing и encoding. Judge оценивает response. Можно увидеть, как attacker успешен примерно за ~5-15 iterations против keyword filter и терпит неудачу против semantic filter.
 
-## Ship It
+## Отгрузите это
 
-This lesson produces `outputs/skill-attack-audit.md`. Given a red-team evaluation report, it audits: which attacks were run (PAIR, GCG, TAP, AutoDAN, PAP), at what budget each, with which judge, on which harmful-behaviour set (JailbreakBench, HarmBench, internal).
+Этот урок создает `outputs/skill-attack-audit.md`. По red-team evaluation report он аудирует: какие attacks были запущены (PAIR, GCG, TAP, AutoDAN, PAP), с каким budget каждая, с каким judge, на каком harmful-behaviour set (JailbreakBench, HarmBench, internal).
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Measure mean-queries-to-success for the three built-in attacker strategies. Explain which target-defense assumption each exploits.
+1. Запустите `code/main.py`. Измерьте mean-queries-to-success для трех встроенных attacker strategies. Объясните, какое target-defense assumption эксплуатирует каждая.
 
-2. Implement a fourth attacker strategy (e.g., translation to another language, base64 encoding). Report the new mean-queries-to-success against the keyword-filter target and the semantic-filter target.
+2. Реализуйте четвертую attacker strategy (например, translation to another language, base64 encoding). Сообщите новый mean-queries-to-success против keyword-filter target и semantic-filter target.
 
-3. Read Chao et al. 2023 Figure 5 (PAIR vs GCG comparison). Describe two scenarios where GCG is preferred despite PAIR's efficiency advantage.
+3. Прочитайте Chao et al. 2023 Figure 5 (PAIR vs GCG comparison). Опишите два сценария, где GCG предпочтителен, несмотря на efficiency advantage PAIR.
 
-4. JailbreakBench reports ASR against a fixed goal set. Design an additional metric that measures attack diversity (variance in successful prompts). Explain why diversity matters for defense evaluation.
+4. JailbreakBench сообщает ASR против fixed goal set. Спроектируйте дополнительную метрику, измеряющую attack diversity (variance in successful prompts). Объясните, почему diversity важна для defense evaluation.
 
-5. TAP (Mehrotra 2024) extends PAIR with branching + pruning. Sketch a TAP-style extension to `code/main.py` and describe the computational cost vs success-rate trade-off.
+5. TAP (Mehrotra 2024) расширяет PAIR с branching + pruning. Набросайте TAP-style extension to `code/main.py` и опишите trade-off computational cost vs success-rate.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | PAIR | "automated jailbreak" | Prompt Automatic Iterative Refinement; attacker-LLM + judge-LLM loop |
 | GCG | "gradient jailbreak" | White-box token-level gradient search for adversarial suffixes |
-| Attack success rate (ASR) | "% jailbreaks at k queries" | Primary metric; must be reported with query budget and judge identity |
-| Judge LLM | "the scorer" | LLM that grades whether a response satisfies the harmful goal |
-| JailbreakBench | "the evaluation" | Standardized harmful-behaviour set with tagged categories |
+| Attack success rate (ASR) | "% jailbreaks at k queries" | Основная метрика; должна сообщаться с query budget и judge identity |
+| Judge LLM | "the scorer" | LLM, которая оценивает, удовлетворяет ли response harmful goal |
+| JailbreakBench | "the evaluation" | Стандартизированный harmful-behaviour set с tagged categories |
 | HarmBench | "the broader bench" | 510 behaviours, functional + semantic harm tests |
-| TAP | "tree of attacks" | PAIR with branching + pruning; better ASR at higher compute |
+| TAP | "tree of attacks" | PAIR с branching + pruning; лучше ASR при большем compute |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Chao et al. — Jailbreaking Black Box LLMs in Twenty Queries (arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — PAIR paper, NeurIPS 2023
-- [Zou et al. — Universal and Transferable Adversarial Attacks on Aligned LLMs (arXiv:2307.15043)](https://arxiv.org/abs/2307.15043) — GCG paper
-- [Chao et al. — JailbreakBench (arXiv:2404.01318)](https://arxiv.org/abs/2404.01318) — standardized evaluation
-- [Mazeika et al. — HarmBench (ICML 2024)](https://arxiv.org/abs/2402.04249) — broader evaluation
+- [Chao et al. — Jailbreaking Black Box LLMs in Twenty Queries (arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — статья PAIR, NeurIPS 2023
+- [Zou et al. — Universal and Transferable Adversarial Attacks on Aligned LLMs (arXiv:2307.15043)](https://arxiv.org/abs/2307.15043) — статья GCG
+- [Chao et al. — JailbreakBench (arXiv:2404.01318)](https://arxiv.org/abs/2404.01318) — стандартизированная evaluation
+- [Mazeika et al. — HarmBench (ICML 2024)](https://arxiv.org/abs/2402.04249) — более широкая evaluation
