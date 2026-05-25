@@ -1,11 +1,11 @@
-# T5, BART — Encoder-Decoder Models
+# T5, BART — encoder-decoder модели
 
 > Encoders понимают. Decoders генерируют. Соедините их обратно — и получите модель для задач input → output: translate, summarize, rewrite, transcribe.
 
-**Type:** Learn
-**Languages:** Python
-**Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 06 (BERT), Phase 7 · 07 (GPT)
-**Time:** ~45 minutes
+**Тип:** Изучение
+**Языки:** Python
+**Предварительные требования:** Фаза 7 · 05 (полный transformer), Фаза 7 · 06 (BERT), Фаза 7 · 07 (GPT)
+**Время:** ~45 минут
 
 ## Проблема
 
@@ -26,7 +26,7 @@ Decoder-only GPT и encoder-only BERT упрощают архитектуру 20
 В 2026 году формат encoder-decoder живет там, где важна структура input:
 
 - Whisper (speech → text).
-- Google's translation stack.
+- Translation stack Google.
 - Некоторые code-completion / repair models с отдельными context-and-edit structures.
 - Flan-T5 и варианты для structured reasoning tasks.
 
@@ -51,7 +51,7 @@ target tokens ─▶ decoder block                   │
 
 Ключевое: encoder запускается один раз на input. Decoder работает autoregressively, но cross-attends к одному и тому же encoder output на каждом step. Caching encoder output — бесплатное ускорение для long inputs.
 
-### T5 pretraining — span corruption
+### Pretraining T5 — span corruption
 
 Выберите random spans во input (средняя длина 3 tokens, 15% total). Замените каждый span уникальным sentinel: `<extra_id_0>`, `<extra_id_1>` и т.д. Decoder выводит только corrupted spans с их sentinel prefix:
 
@@ -62,7 +62,7 @@ target: <extra_id_0> brown <extra_id_1> over the lazy
 
 Это более дешевый signal, чем предсказывать всю sequence. В ablation T5 он конкурентен с MLM (BERT) и prefix-LM (UniLM).
 
-### BART pretraining — multi-noise denoising
+### Pretraining BART — denoising с несколькими видами шума
 
 BART пробует пять noising functions:
 
@@ -80,22 +80,22 @@ BART пробует пять noising functions:
 
 ### Когда выбирать вариант в 2026 году
 
-| Task | Encoder-decoder? | Why |
-|------|------------------|-----|
-| Translation | Yes, usually | Clear source sequence; fixed output distribution; beam search works |
-| Speech-to-text | Yes (Whisper) | Input modality differs from output; encoder shapes audio features |
-| Chat / reasoning | No, decoder-only | No persistent "input" — the conversation is the sequence |
-| Code completion | Usually no | Decoder-only with long context wins; code models like Qwen 2.5 Coder are decoder-only |
-| Summarization | Either works | BART, PEGASUS beat earlier decoder-only baselines; modern decoder-only LLMs match them |
-| Structured extraction | Either | T5 is clean because "text → text" absorbs any output format |
+| Задача | Encoder-decoder? | Почему |
+|--------|------------------|--------|
+| Translation | Да, обычно | Четкая source sequence; fixed output distribution; beam search работает |
+| Speech-to-text | Да (Whisper) | Input modality отличается от output; encoder формирует audio features |
+| Chat / reasoning | Нет, decoder-only | Нет постоянного "input" — conversation и есть sequence |
+| Code completion | Обычно нет | Decoder-only с long context выигрывает; code models вроде Qwen 2.5 Coder — decoder-only |
+| Summarization | Подходит любой | BART, PEGASUS били ранние decoder-only baselines; современные decoder-only LLMs сравнялись с ними |
+| Structured extraction | Любой | T5 удобен, потому что "text → text" поглощает любой output format |
 
 Тренд с ~2022: decoder-only забирает задачи, где раньше был encoder-decoder, потому что (a) instruction-tuned decoder-only LLMs обобщаются на все через prompting, (b) одну architecture проще масштабировать, чем две, (c) RLHF предполагает decoder. Encoder-decoder держится там, где input modality отличается (speech, images) или важен beam search quality.
 
-## Build It
+## Соберите это
 
 См. `code/main.py`. Мы реализуем T5-style span corruption для toy corpus — это самая полезная часть урока, потому что она встречается почти во всех encoder-decoder pretraining recipes.
 
-### Step 1: span corruption
+### Шаг 1: span corruption
 
 ```python
 def corrupt_spans(tokens, mask_rate=0.15, mean_span=3.0, rng=None):
@@ -108,17 +108,17 @@ def corrupt_spans(tokens, mask_rate=0.15, mean_span=3.0, rng=None):
 
 Target format — convention T5: `<sent0> span0 <sent1> span1 ...`. Corrupted input чередует unchanged tokens с sentinel tokens в местах spans.
 
-### Step 2: verify round-trip
+### Шаг 2: проверьте round-trip
 
 По corrupted input и target восстановите original sentence. Если corruption обратим, forward pass определен корректно. Это sanity check — real training так не делает, но тест дешевый и ловит off-by-one bugs в span bookkeeping.
 
-### Step 3: BART noising
+### Шаг 3: noising в BART
 
 Пять функций: `token_mask`, `token_delete`, `text_infill`, `sentence_permute`, `document_rotate`. Скомпонуйте две и покажите результат.
 
-## Use It
+## Используйте это
 
-HuggingFace reference:
+Reference в HuggingFace:
 
 ```python
 from transformers import T5ForConditionalGeneration, T5Tokenizer
@@ -132,28 +132,28 @@ print(tok.decode(out[0], skip_special_tokens=True))
 
 Трюк T5: имя task входит в input text. Одна model обрабатывает десятки tasks, потому что каждая task — text-in, text-out. В 2026 году этот pattern обобщен instruction-tuned decoder-only models, но T5 зафиксировал его первым.
 
-## Ship It
+## Доведите до поставки
 
 См. `outputs/skill-seq2seq-picker.md`. Skill выбирает между encoder-decoder и decoder-only для новой task по input-output structure, latency и quality targets.
 
 ## Упражнения
 
-1. **Easy.** Запустите `code/main.py`, примените span corruption к 30-token sentence, проверьте, что concatenating non-sentinel source tokens с decoded target spans воспроизводит original.
-2. **Medium.** Реализуйте BART `text_infill` noise: замените random spans одним `<mask>` token, а decoder должен вывести правильную длину и содержимое span. Покажите пример.
-3. **Hard.** Fine-tune `flan-t5-small` на tiny English → pig-Latin corpus (200 pairs). Измерьте BLEU на held-out 50-pair set. Сравните с fine-tuning `Llama-3.2-1B` на тех же data с тем же compute.
+1. **Легко.** Запустите `code/main.py`, примените span corruption к 30-token sentence, проверьте, что concatenating non-sentinel source tokens с decoded target spans воспроизводит original.
+2. **Средне.** Реализуйте BART `text_infill` noise: замените random spans одним `<mask>` token, а decoder должен вывести правильную длину и содержимое span. Покажите пример.
+3. **Сложно.** Fine-tune `flan-t5-small` на tiny English → pig-Latin corpus (200 pairs). Измерьте BLEU на held-out 50-pair set. Сравните с fine-tuning `Llama-3.2-1B` на тех же data с тем же compute.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
 | Encoder-decoder | "Seq2seq transformer" | Два стека: bidirectional encoder для input, causal decoder с cross-attention для output. |
-| Cross-attention | "Where source talks to target" | Decoder Q × encoder K/V. Единственное место, где encoder information входит в decoder. |
-| Span corruption | "T5's pretraining trick" | Заменить random spans на sentinel tokens; decoder outputs spans. |
-| Denoising objective | "BART's game" | Применить noise function к input, обучить decoder reconstruct clean sequence. |
-| Sentinel token | "The `<extra_id_N>` placeholder" | Special tokens, которые отмечают corrupted spans в source и повторно отмечают их в target. |
+| Cross-attention | "Где source говорит с target" | Decoder Q × encoder K/V. Единственное место, где encoder information входит в decoder. |
+| Span corruption | "Pretraining-трюк T5" | Заменить random spans на sentinel tokens; decoder outputs spans. |
+| Denoising objective | "Игра BART" | Применить noise function к input, обучить decoder reconstruct clean sequence. |
+| Sentinel token | "Placeholder `<extra_id_N>`" | Special tokens, которые отмечают corrupted spans в source и повторно отмечают их в target. |
 | Flan | "Instruction-tuned T5" | T5 fine-tuned на >1,800 tasks; сделал encoder-decoder конкурентным в instruction-following. |
-| Beam search | "Decoding strategy" | Держать top-k partial sequences на каждом step; стандарт для translation/summarization. |
-| Teacher forcing | "Training-time input" | Во время training подавать true previous output token в decoder, а не sampled one. |
+| Beam search | "Стратегия decoding" | Держать top-k partial sequences на каждом step; стандарт для translation/summarization. |
+| Teacher forcing | "Вход во время обучения" | Во время training подавать true previous output token в decoder, а не sampled one. |
 
 ## Дополнительное чтение
 

@@ -1,10 +1,10 @@
-# Speculative Decoding — Draft, Verify, Repeat
+# Speculative Decoding — черновик, проверка, повтор
 
 > Autoregressive decoding последовательно. Каждый token ждет предыдущий. Speculative decoding разрывает цепочку: дешевая модель drafts N tokens, дорогая модель verifies все N за один forward pass. Когда draft прав, вы заплатили один большой forward за N generations.
 
 **Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 07 (GPT Causal LM), Фаза 7 · 12 (KV Cache & Flash Attention)
+**Предварительные требования:** Фаза 7 · 07 (GPT causal LM), Фаза 7 · 12 (KV cache и Flash Attention)
 **Время:** ~60 минут
 
 ## Проблема
@@ -141,11 +141,11 @@ def spec_step(prefix, q_model, p_model, N, rng):
 
 Пять принятых → один bonus → шесть tokens produced за один verifier pass.
 
-### Шаг 4: измерить acceptance rate
+### Шаг 4: измерьте acceptance rate
 
 Запустите 10 000 speculative steps при разных draft-quality levels. Plot acceptance rate vs. KL divergence между draft и verifier distributions. Должна быть чистая monotone relationship.
 
-### Шаг 5: проверить distribution equivalence
+### Шаг 5: проверьте distribution equivalence
 
 Empirically: histogram tokens, produced by speculative loop, должен совпадать с histogram, produced by sampling directly from verifier. Это theorem Leviathan на практике. Chi-square test подтверждает within sampling error.
 
@@ -170,18 +170,18 @@ TensorRT-LLM имеет самый быстрый Medusa path на mid-2026. `fa
 
 **Выбор draft:**
 
-| Strategy | When to pick | Speedup |
+| Strategy | Когда выбирать | Speedup |
 |----------|--------------|---------|
-| Vanilla draft (1B/3B Llama family) | Fast prototype, no training | 1.8–2.3× |
-| Medusa heads | You can fine-tune the verifier | 2–3× |
-| EAGLE-2 / 3 | Production, max speed | 3–4× |
-| Lookahead | No draft, no training, no extra params | 1.3–1.6× |
+| Vanilla draft (семейство 1B/3B Llama) | Быстрый prototype, без training | 1.8–2.3× |
+| Medusa heads | Можно fine-tune verifier | 2–3× |
+| EAGLE-2 / 3 | Production, максимальная скорость | 3–4× |
+| Lookahead | Без draft, без training, без extra params | 1.3–1.6× |
 
 **Когда НЕ использовать spec-decode:**
 
-- Single-sequence generation of 1–5 tokens. Overhead dominates.
-- Wildly creative / high-temperature sampling (α drops).
-- Memory-constrained deployments (draft model adds VRAM).
+- Single-sequence generation на 1–5 tokens. Overhead доминирует.
+- Сильно creative / high-temperature sampling (α падает).
+- Memory-constrained deployments (draft model добавляет VRAM).
 
 ## Доведите до поставки
 
@@ -191,23 +191,23 @@ TensorRT-LLM имеет самый быстрый Medusa path на mid-2026. `fa
 
 1. **Легко.** Запустите `code/main.py`. Подтвердите, что speculative token distribution совпадает с verifier direct-sample distribution на 50 000 tokens в пределах chi-square p > 0.05.
 2. **Средне.** Постройте speedup (tokens per big-model forward) как function of `N` для `α = 0.5, 0.7, 0.85`. Определите optimal `N` для каждого α. (Hint: expected tokens per verify call = `(1 - α^{N+1}) / (1 - α)`.)
-3. **Сложно.** Реализуйте tiny Medusa: возьмите capstone GPT из Lesson 14, добавьте 3 extra LM heads, которые предсказывают positions t+2, t+3, t+4. Обучите на tinyshakespeare с joint multi-head loss. Сравните acceptance rates с vanilla draft, полученным truncating the same model.
+3. **Сложно.** Реализуйте tiny Medusa: возьмите capstone GPT из Урок 14, добавьте 3 extra LM heads, которые предсказывают positions t+2, t+3, t+4. Обучите на tinyshakespeare с joint multi-head loss. Сравните acceptance rates с vanilla draft, полученным truncating the same model.
 4. **Сложно.** Реализуйте rollback: начните с 10-token prefix KV cache, подайте 5 draft tokens, simulate rejection at position 3. Проверьте, что cache reads correctly match "prefix + first 2 accepted drafts" на следующей iteration.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Draft model | "The cheap one" | Меньшая model, которая предлагает candidate tokens; обычно в 10–50× дешевле verifier. |
-| Verifier | "The big one" | Target model, distribution которой мы сохраняем; runs once per speculative step. |
-| Acceptance rate (α) | "How often the draft is right" | Per-token probability, что verifier принимает draft. Типично 0.7–0.9. |
-| Residual distribution | "The rejection fallback" | `(q - p)_+` normalized; sampling from this on rejection preserves verifier distribution. |
-| Bonus token | "The free one" | Когда все N drafts accepted, sample one more from verifier next-step distribution. |
-| Medusa | "Draft-less speculative" | Multiple LM heads on verifier predict positions t+1..t+k in parallel. |
-| EAGLE | "Hidden-state draft" | Tiny transformer draft conditioned on verifier last-layer hidden states. |
-| Lookahead decoding | "Jacobi iteration" | Self-speculation using fixed-point iteration; no draft model. |
-| Tree attention | "Verify many candidates at once" | Branching verification, который рассматривает несколько draft continuations simultaneously. |
-| KV rollback | "Undo rejected drafts" | Scratch KV buffer; commit on acceptance, discard on reject. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Draft model | "Дешевая модель" | Меньшая model, которая предлагает candidate tokens; обычно в 10–50× дешевле verifier. |
+| Verifier | "Большая модель" | Target model, distribution которой мы сохраняем; runs once per speculative step. |
+| Acceptance rate (α) | "Как часто draft прав" | Per-token probability, что verifier принимает draft. Типично 0.7–0.9. |
+| Residual distribution | "Fallback при rejection" | `(q - p)_+` normalized; sampling from this on rejection preserves verifier distribution. |
+| Bonus token | "Бесплатный токен" | Когда все N drafts accepted, sample one more from verifier next-step distribution. |
+| Medusa | "Speculative без draft model" | Multiple LM heads on verifier predict positions t+1..t+k in parallel. |
+| EAGLE | "Draft по hidden states" | Tiny transformer draft conditioned on verifier last-layer hidden states. |
+| Lookahead decoding | "Итерация Якоби" | Self-speculation using fixed-point iteration; no draft model. |
+| Tree attention | "Проверить много кандидатов сразу" | Branching verification, который рассматривает несколько draft continuations simultaneously. |
+| KV rollback | "Откатить rejected drafts" | Scratch KV buffer; commit on acceptance, discard on reject. |
 
 ## Дополнительное чтение
 

@@ -1,4 +1,4 @@
-# POS Tagging and Syntactic Parsing
+# POS-разметка и синтаксический разбор
 
 > Грамматика какое-то время была не в моде. Затем каждому LLM-пайплайну понадобилось валидировать structured extraction, и она вернулась.
 
@@ -19,7 +19,7 @@
 
 ## Концепция
 
-![POS tag + dependency parse example](./assets/pos-parse.svg)
+![Пример POS-тега и dependency-разбора](./assets/pos-parse.svg)
 
 **POS tagging** помечает каждый токен грамматической категорией. **Penn Treebank (PTB)** tagset - английский стандарт. 36 тегов с различиями, которые обычному читателю кажутся придирчивыми: `NN` singular noun, `NNS` plural noun, `NNP` proper noun singular, `VBD` verb past tense, `VBZ` verb 3rd person singular present и так далее. **Universal Dependencies (UD)** tagset грубее (17 тегов) и не привязан к языку; он стал стандартом для cross-lingual work.
 
@@ -226,14 +226,14 @@ Refuse to recommend rolling your own parser. Building parsers from scratch is a 
 
 ## Упражнения
 
-1. **Easy.** Используя most-frequent-tag baseline на небольшом tagged corpus (например, NLTK's Brown subset), измерьте accuracy на held-out sentences. Проверьте результат ~85%.
-2. **Medium.** Обучите bigram HMM выше и сообщите per-tag precision/recall. Какие tags HMM путает чаще всего?
-3. **Hard.** Используйте dependency parse spaCy, чтобы извлечь subject-verb-object triples из выборки в 1000 предложений. Оцените на 50 manually labeled triples. Задокументируйте, где extraction ломается (часто passives, coordinations и elided subjects).
+1. **Легко.** Используя most-frequent-tag baseline на небольшом tagged corpus (например, NLTK's Brown subset), измерьте accuracy на held-out sentences. Проверьте результат ~85%.
+2. **Средне.** Обучите bigram HMM выше и сообщите per-tag precision/recall. Какие tags HMM путает чаще всего?
+3. **Сложно.** Используйте dependency parse spaCy, чтобы извлечь subject-verb-object triples из выборки в 1000 предложений. Оцените на 50 manually labeled triples. Задокументируйте, где extraction ломается (часто passives, coordinations и elided subjects).
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | POS tag | Тип слова | Грамматическая категория. В PTB 36; в UD 17. |
 | Penn Treebank | Стандартный tagset | Специфичен для английского. Детализированные времена глаголов и число существительных. |
 | Universal Dependencies | Multilingual tagset | Грубее PTB; language-neutral; стандарт для cross-lingual work. |

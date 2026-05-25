@@ -61,14 +61,14 @@ Random search семплирует гиперпараметры из распр�
 ```mermaid
 flowchart LR
     subgraph Grid Search
-        G1[3 уникальных learning rates]
-        G2[3 уникальных max depths]
+        G1[3 unique learning rates]
+        G2[3 unique max depths]
         G3[9 total evaluations]
     end
 
     subgraph Random Search
-        R1[9 уникальных learning rates]
-        R2[9 уникальных max depths]
+        R1[9 unique learning rates]
+        R2[9 unique max depths]
         R3[9 total evaluations]
     end
 ```
@@ -86,13 +86,13 @@ Random search игнорирует результаты. Он не учится 
 
 ```mermaid
 flowchart TD
-    A[Определить search space] --> B[Оценить начальные random points]
-    B --> C[Fit surrogate model по результатам]
-    C --> D[Использовать acquisition function для выбора следующей точки]
-    D --> E[Оценить модель в этой точке]
-    E --> F{Бюджет исчерпан?}
-    F -->|Нет| C
-    F -->|Да| G[Вернуть лучшие найденные hyperparameters]
+    A[Define search space] --> B[Evaluate initial random points]
+    B --> C[Fit surrogate model to results]
+    C --> D[Use acquisition function to pick next point]
+    D --> E[Evaluate the model at that point]
+    E --> F{Budget exhausted?}
+    F -->|No| C
+    F -->|Yes| G[Return best hyperparameters found]
 ```
 
 Два ключевых компонента:
@@ -155,11 +155,11 @@ Learning rate почти всегда самый важный гиперпара
 
 ```mermaid
 flowchart TD
-    A[Начать с defaults] --> B[Coarse random search: 20-50 trials]
-    B --> C[Определить важные hyperparameters]
-    C --> D[Fine random или Bayesian search: 50-100 trials в суженном space]
-    D --> E[Финальная модель с лучшими hyperparameters]
-    E --> F[Переобучить на всех training data]
+    A[Start with defaults] --> B[Coarse random search: 20-50 trials]
+    B --> C[Identify important hyperparameters]
+    C --> D[Fine random or Bayesian search: 50-100 trials in narrowed space]
+    D --> E[Final model with best hyperparameters]
+    E --> F[Retrain on full training data]
 ```
 
 Конкретный workflow:
@@ -179,7 +179,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    D[Полный набор данных] --> O1[Outer Fold 1: Test]
+    D[Full Dataset] --> O1[Outer Fold 1: Test]
     D --> O2[Outer Fold 2: Test]
     D --> O3[Outer Fold 3: Test]
     D --> O4[Outer Fold 4: Test]

@@ -38,13 +38,13 @@ Anomaly detection переворачивает задачу. Вместо тог
 
 ```mermaid
 flowchart TD
-    A[Типы аномалий] --> B[Point Anomaly]
+    A[Anomaly Types] --> B[Point Anomaly]
     A --> C[Contextual Anomaly]
     A --> D[Collective Anomaly]
 
-    B --> B1["Одно необычное значение<br/>Temperature: 500F"]
-    C --> C1["Необычно в context<br/>90F in January"]
-    D --> D1["Необычная sequence<br/>50 failed logins"]
+    B --> B1["Single unusual value<br/>Temperature: 500F"]
+    C --> C1["Unusual in context<br/>90F in January"]
+    D --> D1["Unusual sequence<br/>50 failed logins"]
 
     style B fill:#fdd,stroke:#333
     style C fill:#ffd,stroke:#333
@@ -126,7 +126,7 @@ Default factor — 1.5.
 
 ```mermaid
 flowchart TD
-    A[Все точки данных] --> B{Random Feature + Random Split}
+    A[All Data Points] --> B{Random Feature + Random Split}
     B --> C[Left Partition]
     B --> D[Right Partition]
     C --> E{Random Feature + Random Split}
@@ -203,8 +203,8 @@ LOF сравнивает local density вокруг point с density вокру�
 
 ```mermaid
 flowchart LR
-    A[Сырые данные] --> B[Train только на Normal Data]
-    B --> C[Score all Test Data]
+    A[Raw Data] --> B[Train on Normal Data Only]
+    B --> C[Score All Test Data]
     C --> D[Rank by Anomaly Score]
     D --> E[Evaluate Top-K Flagged Items]
     E --> F[Precision at K / AUPRC]

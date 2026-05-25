@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 9 · 04 (TD Learning), Phase 9 · 06 (REINFORCE)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Vanilla REINFORCE работает, но variance ужасна. Monte Carlo returns `G_t` могут отличаться между episodes более чем в 10 раз. Умножение этого шума на `∇ log π` и усреднение дает gradient estimator, которому нужны тысячи episodes, чтобы сдвинуть policy настолько же, насколько ее можно сдвинуть намного меньшим числом DQN updates.
 
@@ -17,7 +17,7 @@ Variance возникает из raw returns. Если вычесть baseline `
 
 Action хорош, если дал return выше среднего, и плох, если ниже. REINFORCE с learned critic — это *actor-critic*. Critic дает actor low-variance teacher. Это каждый deep-policy method после 2015 (A2C, A3C, PPO, SAC, IMPALA).
 
-## The Concept
+## Концепция
 
 ![Actor-critic: policy net plus value net, TD residual as advantage](../assets/actor-critic.svg)
 
@@ -53,7 +53,7 @@ Action хорош, если дал return выше среднего, и плох
 
 Три terms: policy-gradient loss, value regression, entropy bonus. `c_v ~ 0.5`, `c_e ~ 0.01` — canonical starting points.
 
-## Build It
+## Практика
 
 ### Step 1: a critic
 
@@ -124,7 +124,7 @@ Toy code single-threaded для ясности; переписать в batched 
 - **Entropy collapse.** Без `c_e > 0` policy становится near-deterministic за несколько сотен updates и перестает exploring.
 - **Reward scale.** Advantage magnitudes зависят от reward scale. Normalize rewards (например, running-std dividing) для consistent gradient magnitudes across tasks.
 
-## Use It
+## Использование
 
 A2C/A3C редко финальный выбор в 2026, но это architecture, которую уточняют все следующие методы:
 
@@ -139,7 +139,7 @@ A2C/A3C редко финальный выбор в 2026, но это architectu
 
 Если видите "advantage" в paper 2026 года, думайте actor-critic.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-actor-critic-trainer.md`:
 
@@ -164,16 +164,16 @@ Given an environment and compute budget, output:
 Refuse single-worker A2C on environments with horizon > 1000 (too on-policy, too slow). Refuse to ship without advantage normalization. Flag any run with `c_e = 0` and observed entropy < 0.1 as entropy-collapsed.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Train actor-critic with MC advantage (`G_t - V(s_t)`) on 4×4 GridWorld. Compare sample efficiency to REINFORCE-with-running-mean-baseline from Lesson 06.
-2. **Medium.** Switch to TD-residual advantage (`r + γ V(s') - V(s)`). Measure variance of the advantage batches. By how much does it drop?
-3. **Hard.** Implement GAE(λ). Sweep `λ ∈ {0, 0.5, 0.9, 0.95, 1.0}`. Plot final return vs sample efficiency. Where is the bias/variance sweet spot for this task?
+1. **Легко.** Train actor-critic with MC advantage (`G_t - V(s_t)`) on 4×4 GridWorld. Compare sample efficiency to REINFORCE-with-running-mean-baseline from Lesson 06.
+2. **Средне.** Switch to TD-residual advantage (`r + γ V(s') - V(s)`). Measure variance of the advantage batches. By how much does it drop?
+3. **Сложно.** Implement GAE(λ). Sweep `λ ∈ {0, 0.5, 0.9, 0.95, 1.0}`. Plot final return vs sample efficiency. Where is the bias/variance sweet spot for this task?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Actor | "The policy net" | `π_θ(a|s)`, updated by policy gradient. |
 | Critic | "The value net" | `V_φ(s)`, updated by MSE regression to returns / TD targets. |
 | Advantage | "How much better than average" | `A(s, a) = Q(s, a) - V(s)` or its estimators. Multiplier for `∇ log π`. |
@@ -183,7 +183,7 @@ Refuse single-worker A2C on environments with horizon > 1000 (too on-policy, too
 | A3C | "Async actor-critic" | Worker threads push gradients to a shared param server. Original paper; less common in 2026. |
 | Bootstrap | "Use V at the horizon" | Truncate the rollout, add `γ^n V(s_{t+n})` to close the sum. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Mnih et al. (2016). Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783) — A3C, original async actor-critic paper.
 - [Schulman et al. (2016). High-Dimensional Continuous Control Using Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438) — GAE.

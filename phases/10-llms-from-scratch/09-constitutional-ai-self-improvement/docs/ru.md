@@ -161,7 +161,7 @@ graph LR
 
 Большинство frontier pipelines 2026 года запускают все четыре. CAI для safety layers. GRPO для reasoning post-training pass. DPO для preference polish. Малые проходы RLHF для остаточного поведения, которое сопротивляется другим методам.
 
-## Build It
+## Практика
 
 Код реализует три вещи на чистом Python + numpy. Цикл самокритики Constitutional AI. Rule-based reward checker для простой арифметики. Минимальный GRPO trainer, который работает на крошечной language model из урока 04.
 
@@ -289,17 +289,17 @@ def self_improvement_round(prompts: list[str], policy_sampler, group_size: int =
             "overall_mean": float(np.mean([m["mean_reward"] for m in metrics]))}
 ```
 
-## Use It
+## Использование
 
 Запуск `code/main.py` выполняет оба цикла end to end. CAI loop создает небольшой набор пар (initial, revised), на которых можно было бы fine-tune. GRPO loop создает per-prompt reward statistics для арифметических задач, показывая, как group-relative advantages позволяют слабому sampler улучшаться без value function и human labels.
 
 Сами числа не важны. В настоящем запуске с обученной моделью reward mean должен расти по раундам, reward std должен оставаться положительным (если он схлопывается к нулю, policy mode-collapsed и нужно остановиться), а KL к reference должен расти медленно. Эти три кривые -- mean reward up, std stable, KL bounded -- production health check для GRPO или CAI pipeline.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-self-improvement-auditor.md`. Передайте ему proposed self-improvement pipeline, и он enforced non-negotiable gates: reward rule, который действительно проверяем; KL budget относительно reference; diversity floor; human-data quota. Он отказывается одобрять цикл, который заявляет "pure self-improvement" без внешнего grounding.
 
-## Exercises
+## Упражнения
 
 1. Замените рукописного критика в Step 2 на LLM call. Используйте любую local chat model. Измерьте, как часто critique и revision действительно улучшают response, а не оставляют его без изменений.
 
@@ -311,9 +311,9 @@ def self_improvement_round(prompts: list[str], policy_sampler, group_size: int =
 
 5. Постройте process reward scorer для двухшаговой арифметической задачи. Для "What is (3+4)*5?" модель должна показать промежуточный шаг 3+4=7. Оцените промежуточный шаг отдельно от финального ответа и сравните PRM-weighted GRPO с pure ORM-weighted GRPO за 10 rounds.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | Constitutional AI | "The model aligns itself" | Двухэтапный пайплайн (self-critique + RLAIF), который заменяет большую часть human preference labels самооценками модели относительно письменной конституции |
 | RLAIF | "RLHF without humans" | Reinforcement Learning from AI Feedback -- PPO или DPO на preferences, сгенерированных самой моделью |
@@ -326,7 +326,7 @@ def self_improvement_round(prompts: list[str], policy_sampler, group_size: int =
 | KL budget | "How far you can drift" | Общая KL divergence от reference model, которую optimizer может накопить до остановки training |
 | R1 moment | "The model learned to backtrack" | Поведение, о котором сообщал DeepSeek: policy, обученная только на outcome rewards, спонтанно развила self-checking и backtracking в chain-of-thought |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Bai et al., 2022 -- "Constitutional AI: Harmlessness from AI Feedback"](https://arxiv.org/abs/2212.08073) -- оригинальная статья Anthropic по CAI с двухэтапным пайплайном SL-CAI + RLAIF
 - [Shao et al., 2024 -- "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"](https://arxiv.org/abs/2402.03300) -- вводит GRPO

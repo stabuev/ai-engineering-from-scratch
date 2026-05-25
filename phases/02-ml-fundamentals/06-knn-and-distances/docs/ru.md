@@ -38,13 +38,13 @@ KNN также встречается повсюду в современном A
 
 ```mermaid
 graph TD
-    Q["Query-точка ?"] --> D["Вычислить расстояния<br>до всех обучающих точек"]
-    D --> S["Отсортировать по расстоянию"]
-    S --> K["Выбрать K ближайших"]
-    K --> C{"Классификация<br>или регрессия?"}
-    C -->|Классификация| V["Голосование большинством"]
-    C -->|Регрессия| A["Среднее значений"]
-    V --> P["Предсказание"]
+    Q["Query point ?"] --> D["Compute distances<br>to all training points"]
+    D --> S["Sort by distance"]
+    S --> K["Select K nearest"]
+    K --> C{"Classification<br>or Regression?"}
+    C -->|Classification| V["Majority vote"]
+    C -->|Regression| A["Average values"]
+    V --> P["Prediction"]
     A --> P
 ```
 
@@ -65,16 +65,16 @@ K — единственный гиперпараметр. Он управляе
 
 ```mermaid
 graph LR
-    subgraph "K=1 (переобучение)"
-        A["Рваная граница<br>следует за каждой точкой"]
+    subgraph "K=1 (overfitting)"
+        A["Jagged boundary<br>follows every point"]
     end
-    subgraph "K=15 (хорошо)"
-        B["Гладкая граница<br>улавливает настоящий паттерн"]
+    subgraph "K=15 (good)"
+        B["Smooth boundary<br>captures true pattern"]
     end
-    subgraph "K=N (недообучение)"
-        C["Плоская граница<br>предсказывает класс большинства"]
+    subgraph "K=N (underfitting)"
+        C["Flat boundary<br>predicts majority class"]
     end
-    A -->|"увеличить K"| B -->|"увеличить K"| C
+    A -->|"increase K"| B -->|"increase K"| C
 ```
 
 ### Метрики расстояния
@@ -168,12 +168,12 @@ KD-tree рекурсивно делит пространство вдоль ос
 
 ```mermaid
 graph TD
-    R["Разбиение по x1 в 5.0"] -->|"x1 <= 5.0"| L["Разбиение по x2 в 3.0"]
-    R -->|"x1 > 5.0"| RR["Разбиение по x2 в 7.0"]
-    L -->|"x2 <= 3.0"| LL["Лист: 3 точки"]
-    L -->|"x2 > 3.0"| LR["Лист: 4 точки"]
-    RR -->|"x2 <= 7.0"| RL["Лист: 2 точки"]
-    RR -->|"x2 > 7.0"| RRR["Лист: 5 точек"]
+    R["Split on x1 at 5.0"] -->|"x1 <= 5.0"| L["Split on x2 at 3.0"]
+    R -->|"x1 > 5.0"| RR["Split on x2 at 7.0"]
+    L -->|"x2 <= 3.0"| LL["Leaf: 3 points"]
+    L -->|"x2 > 3.0"| LR["Leaf: 4 points"]
+    RR -->|"x2 <= 7.0"| RL["Leaf: 2 points"]
+    RR -->|"x2 > 7.0"| RRR["Leaf: 5 points"]
 ```
 
 Чтобы найти ближайшего соседа, пройдите по дереву до листа, содержащего query, затем возвращайтесь назад и проверяйте соседние разбиения только если они могут содержать более близкие точки.

@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 9 · 01 (MDPs)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 У вас есть MDP с известной моделью: можно запросить `P(s' | s, a)` и `R(s, a, s')` для любой пары state-action. Inventory manager знает распределение спроса. Board game имеет детерминированные переходы. Gridworld — это четыре строки Python. У вас есть *model*.
 
@@ -15,7 +15,7 @@ Model-free RL (Q-learning, PPO, REINFORCE) был придуман для слу
 
 В 2026 году они нужны по трем причинам. Во-первых, каждая tabular environment в RL research (GridWorld, FrozenLake, CliffWalking) решается DP, чтобы получить gold-standard policy. Во-вторых, точные values позволяют *debug* sampling methods: если оценка Q-learning для `V*(s_0)` расходится с DP-ответом на 30%, ошибка в Q-learning. В-третьих, современные offline RL и planning methods (MCTS, AlphaZero search, model-based RL в Phase 9 · 10) итерируют Bellman backup по learned или given model.
 
-## The Concept
+## Концепция
 
 ![Policy iteration and value iteration, side by side](../assets/dp.svg)
 
@@ -38,7 +38,7 @@ Model-free RL (Q-learning, PPO, REINFORCE) был придуман для слу
 
 **Why `γ < 1` matters.** Bellman operator — это `γ`-contraction в sup-norm: `||T V - T V'||_∞ ≤ γ ||V - V'||_∞`. Contraction дает unique fixed point и geometric convergence. Уберите `γ < 1`, и гарантия исчезнет — нужен finite horizon или absorbing terminal state.
 
-## Build It
+## Практика
 
 ### Step 1: build the GridWorld MDP model
 
@@ -138,7 +138,7 @@ def value_iteration(gamma=0.99, tol=1e-6):
 - **Policy ties.** Если два действия имеют равный Q-value, `argmax` может по-разному разрешать tie на каждой итерации, и проверка "policy stable" начнет осциллировать. Используйте stable tie-break (первое действие в фиксированном порядке).
 - **State-space explosion.** DP стоит `O(|S| · |A|)` на sweep. Работает примерно до ~10⁷ states. Дальше нужна function approximation (Phase 9 · 05 onwards).
 
-## Use It
+## Использование
 
 В 2026 году DP — correctness baseline и inner loop planners:
 
@@ -152,7 +152,7 @@ def value_iteration(gamma=0.99, tol=1e-6):
 
 Каждый раз, когда кто-то говорит "the optimal value function", имеется в виду "the DP fixed point". Когда видите `V*` или `Q*` в paper, представляйте этот loop.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-dp-solver.md`:
 
@@ -177,16 +177,16 @@ Given an MDP with a known model, output:
 Refuse to run DP on state spaces > 10⁷. Refuse to claim convergence without a sup-norm check. Flag any γ ≥ 1 on an infinite-horizon task as a guarantee violation.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Запустите value iteration на 4×4 GridWorld с `γ ∈ {0.9, 0.99}`. Сколько sweeps нужно до `max |ΔV| < 1e-6`? Выведите `V*` как сетку 4×4.
-2. **Medium.** Сравните policy iteration и value iteration на *stochastic* GridWorld (slip probability `0.1`). Посчитайте sweeps, wall-clock time, final `V*(0,0)`. Что сходится быстрее по итерациям? По wall-clock?
-3. **Hard.** Постройте modified policy iteration: в evaluation step запускайте только `k` sweeps вместо сходимости. Постройте график ошибки `V*(0,0)` vs `k` для `k ∈ {1, 2, 5, 10, 50}`. Что кривая говорит о tradeoff между evaluation и improvement?
+1. **Легко.** Запустите value iteration на 4×4 GridWorld с `γ ∈ {0.9, 0.99}`. Сколько sweeps нужно до `max |ΔV| < 1e-6`? Выведите `V*` как сетку 4×4.
+2. **Средне.** Сравните policy iteration и value iteration на *stochastic* GridWorld (slip probability `0.1`). Посчитайте sweeps, wall-clock time, final `V*(0,0)`. Что сходится быстрее по итерациям? По wall-clock?
+3. **Сложно.** Постройте modified policy iteration: в evaluation step запускайте только `k` sweeps вместо сходимости. Постройте график ошибки `V*(0,0)` vs `k` для `k ∈ {1, 2, 5, 10, 50}`. Что кривая говорит о tradeoff между evaluation и improvement?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Policy iteration | "DP algorithm" | Чередование evaluation (`V^π`) и improvement (greedy `π` относительно `V^π`) до стабилизации policy. |
 | Value iteration | "Faster DP" | Bellman optimality backup в один sweep; геометрически сходится к `V*`. |
 | Bellman operator | "The recursion" | `(T V)(s) = max_a Σ P (r + γ V(s'))`; `γ`-contraction in sup-norm. |
@@ -195,7 +195,7 @@ Refuse to run DP on state spaces > 10⁷. Refuse to claim convergence without a 
 | Synchronous update | "Jacobi-style" | Использовать старую `V` весь sweep; проще анализировать, но медленнее. |
 | In-place update | "Gauss-Seidel-style" | Использовать `V` по мере обновления; быстрее сходится на практике. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Sutton & Barto (2018). Ch. 4 — Dynamic Programming](http://incompleteideas.net/book/RLbook2020.pdf) — каноническое изложение policy iteration and value iteration.
 - [Bertsekas (2019). Reinforcement Learning and Optimal Control](http://www.athenasc.com/rlbook.html) — строгий разбор contraction-mapping arguments.

@@ -194,7 +194,7 @@ Refuse any LLM-based RE pipeline without span verification (source provenance). 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Triple | Subject-relation-object | Кортеж `(s, r, o)`, который является атомарной единицей KG. |
 | Open IE | Extract anything | Фразы отношений с открытым словарем; высокая полнота, низкая точность. |
 | Closed ontology | Fixed schema | Ограниченный набор типов отношений (Wikidata, UMLS, FIBO). |

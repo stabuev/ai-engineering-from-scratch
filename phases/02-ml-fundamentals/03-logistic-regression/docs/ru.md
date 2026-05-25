@@ -63,11 +63,11 @@ sigmoid(z) = 1 / (1 + e^(-z))
 
 ```mermaid
 flowchart LR
-    X[Входные признаки x] --> L["Линейная часть: z = wx + b"]
-    L --> S["Сигмоида: p = 1/(1+e^-z)"]
+    X[Input features x] --> L["Linear: z = wx + b"]
+    L --> S["Sigmoid: p = 1/(1+e^-z)"]
     S --> D{"p >= 0.5?"}
-    D -->|Да| P[Предсказать 1]
-    D -->|Нет| N[Предсказать 0]
+    D -->|Yes| P[Predict 1]
+    D -->|No| N[Predict 0]
 ```
 
 Выход p интерпретируется как P(y=1 | x), вероятность того, что вход принадлежит классу 1. Граница решений находится там, где wx + b = 0; в этой точке сигмоида выдает ровно 0.5.
@@ -101,13 +101,13 @@ dL/db = (1/n) * sum(p - y)
 
 ```mermaid
 flowchart TD
-    A[Инициализировать w=0, b=0] --> B[Прямой проход: z = wx+b, p = sigmoid z]
-    B --> C[Вычислить loss: бинарная кросс-энтропия]
-    C --> D["Вычислить градиенты: dw = (1/n) * sum((p-y)*x)"]
-    D --> E[Обновить: w = w - lr*dw, b = b - lr*db]
-    E --> F{Сошлось?}
-    F -->|Нет| B
-    F -->|Да| G[Модель обучена]
+    A[Initialize w=0, b=0] --> B[Forward pass: z = wx+b, p = sigmoid z]
+    B --> C[Compute loss: binary cross-entropy]
+    C --> D["Compute gradients: dw = (1/n) * sum((p-y)*x)"]
+    D --> E[Update: w = w - lr*dw, b = b - lr*db]
+    E --> F{Converged?}
+    F -->|No| B
+    F -->|Yes| G[Model trained]
 ```
 
 ### Граница решений

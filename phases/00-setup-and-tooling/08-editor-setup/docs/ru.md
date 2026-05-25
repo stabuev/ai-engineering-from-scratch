@@ -26,11 +26,11 @@
 
 ```mermaid
 graph TD
-    L5["5. Удалённая разработка<br/>SSH к GPU-серверам и облачным VM"] --> L4
-    L4["4. Интеграция терминала<br/>Запуск скриптов, отладка, мониторинг GPU"] --> L3
-    L3["3. Настройки для AI<br/>Автоформатирование, проверка типов, rulers"] --> L2
-    L2["2. Расширения<br/>Python, Jupyter, Pylance, GitLens"] --> L1
-    L1["1. Базовый редактор<br/>VS Code — бесплатный, расширяемый, универсальный"]
+    L5["5. Remote Development<br/>SSH into GPU boxes, cloud VMs"] --> L4
+    L4["4. Terminal Integration<br/>Run scripts, debug, monitor GPU"] --> L3
+    L3["3. AI-Specific Settings<br/>Auto-format, type checking, rulers"] --> L2
+    L2["2. Extensions<br/>Python, Jupyter, Pylance, GitLens"] --> L1
+    L1["1. Base Editor<br/>VS Code — free, extensible, universal"]
 ```
 
 ## Практика
@@ -148,7 +148,7 @@ ssh-copy-id user@your-gpu-box-ip
 
 Добавьте хост в `~/.ssh/config` для удобства:
 
-```text
+```
 Host gpu-box
     HostName 203.0.113.50
     User ubuntu

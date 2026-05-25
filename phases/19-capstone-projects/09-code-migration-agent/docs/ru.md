@@ -1,28 +1,28 @@
-# Capstone 09 — Code Migration Agent (Repo-Level Language / Runtime Upgrade)
+# Capstone 09 — Агент миграции кода (обновление языка / runtime на уровне репозитория)
 
-> Amazon's MigrationBench (Java 8 to 17) and Google's App Engine Py2-to-Py3 migrator set the 2026 bar. Moderne's OpenRewrite does deterministic AST rewrites at scale. Grit targets the same problem with codemod-style DSL. The production pattern combines both: a deterministic substrate for safe rewrites plus an agent layer for the ambiguous cases, a sandbox for per-branch builds, and a test harness that flips green before the PR opens. The capstone is to migrate 50 real repos and publish a pass rate with a failure taxonomy.
+> Amazon MigrationBench (Java 8 to 17) и мигратор Google App Engine Py2-to-Py3 задают планку 2026 года. Moderne OpenRewrite выполняет детерминированные AST-переписывания в масштабе. Grit решает ту же задачу через DSL в стиле codemod. Продакшен-паттерн объединяет оба подхода: детерминированная основа для безопасных переписываний, агентный слой для неоднозначных случаев, sandbox для сборок по веткам и test harness, который становится зеленым до открытия PR. Капстоун: мигрировать 50 реальных репозиториев и опубликовать pass rate с таксономией отказов.
 
-**Type:** Capstone
-**Languages:** Python (agent), Java / Python (targets), TypeScript (dashboard)
-**Prerequisites:** Phase 5 (NLP), Phase 7 (transformers), Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure)
-**Phases exercised:** P5 · P7 · P11 · P13 · P14 · P15 · P17
-**Time:** 30 hours
+**Тип:** Capstone
+**Языки:** Python (agent), Java / Python (targets), TypeScript (dashboard)
+**Предварительные требования:** Phase 5 (NLP), Phase 7 (transformers), Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure)
+**Отрабатываемые фазы:** P5 · P7 · P11 · P13 · P14 · P15 · P17
+**Время:** 30 часов
 
-## Problem
+## Проблема
 
-Large-scale code migration is one of the cleanest production applications of 2026 coding agents. The ground truth is obvious (does the test suite pass after the migration?), the rewards are real (a Java-8 fleet migration is a headcount-scale project), and the benchmarks are public (MigrationBench 50-repo subset). Moderne's OpenRewrite handles the deterministic side. The agent layer handles everything OpenRewrite recipes cannot: ambiguous rewrites, build-system drift, long-tail syntax, transitive dependency breakage.
+Крупномасштабная миграция кода - одно из самых чистых продакшен-применений coding agents в 2026 году. Ground truth очевиден (проходит ли test suite после миграции?), выгода реальна (миграция парка Java 8 - проект масштаба команды), а бенчмарки публичны (подмножество MigrationBench из 50 repos). Moderne OpenRewrite закрывает детерминированную часть. Агентный слой обрабатывает все, с чем не справляются OpenRewrite recipes: неоднозначные переписывания, дрейф build-system, long-tail синтаксис, поломки транзитивных зависимостей.
 
-You will build an agent that takes a Java 8 repo (or Python 2 repo) and produces a green-CI migrated branch. You will measure pass rate, test-coverage preservation, cost per repo, and build a failure taxonomy. The side-by-side against a deterministic-only baseline tells you where the agent's value actually lives.
+Вы построите агента, который принимает Java 8 repo (или Python 2 repo) и создает мигрированную ветку с зеленым CI. Вы измерите pass rate, сохранение test coverage, cost per repo и построите таксономию отказов. Сравнение бок о бок с baseline "deterministic-only" покажет, где на самом деле находится ценность агента.
 
-## Concept
+## Концепция
 
-The pipeline has two layers. The **deterministic substrate** (OpenRewrite for Java, libcst for Python) runs the bulk of mechanical rewrites safely: imports, method signatures, null-safety edits, try-with-resources, deprecated API replacements. It is fast and produces auditable diffs. The **agent layer** (OpenAI Agents SDK or LangGraph over Claude Opus 4.7 and GPT-5.4-Codex) handles cases the recipes cannot: build-file upgrades (Maven/Gradle/pyproject), transitive dependency conflicts, test flakes, custom annotations.
+Pipeline состоит из двух слоев. **Детерминированная основа** (OpenRewrite для Java, libcst для Python) безопасно выполняет основную массу механических переписываний: imports, method signatures, null-safety edits, try-with-resources, deprecated API replacements. Она быстрая и создает аудируемые diffs. **Агентный слой** (OpenAI Agents SDK или LangGraph поверх Claude Opus 4.7 и GPT-5.4-Codex) обрабатывает случаи, которые recipes не покрывают: обновления build files (Maven/Gradle/pyproject), конфликты транзитивных зависимостей, test flakes, custom annotations.
 
-Each repo gets a Daytona sandbox with the target runtime preinstalled. The agent iterates: run build, classify failures, apply fix, rerun. Hard limits: 30 minutes per repo, $8 per repo, 20 agent turns. If all tests pass and the coverage delta is not negative, the branch opens a PR. If not, the repo gets filed under a failure class with evidence.
+Каждый repo получает Daytona sandbox с предустановленным целевым runtime. Агент итерирует: запускает build, классифицирует failures, применяет fix, запускает повторно. Жесткие лимиты: 30 минут на repo, $8 на repo, 20 agent turns. Если все тесты проходят и coverage delta не отрицательная, ветка открывает PR. Если нет, repo попадает в класс отказа с evidence.
 
-The failure taxonomy is the deliverable. Across 50 repos, what broke? Transitive deps? Custom annotations? Build tool version? Test flakes unrelated to migration? Each class gets a count and an exemplar diff. Future recipe authors can target the top three.
+Таксономия отказов - главный результат. Что сломалось на 50 repos? Transitive deps? Custom annotations? Build tool version? Test flakes, не связанные с миграцией? Каждый класс получает количество случаев и exemplar diff. Будущие авторы recipes смогут нацелиться на три главные категории.
 
-## Architecture
+## Архитектура
 
 ```
 target repo
@@ -52,36 +52,36 @@ open PR
 file under failure class + attach repro
 ```
 
-## Stack
+## Стек
 
-- Deterministic substrate: OpenRewrite (Java) or libcst (Python)
-- Agent: OpenAI Agents SDK or LangGraph over Claude Opus 4.7 + GPT-5.4-Codex
-- Sandbox: Daytona devcontainers per branch, pre-installed target runtime (Java 17 / Python 3.12)
-- Build systems: Maven, Gradle, uv (Python)
-- Benchmarks: Amazon MigrationBench 50-repo subset (Java 8 to 17), Google App Engine Py2-to-Py3 repos
-- Test harness: parallel runner, coverage via Jacoco (Java) or coverage.py (Python)
-- Observability: Langfuse + trace bundle per repo with every diff chunk
-- Dashboard: failure-taxonomy dashboard with per-class counts and exemplar diffs
+- Детерминированная основа: OpenRewrite (Java) или libcst (Python)
+- Агент: OpenAI Agents SDK или LangGraph поверх Claude Opus 4.7 + GPT-5.4-Codex
+- Sandbox: Daytona devcontainers по ветке, предустановленный целевой runtime (Java 17 / Python 3.12)
+- Системы сборки: Maven, Gradle, uv (Python)
+- Бенчмарки: Amazon MigrationBench 50-repo subset (Java 8 to 17), Google App Engine Py2-to-Py3 repos
+- Test harness: parallel runner, coverage через Jacoco (Java) или coverage.py (Python)
+- Observability: Langfuse + trace bundle per repo с каждым diff chunk
+- Dashboard: dashboard таксономии отказов с количеством случаев по классам и exemplar diffs
 
-## Build It
+## Соберите
 
-1. **Recipe pass.** Run OpenRewrite (Java) or libcst (Python) recipes first. Catch the 70-80% of migrations that are mechanical. Commit as "recipe" commit.
+1. **Проход recipes.** Сначала запустите OpenRewrite (Java) или libcst (Python) recipes. Захватите 70-80% миграций, которые являются механическими. Закоммитьте как "recipe" commit.
 
-2. **Build trial.** Daytona sandbox: install target runtime, run the build. If green, skip to tests. If red, hand off to agent.
+2. **Пробная сборка.** Daytona sandbox: установите target runtime, запустите build. Если build зеленый, переходите к tests. Если красный, передайте агенту.
 
-3. **Agent loop.** LangGraph with tools: `run_build`, `read_file`, `edit_file`, `run_test`, `git_diff`. Agent classifies the failure (dep, syntax, test, build-tool) and applies a targeted fix. Rerun.
+3. **Agent loop.** LangGraph с tools: `run_build`, `read_file`, `edit_file`, `run_test`, `git_diff`. Агент классифицирует failure (dep, syntax, test, build-tool) и применяет точечный fix. Запустите повторно.
 
-4. **Budget caps.** 30 minutes wall-clock per repo, $8 cost, 20 agent turns. Any breach halts and files under "budget_exhausted" with the current diff.
+4. **Бюджетные ограничения.** 30 минут wall-clock на repo, $8 cost, 20 agent turns. Любое превышение останавливает процесс и помещает repo в "budget_exhausted" с текущим diff.
 
-5. **Test + coverage gate.** After the build goes green, run the test suite. Compare coverage to the base repo. If coverage dropped more than 2%, file under "coverage_regression".
+5. **Gate тестов и coverage.** После того как build стал зеленым, запустите test suite. Сравните coverage с base repo. Если coverage упала больше чем на 2%, поместите в "coverage_regression".
 
-6. **PR open.** On success, push the branch, open the PR with the diff and a summary of which recipes applied and which commits the agent authored.
+6. **Открытие PR.** При успехе отправьте branch, откройте PR с diff и кратким описанием того, какие recipes применились и какие commits написал агент.
 
-7. **Failure taxonomy.** For each failed repo, tag with a class: `dep_upgrade_required`, `build_tool_drift`, `custom_annotation`, `test_flake`, `syntax_edge_case`, `budget_exhausted`. Build a dashboard.
+7. **Таксономия отказов.** Для каждого failed repo добавьте tag с классом: `dep_upgrade_required`, `build_tool_drift`, `custom_annotation`, `test_flake`, `syntax_edge_case`, `budget_exhausted`. Постройте dashboard.
 
-8. **50-repo run.** Execute across the MigrationBench subset. Report per-class pass rate, cost-per-repo, coverage-preservation, and a compare-vs-deterministic-only baseline.
+8. **Прогон на 50 repos.** Выполните на подмножестве MigrationBench. Отчитайтесь по per-class pass rate, cost-per-repo, coverage-preservation и сравнению с deterministic-only baseline.
 
-## Use It
+## Используйте
 
 ```
 $ migrate legacy-java-service --target java17
@@ -94,50 +94,50 @@ $ migrate legacy-java-service --target java17
 [pr]       opened #1841  cost=$3.20  turns=4
 ```
 
-## Ship It
+## Сдайте
 
-`outputs/skill-migration-agent.md` is the deliverable. Given a repo, it executes deterministic recipes then an agent loop to produce a green migrated branch, or files the repo under a taxonomy class.
+`outputs/skill-migration-agent.md` - deliverable. Для заданного repo он выполняет deterministic recipes, затем agent loop, чтобы создать зеленую мигрированную ветку, либо помещает repo в класс таксономии.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
-| 25 | MigrationBench pass rate | 50-repo subset pass@1 |
-| 20 | Test-coverage preservation | Mean coverage delta vs base |
-| 20 | Cost per migrated repo | $/repo on passing runs |
-| 20 | Agent / deterministic-tool integration | Fraction of fixes that OpenRewrite handled vs agent authored |
-| 15 | Failure analysis write-up | Taxonomy completeness with exemplars |
+| 25 | MigrationBench pass rate | pass@1 на подмножестве из 50 repos |
+| 20 | Сохранение test coverage | Средняя coverage delta относительно base |
+| 20 | Cost per migrated repo | $/repo на successful runs |
+| 20 | Интеграция агента и deterministic-tool | Доля fixes, которые обработал OpenRewrite, относительно fixes, написанных агентом |
+| 15 | Анализ отказов | Полнота таксономии с exemplars |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Run the migrate pipeline with OpenRewrite only (no agent). Compare pass rate to the full pipeline. Identify the cases where the agent alone is the difference.
+1. Запустите migrate pipeline только с OpenRewrite (без агента). Сравните pass rate с полным pipeline. Определите случаи, где именно agent меняет исход.
 
-2. Implement a "lint-clean" check: after migration, run a style linter (spotless for Java, ruff for Python). Fail the PR if new lint errors appear. Measure the coverage-preserved-but-style-regressed rate.
+2. Реализуйте проверку "lint-clean": после миграции запустите style linter (spotless для Java, ruff для Python). Проваливайте PR, если появляются новые lint errors. Измерьте coverage-preserved-but-style-regressed rate.
 
-3. Add a "minimal-diff" optimizer: after the agent's branch passes tests, trim unnecessary changes with a second pass. Report diff-size reduction.
+3. Добавьте optimizer "minimal-diff": после того как branch агента проходит tests, обрежьте ненужные изменения вторым проходом. Отчитайтесь о сокращении diff-size.
 
-4. Extend to a third migration: Node 18 to Node 22. Reuse the sandbox wrapping; swap the recipe layer for a custom codemod.
+4. Расширьте на третью миграцию: Node 18 to Node 22. Переиспользуйте sandbox wrapping; замените recipe layer на custom codemod.
 
-5. Measure time-to-first-green-build (TTFGB) as a UX metric. Target: p50 under 10 minutes.
+5. Измерьте time-to-first-green-build (TTFGB) как UX metric. Цель: p50 меньше 10 минут.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Deterministic substrate | "Recipe engine" | OpenRewrite / libcst: declarative AST rewrites with safety guarantees |
-| Codemod | "Code-modifying program" | A rewrite rule that changes source code mechanically |
-| Build drift | "Tool version skew" | Subtle Maven / Gradle / uv behavior changes between major versions |
-| Failure class | "Taxonomy bucket" | A labeled reason a repo did not migrate: dep, syntax, test, build-tool, budget |
-| Coverage delta | "Coverage preservation" | Change in test coverage % from base to migrated branch |
-| Agent turn | "Tool-call round" | One plan -> act -> observe cycle in the agent loop |
-| Budget exhaustion | "Hit the ceiling" | The repo consumed its 30-min / $8 / 20-turn limit without passing |
+| Deterministic substrate | "Recipe engine" | OpenRewrite / libcst: декларативные AST-переписывания с гарантиями безопасности |
+| Codemod | "Code-modifying program" | Rewrite rule, который механически меняет source code |
+| Build drift | "Tool version skew" | Тонкие изменения поведения Maven / Gradle / uv между major versions |
+| Failure class | "Taxonomy bucket" | Маркированная причина, по которой repo не мигрировал: dep, syntax, test, build-tool, budget |
+| Coverage delta | "Coverage preservation" | Изменение test coverage % от base к migrated branch |
+| Agent turn | "Tool-call round" | Один цикл plan -> act -> observe в agent loop |
+| Budget exhaustion | "Hit the ceiling" | Repo израсходовал лимит 30-min / $8 / 20-turn, так и не пройдя tests |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Amazon MigrationBench](https://aws.amazon.com/blogs/devops/amazon-introduces-two-benchmark-datasets-for-evaluating-ai-agents-ability-on-code-migration/) — the canonical 2026 benchmark
-- [Moderne.io OpenRewrite platform](https://www.moderne.io) — the deterministic substrate reference
+- [Amazon MigrationBench](https://aws.amazon.com/blogs/devops/amazon-introduces-two-benchmark-datasets-for-evaluating-ai-agents-ability-on-code-migration/) — канонический benchmark 2026 года
+- [Moderne.io OpenRewrite platform](https://www.moderne.io) — reference для детерминированной основы
 - [OpenRewrite documentation](https://docs.openrewrite.org) — recipe authoring
-- [Grit.io](https://www.grit.io) — alternate codemod DSL
-- [OpenAI sandboxed migration cookbook](https://developers.openai.com/cookbook/examples/agents_sdk/sandboxed-code-migration/sandboxed_code_migration_agent) — the Agents SDK reference
-- [Google App Engine Py2 to Py3 migrator](https://cloud.google.com/appengine) — alternate migration benchmark
-- [libcst](https://github.com/Instagram/LibCST) — Python deterministic substrate
-- [Daytona sandboxes](https://daytona.io) — reference per-branch sandbox
+- [Grit.io](https://www.grit.io) — альтернативный codemod DSL
+- [OpenAI sandboxed migration cookbook](https://developers.openai.com/cookbook/examples/agents_sdk/sandboxed-code-migration/sandboxed_code_migration_agent) — reference для Agents SDK
+- [Google App Engine Py2 to Py3 migrator](https://cloud.google.com/appengine) — альтернативный migration benchmark
+- [libcst](https://github.com/Instagram/LibCST) — deterministic substrate для Python
+- [Daytona sandboxes](https://daytona.io) — reference для sandbox по ветке

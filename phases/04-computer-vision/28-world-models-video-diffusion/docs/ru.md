@@ -108,16 +108,16 @@ Sora полностью пропускает интерфейс действий
 
 ### Ландшафт моделей в 2026 году
 
-| Model | Use | Parameters | Output | License |
+| Модель | Использование | Параметры | Выход | Лицензия |
 |-------|-----|------------|--------|---------|
-| Sora 2 | text-to-video, audio | — | 1-min 1080p + audio | API only |
-| Runway Gen-5 | text/image-to-video | — | 10s clips | API |
-| Runway GWM-1 Worlds | interactive world | — | infinite 3D rollout | API |
-| Genie 3 | interactive world from image | 11B+ | playable frames | research preview |
-| Wan-Video 2.1 | open text-to-video | 14B | high-quality clips | non-commercial |
-| HunyuanVideo | open text-to-video | 13B | 10s clips | permissive |
-| Cosmos / Cosmos-Drive | autonomous driving sim | 7-14B | driving scenes | NVIDIA open |
-| Magica / Mirage 2 | AI-native game engine | — | modifiable worlds | product |
+| Sora 2 | text-to-video, audio | — | 1-минутное 1080p + audio | только API |
+| Runway Gen-5 | text/image-to-video | — | клипы 10s | API |
+| Runway GWM-1 Worlds | interactive world | — | бесконечный 3D rollout | API |
+| Genie 3 | interactive world from image | 11B+ | playable frames | исследовательский preview |
+| Wan-Video 2.1 | открытая text-to-video | 14B | high-quality clips | non-commercial |
+| HunyuanVideo | открытая text-to-video | 13B | клипы 10s | permissive |
+| Cosmos / Cosmos-Drive | симуляция автономного вождения | 7-14B | driving scenes | открытая NVIDIA |
+| Magica / Mirage 2 | AI-native game engine | — | modifiable worlds | продукт |
 
 ## Построим это
 
@@ -249,7 +249,7 @@ print(f"output {tuple(out.shape)}")
 
 - **Sora 2 API** (OpenAI) — text-to-video, синхронизированный звук. Премиальная цена.
 - **Runway Gen-5 / GWM-1** (Runway) — image-to-video, интерактивные миры.
-- **Wan-Video 2.1 / HunyuanVideo** — open-source self-host.
+- **Wan-Video 2.1 / HunyuanVideo** — open-source для self-host.
 - **Cosmos / Cosmos-Drive** (NVIDIA) — открытые веса для симуляции вождения.
 - **Genie 3** — исследовательское превью, доступ по запросу.
 
@@ -257,10 +257,10 @@ print(f"output {tuple(out.shape)}")
 
 Для робототехники стек в реальных системах:
 
-1. Language goal -> VLM (Qwen3-VL) -> high-level plan.
-2. Plan -> latent-action video model -> imagined rollout.
-3. Rollout -> inverse dynamics model -> low-level actions.
-4. Actions executed -> observation fed back into step 1.
+1. Языковая цель -> VLM (Qwen3-VL) -> высокоуровневый план.
+2. План -> latent-action video model -> воображаемый rollout.
+3. Rollout -> inverse dynamics model -> низкоуровневые действия.
+4. Действия выполнены -> наблюдение подается обратно в шаг 1.
 
 ## Отгружаем
 
@@ -277,7 +277,7 @@ print(f"output {tuple(out.shape)}")
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
 | World model | "Обученный симулятор" | Модель, которая предсказывает будущие наблюдения по состоянию и действию |
 | Video DiT | "Пространственно-временной трансформер" | Диффузионный трансформер с 3D-патчификацией и разделенным вниманием |

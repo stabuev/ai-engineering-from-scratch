@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 9 · 01 (MDPs), Phase 9 · 02 (Dynamic Programming), Phase 9 · 03 (Monte Carlo)
 **Time:** ~75 minutes
 
-## The Problem
+## Проблема
 
 Monte Carlo работает, но требует двух дорогих вещей. Episodes должны завершаться, и обновление возможно только после получения final return. Если episode длится 1,000 steps, MC ждет 1,000 steps, прежде чем что-либо обновить. Это high-variance, low-bias и на практике медленно.
 
@@ -17,7 +17,7 @@ Temporal difference (TD) learning занимает середину. Из одн
 
 На этом повороте стоит весь modern RL — DQN, A2C, PPO, SAC. Остальная Phase 9 — это слои function approximation и tricks поверх one-step TD update, который вы напишете здесь.
 
-## The Concept
+## Концепция
 
 ![Q-learning vs SARSA: off-policy max vs on-policy Q(s', a')](../assets/td.svg)
 
@@ -49,7 +49,7 @@ Variance ниже, чем у SARSA (нет sample of `a'`), target тот же o
 
 **n-step TD and TD(λ).** Интерполируют между TD(0) и MC, ожидая `n` steps перед bootstrapping. `n=1` — TD, `n=∞` — MC. TD(λ) усредняет все `n` с geometric weights `(1-λ)λ^{n-1}`. Большинство deep-RL использует `n` между 3 и 20.
 
-## Build It
+## Практика
 
 ### Step 1: SARSA on ε-greedy policy
 
@@ -115,7 +115,7 @@ def q_learning(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
 - **Non-terminating episodes.** TD может учиться без terminals, но нужно либо cap steps, либо корректно bootstrap at cap. Standard: treat cap as non-terminal, keep bootstrapping.
 - **State hashing.** Если states — tuples/tensors, используйте hashable key (tuple, not list; tuple of floats rounded, not raw).
 
-## Use It
+## Использование
 
 TD landscape в 2026:
 
@@ -130,7 +130,7 @@ TD landscape в 2026:
 
 Девяносто процентов "RL", о котором вы читаете в papers 2026 года, — это какая-то надстройка над Q-learning или SARSA. Поймите tabular update руками, прежде чем идти глубже.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-td-agent.md`:
 
@@ -155,16 +155,16 @@ Given a tabular or small-feature environment, output:
 Refuse to apply tabular TD to state spaces > 10⁶. Refuse to ship a Q-learning agent without a max-bias caveat. Flag any agent trained with ε held at 1.0 throughout (no exploitation phase).
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Реализуйте Q-learning и SARSA на 4×4 GridWorld. Постройте learning curves (mean return per 100 episodes) для 2,000 episodes. Кто сходится быстрее?
-2. **Medium.** Постройте cliff-walking environment (4×12, last row is the cliff with reward -100 and reset to start). Сравните final policies Q-learning и SARSA. Сделайте screenshot путей. Кто идет ближе к cliff?
-3. **Hard.** Реализуйте Double Q-learning. На noisy-reward GridWorld (Gaussian noise σ=5 added to per-step reward) покажите, что Q-learning заметно overestimates `V*(0,0)`, а Double Q-learning — нет.
+1. **Легко.** Реализуйте Q-learning и SARSA на 4×4 GridWorld. Постройте learning curves (mean return per 100 episodes) для 2,000 episodes. Кто сходится быстрее?
+2. **Средне.** Постройте cliff-walking environment (4×12, last row is the cliff with reward -100 and reset to start). Сравните final policies Q-learning и SARSA. Сделайте screenshot путей. Кто идет ближе к cliff?
+3. **Сложно.** Реализуйте Double Q-learning. На noisy-reward GridWorld (Gaussian noise σ=5 added to per-step reward) покажите, что Q-learning заметно overestimates `V*(0,0)`, а Double Q-learning — нет.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | TD error | "The update signal" | `δ = r + γ V(s') - V(s)`, bootstrapped residual. |
 | TD(0) | "One-step TD" | Обновление после каждого transition, используя только estimate следующего state. |
 | Q-learning | "Off-policy RL 101" | TD update с `max` over next-state actions; учит `Q*` независимо от behavior policy. |
@@ -174,7 +174,7 @@ Refuse to apply tabular TD to state spaces > 10⁶. Refuse to ship a Q-learning 
 | Bootstrapping | "Using current estimate in the target" | То, что отличает TD от MC. Источник bias, но огромного variance reduction. |
 | Maximization bias | "Q-learning overestimates" | `max` over noisy estimates biased upward; чинится Double Q-learning. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Watkins & Dayan (1992). Q-learning](https://link.springer.com/article/10.1007/BF00992698) — original paper and convergence proof.
 - [Sutton & Barto (2018). Ch. 6 — Temporal-Difference Learning](http://incompleteideas.net/book/RLbook2020.pdf) — TD(0), SARSA, Q-learning, Expected SARSA.

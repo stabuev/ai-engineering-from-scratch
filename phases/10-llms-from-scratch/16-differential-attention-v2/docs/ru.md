@@ -7,14 +7,14 @@
 **Prerequisites:** Phase 7 · 02 (self-attention), Phase 7 · 15 (attention variants), Phase 10 · 14 (architecture walkthrough)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
 - Точно сформулировать, почему у softmax attention есть noise floor и почему он растет с длиной контекста.
 - Вывести формулу differential attention и объяснить, почему вычитание убирает общий шумовой компонент, сохраняя сигнал.
 - Разобрать diff от V1 к V2: что стало быстрее, проще и стабильнее, и почему каждое изменение было нужно для production pre-training.
 - Реализовать differential attention с нуля на чистом Python и эмпирически проверить свойство шумоподавления на синтетическом запросе signal-plus-noise.
 
-## The Problem
+## Проблема
 
 У стандартного softmax attention есть математическое свойство, которое в масштабе становится операционной проблемой. Для запроса `q` веса внимания равны `softmax(qK^T / sqrt(d))`. Softmax никогда не дает точных нулей — каждый несовпадающий токен получает некоторую положительную массу. Эта остаточная масса является шумом, и она масштабируется с длиной контекста. При 128k токенов, даже если каждый несовпадающий токен получает всего 0.001% вероятности, 127,999 таких токенов вместе дают около 12% общей массы. Модель вынуждена учиться обходить noise floor, который растет вместе с контекстом.
 
@@ -22,7 +22,7 @@
 
 У DIFF V1 было три проблемы, которые не пускали его во frontier pre-training pipelines. Value cache нужно было загружать дважды на каждый шаг decode, требовались кастомные CUDA kernels, ломавшие совместимость с FlashAttention, а per-head RMSNorm дестабилизировал долгие training runs в масштабе 70B+. DIFF V2 (Microsoft unilm blog, 20 января 2026) исправил все три. Этот урок разбирает обе версии, строит оператор разности и benchmark-ит шумоподавление на toy-запросе.
 
-## The Concept
+## Концепция
 
 ### The noise floor of softmax
 
@@ -95,7 +95,7 @@ V2 также убирает per-head RMSNorm, который V1 использ�
 | FlashAttention | Да в V2 (нет в V1) |
 | Speculative decoding | Да (изменение attention невидимо для spec-decode loop) |
 
-## Build It
+## Практика
 
 `code/main.py` реализует differential attention на чистом Python. Toy-запрос с известной структурой signal-plus-noise позволяет напрямую измерить коэффициент шумоподавления.
 
@@ -140,7 +140,7 @@ out = [[sum(w * v[j] for w, v in zip(row, V)) for j in range(d_v)] for row in di
 
 Toy-код измеряет дополнительную стоимость параметров для V2 (примерно `hidden * hidden` сверху на attention block) и печатает ее.
 
-## Use It
+## Использование
 
 DIFF V2 еще не поставляется в каждом production inference server по состоянию на апрель 2026, но интеграция идет в vLLM и SGLang. Тем временем pattern встречается в:
 
@@ -158,11 +158,11 @@ DIFF V2 еще не поставляется в каждом production inferenc
 - Вы обслуживаете pre-trained dense model со стабильной long-context performance. Стоимость переобучения редко окупается на существующих weights.
 - Контекст всегда меньше 16k. Noise floor пренебрежим.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-diff-attention-integrator.md`. По architecture модели, целевой длине контекста, профилю hallucination и training budget он строит integration plan для добавления differential attention в новый pre-training run или LoRA fine-tune.
 
-## Exercises
+## Упражнения
 
 1. Запустите `code/main.py`. Проверьте, что signal-to-noise ratio для differential attention выше, чем для standard softmax attention на синтетическом запросе. Меняйте noise amplitude и покажите crossover point, где standard attention становится непригодным.
 
@@ -174,9 +174,9 @@ DIFF V2 еще не поставляется в каждом production inferenc
 
 5. Расширьте toy до GQA + DIFF V2. Возьмите 8 KV heads и 32 Q heads. Покажите, что размер KV cache совпадает с baseline GQA model с тем же конфигом (8, 32).
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|------------------------|
 | Differential attention | "Two softmaxes minus each other" | Разделить Q, K на две половины, посчитать две softmax maps, вычесть вторую (масштабированную lambda) из первой, затем умножить на V |
 | Noise floor | "The non-zero tail of softmax" | Вес O(1/N), который softmax кладет на каждый нерелевантный токен и который суммируется до O(1) на длинных контекстах |
@@ -188,7 +188,7 @@ DIFF V2 еще не поставляется в каждом production inferenc
 | Lost in the middle | "Long-context failure mode" | Эмпирический феномен, где retrieval accuracy проседает для документов в середине длинного контекста — DIFF attention снижает это |
 | Arithmetic intensity | "FLOPs per byte loaded" | Отношение, которое V2 увеличивает на decode, удваивая queries на одну KV load; важно для memory-bound decode |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Ye et al. — Differential Transformer (arXiv:2410.05258, ICLR 2025)](https://arxiv.org/abs/2410.05258) — исходная статья с теорией noise-cancellation и long-context ablations
 - [Microsoft unilm — Differential Transformer V2 (Hugging Face blog, January 2026)](https://huggingface.co/blog/microsoft/diff-attn-v2) — production-stack rewrite, baseline decode, совместимость с FlashAttention

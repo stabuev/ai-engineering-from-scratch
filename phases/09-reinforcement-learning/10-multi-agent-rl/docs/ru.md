@@ -155,14 +155,14 @@ Refuse independent Q-learning on tightly-coupled cooperative tasks. Refuse to re
 
 ## Упражнения
 
-1. **Easy.** Обучите independent Q-learning на 2-agent cooperative GridWorld. Сколько эпизодов нужно, пока mean return > 0? Постройте joint learning curve.
-2. **Medium.** Добавьте задачу "coordination": цель считается достигнутой только когда оба агента наступают на нее в один и тот же ход. Independent Q все еще сходится? Что ломается?
-3. **Hard.** Реализуйте centralized critic для MAPPO-style training и сравните скорость сходимости с independent PPO на coordination task.
+1. **Легко.** Обучите independent Q-learning на 2-agent cooperative GridWorld. Сколько эпизодов нужно, пока mean return > 0? Постройте joint learning curve.
+2. **Средне.** Добавьте задачу "coordination": цель считается достигнутой только когда оба агента наступают на нее в один и тот же ход. Independent Q все еще сходится? Что ломается?
+3. **Сложно.** Реализуйте centralized critic для MAPPO-style training и сравните скорость сходимости с independent PPO на coordination task.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | Markov game | "Multi-agent MDP" | `(S, A_1, …, A_n, P, R_1, …, R_n)`; у каждого агента своя награда. |
 | CTDE | "Centralized training, decentralized execution" | Joint critic во время training; policy каждого агента использует только local obs. |
 | IPPO | "Independent PPO" | Каждый агент запускает PPO отдельно. Простой baseline; часто недооценен. |

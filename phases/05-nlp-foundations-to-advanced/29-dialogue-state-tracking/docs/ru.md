@@ -196,7 +196,7 @@ Refuse LLM-only DST for compliance-sensitive slots without a rule-based secondar
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | DST | Dialogue state tracking | Поддерживать slot-value dict между репликами диалога. |
 | Slot | Единица намерения пользователя | Именованный параметр, который нужен backend (cuisine, date). |
 | Domain | Область задачи | Restaurant, hotel, taxi — наборы слотов. |
@@ -210,5 +210,5 @@ Refuse LLM-only DST for compliance-sensitive slots without a rule-based secondar
 - [Budzianowski et al. (2018). MultiWOZ — A Large-Scale Multi-Domain Wizard-of-Oz](https://arxiv.org/abs/1810.00278) — канонический бенчмарк.
 - [Feng et al. (2023). Towards LLM-driven Dialogue State Tracking (LDST)](https://arxiv.org/abs/2310.14970) — instruction tuning LLaMA + LoRA для DST.
 - [Heck et al. (2020). TripPy — A Triple Copy Strategy for Value Independent Neural Dialog State Tracking](https://arxiv.org/abs/2005.02877) — рабочая лошадка DST на основе копирования.
-- [King, Flanigan (2024). Unsupervised End-to-End Task-Oriented Dialogue with LLMs](https://arxiv.org/abs/2404.10753) — EM-based unsupervised TOD.
+- [King, Flanigan (2024). Unsupervised End-to-End Task-Oriented Dialogue with LLMs](https://arxiv.org/abs/2404.10753) — unsupervised TOD на основе EM.
 - [MultiWOZ leaderboard](https://github.com/budzianowski/multiwoz) — канонические результаты DST.

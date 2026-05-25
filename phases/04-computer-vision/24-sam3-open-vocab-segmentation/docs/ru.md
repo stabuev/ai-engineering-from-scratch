@@ -49,7 +49,7 @@ flowchart LR
     style SAM3 fill:#dcfce7,stroke:#16a34a
 ```
 
-### Promptable Concept Segmentation
+### Promptable Concept Segmentation (сегментация концептов по промпту)
 
 "Концептный промпт" (concept prompt) - это короткая именная фраза (`"yellow school bus"`, `"striped red umbrella"`, `"hand holding a mug"`) или визуальный пример. Модель возвращает сегментационные маски для каждого экземпляра на изображении, который соответствует концепту, плюс уникальный ID экземпляра для каждого совпадения.
 

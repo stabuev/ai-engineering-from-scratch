@@ -1,4 +1,4 @@
-# Sequence-to-Sequence Models
+# Модели Sequence-to-Sequence
 
 > Две RNN притворяются переводчиком. Bottleneck, в который они упираются, - причина существования attention.
 
@@ -17,7 +17,7 @@ Classification отображает sequence переменной длины в 
 
 ## Концепция
 
-![Encoder-decoder with context vector bottleneck](./assets/seq2seq.svg)
+![Encoder-decoder с узким местом в виде вектора контекста](./assets/seq2seq.svg)
 
 **Encoder.** RNN, читающая source sentence. Ее final hidden state - **context vector**, fixed-size summary всего input. Предположительно, ничего не теряет, кроме source.
 
@@ -160,7 +160,7 @@ print(tok.decode(out[0], skip_special_tokens=True))
 - On-device text generation, где memory cost transformer слишком высок.
 - Pedagogy. Понимание encoder-decoder bottleneck - самый быстрый путь к пониманию, почему transformers победили.
 
-### Exposure bias and its mitigations
+### Exposure bias и способы его смягчения
 
 - **Scheduled sampling.** Anneal teacher forcing ratio во время training, чтобы модель училась восстанавливаться после собственных ошибок.
 - **Minimum risk training.** Обучайте на sentence-level BLEU score вместо token-level cross-entropy. Ближе к тому, что вам действительно нужно.
@@ -192,14 +192,14 @@ Refuse to recommend training a seq2seq from scratch for under a million parallel
 
 ## Упражнения
 
-1. **Easy.** Реализуйте toy copy task. Обучите GRU seq2seq на input-output pairs, где target равен source. Измерьте accuracy на длинах 5, 10, 20. Воспроизведите bottleneck.
-2. **Medium.** Добавьте beam search decoding с beam width 3. Измерьте BLEU на небольшом parallel corpus против greedy. Задокументируйте, где beam search выигрывает (обычно last tokens) и где не дает разницы.
-3. **Hard.** Fine-tune `facebook/bart-base` на 10k-pair paraphrase dataset. Сравните beam-4 output fine-tuned model с output base model на held-out inputs. Сообщите BLEU и выберите 10 qualitative examples.
+1. **Легко.** Реализуйте toy copy task. Обучите GRU seq2seq на input-output pairs, где target равен source. Измерьте accuracy на длинах 5, 10, 20. Воспроизведите bottleneck.
+2. **Средне.** Добавьте beam search decoding с beam width 3. Измерьте BLEU на небольшом parallel corpus против greedy. Задокументируйте, где beam search выигрывает (обычно last tokens) и где не дает разницы.
+3. **Сложно.** Fine-tune `facebook/bart-base` на 10k-pair paraphrase dataset. Сравните beam-4 output fine-tuned model с output base model на held-out inputs. Сообщите BLEU и выберите 10 qualitative examples.
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Encoder | Input RNN | Читает source. Создает per-step hidden states и final context vector. |
 | Decoder | Output RNN | Инициализируется context vector. Генерирует target tokens по одному. |
 | Context vector | Summary | Final encoder hidden state. Fixed size. Bottleneck, который решает attention. |
@@ -212,4 +212,4 @@ Refuse to recommend training a seq2seq from scratch for under a million parallel
 - [Sutskever, Vinyals, Le (2014). Sequence to Sequence Learning with Neural Networks](https://arxiv.org/abs/1409.3215) — оригинальная seq2seq paper. Четыре страницы.
 - [Cho et al. (2014). Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078) — ввела GRU и encoder-decoder framing.
 - [Bahdanau, Cho, Bengio (2014). Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) — статья об attention. Читайте сразу после этого урока.
-- [PyTorch NLP from Scratch tutorial](https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html) — buildable seq2seq + attention code.
+- [PyTorch NLP from Scratch tutorial](https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html) — готовый к запуску код seq2seq + attention.

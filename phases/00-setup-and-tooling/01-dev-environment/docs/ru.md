@@ -26,9 +26,9 @@
 
 ```mermaid
 graph TD
-    A["4. AI/ML-библиотеки\nPyTorch, JAX, transformers и т.д."] --> B["3. Языковые рантаймы\nPython 3.11+, Node 20+, Rust, Julia"]
-    B --> C["2. Менеджеры пакетов\nuv, pnpm, cargo, juliaup"]
-    C --> D["1. Системная основа\nОС, shell, git, редактор, GPU-драйверы"]
+    A["4. AI/ML Libraries\nPyTorch, JAX, transformers, etc."] --> B["3. Language Runtimes\nPython 3.11+, Node 20+, Rust, Julia"]
+    B --> C["2. Package Managers\nuv, pnpm, cargo, juliaup"]
+    C --> D["1. System Foundation\nOS, shell, git, editor, GPU drivers"]
 ```
 
 Мы устанавливаем всё снизу вверх. Каждый уровень зависит от предыдущего.
@@ -47,7 +47,7 @@ brew install git curl wget
 # Ubuntu/Debian
 sudo apt update && sudo apt install -y build-essential git curl wget
 
-# Windows (используйте WSL2)
+# Windows (use WSL2)
 wsl --install -d Ubuntu-24.04
 ```
 
@@ -61,7 +61,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.12
 
 uv venv
-source .venv/bin/activate  # или .venv\Scripts\activate в Windows
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 
 uv pip install numpy matplotlib jupyter
 ```
@@ -75,7 +75,7 @@ print(f"Python {sys.version}")
 import numpy as np
 print(f"NumPy {np.__version__}")
 a = np.array([1, 2, 3])
-print(f"Вектор: {a}, скалярное произведение на самого себя: {np.dot(a, a)}")
+print(f"Vector: {a}, dot product with itself: {np.dot(a, a)}")
 ```
 
 ### Шаг 3: Node.js с pnpm
@@ -119,13 +119,13 @@ julia -e 'println("Julia ", VERSION)'
 # NVIDIA
 nvidia-smi
 
-# Установка PyTorch с CUDA
+# Install PyTorch with CUDA
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 ```
 
 ```python
 import torch
-print(f"CUDA доступна: {torch.cuda.is_available()}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 ```

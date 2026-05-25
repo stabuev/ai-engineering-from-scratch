@@ -1,28 +1,28 @@
-# Capstone 05 — Autonomous Research Agent (AI-Scientist Class)
+# Capstone 05 — Автономный исследовательский агент класса AI-Scientist
 
-> Sakana's AI-Scientist-v2 published full papers. Agent Laboratory ran the experiments. Allen AI shared traces. The 2026 shape is plan-execute-verify tree search over experiments, budgeted cost, sandboxed code execution, a vision-feedback LaTeX writer, and an automated NeurIPS-style reviewer ensemble. The capstone is to build one, run it end to end within $30 per paper, and survive the sandbox-escape red team that Sakana documented.
+> Sakana's AI-Scientist-v2 опубликовал полноценные статьи. Agent Laboratory запускал эксперименты. Allen AI поделилась трассами. Форма 2026 года — это plan-execute-verify tree search по экспериментам, ограниченный бюджет, sandboxed code execution, LaTeX-писатель с vision-feedback и автоматизированный ансамбль рецензентов в стиле NeurIPS. Capstone — построить такой агент, запустить его end to end в пределах $30 на статью и выдержать red team на sandbox-escape, описанный Sakana.
 
-**Type:** Capstone
-**Languages:** Python (agent + sandbox), LaTeX (output)
-**Prerequisites:** Phase 2 (ML), Phase 3 (deep learning), Phase 7 (transformers), Phase 10 (LLMs from scratch), Phase 14 (agents), Phase 15 (autonomous), Phase 16 (multi-agent), Phase 18 (safety)
-**Phases exercised:** P0 · P2 · P3 · P7 · P10 · P14 · P15 · P16 · P18
-**Time:** 40 hours
+**Тип:** Capstone
+**Языки:** Python (agent + sandbox), LaTeX (output)
+**Предварительные требования:** Phase 2 (ML), Phase 3 (deep learning), Phase 7 (transformers), Phase 10 (LLMs from scratch), Phase 14 (agents), Phase 15 (autonomous), Phase 16 (multi-agent), Phase 18 (safety)
+**Задействованные фазы:** P0 · P2 · P3 · P7 · P10 · P14 · P15 · P16 · P18
+**Время:** 40 hours
 
-## Problem
+## Проблема
 
-Autonomous research agents crossed a threshold in 2026. Sakana AI's AI-Scientist-v2 was published in Nature with generated papers that cleared workshop peer review. ShinkaEvolve (ICLR 2026) extended the line to evolving hypotheses. AMD's Agent Laboratory shipped reproducible traces. The agents are not magic — they are a plan-execute-verify loop running over a tree of candidate experiments, with cost caps, seed-bound sandboxes, and automated review. The craft is in the loop, the budget, and the safety story.
+Autonomous research agents перешагнули важный порог в 2026 году. Sakana AI's AI-Scientist-v2 был опубликован в Nature с generated papers, прошедшими workshop peer review. ShinkaEvolve (ICLR 2026) расширил эту линию до evolving hypotheses. AMD's Agent Laboratory выпустил воспроизводимые трассы. Эти агенты не магия — это цикл plan-execute-verify, работающий по дереву candidate experiments, с cost caps, seed-bound sandboxes и automated review. Мастерство находится в цикле, бюджете и истории безопасности.
 
-You learn the loop by implementing one against a seed idea in a narrow domain (for example, attention-sparsity ablations on a 100M-parameter transformer). The value is not in discovering something new on the first run. The value is in the infrastructure: the tree-search, the experiment sandbox, the writer-reviewer loop, the red-team report. The Sakana team documented sandbox-escape failures; your agent must pass the same red team.
+Вы изучаете этот цикл, реализуя его для seed idea в узкой области, например для attention-sparsity ablations на 100M-parameter transformer. Ценность не в том, чтобы с первого запуска открыть что-то новое. Ценность в инфраструктуре: tree-search, experiment sandbox, writer-reviewer loop, red-team report. Команда Sakana задокументировала sandbox-escape failures; ваш агент должен пройти тот же red team.
 
-## Concept
+## Концепция
 
-The agent is a best-first tree search. Nodes are experiment specifications: (hypothesis, config, code, expected outcome). An expand step proposes children with small edits (swap optimizer, shift batch size, ablate a component). Each child runs in a fresh sandbox with a hard resource cap. Results feed back into a scoring function that ranks nodes by (novelty × quality × remaining budget). The tree grows until budget is exhausted, then the best branch is written up.
+Агент — это best-first tree search. Узлы — это спецификации экспериментов: (hypothesis, config, code, expected outcome). Шаг expand предлагает дочерние узлы с небольшими правками: заменить optimizer, сдвинуть batch size, провести ablation компонента. Каждый дочерний узел запускается в свежем sandbox с жестким resource cap. Результаты возвращаются в scoring function, ранжирующую узлы по (novelty × quality × remaining budget). Дерево растет, пока не исчерпан бюджет, затем лучшая ветка оформляется в статью.
 
-The writer is multimodal. It generates a LaTeX draft, compiles it, renders figures, and feeds the rendered PDF back into Claude Opus 4.7's vision mode for critique on layout, figure legibility, and claim-evidence alignment. A reviewer ensemble of five LLM judges emits NeurIPS-style scores (novelty, rigor, clarity, reproducibility, impact); if the average drops below threshold, the paper returns to the writer with critique.
+Писатель мультимодальный. Он генерирует LaTeX draft, компилирует его, рендерит figures и передает отрендеренный PDF обратно в Claude Opus 4.7's vision mode для критики layout, читаемости figures и соответствия claim-evidence. Ансамбль из пяти LLM judges выдает оценки в стиле NeurIPS (novelty, rigor, clarity, reproducibility, impact); если среднее ниже порога, статья возвращается писателю с critique.
 
-Safety is load-bearing. Every experiment runs in an E2B or Daytona sandbox with no network egress, bounded wall-clock, and pinned resource limits. The agent's code-generation step passes through a policy layer that blocks syscalls that escape the sandbox. The red-team report reproduces the Sakana-documented attack surface (fork bombs, filesystem escapes, LLM-written network calls).
+Безопасность здесь несущая часть системы. Каждый эксперимент выполняется в E2B or Daytona sandbox без network egress, с ограниченным wall-clock и закрепленными resource limits. Шаг code-generation у агента проходит через policy layer, блокирующий syscalls, которые выводят за пределы sandbox. Red-team report воспроизводит attack surface, задокументированную Sakana: fork bombs, filesystem escapes, LLM-written network calls.
 
-## Architecture
+## Архитектура
 
 ```
 seed idea + domain
@@ -58,38 +58,38 @@ seed idea + domain
   paper.pdf + review.md + trace.json
 ```
 
-## Stack
+## Стек
 
-- Orchestration: LangGraph with checkpointing and human-approval gates
+- Оркестрация: LangGraph with checkpointing and human-approval gates
 - Tree search: custom best-first over experiment nodes (AB-MCTS-style from Sakana v2)
 - Sandbox: E2B per experiment, Docker-in-Docker fallback; resource caps via cgroups
-- Literature: Semantic Scholar Graph API + OpenAlex + local FAISS cache of abstracts
-- Writer: LaTeX template + Claude Opus 4.7 (vision mode) for figure critique and layout
-- Reviewer: ensemble of 5 judges (Opus 4.7, GPT-5.4, Gemini 3 Pro, DeepSeek R1, Qwen3-Max) with weighted aggregation
-- Experiment framework: PyTorch 2.5 for the physical experiments, W&B for logging
-- Observability: Langfuse for agent traces, $30 hard budget per paper
+- Литература: Semantic Scholar Graph API + OpenAlex + local FAISS cache of abstracts
+- Писатель: LaTeX template + Claude Opus 4.7 (vision mode) for figure critique and layout
+- Рецензент: ensemble of 5 judges (Opus 4.7, GPT-5.4, Gemini 3 Pro, DeepSeek R1, Qwen3-Max) with weighted aggregation
+- Фреймворк экспериментов: PyTorch 2.5 для физических экспериментов, W&B для logging
+- Наблюдаемость: Langfuse for agent traces, $30 hard budget per paper
 
-## Build It
+## Постройте это
 
-1. **Seed and domain scoping.** Take a seed idea (e.g., "investigate sparsity patterns in attention maps of sub-1B transformers"). Define the search space: models, datasets, compute budget.
+1. **Seed and domain scoping.** Возьмите seed idea, например "investigate sparsity patterns in attention maps of sub-1B transformers". Определите search space: models, datasets, compute budget.
 
-2. **Literature pass.** Query Semantic Scholar + OpenAlex for 50 most-cited relevant papers; cache abstracts locally; generate a 1-page domain digest.
+2. **Literature pass.** Запросите в Semantic Scholar + OpenAlex 50 наиболее цитируемых релевантных статей; закешируйте abstracts локально; сгенерируйте 1-page domain digest.
 
-3. **Tree scaffolding.** Initialize the root with the seed hypothesis. Implement `expand(node) -> children` with small-edit proposals (one config change per child). Implement `score(node)` as a weighted novelty × quality × budget term.
+3. **Tree scaffolding.** Инициализируйте root с seed hypothesis. Реализуйте `expand(node) -> children` с small-edit proposals (одно изменение config на дочерний узел). Реализуйте `score(node)` как взвешенный член novelty × quality × budget.
 
-4. **Sandbox wrapping.** Every experiment runs `docker run --network=none --memory=8g --cpus=2 --pids-limit=256 --read-only` (or the equivalent E2B policy). Seeds are written to the sandbox; outputs are mounted read-only back out.
+4. **Sandbox wrapping.** Каждый эксперимент запускается через `docker run --network=none --memory=8g --cpus=2 --pids-limit=256 --read-only` или эквивалентную E2B policy. Seeds записываются в sandbox; outputs монтируются обратно наружу read-only.
 
-5. **Plan-execute-verify loop.** `plan` proposes children. `execute` runs the sandbox, captures logs and metrics. `verify` runs unit checks on metrics (did the loss decrease? did the ablation isolate the effect?). Failed nodes get a failure reason stored on the tree.
+5. **Plan-execute-verify loop.** `plan` предлагает дочерние узлы. `execute` запускает sandbox, собирает logs and metrics. `verify` выполняет unit checks на metrics: снизился ли loss, изолировала ли ablation эффект. Неудачные узлы получают failure reason, сохраненный в tree.
 
-6. **Writer.** After budget, select the best branch. Render figures with matplotlib. Generate a LaTeX draft via Claude Opus 4.7 with the branch trace in context. Compile. Feed the compiled PDF back to Opus 4.7 vision for critique. Iterate.
+6. **Writer.** После исчерпания бюджета выберите лучшую ветку. Отрендерите figures с matplotlib. Сгенерируйте LaTeX draft через Claude Opus 4.7, передав branch trace в контекст. Скомпилируйте. Передайте compiled PDF обратно в Opus 4.7 vision для critique. Итерируйте.
 
-7. **Reviewer ensemble.** Five judges score the draft on (novelty, rigor, clarity, reproducibility, impact) with NeurIPS-style rubrics. If mean < 4.0/5, return to writer with critique. Hard stop after 3 rewrites.
+7. **Reviewer ensemble.** Пять judges оценивают draft по (novelty, rigor, clarity, reproducibility, impact) с rubrics в стиле NeurIPS. Если mean < 4.0/5, верните писателю с critique. Hard stop после 3 rewrites.
 
-8. **Red team.** Build or integrate a set of adversarial tasks targeting the sandbox: fork bombs, network exfiltration attempts, filesystem escapes, LLM-written shell metacharacters. Confirm all are blocked. Write up findings.
+8. **Red team.** Соберите или интегрируйте набор adversarial tasks, атакующих sandbox: fork bombs, network exfiltration attempts, filesystem escapes, LLM-written shell metacharacters. Подтвердите, что все заблокировано. Опишите findings.
 
-9. **Reproducibility.** Every paper ships with its tree-search trace JSON, seeds, W&B run links, sandbox configs, and a README reproducing it end to end.
+9. **Reproducibility.** Каждая статья поставляется с tree-search trace JSON, seeds, W&B run links, sandbox configs и README, воспроизводящим ее end to end.
 
-## Use It
+## Используйте это
 
 ```
 $ ai-scientist run --seed "attention sparsity in sub-1B transformers" --budget 30
@@ -106,34 +106,34 @@ $ ai-scientist run --seed "attention sparsity in sub-1B transformers" --budget 3
 [done]   paper.pdf + review.md + trace.json     $28.40 spent
 ```
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-ai-scientist.md` is the deliverable. Given a seed idea + a domain + a $30 budget, it runs the full pipeline and emits a reviewable paper plus a reproducibility bundle.
+`outputs/skill-ai-scientist.md` — deliverable. При наличии seed idea + domain + $30 budget он запускает полный pipeline и выдает reviewable paper плюс reproducibility bundle.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
-| 25 | Paper quality | Blind rubric review against published workshop papers |
-| 20 | Experimental rigor | Baselines, seeds, ablations; every claim backed by a cell in the results table |
-| 20 | Cost and compute discipline | $30/paper ceiling enforced, Langfuse-traced |
-| 20 | Safety | Sandbox red team passes; network policy and kill-switch verified |
-| 15 | Reproducibility | One-command rerun with identical seeds reproduces the paper |
+| 25 | Качество статьи | Blind rubric review against published workshop papers |
+| 20 | Экспериментальная строгость | Baselines, seeds, ablations; каждое claim подкреплено ячейкой в results table |
+| 20 | Дисциплина стоимости и compute | $30/paper ceiling enforced, Langfuse-traced |
+| 20 | Безопасность | Sandbox red team проходит; network policy and kill-switch verified |
+| 15 | Воспроизводимость | One-command rerun with identical seeds reproduces the paper |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Run the pipeline against three different seed ideas in the same domain. Compare which parts of the tree-search overlap. Identify duplicated wasted compute.
+1. Запустите pipeline на трех разных seed ideas в одной области. Сравните, какие части tree-search пересекаются. Найдите duplicated wasted compute.
 
-2. Add a human-in-the-loop gate before experiment execution for nodes estimated above $5. Measure how much total cost drops.
+2. Добавьте human-in-the-loop gate перед выполнением эксперимента для узлов, оцененных дороже $5. Измерьте, насколько падает total cost.
 
-3. Swap the reviewer ensemble for a single judge. Measure the false-accept rate on a held-out set of known-bad papers.
+3. Замените reviewer ensemble на одного judge. Измерьте false-accept rate на held-out наборе known-bad papers.
 
-4. Introduce a network-exfiltration red team test: agent writes code that tries to `curl` an external address. Confirm the `--network=none` policy blocks it. Log the attempt.
+4. Введите red team test на network-exfiltration: агент пишет код, который пытается выполнить `curl` на внешний адрес. Подтвердите, что policy `--network=none` блокирует это. Залогируйте попытку.
 
-5. Compare your tree-search with a flat random baseline (same budget, no expansion strategy). Report the novelty × quality gain.
+5. Сравните ваш tree-search с flat random baseline (тот же бюджет, без expansion strategy). Сообщите прирост novelty × quality.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|-----------------|------------------------|
 | Tree search | "AB-MCTS-style expansion" | Best-first exploration over experiment nodes with a novelty×quality×budget score |
 | Sandbox | "Experiment isolation" | Container with no network, bounded CPU/memory, pinned seeds, read-only inputs |
@@ -143,13 +143,13 @@ $ ai-scientist run --seed "attention sparsity in sub-1B transformers" --budget 3
 | Cost ceiling | "$ budget" | Hard cap on total spend per paper; Langfuse counters + pre-run estimates |
 | Red team | "Sandbox-escape audit" | Adversarial tasks that would escape the sandbox if the policy is wrong |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Sakana AI-Scientist-v2 repository](https://github.com/SakanaAI/AI-Scientist-v2) — the reference production research agent
-- [Sakana AI-Scientist-v1 paper (arXiv:2408.06292)](https://arxiv.org/abs/2408.06292) — the original methodology
+- [Sakana AI-Scientist-v2 repository](https://github.com/SakanaAI/AI-Scientist-v2) — эталонный production research agent
+- [Sakana AI-Scientist-v1 paper (arXiv:2408.06292)](https://arxiv.org/abs/2408.06292) — исходная methodology
 - [ShinkaEvolve (Sakana ICLR 2026)](https://sakana.ai) — evolutionary extension
 - [Agent Laboratory (AMD)](https://github.com/SamuelSchmidgall/AgentLaboratory) — multi-role research-lab framework
-- [LangGraph documentation](https://langchain-ai.github.io/langgraph/) — reference orchestration layer
+- [LangGraph documentation](https://langchain-ai.github.io/langgraph/) — эталонный orchestration layer
 - [Semantic Scholar Graph API](https://api.semanticscholar.org/) — literature search
-- [E2B sandboxes](https://e2b.dev) — reference experiment isolation
-- [NeurIPS reviewer guidelines](https://neurips.cc/Conferences/2026/Reviewer-Guidelines) — the rubric the reviewer ensemble encodes
+- [E2B sandboxes](https://e2b.dev) — эталонная experiment isolation
+- [NeurIPS reviewer guidelines](https://neurips.cc/Conferences/2026/Reviewer-Guidelines) — rubric, которую кодирует reviewer ensemble

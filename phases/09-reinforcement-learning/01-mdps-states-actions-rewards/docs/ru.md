@@ -7,7 +7,7 @@
 **Prerequisites:** Phase 1 · 06 (Probability & Distributions), Phase 2 · 01 (ML Taxonomy)
 **Time:** ~45 minutes
 
-## The Problem
+## Проблема
 
 Вы пишете шахматного бота. Или планировщик запасов. Или торгового агента. Или PPO loop, который обучает reasoning model. Четыре разные области, один неожиданный факт: все четыре сводятся к одному и тому же математическому объекту.
 
@@ -15,7 +15,7 @@ Supervised learning дает вам пары `(x, y)` и просит подоб
 
 Вы не сможете учиться по этому потоку, пока не формализуете его. "Что я видел", "что я сделал", "что произошло дальше", "насколько это было хорошо" — каждое из этого должно стать объектом, о котором можно рассуждать. Такая формализация называется Markov Decision Process. Каждый RL-алгоритм в этой фазе, включая RLHF и GRPO loops в конце, оптимизируется поверх этой формы.
 
-## The Concept
+## Концепция
 
 ![Markov decision process: states, actions, transitions, rewards, discount](../assets/mdp.svg)
 
@@ -38,7 +38,7 @@ Supervised learning дает вам пары `(x, y)` и просит подоб
 
 Они раскладывают ожидаемый return на "награду этого шага" плюс "дисконтированную ценность состояния, в которое вы попадете". Рекурсивно. Каждый алгоритм в Phase 9 либо итерирует это уравнение до сходимости (dynamic programming), либо семплирует из него (Monte Carlo), либо bootstraps его на один шаг (temporal difference).
 
-## Build It
+## Практика
 
 ### Step 1: a tiny deterministic MDP
 
@@ -121,7 +121,7 @@ Effective horizon примерно равен `1 / (1 - γ)`. `γ = 0.9` → 10 
 - **Discount mis-spec.** `γ = 1` на infinite-horizon task делает каждую value бесконечной. Всегда ограничивайте либо finite horizon, либо `γ < 1`.
 - **Reward scale.** Награды {+100, -100} и {+1, -1} дают одинаковые оптимальные policies, но радикально разные magnitude градиентов. Нормализуйте примерно к `[-1, 1]` перед подачей в PPO/DQN.
 
-## Use It
+## Использование
 
 Стек 2026 года сводит каждый RL pipeline к MDP до написания кода:
 
@@ -135,7 +135,7 @@ Effective horizon примерно равен `1 / (1 - γ)`. `γ = 0.9` → 10 
 
 Запишите пять элементов tuple до написания любого training loop. Большинство баг-репортов "RL does not work" восходят к MDP formulation, которая была сломана уже на бумаге.
 
-## Ship It
+## Результат
 
 Сохраните как `outputs/skill-mdp-modeler.md`:
 
@@ -160,16 +160,16 @@ Given a task (control / game / recommendation / LLM fine-tuning), output:
 Refuse to ship any MDP where the state is non-Markovian without explicit mention of frame-stacking or recurrent state. Refuse any reward that was not defined in terms of the target outcome. Flag any `γ ≥ 1.0` on an infinite-horizon task. Flag any reward range >100x the typical step reward as a likely gradient-explosion source.
 ```
 
-## Exercises
+## Упражнения
 
-1. **Easy.** Реализуйте 4×4 GridWorld и random-policy rollout в `code/main.py`. Запустите 10,000 episodes. Сообщите mean и std return. Сравните с оптимальным return (-6).
-2. **Medium.** Запустите `policy_evaluation` с `γ ∈ {0.5, 0.9, 0.99}` для uniform-random policy. Выведите `V` как сетку 4×4 для каждого значения. Объясните, почему state values рядом с terminal растут быстрее при большем `γ`.
-3. **Hard.** Сделайте GridWorld стохастическим: каждое действие с вероятностью `p = 0.1` соскальзывает в соседнее направление. Переоцените uniform policy. `V[start]` становится лучше или хуже? Почему?
+1. **Легко.** Реализуйте 4×4 GridWorld и random-policy rollout в `code/main.py`. Запустите 10,000 episodes. Сообщите mean и std return. Сравните с оптимальным return (-6).
+2. **Средне.** Запустите `policy_evaluation` с `γ ∈ {0.5, 0.9, 0.99}` для uniform-random policy. Выведите `V` как сетку 4×4 для каждого значения. Объясните, почему state values рядом с terminal растут быстрее при большем `γ`.
+3. **Сложно.** Сделайте GridWorld стохастическим: каждое действие с вероятностью `p = 0.1` соскальзывает в соседнее направление. Переоцените uniform policy. `V[start]` становится лучше или хуже? Почему?
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как говорят | Что это на самом деле означает |
+|------|----------------|----------------------|
 | MDP | "Reinforcement learning setup" | Tuple `(S, A, P, R, γ)`, удовлетворяющий Markov property. |
 | State | "What the agent sees" | Достаточная статистика для будущей dynamics при выбранном классе policies. |
 | Policy | "Agent's behavior" | Conditional distribution `π(a | s)` или deterministic map `s → a`. |
@@ -179,7 +179,7 @@ Refuse to ship any MDP where the state is non-Markovian without explicit mention
 | Bellman equation | "Dynamic programming recursion" | Fixed-point decomposition of value / Q into one-step reward plus discounted successor value. |
 | Discount `γ` | "Future vs present" | Geometric weight on far-future reward; effective horizon `~1/(1-γ)`. |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Sutton & Barto (2018). Reinforcement Learning: An Introduction, 2nd ed.](http://incompleteideas.net/book/RLbook2020.pdf) — основной учебник. Ch. 3 рассматривает MDPs and Bellman equations; Ch. 1 мотивирует reward hypothesis, лежащую в основе каждого следующего урока.
 - [Bellman (1957). Dynamic Programming](https://press.princeton.edu/books/paperback/9780691146683/dynamic-programming) — источник Bellman equation.

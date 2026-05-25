@@ -113,7 +113,7 @@ Bigram-style predictor conditioned on style. Суть паттерна: codec to
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Codec | "Neural compression" | Encoder / decoder для audio; typical output — 50-75 Hz tokens. |
 | RVQ | "Residual VQ" | Cascade of K quantizers; каждый моделирует residual предыдущего. |
 | Token | "One codec symbol" | Discrete index into codebook; 1024 или 2048 typical. |

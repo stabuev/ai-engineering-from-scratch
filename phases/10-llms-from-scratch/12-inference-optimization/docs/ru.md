@@ -243,7 +243,7 @@ Memory roof:  peak bandwidth * ops:byte ratio
 
 Точка перехода на A100 находится около ops:byte = 156 (312 TFLOPS / 2 TB/s). Ниже 156 вы memory-bound. Выше 156 вы compute-bound. Continuous batching сдвигает decode к этой точке перехода, упаковывая больше токенов в одну iteration.
 
-## Build It
+## Практика
 
 ### Step 1: KV Cache from Scratch
 
@@ -683,7 +683,7 @@ def memory_budget(config, gpu_memory_gb, model_dtype_bytes=2, kv_dtype_bytes=2):
     }
 ```
 
-## Use It
+## Использование
 
 С vLLM:
 
@@ -738,7 +738,7 @@ outputs = runner.generate(
 )
 ```
 
-## Ship It
+## Результат
 
 Этот урок создает:
 - `outputs/skill-inference-optimization.md` -- skill для диагностики и оптимизации LLM inference serving
@@ -757,7 +757,7 @@ outputs = runner.generate(
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | Prefill | "Processing the prompt" | Вычисление attention по всем input tokens параллельно -- compute-bound, потому что полное matrix multiplication держит ядра GPU занятыми |
 | Decode | "Generating tokens" | Производство одного токена за forward pass с чтением всех весов модели каждый раз -- memory-bound, потому что вычисления заканчиваются раньше, чем приходят следующие веса |

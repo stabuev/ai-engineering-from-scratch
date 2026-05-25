@@ -67,7 +67,7 @@ x_t = (1 - t) * x_0 + t * epsilon,     t in [0, 1]
 
 SD3 называет это **Rectified Flow Matching**. FLUX, Z-Image и большинство моделей 2026 года используют ту же целевую функцию. Типичный инференс: 20-30 шагов Euler (детерминированно) против 50+ шагов DDIM в старом режиме DDPM. Distilled / turbo / schnell / LCM-варианты снижают это до 1-4 шагов.
 
-### AdaLN conditioning
+### Обусловливание AdaLN
 
 DiT подают условную информацию по timestep и class/text через **adaptive layer norm**: предсказывают `scale` и `shift` из вектора условий и применяют их после LayerNorm. Это намного чище, чем FiLM-style модуляция в U-Net, и является стандартом по умолчанию в каждом современном DiT.
 
@@ -105,10 +105,10 @@ Rectified flow меняет сэмплер, а не условную инфор�
 | Stable Diffusion 3 Medium | 2B | MMDiT | SAI Community |
 | Stable Diffusion 3.5 Large | 8B | MMDiT | SAI Community |
 | FLUX.1-dev | 12B | Double + Single Stream DiT | non-commercial |
-| FLUX.1-schnell | 12B | same, distilled | Apache 2.0 |
-| FLUX.2 | — | iterated FLUX.1 | mixed |
+| FLUX.1-schnell | 12B | то же, дистиллированная | Apache 2.0 |
+| FLUX.2 | — | итерация FLUX.1 | mixed |
 | Z-Image | 6B | S3-DiT (Scalable Single-Stream) | permissive |
-| Qwen-Image | ~20B | DiT + Qwen text tower | Apache 2.0 |
+| Qwen-Image | ~20B | DiT + текстовая башня Qwen | Apache 2.0 |
 | Hunyuan-Image-3.0 | ~80B | DiT | research |
 | SD4 Turbo | 3B | DiT + distillation | SAI Commercial |
 

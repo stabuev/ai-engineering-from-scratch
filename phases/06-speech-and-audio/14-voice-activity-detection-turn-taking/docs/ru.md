@@ -154,7 +154,7 @@ STT (Kyutai, Deepgram, AssemblyAI) должен поддерживать flush. 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | VAD | Voice detector | Бинарная per-frame оценка: есть ли здесь речь? |
 | Turn detection | End-pointing | VAD + silence-hangover + semantic endpoint. |
 | Silence hangover | Wait-after-speech | Время ожидания перед turn end; 500-800 ms. |

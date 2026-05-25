@@ -220,7 +220,7 @@ Weights 8B -- это 16 GB in BF16. KV cache для одной 128k sequence б�
 - **Long-context needs**: Llama 3 (128k with RoPE scaling), DeepSeek (MLA advantage).
 - **Low-latency serving**: Gemma 2 9B (sliding window cuts long-context compute).
 
-## Build It
+## Практика
 
 Код урока -- calculator. Имея любой config.json, он печатает parameter count by component, KV cache at max context, SwiGLU MLP ratio и короткий verdict по architecture (dense / GQA / MLA / MoE).
 
@@ -237,17 +237,17 @@ Script проходит architecture field by field, считает param counts
 
 См. `code/main.py` для implementation.
 
-## Use It
+## Использование
 
 Запустите calculator на Llama 3 8B, Mistral 7B, Mixtral 8x7B и DeepSeek V3 configs, bundled in the script. Сравните parameter breakdowns. Обратите внимание, что MoE models имеют total param count, который dwarfs dense models, но active param count часто меньше. Заметьте, что KV cache DeepSeek V3 меньше, чем у Llama 3 405B, несмотря на большее total parameters -- это MLA in action.
 
 Затем подключите config любой локальной model, прочитайте summary и решите, fit-ится ли она в ваш GPU.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-open-model-picker.md`. Имея deployment target (GPU type, VRAM, context length, latency budget) и task profile (chat, code, reasoning, long-context), он рекомендует open model, quantization scheme из урока 11 и inference stack из урока 12, с explicit reasoning about the six architectural knobs.
 
-## Exercises
+## Упражнения
 
 1. Прочитайте Qwen 2.5 72B config from HuggingFace. Вычислите total parameters from scratch. Сравните с HF-reported value и определите, откуда берется delta (head dim rounding, KV sharing factor, etc.).
 
@@ -259,9 +259,9 @@ Script проходит architecture field by field, считает param counts
 
 5. Найдите recent frontier open model, released after this lesson was written. Определите, какие из six knobs она выбрала и ввела ли seventh knob. Curriculum будет казаться устаревшим в момент выхода новой architecture -- цель в том, чтобы обновить таблицу без перестройки всей mental model.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
 | RMSNorm | "LayerNorm without the mean" | Нормализация только root mean square с learned scale — дешевле и сопоставима с LayerNorm |
 | RoPE | "Rotary positions" | Вращает каждый Q and K vector in 2D pairs by an angle that depends on position — extrapolates beyond training length with scaling tricks |
@@ -274,7 +274,7 @@ Script проходит architecture field by field, считает param counts
 | Sliding-window attention | "Don't attend to everything" | Каждый token attends only to the last W tokens — caps attention cost at O(W) per token, used in Gemma 2 and early Mistral |
 | Active params | "What runs per token" | Для MoE models, parameter count that sees a forward pass per token (much smaller than total params) — governs per-token FLOPs |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Dubey et al., 2024 -- "The Llama 3 Herd of Models"](https://arxiv.org/abs/2407.21783) -- architectural and training reference for dense Llama 3 family
 - [DeepSeek-AI, 2024 -- "DeepSeek-V3 Technical Report"](https://arxiv.org/abs/2412.19437) -- MLA plus auxiliary-loss-free load balancing plus 671B MoE

@@ -176,14 +176,14 @@ def test_rag_system():
 
 Стек 2026 года:
 
-| Use case | Framework |
+| Сценарий | Фреймворк |
 |---------|-----------|
 | Мониторинг качества RAG | RAGAS (4 metrics) |
-| CI/CD regression gates | DeepEval + pytest |
+| Regression gates в CI/CD | DeepEval + pytest |
 | Пользовательские критерии домена | G-Eval внутри DeepEval |
-| Online live-traffic monitoring | RAGAS with reference-free mode |
-| Human-in-the-loop spot checks | LangSmith или Phoenix с annotation UI |
-| Red-teaming / safety eval | Promptfoo + DeepEval |
+| Онлайн-мониторинг live traffic | RAGAS with reference-free mode |
+| Выборочные проверки human-in-the-loop | LangSmith или Phoenix с annotation UI |
+| Red-teaming / оценка safety | Promptfoo + DeepEval |
 
 Типичный стек: RAGAS для мониторинга, DeepEval для CI, G-Eval для новых измерений. Запускайте все три; они полезно расходятся.
 
@@ -221,7 +221,7 @@ Refuse to rely on a judge untested against ≥50 human-labeled examples. Refuse 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | LLM-as-judge | Scoring with an LLM | Prompt judge model, чтобы оценить outputs 0-1 по рубрике. |
 | RAGAS | The RAG metric library | Open-source eval framework с 4 reference-free RAG metrics. |
 | Faithfulness | Is the answer grounded? | Доля claims ответа, логически следующих из retrieved context. |

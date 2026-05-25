@@ -148,7 +148,7 @@ Diffusion — универсальный generative backbone. Flow matching (Les
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Forward process | "Adding noise" | Fixed Markov chain `q(x_t | x_{t-1})`, которая разрушает данные. |
 | Reverse process | "Denoising" | Learned chain `p_θ(x_{t-1} | x_t)`, которая восстанавливает данные. |
 | β schedule | "The noise ladder" | Per-step variance; linear, cosine или sigmoid. |

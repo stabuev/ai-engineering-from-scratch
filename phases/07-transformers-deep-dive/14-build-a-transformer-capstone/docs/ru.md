@@ -4,7 +4,7 @@
 
 **Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 01 through 13. Не пропускайте.
+**Предварительные требования:** Фаза 7 · 01–13. Не пропускайте.
 **Время:** ~120 минут
 
 ## Проблема
@@ -62,12 +62,12 @@ shift-by-one cross-entropy            ◀── Lesson 07
 
 ### Что мы не поставляем
 
-- RoPE — реализован концептуально в Lesson 04. Здесь для простоты используем learned positional embeddings. В упражнениях вы замените их на RoPE.
+- RoPE — реализован концептуально в Урок 04. Здесь для простоты используем learned positional embeddings. В упражнениях вы замените их на RoPE.
 - KV cache during generation — каждый generation step пересчитывает attention по всему prefix. Медленнее, но проще. В упражнениях вы добавите KV cache.
 - Flash Attention — PyTorch 2.0+ auto-dispatches, если inputs подходят; мы используем `F.scaled_dot_product_attention`.
-- MoE — один FFN на block. Вы видели MoE в Lesson 11.
+- MoE — один FFN на block. Вы видели MoE в Урок 11.
 
-### Target metrics
+### Целевые метрики
 
 На laptop Mac M2, 4-layer, 4-head, d_model=128 GPT, обученный 2 000 steps на `tinyshakespeare.txt`:
 
@@ -85,7 +85,7 @@ shift-by-one cross-entropy            ◀── Lesson 07
 - Training loop с bf16 autocast на supported hardware.
 - Sampling после завершения training.
 
-### Шаг 1: data
+### Шаг 1: данные
 
 ```python
 text = open("tinyshakespeare.txt").read()
@@ -98,9 +98,9 @@ decode = lambda xs: "".join(itos[x] for x in xs)
 
 65 unique characters. Tiny vocabulary. Помещается в 4-byte vocab_size. Без BPE, без tokenizer drama.
 
-### Шаг 2: model
+### Шаг 2: модель
 
-См. `code/main.py`. Block — textbook из Lesson 05: pre-norm, RMSNorm, SwiGLU, causal MHA. Parameter count для 4/4/128: ~800K.
+См. `code/main.py`. Block — textbook из Урок 05: pre-norm, RMSNorm, SwiGLU, causal MHA. Parameter count для 4/4/128: ~800K.
 
 ### Шаг 3: training loop
 
@@ -121,7 +121,7 @@ for step in range(max_steps):
 
 По prompt повторно делаем forward, sample from top-p logits, append и продолжаем. Остановиться после 500 tokens.
 
-### Шаг 5: прочитать output
+### Шаг 5: прочитайте output
 
 После 2 000 steps:
 
@@ -158,16 +158,16 @@ The chief that well shame and hath been his friends,
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| nanoGPT | "Karpathy's tutorial repo" | Минимальный decoder-only transformer training code, ~300 LOC; canonical reference. |
-| tinyshakespeare | "The standard toy corpus" | ~1.1 MB текста; каждый character-LM tutorial с 2015 года использует его. |
-| Tied embeddings | "Share input/output matrix" | LM head weight = transpose of token embedding matrix; экономит parameters, улучшает quality. |
-| bf16 autocast | "Training precision trick" | Run forward/back in bf16, держать optimizer state in fp32; standard since 2021. |
-| Gradient clipping | "Stops spikes" | Ограничить global grad norm at 1.0; предотвращает training blowups. |
-| Cosine LR schedule | "The 2020+ default" | LR ramps up linearly (warmup), затем decays cosine-shaped до 10% peak. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| nanoGPT | "Учебный репозиторий Karpathy" | Минимальный decoder-only transformer training code, ~300 LOC; canonical reference. |
+| tinyshakespeare | "Стандартный toy corpus" | ~1.1 MB текста; каждый character-LM tutorial с 2015 года использует его. |
+| Tied embeddings | "Разделить input/output matrix" | LM head weight = transpose of token embedding matrix; экономит parameters, улучшает quality. |
+| bf16 autocast | "Трюк с precision при training" | Run forward/back in bf16, держать optimizer state in fp32; standard since 2021. |
+| Gradient clipping | "Останавливает spikes" | Ограничить global grad norm at 1.0; предотвращает training blowups. |
+| Cosine LR schedule | "Default после 2020" | LR ramps up linearly (warmup), затем decays cosine-shaped до 10% peak. |
 | MFU | "Model FLOP Utilization" | Achieved FLOPs / theoretical peak; 40% dense, 30% MoE — сильный результат в 2026. |
-| Val loss | "Held-out loss" | Cross-entropy на данных, которые модель не видела; overfit detector. |
+| Val loss | "Loss на holdout" | Cross-entropy на данных, которые модель не видела; overfit detector. |
 
 ## Дополнительное чтение
 

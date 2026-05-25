@@ -50,22 +50,22 @@ echo $SHELL
 Ключевые вещи, которые стоит знать:
 
 ```bash
-# Перемещение
+# Move around
 cd ~/projects/ai-engineering-from-scratch
 pwd
 ls -la
 
-# Поиск по истории (самый полезный хоткей, который вы выучите)
-# Ctrl+R, затем введите часть предыдущей команды
-# Нажмите Ctrl+R ещё раз, чтобы переключаться между совпадениями
+# History search (most useful shortcut you'll learn)
+# Ctrl+R then type part of a previous command
+# Press Ctrl+R again to cycle through matches
 
-# Очистить терминал
-clear   # или Ctrl+L
+# Clear terminal
+clear   # or Ctrl+L
 
-# Остановить выполняющуюся команду
+# Cancel a running command
 # Ctrl+C
 
-# Приостановить выполняющуюся команду (возврат через fg)
+# Suspend a running command (resume with fg)
 # Ctrl+Z
 ```
 
@@ -74,22 +74,22 @@ clear   # или Ctrl+L
 Пайпы соединяют команды друг с другом. Именно так вы обрабатываете логи, фильтруете вывод и объединяете инструменты. Вы будете использовать это постоянно.
 
 ```bash
-# Подсчитать, сколько раз слово "loss" встречается в логе
+# Count how many times "loss" appears in a log
 cat train.log | grep "loss" | wc -l
 
-# Извлечь только значения loss из вывода обучения
+# Extract just the loss values from training output
 grep "loss:" train.log | awk '{print $NF}' > losses.txt
 
-# Следить за обновлением логов в реальном времени, фильтруя ошибки
+# Watch a log file update in real time, filtering for errors
 tail -f train.log | grep --line-buffered "ERROR"
 
-# Отсортировать эксперименты по финальной accuracy
+# Sort experiments by final accuracy
 grep "final_accuracy" results/*.log | sort -t= -k2 -n -r
 
-# Перенаправить stdout и stderr в разные файлы
+# Redirect stdout and stderr to separate files
 python train.py > output.log 2> errors.log
 
-# Перенаправить оба потока в один файл
+# Redirect both to the same file
 python train.py > train_full.log 2>&1
 ```
 
@@ -108,22 +108,22 @@ python train.py > train_full.log 2>&1
 Обучение моделей занимает часы. Вы не захотите держать терминал открытым всё это время.
 
 ```bash
-# Запустить в фоне (вывод всё ещё идёт в терминал)
+# Run in background (output still goes to terminal)
 python train.py &
 
-# Запустить в фоне и защитить от hangup
+# Run in background, immune to hangup (closing terminal won't kill it)
 nohup python train.py > train.log 2>&1 &
 
-# Проверить фоновые процессы
+# Check what's running in background
 jobs
 ps aux | grep train.py
 
-# Вернуть фоновую задачу на передний план
+# Bring a background job to foreground
 fg %1
 
-# Убить фоновый процесс
+# Kill a background process
 kill %1
-# или найти PID и завершить его
+# or find its PID and kill that
 kill $(pgrep -f "train.py")
 ```
 
@@ -142,35 +142,34 @@ kill $(pgrep -f "train.py")
 tmux позволяет создавать постоянные терминальные сессии с несколькими панелями. Это один из самых полезных инструментов для управления обучением моделей.
 
 ```bash
-# Установка
+# Install
 # macOS
 brew install tmux
-
 # Ubuntu
 sudo apt install tmux
 
-# Создать именованную сессию
+# Start a named session
 tmux new -s training
 
-# Разделить горизонтально
-# Ctrl+B затем "
+# Split horizontally
+# Ctrl+B then "
 
-# Разделить вертикально
-# Ctrl+B затем %
+# Split vertically
+# Ctrl+B then %
 
-# Переключение между панелями
-# Ctrl+B затем стрелки
+# Navigate between panes
+# Ctrl+B then arrow keys
 
-# Отсоединиться (сессия продолжит работать)
-# Ctrl+B затем d
+# Detach (session keeps running)
+# Ctrl+B then d
 
-# Подключиться снова
+# Reattach
 tmux attach -t training
 
-# Список сессий
+# List sessions
 tmux ls
 
-# Удалить сессию
+# Kill a session
 tmux kill-session -t training
 ```
 
@@ -179,37 +178,37 @@ tmux kill-session -t training
 ```bash
 tmux new -s train
 
-# Панель 1: запуск обучения
+# Pane 1: start training
 python train.py --epochs 100 --lr 1e-4
 
-# Ctrl+B, " чтобы разделить, затем мониторинг GPU
+# Ctrl+B, " to split, then run GPU monitor
 watch -n1 nvidia-smi
 
-# Ctrl+B, % чтобы разделить вертикально, просмотр логов
+# Ctrl+B, % to split vertically, tail the logs
 tail -f logs/experiment.log
 
-# Теперь можно отсоединиться через Ctrl+B, d
-# Выйти по SSH, пойти за кофе, вернуться
+# Now detach with Ctrl+B, d
+# SSH out, go get coffee, come back
 # tmux attach -t train
 ```
 
 ### Шаг 5: Мониторинг через htop и nvtop
 
 ```bash
-# Системные процессы (лучше, чем top)
+# System processes (better than top)
 htop
 
-# GPU-процессы (если у вас NVIDIA GPU)
-# Установка: sudo apt install nvtop (Ubuntu) или brew install nvtop (macOS)
+# GPU processes (if you have NVIDIA GPU)
+# Install: sudo apt install nvtop (Ubuntu) or brew install nvtop (macOS)
 nvtop
 
-# Быстрая проверка GPU без nvtop
+# Quick GPU check without nvtop
 nvidia-smi
 
-# Обновлять использование GPU каждую секунду
+# Watch GPU usage update every second
 watch -n1 nvidia-smi
 
-# Посмотреть, какие процессы используют GPU
+# See which processes are using the GPU
 nvidia-smi --query-compute-apps=pid,name,used_memory --format=csv
 ```
 
@@ -224,34 +223,33 @@ nvidia-smi --query-compute-apps=pid,name,used_memory --format=csv
 Когда вы арендуете облачный GPU (Lambda, RunPod, Vast.ai), вы подключаетесь через SSH.
 
 ```bash
-# Базовое подключение
+# Basic connection
 ssh user@gpu-box-ip
 
-# С использованием конкретного ключа
+# With a specific key
 ssh -i ~/.ssh/my_gpu_key user@gpu-box-ip
 
-# Копирование файлов на удалённую машину
+# Copy files to remote
 scp model.pt user@gpu-box-ip:~/models/
 
-# Копирование файлов с удалённой машины
+# Copy files from remote
 scp user@gpu-box-ip:~/results/metrics.json ./
 
-# Синхронизация директории
+# Sync a whole directory (faster for many files)
 rsync -avz ./data/ user@gpu-box-ip:~/data/
 
-# Проброс порта
+# Port forward (access remote Jupyter/TensorBoard locally)
 ssh -L 8888:localhost:8888 user@gpu-box-ip
+# Now open localhost:8888 in your browser
 
-# Затем откройте localhost:8888 в браузере
-
-# SSH config для удобства
-# Добавьте в ~/.ssh/config:
+# SSH config for convenience
+# Add to ~/.ssh/config:
 # Host gpu
 #     HostName 192.168.1.100
 #     User ubuntu
 #     IdentityFile ~/.ssh/gpu_key
 #
-# После этого:
+# Then just:
 # ssh gpu
 ```
 
@@ -266,16 +264,16 @@ source phases/00-setup-and-tooling/10-terminal-and-shell/code/shell_aliases.sh
 Или просто скопируйте нужные алиасы:
 
 ```bash
-# Быстрый статус GPU
+# GPU status at a glance
 alias gpu='nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader'
 
-# Убить все процессы обучения на Python
+# Kill all Python training processes
 alias killtraining='pkill -f "python.*train"'
 
-# Быстрая активация виртуального окружения
+# Quick virtual environment activate
 alias ae='source .venv/bin/activate'
 
-# Следить за training loss
+# Watch training loss
 alias watchloss='tail -f logs/*.log | grep --line-buffered "loss"'
 ```
 
@@ -286,29 +284,29 @@ alias watchloss='tail -f logs/*.log | grep --line-buffered "loss"'
 Эти команды постоянно встречаются на практике:
 
 ```bash
-# Запустить обучение, логировать всё и получить уведомление по завершении
+# Run training, log everything, notify when done
 python train.py 2>&1 | tee train.log; echo "DONE" | mail -s "Training complete" you@email.com
 
-# Сравнить два лога экспериментов
+# Compare two experiment logs side by side
 diff <(grep "accuracy" exp1.log) <(grep "accuracy" exp2.log)
 
-# Найти самые большие файлы моделей
+# Find the largest model files (clean up disk space)
 find . -name "*.pt" -o -name "*.safetensors" | xargs du -h | sort -rh | head -20
 
-# Скачать модель с Hugging Face
+# Download a model from Hugging Face
 wget https://huggingface.co/model/resolve/main/model.safetensors
 
-# Распаковать датасет
+# Untar a dataset
 tar xzf dataset.tar.gz -C ./data/
 
-# Подсчитать строки во всех Python-файлах
+# Count lines in all Python files (see how big your project is)
 find . -name "*.py" | xargs wc -l | tail -1
 
-# Проверить свободное место
+# Check disk space (training data fills disks fast)
 df -h
 du -sh ./data/*
 
-# Проверить переменные окружения перед обучением
+# Environment variable check before training
 env | grep -i cuda
 env | grep -i torch
 ```
@@ -331,11 +329,7 @@ env | grep -i torch
 
 1. Установите tmux, создайте сессию с тремя панелями и запустите `htop` в одной, `watch -n1 date` во второй и Python‑скрипт в третьей. Отсоединитесь и подключитесь снова.
 2. Добавьте алиасы из `code/shell_aliases.sh` в конфиг оболочки и перезагрузите его через `source ~/.zshrc` (или `~/.bashrc`).
-3. Создайте фейковый training‑лог:
-```bash
-for i in $(seq 1 100); do echo "epoch $i loss: $(echo "scale=4; 1/$i" | bc)"; sleep 0.1; done > fake_train.log
-```
-Затем используйте `grep`, `tail` и `awk`, чтобы извлечь только значения loss.
+3. Создайте фейковый training‑лог с `for i in $(seq 1 100); do echo "epoch $i loss: $(echo "scale=4; 1/$i" | bc)"; sleep 0.1; done > fake_train.log`, а затем используйте `grep`, `tail` и `awk`, чтобы извлечь только значения loss.
 4. Настройте SSH config для сервера, к которому у вас есть доступ (или используйте `localhost` для практики).
 
 ## Ключевые термины

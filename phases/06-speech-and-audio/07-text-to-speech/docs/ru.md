@@ -1,4 +1,4 @@
-# Text-to-Speech (TTS) — от Tacotron до F5 и Kokoro
+# Синтез речи (TTS) — от Tacotron до F5 и Kokoro
 
 > ASR обращает речь в текст; TTS обращает текст в речь. Стек 2026 года состоит из трех частей: text → tokens, tokens → mel, mel → waveform. Для каждой части есть дефолтная модель, помещающаяся в ноутбук.
 
@@ -13,11 +13,11 @@
 
 Современные TTS-пайплайны выглядят так:
 
-1. **Text frontend.** Нормализовать текст (даты, числа, emails), преобразовать в phonemes или subword tokens, предсказать prosody features.
+1. **Text frontend.** Нормализовать текст (даты, числа, emails), преобразовать в phonemes или subword tokens, предсказать признаки просодии.
 2. **Acoustic model.** Text → mel spectrogram. Tacotron 2 (2017), FastSpeech 2 (2020), VITS (2021), F5-TTS (2024), Kokoro (2024).
 3. **Vocoder.** Mel → waveform. WaveNet (2016), WaveRNN, HiFi-GAN (2020), BigVGAN (2022), neural codec vocoders в 2024+.
 
-В 2026 году разделение acoustic + vocoder размывается end-to-end diffusion и flow-matching моделями. Но мысленная модель из трех частей все еще полезна для debugging.
+В 2026 году разделение acoustic + vocoder размывается end-to-end diffusion и flow-matching моделями. Но мысленная модель из трех частей все еще полезна для отладки.
 
 ## Концепция
 
@@ -52,7 +52,7 @@
 - **MOS (Mean Opinion Score).** Шкала 1–5, crowd-sourced. Все еще золотой стандарт; мучительно медленный.
 - **CMOS (Comparative MOS).** A-vs-B preference. Более узкие confidence intervals на аннотацию.
 - **UTMOS, DNSMOS.** Neural MOS predictors без reference. Используются для leaderboards.
-- **CER (Character Error Rate) via ASR.** Прогоните TTS output через Whisper, посчитайте CER против input text. Proxy для intelligibility.
+- **CER (Character Error Rate) через ASR.** Прогоните TTS output через Whisper, посчитайте CER против input text. Proxy для разборчивости.
 - **SECS (Speaker Embedding Cosine Similarity).** Качество voice cloning.
 
 Числа 2026 года на LibriTTS test-clean:
@@ -101,7 +101,7 @@ wav = tts.infer(
 )
 ```
 
-Передайте 5-секундный reference clip + его transcript; F5 клонирует prosody и timbre.
+Передайте 5-секундный reference clip + его transcript; F5 клонирует просодию и тембр.
 
 ### Шаг 4: HiFi-GAN vocoder с нуля
 
@@ -153,7 +153,7 @@ Open-source лидеры 2026 года: **F5-TTS по качеству, Kokoro �
 
 ## Доведите до результата
 
-Сохраните как `outputs/skill-tts-designer.md`. Спроектируйте TTS pipeline для заданного голоса, latency и language target.
+Сохраните как `outputs/skill-tts-designer.md`. Спроектируйте TTS pipeline для заданного голоса, latency и целевого языка.
 
 ## Упражнения
 
@@ -164,7 +164,7 @@ Open-source лидеры 2026 года: **F5-TTS по качеству, Kokoro �
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Phoneme | Единица звука | Абстрактный класс звука; 39 в English (ARPABet). |
 | Duration predictor | Сколько длится каждая фонема | Non-AR output модели; целые frames per phoneme. |
 | Vocoder | Mel → waveform | Нейросеть, отображающая mel-spec в сырые отсчеты. |

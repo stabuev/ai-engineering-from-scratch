@@ -1,28 +1,28 @@
 # Capstone 03 — Real-Time Voice Assistant (ASR to LLM to TTS)
 
-> A voice agent that feels right has end-to-end latency under 800ms, knows when you have stopped talking, handles barge-in, and can call a tool without stalling. Retell, Vapi, LiveKit Agents, and Pipecat all hit this bar in 2026. They do it with the same shape: a streaming ASR, a turn-detector, a streaming LLM, and a streaming TTS, all wired through WebRTC with aggressive latency budgets at every hop. Build one, measure WER and MOS and false-cutoff rate, and run it under packet loss.
+> Voice agent, который ощущается правильно, имеет end-to-end latency under 800ms, понимает, когда вы закончили говорить, handles barge-in и может вызвать tool without stalling. Retell, Vapi, LiveKit Agents и Pipecat все достигают этой планки в 2026 году. Они делают это одной формой: streaming ASR, turn-detector, streaming LLM и streaming TTS, все связано через WebRTC с жесткими latency budgets на каждом hop. Соберите такой agent, измерьте WER, MOS и false-cutoff rate, и запустите его under packet loss.
 
-**Type:** Capstone
-**Languages:** Python (agent + pipeline), TypeScript (web client)
-**Prerequisites:** Phase 6 (speech and audio), Phase 7 (transformers), Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 17 (infrastructure)
-**Phases exercised:** P6 · P7 · P11 · P13 · P14 · P17
-**Time:** 30 hours
+**Тип:** Capstone
+**Языки:** Python (agent + pipeline), TypeScript (web client)
+**Предварительные требования:** Phase 6 (speech and audio), Phase 7 (transformers), Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 17 (infrastructure)
+**Задействованные фазы:** P6 · P7 · P11 · P13 · P14 · P17
+**Время:** 30 часов
 
-## Problem
+## Проблема
 
-Voice has been the fastest-moving AI UX category of 2025-2026. The technical ceiling dropped each quarter. OpenAI Realtime API, Gemini 2.5 Live, Cartesia Sonic-2, ElevenLabs Flash v3, LiveKit Agents 1.0, and Pipecat 0.0.70 all put sub-800ms first-audio-out within reach. The bar is not latency alone. It is the interaction feel: not cutting the user off, not getting cut off, recovering from a mid-sentence interruption, calling a tool mid-conversation without stalling the audio, surviving jittery mobile networks.
+Voice была самой быстро развивающейся категорией AI UX в 2025-2026. Technical ceiling снижался каждый квартал. OpenAI Realtime API, Gemini 2.5 Live, Cartesia Sonic-2, ElevenLabs Flash v3, LiveKit Agents 1.0 и Pipecat 0.0.70 все сделали sub-800ms first-audio-out достижимым. Планка — не только latency. Это interaction feel: не перебивать user, не быть перебитым неправильно, восстанавливаться после mid-sentence interruption, вызывать tool mid-conversation без остановки audio, переживать jittery mobile networks.
 
-You cannot get there by stitching three REST calls. The architecture is pipelined streaming end to end. Build it and the failure modes become visible: a VAD tuned for phone audio firing on background TV, a turn-detector waiting for punctuation that never comes, a TTS that buffers 400ms before emitting. The capstone is to fix these one at a time under load and publish a latency-and-quality report.
+Нельзя добиться этого, склеив три REST calls. Architecture is pipelined streaming end to end. Соберите ее, и failure modes станут видны: VAD, tuned for phone audio, срабатывает на background TV; turn-detector ждет punctuation, который не приходит; TTS buffers 400ms before emitting. Capstone — исправить это по одному under load и опубликовать latency-and-quality report.
 
-## Concept
+## Концепция
 
-The pipeline has five streaming stages: **audio in** (WebRTC from browser or PSTN), **ASR** (streaming partial transcripts from Deepgram Nova-3 or faster-whisper), **turn detection** (VAD plus a small turn-detector model that reads partial transcripts for completion cues), **LLM** (streaming tokens as soon as the turn is judged complete), **TTS** (streaming audio out within ~200ms of the first LLM token).
+Pipeline имеет пять streaming stages: **audio in** (WebRTC from browser or PSTN), **ASR** (streaming partial transcripts from Deepgram Nova-3 or faster-whisper), **turn detection** (VAD plus a small turn-detector model that reads partial transcripts for completion cues), **LLM** (streaming tokens as soon as the turn is judged complete), **TTS** (streaming audio out within ~200ms of the first LLM token).
 
-Three cross-cutting concerns. **Barge-in**: when the user starts speaking while the agent is speaking, the TTS cancels and the ASR picks up immediately. **Tool use**: mid-conversation function calls (weather, calendar) must run on a side channel without stalling the audio; the agent pre-fills an acknowledgement token ("one second...") if latency exceeds 300ms. **Backpressure**: under packet loss, partial transcripts are held, VAD raises the speech-gate threshold, and the agent avoids speaking over an unacknowledged message.
+Три cross-cutting concerns. **Barge-in**: когда user начинает говорить, пока agent speaks, TTS cancels and ASR picks up immediately. **Tool use**: mid-conversation function calls (weather, calendar) must run on a side channel without stalling the audio; agent pre-fills an acknowledgement token ("one second...") if latency exceeds 300ms. **Backpressure**: under packet loss, partial transcripts are held, VAD raises the speech-gate threshold, and agent avoids speaking over an unacknowledged message.
 
-The measurement bar is quantitative. WER under 8% on the Hamming VAD benchmark at 15 dB SNR. First-audio-out p50 under 800ms on 100 measured calls. False-cutoff rate under 3%. MOS above 4.2 on TTS. 50 concurrent calls on a single g5.xlarge. These numbers are the deliverable.
+Measurement bar quantitative. WER under 8% on the Hamming VAD benchmark at 15 dB SNR. First-audio-out p50 under 800ms on 100 measured calls. False-cutoff rate under 3%. MOS above 4.2 on TTS. 50 concurrent calls on a single g5.xlarge. These numbers are the deliverable.
 
-## Architecture
+## Архитектура
 
 ```
 browser / Twilio PSTN
@@ -58,7 +58,7 @@ browser / Twilio PSTN
    OpenTelemetry voice traces -> Langfuse
 ```
 
-## Stack
+## Стек
 
 - Transport: LiveKit Agents 1.0 (WebRTC) plus Twilio PSTN gateway; Pipecat 0.0.70 as the alternate framework
 - ASR: Deepgram Nova-3 (streaming, sub-300ms first partial) or faster-whisper Whisper-v3-turbo self-hosted
@@ -69,9 +69,9 @@ browser / Twilio PSTN
 - Observability: OpenTelemetry voice spans, Langfuse voice traces with audio replay
 - Deployment: single g5.xlarge (24GB VRAM) for self-hosted Whisper + Orpheus; hosted APIs for lowest latency
 
-## Build It
+## Соберите
 
-1. **WebRTC session.** Stand up a LiveKit room and a web client that streams microphone audio. On the server, attach an agent worker that joins the room.
+1. **WebRTC session.** Поднимите LiveKit room и web client, который streams microphone audio. На server attached agent worker, который joins the room.
 
 2. **ASR streaming.** Feed 20ms PCM frames to Deepgram Nova-3 (or faster-whisper on GPU). Subscribe to partial and final transcripts. Log per-partial latency.
 
@@ -89,7 +89,7 @@ browser / Twilio PSTN
 
 9. **Load test.** Drive 50 concurrent calls on a single g5.xlarge with a synthetic caller. Measure sustained first-audio-out p95.
 
-## Use It
+## Использование
 
 ```
 caller: "what is the weather in tokyo tomorrow"
@@ -102,11 +102,11 @@ caller: "what is the weather in tokyo tomorrow"
 turn latency: 1040ms user-stop -> audio-out
 ```
 
-## Ship It
+## Что сдавать
 
-`outputs/skill-voice-agent.md` is the deliverable. Given a domain (customer support, scheduling, or kiosk), it stands up a LiveKit agent with the ASR/VAD/LLM/TTS pipeline tuned to the measurement bar. Rubric:
+`outputs/skill-voice-agent.md` — deliverable. Для заданного domain (customer support, scheduling, or kiosk) он поднимает LiveKit agent with the ASR/VAD/LLM/TTS pipeline, tuned to the measurement bar. Rubric:
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
 | 25 | End-to-end latency | p50 first-audio-out under 800ms across 100 recorded calls |
 | 20 | Turn-taking quality | False-cutoff rate under 3% on the Hamming VAD benchmark |
@@ -115,11 +115,11 @@ turn latency: 1040ms user-stop -> audio-out
 | 15 | Eval harness completeness | Reproducible measurements with public config |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Swap Deepgram Nova-3 for faster-whisper v3 turbo on a g5.xlarge. Measure the latency and WER gap. Identify where CPU-vs-GPU decisions matter.
+1. Замените Deepgram Nova-3 на faster-whisper v3 turbo on a g5.xlarge. Measure the latency and WER gap. Identify where CPU-vs-GPU decisions matter.
 
-2. Add an interruption-arbitration policy: what does the agent do when the user barges in during a tool call? Compare three policies (hard cancel, finish-tool-then-stop, queue next turn).
+2. Add an interruption-arbitration policy: что делает agent, когда user barges in during a tool call? Compare three policies (hard cancel, finish-tool-then-stop, queue next turn).
 
 3. Run an adversarial turn-detector test: give the user long pauses mid-sentence. Tune the VAD silence threshold and the turn-detector score threshold for lowest false-cutoff without blowing past 900ms.
 
@@ -127,9 +127,9 @@ turn latency: 1040ms user-stop -> audio-out
 
 5. Add voice activity detection for non-English languages (Japanese, Spanish). Measure the Silero VAD v5 false-trigger rate versus language-specific fine-tunes.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | Turn detection | "End of utterance" | Classifier that, given VAD silence and a partial transcript, decides the user is done speaking |
 | Barge-in | "Interruption handling" | Canceling TTS mid-playback when VAD detects new user speech |
@@ -139,7 +139,7 @@ turn latency: 1040ms user-stop -> audio-out
 | Filler | "Acknowledgment token" | Short phrase the agent emits to avoid silence when a tool is slow |
 | MOS | "Mean opinion score" | Perceptual speech quality rating; NISQA is the automated proxy |
 
-## Further Reading
+## Дополнительное чтение
 
 - [LiveKit Agents 1.0](https://github.com/livekit/agents) — reference WebRTC agent framework
 - [Pipecat](https://github.com/pipecat-ai/pipecat) — alternate Python-first streaming agent framework

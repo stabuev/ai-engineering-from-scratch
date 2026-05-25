@@ -136,7 +136,7 @@ Descriptions попадают в контекст модели дословно.
 
 Этот урок создает `outputs/skill-tool-schema-linter.md`. Получив любой tool registry, skill проверяет его по design rules выше и выдает fix-list с severities и suggested rewrites. Можно запускать в CI.
 
-## Exercises
+## Упражнения
 
 1. Возьмите `BAD_REGISTRY` в `code/main.py` и перепишите каждый tool так, чтобы он проходил linter. Измерьте длину description и посчитайте rule violations до и после.
 

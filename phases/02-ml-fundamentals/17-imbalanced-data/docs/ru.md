@@ -10,52 +10,52 @@
 ## Цели обучения
 
 - Реализовать SMOTE с нуля и объяснить, чем synthetic oversampling отличается от random duplication
-- Оценивать imbalanced classifiers через F1, AUPRC и Matthews Correlation Coefficient вместо accuracy
-- Сравнить class weighting, threshold tuning и resampling strategies и выбрать подход для заданного imbalance ratio
-- Построить полный imbalanced data pipeline, объединяющий SMOTE, class weights и threshold optimization
+- Оценивать классификаторы на несбалансированных данных через F1, AUPRC и Matthews Correlation Coefficient вместо accuracy
+- Сравнить class weighting, threshold tuning и стратегии resampling и выбрать подход для заданного imbalance ratio
+- Построить полный pipeline для несбалансированных данных, объединяющий SMOTE, class weights и threshold optimization
 
 ## Проблема
 
-Вы строите fraud detection model. Она получает 99.9% accuracy. Вы празднуете. Затем понимаете, что она предсказывает "not fraud" для каждой транзакции.
+Вы строите модель обнаружения мошенничества. Она получает 99.9% accuracy. Вы празднуете. Затем понимаете, что она предсказывает "not fraud" для каждой транзакции.
 
-Это не bug. Это рациональное поведение, когда только 0.1% transactions fraudulent. Model learns, что always guessing majority class минимизирует overall error. Технически корректно и совершенно бесполезно.
+Это не bug. Это рациональное поведение, когда только 0.1% транзакций мошеннические. Модель выучивает, что постоянный выбор majority class минимизирует общую ошибку. Технически корректно и совершенно бесполезно.
 
-Так происходит везде, где real classification важна. Disease diagnosis: 1% positive rate. Network intrusion: 0.01% attacks. Manufacturing defects: 0.5% defective. Spam filtering: 20% spam. Churn prediction: 5% churners. Чем consequential minority class, тем реже он обычно встречается.
+Так происходит везде, где реальная классификация важна. Диагностика болезней: 1% positive rate. Сетевые вторжения: 0.01% атак. Производственные дефекты: 0.5% брака. Фильтрация спама: 20% спама. Прогноз оттока: 5% churners. Чем значимее minority class, тем реже он обычно встречается.
 
-Accuracy fails, потому что одинаково относится ко всем correct predictions. Correctly labeling legitimate transaction и correctly catching fraud оба дают один point accuracy. Но catching fraud — вся причина существования model. Нужны metrics, techniques и training strategies, которые заставляют model обращать внимание на редкий, но важный class.
+Accuracy fails, потому что одинаково относится ко всем правильным предсказаниям. Правильная классификация legitimate transaction и правильное обнаружение fraud оба дают один пункт accuracy. Но обнаружение fraud — вся причина существования модели. Нужны метрики, техники и стратегии обучения, которые заставляют модель обращать внимание на редкий, но важный класс.
 
 ## Концепция
 
-### Почему Accuracy fails
+### Почему accuracy не работает
 
-Рассмотрим dataset из 1000 samples: 990 negative, 10 positive. Model, всегда предсказывающая negative:
+Рассмотрим dataset из 1000 объектов: 990 negative, 10 positive. Модель, всегда предсказывающая negative:
 
-|  | Predicted Positive | Predicted Negative |
+|  | Предсказан Positive | Предсказан Negative |
 |--|---|---|
-| Actually Positive | 0 (TP) | 10 (FN) |
-| Actually Negative | 0 (FP) | 990 (TN) |
+| Фактически Positive | 0 (TP) | 10 (FN) |
+| Фактически Negative | 0 (FP) | 990 (TN) |
 
 Accuracy = (0 + 990) / 1000 = 99.0%
 
-Model catches zero fraud. Zero disease. Zero defects. Но accuracy говорит 99%. Поэтому accuracy опасна для imbalanced problems.
+Модель ловит ноль fraud. Ноль болезней. Ноль дефектов. Но accuracy говорит 99%. Поэтому accuracy опасна для imbalanced problems.
 
 ### Лучшие метрики
 
-**Precision** = TP / (TP + FP). Среди всего, что flagged as positive, сколько действительно positive? High precision значит мало false alarms.
+**Precision** = TP / (TP + FP). Среди всего, что помечено как positive, сколько действительно positive? High precision значит мало false alarms.
 
-**Recall** = TP / (TP + FN). Среди всего actually positive сколько мы поймали? High recall значит мало missed positives.
+**Recall** = TP / (TP + FN). Сколько из всех actually positive мы поймали? High recall значит мало missed positives.
 
-**F1 Score** = 2 * precision * recall / (precision + recall). Harmonic mean. Штрафует extreme imbalance между precision и recall сильнее, чем arithmetic mean.
+**F1 Score** = 2 * precision * recall / (precision + recall). Гармоническое среднее. Штрафует extreme imbalance между precision и recall сильнее, чем arithmetic mean.
 
-**F-beta Score** = (1 + beta^2) * precision * recall / (beta^2 * precision + recall). При beta > 1 важнее recall. При beta < 1 важнее precision. F2 часто используется в fraud detection (missed fraud хуже false alarm).
+**F-beta Score** = (1 + beta^2) * precision * recall / (beta^2 * precision + recall). При beta > 1 важнее recall. При beta < 1 важнее precision. F2 часто используется в fraud detection (пропущенное мошенничество хуже false alarm).
 
-**AUPRC** (Area Under Precision-Recall Curve). Как AUC-ROC, но информативнее для imbalanced data. Random classifier имеет AUPRC, равную positive class rate (а не 0.5, как ROC). Поэтому improvements легче заметить.
+**AUPRC** (Area Under Precision-Recall Curve). Как AUC-ROC, но информативнее для imbalanced data. Random classifier имеет AUPRC, равную доле positive class (а не 0.5, как ROC). Поэтому улучшения легче заметить.
 
-**Matthews Correlation Coefficient** = (TP * TN - FP * FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN)). Диапазон от -1 до +1. Дает высокий score только когда model хорошо работает на обоих classes. Balanced даже при сильно разных class sizes.
+**Matthews Correlation Coefficient** = (TP * TN - FP * FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN)). Диапазон от -1 до +1. Дает высокий score только когда модель хорошо работает на обоих классах. Сбалансирован даже при сильно разных размерах классов.
 
-Для модели "always predict negative" выше: precision = 0/0 (undefined, часто set to 0), recall = 0/10 = 0, F1 = 0, MCC = 0. Эти metrics правильно определяют model как worthless.
+Для модели "always predict negative" выше: precision = 0/0 (undefined, часто set to 0), recall = 0/10 = 0, F1 = 0, MCC = 0. Эти метрики правильно определяют модель как бесполезную.
 
-### Imbalanced Data Pipeline
+### Pipeline для несбалансированных данных
 
 ```mermaid
 flowchart TD
@@ -75,17 +75,17 @@ flowchart TD
 
 ### SMOTE: Synthetic Minority Oversampling Technique
 
-Random oversampling дублирует existing minority samples. Это работает, но рискует overfitting, потому что model видит identical points repeatedly.
+Random oversampling дублирует существующие minority samples. Это работает, но создает риск overfitting, потому что модель многократно видит идентичные точки.
 
-SMOTE создает new synthetic minority samples, которые plausible, но не copies. Алгоритм:
+SMOTE создает новые synthetic minority samples, которые правдоподобны, но не являются копиями. Алгоритм:
 
-1. Для каждого minority sample x найти k nearest neighbors среди other minority samples
-2. Выбрать одного neighbor random
-3. Создать new sample на line segment между x и этим neighbor
+1. Для каждого minority sample x найти k nearest neighbors среди других minority samples
+2. Случайно выбрать одного neighbor
+3. Создать new sample на отрезке между x и этим neighbor
 
 Формула: `new_sample = x + random(0, 1) * (neighbor - x)`
 
-Это interpolates между real minority points, создавая samples в той же region of feature space без простого copying.
+Это интерполирует между реальными minority points, создавая samples в той же области пространства признаков без простого копирования.
 
 ```mermaid
 flowchart LR
@@ -114,33 +114,33 @@ flowchart LR
 
 ### Сравнение sampling strategies
 
-**Random Oversampling**: duplicate minority samples to match majority count.
-- Pros: simple, no information loss
-- Cons: exact duplicates cause overfitting, increases training time
+**Random Oversampling**: дублировать minority samples до числа объектов majority class.
+- Плюсы: просто, нет потери информации
+- Минусы: точные дубликаты вызывают overfitting, время обучения растет
 
-**Random Undersampling**: remove majority samples to match minority count.
-- Pros: fast training, simple
-- Cons: throws away potentially useful majority data, higher variance
+**Random Undersampling**: удалить majority samples до числа объектов minority class.
+- Плюсы: быстрое обучение, простота
+- Минусы: выбрасывает потенциально полезные majority data, выше variance
 
-**SMOTE**: create synthetic minority samples via interpolation.
-- Pros: generates new data points, reduces overfitting compared to random oversampling
-- Cons: can create noisy samples near the decision boundary, does not account for majority class distribution
+**SMOTE**: создать synthetic minority samples через интерполяцию.
+- Плюсы: генерирует новые точки данных, снижает overfitting по сравнению с random oversampling
+- Минусы: может создавать шумовые samples рядом с decision boundary, не учитывает распределение majority class
 
-| Strategy | Data Changed | Risk | When to Use |
+| Стратегия | Как меняются данные | Риск | Когда использовать |
 |----------|--------------|------|-------------|
-| Oversample | Minority duplicated | Overfitting | Small datasets, moderate imbalance |
-| Undersample | Majority removed | Information loss | Large datasets, want fast training |
-| SMOTE | Synthetic minority added | Boundary noise | Moderate imbalance, enough minority samples for k-NN |
+| Oversample | Minority дублируется | Overfitting | Малые наборы данных, умеренный imbalance |
+| Undersample | Majority удаляется | Потеря информации | Большие наборы данных, нужно быстрое обучение |
+| SMOTE | Добавляется synthetic minority | Шум на границе | Умеренный imbalance, достаточно minority samples для k-NN |
 
 ### Class Weights
 
-Вместо изменения data измените то, как model treats errors. Назначьте больший weight misclassifying minority class.
+Вместо изменения данных измените то, как модель обрабатывает ошибки. Назначьте больший вес ошибочной классификации minority class.
 
 Для binary problem с 950 negative и 50 positive samples:
-- Weight for negative class = n_samples / (2 * n_negative) = 1000 / (2 * 950) = 0.526
-- Weight for positive class = n_samples / (2 * n_positive) = 1000 / (2 * 50) = 10.0
+- Вес negative class = n_samples / (2 * n_negative) = 1000 / (2 * 950) = 0.526
+- Вес positive class = n_samples / (2 * n_positive) = 1000 / (2 * 50) = 10.0
 
-Positive class получает weight в 19x больше. Misclassifying one positive sample costs as much as misclassifying 19 negative samples. Model forced to pay attention to minority class.
+Positive class получает вес в 19x больше. Ошибка на одном positive sample стоит столько же, сколько ошибка на 19 negative samples. Модель вынуждена обращать внимание на minority class.
 
 В logistic regression это меняет loss function:
 
@@ -148,20 +148,20 @@ Positive class получает weight в 19x больше. Misclassifying one p
 weighted_loss = -sum(w_i * [y_i * log(p_i) + (1-y_i) * log(1-p_i)])
 ```
 
-где w_i зависит от class sample i.
+где w_i зависит от класса sample i.
 
-Class weights математически equivalent to oversampling in expectation, но без создания новых data points. Поэтому они быстрее и избегают overfitting risk duplicated samples.
+Class weights математически equivalent to oversampling in expectation, но без создания новых точек данных. Поэтому они быстрее и избегают риска overfitting на duplicated samples.
 
 ### Threshold Tuning
 
-Большинство classifiers output probability. Default threshold — 0.5: если P(positive) >= 0.5, predict positive. Но 0.5 arbitrary. При imbalanced classes optimal threshold обычно намного ниже.
+Большинство classifiers выдают probability. Default threshold — 0.5: если P(positive) >= 0.5, predict positive. Но 0.5 произволен. При imbalanced classes optimal threshold обычно намного ниже.
 
 Процесс:
-1. Train model
+1. Обучить модель
 2. Получить predicted probabilities на validation set
-3. Sweep thresholds from 0.0 to 1.0
-4. Compute F1 (или выбранную metric) на каждом threshold
-5. Pick threshold, maximizing metric
+3. Перебрать thresholds от 0.0 до 1.0
+4. Вычислить F1 (или выбранную metric) на каждом threshold
+5. Выбрать threshold, максимизирующий metric
 
 ```mermaid
 flowchart LR
@@ -172,22 +172,22 @@ flowchart LR
     E --> F[Use in Production]
 ```
 
-Model может выдать P(fraud) = 0.15 для fraudulent transaction. При threshold 0.5 это classified as not fraud. При threshold 0.10 fraud caught correctly. Probability calibration менее важна, чем ranking: пока fraud получает probabilities выше, чем non-fraud, существует threshold, который их разделит.
+Модель может выдать P(fraud) = 0.15 для fraudulent transaction. При threshold 0.5 это classified as not fraud. При threshold 0.10 fraud caught correctly. Probability calibration менее важна, чем ranking: пока fraud получает probabilities выше, чем non-fraud, существует threshold, который их разделит.
 
 ### Cost-Sensitive Learning
 
-Обобщение class weights. Вместо uniform costs назначьте specific misclassification costs:
+Обобщение class weights. Вместо одинаковых costs назначьте конкретные misclassification costs:
 
-| | Predict Positive | Predict Negative |
+| | Предсказать Positive | Предсказать Negative |
 |--|---|---|
-| Actually Positive | 0 (correct) | C_FN = 100 |
-| Actually Negative | C_FP = 1 | 0 (correct) |
+| Фактически Positive | 0 (correct) | C_FN = 100 |
+| Фактически Negative | C_FP = 1 | 0 (correct) |
 
-Missed fraudulent transaction (FN) стоит в 100 раз больше, чем false alarm (FP). Model optimizes total cost, not total error count.
+Пропущенная fraudulent transaction (FN) стоит в 100 раз больше, чем false alarm (FP). Модель оптимизирует суммарную стоимость, а не общее число ошибок.
 
-Это самый principled approach, когда можно оценить real-world costs. Missed cancer diagnosis имеет совсем другую стоимость, чем false alarm leading to extra biopsy. Явное задание costs заставляет правильные tradeoffs.
+Это самый принципиальный подход, когда можно оценить реальные costs. Пропущенный диагноз рака имеет совсем другую стоимость, чем false alarm, leading to extra biopsy. Явное задание costs заставляет делать правильные tradeoffs.
 
-### Decision Flowchart
+### Блок-схема принятия решений
 
 ```mermaid
 flowchart TD
@@ -213,7 +213,7 @@ flowchart TD
 
 ## Соберите это
 
-### Шаг 1: сгенерировать imbalanced dataset
+### Шаг 1: сгенерировать несбалансированный dataset
 
 ```python
 import numpy as np
@@ -267,7 +267,7 @@ def smote(X_minority, k=5, n_synthetic=100, seed=42):
     return np.array(synthetic)
 ```
 
-### Шаг 3: Random oversampling and undersampling
+### Шаг 3: Random oversampling и undersampling
 
 ```python
 def random_oversample(X, y, seed=42):
@@ -312,7 +312,7 @@ def random_undersample(X, y, seed=42):
     return X_out[shuffle], y_out[shuffle]
 ```
 
-### Шаг 4: Logistic regression with class weights
+### Шаг 4: логистическая регрессия с class weights
 
 ```python
 def sigmoid(z):
@@ -378,7 +378,7 @@ def find_optimal_threshold(y_true, y_probs, metric="f1"):
     return best_threshold, best_score
 ```
 
-### Шаг 6: Evaluation functions
+### Шаг 6: функции оценки
 
 ```python
 def confusion_matrix_values(y_true, y_pred):
@@ -455,11 +455,11 @@ best_thresh, best_f1 = find_optimal_threshold(y_val, probs_val, metric="f1")
 preds_thresh = (probs_cw >= best_thresh).astype(int)
 ```
 
-Код file запускает все это в одном script и печатает results.
+Файл с кодом запускает все это в одном скрипте и печатает результаты.
 
 ## Используйте это
 
-Со scikit-learn и imbalanced-learn эти techniques — one-liners:
+В scikit-learn и imbalanced-learn эти техники — one-liners:
 
 ```python
 from sklearn.linear_model import LogisticRegression
@@ -489,42 +489,42 @@ pipeline.fit(X_train, y_train)
 print(classification_report(y_test, pipeline.predict(X_test)))
 ```
 
-Реализации с нуля показывают, что именно делает каждая technique. SMOTE — это k-NN interpolation на minority class. Class weights умножают loss. Threshold tuning — for-loop по cutoffs. Никакой магии.
+Реализации с нуля показывают, что именно делает каждая техника. SMOTE — это k-NN interpolation на minority class. Class weights умножают loss. Threshold tuning — цикл for по cutoffs. Никакой магии.
 
 ## Доведите до результата
 
 Этот урок создает:
-- `outputs/skill-imbalanced-data.md` — decision checklist для imbalanced classification problems
+- `outputs/skill-imbalanced-data.md` — checklist решений для задач классификации на несбалансированных данных
 
 ## Упражнения
 
-1. **Borderline-SMOTE**: измените SMOTE implementation, чтобы генерировать synthetic samples только для minority points, near decision boundary (те, чьи k-nearest neighbors include majority class samples). Сравните со standard SMOTE на dataset с overlapping classes.
+1. **Borderline-SMOTE**: измените реализацию SMOTE, чтобы генерировать synthetic samples только для minority points рядом с decision boundary (тех, чьи k-nearest neighbors include majority class samples). Сравните со standard SMOTE на dataset с overlapping classes.
 
-2. **Cost matrix optimization**: реализуйте cost-sensitive learning, где cost matrix — parameter. Создайте function, которая принимает cost matrix и возвращает optimal predictions, minimizing expected cost. Протестируйте разные cost ratios (1:10, 1:100, 1:1000) и постройте, как меняется precision-recall tradeoff.
+2. **Cost matrix optimization**: реализуйте cost-sensitive learning, где cost matrix — parameter. Создайте функцию, которая принимает cost matrix и возвращает optimal predictions, minimizing expected cost. Протестируйте разные cost ratios (1:10, 1:100, 1:1000) и постройте, как меняется precision-recall tradeoff.
 
 3. **Threshold calibration**: реализуйте Platt scaling (fit logistic regression на raw outputs модели для calibrated probabilities). Сравните precision-recall curve до и после calibration. Покажите, что calibration не меняет ranking (AUC остается тем же), но делает probabilities meaningful.
 
-4. **Ensemble with balanced bagging**: обучите multiple models, каждую на balanced bootstrap sample (all minority + random subset of majority). Усредните predictions. Сравните этот подход с single model with SMOTE. Измерьте performance и variance across runs.
+4. **Ensemble with balanced bagging**: обучите несколько моделей, каждую на balanced bootstrap sample (all minority + random subset of majority). Усредните predictions. Сравните этот подход с single model with SMOTE. Измерьте performance и variance across runs.
 
-5. **Imbalance ratio experiment**: возьмите balanced dataset и постепенно увеличивайте imbalance ratio (50/50, 70/30, 90/10, 95/5, 99/1). Для каждого ratio обучите with and without SMOTE. Постройте F1 vs imbalance ratio для обоих approaches. При каком ratio SMOTE начинает давать meaningful difference?
+5. **Imbalance ratio experiment**: возьмите balanced dataset и постепенно увеличивайте imbalance ratio (50/50, 70/30, 90/10, 95/5, 99/1). Для каждого ratio обучите with and without SMOTE. Постройте F1 vs imbalance ratio для обоих подходов. При каком ratio SMOTE начинает давать meaningful difference?
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
 |--------|-------------|------------------------------|
-| Class imbalance | «У одного class намного больше samples» | Distribution classes в dataset сильно skewed, из-за чего models favor majority class |
-| SMOTE | «Synthetic oversampling» | Создает new minority samples через interpolation между existing minority samples и их k-nearest minority neighbors |
-| Class weights | «Делать ошибки на rare classes дороже» | Умножение loss function на class-specific weights, чтобы model сильнее штрафовала minority misclassification |
+| Class imbalance | «У одного класса намного больше объектов» | Распределение классов в dataset сильно перекошено, из-за чего models favor majority class |
+| SMOTE | «Synthetic oversampling» | Создает новые minority samples через interpolation между existing minority samples и их k-nearest minority neighbors |
+| Class weights | «Делать ошибки на rare classes дороже» | Умножение функции потерь на class-specific weights, чтобы модель сильнее штрафовала minority misclassification |
 | Threshold tuning | «Двигать decision boundary» | Изменение probability cutoff для classification с default 0.5 на value, optimizing desired metric |
-| Precision-recall tradeoff | «Нельзя получить оба» | Lowering threshold catches more positives (higher recall), но also flags more false positives (lower precision), и наоборот |
+| Precision-recall tradeoff | «Нельзя получить оба» | Снижение threshold ловит больше positives (higher recall), но also flags more false positives (lower precision), и наоборот |
 | AUPRC | «Area under PR curve» | Сводит precision-recall curve в одно число; информативнее AUC-ROC при сильном class imbalance |
 | Matthews Correlation Coefficient | «Balanced metric» | Correlation between predicted and actual labels, дающая высокий score только при хорошем performance на обоих classes |
 | Cost-sensitive learning | «Разные ошибки стоят по-разному» | Учет real-world misclassification costs в training objective, чтобы model optimizes total cost, not error count |
-| Random oversampling | «Duplicate minority» | Повторение minority class samples для balancing class counts; просто, но risk overfitting duplicated points |
+| Random oversampling | «Duplicate minority» | Повторение minority class samples для balancing class counts; просто, но есть риск overfitting на duplicated points |
 
 ## Дополнительное чтение
 
 - [SMOTE: Synthetic Minority Over-sampling Technique (Chawla et al., 2002)](https://arxiv.org/abs/1106.1813) — оригинальная статья SMOTE, все еще самая цитируемая работа по imbalanced learning
-- [Learning from Imbalanced Data (He & Garcia, 2009)](https://ieeexplore.ieee.org/document/5128907) — comprehensive survey по sampling, cost-sensitive и algorithmic approaches
-- [imbalanced-learn documentation](https://imbalanced-learn.org/stable/) — Python library с SMOTE variants, undersampling strategies и pipeline integration
+- [Learning from Imbalanced Data (He & Garcia, 2009)](https://ieeexplore.ieee.org/document/5128907) — подробный обзор sampling, cost-sensitive и algorithmic approaches
+- [imbalanced-learn documentation](https://imbalanced-learn.org/stable/) — Python-библиотека с SMOTE variants, undersampling strategies и pipeline integration
 - [The Precision-Recall Plot Is More Informative than the ROC Plot (Saito & Rehmsmeier, 2015)](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0118432) — когда и почему выбирать PR curves вместо ROC curves для imbalanced problems

@@ -41,7 +41,7 @@ flowchart LR
     style A3 fill:#dcfce7,stroke:#16a34a
 ```
 
-### 2D + pool
+### 2D + pooling
 
 Возьмите 2D CNN (ResNet, EfficientNet, ViT). Запустите ее независимо на каждом выбранном кадре. Усредните (или примените max-pool, или attention-pool) эмбеддинги отдельных кадров. Передайте агрегированный вектор в классификатор.
 
@@ -253,7 +253,7 @@ print(f"(2+1)D output: {tuple(c(x).shape)}")
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
 | 2D + pool | "Per-frame classifier" | Запустить 2D CNN на каждом выбранном кадре, усреднить признаки по времени через average-pool, классифицировать |
 | 3D convolution | "Spatio-temporal kernel" | Ядро, которое выполняет свертку по (T, H, W); может естественно моделировать движение |

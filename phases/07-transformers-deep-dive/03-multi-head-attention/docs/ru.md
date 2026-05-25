@@ -2,10 +2,10 @@
 
 > Одна attention head за раз учит одно отношение. Восемь heads учат восемь. Heads дешевы. Берите больше.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 7 · 02 (Self-Attention from Scratch)
-**Time:** ~75 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 7 · 02 (self-attention с нуля)
+**Время:** ~75 минут
 
 ## Проблема
 
@@ -19,30 +19,30 @@ Multi-head attention — default, с которым в 2026 году поста�
 
 ![Multi-head attention splits, attends, concatenates](../assets/multi-head-attention.svg)
 
-**Split.** Возьмите `X` формы `(N, d_model)`. Спроецируйте в Q, K, V, каждую формы `(N, d_model)`. Измените форму на `(N, n_heads, d_head)`, где `d_head = d_model / n_heads`. Транспонируйте в `(n_heads, N, d_head)`.
+**Разделение.** Возьмите `X` формы `(N, d_model)`. Спроецируйте в Q, K, V, каждую формы `(N, d_model)`. Измените форму на `(N, n_heads, d_head)`, где `d_head = d_model / n_heads`. Транспонируйте в `(n_heads, N, d_head)`.
 
-**Attend in parallel.** Запустите scaled dot-product attention внутри каждой head. Каждая head производит `(N, d_head)`. Heads работают с разными подпространствами embedding и не взаимодействуют во время самого вычисления attention.
+**Параллельное attention.** Запустите scaled dot-product attention внутри каждой head. Каждая head производит `(N, d_head)`. Heads работают с разными подпространствами embedding и не взаимодействуют во время самого вычисления attention.
 
-**Concatenate and project.** Соберите heads обратно в `(N, d_model)` и умножьте на обучаемую выходную матрицу `W_o` формы `(d_model, d_model)`. `W_o` — место, где heads смешиваются.
+**Конкатенация и проекция.** Соберите heads обратно в `(N, d_model)` и умножьте на обучаемую выходную матрицу `W_o` формы `(d_model, d_model)`. `W_o` — место, где heads смешиваются.
 
 **Почему это работает.** Каждая head может специализироваться, не конкурируя с другими за representational budget. Probing studies 2019–2024 показывают разные роли heads: positional heads, head, которая смотрит на предыдущий токен, copy heads, named-entity heads, induction heads (лежащие в основе in-context learning).
 
 **Линия вариантов к 2026 году:**
 
-| Variant | Q heads | K/V heads | Used by |
-|---------|---------|-----------|---------|
+| Вариант | Q-heads | K/V-heads | Где используется |
+|---------|---------|-----------|------------------|
 | Multi-head (MHA) | N | N | GPT-2, BERT, T5 |
 | Multi-query (MQA) | N | 1 | PaLM, Falcon |
 | Grouped-query (GQA) | N | G (e.g. N/8) | Llama 2 70B, Llama 3+, Qwen 2+, Mistral |
-| Multi-head latent (MLA) | N | compressed to low-rank | DeepSeek-V2, V3 |
+| Multi-head latent (MLA) | N | сжаты до low-rank | DeepSeek-V2, V3 |
 
 GQA — современный default, потому что он сокращает память KV-cache в `N/G` раз, сохраняя почти полное качество. MLA идет дальше: сжимает K/V в latent space, затем проецирует обратно во время вычислений — тратит FLOPs, но экономит намного больше памяти.
 
-## Build It
+## Соберите это
 
-### Step 1: разделите heads из single-head attention, который у нас уже есть
+### Шаг 1: разделите heads из single-head attention, который у нас уже есть
 
-Возьмите `SelfAttention` из Lesson 02 и оберните его парой split/concat. См. `code/main.py` для numpy-реализации; логика такая:
+Возьмите `SelfAttention` из Урок 02 и оберните его парой split/concat. См. `code/main.py` для numpy-реализации; логика такая:
 
 ```python
 def split_heads(X, n_heads):
@@ -57,7 +57,7 @@ def combine_heads(H):
 
 Один reshape и один transpose. Без цикла. Именно это PyTorch делает внутри `nn.MultiheadAttention`.
 
-### Step 2: запустите scaled-dot-product attention для каждой head
+### Шаг 2: запустите scaled-dot-product attention для каждой head
 
 Каждая head получает свой срез Q, K, V. Attention становится batched matmul:
 
@@ -78,7 +78,7 @@ def mha_forward(X, W_q, W_k, W_v, W_o, n_heads):
 
 На реальном железе `Qh @ Kh.transpose(...)` — это один `bmm`. GPU видит один batched matmul формы `(heads, N, d_head) × (heads, d_head, N) -> (heads, N, N)`. Добавлять heads почти бесплатно.
 
-### Step 3: вариант Grouped-Query Attention
+### Шаг 3: вариант Grouped-Query Attention
 
 Меняются только проекции key и value. Q получает `n_heads` групп; K и V получают `n_kv_heads < n_heads` групп и повторяются для совпадения:
 
@@ -91,11 +91,11 @@ def gqa_project(X, W, n_kv_heads, n_heads):
 
 На inference это экономит память, потому что в KV cache живут только `n_kv_heads` копий, а не `n_heads`. Llama 3 70B использует 64 query heads с 8 KV heads — сжатие cache в 8×.
 
-### Step 4: исследуйте, что выучила каждая head
+### Шаг 4: исследуйте, что выучила каждая head
 
 Запустите MHA на коротком предложении с 4 heads. Для каждой head напечатайте матрицу attention `(N, N)`. Вы увидите, что разные heads выбирают разную структуру даже при random initialization — это частично сигнал, частично rotational symmetry в подпространствах.
 
-## Use It
+## Используйте это
 
 В PyTorch однострочная версия:
 
@@ -118,8 +118,8 @@ out = scaled_dot_product_attention(q, k, v, is_causal=True, enable_gqa=True)
 
 **Сколько heads?** Практические правила из production-моделей в 2026 году:
 
-| Model size | d_model | n_heads | d_head |
-|------------|---------|---------|--------|
+| Размер модели | d_model | n_heads | d_head |
+|---------------|---------|---------|--------|
 | Small (~125M) | 768 | 12 | 64 |
 | Base (~350M) | 1024 | 16 | 64 |
 | Large (~1B) | 2048 | 16 | 128 |
@@ -127,28 +127,28 @@ out = scaled_dot_product_attention(q, k, v, is_causal=True, enable_gqa=True)
 
 `d_head` почти всегда равен 64 или 128. Это единица того, сколько одна head может "видеть". Ниже 32 heads начинают бороться с scaling factor `sqrt(d_head)`; выше 256 вы теряете преимущество "множества маленьких специалистов".
 
-## Ship It
+## Доведите до поставки
 
 См. `outputs/skill-mha-configurator.md`. Skill рекомендует число heads, число kv-heads и стратегию projection для нового transformer с учетом parameter budget, длины последовательности и deployment target.
 
 ## Упражнения
 
-1. **Easy.** Возьмите MHA из `code/main.py` и измените `n_heads` с 1 на 16 при фиксированном `d_model=64`. Постройте loss маленькой one-layer модели на синтетической copy task. Больше heads помогают, выходят на плато или вредят?
-2. **Medium.** Реализуйте MQA (одна KV head, общая для всех query heads). Измерьте, насколько падает число параметров по сравнению с full MHA. Посчитайте, насколько уменьшается KV-cache на inference для N=2048.
-3. **Hard.** Реализуйте маленькую версию Multi-head Latent Attention: сожмите K,V в rank-`r` latent, храните latent в KV cache, распаковывайте во время attention. При каком `r` память cache падает ниже 1/8 от full MHA, пока качество остается в пределах 1 bit от validation ppl?
+1. **Легко.** Возьмите MHA из `code/main.py` и измените `n_heads` с 1 на 16 при фиксированном `d_model=64`. Постройте loss маленькой one-layer модели на синтетической copy task. Больше heads помогают, выходят на плато или вредят?
+2. **Средне.** Реализуйте MQA (одна KV head, общая для всех query heads). Измерьте, насколько падает число параметров по сравнению с full MHA. Посчитайте, насколько уменьшается KV-cache на inference для N=2048.
+3. **Сложно.** Реализуйте маленькую версию Multi-head Latent Attention: сожмите K,V в rank-`r` latent, храните latent в KV cache, распаковывайте во время attention. При каком `r` память cache падает ниже 1/8 от full MHA, пока качество остается в пределах 1 bit от validation ppl?
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Head | "A single attention circuit" | Одна Q/K/V projection размерности `d_head = d_model / n_heads` со своей матрицей attention. |
-| d_head | "Head dimension" | Скрытая ширина на одну head; в production почти всегда 64 или 128. |
-| Split / combine | "Reshape tricks" | `(N, d_model) ↔ (n_heads, N, d_head)` reshape+transpose вокруг attention. |
-| W_o | "Output projection" | Матрица `(d_model, d_model)`, применяемая после конкатенации heads; место, где heads смешиваются. |
-| MQA | "One KV head" | Multi-Query Attention: одна общая K/V projection. Минимальный KV cache, некоторая потеря качества. |
-| GQA | "The default since Llama 2" | Grouped-Query Attention с `n_kv_heads < n_heads`; повторяет их для соответствия Q. |
-| MLA | "DeepSeek's trick" | Multi-head Latent Attention: K,V сжимаются в low-rank latent и распаковываются во время attend. |
-| Induction head | "The circuit behind in-context learning" | Пара heads, которые обнаруживают предыдущие вхождения и копируют то, что следовало за ними. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Head | "Один attention circuit" | Одна Q/K/V projection размерности `d_head = d_model / n_heads` со своей матрицей attention. |
+| d_head | "Размерность head" | Скрытая ширина на одну head; в production почти всегда 64 или 128. |
+| Split / combine | "Трюки с reshape" | `(N, d_model) ↔ (n_heads, N, d_head)` reshape+transpose вокруг attention. |
+| W_o | "Выходная проекция" | Матрица `(d_model, d_model)`, применяемая после конкатенации heads; место, где heads смешиваются. |
+| MQA | "Одна KV-head" | Multi-Query Attention: одна общая K/V projection. Минимальный KV cache, некоторая потеря качества. |
+| GQA | "Default со времен Llama 2" | Grouped-Query Attention с `n_kv_heads < n_heads`; повторяет их для соответствия Q. |
+| MLA | "Трюк DeepSeek" | Multi-head Latent Attention: K,V сжимаются в low-rank latent и распаковываются во время attend. |
+| Induction head | "Circuit за in-context learning" | Пара heads, которые обнаруживают предыдущие вхождения и копируют то, что следовало за ними. |
 
 ## Дополнительное чтение
 

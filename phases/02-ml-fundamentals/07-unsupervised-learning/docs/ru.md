@@ -30,15 +30,15 @@
 
 ```mermaid
 flowchart LR
-    A[Сырые данные] --> B{Выбрать метод}
+    A[Raw Data] --> B{Choose Method}
     B --> C[K-Means]
     B --> D[DBSCAN]
-    B --> E[Иерархическая]
+    B --> E[Hierarchical]
     B --> F[GMM]
-    C --> G[Плоские сферические кластеры]
-    D --> H[Произвольные формы, поиск шума]
-    E --> I[Дерево вложенных кластеров]
-    F --> J[Мягкие назначения, эллиптические кластеры]
+    C --> G[Flat, spherical clusters]
+    D --> H[Arbitrary shapes, noise detection]
+    E --> I[Tree of nested clusters]
+    F --> J[Soft assignments, elliptical clusters]
 ```
 
 ### K-Means: рабочая лошадка

@@ -4,7 +4,7 @@
 
 **Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 05 (Full Transformer), Фаза 7 · 07 (GPT)
+**Предварительные требования:** Фаза 7 · 05 (полный transformer), Фаза 7 · 07 (GPT)
 **Время:** ~45 минут
 
 ## Проблема
@@ -65,7 +65,7 @@ DeepSeek-V2/V3 также делят experts на *shared* и *routed*. Кажд
 
 На токен, на слой:
 
-| Config | Active params / token | Total params |
+| Конфигурация | Активные параметры / token | Всего параметров |
 |--------|-----------------------|--------------|
 | Mixtral 8×22B | ~39B | 141B |
 | Llama 3 70B (dense) | 70B | 70B |
@@ -115,7 +115,7 @@ Bias влияет на selection, а не на gate weight. Это трюк Deep
 
 ## Используйте это
 
-HuggingFace loading:
+Загрузка через HuggingFace:
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -146,16 +146,16 @@ Production inference 2026 года: vLLM нативно поддерживает
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Expert | "One FFN among many" | Независимая feed-forward network; параметры, выделенные для sparse slice FFN-вычисления. |
-| Router | "The gate" | Крошечный linear layer, который оценивает каждый токен относительно каждого expert; top-k selection. |
-| Top-k routing | "k active experts per token" | FFN-вычисление каждого токена проходит ровно через k experts, взвешенных gate. |
-| Auxiliary loss | "Load-balance penalty" | Дополнительный loss term, который штрафует перекошенное expert usage. |
-| Auxiliary-loss-free | "DeepSeek-V3's trick" | Баланс через per-expert bias только на selection router; без extra gradient. |
-| Shared expert | "Always on" | Дополнительный expert, через который проходит каждый токен; захватывает common knowledge. |
-| Expert parallelism | "Shard by expert" | Распределить разных experts по разным GPUs; route tokens across the network. |
-| Sparsity | "Active params < total params" | Ratio `k × expert_size / (E × expert_size)`; 37/671 ≈ 5.5% для DeepSeek-V3. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Expert | "Одна FFN среди многих" | Независимая feed-forward network; параметры, выделенные для sparse slice FFN-вычисления. |
+| Router | "Gate" | Крошечный linear layer, который оценивает каждый токен относительно каждого expert; top-k selection. |
+| Top-k routing | "k активных experts на токен" | FFN-вычисление каждого токена проходит ровно через k experts, взвешенных gate. |
+| Auxiliary loss | "Штраф за дисбаланс нагрузки" | Дополнительный loss term, который штрафует перекошенное expert usage. |
+| Auxiliary-loss-free | "Трюк DeepSeek-V3" | Баланс через per-expert bias только на selection router; без extra gradient. |
+| Shared expert | "Всегда включен" | Дополнительный expert, через который проходит каждый токен; захватывает common knowledge. |
+| Expert parallelism | "Шардировать по experts" | Распределить разных experts по разным GPUs; route tokens across the network. |
+| Sparsity | "Активных параметров меньше, чем всего параметров" | Ratio `k × expert_size / (E × expert_size)`; 37/671 ≈ 5.5% для DeepSeek-V3. |
 
 ## Дополнительное чтение
 

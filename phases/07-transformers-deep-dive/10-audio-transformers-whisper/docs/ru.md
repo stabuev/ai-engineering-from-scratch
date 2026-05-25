@@ -4,7 +4,7 @@
 
 **Тип:** Изучение
 **Языки:** Python
-**Предварительные требования:** Фаза 7 · 05 (Full Transformer), Фаза 7 · 08 (Encoder-Decoder), Фаза 7 · 09 (ViT)
+**Предварительные требования:** Фаза 7 · 05 (полный transformer), Фаза 7 · 08 (encoder-decoder), Фаза 7 · 09 (ViT)
 **Время:** ~45 минут
 
 ## Проблема
@@ -61,8 +61,8 @@ Beam search (width 5) с порогом log-prob. Временные метки 
 
 ### Размеры Whisper
 
-| Model | Params | Layers | d_model | Heads | VRAM (fp16) |
-|-------|--------|--------|---------|-------|-------------|
+| Модель | Параметры | Слои | d_model | Heads | VRAM (fp16) |
+|--------|-----------|------|---------|-------|-------------|
 | Tiny | 39M | 4 | 384 | 6 | ~1 GB |
 | Base | 74M | 6 | 512 | 8 | ~1 GB |
 | Small | 244M | 12 | 768 | 12 | ~2 GB |
@@ -81,13 +81,13 @@ Large-v3-turbo (2024) сократил декодер с 32 слоев до 4. �
 
 ### Ландшафт 2026
 
-| Task | Model | Notes |
-|------|-------|-------|
+| Задача | Модель | Примечания |
+|--------|--------|------------|
 | English ASR | Whisper-turbo, Moonshine | Moonshine в 4× быстрее на edge |
-| Multilingual ASR | Whisper-large-v3 | 97 languages |
+| Multilingual ASR | Whisper-large-v3 | 97 языков |
 | Streaming ASR | faster-whisper + VAD | достижимы цели latency 150 ms |
 | TTS | Piper, XTTS-v2, Kokoro | Encoder-decoder pattern, но Whisper-shaped |
-| Audio + language | AudioLM, SeamlessM4T | Text tokens + audio tokens in one transformer |
+| Audio + language | AudioLM, SeamlessM4T | Text tokens + audio tokens в одном transformer |
 
 ## Соберите это
 
@@ -171,16 +171,16 @@ for s in segments:
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
-| Mel spectrogram | "Audio image" | 2D-представление: frequency bins по одной оси, time frames по другой; log-scaled energy в каждой ячейке. |
-| Log-mel | "What Whisper sees" | Mel spectrogram, пропущенная через log; приближает человеческое восприятие громкости. |
-| Frame | "One time slice" | Окно samples длиной 25 ms; перекрывается со stride 10 ms. |
-| Task token | "Prompt prefix for speech" | Специальные токены вроде `<|transcribe|>` / `<|translate|>` в prompt декодера. |
-| Voice activity detection (VAD) | "Find the speech" | Gate, который удаляет тишину перед ASR; резко снижает cost. |
+| Термин | Как говорят | Что это на самом деле значит |
+|------|------------|-------------------------------|
+| Mel spectrogram | "Аудиоизображение" | 2D-представление: frequency bins по одной оси, time frames по другой; log-scaled energy в каждой ячейке. |
+| Log-mel | "Что видит Whisper" | Mel spectrogram, пропущенная через log; приближает человеческое восприятие громкости. |
+| Frame | "Один временной срез" | Окно samples длиной 25 ms; перекрывается со stride 10 ms. |
+| Task token | "Prompt-префикс для речи" | Специальные токены вроде `<|transcribe|>` / `<|translate|>` в prompt декодера. |
+| Voice activity detection (VAD) | "Найти речь" | Gate, который удаляет тишину перед ASR; резко снижает cost. |
 | CTC | "Connectionist Temporal Classification" | Классический ASR loss для обучения без alignment; Whisper его НЕ использует. |
-| Whisper-turbo | "Small decoder, full encoder" | large-v3 encoder + 4-layer decoder; декодирование в 8× быстрее. |
-| Faster-whisper | "The production wrapper" | Реализация на CTranslate2; int8 quantization; в 4× быстрее reference OpenAI. |
+| Whisper-turbo | "Малый decoder, полный encoder" | large-v3 encoder + 4-layer decoder; декодирование в 8× быстрее. |
+| Faster-whisper | "Production wrapper" | Реализация на CTranslate2; int8 quantization; в 4× быстрее reference OpenAI. |
 
 ## Дополнительное чтение
 

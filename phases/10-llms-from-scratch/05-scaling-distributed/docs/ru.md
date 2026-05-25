@@ -239,7 +239,7 @@ graph TD
     style N1 fill:#1a1a2e,stroke:#e94560,color:#fff
 ```
 
-## Build It
+## Практика
 
 ### Step 1: Simulate Data Parallelism
 
@@ -448,7 +448,7 @@ def mixed_precision_comparison(params_billions):
 
 Главный сюрприз для большинства: mixed precision не уменьшает память вдвое. Optimizer states (Adam's m and v) остаются в FP32 независимо от precision. Для модели 7B FP32 training использует 112GB. Mixed precision использует 84GB. Это reduction на 25%, а не на 50%. Dominates именно optimizer.
 
-## Use It
+## Использование
 
 ### Run All Simulations
 
@@ -527,11 +527,11 @@ def run_all_demos():
               f"Savings={result['savings_vs_fp32']:.0%}")
 ```
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-distributed-training-planner.md` -- prompt, который принимает model size и available hardware, а затем выдает полный distributed training plan: parallelism strategy, memory budget, communication overhead и expected throughput.
 
-## Exercises
+## Упражнения
 
 1. Измените memory calculator, чтобы включить activation checkpointing. При checkpointing сохраняются activations только каждого K-го layer (typical K=1, то есть все перевычисляется). Покажите memory-compute tradeoff: сколько памяти экономит checkpointing и насколько он замедляет training (примерно 33% more compute для full checkpointing)?
 
@@ -543,7 +543,7 @@ def run_all_demos():
 
 5. Добавьте ZeRO-Offload в memory calculator. Предположите, что CPU RAM составляет 512GB per node, а NVMe -- 2TB. Покажите, как offloading optimizer states to CPU позволяет обучать модель 70B на 4 GPUs вместо 16 ценой 30-50% slower optimizer steps.
 
-## Key Terms
+## Ключевые термины
 
 | Термин | Как обычно говорят | Что это на самом деле означает |
 |------|----------------|----------------------|
@@ -558,7 +558,7 @@ def run_all_demos():
 | Mixed precision | "Train in half precision" | Использовать FP16/BF16 для forward/backward и FP32 для optimizer states -- экономит ~25% memory, а не 50%, потому что dominates optimizer |
 | Pipeline bubble | "Idle time in the pipeline" | Доля времени, когда GPUs простаивают, ожидая data from previous stage -- уменьшается при использовании большего числа micro-batches |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Rajbhandari et al., 2020 -- "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models"](https://arxiv.org/abs/1910.02054) -- статья DeepSpeed ZeRO, определившая три sharding stages
 - [Shoeybi et al., 2020 -- "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism"](https://arxiv.org/abs/1909.08053) -- tensor parallelism NVIDIA для transformers

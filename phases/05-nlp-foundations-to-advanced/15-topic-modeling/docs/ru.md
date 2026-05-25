@@ -21,7 +21,7 @@ BERTopic (2020) кодирует документы с BERT, снижает ра
 
 ## Концепция
 
-![LDA mixture model vs BERTopic clustering](../assets/topic-modeling.svg)
+![Смесевая модель LDA и кластеризация BERTopic](../assets/topic-modeling.svg)
 
 **Генеративная история LDA.** Каждая тема — распределение по словам. Каждый документ — смесь тем. Чтобы сгенерировать слово в документе, сэмплируем тему из смеси документа, затем сэмплируем слово из распределения этой темы. Inference обращает это: по наблюдаемым словам выводит topic distribution для каждого документа и word distribution для каждой темы. Collapsed Gibbs sampling или variational Bayes выполняет математику.
 
@@ -108,15 +108,15 @@ for topic_id in valid_topics[:5]:
 
 ## Когда что выбирать
 
-| Situation | Pick |
+| Ситуация | Выбор |
 |-----------|------|
-| Short text (tweets, reviews, headlines) | BERTopic |
-| Long documents with topic mixtures | LDA |
-| No GPU / limited compute | LDA or NMF |
-| Need document-level multi-topic distributions | LDA |
-| LLM integration for topic labeling | BERTopic (direct support) |
-| Resource-constrained edge deployment | LDA |
-| Max semantic coherence | BERTopic |
+| Короткий текст (tweets, reviews, headlines) | BERTopic |
+| Длинные документы со смесями тем | LDA |
+| Нет GPU / ограниченные вычисления | LDA или NMF |
+| Нужны multi-topic distributions на уровне документа | LDA |
+| Интеграция с LLM для разметки тем | BERTopic (прямая поддержка) |
+| Edge-развертывание с ограниченными ресурсами | LDA |
+| Максимальная семантическая связность | BERTopic |
 
 Самое важное практическое соображение — длина документа. BERT embeddings усекаются; LDA counts работают с любой длиной. Для документов длиннее контекста embedding model либо chunk + aggregate, либо используйте LDA.
 
@@ -158,14 +158,14 @@ Refuse BERTopic on documents longer than the embedding model's context window wi
 
 ## Упражнения
 
-1. **Easy.** Обучите LDA с 5 темами на dataset 20 Newsgroups. Выведите top 10 words для каждой темы. Подпишите каждую тему вручную. Нашел ли алгоритм реальные категории?
-2. **Medium.** Обучите BERTopic на том же subset 20 Newsgroups. Сравните найденное число тем, top words и qualitative coherence с LDA. Что чище выявляет реальные категории?
-3. **Hard.** Вычислите c_v coherence для LDA и BERTopic на вашем корпусе. Запустите каждый метод с 5, 10, 20, 50 темами. Постройте график coherence vs topic count. Сообщите, какой метод стабильнее по разным числам тем.
+1. **Легко.** Обучите LDA с 5 темами на dataset 20 Newsgroups. Выведите top 10 words для каждой темы. Подпишите каждую тему вручную. Нашел ли алгоритм реальные категории?
+2. **Средне.** Обучите BERTopic на том же subset 20 Newsgroups. Сравните найденное число тем, top words и qualitative coherence с LDA. Что чище выявляет реальные категории?
+3. **Сложно.** Вычислите c_v coherence для LDA и BERTopic на вашем корпусе. Запустите каждый метод с 5, 10, 20, 50 темами. Постройте график coherence vs topic count. Сообщите, какой метод стабильнее по разным числам тем.
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | Topic | A thing the corpus is about | Распределение вероятностей по словам (LDA) или кластер похожих документов (BERTopic). |
 | Mixed membership | Doc is multiple topics | LDA назначает каждому документу распределение по всем темам. |
 | UMAP | Dimensionality reduction | Manifold learning, сохраняющий локальную структуру; используется в BERTopic. |

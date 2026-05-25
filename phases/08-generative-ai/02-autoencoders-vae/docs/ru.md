@@ -125,7 +125,7 @@ Latent-diffusion model — это VAE с diffusion model между encoder и d
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Autoencoder | Encode-decode network | `x → z → x̂`, учит MSE. Не генеративен. |
 | VAE | AE with a sampler | Encoder выдает распределение, KL penalty формирует пространство кодов. |
 | ELBO | Evidence lower bound | `log p(x) ≥ recon - KL[q(z|x) \|\| p(z)]`; tight, когда `q = p(z|x)`. |

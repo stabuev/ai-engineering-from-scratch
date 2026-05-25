@@ -17,7 +17,7 @@ NER - рабочая лошадка под каждым пайплайном с�
 
 ## Концепция
 
-![NER tagging: BIO schema + CRF+BiLSTM pipeline](./assets/ner.svg)
+![NER-разметка: схема BIO + конвейер CRF+BiLSTM](./assets/ner.svg)
 
 **BIO tagging** (или BILOU) превращает извлечение сущностей в задачу sequence labeling. Каждому токену назначается метка `B-TYPE` (начало сущности), `I-TYPE` (внутри сущности) или `O` (вне любой сущности).
 
@@ -296,14 +296,14 @@ Refuse to recommend fine-tuning a transformer for under 500 labeled examples unl
 
 ## Упражнения
 
-1. **Easy.** Реализуйте `bio_to_spans` (обратную функцию к `spans_to_bio`) и проверьте round-trip consistency на 10 предложениях.
-2. **Medium.** Обучите CRF из sklearn-crfsuite выше на английском NER-датасете CoNLL-2003. Сообщите per-entity F1 с помощью `seqeval`. Типичный результат: ~84 F1.
-3. **Hard.** Fine-tune `distilbert-base-cased` на domain-specific NER dataset (medical, legal или financial). Сравните с малой моделью spaCy. Задокументируйте проверки data leakage и опишите, что вас удивило.
+1. **Легко.** Реализуйте `bio_to_spans` (обратную функцию к `spans_to_bio`) и проверьте round-trip consistency на 10 предложениях.
+2. **Средне.** Обучите CRF из sklearn-crfsuite выше на английском NER-датасете CoNLL-2003. Сообщите per-entity F1 с помощью `seqeval`. Типичный результат: ~84 F1.
+3. **Сложно.** Fine-tune `distilbert-base-cased` на domain-specific NER dataset (medical, legal или financial). Сравните с малой моделью spaCy. Задокументируйте проверки data leakage и опишите, что вас удивило.
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | NER | Извлекать имена | Размечать token spans типами (PERSON, ORG, GPE, DATE, ...). |
 | BIO | Схема тегирования | `B-X` начинает, `I-X` продолжает, `O` вне сущности. |
 | BILOU | Улучшенный BIO | Добавляет `L-X` (last), `U-X` (unit) для более чистых границ. |

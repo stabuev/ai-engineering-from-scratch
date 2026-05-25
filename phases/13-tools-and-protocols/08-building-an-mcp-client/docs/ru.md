@@ -103,7 +103,7 @@ Streamable HTTP использует header `Mcp-Session-Id`. В stdio нет se
 - Dispatch table — простой `dict[str, Session]`.
 - Обработка конфликтов явная: когда два сервера объявляют одно имя, более поздний переименовывается с префиксом.
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/skill-mcp-client-harness.md`. По декларативному списку MCP-серверов (name, command, args) skill создает harness, который запускает их, объединяет списки tools и поставляет routing function с разрешением конфликтов.
 

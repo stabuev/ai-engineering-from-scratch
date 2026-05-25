@@ -1,4 +1,4 @@
-# Sentiment Analysis
+# Анализ тональности
 
 > Каноническая NLP-задача. Большая часть того, что нужно знать о classical text classification, проявляется именно здесь.
 
@@ -17,7 +17,7 @@ Sentiment — рабочая лаборатория для classical NLP. Есл
 
 ## Концепция
 
-![Sentiment pipeline: tokens → features → classifier → label](./assets/sentiment.svg)
+![Конвейер анализа тональности: токены → признаки → классификатор → метка](./assets/sentiment.svg)
 
 Classical sentiment — это рецепт из двух шагов.
 
@@ -237,17 +237,17 @@ Refuse to recommend dropping stopwords for sentiment tasks. Refuse to report acc
 
 ## Упражнения
 
-1. **Easy.** Добавьте `apply_negation` как preprocessing step в scikit-learn pipeline и измерьте F1 delta на небольшом sentiment dataset.
-2. **Medium.** Реализуйте class-weighted logistic regression (передайте `class_weight="balanced"` в scikit-learn или выведите gradient самостоятельно). Измерьте effect на synthetic 90-10 class imbalance.
-3. **Hard.** Постройте sarcasm detector, обучив второй classifier на residuals sentiment model. Задокументируйте experimental setup. Предупредите читателя, когда accuracy ниже chance (chance-level on 2-class sarcasm is ~50%, и большинство первых попыток оказываются там).
+1. **Легко.** Добавьте `apply_negation` как preprocessing step в scikit-learn pipeline и измерьте F1 delta на небольшом sentiment dataset.
+2. **Средне.** Реализуйте class-weighted logistic regression (передайте `class_weight="balanced"` в scikit-learn или выведите gradient самостоятельно). Измерьте effect на synthetic 90-10 class imbalance.
+3. **Сложно.** Постройте sarcasm detector, обучив второй classifier на residuals sentiment model. Задокументируйте experimental setup. Предупредите читателя, когда accuracy ниже chance (chance-level on 2-class sarcasm is ~50%, и большинство первых попыток оказываются там).
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
-|------|-----------------|-----------------------|
+| Термин | Как обычно говорят | Что это на самом деле означает |
+|------|-------------------|--------------------------------|
 | Polarity | Positive or negative | Binary label; иногда расширяется до neutral или fine-grained (5-star). |
 | Aspect-based sentiment | Per-aspect polarity | Приписывает sentiment конкретным entities или attributes, упомянутым в тексте. |
-| Negation scoping | Reversing nearby tokens | Prefix tokens after "not" with `NOT_` until punctuation. |
+| Область действия отрицания | Переворот соседних токенов | Добавлять префикс `NOT_` к токенам после "not" до пунктуации. |
 | Laplace smoothing | Adding 1 to counts | Предотвращает zero-probability features в Naive Bayes. |
 | L2 regularization | Shrinking weights | Добавляет `lambda * sum(w^2)` к loss. Необходима для sparse text features. |
 

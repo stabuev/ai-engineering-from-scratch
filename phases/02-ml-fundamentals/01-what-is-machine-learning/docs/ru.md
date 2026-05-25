@@ -30,18 +30,18 @@
 
 ```mermaid
 flowchart LR
-    subgraph Traditional["Традиционное программирование"]
+    subgraph Traditional["Traditional Programming"]
         direction LR
-        R[Правила] --> P1[Программа]
-        D1[Данные] --> P1
-        P1 --> O1[Вывод]
+        R[Rules] --> P1[Program]
+        D1[Data] --> P1
+        P1 --> O1[Output]
     end
 
-    subgraph ML["Машинное обучение"]
+    subgraph ML["Machine Learning"]
         direction LR
-        D2[Данные] --> P2[Алгоритм обучения]
-        O2[Ожидаемый вывод] --> P2
-        P2 --> M[Модель / правила]
+        D2[Data] --> P2[Learning Algorithm]
+        O2[Expected Output] --> P2
+        P2 --> M[Model / Rules]
     end
 ```
 
@@ -55,18 +55,18 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    ML[Машинное обучение] --> SL[Обучение с учителем]
-    ML --> UL[Обучение без учителя]
-    ML --> RL[Обучение с подкреплением]
+    ML[Machine Learning] --> SL[Supervised Learning]
+    ML --> UL[Unsupervised Learning]
+    ML --> RL[Reinforcement Learning]
 
-    SL --> C[Классификация]
-    SL --> R[Регрессия]
+    SL --> C[Classification]
+    SL --> R[Regression]
 
-    UL --> CL[Кластеризация]
-    UL --> DR[Снижение размерности]
+    UL --> CL[Clustering]
+    UL --> DR[Dimensionality Reduction]
 
-    RL --> PO[Оптимизация политики]
-    RL --> VL[Обучение функции ценности]
+    RL --> PO[Policy Optimization]
+    RL --> VL[Value Learning]
 ```
 
 **Обучение с учителем**: у вас есть пары «вход-выход». Модель учится отображать входы в выходы.
@@ -123,15 +123,15 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[Собрать данные] --> B[Очистить и исследовать]
-    B --> C[Сконструировать признаки]
-    C --> D[Разделить данные]
-    D --> E[Обучить модель]
-    E --> F[Оценить]
-    F -->|Недостаточно хорошо| C
-    F -->|Достаточно хорошо| G[Развернуть]
-    G --> H[Мониторить]
-    H -->|Качество падает| A
+    A[Collect Data] --> B[Clean & Explore]
+    B --> C[Feature Engineering]
+    C --> D[Split Data]
+    D --> E[Train Model]
+    E --> F[Evaluate]
+    F -->|Not good enough| C
+    F -->|Good enough| G[Deploy]
+    G --> H[Monitor]
+    H -->|Performance drops| A
 ```
 
 **Сбор данных**: собрать сырые данные. Больше данных почти всегда лучше, но качество важнее количества.
@@ -156,16 +156,16 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph Dataset["Полный набор данных (100%)"]
+    subgraph Dataset["Full Dataset (100%)"]
         direction LR
-        TR["Обучающая выборка (70%)"]
-        VA["Валидационная выборка (15%)"]
-        TE["Тестовая выборка (15%)"]
+        TR["Training Set (70%)"]
+        VA["Validation Set (15%)"]
+        TE["Test Set (15%)"]
     end
 
-    TR -->|Обучить модель| M[Модель]
-    M -->|Настроить гиперпараметры| VA
-    VA -->|Финальная оценка| TE
+    TR -->|Train model| M[Model]
+    M -->|Tune hyperparameters| VA
+    VA -->|Final evaluation| TE
 ```
 
 | Выборка | Назначение | Когда используется | Типичный размер |
@@ -182,26 +182,26 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph UF["Недообучение"]
-        U1["Модель слишком простая"]
-        U2["Высокое смещение"]
-        U3["Пропускает закономерности"]
+    subgraph UF["Underfitting"]
+        U1["Model too simple"]
+        U2["High bias"]
+        U3["Misses patterns"]
     end
 
-    subgraph GF["Хорошее соответствие"]
-        G1["Правильная сложность"]
-        G2["Сбалансирована"]
-        G3["Хорошо обобщает"]
+    subgraph GF["Good Fit"]
+        G1["Right complexity"]
+        G2["Balanced"]
+        G3["Generalizes well"]
     end
 
-    subgraph OF["Переобучение"]
-        O1["Модель слишком сложная"]
-        O2["Высокая дисперсия"]
-        O3["Запоминает шум"]
+    subgraph OF["Overfitting"]
+        O1["Model too complex"]
+        O2["High variance"]
+        O3["Memorizes noise"]
     end
 
-    UF -->|Увеличить сложность| GF
-    GF -->|Слишком большая сложность| OF
+    UF -->|Increase complexity| GF
+    GF -->|Too much complexity| OF
 ```
 
 **Недообучение (underfitting)**: модель слишком проста, чтобы уловить закономерности в данных. Например, прямая линия пытается описать криволинейную зависимость. Ошибка на обучении высокая. Ошибка на тесте высокая.
@@ -274,18 +274,18 @@ ML мощен, но не всегда является правильным ин
 
 ```mermaid
 flowchart TD
-    A["У вас есть данные?"] -->|Нет| B["Сначала соберите данные или используйте правила"]
-    A -->|Да| C["Можно ли явно записать правила?"]
-    C -->|"Да, и они простые"| D["Используйте правила. ML не нужен."]
-    C -->|"Нет, или они слишком сложные"| E["Допустима ли цена ошибок?"]
-    E -->|"Нет, нужна гарантированная корректность"| F["Используйте детерминированные методы"]
-    E -->|Да| G["Нужна ли объяснимость?"]
-    G -->|"Да, строго"| H["Используйте только интерпретируемые модели"]
-    G -->|"Нет, или частично"| I["Используйте ML"]
-    I --> J["Достаточно ли размеченных данных?"]
-    J -->|Да| K["Обучение с учителем"]
-    J -->|"Есть часть меток"| L["Полуобучение"]
-    J -->|"Меток нет"| M["Обучение без учителя или self-supervised"]
+    A["Do you have data?"] -->|No| B["Collect data first or use rules"]
+    A -->|Yes| C["Can you write the rules explicitly?"]
+    C -->|"Yes, and they are simple"| D["Use rules. Skip ML."]
+    C -->|"No, or they are too complex"| E["Is the cost of errors acceptable?"]
+    E -->|"No, need guaranteed correctness"| F["Use deterministic methods"]
+    E -->|Yes| G["Do you need explainability?"]
+    G -->|"Yes, strictly"| H["Use interpretable models only"]
+    G -->|"No, or partially"| I["Use ML"]
+    I --> J["Do you have enough labeled data?"]
+    J -->|Yes| K["Supervised learning"]
+    J -->|"Some labels"| L["Semi-supervised learning"]
+    J -->|"No labels"| M["Unsupervised or self-supervised"]
 ```
 
 ## Соберите это

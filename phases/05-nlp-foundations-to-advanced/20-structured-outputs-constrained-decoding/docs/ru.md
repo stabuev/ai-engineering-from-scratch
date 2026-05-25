@@ -167,7 +167,7 @@ print(response.output_parsed)
 | Любой провайдер, Pydantic workflow, можно терпеть повторы | Instructor |
 | Локальная модель, нужна 100% валидность, плоская схема | Outlines (FSM) |
 | Локальная модель, рекурсивная схема | XGrammar или llguidance |
-| Self-hosted inference server | vLLM guided decoding |
+| Self-hosted inference server | Guided decoding в vLLM |
 | Batch processing с допустимыми повторами | Instructor + самая дешевая модель |
 
 ## Доведите до продакшена
@@ -203,7 +203,7 @@ Refuse any design that puts `answer` or `decision` before reasoning fields. Refu
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | Ограниченное декодирование (constrained decoding) | Заставить вывод быть валидным | Маскировать логиты недопустимых токенов на каждом шаге генерации. |
 | Обработчик логитов (logit processor) | То, что ограничивает | Функция: `(logits, state) -> masked_logits`. |
 | FSM | Конечный автомат | Скомпилированное представление грамматики; O(1)-поиск допустимого следующего токена. |

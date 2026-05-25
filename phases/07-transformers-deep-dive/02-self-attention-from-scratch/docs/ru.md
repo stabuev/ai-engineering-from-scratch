@@ -1,11 +1,11 @@
-# Self-Attention from Scratch
+# Self-Attention с нуля
 
 > Attention — это lookup table, где каждое слово спрашивает "кто для меня важен?" — и учится ответу.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 3 (Deep Learning Core), Phase 5 Lesson 10 (Sequence-to-Sequence)
-**Time:** ~90 minutes
+**Тип:** Сборка
+**Языки:** Python
+**Предварительные требования:** Фаза 3 (ядро deep learning), Фаза 5 · Урок 10 (sequence-to-sequence)
+**Время:** ~90 минут
 
 ## Цели обучения
 
@@ -24,7 +24,7 @@ Self-attention позволяет каждой позиции sequence attend к
 
 ## Концепция
 
-### The Database Lookup Analogy
+### Аналогия с lookup в базе данных
 
 Думайте об attention как о мягком database lookup:
 
@@ -43,7 +43,7 @@ Attention:
 
 Dot product между query и всеми keys дает attention scores. Высокий score означает "этот key подходит к моему query". Эти scores взвешивают values. Output — weighted sum of values.
 
-### Q, K, V Computation
+### Вычисление Q, K, V
 
 Каждый token embedding проецируется через три обучаемые weight matrices:
 
@@ -78,7 +78,7 @@ Projections:
        +----[*]------> v_i    "What do I offer?"
 ```
 
-### The Attention Matrix
+### Матрица attention
 
 Когда Q, K, V получены для всех tokens, attention scores образуют matrix:
 
@@ -101,7 +101,7 @@ Scores = Q @ K^T    shape: (n, n)
 Each row: one token's attention over the entire sequence
 ```
 
-### Why Scale?
+### Зачем масштабировать?
 
 Dot products растут с размерностью dk. Если dk = 64, dot products могут быть десятками, загоняя softmax в области исчезающих gradients. Исправление: делить на sqrt(dk).
 
@@ -111,7 +111,7 @@ Scaled scores = (Q @ K^T) / sqrt(dk)
 
 Так values остаются в диапазоне, где softmax дает полезные gradients.
 
-### Softmax Turns Scores into Weights
+### Softmax превращает scores в веса
 
 Softmax превращает raw scores в probability distribution по каждой row:
 
@@ -125,7 +125,7 @@ Attention weights:   [0.52, 0.09, 0.07, 0.14, 0.08]   (sums to ~1.0)
 
 Теперь у каждого token есть набор weights, показывающий, насколько сильно attend к каждому другому token.
 
-### Weighted Sum of Values
+### Взвешенная сумма value-векторов
 
 Итоговый output для каждого token — weighted sum всех value vectors:
 
@@ -136,7 +136,7 @@ For token 1:
   output_1 = 0.52 * v1 + 0.09 * v2 + 0.07 * v3 + 0.14 * v4 + 0.08 * v5
 ```
 
-### Full Pipeline
+### Полный пайплайн
 
 ```
                     +-------+
@@ -158,17 +158,17 @@ For token 1:
                               +-----------------+
 ```
 
-Formula in one line:
+Формула в одну строку:
 
 ```
 Attention(Q, K, V) = softmax( Q @ K^T / sqrt(dk) ) @ V
 ```
 
-## Build It
+## Соберите это
 
-### Step 1: Softmax from scratch
+### Шаг 1: Softmax с нуля
 
-Softmax converts raw logits into probabilities. Subtract the max for numerical stability.
+Softmax превращает raw logits в probabilities. Вычтите максимум для численной устойчивости.
 
 ```python
 import numpy as np
@@ -184,7 +184,7 @@ print(f"softmax: {softmax(logits)}")
 print(f"sum:     {softmax(logits).sum():.4f}")
 ```
 
-### Step 2: Scaled dot-product attention
+### Шаг 2: Scaled dot-product attention
 
 Core function. Принимает matrices Q, K, V и возвращает attention output плюс weight matrix.
 
@@ -197,7 +197,7 @@ def scaled_dot_product_attention(Q, K, V):
     return output, weights
 ```
 
-### Step 3: Self-attention class with learned projections
+### Шаг 3: класс self-attention с обучаемыми проекциями
 
 Полный self-attention module с weight matrices Wq, Wk, Wv, инициализированными Xavier-like scaling.
 
@@ -220,7 +220,7 @@ class SelfAttention:
         return output, weights
 ```
 
-### Step 4: Run it on a sentence
+### Шаг 4: запустите на предложении
 
 Создайте fake embeddings для sentence и посмотрите attention weights.
 
@@ -251,7 +251,7 @@ for i, token in enumerate(sentence):
     print()
 ```
 
-### Step 5: Visualize attention with ASCII heatmap
+### Шаг 5: визуализируйте attention через ASCII heatmap
 
 Отобразите attention weights в символы для быстрого visual.
 
@@ -274,7 +274,7 @@ def ascii_heatmap(weights, tokens, chars=" ░▒▓█"):
 ascii_heatmap(weights, sentence)
 ```
 
-## Use It
+## Используйте это
 
 PyTorch `nn.MultiheadAttention` делает то же, что мы построили, плюс multi-head splitting и output projection:
 
@@ -301,7 +301,7 @@ print(attn_weights[0].detach().numpy().round(3))
 
 Ключевое отличие: multi-head attention запускает несколько attention functions параллельно, каждую со своими Q, K, V projections размера dk = d_model / n_heads, затем concatenates results. Это позволяет модели одновременно attend к разным типам отношений.
 
-## Ship It
+## Доведите до поставки
 
 Этот урок производит:
 - `outputs/prompt-attention-explainer.md` - prompt для объяснения attention через database lookup analogy
@@ -314,15 +314,15 @@ print(attn_weights[0].detach().numpy().round(3))
 
 ## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|----------------|----------------------|
-| Query (Q) | "The question vector" | Обучаемая projection input, представляющая, какую информацию ищет token |
-| Key (K) | "The label vector" | Обучаемая projection, представляющая, какую информацию содержит token, matched against queries |
-| Value (V) | "The content vector" | Обучаемая projection с фактической информацией, агрегируемой по attention scores |
-| Scaled dot-product attention | "The attention formula" | softmax(QK^T / sqrt(dk)) @ V - scaling предотвращает softmax saturation в high dimensions |
-| Self-attention | "The token looks at itself and others" | Attention, где Q, K, V приходят из одной sequence, позволяя каждой position attend к каждой другой |
-| Attention weights | "How much focus" | Probability distribution over positions, produced by softmax over scaled dot products |
-| Multi-head attention | "Parallel attention" | Запуск нескольких attention functions с разными projections и concatenation результатов для richer representations |
+| Query (Q) | "Вектор вопроса" | Обучаемая projection input, представляющая, какую информацию ищет token |
+| Key (K) | "Вектор метки" | Обучаемая projection, представляющая, какую информацию содержит token, matched against queries |
+| Value (V) | "Вектор содержимого" | Обучаемая projection с фактической информацией, агрегируемой по attention scores |
+| Scaled dot-product attention | "Формула attention" | softmax(QK^T / sqrt(dk)) @ V - scaling предотвращает softmax saturation в high dimensions |
+| Self-attention | "Токен смотрит на себя и на другие токены" | Attention, где Q, K, V приходят из одной sequence, позволяя каждой position attend к каждой другой |
+| Attention weights | "Степень фокуса" | Probability distribution over positions, produced by softmax over scaled dot products |
+| Multi-head attention | "Параллельное attention" | Запуск нескольких attention functions с разными projections и concatenation результатов для richer representations |
 
 ## Дополнительное чтение
 

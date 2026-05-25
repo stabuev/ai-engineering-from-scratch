@@ -1,28 +1,28 @@
 # Capstone 06 — DevOps Troubleshooting Agent for Kubernetes
 
-> AWS's DevOps Agent went GA, Resolve AI published its K8s playbooks, NeuBird demoed semantic monitoring, and Metoro tied AI SRE to per-service SLOs. The production shape is settled: an alert webhook fires, an agent reads telemetry, walks a graph of K8s objects, ranks root-cause hypotheses, and posts a Slack brief with approval buttons. Read-only by default. Every remediation gated by a human. This capstone is that agent, evaluated on 20 synthetic incidents and compared against AWS's Agent on three shared cases.
+> AWS's DevOps Agent вышел в GA, Resolve AI опубликовала свои K8s playbooks, NeuBird показала semantic monitoring, а Metoro связала AI SRE с per-service SLOs. Production-форма устоялась: alert webhook срабатывает, агент читает telemetry, обходит graph of K8s objects, ранжирует root-cause hypotheses и публикует Slack brief с approval buttons. По умолчанию read-only. Каждая remediation проходит через human gate. Этот capstone — такой агент, оцененный на 20 synthetic incidents и сравненный с AWS's Agent на трех общих cases.
 
-**Type:** Capstone
-**Languages:** Python (agent), TypeScript (Slack integration)
-**Prerequisites:** Phase 11 (LLM engineering), Phase 13 (tools and MCP), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure), Phase 18 (safety)
-**Phases exercised:** P11 · P13 · P14 · P15 · P17 · P18
-**Time:** 30 hours
+**Тип:** Capstone
+**Языки:** Python (agent), TypeScript (Slack integration)
+**Предварительные требования:** Phase 11 (LLM engineering), Phase 13 (tools and MCP), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure), Phase 18 (safety)
+**Задействованные фазы:** P11 · P13 · P14 · P15 · P17 · P18
+**Время:** 30 hours
 
-## Problem
+## Проблема
 
-The 2025-2026 SRE narrative became: "AI agents triage incidents, humans approve remediations." AWS DevOps Agent, Resolve AI, NeuBird, Metoro, PagerDuty AIOps all ship this shape in production. The agent reads Prometheus metrics, Loki logs, Tempo traces, kube-state-metrics, and a knowledge graph of K8s objects. It produces a ranked root-cause hypothesis with telemetry citations in under five minutes. It never executes destructive commands without explicit human approval through Slack.
+SRE-нарратив 2025-2026 стал таким: "AI agents triage incidents, humans approve remediations." AWS DevOps Agent, Resolve AI, NeuBird, Metoro, PagerDuty AIOps — все поставляют эту форму в production. Агент читает Prometheus metrics, Loki logs, Tempo traces, kube-state-metrics и knowledge graph of K8s objects. Он выдает ranked root-cause hypothesis с telemetry citations менее чем за пять минут. Он никогда не выполняет destructive commands без явного human approval через Slack.
 
-Most of the hard work is scoping and safety, not reasoning. The agent needs a read-only-by-default RBAC surface, a hardened MCP tool server, and audit logs of every command considered vs executed. It needs to know when it is outside its depth and escalate. And it has to run cheap enough that OOM-kill cascades do not generate a $5k agent bill.
+Большая часть сложной работы — это scoping and safety, а не reasoning. Агенту нужна RBAC surface, read-only by default, hardened MCP tool server и audit logs каждой команды: considered vs executed. Он должен понимать, когда задача вне его глубины, и передавать ее на escalation. И он должен работать достаточно дешево, чтобы OOM-kill cascades не создавали $5k agent bill.
 
-## Concept
+## Концепция
 
-The agent operates on a knowledge graph. Nodes are K8s objects (Pods, Deployments, Services, Nodes, HPAs, PVCs) plus telemetry sources (Prometheus series, Loki streams, Tempo traces). Edges encode ownership (Pod -> ReplicaSet -> Deployment), scheduling (Pod -> Node), and observation (Pod -> Prometheus series). The graph is kept fresh by a kube-state-metrics sync and re-sampled on every alert.
+Агент работает поверх knowledge graph. Узлы — K8s objects (Pods, Deployments, Services, Nodes, HPAs, PVCs) плюс telemetry sources (Prometheus series, Loki streams, Tempo traces). Ребра кодируют ownership (Pod -> ReplicaSet -> Deployment), scheduling (Pod -> Node) и observation (Pod -> Prometheus series). Graph поддерживается свежим через kube-state-metrics sync и повторно сэмплируется при каждом alert.
 
-When an alert fires, the agent root-causes from the affected object. It walks edges, pulls the relevant telemetry slices (last 15 minutes), and drafts a hypothesis. The hypothesis is ranked by evidence: how many telemetry citations support it, how recent, how specific. The top-3 hypotheses go to Slack with graph-path visualizations and approval buttons for remediation actions.
+Когда срабатывает alert, агент ищет root cause, начиная с affected object. Он обходит edges, достает релевантные telemetry slices за последние 15 minutes и черновиком формирует hypothesis. Hypothesis ранжируется по evidence: сколько telemetry citations ее поддерживают, насколько они свежие и специфичные. Top-3 hypotheses уходят в Slack с graph-path visualizations и approval buttons для remediation actions.
 
-Remediation is gated. Allowed default actions are read-only. Destructive actions (scaling down, rolling back, deleting Pods) require Slack approval; ArgoCD rollback hooks require an auth token the agent never holds. The audit log records every command the agent *considered* — not just executed — so the review process catches near-misses.
+Remediation проходит через gate. Разрешенные default actions — read-only. Destructive actions (scaling down, rolling back, deleting Pods) требуют Slack approval; ArgoCD rollback hooks требуют auth token, которого у агента никогда нет. Audit log записывает каждую command, которую агент *considered*, а не только executed, чтобы review process ловил near-misses.
 
-## Architecture
+## Архитектура
 
 ```
 PagerDuty / Alertmanager webhook
@@ -53,38 +53,38 @@ PagerDuty / Alertmanager webhook
    audit log: considered vs executed, every command
 ```
 
-## Stack
+## Стек
 
-- Observability sources: Prometheus, Loki, Tempo, kube-state-metrics
+- Источники наблюдаемости: Prometheus, Loki, Tempo, kube-state-metrics
 - Knowledge graph: Neo4j (managed) or kuzu (embedded) of K8s objects + telemetry edges
-- Agent: LangGraph with per-tool allow-list, read-only by default
+- Агент: LangGraph with per-tool allow-list, read-only by default
 - Tool transport: FastMCP over StreamableHTTP; separate server for destructive tools behind approval gate
-- Models: Claude Sonnet 4.7 for root-cause reasoning, Gemini 2.5 Flash for log summarization
+- Модели: Claude Sonnet 4.7 for root-cause reasoning, Gemini 2.5 Flash for log summarization
 - Remediation: ArgoCD rollback webhook, PagerDuty escalate, Slack approval card
 - Audit: append-only structured log (considered, executed, approved, outcome)
 - Deployment: K8s deployment with its own narrow RBAC role; separate namespace
 
-## Build It
+## Постройте это
 
-1. **Graph ingestion.** Sync kube-state-metrics into Neo4j/kuzu every 30s. Nodes: Pod, Deployment, Node, Service, PVC, HPA. Edges: OWNED_BY, SCHEDULED_ON, EXPOSES, MOUNTS, SCALES. Telemetry overlay edges: OBSERVED_BY (a Pod is observed by a Prometheus series).
+1. **Graph ingestion.** Синхронизируйте kube-state-metrics в Neo4j/kuzu каждые 30s. Узлы: Pod, Deployment, Node, Service, PVC, HPA. Ребра: OWNED_BY, SCHEDULED_ON, EXPOSES, MOUNTS, SCALES. Telemetry overlay edges: OBSERVED_BY (Pod наблюдается Prometheus series).
 
-2. **Alert receiver.** FastAPI endpoint that accepts PagerDuty or Alertmanager webhooks. Extract the affected object(s) and SLO breach.
+2. **Alert receiver.** FastAPI endpoint, принимающий PagerDuty or Alertmanager webhooks. Извлеките affected object(s) и SLO breach.
 
-3. **Read-only tool surface.** Wrap kubectl, Prometheus query, Loki logql, Tempo traceql through FastMCP. Every tool has a narrow RBAC verb ("get", "list", "describe"). No "delete", "exec", "scale" in the default server.
+3. **Read-only tool surface.** Оберните kubectl, Prometheus query, Loki logql, Tempo traceql через FastMCP. У каждого tool узкий RBAC verb ("get", "list", "describe"). Никаких "delete", "exec", "scale" в default server.
 
-4. **Root-cause agent.** LangGraph with three nodes: `sample` pulls the last-15-minutes telemetry slice, `walk` queries the graph for neighboring objects, `hypothesize` drafts ranked root-cause candidates with telemetry citations.
+4. **Root-cause agent.** LangGraph с тремя узлами: `sample` забирает telemetry slice за last-15-minutes, `walk` запрашивает у graph neighboring objects, `hypothesize` формирует ranked root-cause candidates с telemetry citations.
 
-5. **Evidence scoring.** Each hypothesis has a score = recency * specificity * graph-path length inverse * citation count. Return top-3.
+5. **Evidence scoring.** У каждой hypothesis score = recency * specificity * graph-path length inverse * citation count. Верните top-3.
 
-6. **Slack brief.** Post an attachment with the hypothesis, the graph-path visualization (a subgraph image rendered server-side), and approval buttons for at most one remediation action.
+6. **Slack brief.** Опубликуйте attachment с hypothesis, graph-path visualization (subgraph image, rendered server-side) и approval buttons максимум для одного remediation action.
 
-7. **Remediation gate.** Destructive tools (scale down, roll back, delete) live on a second MCP server behind an approval token. The agent can call them only after the Slack card is approved by a human.
+7. **Remediation gate.** Destructive tools (scale down, roll back, delete) живут на втором MCP server за approval token. Агент может вызывать их только после того, как Slack card approved by a human.
 
-8. **Audit log.** Append-only JSONL: for every candidate command, log whether it was considered, whether it was executed, who approved it. Ship to S3 daily.
+8. **Audit log.** Append-only JSONL: для каждой candidate command логируйте, была ли она considered, была ли executed, кто approved it. Ежедневно отправляйте в S3.
 
-9. **Synthetic incident suite.** Build 20 scenarios: OOMKill cascade, DNS flap, HPA thrash, PVC fill, noisy neighbor, faulty sidecar, bad ConfigMap rollout, certificate rotation, image-pull backoff, etc. Score the agent on root-cause accuracy and time-to-hypothesis.
+9. **Synthetic incident suite.** Соберите 20 scenarios: OOMKill cascade, DNS flap, HPA thrash, PVC fill, noisy neighbor, faulty sidecar, bad ConfigMap rollout, certificate rotation, image-pull backoff и т.д. Оценивайте агента по root-cause accuracy и time-to-hypothesis.
 
-## Use It
+## Используйте это
 
 ```
 webhook: alert.pagerduty.com -> checkout-api SLO breach, error rate 14%
@@ -98,34 +98,34 @@ webhook: alert.pagerduty.com -> checkout-api SLO breach, error rate 14%
           (approval required; agent does not roll back unilaterally)
 ```
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-devops-agent.md` is the deliverable. Given a K8s cluster and alert source, the agent produces ranked root-cause hypotheses and a Slack-gated remediation flow.
+`outputs/skill-devops-agent.md` — deliverable. При наличии K8s cluster и alert source агент выдает ranked root-cause hypotheses и Slack-gated remediation flow.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
 | 25 | RCA accuracy on scenario suite | ≥80% correct root cause across 20 synthetic incidents |
-| 20 | Safety | Destructive-action guard never fires without Slack approval in the audit log |
+| 20 | Безопасность | Destructive-action guard never fires without Slack approval in the audit log |
 | 20 | Time-to-hypothesis | p50 under 5 minutes from alert to Slack brief |
-| 20 | Explainability | Every hypothesis has graph paths and telemetry citations |
-| 15 | Integration completeness | PagerDuty, Slack, ArgoCD, Prometheus end-to-end working |
+| 20 | Объяснимость | Каждая hypothesis содержит graph paths and telemetry citations |
+| 15 | Полнота интеграции | PagerDuty, Slack, ArgoCD, Prometheus работают end-to-end |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Run your agent on the same three incidents AWS's DevOps Agent is demo'd on. Publish the side-by-side. Report where the agent diverges.
+1. Запустите своего агента на тех же трех incidents, которые демонстрирует AWS's DevOps Agent. Опубликуйте side-by-side. Сообщите, где агент расходится.
 
-2. Add a "near-miss" audit that flags any command the agent *considered* that would have been destructive without approval. Measure the near-miss rate over one week.
+2. Добавьте "near-miss" audit, который помечает любую command, которую агент *considered* и которая была бы destructive без approval. Измерьте near-miss rate за одну неделю.
 
-3. Swap the hypothesis model from Claude Sonnet 4.7 to a self-hosted Llama 3.3 70B. Measure RCA accuracy delta and dollar per incident.
+3. Замените hypothesis model с Claude Sonnet 4.7 на self-hosted Llama 3.3 70B. Измерьте delta RCA accuracy и dollar per incident.
 
-4. Build a causal filter: distinguish correlated telemetry spikes from a true root cause. Train a small classifier on the 20-scenario labels.
+4. Постройте causal filter: отличайте correlated telemetry spikes от true root cause. Обучите small classifier на labels из 20-scenario.
 
-5. Add a rollback dry-run: ArgoCD rollback against a staging cluster with the same manifest. Verify the rollback plan in a live cluster before the Slack approval button.
+5. Добавьте rollback dry-run: ArgoCD rollback против staging cluster с тем же manifest. Проверьте rollback plan в live cluster перед Slack approval button.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле значит |
 |------|-----------------|------------------------|
 | K8s knowledge graph | "Cluster graph" | Nodes = K8s objects + telemetry series; edges = ownership, scheduling, observation |
 | Read-only-by-default | "Scoped RBAC" | Agent's service account has only get/list/describe verbs; destructive verbs live in a separate server behind approval |
@@ -135,13 +135,13 @@ webhook: alert.pagerduty.com -> checkout-api SLO breach, error rate 14%
 | Telemetry citation | "Evidence pointer" | A Prometheus query, Loki selector, or Tempo trace URL that supports a claim |
 | MTTR | "Time to resolution" | Wall-clock from alert fire to SLO recovery |
 
-## Further Reading
+## Дополнительное чтение
 
-- [AWS DevOps Agent GA](https://aws.amazon.com/blogs/aws/aws-devops-agent-helps-you-accelerate-incident-response-and-improve-system-reliability-preview/) — the canonical 2026 reference
-- [Resolve AI K8s troubleshooting](https://resolve.ai/blog/kubernetes-troubleshooting-in-resolve-ai) — the competitor reference
+- [AWS DevOps Agent GA](https://aws.amazon.com/blogs/aws/aws-devops-agent-helps-you-accelerate-incident-response-and-improve-system-reliability-preview/) — canonical 2026 reference
+- [Resolve AI K8s troubleshooting](https://resolve.ai/blog/kubernetes-troubleshooting-in-resolve-ai) — competitor reference
 - [NeuBird semantic monitoring](https://www.neubird.ai) — semantic-graph approach
 - [Metoro AI SRE](https://metoro.io) — SLO-first production framing
-- [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) — the cluster-state source
-- [LangGraph](https://langchain-ai.github.io/langgraph/) — reference agent orchestrator
+- [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) — cluster-state source
+- [LangGraph](https://langchain-ai.github.io/langgraph/) — эталонный agent orchestrator
 - [FastMCP](https://github.com/jlowin/fastmcp) — Python MCP server framework
-- [ArgoCD rollback](https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_rollback/) — the gated remediation target
+- [ArgoCD rollback](https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_rollback/) — gated remediation target

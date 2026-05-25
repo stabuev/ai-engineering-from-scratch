@@ -1,6 +1,6 @@
-# Распознавание речи (ASR) — CTC, RNN-T, Attention
+# Распознавание речи (ASR) — CTC, RNN-T, внимание
 
-> Распознавание речи — это аудиоклассификация на каждом временном шаге, склеенная sequence model, которая знает английский и тишину. CTC, RNN-T и attention — три способа сделать это. Выберите один и поймите почему.
+> Распознавание речи — это аудиоклассификация на каждом временном шаге, склеенная с sequence model, которая знает английский и тишину. CTC, RNN-T и attention — три способа сделать это. Выберите один и поймите почему.
 
 **Тип:** Сборка
 **Языки:** Python
@@ -14,8 +14,8 @@
 Это решают три формулировки:
 
 1. **CTC (Connectionist Temporal Classification).** Выдавать вероятности токенов на каждом фрейме, включая специальный *blank*. При декодировании схлопывать повторы и blank. Неавторегрессионно, быстро. Используется в wav2vec 2.0, MMS.
-2. **RNN-T (Recurrent Neural Network Transducer).** Joint network предсказывает следующий токен по encoder frame и предыдущим токенам. Поддерживает streaming. Используется в on-device ASR Google, NVIDIA Parakeet.
-3. **Attention encoder-decoder.** Encoder сжимает аудио в hidden states, decoder делает cross-attention и авторегрессионно генерирует токены. Используется в Whisper, SeamlessM4T.
+2. **RNN-T (Recurrent Neural Network Transducer).** Совместная сеть предсказывает следующий токен по encoder frame и предыдущим токенам. Поддерживает streaming. Используется в on-device ASR Google, NVIDIA Parakeet.
+3. **Attention encoder-decoder.** Encoder сжимает аудио в скрытые состояния, decoder делает cross-attention и авторегрессионно генерирует токены. Используется в Whisper, SeamlessM4T.
 
 В 2026 году SOTA WER на LibriSpeech test-clean — 1.4% (Parakeet-TDT-1.1B, NVIDIA) и 1.58% (Whisper-Large-v3-turbo). Различия качества малы; различия деплоя огромны.
 
@@ -25,19 +25,19 @@
 
 **Интуиция CTC.** Пусть encoder выдает `T` распределений по фреймам над `V+1` токенами (V символов + blank). Для целевой строки `y` длины `U < T` засчитывается любое фреймовое выравнивание, которое схлопывается в `y`. CTC loss суммирует по всем таким выравниваниям. Инференс: argmax по фреймам, схлопнуть повторы, удалить blank.
 
-Плюсы: неавторегрессионность, streamable, нулевой lookahead. Минус: *conditional independence assumption* — предсказание каждого фрейма независимо от других, поэтому внутренней языковой модели нет. Исправляют внешней LM через beam search или shallow fusion.
+Плюсы: неавторегрессионность, возможность streaming, нулевой lookahead. Минус: *conditional independence assumption* — предсказание каждого фрейма независимо от других, поэтому внутренней языковой модели нет. Исправляют внешней LM через beam search или shallow fusion.
 
-**Интуиция RNN-T.** Добавляет *predictor*, который эмбеддит историю токенов, и *joiner*, который объединяет состояние predictor с encoder frame в совместное распределение над `V+1` (`+1` — null / no-emit). Явно моделирует условные зависимости, которые CTC игнорировал. Streamable, потому что каждый шаг зависит только от прошлых фреймов и прошлых токенов.
+**Интуиция RNN-T.** Добавляет *predictor*, который эмбеддит историю токенов, и *joiner*, который объединяет состояние predictor с encoder frame в совместное распределение над `V+1` (`+1` — null / no-emit). Явно моделирует условные зависимости, которые CTC игнорировал. Поддерживает streaming, потому что каждый шаг зависит только от прошлых фреймов и прошлых токенов.
 
-Плюсы: streaming + внутренняя LM. Минус: обучение сложнее и прожорливее по памяти (3D loss lattice); RNN-T loss kernels — отдельная категория библиотек.
+Плюсы: streaming + внутренняя LM. Минус: обучение сложнее и прожорливее по памяти (3D loss lattice); ядра RNN-T loss — отдельная категория библиотек.
 
-**Attention encoder-decoder.** Encoder (6-32 transformer layers) по log-mel фреймам. Decoder (6-32 transformer layers) с causal self-attn + cross-attn к выходам encoder генерирует токены авторегрессионно. Ограничений выравнивания нет — attention может смотреть куда угодно в аудио. Не streamable, если не ограничить attention (chunked Whisper-Streaming, 2024).
+**Attention encoder-decoder.** Encoder (6-32 transformer layers) по log-mel фреймам. Decoder (6-32 transformer layers) с causal self-attn + cross-attn к выходам encoder генерирует токены авторегрессионно. Ограничений выравнивания нет — attention может смотреть куда угодно в аудио. Не поддерживает streaming, если не ограничить attention (chunked Whisper-Streaming, 2024).
 
 Плюсы: лучшее качество offline ASR, легко обучать стандартным seq2seq-инструментарием. Минус: авторегрессионная задержка пропорциональна длине вывода; streaming требует инженерии.
 
 ### WER: главное число
 
-**Word Error Rate** = `(S + D + I) / N`, где S=substitutions, D=deletions, I=insertions, N=число слов в reference. Это Levenshtein edit distance на уровне слов. Ниже лучше. WER выше 20% обычно непригоден; ниже 5% — человеческий уровень для прочитанной речи. Числа 2026 года:
+**Word Error Rate** = `(S + D + I) / N`, где S=substitutions, D=deletions, I=insertions, N=число слов в эталоне. Это расстояние Левенштейна на уровне слов. Ниже лучше. WER выше 20% обычно непригоден; ниже 5% — человеческий уровень для прочитанной речи. Числа 2026 года:
 
 | Model | LibriSpeech test-clean | LibriSpeech test-other | Size |
 |-------|------------------------|------------------------|------|
@@ -85,7 +85,7 @@ def ctc_beam(frame_logits, beam=8, blank=0):
     return beams[0][0]
 ```
 
-В продакшене используют prefix tree beam search с LM fusion; это концептуальный скелет.
+В продакшене используют beam search по prefix tree с LM fusion; это концептуальный скелет.
 
 ### Шаг 3: WER
 
@@ -128,7 +128,7 @@ for chunk in streaming_audio():
     print(asr(chunk, return_timestamps=True))
 ```
 
-Streaming ASR требует chunked encoder attention и carryover state; используйте библиотеку, которая это поддерживает (NeMo для Parakeet, `transformers` pipeline с `chunk_length_s`).
+Streaming ASR требует chunked encoder attention и переноса состояния; используйте библиотеку, которая это поддерживает (NeMo для Parakeet, `transformers` pipeline с `chunk_length_s`).
 
 ## Используйте это
 
@@ -163,7 +163,7 @@ Streaming ASR требует chunked encoder attention и carryover state; ис�
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | CTC | Loss с blank-token | Маргинализация по всем выравниваниям фрейм-токен; non-AR. |
 | RNN-T | Streaming loss | CTC + predictor следующего токена; учитывает порядок слов. |
 | Attention enc-dec | Whisper-style | Encoder + decoder с cross-attention; лучшее offline качество. |

@@ -590,7 +590,7 @@ if __name__ == "__main__":
         print(f"  KL > {kl_threshold}: {'Yes (model drifted significantly)' if max(kls) > kl_threshold else 'No (model stayed close to reference)'}")
 ```
 
-## Ship It
+## Результат
 
 Этот урок создает `outputs/prompt-reward-model-designer.md` — prompt для проектирования reward model training pipelines. По заданному целевому поведению (helpfulness, coding ability, safety) он выдает протокол сбора данных, guidelines для аннотаторов и критерии оценки reward model.
 

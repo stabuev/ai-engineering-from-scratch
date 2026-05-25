@@ -126,7 +126,7 @@ SAM (Meta's Segment Anything, 2023) + diffusion inpaint — background-removal p
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Inpainting | "Fill the hole" | Regenerate внутри mask; keep outside pixels. |
 | Outpainting | "Extend the canvas" | Regenerate outside canvas; keep inside. |
 | 9-channel U-Net | "Proper inpainting model" | U-Net с `noisy | encoded-source | mask` как input. |

@@ -52,7 +52,7 @@ tau = temperature (0.1 standard)
 
 Это loss InfoNCE. Ему нужно много negative samples на каждый positive sample, поэтому размер batch важен — SimCLR требует 512-8192. MoCo ввел momentum queue прошлых batch'ей, чтобы отвязать число negatives от размера batch.
 
-### Teacher-student (DINO)
+### Учитель-студент (DINO)
 
 Две сети с одной архитектурой: student и teacher. Teacher — экспоненциальное скользящее среднее (EMA) весов student. Обе видят аугментированные представления изображения. Выход student обучается совпадать с выходом teacher — без явных negatives.
 
@@ -67,7 +67,7 @@ teacher_weights = m * teacher_weights + (1 - m) * student_weights   (m ≈ 0.996
 
 DINO — это подход, который DINOv2 масштабирует на 142M curated images. Полученные признаки — текущий SOTA для zero-shot visual retrieval и dense prediction.
 
-### Masked reconstruction (MAE)
+### Маскированная реконструкция (MAE)
 
 Маскируем 75% патчей входа ViT. Через encoder пропускаем только видимые 25%. Небольшой decoder получает выход encoder плюс mask tokens в замаскированных позициях и обучается восстанавливать пиксели замаскированных патчей.
 
@@ -107,7 +107,7 @@ Linear probe — чистая мера качества признаков; fine
 
 ## Соберите это
 
-### Step 1: Two-view augmentation pipeline
+### Шаг 1: Пайплайн аугментации с двумя видами
 
 ```python
 import torch
@@ -139,7 +139,7 @@ class TwoViewDataset(torch.utils.data.Dataset):
 
 Каждый __getitem__ возвращает два аугментированных представления одного и того же изображения; labels не нужны.
 
-### Step 2: InfoNCE loss
+### Шаг 2: Функция потерь InfoNCE
 
 ```python
 import torch.nn.functional as F
@@ -161,7 +161,7 @@ def info_nce(z1, z2, tau=0.1):
 
 L2-нормализуйте embeddings перед вызовом. `tau=0.1` — значение по умолчанию в SimCLR; меньшее значение делает loss острее и требует больше negatives.
 
-### Step 3: Sanity check InfoNCE
+### Шаг 3: Sanity check для InfoNCE
 
 ```python
 z1 = F.normalize(torch.randn(16, 32), dim=-1)
@@ -175,7 +175,7 @@ print(f"InfoNCE with random pairs:     {loss_random:.3f}")
 
 Идентичные пары должны давать низкий loss (близкий к 0 для большого batch и низкой temperature). Случайные пары должны давать log(2N-1) = ~log(31) = ~3.4 при batch из 16 пар.
 
-### Step 4: MAE-style masking
+### Шаг 4: Маскирование в стиле MAE
 
 ```python
 def random_mask_indices(num_patches, mask_ratio=0.75, seed=0):
@@ -249,4 +249,4 @@ with torch.no_grad():
 - [SimCLR (Chen et al., 2020)](https://arxiv.org/abs/2002.05709) — reference по contrastive learning
 - [DINO (Caron et al., 2021)](https://arxiv.org/abs/2104.14294) — teacher-student с momentum, centring, sharpening
 - [MAE (He et al., 2022)](https://arxiv.org/abs/2111.06377) — masked autoencoder pretraining для ViT
-- [DINOv2 (Oquab et al., 2023)](https://arxiv.org/abs/2304.07193) — scaling self-supervised ViT to production features
+- [DINOv2 (Oquab et al., 2023)](https://arxiv.org/abs/2304.07193) — масштабирование самообучаемого ViT до production-признаков

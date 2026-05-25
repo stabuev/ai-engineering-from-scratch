@@ -1,6 +1,6 @@
 # Клонирование и преобразование голоса
 
-> Voice cloning читает ваш текст чужим голосом. Voice conversion переписывает ваш голос в чужой, сохраняя сказанное. Обе задачи держатся на одном примитиве: отделить speaker identity от content.
+> Клонирование голоса читает ваш текст чужим голосом. Преобразование голоса переписывает ваш голос в чужой, сохраняя сказанное. Обе задачи держатся на одном примитиве: отделить идентичность говорящего от содержания.
 
 **Тип:** Сборка
 **Языки:** Python
@@ -28,7 +28,7 @@
 
 Используют: F5-TTS (2024), YourTTS (2022), XTTS v2 (2024), OpenVoice v2 (2024).
 
-**Few-shot fine-tuning.** Запишите 5-30 минут целевого голоса. LoRA-fine-tune базовую модель за час. Качество прыгает от «приемлемо» до «неотличимо». Coqui и ElevenLabs поддерживают этот pattern; community использует его с F5-TTS.
+**Few-shot fine-tuning.** Запишите 5-30 минут целевого голоса. LoRA-fine-tune базовую модель за час. Качество прыгает от «приемлемо» до «неотличимо». Coqui и ElevenLabs поддерживают этот паттерн; community использует его с F5-TTS.
 
 **Voice conversion (VC).** Два семейства:
 
@@ -141,7 +141,7 @@ def cloned_inference(text, ref_audio, consent_record):
 
 ## Доведите до результата
 
-Сохраните как `outputs/skill-voice-cloner.md`. Спроектируйте cloning или conversion pipeline с consent gate + watermark + quality target.
+Сохраните как `outputs/skill-voice-cloner.md`. Спроектируйте cloning или conversion pipeline с consent gate + watermark + целевым качеством.
 
 ## Упражнения
 
@@ -152,7 +152,7 @@ def cloned_inference(text, ref_audio, consent_record):
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | Zero-shot clone | 5 секунд достаточно | Pretrained model + speaker embedding; без обучения. |
 | PPG | Phonetic posteriorgram | Per-frame ASR posteriors как language-agnostic content rep. |
 | KNN-VC | Nearest-neighbor conversion | Заменить каждый source frame ближайшим target-pool frame. |

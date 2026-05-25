@@ -114,7 +114,7 @@ Production stacks в 2026 году:
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |
-|------|-----------------|-----------------------|
+|------|----------------|----------------------|
 | First stage | "The VAE" | Trained encoder/decoder pair; сжимает 512² до 64². |
 | Second stage | "The U-Net" | Diffusion model over the latent space. |
 | CFG | "Guidance scale" | `(1+w)·ε_cond - w·ε_uncond`; настраивает conditioning strength. |

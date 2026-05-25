@@ -1,4 +1,4 @@
-# CNNs and RNNs for Text
+# CNN и RNN для текста
 
 > Convolutions учат n-grams. Recurrences запоминают. Оба подхода вытеснены attention. Оба все еще важны на ограниченном hardware.
 
@@ -21,7 +21,7 @@ TF-IDF и Word2Vec создавали плоские векторы, игнор�
 
 ## Концепция
 
-![TextCNN filters vs. RNN hidden state unrolling](./assets/cnn-rnn.svg)
+![Фильтры TextCNN и разворачивание скрытого состояния RNN](./assets/cnn-rnn.svg)
 
 **TextCNN** (Kim, 2014). Токены эмбеддятся. 1D convolution ширины `k` скользит фильтром по последовательным `k`-grams embeddings, создавая feature map. Global max-pooling по этой карте выбирает сильнейшую активацию. Max-pooled outputs от нескольких ширин фильтра конкатенируются. Затем идут в classifier head.
 
@@ -177,14 +177,14 @@ Refuse to recommend fine-tuning a transformer when data is under ~500 labeled ex
 
 ## Упражнения
 
-1. **Easy.** Обучите TextCNN на toy dataset с 3 классами (данные придумайте сами). Проверьте, что filter widths (2, 3, 4) превосходят single width (3) по average F1.
-2. **Medium.** Реализуйте max-pool, mean-pool и last-state pooling для LSTM classifier. Сравните на небольшом dataset; задокументируйте, какой pooling выигрывает, и предположите почему.
-3. **Hard.** Постройте BiLSTM-CRF NER tagger (объедините урок 06 и этот урок). Обучите на CoNLL-2003. Сравните с CRF-alone baseline из урока 06 и с BERT fine-tune. Сообщите training time, memory и F1.
+1. **Легко.** Обучите TextCNN на toy dataset с 3 классами (данные придумайте сами). Проверьте, что filter widths (2, 3, 4) превосходят single width (3) по average F1.
+2. **Средне.** Реализуйте max-pool, mean-pool и last-state pooling для LSTM classifier. Сравните на небольшом dataset; задокументируйте, какой pooling выигрывает, и предположите почему.
+3. **Сложно.** Постройте BiLSTM-CRF NER tagger (объедините урок 06 и этот урок). Обучите на CoNLL-2003. Сравните с CRF-alone baseline из урока 06 и с BERT fine-tune. Сообщите training time, memory и F1.
 
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле значит |
-|------|-----------------|-----------------------|
+|------|-------------------|--------------------------------|
 | TextCNN | CNN для текста | Стек 1D convolutions поверх word embeddings с global max-pool. Kim (2014). |
 | RNN | Recurrent net | Hidden state обновляется на каждом time step: `h_t = f(W x_t + U h_{t-1})`. |
 | LSTM | Gated RNN | Добавляет input / forget / output gates + cell state. Стабильно обучается через длинные sequences. |

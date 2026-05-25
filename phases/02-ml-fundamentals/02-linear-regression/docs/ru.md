@@ -63,13 +63,13 @@ MSE = (1/n) * sum((y_predicted - y_actual)^2)
 
 ```mermaid
 flowchart TD
-    A[Случайно инициализировать w и b] --> B[Вычислить предсказания: y_hat = wx + b]
-    B --> C[Вычислить стоимость: MSE]
-    C --> D[Вычислить градиенты: dMSE/dw, dMSE/db]
-    D --> E[Обновить параметры]
-    E --> F{Стоимость достаточно мала?}
-    F -->|Нет| B
-    F -->|Да| G[Готово: найдены оптимальные w и b]
+    A[Initialize w and b randomly] --> B[Compute predictions: y_hat = wx + b]
+    B --> C[Compute cost: MSE]
+    C --> D[Compute gradients: dMSE/dw, dMSE/db]
+    D --> E[Update parameters]
+    E --> F{Cost low enough?}
+    F -->|No| B
+    F -->|Yes| G[Done: optimal w and b found]
 ```
 
 Градиенты говорят две вещи: в каком направлении двигать каждый параметр и насколько сильно двигать.

@@ -1,26 +1,26 @@
 # Capstone 07 — End-to-End Fine-Tuning Pipeline (Data to SFT to DPO to Serve)
 
-> An 8B model trained on your own data, DPO-aligned on your own preferences, quantized, speculative-decoded, and served at measurable $/1M tokens. The 2026 open stack is Axolotl v0.8, TRL 0.15, Unsloth for iteration, GPTQ/AWQ/GGUF for quantization, vLLM 0.7 with EAGLE-3 for serving. The capstone is to run the whole pipeline reproducibly — YAML in, served endpoint out — and publish a model card under the 2026 Model Openness Framework.
+> 8B model, обученная на ваших данных, DPO-aligned на ваших предпочтениях, quantized, speculative-decoded и обслуживаемая с измеримым $/1M tokens. Open stack 2026 года — Axolotl v0.8, TRL 0.15, Unsloth для итераций, GPTQ/AWQ/GGUF для quantization, vLLM 0.7 with EAGLE-3 для serving. Capstone — воспроизводимо запустить весь pipeline: YAML на входе, served endpoint на выходе, и опубликовать model card по 2026 Model Openness Framework.
 
-**Type:** Capstone
-**Languages:** Python (pipeline), YAML (configs), Bash (scripts)
-**Prerequisites:** Phase 2 (ML), Phase 3 (DL), Phase 7 (transformers), Phase 10 (LLMs from scratch), Phase 11 (LLM engineering), Phase 17 (infrastructure), Phase 18 (safety)
-**Phases exercised:** P2 · P3 · P7 · P10 · P11 · P17 · P18
-**Time:** 35 hours
+**Тип:** Capstone
+**Языки:** Python (pipeline), YAML (configs), Bash (scripts)
+**Предварительные требования:** Phase 2 (ML), Phase 3 (DL), Phase 7 (transformers), Phase 10 (LLMs from scratch), Phase 11 (LLM engineering), Phase 17 (infrastructure), Phase 18 (safety)
+**Задействованные фазы:** P2 · P3 · P7 · P10 · P11 · P17 · P18
+**Время:** 35 hours
 
-## Problem
+## Проблема
 
-Every serious AI team in 2026 keeps a fine-tuning pipeline on tap. Not because they ship a frontier base model, but because downstream adaptation — domain SFT, DPO against labeled preferences, distilled drafts for speculative decoding, serving with EAGLE-3 — is where the measurable wins live. Axolotl v0.8 handles multi-GPU SFT configs. TRL 0.15 handles DPO and GRPO. Unsloth gets you fast single-GPU iteration. vLLM 0.7 with EAGLE-3 pushes decode throughput 2-3x without quality loss. The tooling works; the craft is in the YAMLs, the data hygiene, and the eval discipline.
+В 2026 году у каждой серьезной AI-команды под рукой есть fine-tuning pipeline. Не потому, что они выпускают frontier base model, а потому что downstream adaptation — domain SFT, DPO against labeled preferences, distilled drafts for speculative decoding, serving with EAGLE-3 — дает измеримые выигрыши. Axolotl v0.8 ведет multi-GPU SFT configs. TRL 0.15 ведет DPO and GRPO. Unsloth дает быстрые single-GPU iteration. vLLM 0.7 with EAGLE-3 поднимает decode throughput в 2-3x без потери качества. Инструменты работают; мастерство — в YAMLs, data hygiene и eval discipline.
 
-You will run an 8B base (Llama 3.3, Qwen3, or Gemma 3) through SFT then DPO on task-specific data, quantize for serving, and measure gains against lm-evaluation-harness, RewardBench-2, MT-Bench-v2, and MMLU-Pro. You will produce a model card under the 2026 Model Openness Framework. The point is reproducibility — one command reruns the whole pipeline end to end.
+Вы проведете 8B base (Llama 3.3, Qwen3 или Gemma 3) через SFT, затем DPO на task-specific data, quantize for serving и измерите gains против lm-evaluation-harness, RewardBench-2, MT-Bench-v2 и MMLU-Pro. Вы подготовите model card по 2026 Model Openness Framework. Смысл — воспроизводимость: одна команда перезапускает весь pipeline end to end.
 
-## Concept
+## Концепция
 
-The pipeline has five stages. **Data**: dedup (MinHash / Datatrove), quality filter (Nemotron-CC style classifier), PII scrub, split-hygiene check against public benchmark contamination. **SFT**: Axolotl YAML, ZeRO-3 on 8xH100, cosine schedule, packed sequences, 2-3 epochs. **DPO or GRPO**: TRL config, 1 epoch, preference pairs either human-labeled or model-judged, beta tuning. **Quantize**: GPTQ + AWQ + GGUF for deployment flexibility. **Serve**: vLLM 0.7 with EAGLE-3 speculative heads (or SGLang with SpecForge), K8s deployment, HPA on queue-wait.
+Pipeline состоит из пяти стадий. **Data**: dedup (MinHash / Datatrove), quality filter (Nemotron-CC style classifier), PII scrub, split-hygiene check against public benchmark contamination. **SFT**: Axolotl YAML, ZeRO-3 on 8xH100, cosine schedule, packed sequences, 2-3 epochs. **DPO or GRPO**: TRL config, 1 epoch, preference pairs either human-labeled or model-judged, beta tuning. **Quantize**: GPTQ + AWQ + GGUF для deployment flexibility. **Serve**: vLLM 0.7 with EAGLE-3 speculative heads или SGLang with SpecForge, K8s deployment, HPA on queue-wait.
 
-Ablations are the deliverable: SFT-only vs SFT+DPO vs SFT+GRPO on three task-specific benchmarks. Serving metrics: tokens/s at batch 1 / 8 / 32, EAGLE-3 acceptance rate, $/1M tokens. Safety eval: Llama Guard 4 pass rate. Model card: bias evaluations, reproducibility seeds, data licensing.
+Ablations — deliverable: SFT-only vs SFT+DPO vs SFT+GRPO на трех task-specific benchmarks. Serving metrics: tokens/s at batch 1 / 8 / 32, EAGLE-3 acceptance rate, $/1M tokens. Safety eval: Llama Guard 4 pass rate. Model card: bias evaluations, reproducibility seeds, data licensing.
 
-## Architecture
+## Архитектура
 
 ```
 raw data (HF datasets + internal)
@@ -53,7 +53,7 @@ lm-eval-harness + RewardBench-2 + MT-Bench-v2 + MMLU-Pro
 model card (2026 MOF) + safety eval (Llama Guard 4)
 ```
 
-## Stack
+## Стек
 
 - Data: Datatrove for dedup, Nemotron-CC classifier for quality, Presidio for PII
 - Base: Llama 3.3 8B, Qwen3 14B, or Gemma 3 12B
@@ -66,27 +66,27 @@ model card (2026 MOF) + safety eval (Llama Guard 4)
 - Infrastructure: Kubernetes + NVIDIA device plugin, HPA on queue-wait metric
 - Observability: W&B for training, Langfuse for inference
 
-## Build It
+## Постройте это
 
-1. **Data pipeline.** Run Datatrove dedup on raw corpus. Apply Nemotron-CC-style quality classifier. Presidio scrubs PII. Write train/val splits with explicit seed.
+1. **Data pipeline.** Запустите Datatrove dedup на raw corpus. Примените Nemotron-CC-style quality classifier. Presidio очищает PII. Запишите train/val splits с explicit seed.
 
-2. **Contamination check.** For every validation split, compute MinHash against MMLU-Pro, MT-Bench-v2, RewardBench-2 test sets. Reject any overlap.
+2. **Contamination check.** Для каждого validation split вычислите MinHash against MMLU-Pro, MT-Bench-v2, RewardBench-2 test sets. Отклоняйте любой overlap.
 
-3. **Axolotl SFT.** YAML with ZeRO-3, FA3, sequence packing. 2-3 epochs on 8xH100. Log to W&B.
+3. **Axolotl SFT.** YAML with ZeRO-3, FA3, sequence packing. 2-3 epochs on 8xH100. Логируйте в W&B.
 
-4. **TRL DPO / GRPO.** Take the SFT checkpoint, run one epoch of DPO on preference pairs (or GRPO with a verifiable reward on math/code). Sweep beta.
+4. **TRL DPO / GRPO.** Возьмите SFT checkpoint, запустите one epoch of DPO on preference pairs или GRPO with a verifiable reward on math/code. Сделайте sweep beta.
 
-5. **Quantize.** Produce three quants: GPTQ-INT4-Marlin, AWQ-INT4, GGUF-Q4_K_M for llama.cpp. Record size and nominal throughput.
+5. **Quantize.** Выпустите три quants: GPTQ-INT4-Marlin, AWQ-INT4, GGUF-Q4_K_M for llama.cpp. Запишите size and nominal throughput.
 
-6. **Serve with speculative decoding.** vLLM 0.7 config with EAGLE-3 draft heads trained via Red Hat Speculators. Measure acceptance rate and tail latency at batch 1 / 8 / 32. Report $/1M tokens vs Anthropic / OpenAI on the same eval.
+6. **Serve with speculative decoding.** vLLM 0.7 config with EAGLE-3 draft heads trained via Red Hat Speculators. Измерьте acceptance rate and tail latency at batch 1 / 8 / 32. Сообщите $/1M tokens vs Anthropic / OpenAI on the same eval.
 
-7. **Eval matrix.** Run lm-eval-harness, RewardBench-2, MT-Bench-v2, MMLU-Pro on base, SFT-only, SFT+DPO, SFT+GRPO. Produce a table.
+7. **Eval matrix.** Запустите lm-eval-harness, RewardBench-2, MT-Bench-v2, MMLU-Pro на base, SFT-only, SFT+DPO, SFT+GRPO. Подготовьте table.
 
 8. **Safety eval.** Llama Guard 4 pass rate on the dev set. ShieldGemma-2 output filter.
 
 9. **Model card.** MOF 2026 template: data, training, eval, safety, license, reproducibility section with YAMLs and commit SHAs.
 
-## Use It
+## Используйте это
 
 ```
 $ ./pipeline.sh config/llama3.3-8b-domainX.yaml
@@ -99,34 +99,34 @@ $ ./pipeline.sh config/llama3.3-8b-domainX.yaml
 [card]    model-card.md generated under 2026 MOF
 ```
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-finetuning-pipeline.md` describes the deliverable. A single command runs data through SFT through DPO through quant through serve through eval, and emits a model card + the served endpoint.
+`outputs/skill-finetuning-pipeline.md` описывает deliverable. Одна команда прогоняет data through SFT through DPO through quant through serve through eval и выдает model card + served endpoint.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
 | 25 | Eval delta vs base | Measured gain on target tasks (MMLU-Pro, MT-Bench-v2, task-specific) |
-| 20 | Pipeline reproducibility | One command reruns end to end with identical seeds |
+| 20 | Воспроизводимость pipeline | One command reruns end to end with identical seeds |
 | 20 | Data hygiene | Dedup rate, PII scrub coverage, contamination check green |
 | 20 | Serving efficiency | tokens/s at bs=1/8/32, EAGLE-3 acceptance rate, $/1M tokens |
 | 15 | Model card + safety eval | 2026 MOF completeness + Llama Guard 4 pass rate |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Run SFT-only vs SFT+DPO vs SFT+GRPO on the same task-specific benchmark. Report which preference method wins and by how much.
+1. Запустите SFT-only vs SFT+DPO vs SFT+GRPO на одном task-specific benchmark. Сообщите, какой preference method выигрывает и насколько.
 
-2. Swap Llama 3.3 8B for Qwen3 14B. Measure the $/1M tokens at matched quality.
+2. Замените Llama 3.3 8B на Qwen3 14B. Измерьте $/1M tokens при matched quality.
 
-3. Measure EAGLE-3 acceptance rate on domain data vs generic ShareGPT. Report the delta and what it means for latency budgets.
+3. Измерьте EAGLE-3 acceptance rate на domain data vs generic ShareGPT. Сообщите delta и что она означает для latency budgets.
 
-4. Inject 1% of contamination (leak MMLU-Pro answers into training data) and rerun eval. Watch MMLU-Pro accuracy jump unrealistically. Build a contamination-check CI gate that catches this.
+4. Внесите 1% contamination: слейте MMLU-Pro answers в training data, затем перезапустите eval. Посмотрите, как MMLU-Pro accuracy нереалистично подскакивает. Постройте contamination-check CI gate, который это ловит.
 
-5. Add LoRA SFT as an alternative to full fine-tune. Measure the quality gap at 10x lower memory.
+5. Добавьте LoRA SFT как альтернативу full fine-tune. Измерьте quality gap при 10x lower memory.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | Axolotl | "SFT trainer" | Unified YAML-driven trainer for SFT, DPO, and distillation |
 | TRL | "Preference tuner" | Hugging Face library for DPO, GRPO, PPO on LLMs |
@@ -136,13 +136,13 @@ $ ./pipeline.sh config/llama3.3-8b-domainX.yaml
 | Contamination check | "Split hygiene" | MinHash-based detection of test-set leakage into training |
 | Acceptance rate | "EAGLE / MTP metric" | Fraction of drafted tokens the target model accepts |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Axolotl documentation](https://axolotl-ai-cloud.github.io/axolotl/) — the reference SFT / DPO trainer
+- [Axolotl documentation](https://axolotl-ai-cloud.github.io/axolotl/) — эталонный SFT / DPO trainer
 - [TRL documentation](https://huggingface.co/docs/trl) — DPO and GRPO reference implementations
 - [Unsloth](https://github.com/unslothai/unsloth) — single-GPU iteration reference
 - [DeepSeek R1 paper (arXiv:2501.12948)](https://arxiv.org/abs/2501.12948) — GRPO methodology
-- [vLLM + EAGLE-3 documentation](https://docs.vllm.ai) — reference serving stack
+- [vLLM + EAGLE-3 documentation](https://docs.vllm.ai) — эталонный serving stack
 - [SGLang SpecForge](https://github.com/sgl-project/SpecForge) — alternate speculative-decoding trainer
-- [Model Openness Framework 2026](https://isocpp.org/) — the open-release grading standard
+- [Model Openness Framework 2026](https://isocpp.org/) — open-release grading standard
 - [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) — canonical eval runner

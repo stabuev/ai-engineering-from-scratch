@@ -2,9 +2,9 @@
 
 > Вы собрали двигатель из поршней и коленчатых валов. Теперь изучите тот, на котором все действительно ездят.
 
-**Тип:** Build
+**Тип:** Сборка
 **Языки:** Python
-**Предварительные требования:** Урок 03.10 (Build Your Own Mini Framework)
+**Предварительные требования:** Урок 03.10 (соберите собственный мини-фреймворк)
 **Время:** ~75 минут
 
 ## Цели обучения
@@ -148,17 +148,17 @@ class MLP(nn.Module):
 | nn.BatchNorm1d(features) | Нормализует активации | 2 * features |
 | nn.Dropout(p) | Случайное зануление | 0 |
 | nn.ReLU() | max(0, x) | 0 |
-| nn.GELU() | Gaussian error linear | 0 |
+| nn.GELU() | Gaussian Error Linear Unit | 0 |
 | nn.Embedding(vocab, dim) | Таблица поиска | vocab * dim |
 | nn.LayerNorm(dim) | Нормализация по каждому примеру | 2 * dim |
 
 ### Функции потерь и оптимизаторы
 
-PyTorch поставляется с production-ready версиями всего, что вы построили.
+PyTorch поставляется с готовыми для продакшена версиями всего, что вы построили.
 
 **Функции потерь** (из `torch.nn`):
 
-| Loss | Задача | Вход |
+| Функция потерь | Задача | Вход |
 |------|------|-------|
 | nn.MSELoss() | Регрессия | Любая форма |
 | nn.CrossEntropyLoss() | Многоклассовая классификация | Логиты (не softmax) |
@@ -174,7 +174,7 @@ PyTorch поставляется с production-ready версиями всего
 |-----------|-------------|-----------|
 | SGD(params, lr, momentum) | CNN, хорошо настроенные пайплайны | 0.01--0.1 |
 | Adam(params, lr) | Начальная точка по умолчанию | 1e-3 |
-| AdamW(params, lr, weight_decay) | Transformers, fine-tuning | 1e-4--1e-3 |
+| AdamW(params, lr, weight_decay) | Трансформеры, дообучение | 1e-4--1e-3 |
 | LBFGS(params) | Малый масштаб, второй порядок | 1.0 |
 
 ### Цикл обучения
@@ -447,21 +447,21 @@ def main():
     print(f"Final test accuracy: {test_acc:.4f}")
 ```
 
-Ожидаемый результат после 10 эпох: ~97.8% test accuracy. Время обучения на CPU: ~30 секунд. На GPU: ~5 секунд. На вашем мини-фреймворке с той же архитектурой: ~45 минут.
+Ожидаемый результат после 10 эпох: ~97.8% тестовой точности. Время обучения на CPU: ~30 секунд. На GPU: ~5 секунд. На вашем мини-фреймворке с той же архитектурой: ~45 минут.
 
 ## Используйте это
 
 ### Краткое сравнение: мини-фреймворк vs PyTorch
 
-| Mini Framework (Lesson 10) | PyTorch |
+| Мини-фреймворк (урок 10) | PyTorch |
 |---------------------------|---------|
 | `model = Sequential(Linear(784, 256), ReLU(), ...)` | `model = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), ...)` |
 | `pred = model.forward(x)` | `pred = model(x)` |
 | `optimizer.zero_grad()` | `optimizer.zero_grad()` |
-| `grad = criterion.backward()` then `model.backward(grad)` | `loss.backward()` |
+| `grad = criterion.backward()`, затем `model.backward(grad)` | `loss.backward()` |
 | `optimizer.step()` | `optimizer.step()` |
-| No GPU | `model.to("cuda")` |
-| Manual backward for every module | Autograd handles everything |
+| Нет GPU | `model.to("cuda")` |
+| Ручной backward для каждого модуля | Autograd обрабатывает все |
 
 Интерфейс почти идентичен. Разница -- во всем, что под капотом.
 
@@ -499,13 +499,13 @@ PyTorch поставляется с 15+ scheduler: StepLR, ExponentialLR, Cosine
 
 ## Упражнения
 
-1. **Добавьте batch normalization.** Вставьте `nn.BatchNorm1d` после каждого линейного слоя (до активации). Сравните test accuracy и скорость обучения с версией только на dropout. Batch norm должен достигать 98%+ за меньшее число эпох.
+1. **Добавьте batch normalization.** Вставьте `nn.BatchNorm1d` после каждого линейного слоя (до активации). Сравните тестовую точность и скорость обучения с версией только на dropout. Batch norm должен достигать 98%+ за меньшее число эпох.
 
 2. **Реализуйте learning rate finder.** Обучайте одну эпоху с экспоненциально растущим learning rate (от 1e-7 до 1.0). Постройте график loss vs LR. Оптимальный LR находится прямо перед тем, как loss начинает расти. Используйте это, чтобы выбрать лучший LR для модели MNIST.
 
 3. **Перенесите на GPU со смешанной точностью.** Добавьте `torch.amp.autocast` и `GradScaler` в цикл обучения. Измерьте пропускную способность (samples/second) со смешанной точностью и без нее на GPU. На A100 ожидайте ускорение ~2x.
 
-4. **Постройте пользовательский Dataset.** Скачайте Fashion-MNIST (тот же формат, что MNIST, но с предметами одежды). Реализуйте класс `FashionMNISTDataset(Dataset)` с `__getitem__` и `__len__`. Обучите тот же MLP и сравните accuracy. Fashion-MNIST сложнее -- ожидайте ~88% против ~98%.
+4. **Постройте пользовательский Dataset.** Скачайте Fashion-MNIST (тот же формат, что MNIST, но с предметами одежды). Реализуйте класс `FashionMNISTDataset(Dataset)` с `__getitem__` и `__len__`. Обучите тот же MLP и сравните точность. Fashion-MNIST сложнее -- ожидайте ~88% против ~98%.
 
 5. **Замените Adam на SGD + momentum.** Обучайте с `SGD(params, lr=0.01, momentum=0.9)`. Сравните кривые сходимости. Затем добавьте scheduler `CosineAnnealingLR` и проверьте, догонит ли SGD Adam к эпохе 10.
 

@@ -166,7 +166,7 @@ graph TD
 
 **ChatGPT.** Plugins, function calling и MCP servers открывают доступ к web/code/images/databases. Routing layer выбирает capabilities. Memory и prompt caching поддерживают поведение продукта на масштабе.
 
-### Scaling
+### Масштабирование
 
 | Масштаб | Архитектура | Инфраструктура |
 |-------|-------------|-------|
@@ -175,7 +175,7 @@ graph TD
 | 10K-100K DAU | Horizontal scaling, load balancer, async workers | Kubernetes, $5K/month |
 | 100K+ DAU | Multi-region, model routing, dedicated inference | Custom infra, $50K+/month |
 
-Ключевые паттерны: async везде, queue-based processing для не real-time задач, HTTP connection pooling и horizontal scaling, потому что LLM-приложения ограничены I/O.
+Ключевые паттерны: async везде, queue-based processing для не real-time задач, HTTP connection pooling и horizontal scaling, потому что LLM-приложения ограничены I/O. Для вызовов LLM не блокируйте поток веб-сервера: используйте `asyncio` и `httpx.AsyncClient`.
 
 ### Прогноз затрат
 

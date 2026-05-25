@@ -26,13 +26,13 @@ Linux организует всё под единым корнем `/`. Здес
 
 ```mermaid
 graph TD
-    root["/"] --> home["home/your-username/<br/>Ваши файлы — клонирование репозиториев, запуск обучения"]
-    root --> tmp["tmp/<br/>Временные файлы, очищаются после перезагрузки"]
-    root --> usr["usr/<br/>Системные программы и библиотеки"]
-    root --> etc["etc/<br/>Файлы конфигурации"]
-    root --> varlog["var/log/<br/>Логи — проверяйте их, когда что-то ломается"]
-    root --> mnt["mnt/ или /media/<br/>Внешние диски и тома"]
-    root --> proc["proc/ и /sys/<br/>Виртуальные файлы — информация о ядре и оборудовании"]
+    root["/"] --> home["home/your-username/<br/>Your files — clone repos, run training"]
+    root --> tmp["tmp/<br/>Temporary files, cleared on reboot"]
+    root --> usr["usr/<br/>System programs and libraries"]
+    root --> etc["etc/<br/>Config files"]
+    root --> varlog["var/log/<br/>Logs — check when something breaks"]
+    root --> mnt["mnt/ or /media/<br/>External drives and volumes"]
+    root --> proc["proc/ and /sys/<br/>Virtual files — kernel and hardware info"]
 ```
 
 Ваш домашний каталог — это `~` или `/home/your-username`. Почти всё, что вы делаете, происходит здесь.
@@ -44,28 +44,28 @@ graph TD
 ### Навигация
 
 ```bash
-pwd                         # Где я?
-ls                          # Что здесь?
-ls -la                      # Что здесь, включая скрытые файлы и подробности?
-cd /path/to/dir             # Перейти туда
-cd ~                        # Перейти домой
-cd ..                       # Подняться на уровень выше
+pwd                         # Where am I?
+ls                          # What's here?
+ls -la                      # What's here, including hidden files with details?
+cd /path/to/dir             # Go there
+cd ~                        # Go home
+cd ..                       # Go up one level
 ```
 
 ### Файлы и директории
 
 ```bash
-mkdir my-project            # Создать директорию
-mkdir -p a/b/c              # Создать вложенные директории одной командой
+mkdir my-project            # Create a directory
+mkdir -p a/b/c              # Create nested directories in one shot
 
-cp file.txt backup.txt      # Скопировать файл
-cp -r src/ src-backup/      # Скопировать директорию (рекурсивно)
+cp file.txt backup.txt      # Copy a file
+cp -r src/ src-backup/      # Copy a directory (recursive)
 
-mv old.txt new.txt          # Переименовать файл
-mv file.txt /tmp/           # Переместить файл
+mv old.txt new.txt          # Rename a file
+mv file.txt /tmp/           # Move a file
 
-rm file.txt                 # Удалить файл (без корзины — навсегда)
-rm -rf my-dir/              # Удалить директорию и всё внутри
+rm file.txt                 # Delete a file (no trash, it's gone)
+rm -rf my-dir/              # Delete a directory and everything inside
 ```
 
 `rm -rf` удаляет безвозвратно. Отмены нет. Перед нажатием Enter дважды проверьте путь.
@@ -73,22 +73,22 @@ rm -rf my-dir/              # Удалить директорию и всё вн
 ### Чтение файлов
 
 ```bash
-cat file.txt                # Вывести весь файл
-head -20 file.txt           # Первые 20 строк
-tail -20 file.txt           # Последние 20 строк
-tail -f log.txt             # Следить за логом в реальном времени (Ctrl+C для остановки)
-less file.txt               # Просматривать файл с прокруткой (q для выхода)
+cat file.txt                # Print entire file
+head -20 file.txt           # First 20 lines
+tail -20 file.txt           # Last 20 lines
+tail -f log.txt             # Follow a log file in real time (Ctrl+C to stop)
+less file.txt               # Scroll through a file (q to quit)
 ```
 
 ### Поиск
 
 ```bash
-grep "error" training.log           # Найти строки с "error"
-grep -r "learning_rate" .           # Искать во всех файлах текущей директории
-grep -i "cuda" config.yaml          # Поиск без учёта регистра
+grep "error" training.log           # Find lines containing "error"
+grep -r "learning_rate" .           # Search all files in current directory
+grep -i "cuda" config.yaml          # Case-insensitive search
 
-find . -name "*.py"                 # Найти все Python-файлы
-find . -name "*.ckpt" -size +1G     # Найти checkpoint-файлы больше 1GB
+find . -name "*.py"                 # Find all Python files under current dir
+find . -name "*.ckpt" -size +1G     # Find checkpoint files larger than 1GB
 ```
 
 ## Права доступа
@@ -98,19 +98,19 @@ find . -name "*.ckpt" -size +1G     # Найти checkpoint-файлы боль�
 ```bash
 ls -l train.py
 # -rwxr-xr-- 1 user group 2048 Mar 19 10:00 train.py
-#  ^^^             права владельца: чтение, запись, выполнение
-#     ^^^          права группы: чтение, выполнение
-#        ^^        остальные: только чтение
+#  ^^^             owner permissions: read, write, execute
+#     ^^^          group permissions: read, execute
+#        ^^        everyone else: read only
 ```
 
 Частые исправления:
 
 ```bash
-chmod +x train.sh           # Сделать скрипт исполняемым
-chmod 755 deploy.sh         # Владелец: полный доступ, остальные: чтение + выполнение
-chmod 644 config.yaml       # Владелец: чтение + запись, остальные: только чтение
+chmod +x train.sh           # Make a script executable
+chmod 755 deploy.sh         # Owner: full, others: read+execute
+chmod 644 config.yaml       # Owner: read+write, others: read only
 
-chown user:group file.txt   # Изменить владельца файла (нужен sudo)
+chown user:group file.txt   # Change who owns a file (needs sudo)
 ```
 
 Если вы видите «Permission denied», почти всегда проблема в правах доступа. В большинстве случаев помогут `chmod +x` или `sudo`.
@@ -120,13 +120,13 @@ chown user:group file.txt   # Изменить владельца файла (н
 Ubuntu использует `apt`. Через него устанавливается системное ПО.
 
 ```bash
-sudo apt update             # Обновить список пакетов (всегда делайте это сначала)
-sudo apt install -y htop    # Установить пакет (-y пропускает подтверждение)
-sudo apt install -y build-essential  # C-компилятор, make и т.д. Нужны многим Python-пакетам
-sudo apt install -y tmux    # Терминальный мультиплексор (сохраняет сессии после отключения)
+sudo apt update             # Refresh the package list (always do this first)
+sudo apt install -y htop    # Install a package (-y skips confirmation)
+sudo apt install -y build-essential  # C compiler, make, etc. Needed by many Python packages
+sudo apt install -y tmux    # Terminal multiplexer (keep sessions alive after disconnect)
 
-apt list --installed        # Что установлено?
-sudo apt remove htop        # Удалить пакет
+apt list --installed        # What's installed?
+sudo apt remove htop        # Uninstall
 ```
 
 Часто используемые пакеты для свежего GPU-сервера:
@@ -148,9 +148,9 @@ sudo apt update && sudo apt install -y \
 Обычно вы работаете как обычный пользователь. Некоторые операции требуют root-доступа.
 
 ```bash
-whoami                      # Кто я?
-sudo command                # Выполнить одну команду от root
-sudo su                     # Стать root-пользователем (exit для возврата, используйте осторожно)
+whoami                      # What user am I?
+sudo command                # Run a single command as root
+sudo su                     # Become root (exit to go back, use sparingly)
 ```
 
 На облачных GPU-инстансах вы чаще всего единственный пользователь и уже имеете доступ к sudo. Не запускайте всё от root. Используйте sudo только при необходимости.
@@ -160,21 +160,21 @@ sudo su                     # Стать root-пользователем (exit �
 Когда обучение зависло или нужно проверить, что сейчас работает:
 
 ```bash
-htop                        # Интерактивный просмотр процессов (q для выхода)
-ps aux | grep python        # Найти работающие Python-процессы
-kill 12345                  # Аккуратно остановить процесс с PID 12345
-kill -9 12345               # Принудительно завершить процесс (если обычное завершение не сработало)
-nvidia-smi                  # Процессы GPU и использование памяти
+htop                        # Interactive process viewer (q to quit)
+ps aux | grep python        # Find running Python processes
+kill 12345                  # Gracefully stop process with PID 12345
+kill -9 12345               # Force kill (use when graceful doesn't work)
+nvidia-smi                  # GPU processes and memory usage
 ```
 
 systemd управляет сервисами (фоновыми демонами). Вы будете использовать его, если запускаете inference-серверы:
 
 ```bash
-sudo systemctl start nginx          # Запустить сервис
-sudo systemctl stop nginx           # Остановить сервис
-sudo systemctl restart nginx        # Перезапустить сервис
-sudo systemctl status nginx         # Проверить статус
-sudo systemctl enable nginx         # Автозапуск при загрузке
+sudo systemctl start nginx          # Start a service
+sudo systemctl stop nginx           # Stop it
+sudo systemctl restart nginx        # Restart it
+sudo systemctl status nginx         # Check if it's running
+sudo systemctl enable nginx         # Start automatically on boot
 ```
 
 ## Дисковое пространство
@@ -182,27 +182,27 @@ sudo systemctl enable nginx         # Автозапуск при загрузк
 GPU-серверы часто имеют ограниченный объём диска. Модели и датасеты быстро его заполняют.
 
 ```bash
-df -h                       # Использование диска для всех подключённых устройств
-df -h /home                 # Использование диска для /home
+df -h                       # Disk usage for all mounted drives
+df -h /home                 # Disk usage for /home specifically
 
-du -sh *                    # Размер каждого объекта в текущей директории
-du -sh ~/.cache             # Размер кэша (сюда попадают pip и модели Hugging Face)
-du -sh /data/checkpoints/   # Проверить размер checkpoint-файлов
+du -sh *                    # Size of each item in current directory
+du -sh ~/.cache             # Size of your cache (pip, huggingface models land here)
+du -sh /data/checkpoints/   # Check how big your checkpoints are
 
-# Найти самых крупных потребителей места
+# Find the biggest space hogs
 du -h --max-depth=1 / 2>/dev/null | sort -hr | head -20
 ```
 
 Частые способы освободить место:
 
 ```bash
-# Очистить кэш pip
+# Clear pip cache
 pip cache purge
 
-# Очистить кэш apt
+# Clear apt cache
 sudo apt clean
 
-# Удалить старые checkpoint-файлы
+# Remove old checkpoints you don't need
 rm -rf checkpoints/epoch_01/ checkpoints/epoch_02/
 ```
 
@@ -211,17 +211,17 @@ rm -rf checkpoints/epoch_01/ checkpoints/epoch_02/
 Из командной строки вы будете скачивать модели, переносить файлы и обращаться к API.
 
 ```bash
-# Скачать файлы
-wget https://example.com/model.bin                   # Скачать файл
-curl -O https://example.com/data.tar.gz              # То же самое через curl
-curl -s https://api.example.com/health | python3 -m json.tool  # Запрос к API и красивый вывод JSON
+# Download files
+wget https://example.com/model.bin                   # Download a file
+curl -O https://example.com/data.tar.gz              # Same thing with curl
+curl -s https://api.example.com/health | python3 -m json.tool  # Hit an API, pretty-print JSON
 
-# Передача файлов между машинами
-scp model.bin user@remote:/data/                     # Копировать файл на удалённую машину
-scp user@remote:/data/results.csv .                  # Копировать файл с удалённой машины
-scp -r user@remote:/data/checkpoints/ ./local-dir/   # Копировать директорию
+# Transfer files between machines
+scp model.bin user@remote:/data/                     # Copy file to remote machine
+scp user@remote:/data/results.csv .                  # Copy file from remote to local
+scp -r user@remote:/data/checkpoints/ ./local-dir/   # Copy directory
 
-# Синхронизация директорий (быстрее scp для больших файлов, умеет продолжать после обрыва)
+# Sync directories (faster than scp for large transfers, resumes on failure)
 rsync -avz --progress ./data/ user@remote:/data/
 rsync -avz --progress user@remote:/results/ ./results/
 ```
@@ -233,17 +233,17 @@ rsync -avz --progress user@remote:/results/ ./results/
 Если вы подключены по SSH к удалённому серверу, закрытие ноутбука завершит обучение. tmux предотвращает это.
 
 ```bash
-tmux new -s train           # Создать новую сессию с именем "train"
-# ... запустите обучение, затем:
-# Ctrl+B, затем D           # Отсоединиться (обучение продолжит работать)
+tmux new -s train           # Start a new session named "train"
+# ... start your training, then:
+# Ctrl+B, then D            # Detach (training keeps running)
 
-tmux ls                     # Список сессий
-tmux attach -t train        # Подключиться обратно
+tmux ls                     # List sessions
+tmux attach -t train        # Reattach to session
 
-# Внутри tmux:
-# Ctrl+B, затем %           # Разделить окно вертикально
-# Ctrl+B, затем "           # Разделить окно горизонтально
-# Ctrl+B, затем стрелки     # Переключаться между окнами
+# Inside tmux:
+# Ctrl+B, then %            # Split pane vertically
+# Ctrl+B, then "            # Split pane horizontally
+# Ctrl+B, then arrow keys   # Switch between panes
 ```
 
 Всегда запускайте длительное обучение внутри tmux. Всегда.
@@ -253,10 +253,10 @@ tmux attach -t train        # Подключиться обратно
 Если вы используете Windows, WSL2 даёт вам полноценную Linux-среду без dual boot.
 
 ```bash
-# В PowerShell (от имени администратора)
+# In PowerShell (admin)
 wsl --install -d Ubuntu-24.04
 
-# После перезагрузки откройте Ubuntu из меню Start
+# After restart, open Ubuntu from Start menu
 sudo apt update && sudo apt upgrade -y
 ```
 
@@ -282,16 +282,16 @@ GPU passthrough работает с установленными NVIDIA-драй
 ## Краткая шпаргалка
 
 ```
-Навигация:     pwd, ls, cd, find
-Файлы:         cp, mv, rm, mkdir, cat, head, tail, less
-Поиск:         grep, find
-Права:         chmod, chown, sudo
-Пакеты:        apt update, apt install
-Процессы:      htop, ps, kill, nvidia-smi
-Сервисы:       systemctl start/stop/restart/status
-Диск:          df -h, du -sh
-Сеть:          curl, wget, scp, rsync
-Сессии:        tmux new/attach/detach
+Navigation:     pwd, ls, cd, find
+Files:          cp, mv, rm, mkdir, cat, head, tail, less
+Search:         grep, find
+Permissions:    chmod, chown, sudo
+Packages:       apt update, apt install
+Processes:      htop, ps, kill, nvidia-smi
+Services:       systemctl start/stop/restart/status
+Disk:           df -h, du -sh
+Network:        curl, wget, scp, rsync
+Sessions:       tmux new/attach/detach
 ```
 
 ## Упражнения
