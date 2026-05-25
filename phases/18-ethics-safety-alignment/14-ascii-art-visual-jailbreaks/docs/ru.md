@@ -1,94 +1,94 @@
 # ASCII Art and Visual Jailbreaks
 
-> Jiang, Xu, Niu, Xiang, Ramasubramanian, Li, Poovendran, "ArtPrompt: ASCII Art-based Jailbreak Attacks against Aligned LLMs" (ACL 2024, arXiv:2402.11753). Mask the safety-relevant tokens in a harmful request, replace them with ASCII-art renderings of the same letters, and send the cloaked prompt. GPT-3.5, GPT-4, Gemini, Claude, Llama-2 all fail to robustly recognize ASCII-art tokens. The attack bypasses PPL (perplexity filters), Paraphrase defenses, and Retokenization. Related: the ViTC benchmark measures recognition of non-semantic visual prompts; StructuralSleight generalizes to Uncommon Text-Encoded Structures (trees, graphs, nested JSON) as a family of encoding attacks.
+> Jiang, Xu, Niu, Xiang, Ramasubramanian, Li, Poovendran, "ArtPrompt: ASCII Art-based Jailbreak Attacks against Aligned LLMs" (ACL 2024, arXiv:2402.11753). Маскируют safety-relevant tokens во вредоносном запросе, заменяют их ASCII-art отображениями тех же букв и отправляют замаскированный prompt. GPT-3.5, GPT-4, Gemini, Claude, Llama-2 не умеют надежно распознавать ASCII-art tokens. Атака обходит PPL (perplexity filters), Paraphrase defenses и Retokenization. Связано: benchmark ViTC измеряет распознавание non-semantic visual prompts; StructuralSleight обобщает это на Uncommon Text-Encoded Structures (trees, graphs, nested JSON) как семейство encoding attacks.
 
 **Type:** Build
 **Languages:** Python (stdlib, ArtPrompt token-masking harness)
 **Prerequisites:** Phase 18 · 12 (PAIR), Phase 18 · 13 (MSJ)
 **Time:** ~60 minutes
 
-## Learning Objectives
+## Цели обучения
 
-- Describe the ArtPrompt attack: word-identification step, ASCII-art substitution, final cloaked prompt.
-- Explain why standard defenses (PPL, Paraphrase, Retokenization) fail on ArtPrompt.
-- Define ViTC and describe what it measures.
-- Describe StructuralSleight as a generalization to arbitrary Uncommon Text-Encoded Structures.
+- Описать атаку ArtPrompt: этап word-identification, ASCII-art substitution, итоговый cloaked prompt.
+- Объяснить, почему стандартные защиты (PPL, Paraphrase, Retokenization) проваливаются на ArtPrompt.
+- Определить ViTC и описать, что он измеряет.
+- Описать StructuralSleight как обобщение на произвольные Uncommon Text-Encoded Structures.
 
-## The Problem
+## Проблема
 
-Attacks via paraphrase and roleplay (Lesson 12) and via long context (Lesson 13) operate on the text-level pattern. ArtPrompt operates at the recognition level: the model does not parse the forbidden token. It parses an image rendered in characters. The safety filter sees harmless punctuation. The model sees a word.
+Атаки через paraphrase и roleplay (Lesson 12) и через long context (Lesson 13) работают на уровне текстового шаблона. ArtPrompt работает на уровне распознавания: модель не парсит запрещенный token. Она парсит изображение, отрисованное символами. Safety filter видит безвредную пунктуацию. Модель видит слово.
 
-## The Concept
+## Концепция
 
 ### ArtPrompt, two steps
 
-Step 1. Word Identification. Given a harmful request, the attacker uses an LLM to identify the safety-relevant words (e.g., "bomb" in "how to make a bomb"). 
+Step 1. Word Identification. По вредоносному запросу атакующий использует LLM, чтобы определить safety-relevant words (например, "bomb" в "how to make a bomb"). 
 
-Step 2. Cloaked Prompt Generation. Replace each identified word with its ASCII-art rendering (a 7x5 or 7x7 block of characters forming the letter shape). The model receives a grid of punctuation and spaces that a sufficiently capable model can recognize as the word; a safety filter sees only the grid.
+Step 2. Cloaked Prompt Generation. Замените каждое найденное слово его ASCII-art отображением (блок символов 7x5 или 7x7, формирующий форму буквы). Модель получает сетку из пунктуации и пробелов, которую достаточно сильная модель может распознать как слово; safety filter видит только сетку.
 
-Result: GPT-4, Gemini, Claude, Llama-2, GPT-3.5 all fail. Attack success rate above 75% on their benchmark subset.
+Результат: GPT-4, Gemini, Claude, Llama-2, GPT-3.5 все проваливаются. Attack success rate выше 75% на их benchmark subset.
 
 ### Why the standard defenses fail
 
-- **PPL (perplexity filter).** ASCII art has high perplexity — but so does all novel input. Threshold choices that block ArtPrompt also block legitimate structured input.
-- **Paraphrase.** Paraphrasing the prompt destroys the ASCII art. In practice, paraphrase LLMs often preserve or reconstruct the art.
-- **Retokenization.** Splitting tokens differently does not change that the model's vision is recognizing letter shapes.
+- **PPL (perplexity filter).** ASCII art имеет высокую perplexity — но то же верно для любого нового input. Пороги, которые блокируют ArtPrompt, также блокируют легитимный structured input.
+- **Paraphrase.** Перефразирование prompt разрушает ASCII art. На практике paraphrase LLM часто сохраняют или восстанавливают art.
+- **Retokenization.** Иное разбиение на tokens не меняет того, что "зрение" модели распознает формы букв.
 
-The underlying issue is that safety filters are token- or semantic-level; ArtPrompt operates at the visual recognition level.
+Базовая проблема в том, что safety filters работают на token- или semantic-level; ArtPrompt действует на visual recognition level.
 
 ### ViTC benchmark
 
-Recognition of non-semantic visual prompts. Measures the model's ability to read ASCII-art, wingdings, and other non-text-semantic visual content. ArtPrompt's effectiveness correlates with ViTC accuracy: the better the model reads visual text, the better ArtPrompt works on it. This is a capability-safety tradeoff.
+Распознавание non-semantic visual prompts. Измеряет способность модели читать ASCII-art, wingdings и другой non-text-semantic visual content. Эффективность ArtPrompt коррелирует с ViTC accuracy: чем лучше модель читает визуальный текст, тем лучше ArtPrompt работает против нее. Это capability-safety tradeoff.
 
 ### StructuralSleight
 
-Generalizes ArtPrompt: Uncommon Text-Encoded Structures (UTES). Trees, graphs, nested JSON, CSV-in-JSON, diff-style code blocks. If a structure is rare in training safety data but parseable by the model, it can hide harmful content.
+Обобщает ArtPrompt: Uncommon Text-Encoded Structures (UTES). Trees, graphs, nested JSON, CSV-in-JSON, diff-style code blocks. Если структура редка в training safety data, но парсится моделью, она может скрывать вредоносный контент.
 
-The defense implication: safety must generalize across the structured representations the model can parse. The set is large and growing.
+Следствие для защиты: safety должна обобщаться на структурированные представления, которые модель умеет парсить. Этот набор велик и растет.
 
 ### Image-modality analog
 
-Visual LLMs (GPT-5.2, Gemini 3 Pro, Claude Opus 4.5, Grok 4.1) extend the attack surface. ArtPrompt-style attacks with actual images are stronger than ASCII-art analogs because image encoders produce richer signal.
+Visual LLMs (GPT-5.2, Gemini 3 Pro, Claude Opus 4.5, Grok 4.1) расширяют поверхность атаки. ArtPrompt-style атаки с реальными изображениями сильнее, чем ASCII-art analogs, потому что image encoders создают более богатый сигнал.
 
-### Where this fits in Phase 18
+### Как это вписывается в Phase 18
 
-Lessons 12-14 describe three orthogonal attack vectors: iterative refinement (PAIR), context length (MSJ), and encoding (ArtPrompt/StructuralSleight). Lesson 15 shifts from model-centric attacks to system-boundary attacks (indirect prompt injection). Lesson 16 describes the defensive tooling response.
+Lessons 12-14 описывают три ортогональных вектора атак: iterative refinement (PAIR), context length (MSJ) и encoding (ArtPrompt/StructuralSleight). Lesson 15 переходит от model-centric attacks к system-boundary attacks (indirect prompt injection). Lesson 16 описывает defensive tooling response.
 
-## Use It
+## Применение
 
-`code/main.py` builds a toy ArtPrompt. You can cloak specific words in a harmful query with ASCII-art glyphs, verify the cloaked string passes a keyword filter, and (optionally) decode the cloaked string back using a simple recognizer.
+`code/main.py` строит игрушечный ArtPrompt. Вы можете замаскировать конкретные слова во вредоносном query с помощью ASCII-art glyphs, проверить, что cloaked string проходит keyword filter, и (опционально) декодировать cloaked string обратно с помощью простого recognizer.
 
-## Ship It
+## Результат
 
-This lesson produces `outputs/skill-encoding-audit.md`. Given a jailbreak-defense report, it enumerates the encoding attack families covered (ASCII art, base64, leet-speak, UTF-8 homoglyph, UTES) and the defense layer that catches each.
+Этот урок создает `outputs/skill-encoding-audit.md`. Для jailbreak-defense report он перечисляет покрытые семейства encoding attacks (ASCII art, base64, leet-speak, UTF-8 homoglyph, UTES) и слой защиты, который ловит каждое из них.
 
-## Exercises
+## Упражнения
 
-1. Run `code/main.py`. Verify the cloaked string passes a simple keyword filter. Report the character-level change required.
+1. Запустите `code/main.py`. Проверьте, что cloaked string проходит простой keyword filter. Сообщите требуемое изменение на character-level.
 
-2. Implement a second encoding: base64 for the same target word. Compare the filter-bypass rate against ArtPrompt and the recovery difficulty.
+2. Реализуйте второе кодирование: base64 для того же target word. Сравните filter-bypass rate с ArtPrompt и сложность восстановления.
 
-3. Read Jiang et al. 2024 Section 4.3 (five-model results). Propose a reason why Claude's ArtPrompt-resistance is higher than Gemini's on the same benchmark.
+3. Прочитайте Jiang et al. 2024 Section 4.3 (five-model results). Предложите причину, почему Claude's ArtPrompt-resistance выше, чем Gemini's, на том же benchmark.
 
-4. Design a pre-generation defense that detects ASCII-art-shaped regions in the prompt. Measure the false-positive rate on legitimate code, tables, and mathematical notation.
+4. Спроектируйте pre-generation defense, которая обнаруживает ASCII-art-shaped regions в prompt. Измерьте false-positive rate на легитимном code, tables и mathematical notation.
 
-5. StructuralSleight lists 10 encoding structures. Sketch a generalized defense that handles all 10 and estimate the compute cost per defended prompt.
+5. StructuralSleight перечисляет 10 encoding structures. Набросайте generalized defense, которая обрабатывает все 10, и оцените compute cost per defended prompt.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| ArtPrompt | "the ASCII-art attack" | Two-step jailbreak that masks safety words with ASCII-art renderings |
-| Cloaking | "hide the word" | Replace a forbidden token with a visual representation the model reads but the filter does not |
-| UTES | "uncommon structure" | Uncommon Text-Encoded Structure — tree, graph, nested JSON, etc. used to smuggle content |
-| ViTC | "visual-text capability" | Benchmark for model's ability to read non-semantic visual encoding |
-| Perplexity filter | "PPL defense" | Reject prompts with high perplexity; fails because legitimate structured input also scores high |
-| Retokenization | "tokenizer shift defense" | Pre-process the prompt with a different tokenizer; fails because recognition is visual |
-| Homoglyph | "lookalike characters" | Unicode characters that look identical to Latin letters; bypass substring checks |
+| ArtPrompt | "the ASCII-art attack" | Двухэтапный jailbreak, который маскирует safety words с помощью ASCII-art renderings |
+| Cloaking | "hide the word" | Заменить запрещенный token визуальным представлением, которое модель читает, а фильтр нет |
+| UTES | "uncommon structure" | Uncommon Text-Encoded Structure — tree, graph, nested JSON и т. д., используемые для скрытой передачи контента |
+| ViTC | "visual-text capability" | Benchmark способности модели читать non-semantic visual encoding |
+| Perplexity filter | "PPL defense" | Отклоняет prompts с высокой perplexity; проваливается, потому что легитимный structured input тоже получает высокий score |
+| Retokenization | "tokenizer shift defense" | Предобрабатывает prompt другим tokenizer; проваливается, потому что распознавание визуальное |
+| Homoglyph | "lookalike characters" | Unicode-символы, выглядящие идентично латинским буквам; обходят substring checks |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Jiang et al. — ArtPrompt (ACL 2024, arXiv:2402.11753)](https://arxiv.org/abs/2402.11753) — the ASCII-art jailbreak paper
-- [Li et al. — StructuralSleight (arXiv:2406.08754)](https://arxiv.org/abs/2406.08754) — UTES generalization
-- [Chao et al. — PAIR (Lesson 12, arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — complementary iterative attack
-- [Anil et al. — Many-shot Jailbreaking (Lesson 13)](https://www.anthropic.com/research/many-shot-jailbreaking) — complementary length attack
+- [Jiang et al. — ArtPrompt (ACL 2024, arXiv:2402.11753)](https://arxiv.org/abs/2402.11753) — статья об ASCII-art jailbreak
+- [Li et al. — StructuralSleight (arXiv:2406.08754)](https://arxiv.org/abs/2406.08754) — обобщение UTES
+- [Chao et al. — PAIR (Lesson 12, arXiv:2310.08419)](https://arxiv.org/abs/2310.08419) — дополняющая итеративная атака
+- [Anil et al. — Many-shot Jailbreaking (Lesson 13)](https://www.anthropic.com/research/many-shot-jailbreaking) — дополняющая атака через длину
