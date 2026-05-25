@@ -1,28 +1,28 @@
-# Capstone 10 — Multi-Agent Software Engineering Team
+# Capstone 10 — Мультиагентная команда разработки ПО
 
-> SWE-AF's factory architecture, MetaGPT's role-based prompting, AutoGen 0.4's typed actor graph, Cognition's Devin, and Factory's Droids all converged on the same 2026 shape: an architect plans, N coders work in parallel worktrees, a reviewer gates, a tester verifies. Parallel worktrees convert wall-clock into throughput. Shared state and handoff protocols become the failure surface. The capstone is to build the team, evaluate on SWE-bench Pro, and report which handoffs break and how often.
+> SWE-AF factory architecture, role-based prompting в MetaGPT, typed actor graph в AutoGen 0.4, Devin от Cognition и Droids от Factory сошлись к одной форме 2026 года: architect планирует, N coders работают параллельно в worktrees, reviewer ставит gate, tester проверяет. Parallel worktrees превращают wall-clock во throughput. Shared state и handoff protocols становятся поверхностью отказов. Capstone: построить team, оценить на SWE-bench Pro и отчитаться, какие handoffs ломаются и как часто.
 
-**Type:** Capstone
-**Languages:** Python / TypeScript (agents), Shell (worktree scripts)
-**Prerequisites:** Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 16 (multi-agent), Phase 17 (infrastructure)
-**Phases exercised:** P11 · P13 · P14 · P15 · P16 · P17
-**Time:** 40 hours
+**Тип:** Capstone
+**Языки:** Python / TypeScript (agents), Shell (worktree scripts)
+**Предварительные требования:** Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 16 (multi-agent), Phase 17 (infrastructure)
+**Отрабатываемые фазы:** P11 · P13 · P14 · P15 · P16 · P17
+**Время:** 40 часов
 
-## Problem
+## Проблема
 
-Single-agent coding harnesses hit a ceiling on large tasks. Not because any individual agent is weak, but because a 200k-token context cannot hold an architecture plan plus four parallel codebase slices plus reviewer commentary plus test output. Multi-agent factories split the problem: an architect owns the plan, coders own implementation in parallel worktrees, a reviewer gates, a tester verifies. SWE-AF's "factory" architecture, MetaGPT's roles, AutoGen's typed actor graph — all three framings describe the same shape.
+Single-agent coding harnesses упираются в потолок на больших задачах. Не потому, что отдельный agent слаб, а потому что 200k-token context не может вместить architecture plan плюс четыре параллельных среза codebase плюс reviewer commentary плюс test output. Multi-agent factories делят проблему: architect владеет plan, coders владеют implementation в parallel worktrees, reviewer ставит gate, tester проверяет. "Factory" architecture SWE-AF, roles MetaGPT, typed actor graph AutoGen - все три описания задают одну и ту же форму.
 
-The failure surface is the handoff. Architect plans something the coders cannot implement. Coders produce conflicting diffs. Reviewer approves a hallucinated fix. Tester races a still-writing coder. You will build one of these teams, run it on 50 SWE-bench Pro issues, track every handoff, and publish the post-mortem.
+Поверхность отказов - это handoff. Architect планирует то, что coders не могут реализовать. Coders создают конфликтующие diffs. Reviewer одобряет hallucinated fix. Tester соревнуется с coder, который еще пишет. Вы построите одну из таких команд, запустите ее на 50 issues из SWE-bench Pro, отследите каждый handoff и опубликуете post-mortem.
 
-## Concept
+## Концепция
 
-Roles are typed agents. **Architect** (Claude Opus 4.7) reads the issue, writes a plan, and breaks it into subtasks with explicit interfaces. **Coders** (Claude Sonnet 4.7, N parallel instances, each in a `git worktree` + Daytona sandbox) implement subtasks independently. **Reviewer** (GPT-5.4) reads the merged diff and either approves or requests specific changes. **Tester** (Gemini 2.5 Pro) runs the test suite in isolation and reports pass/fail with artifacts.
+Roles - это типизированные agents. **Architect** (Claude Opus 4.7) читает issue, пишет plan и разбивает его на subtasks с явными interfaces. **Coders** (Claude Sonnet 4.7, N parallel instances, каждый в `git worktree` + Daytona sandbox) независимо реализуют subtasks. **Reviewer** (GPT-5.4) читает merged diff и либо одобряет, либо запрашивает конкретные changes. **Tester** (Gemini 2.5 Pro) запускает test suite в изоляции и сообщает pass/fail с artifacts.
 
-Communication is through a shared task board (file-backed or Redis). Each role consumes tasks it is permitted to handle. Handoffs are A2A-protocol-typed messages. Coordination concerns: merge-conflict resolution (coordinator role or automatic three-way merge), shared-state synchronization (the plan is frozen once coders start; replans are separate events), and reviewer gatekeeping (the reviewer cannot approve its own changes or changes it proposed).
+Коммуникация идет через shared task board (file-backed или Redis). Каждая role потребляет tasks, которые ей разрешено обрабатывать. Handoffs - это A2A-protocol-typed messages. Coordination concerns: merge-conflict resolution (coordinator role или automatic three-way merge), shared-state synchronization (plan замораживается, когда coders стартуют; replans являются отдельными events) и reviewer gatekeeping (reviewer не может approve собственные changes или changes, которые сам предложил).
 
-Token amplification is the hidden cost. Every role boundary adds summary prompts and handoff context. A 40-turn single-agent run becomes 160 total turns across four roles. The rubric specifically weighs token efficiency vs single-agent baseline because the question is not "does multi-agent work" but "does it win per dollar."
+Token amplification - скрытая стоимость. Каждая role boundary добавляет summary prompts и handoff context. 40-turn single-agent run превращается в 160 total turns через четыре roles. Rubric отдельно взвешивает token efficiency vs single-agent baseline, потому что вопрос не "работает ли multi-agent", а "выигрывает ли он per dollar."
 
-## Architecture
+## Архитектура
 
 ```
 GitHub issue URL
@@ -53,38 +53,38 @@ Coder A          Coder B          Coder C          Coder D          (4 parallel)
                                      -> fails?  -> route back to coder
 ```
 
-## Stack
+## Стек
 
-- Orchestration: LangGraph with shared state + per-agent sub-graphs
-- Messaging: A2A protocol (Google 2025) for typed inter-agent messages
+- Orchestration: LangGraph с shared state + per-agent sub-graphs
+- Messaging: A2A protocol (Google 2025) для типизированных inter-agent messages
 - Models: Opus 4.7 (architect), Sonnet 4.7 (coders), GPT-5.4 (reviewer), Gemini 2.5 Pro (tester)
 - Worktree isolation: `git worktree add` per coder + Daytona sandbox
 - Merge coordinator: custom three-way merge + LLM-mediated conflict resolution
-- Eval: SWE-bench Pro (50 issues), SWE-AF scenarios, HumanEval++ for unit tests
-- Observability: Langfuse with role-tagged spans, per-agent token accounting
-- Deployment: K8s with each role as a separate Deployment + HPA on backlog
+- Eval: SWE-bench Pro (50 issues), SWE-AF scenarios, HumanEval++ для unit tests
+- Observability: Langfuse с role-tagged spans, per-agent token accounting
+- Deployment: K8s, где каждая role развернута как отдельный Deployment + HPA по backlog
 
-## Build It
+## Соберите
 
-1. **Task board.** File-backed JSONL with typed messages: `plan_request`, `subtask`, `diff_ready`, `review_needed`, `test_needed`, `approved`, `rejected`, `replan_needed`. Agents subscribe to tags.
+1. **Task board.** File-backed JSONL с typed messages: `plan_request`, `subtask`, `diff_ready`, `review_needed`, `test_needed`, `approved`, `rejected`, `replan_needed`. Agents подписываются на tags.
 
-2. **Architect.** Reads the GitHub issue, runs Opus 4.7 with a plan template requiring explicit subtask interfaces (files touched, public functions, test impact). Emits one `plan_request` with a DAG of subtasks.
+2. **Architect.** Читает GitHub issue, запускает Opus 4.7 с plan template, требующим явных subtask interfaces (files touched, public functions, test impact). Эмитит один `plan_request` с DAG subtasks.
 
-3. **Coders.** N parallel workers, each claims one subtask from the board. Each spawns a fresh `git worktree add` branch plus a Daytona sandbox. Implements the subtask. Emits `diff_ready` with the patch + test deltas.
+3. **Coders.** N parallel workers, каждый забирает один subtask с board. Каждый создает свежую `git worktree add` branch плюс Daytona sandbox. Реализует subtask. Эмитит `diff_ready` с patch + test deltas.
 
-4. **Merge coordinator.** On all-coders-done, three-way merges the N branches into a staging branch. LLM-mediated conflict resolution only when file-level overlap exists.
+4. **Merge coordinator.** Когда все coders завершили работу, выполняет three-way merge N branches в staging branch. LLM-mediated conflict resolution используется только при file-level overlap.
 
-5. **Reviewer.** GPT-5.4 reads the merged diff. Cannot approve diffs it authored. Emits `approved` (no-op) or `review_feedback` with specific change requests routed back to the relevant coder.
+5. **Reviewer.** GPT-5.4 читает merged diff. Не может approve diffs, которые сам authored. Эмитит `approved` (no-op) или `review_feedback` с specific change requests, routed back к соответствующему coder.
 
-6. **Tester.** Gemini 2.5 Pro runs the test suite in a clean sandbox. Captures artifacts. Emits `test_passed` or `test_failed` with stacktraces. Failed tests loop back to the coder owning the failing subtask.
+6. **Tester.** Gemini 2.5 Pro запускает test suite в clean sandbox. Сохраняет artifacts. Эмитит `test_passed` или `test_failed` со stacktraces. Failed tests возвращаются к coder, владеющему failing subtask.
 
-7. **Handoff accounting.** Every message crossing a role boundary gets a span in Langfuse with payload size and model used. Compute per-subtask token amplification (coder_tokens + reviewer_tokens + tester_tokens + architect_share / coder_tokens).
+7. **Handoff accounting.** Каждое message, пересекающее role boundary, получает span в Langfuse с payload size и использованной model. Вычислите per-subtask token amplification (coder_tokens + reviewer_tokens + tester_tokens + architect_share / coder_tokens).
 
-8. **Eval.** Run on 50 SWE-bench Pro issues. Compare pass@1 and $-per-solved-issue against a single-agent baseline (one Sonnet 4.7 in a single worktree).
+8. **Eval.** Запустите на 50 issues из SWE-bench Pro. Сравните pass@1 и $-per-solved-issue с single-agent baseline (один Sonnet 4.7 в single worktree).
 
-9. **Post-mortem.** For each failed issue, identify the handoff that broke (plan too vague, merge conflict, reviewer false-approve, tester flake). Produce a handoff-failure histogram.
+9. **Post-mortem.** Для каждого failed issue определите handoff, который сломался (слишком расплывчатый plan, merge conflict, reviewer false-approve, tester flake). Создайте гистограмму handoff-failure.
 
-## Use It
+## Используйте
 
 ```
 $ team run --issue https://github.com/acme/widget/issues/842
@@ -102,50 +102,50 @@ $ team run --issue https://github.com/acme/widget/issues/842
 [pr]        opened #3382   4 coders, 1 revision, $4.90, 18m
 ```
 
-## Ship It
+## Сдайте
 
-`outputs/skill-multi-agent-team.md` is the deliverable. Given an issue URL and parallelism level, the team produces a merge-ready PR with per-role token accounting.
+`outputs/skill-multi-agent-team.md` - deliverable. Для заданного issue URL и уровня parallelism команда создает merge-ready PR с per-role token accounting.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
-| 25 | SWE-bench Pro pass@1 | Matched 50-issue subset, pass@1 |
+| 25 | SWE-bench Pro pass@1 | Согласованное подмножество из 50 issues, pass@1 |
 | 20 | Parallel speedup | Wall-clock vs single-agent baseline |
 | 20 | Review quality | False-approval rate on injected-bug probe |
-| 20 | Token efficiency | Total tokens per solved issue vs single-agent |
-| 15 | Coordination engineering | Merge-conflict resolution, handoff-failure histogram |
+| 20 | Token efficiency | Total tokens на solved issue относительно single-agent |
+| 15 | Coordination engineering | Merge-conflict resolution, гистограмму handoff-failure |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Inject an obvious bug into a diff mid-run (extra `return None` before the main body). Measure the reviewer's false-approve rate. Tune the reviewer prompt until false-approval is under 5%.
+1. Вставьте очевидный bug в diff mid-run (лишний `return None` перед main body). Измерьте reviewer false-approve rate. Настраивайте reviewer prompt, пока false-approval не станет ниже 5%.
 
-2. Reduce to two coders (architect + coder + reviewer + tester, coder runs two subtasks sequentially). Compare wall-clock and pass rate.
+2. Сократите до two coders (architect + coder + reviewer + tester, coder выполняет two subtasks sequentially). Сравните wall-clock и pass rate.
 
-3. Replace the merge coordinator with a single-writer constraint (subtasks touch disjoint file sets). Measure the planning burden on the architect.
+3. Замените merge coordinator на single-writer constraint (subtasks touch disjoint file sets). Измерьте planning burden на architect.
 
-4. Swap reviewer from GPT-5.4 to Claude Opus 4.7. Measure false-approval rate and token cost delta.
+4. Замените reviewer с GPT-5.4 на Claude Opus 4.7. Измерьте false-approval rate и token cost delta.
 
-5. Add a fifth role: documenter (Haiku 4.5). After review, it produces a changelog entry. Measure whether documentation quality justifies the extra token spend.
+5. Добавьте fifth role: documenter (Haiku 4.5). После review он создает changelog entry. Измерьте, оправдывает ли documentation quality дополнительные token spend.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Parallel worktree | "Isolated branch" | `git worktree add` producing a fresh working tree per coder |
-| Task board | "Shared message bus" | File or Redis store of typed messages agents subscribe to |
-| Handoff | "Role boundary" | Any message crossing from one role's context to another's |
-| Token amplification | "Multi-agent overhead" | Total tokens across roles / single-agent tokens for the same task |
-| A2A protocol | "Agent-to-agent" | Google's 2025 spec for typed inter-agent messages |
-| Merge coordinator | "Integrator" | Component that runs three-way merge and mediates conflicts |
-| False approval | "Reviewer hallucination" | Reviewer approves a diff with known bugs |
+| Parallel worktree | "Isolated branch" | `git worktree add`, создающий свежий working tree для каждого coder |
+| Task board | "Shared message bus" | File или Redis store typed messages, на которые подписываются agents |
+| Handoff | "Role boundary" | Любое message, пересекающее context одной role и попадающее в context другой |
+| Token amplification | "Multi-agent overhead" | Total tokens по roles / single-agent tokens для той же task |
+| A2A protocol | "Agent-to-agent" | Спецификация Google 2025 для typed inter-agent messages |
+| Merge coordinator | "Integrator" | Component, который выполняет three-way merge и mediates conflicts |
+| False approval | "Reviewer hallucination" | Reviewer одобряет diff с известными bugs |
 
-## Further Reading
+## Дополнительное чтение
 
-- [SWE-AF factory architecture](https://github.com/Agent-Field/SWE-AF) — the reference 2026 multi-agent factory
+- [SWE-AF factory architecture](https://github.com/Agent-Field/SWE-AF) — reference multi-agent factory 2026 года
 - [MetaGPT](https://github.com/FoundationAgents/MetaGPT) — role-based multi-agent framework
-- [AutoGen v0.4](https://github.com/microsoft/autogen) — Microsoft's typed actor framework
+- [AutoGen v0.4](https://github.com/microsoft/autogen) — typed actor framework от Microsoft
 - [Cognition AI (Devin)](https://cognition.ai) — reference product
-- [Factory Droids](https://www.factory.ai) — alternate reference product
-- [Google A2A protocol](https://developers.google.com/agent-to-agent) — inter-agent messaging spec
-- [git worktree documentation](https://git-scm.com/docs/git-worktree) — the isolation substrate
-- [SWE-bench Pro](https://www.swebench.com) — the evaluation target
+- [Factory Droids](https://www.factory.ai) — альтернативный reference product
+- [Google A2A protocol](https://developers.google.com/agent-to-agent) — спецификация inter-agent messaging
+- [git worktree documentation](https://git-scm.com/docs/git-worktree) — isolation substrate
+- [SWE-bench Pro](https://www.swebench.com) — цель оценки

@@ -1,26 +1,26 @@
 # Capstone 01 — Terminal-Native Coding Agent
 
-> By 2026 the shape of a coding agent is settled. A TUI harness, a stateful plan, a sandboxed tool surface, a loop that plans, acts, observes, recovers. Claude Code, Cursor 3, and OpenCode all look the same from 50 feet. This capstone asks you to build one end to end — CLI in, pull request out — and measure it against mini-swe-agent and Live-SWE-agent on SWE-bench Pro. You will learn why the hard part is not the model call but the tool loop, the sandbox, and the cost ceiling on a 50-turn run.
+> К 2026 году форма coding agent уже устоялась. TUI-harness, stateful plan, sandboxed tool surface, цикл, который планирует, действует, наблюдает и восстанавливается. Claude Code, Cursor 3 и OpenCode с высоты 50 футов выглядят одинаково. Этот capstone предлагает собрать такой агент от начала до конца — от CLI до pull request — и измерить его относительно mini-swe-agent и Live-SWE-agent на SWE-bench Pro. Вы поймете, почему сложная часть — не вызов модели, а tool loop, sandbox и потолок стоимости на 50-turn run.
 
-**Type:** Capstone
-**Languages:** TypeScript / Bun (harness), Python (eval scripts)
-**Prerequisites:** Phase 11 (LLM engineering), Phase 13 (tools and protocols), Phase 14 (agents), Phase 15 (autonomous systems), Phase 17 (infrastructure)
-**Phases exercised:** P0 · P5 · P7 · P10 · P11 · P13 · P14 · P15 · P17 · P18
-**Time:** 35 hours
+**Тип:** Capstone
+**Языки:** TypeScript / Bun (harness), Python (eval scripts)
+**Предварительные требования:** Phase 11 (LLM engineering), Phase 13 (tools and protocols), Phase 14 (agents), Phase 15 (autonomous systems), Phase 17 (infrastructure)
+**Задействованные фазы:** P0 · P5 · P7 · P10 · P11 · P13 · P14 · P15 · P17 · P18
+**Время:** 35 часов
 
-## Problem
+## Проблема
 
-Coding agents became the dominant AI application category in 2026. Claude Code (Anthropic), Cursor 3 with Composer 2 and Agent Tabs (Cursor), Amp (Sourcegraph), OpenCode (112k stars), Factory Droids, and Google Jules all ship variations of the same architecture: a terminal harness, a permissioned tool surface, a sandbox, and a plan-act-observe loop built around a frontier model. The frontier is narrow — Live-SWE-agent reached 79.2% on SWE-bench Verified with Opus 4.5 — but the engineering craft is wide. Most failure modes are not model mistakes. They are tool-loop instability, context poisoning, runaway token cost, and destructive filesystem operations.
+Coding agents стали доминирующей категорией AI-приложений в 2026 году. Claude Code (Anthropic), Cursor 3 with Composer 2 and Agent Tabs (Cursor), Amp (Sourcegraph), OpenCode (112k stars), Factory Droids и Google Jules поставляют вариации одной архитектуры: terminal harness, permissioned tool surface, sandbox и plan-act-observe loop вокруг frontier model. Передний край узкий — Live-SWE-agent достиг 79.2% на SWE-bench Verified с Opus 4.5 — но инженерная область широкая. Большинство отказов — не ошибки модели. Это нестабильность tool loop, context poisoning, runaway token cost и разрушительные операции с filesystem.
 
-You cannot reason about these agents from the outside. You have to build one, watch the loop crash on turn 47 when ripgrep returns 8MB of matches, and rebuild the truncation layer. That is the point of this capstone.
+Невозможно понять эти агенты снаружи. Нужно собрать свой, увидеть, как loop падает на turn 47, когда ripgrep возвращает 8MB совпадений, и перестроить truncation layer. В этом смысл capstone.
 
-## Concept
+## Концепция
 
-The harness has four surfaces. **Plan** maintains a TodoWrite-style state object that the model rewrites each turn. **Act** dispatches tool calls (read, edit, run, search, git). **Observe** captures stdout / stderr / exit codes, truncates, and feeds the summary back. **Recover** handles tool errors without blowing the context window or looping forever. The 2026 shape adds one more thing: **hooks**. `PreToolUse`, `PostToolUse`, `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `Notification`, `Stop`, and `PreCompact` — configurable extension points where the operator injects policy, telemetry, and guardrails.
+У harness четыре поверхности. **Plan** поддерживает state object в стиле TodoWrite, который модель переписывает на каждом turn. **Act** dispatches tool calls (read, edit, run, search, git). **Observe** захватывает stdout / stderr / exit codes, обрезает и возвращает summary обратно. **Recover** обрабатывает tool errors, не взрывая context window и не зацикливаясь навсегда. Форма 2026 года добавляет еще одну вещь: **hooks**. `PreToolUse`, `PostToolUse`, `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `Notification`, `Stop` и `PreCompact` — настраиваемые extension points, куда operator внедряет policy, telemetry и guardrails.
 
-The sandbox is E2B or Daytona. Each task runs in a fresh devcontainer with a git worktree mounted read-write. The harness never touches the host filesystem. The worktree gets torn down on success or failure. Cost control is enforced at three layers: a per-turn token ceiling, a per-session dollar budget, and a hard turn limit (typically 50). The observability layer is OpenTelemetry spans with GenAI semantic conventions, shipped to a self-hosted Langfuse.
+Sandbox — это E2B или Daytona. Каждая task запускается в свежем devcontainer с git worktree, смонтированным read-write. Harness никогда не трогает host filesystem. Worktree уничтожается при успехе или ошибке. Cost control enforced на трех уровнях: per-turn token ceiling, per-session dollar budget и hard turn limit (обычно 50). Observability layer — OpenTelemetry spans с GenAI semantic conventions, отправляемые в self-hosted Langfuse.
 
-## Architecture
+## Архитектура
 
 ```
   user CLI  ->  harness (Bun + Ink TUI)
@@ -50,7 +50,7 @@ The sandbox is E2B or Daytona. Each task runs in a fresh devcontainer with a git
            PR via GitHub app
 ```
 
-## Stack
+## Стек
 
 - Harness runtime: Bun 1.2 + Ink 5 (React-in-terminal)
 - Model access: OpenRouter unified API with Claude Sonnet 4.7, GPT-5.4-Codex, Gemini 3 Pro, Opus 4.5 (for hardest tasks)
@@ -62,25 +62,25 @@ The sandbox is E2B or Daytona. Each task runs in a fresh devcontainer with a git
 - Observability: OpenTelemetry SDK with `gen_ai.*` semconv → self-hosted Langfuse
 - PR posting: GitHub App with fine-grained token, scope limited to the target repo
 
-## Build It
+## Соберите
 
-1. **TUI and command loop.** Scaffold a Bun project with Ink. Accept `agent run <repo> "<task>"`. Print a split view: plan pane (top), tool-call stream (middle), token budget (bottom). Add cancel on Ctrl-C that fires `SessionEnd` hook before exit.
+1. **TUI and command loop.** Создайте scaffold Bun project с Ink. Принимайте `agent run <repo> "<task>"`. Выводите split view: plan pane (top), tool-call stream (middle), token budget (bottom). Добавьте cancel по Ctrl-C, который запускает hook `SessionEnd` перед выходом.
 
-2. **Plan state.** Define a typed TodoWrite schema (pending / in_progress / done items with notes). Model rewrites the full state each turn as a tool call — do not let it mutate incrementally. Persist plan to `.agent/state.json` so crashes can resume.
+2. **Plan state.** Определите typed TodoWrite schema (pending / in_progress / done items with notes). Модель переписывает полный state на каждом turn как tool call — не позволяйте ей mutate incrementally. Persist plan в `.agent/state.json`, чтобы после crash можно было resume.
 
-3. **Tool surface.** Define six tools: `read_file`, `edit_file` (with diff preview), `ripgrep`, `tree_sitter_symbols`, `run_shell` (with timeout), `git` (status / diff / commit / push). Expose over MCP StreamableHTTP so the harness is transport-agnostic. Every tool returns truncated output (cap at 4k tokens per call).
+3. **Tool surface.** Определите шесть tools: `read_file`, `edit_file` (with diff preview), `ripgrep`, `tree_sitter_symbols`, `run_shell` (with timeout), `git` (status / diff / commit / push). Expose over MCP StreamableHTTP, чтобы harness был transport-agnostic. Каждый tool возвращает truncated output (cap at 4k tokens per call).
 
-4. **Sandbox wrapping.** Each task spawns an E2B sandbox. `git worktree add -b agent/$TASK_ID` a fresh branch. All tool calls execute inside the sandbox. Host filesystem is unreachable.
+4. **Sandbox wrapping.** Каждая task создает E2B sandbox. `git worktree add -b agent/$TASK_ID` свежую branch. Все tool calls выполняются внутри sandbox. Host filesystem недоступна.
 
-5. **Hooks.** Implement all eight 2026 hook types. Wire at least four user-authored hooks: (a) `PreToolUse` destructive-command guard that blocks `rm -rf` outside the worktree, (b) `PostToolUse` token accounting, (c) `SessionStart` budget initialization, (d) `Stop` writes a final trace bundle.
+5. **Hooks.** Реализуйте все восемь hook types 2026 года. Подключите как минимум четыре user-authored hooks: (a) `PreToolUse` destructive-command guard, который блокирует `rm -rf` outside the worktree, (b) `PostToolUse` token accounting, (c) `SessionStart` budget initialization, (d) `Stop` writes a final trace bundle.
 
-6. **Eval loop.** Clone a 30-issue subset of SWE-bench Pro Python. Run your harness against each. Compare to mini-swe-agent (the minimal baseline) on pass@1, turns-per-task, and $-per-task. Write the results to `eval/results.jsonl`.
+6. **Eval loop.** Склонируйте 30-issue subset of SWE-bench Pro Python. Запустите harness на каждой. Сравните с mini-swe-agent (minimal baseline) по pass@1, turns-per-task и $-per-task. Запишите результаты в `eval/results.jsonl`.
 
-7. **Cost control.** Hard cutoffs: 50 turns, 200k context, $5 per task. `PreCompact` hook summarizes older turns into a prior-state block at the 150k mark, freeing room for new observations without losing the plan.
+7. **Cost control.** Hard cutoffs: 50 turns, 200k context, $5 per task. Hook `PreCompact` summarizes older turns into a prior-state block на отметке 150k, освобождая место для новых observations без потери plan.
 
-8. **PR posting.** On success, the final step is `git push` + a GitHub API call that opens a PR with the plan and the diff summary in the body.
+8. **PR posting.** При успехе final step — `git push` + GitHub API call, который открывает PR с plan и diff summary в body.
 
-## Use It
+## Использование
 
 ```
 $ agent run ./my-repo "Fix the race condition in worker.rs"
@@ -95,11 +95,11 @@ $ agent run ./my-repo "Fix the race condition in worker.rs"
 [done]  PR opened: #482   turns=9   tokens=38k   cost=$0.41
 ```
 
-## Ship It
+## Что сдавать
 
-The deliverable skill lives in `outputs/skill-terminal-coding-agent.md`. Given a repo path and a task description, it runs the full plan-act-observe loop in a sandbox and returns a PR URL plus a trace bundle. The rubric for this capstone:
+Deliverable skill живет в `outputs/skill-terminal-coding-agent.md`. По repo path и task description он запускает полный plan-act-observe loop в sandbox и возвращает PR URL плюс trace bundle. Rubric для этого capstone:
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
 | 25 | SWE-bench Pro pass@1 vs baseline | Your harness vs mini-swe-agent on 30 matched Python tasks |
 | 20 | Architecture clarity | Plan/act/observe separation, hook surface, tool schema — reviewed against Live-SWE-agent layout |
@@ -108,31 +108,31 @@ The deliverable skill lives in `outputs/skill-terminal-coding-agent.md`. Given a
 | 15 | Developer UX | Cold-start < 2s, crash recovery resumes plan, Ctrl-C cancels mid-tool cleanly |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Swap the backing model from Claude Sonnet 4.7 to Qwen3-Coder-30B served on vLLM. Compare pass@1 and $-per-task. Report where the open model underperforms.
+1. Замените backing model с Claude Sonnet 4.7 на Qwen3-Coder-30B, served on vLLM. Сравните pass@1 и $-per-task. Сообщите, где open model underperforms.
 
-2. Add a `reviewer` sub-agent that reads the diff before PR posting and can request a revision loop. Measure whether false-positive reviews drop SWE-bench pass rate below the single-agent baseline (hint: usually yes).
+2. Добавьте `reviewer` sub-agent, который читает diff перед PR posting и может запросить revision loop. Измерьте, снижает ли false-positive reviews SWE-bench pass rate ниже single-agent baseline (hint: usually yes).
 
-3. Stress-test the sandbox: write a task that tries to `curl` an external URL and a task that writes outside the worktree. Confirm both are blocked by the PreToolUse hook. Log the attempts.
+3. Stress-test sandbox: напишите task, которая пытается `curl` external URL, и task, которая пишет outside the worktree. Подтвердите, что обе заблокированы PreToolUse hook. Log the attempts.
 
-4. Implement `PreCompact` summarization with a smaller model (Haiku 4.5). Measure how much plan fidelity is lost at 3x compaction.
+4. Реализуйте `PreCompact` summarization с smaller model (Haiku 4.5). Измерьте, сколько plan fidelity теряется при 3x compaction.
 
-5. Swap MCP StreamableHTTP transport for stdio. Benchmark cold-start and per-call latency. Pick a winner for local-only use.
+5. Замените MCP StreamableHTTP transport на stdio. Benchmark cold-start and per-call latency. Выберите winner для local-only use.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как обычно говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
-| Harness | "The agent loop" | The code surrounding the model that dispatches tools, maintains plan state, and enforces budgets |
-| Hook | "Agent event listener" | A user-authored script run on one of eight lifecycle events by the harness |
-| Worktree | "Git sandbox" | A linked git checkout at a separate path; disposable without touching the main clone |
-| TodoWrite | "Plan state" | A typed list of pending/in-progress/done items the model rewrites each turn |
+| Harness | "The agent loop" | Код вокруг модели, который dispatches tools, maintains plan state и enforces budgets |
+| Hook | "Agent event listener" | User-authored script, запускаемый harness на одном из восьми lifecycle events |
+| Worktree | "Git sandbox" | Linked git checkout по отдельному path; disposable без touching the main clone |
+| TodoWrite | "Plan state" | Typed list of pending/in-progress/done items, который модель rewrites each turn |
 | StreamableHTTP | "MCP transport" | 2026 MCP revision: long-lived HTTP connection with bidirectional streaming; replaces SSE |
-| Token ceiling | "Context budget" | Per-turn or per-session cap on input+output tokens; triggers compaction or termination |
-| pass@1 | "Single-attempt pass rate" | Fraction of SWE-bench tasks solved on the first run without retry or test-set peeking |
+| Token ceiling | "Context budget" | Per-turn или per-session cap на input+output tokens; triggers compaction or termination |
+| pass@1 | "Single-attempt pass rate" | Доля SWE-bench tasks, решенных с первого запуска без retry или test-set peeking |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code) — reference harness from Anthropic
 - [Cursor 3 changelog](https://cursor.com/changelog) — Agent Tabs and Composer 2 product notes

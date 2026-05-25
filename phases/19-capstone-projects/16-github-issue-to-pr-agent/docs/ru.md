@@ -1,28 +1,28 @@
 # Capstone 16 — GitHub Issue-to-PR Autonomous Agent
 
-> AWS Remote SWE Agents, Cursor Background Agents, OpenAI Codex cloud, and Google Jules all ship the same 2026 product shape: label an issue, get a PR. Run an agent in a cloud sandbox, verify tests pass, and post a review-ready PR with rationale. The hard parts are reproducing the repo's build environment automatically, preventing credential leakage, enforcing per-repo budgets, and making sure the agent cannot force-push. This capstone builds the self-hosted version and compares it on cost and pass rate to the hosted alternatives.
+> AWS Remote SWE Agents, Cursor Background Agents, OpenAI Codex cloud и Google Jules поставляют один и тот же product shape 2026 года: пометь issue label, получи PR. Запусти agent в cloud sandbox, проверь, что tests проходят, и опубликуй review-ready PR с rationale. Сложные части — автоматическое воспроизведение build environment репозитория, предотвращение credential leakage, enforcement per-repo budgets и гарантия, что agent не может force-push. Этот capstone строит self-hosted version и сравнивает ее по cost и pass rate с hosted alternatives.
 
-**Type:** Capstone
-**Languages:** Python (agent), TypeScript (GitHub App), YAML (Actions)
-**Prerequisites:** Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure)
-**Phases exercised:** P11 · P13 · P14 · P15 · P17
-**Time:** 30 hours
+**Тип:** Capstone
+**Языки:** Python (agent), TypeScript (GitHub App), YAML (Actions)
+**Пререквизиты:** Phase 11 (LLM engineering), Phase 13 (tools), Phase 14 (agents), Phase 15 (autonomous), Phase 17 (infrastructure)
+**Отрабатываемые фазы:** P11 · P13 · P14 · P15 · P17
+**Время:** 30 часов
 
-## Problem
+## Задача
 
-The async cloud coding agent is a separate product category from interactive coding agents (capstone 01). The UX is a GitHub label. You label an issue `@agent fix this`, a worker spins up in a cloud sandbox, clones the repo, runs tests, edits files, verifies, and opens a PR with the agent's rationale in the body. No interactive loop, no terminal. AWS Remote SWE Agents, Cursor Background Agents, OpenAI Codex cloud, Google Jules, and Factory Droids all converge on this.
+Async cloud coding agent — отдельная product category по сравнению с interactive coding agents (capstone 01). UX — это GitHub label. Ты ставишь label `@agent fix this` на issue, worker поднимается в cloud sandbox, клонирует repo, запускает tests, редактирует files, проверяет результат и открывает PR с rationale agent в body. Никакого interactive loop, никакого terminal. AWS Remote SWE Agents, Cursor Background Agents, OpenAI Codex cloud, Google Jules и Factory Droids сходятся к этому.
 
-The engineering challenges are concrete: environment reproduction (the agent has to build the repo from scratch without a cached dev image), flaky tests (must be re-run or isolated), credential scoping (a GitHub App with minimal fine-grained permissions), budget enforcement per repo per day, and no-force-push policy. The capstone measures pass rate, cost, and safety vs the hosted alternatives.
+Engineering challenges конкретны: environment reproduction (agent должен собрать repo с нуля без cached dev image), flaky tests (их нужно перезапускать или изолировать), credential scoping (GitHub App с минимальными fine-grained permissions), budget enforcement per repo per day и no-force-push policy. Capstone измеряет pass rate, cost и safety vs hosted alternatives.
 
-## Concept
+## Концепция
 
-The trigger is a GitHub webhook (issue label or PR comment). A dispatcher enqueues work to ECS Fargate or Lambda. The worker pulls the repo into a Daytona or E2B sandbox with a generic Dockerfile inferred from the repo (language, framework). The agent runs a mini-swe-agent or SWE-agent v2 loop against Claude Opus 4.7 or GPT-5.4-Codex. It iterates: read code, propose fix, apply patch, run tests.
+Trigger — GitHub webhook (issue label или PR comment). Dispatcher ставит work в queue для ECS Fargate или Lambda. Worker забирает repo в Daytona или E2B sandbox с generic Dockerfile, выведенным из repo (language, framework). Agent запускает mini-swe-agent или SWE-agent v2 loop с Claude Opus 4.7 или GPT-5.4-Codex. Он итерирует: read code, propose fix, apply patch, run tests.
 
-Verification is the gating step. Full CI must pass in the sandbox before the PR opens. Coverage delta is computed; if negative beyond a threshold, the PR opens but gets labeled `needs-review`. The agent posts the rationale as the PR description plus an `@agent` thread the reviewer can ping for follow-ups.
+Verification — gating step. Full CI должен пройти в sandbox до открытия PR. Coverage delta вычисляется; если она отрицательна сверх threshold, PR открывается, но получает label `needs-review`. Agent публикует rationale как PR description плюс thread `@agent`, куда reviewer может писать follow-ups.
 
-Safety is scoped through two different GitHub surfaces: the App provides a short-lived installation token with `workflows: read` and narrow repo contents/PR scopes; branch protection (not app permissions) enforces "no direct writes to `main`" and "no force-push" — the app is never added to the bypass list. Path-scoped read-only access to `.github/workflows` is not a real GitHub App primitive, so the agent's allow-list on file edits has to enforce that at the worker. Budget ceilings per repo per day are enforced at the dispatcher (e.g., max 5 PRs per repo per day, $20 per PR).
+Safety ограничивается через две разные GitHub surfaces: App предоставляет short-lived installation token с `workflows: read` и узкими repo contents/PR scopes; branch protection (не app permissions) обеспечивает "no direct writes to `main`" и "no force-push" — app никогда не добавляется в bypass list. Path-scoped read-only access к `.github/workflows` не является настоящим GitHub App primitive, поэтому worker должен enforce allow-list на file edits.
 
-## Architecture
+## Архитектура
 
 ```
 GitHub issue labeled `@agent fix` or PR comment
@@ -54,38 +54,38 @@ GitHub issue labeled `@agent fix` or PR comment
     operator reviews; can @-mention agent for follow-ups
 ```
 
-## Stack
+## Стек
 
-- Trigger: GitHub App with fine-grained token; webhook receiver via Lambda or Fly.io
-- Worker: ECS Fargate task (or GitHub Actions self-hosted runner)
-- Sandbox: Daytona devcontainer or E2B sandbox per task
-- Agent loop: mini-swe-agent baseline or SWE-agent v2 over Claude Opus 4.7 / GPT-5.4-Codex
+- Trigger: GitHub App с fine-grained token; webhook receiver через Lambda или Fly.io
+- Worker: ECS Fargate task (или GitHub Actions self-hosted runner)
+- Sandbox: Daytona devcontainer или E2B sandbox per task
+- Agent loop: mini-swe-agent baseline или SWE-agent v2 over Claude Opus 4.7 / GPT-5.4-Codex
 - Retrieval: tree-sitter repo-map + ripgrep
 - Verification: full CI in-sandbox + coverage delta gate
-- Observability: Langfuse with per-PR trace archive linked from the PR body
+- Observability: Langfuse с per-PR trace archive, ссылка на который есть в PR body
 - Budget: per-repo daily dollar ceiling; max PRs per repo per day
 
-## Build It
+## Сборка
 
-1. **GitHub App.** Fine-grained installation token: issues read+write, pull_requests write, contents read+write, workflows read. Branch protection (the only surface that can do this) enforces "no direct push to `main`" and "no force-push"; the app is not in the bypass list. The worker enforces "no writes under `.github/workflows`" as an allow-list check on the proposed diff, since GitHub App permissions are not path-scoped.
+1. **GitHub App.** Fine-grained installation token: issues read+write, pull_requests write, contents read+write, workflows read. Branch protection (единственная surface, которая может это сделать) обеспечивает "no direct push to `main`" и "no force-push"; app не находится в bypass list. Worker обеспечивает "no writes under `.github/workflows`" как allow-list check на proposed diff, потому что GitHub App permissions не являются path-scoped.
 
-2. **Webhook receiver.** Lambda function accepts issue label / PR comment webhooks. Filters by label `@agent fix this`. Enqueues to SQS.
+2. **Webhook receiver.** Lambda function принимает issue label / PR comment webhooks. Фильтрует по label `@agent fix this`. Ставит в SQS.
 
-3. **Dispatcher.** Pops tasks from SQS. Enforces per-repo per-day budget. Spins up an ECS Fargate task with the repo URL, issue body, and a fresh Daytona sandbox.
+3. **Dispatcher.** Забирает tasks из SQS. Enforces per-repo per-day budget. Поднимает ECS Fargate task с repo URL, issue body и свежим Daytona sandbox.
 
-4. **Environment inference.** Detect language (Python, Node, Go, Rust) and package manager (uv, pnpm, go mod, cargo). Generate a Dockerfile on the fly if one does not exist.
+4. **Environment inference.** Определи language (Python, Node, Go, Rust) и package manager (uv, pnpm, go mod, cargo). Сгенерируй Dockerfile на лету, если он отсутствует.
 
-5. **Agent loop.** mini-swe-agent or SWE-agent v2 with Claude Opus 4.7. Tools: ripgrep, tree-sitter repo-map, read_file, edit_file, run_tests, git. Hard limits: $20 cost, 30 min wall-clock, 30 agent turns.
+5. **Agent loop.** mini-swe-agent или SWE-agent v2 с Claude Opus 4.7. Tools: ripgrep, tree-sitter repo-map, read_file, edit_file, run_tests, git. Hard limits: $20 cost, 30 min wall-clock, 30 agent turns.
 
-6. **Verification.** After the loop concludes, run the full test suite in-sandbox. Compute coverage delta via jacoco / coverage.py. If CI red: halt, do not open PR. If coverage drops more than 2%: open PR with `needs-review` label.
+6. **Verification.** После завершения loop запусти full test suite in-sandbox. Посчитай coverage delta через jacoco / coverage.py. Если CI red: остановись, не открывай PR. Если coverage падает больше чем на 2%: открой PR с label `needs-review`.
 
-7. **PR posting.** Push the agent branch. Open PR via GitHub API with: title, rationale, diff summary, trace URL, cost, turns.
+7. **PR posting.** Push agent branch. Открой PR через GitHub API с: title, rationale, diff summary, trace URL, cost, turns.
 
-8. **Credential hygiene.** Worker runs with a short-lived GitHub App installation token. Logs are scrubbed for secrets before archival.
+8. **Credential hygiene.** Worker работает с short-lived GitHub App installation token. Logs scrubbed for secrets before archival.
 
-9. **Eval.** 30 seeded internal issues of varying difficulty. Measure pass rate, PR quality (diff size, style, coverage), cost, latency. Compare with Cursor Background Agents and AWS Remote SWE Agents on the same issues.
+9. **Eval.** 30 seeded internal issues разной сложности. Измерь pass rate, PR quality (diff size, style, coverage), cost, latency. Сравни с Cursor Background Agents и AWS Remote SWE Agents на тех же issues.
 
-## Use It
+## Использование
 
 ```
 # on github.com
@@ -99,50 +99,50 @@ GitHub issue labeled `@agent fix` or PR comment
     > Label: needs-review
 ```
 
-## Ship It
+## Что сдать
 
-`outputs/skill-issue-to-pr.md` is the deliverable. A GitHub App + async cloud worker that turns labeled issues into review-ready PRs with bounded cost and scoped credentials.
+`outputs/skill-issue-to-pr.md` — deliverable. GitHub App + async cloud worker, который превращает labeled issues в review-ready PRs с bounded cost и scoped credentials.
 
-| Weight | Criterion | How it is measured |
+| Вес | Критерий | Как измеряется |
 |:-:|---|---|
-| 25 | Pass rate on 30 issues | End-to-end success (CI green + coverage OK) |
-| 20 | PR quality | Diff size, coverage delta, style conformance |
-| 20 | Cost and latency per resolved issue | $ and wall-clock per PR |
+| 25 | Pass rate на 30 issues | End-to-end success (CI green + coverage OK) |
+| 20 | PR quality | Diff size, coverage delta, соответствие style |
+| 20 | Cost and latency per resolved issue | $ и wall-clock per PR |
 | 20 | Safety | Scoped token, per-repo budget, no force-push, credential hygiene |
-| 15 | Operator UX | Rationale comments, retry affordance, @-mention follow-up |
+| 15 | Operator UX | Rationale comments, возможность retry, @-mention follow-up |
 | **100** | | |
 
-## Exercises
+## Упражнения
 
-1. Add a "fix flaky test" mode: the label `@agent stabilize-flake TestX` runs the test 50 times in-sandbox and proposes a minimal change that stabilizes it.
+1. Добавь режим "fix flaky test": label `@agent stabilize-flake TestX` запускает test 50 раз in-sandbox и предлагает minimal change, который стабилизирует его.
 
-2. Compare cost vs Cursor Background Agents on three shared issues. Report which tools win where.
+2. Сравни cost vs Cursor Background Agents на трех общих issues. Отчитай, какие tools где выигрывают.
 
-3. Implement a budget dashboard: per-repo per-day cost, per-user cost. Alert on anomaly.
+3. Реализуй budget dashboard: per-repo per-day cost, per-user cost. Alert on anomaly.
 
-4. Build a "dry-run" mode that opens a draft PR without running CI, so reviewers can examine the plan cheap.
+4. Построй "dry-run" mode, который открывает draft PR без запуска CI, чтобы reviewers могли дешево изучить plan.
 
-5. Add a retention policy: PR branches older than 7 days without merge get deleted automatically.
+5. Добавь retention policy: PR branches старше 7 days без merge автоматически удаляются.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле значит |
 |------|-----------------|------------------------|
-| GitHub App | "Scoped bot identity" | App with fine-grained permissions + short-lived installation token |
-| Async cloud agent | "Background agent" | Non-interactive worker that runs in a cloud sandbox, not a terminal |
-| Environment inference | "Dockerfile synthesis" | Detect language + package manager, generate a Dockerfile if absent |
-| Verification | "CI-in-sandbox" | Run the full test suite inside the worker before opening a PR |
-| Coverage delta | "Coverage preservation" | Change in test coverage % from base to agent branch |
-| Per-repo budget | "Daily ceiling" | Dollar and PR-count cap enforced at the dispatcher |
-| Rationale | "PR body explanation" | Agent's summary of what changed and why; required in the PR body |
+| GitHub App | "Scoped bot identity" | App с fine-grained permissions + short-lived installation token |
+| Async cloud agent | "Background agent" | Non-interactive worker, который работает в cloud sandbox, а не в terminal |
+| Environment inference | "Синтез Dockerfile" | Определить language + package manager, сгенерировать Dockerfile при отсутствии |
+| Verification | "CI-in-sandbox" | Запуск full test suite внутри worker перед открытием PR |
+| Coverage delta | "Coverage preservation" | Изменение test coverage % от base до agent branch |
+| Per-repo budget | "Дневной лимит" | Лимит в dollars и PR-count, enforced at the dispatcher |
+| Rationale | "PR body explanation" | Summary agent о том, что изменилось и почему; обязательно в PR body |
 
-## Further Reading
+## Дополнительное чтение
 
-- [AWS Remote SWE Agents](https://github.com/aws-samples/remote-swe-agents) — the canonical async cloud agent reference
+- [AWS Remote SWE Agents](https://github.com/aws-samples/remote-swe-agents) — canonical reference для async cloud agent
 - [SWE-agent](https://github.com/SWE-agent/SWE-agent) — CLI reference
 - [Cursor Background Agents](https://docs.cursor.com/background-agent) — commercial alternative
 - [OpenAI Codex (cloud)](https://openai.com/codex) — hosted competitor
-- [Google Jules](https://jules.google) — Google's hosted version
+- [Google Jules](https://jules.google) — hosted version от Google
 - [Factory Droids](https://www.factory.ai) — alternate commercial reference
 - [GitHub App documentation](https://docs.github.com/en/apps) — scoped bot identity
 - [Daytona cloud sandboxes](https://daytona.io) — reference sandbox
