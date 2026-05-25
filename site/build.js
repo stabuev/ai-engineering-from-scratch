@@ -27,7 +27,7 @@ function parseRoadmap(content) {
 
   for (const line of content.split('\n')) {
     // Match phase headers like: ## Phase 0: Настройка и инструменты — ✅
-    const phaseMatch = line.match(/^##\s+Phase\s+(\d+).*?—\s*(✅|🚧|⬚)/);
+    const phaseMatch = line.match(/^##\s+Фаза\s+(\d+).*?—\s*(✅|🚧|⬚)/);
     if (phaseMatch) {
       const phaseId = parseInt(phaseMatch[1]);
       const statusEmoji = phaseMatch[2];
@@ -74,11 +74,11 @@ function parseReadme(content, roadmapStatuses) {
     // New: ### ![](https://img.shields.io/badge/Phase_0-Setup_&_Tooling-95A5A6?style=for-the-badge) `12 lessons`
     // New: <summary><b>🟣 Phase 1 — Math Foundations</b> &nbsp;<code>22 lessons</code>&nbsp; <em>Description</em></summary>
     const phaseHeaderMatch =
-      line.match(/###\s+Phase\s+(\d+):\s+(.+?)\s*`(\d+)\s+lessons?`/) ||
-      line.match(/###\s+!\[\]\([^)]*?Phase[_\s]+(\d+)[-_]([^?)]+?)-[A-F0-9]{6}[^)]*\)\s*`(\d+)\s+lessons?`/i);
+      line.match(/###\s+Фаза\s+(\d+):\s+(.+?)\s*`(\d+)\s+уроков?`/) ||
+      line.match(/###\s+!\[\]\([^)]*?Фаза[_\s]+(\d+)[-_]([^?)]+?)-[A-F0-9]{6}[^)]*\)\s*`(\d+)\s+уроков?`/i);
     const detailsHeaderMatch =
-      line.match(/<summary><strong>Phase\s+(\d+):\s+(.+?)<\/strong>\s*<code>(\d+)\s+(?:lessons?|projects?)<\/code>.*?<em>(.*?)<\/em>/) ||
-      line.match(/<summary>\s*<b>\s*(?:[^\w\s]+\s+)?Phase\s+(\d+)\s*[—\-:]\s*(.+?)<\/b>.*?<code>(\d+)\s+(?:lessons?|projects?)<\/code>.*?<em>(.*?)<\/em>/);
+      line.match(/<summary><strong>Фаза\s+(\d+):\s+(.+?)<\/strong>\s*<code>(\d+)\s+(?:уроков?|проектов?)<\/code>.*?<em>(.*?)<\/em>/) ||
+      line.match(/<summary>\s*<b>\s*(?:[^\w\s]+\s+)?Фаза\s+(\d+)\s*[—\-:]\s*(.+?)<\/b>.*?<code>(\d+)\s+(?:уроков?|проектов?)<\/code>.*?<em>(.*?)<\/em>/);
 
     if (phaseHeaderMatch) {
       const [, idStr, rawName] = phaseHeaderMatch;
@@ -92,7 +92,7 @@ function parseReadme(content, roadmapStatuses) {
           break;
         }
       }
-      const roadmapKey = `Phase ${id}`;
+      const roadmapKey = `Фаза ${id}`;
       const phaseStatus = roadmapStatuses[roadmapKey]?.phaseStatus || 'planned';
       currentPhase = { id, name: name.trim(), status: phaseStatus, desc, lessons: [] };
       phases.push(currentPhase);
@@ -103,7 +103,7 @@ function parseReadme(content, roadmapStatuses) {
     if (detailsHeaderMatch) {
       const [, idStr, name, , desc] = detailsHeaderMatch;
       const id = parseInt(idStr);
-      const roadmapKey = `Phase ${id}`;
+      const roadmapKey = `Фаза ${id}`;
       const phaseStatus = roadmapStatuses[roadmapKey]?.phaseStatus || 'planned';
       currentPhase = { id, name: name.trim(), status: phaseStatus, desc: desc?.trim() || '', lessons: [] };
       phases.push(currentPhase);
@@ -112,7 +112,7 @@ function parseReadme(content, roadmapStatuses) {
     }
 
     // Detect start of lesson table
-    if (currentPhase && line.match(/^\|\s*#\s*\|\s*Lesson/)) {
+    if (currentPhase && line.match(/^\|\s*#\s*\|\s*Урок/)) {
       inLessonTable = true;
       isCapstoneTable = false;
       continue;
@@ -169,7 +169,7 @@ function parseReadme(content, roadmapStatuses) {
         }
 
         // Get status from roadmap
-        const roadmapKey = `Phase ${currentPhase.id}`;
+        const roadmapKey = `Фаза ${currentPhase.id}`;
         const roadmapPhase = roadmapStatuses[roadmapKey];
         let status = 'planned';
         if (roadmapPhase) {
