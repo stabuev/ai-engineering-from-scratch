@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "In Bayes' theorem, what is the 'prior'?",
-      "options": ["The probability of the evidence", "Your belief about a hypothesis before observing any evidence", "The probability of the evidence given the hypothesis", "The final updated probability after seeing evidence"],
+      "question": "Что такое 'prior' в теореме Байеса?",
+      "options": [
+        "Вероятность наблюдаемых данных",
+        "Ваше убеждение о гипотезе до наблюдения каких-либо данных",
+        "Вероятность данных при условии гипотезы",
+        "Итоговая обновлённая вероятность после наблюдения данных"
+      ],
       "correct": 1,
-      "explanation": "The prior P(A) represents your initial belief about hypothesis A before seeing any data. It gets updated to the posterior P(A|B) after observing evidence B."
+      "explanation": "Prior P(A) представляет начальное убеждение о гипотезе A до просмотра данных. После наблюдения evidence B он обновляется до posterior P(A|B)."
     },
     {
       "stage": "pre",
-      "question": "A rare disease affects 1 in 10,000 people. A 99% accurate test returns positive. What is the approximate probability you have the disease?",
-      "options": ["99%", "About 1%", "50%", "10%"],
+      "question": "Редкая болезнь встречается у 1 из 10,000 человек. Тест с точностью 99% дал положительный результат. Какова приблизительная вероятность, что у вас есть болезнь?",
+      "options": [
+        "99%",
+        "Около 1%",
+        "50%",
+        "10%"
+      ],
       "correct": 1,
-      "explanation": "Despite 99% test accuracy, the disease is so rare (0.01%) that most positive results come from healthy people (false positives). Bayes' theorem gives P(sick|positive) = ~0.98%, not 99%."
+      "explanation": "Несмотря на 99% точность теста, болезнь настолько редкая (0.01%), что большинство положительных результатов приходится на здоровых людей (false positives). Теорема Байеса даёт P(sick|positive) = ~0.98%, а не 99%."
     },
     {
       "stage": "post",
-      "question": "What is Laplace smoothing in a Naive Bayes classifier and why is it necessary?",
-      "options": ["It normalizes feature values to have zero mean and unit variance", "It adds a small count to every feature to prevent zero probabilities from unseen words, which would zero out the entire product", "It smooths the decision boundary between classes", "It reduces the dimensionality of the feature space"],
+      "question": "Что такое сглаживание Лапласа в Naive Bayes classifier и почему оно необходимо?",
+      "options": [
+        "Оно нормализует значения признаков к нулевому среднему и единичной дисперсии",
+        "Оно добавляет небольшой счётчик к каждому признаку, чтобы предотвратить нулевые вероятности для невиденных слов, которые занулили бы всё произведение",
+        "Оно сглаживает границу решений между классами",
+        "Оно уменьшает размерность пространства признаков"
+      ],
       "correct": 1,
-      "explanation": "Without smoothing, a word never seen in spam training data gets P(word|spam)=0, making the entire product zero regardless of other strong spam indicators. Adding 1 to each count prevents this."
+      "explanation": "Без сглаживания слово, ни разу не встречавшееся в обучающих данных spam, получает P(word|spam)=0, из-за чего всё произведение становится нулём независимо от других сильных индикаторов spam. Добавление 1 к каждому счётчику предотвращает это."
     },
     {
       "stage": "post",
-      "question": "How does MAP (Maximum A Posteriori) estimation differ from MLE (Maximum Likelihood Estimation)?",
-      "options": ["MAP uses a larger dataset than MLE", "MAP incorporates a prior distribution over parameters, equivalent to adding regularization, while MLE only uses the likelihood", "MAP is faster to compute than MLE", "MLE always produces better results than MAP"],
+      "question": "Чем MAP (Maximum A Posteriori) estimation отличается от MLE (Maximum Likelihood Estimation)?",
+      "options": [
+        "MAP использует больший набор данных, чем MLE",
+        "MAP включает prior distribution по параметрам, что эквивалентно добавлению регуляризации, тогда как MLE использует только likelihood",
+        "MAP быстрее вычисляется, чем MLE",
+        "MLE всегда даёт лучшие результаты, чем MAP"
+      ],
       "correct": 1,
-      "explanation": "MAP maximizes P(data|params) * P(params) while MLE maximizes P(data|params) alone. The prior P(params) acts as regularization -- a Gaussian prior equals L2 regularization, a Laplace prior equals L1."
+      "explanation": "MAP максимизирует P(data|params) * P(params), а MLE максимизирует только P(data|params). Prior P(params) действует как регуляризация -- гауссов prior соответствует L2-регуляризации, Laplace prior соответствует L1."
     },
     {
       "stage": "post",
-      "question": "In sequential Bayesian updating, you start with Beta(1,1) and observe 7 heads and 3 tails. What is the posterior?",
-      "options": ["Beta(7, 3)", "Beta(8, 4)", "Beta(1.7, 1.3)", "Normal(0.7, 0.1)"],
+      "question": "При последовательном байесовском обновлении вы начинаете с Beta(1,1) и наблюдаете 7 орлов и 3 решки. Какой posterior получится?",
+      "options": [
+        "Beta(7, 3)",
+        "Beta(8, 4)",
+        "Beta(1.7, 1.3)",
+        "Normal(0.7, 0.1)"
+      ],
       "correct": 1,
-      "explanation": "The Beta-Binomial conjugate update adds successes to the first parameter and failures to the second: Beta(1+7, 1+3) = Beta(8, 4). The posterior mean is 8/12 = 0.667."
+      "explanation": "Beta-Binomial сопряжённое обновление добавляет успехи к первому параметру, а неудачи ко второму: Beta(1+7, 1+3) = Beta(8, 4). Среднее posterior равно 8/12 = 0.667."
     }
   ]
 }

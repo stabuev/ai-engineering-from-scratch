@@ -2,66 +2,66 @@
   {
     "id": "feateng-pre-1",
     "stage": "pre",
-    "question": "Why is feature engineering often more impactful than choosing a fancier algorithm?",
+    "question": "Почему feature engineering часто влияет сильнее, чем выбор более сложного алгоритма?",
     "options": [
-      "Feature engineering makes the code run faster",
-      "Good features expose patterns to the model that raw data hides, making even simple models effective",
-      "Feature engineering eliminates the need for a test set",
-      "Fancy algorithms cannot process raw data"
+      "Feature engineering ускоряет выполнение кода",
+      "Хорошие признаки раскрывают модели паттерны, скрытые в сырых данных, делая эффективными даже простые модели",
+      "Feature engineering устраняет необходимость в тестовой выборке",
+      "Сложные алгоритмы не могут обрабатывать сырые данные"
     ],
     "correct": 1,
-    "explanation": "The representation of data matters more than the algorithm. A well-engineered feature like BMI (weight/height^2) directly exposes the relevant pattern, making even logistic regression competitive with complex ensembles."
+    "explanation": "Представление данных важнее алгоритма. Хорошо сконструированный признак вроде BMI (weight/height^2) напрямую раскрывает релевантный паттерн, делая даже логистическую регрессию конкурентной со сложными ансамблями."
   },
   {
     "id": "feateng-pre-2",
     "stage": "pre",
-    "question": "What is one-hot encoding?",
+    "question": "Что такое one-hot encoding?",
     "options": [
-      "Replacing each category with its frequency in the dataset",
-      "Creating one binary column per category, with exactly one column set to 1 per row",
-      "Converting all features to values between 0 and 1",
-      "Encoding the target variable as a probability"
+      "Замена каждой категории ее частотой в датасете",
+      "Создание одного бинарного столбца на категорию, где ровно один столбец равен 1 в каждой строке",
+      "Преобразование всех признаков в значения между 0 и 1",
+      "Кодирование целевой переменной как вероятности"
     ],
     "correct": 1,
-    "explanation": "One-hot encoding creates a binary column for each unique category. For a color feature with values red/blue/green, it produces three columns: is_red, is_blue, is_green."
+    "explanation": "One-hot encoding создает бинарный столбец для каждой уникальной категории. Для признака цвета со значениями red/blue/green он создает три столбца: is_red, is_blue, is_green."
   },
   {
     "id": "feateng-post-1",
     "stage": "post",
-    "question": "What is the data leakage risk with target encoding?",
+    "question": "Каков риск data leakage при target encoding?",
     "options": [
-      "It makes the model too slow to train",
-      "It replaces categories with the mean target value, which can leak information from the test set if not computed on training data only",
-      "It creates too many features",
-      "It only works with binary targets"
+      "Он делает обучение модели слишком медленным",
+      "Он заменяет категории средним значением target, что может утечь информацию из тестовой выборки, если считать не только на обучающих данных",
+      "Он создает слишком много признаков",
+      "Он работает только с бинарными target"
     ],
     "correct": 1,
-    "explanation": "Target encoding replaces each category with the mean target for that category. If computed on the full dataset (including test data), test labels leak into training features, inflating performance estimates."
+    "explanation": "Target encoding заменяет каждую категорию средним target для этой категории. Если считать его на всем датасете (включая тестовые данные), тестовые метки протекают в обучающие признаки, завышая оценку качества."
   },
   {
     "id": "feateng-post-2",
     "stage": "post",
-    "question": "TF-IDF weights a word by its inverse document frequency. What is the effect?",
+    "question": "TF-IDF взвешивает слово по inverse document frequency. Каков эффект?",
     "options": [
-      "Common words like 'the' get high weight because they appear frequently",
-      "Rare, distinctive words get higher weight while common words get lower weight",
-      "All words get equal weight regardless of frequency",
-      "Only the most frequent word in each document is kept"
+      "Частые слова вроде 'the' получают большой вес, потому что часто встречаются",
+      "Редкие, отличительные слова получают больший вес, а частые слова — меньший",
+      "Все слова получают одинаковый вес независимо от частоты",
+      "Сохраняется только самое частое слово в каждом документе"
     ],
     "correct": 1,
-    "explanation": "IDF = log(total docs / docs containing word). Common words (appearing in many documents) get low IDF. Rare, distinctive words get high IDF, making them more influential in the representation."
+    "explanation": "IDF = log(total docs / docs containing word). Частые слова (встречающиеся во многих документах) получают низкий IDF. Редкие, отличительные слова получают высокий IDF и сильнее влияют на представление."
   },
   {
     "id": "feateng-post-3",
     "stage": "post",
-    "question": "You have two features with correlation 0.98. Why might you remove one?",
+    "question": "У вас есть два признака с корреляцией 0.98. Почему можно удалить один из них?",
     "options": [
-      "Highly correlated features always cause the model to crash",
-      "They are redundant -- both carry nearly the same information, and keeping both increases overfitting risk without adding signal",
-      "Correlated features make the data non-stationary",
-      "Correlation above 0.5 means the features are measuring different things"
+      "Сильно коррелированные признаки всегда приводят модель к сбою",
+      "Они избыточны -- оба несут почти одну и ту же информацию, а сохранение обоих повышает риск переобучения без добавления сигнала",
+      "Коррелированные признаки делают данные нестационарными",
+      "Корреляция выше 0.5 означает, что признаки измеряют разные вещи"
     ],
     "correct": 1,
-    "explanation": "Features with r=0.98 are nearly redundant. Keeping both adds a noisy duplicate that increases dimensionality, overfitting risk, and multicollinearity without providing new information about the target."
+    "explanation": "Признаки с r=0.98 почти избыточны. Сохранение обоих добавляет шумную копию, увеличивает размерность, риск переобучения и мультиколлинеарность, не давая новой информации о target."
   }
 ]

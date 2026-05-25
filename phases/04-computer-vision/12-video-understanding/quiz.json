@@ -2,63 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why does a 2D+pool video model fail on the Something-Something V2 dataset?",
+      "question": "Почему video model 2D+pool проваливается на датасете Something-Something V2?",
       "options": [
-        "The images are too small",
-        "The model architecture is incompatible",
-        "The dataset's labels are defined by motion direction ('pushing something from left to right'), not appearance; order-invariant average pooling over per-frame features cannot distinguish motion direction",
-        "There are too many classes"
+        "Изображения слишком маленькие",
+        "Архитектура модели несовместима",
+        "Метки датасета определяются направлением движения ('pushing something from left to right'), а не внешним видом; order-invariant average pooling по per-frame features не различает направление движения",
+        "Слишком много классов"
       ],
       "correct": 2,
-      "explanation": "Something-Something labels are literally 'X moved left to right' vs 'X moved right to left'. The two look identical in any single frame, and averaging frame embeddings is order-invariant so pool(f1, f2, ..., fT) == pool(fT, ..., f2, f1). Motion-defined labels require a model that attends to temporal order."
+      "explanation": "Метки Something-Something буквально различают 'X moved left to right' и 'X moved right to left'. В одном кадре они выглядят одинаково, а усреднение frame embeddings инвариантно к порядку: pool(f1, f2, ..., fT) == pool(fT, ..., f2, f1). Для motion-defined labels нужна модель, учитывающая temporal order."
     },
     {
       "stage": "pre",
-      "question": "What is I3D's inflation trick?",
+      "question": "Что такое inflation trick в I3D?",
       "options": [
-        "A way to pretrain on more images",
-        "Take a 2D CNN's pretrained kernels, copy each along a new time axis (dividing by kernel_T to preserve activation scale), and use them to initialise a 3D CNN \u2014 giving the 3D model strong weights without 3D pretraining",
-        "A scheduler for learning rates",
-        "A method for compressing videos"
+        "Способ pretrain на большем числе images",
+        "Взять pretrained kernels 2D CNN, скопировать каждый вдоль новой time axis (деля на kernel_T для сохранения activation scale) и использовать их для инициализации 3D CNN — так 3D model получает сильные weights без 3D pretraining",
+        "Scheduler для learning rates",
+        "Метод сжатия videos"
       ],
       "correct": 1,
-      "explanation": "Inflation bootstraps 3D video models from strong 2D ImageNet weights. A 3x3 2D kernel becomes a 3x3x3 3D kernel by replicating along T with a 1/kernel_T rescale. It transfers object and texture features learnt on ImageNet directly into the video model, which is why I3D was the first 3D model to seriously beat 2D+pool baselines."
+      "explanation": "Inflation инициализирует 3D video models сильными 2D ImageNet weights. Ядро 3x3 становится 3x3x3 путем replication вдоль T с rescale 1/kernel_T. Это переносит object и texture features из ImageNet в video model, поэтому I3D первым серьезно обошел 2D+pool baselines."
     },
     {
       "stage": "post",
-      "question": "A (2+1)D factorised convolution splits a 3D conv into which two operations?",
+      "question": "На какие две операции раскладывает 3D conv факторизованная свертка (2+1)D?",
       "options": [
-        "One temporal conv followed by one depthwise conv",
-        "A grouped conv and a 1x1 conv",
-        "Two 3D convs with different strides",
-        "A spatial 1x3x3 conv followed by a temporal 3x1x1 conv, with a BN+ReLU in between to add a non-linearity that full 3D convs do not have"
+        "Одна temporal conv, затем одна depthwise conv",
+        "Grouped conv и 1x1 conv",
+        "Две 3D conv с разными strides",
+        "Spatial 1x3x3 conv, затем temporal 3x1x1 conv, с BN+ReLU между ними для добавления нелинейности, которой нет в полной 3D conv"
       ],
       "correct": 3,
-      "explanation": "(2+1)D factorises the 3x3x3 kernel into (1x3x3) then (3x1x1). The two convs have a non-linearity between them (BN+ReLU), which increases expressive power per parameter. On Kinetics, R(2+1)D-34 outperforms an equivalent R3D-34 with fewer params \u2014 the extra non-linearity is doing real work."
+      "explanation": "(2+1)D факторизует ядро 3x3x3 в (1x3x3), затем (3x1x1). Между двумя conv есть нелинейность (BN+ReLU), повышающая выразительность на параметр. На Kinetics R(2+1)D-34 превосходит эквивалентный R3D-34 с меньшим числом params."
     },
     {
       "stage": "post",
-      "question": "In a video transformer, what does 'divided attention' mean?",
+      "question": "Что означает 'divided attention' в video transformer?",
       "options": [
-        "Attention over half the tokens",
-        "Each transformer block has two attention modules: one over tokens at the same spatial position across time (temporal attention), then one over tokens at the same timestep across space (spatial attention) \u2014 breaking the O((T*H*W)^2) full attention into O(T^2) + O((H*W)^2)",
-        "Attention applied only during training",
-        "Attention that skips some layers"
+        "Attention по половине tokens",
+        "Каждый transformer block имеет два attention modules: по tokens в одной spatial position через время (temporal attention), затем по tokens в одном timestep через space (spatial attention), разбивая O((T*H*W)^2) full attention на O(T^2) + O((H*W)^2)",
+        "Attention применяется только при training",
+        "Attention пропускает некоторые layers"
       ],
       "correct": 1,
-      "explanation": "Full joint spatio-temporal attention is O((T*H*W)^2), which is infeasible for long videos. Divided attention (TimeSformer) alternates temporal and spatial attention within each block, bringing cost to O(T^2 + (H*W)^2). It trades off a theoretical loss in expressivity for tractable training; in practice divided attention matches or beats joint on most benchmarks."
+      "explanation": "Полный joint spatio-temporal attention имеет O((T*H*W)^2), что невозможно для длинных videos. Divided attention (TimeSformer) чередует temporal и spatial attention внутри блока, снижая cost до O(T^2 + (H*W)^2). Практически это часто совпадает или превосходит joint attention."
     },
     {
       "stage": "post",
-      "question": "Your Kinetics-400 model reports 76% clip accuracy and 82% video accuracy. What does the gap tell you?",
+      "question": "Kinetics-400 model сообщает 76% clip accuracy и 82% video accuracy. Что говорит разрыв?",
       "options": [
-        "Per-clip predictions are noisy; averaging predictions across multiple sampled clips per video (test-time augmentation) stabilises the result. A large gap suggests the model's features are sensitive to which 8-frame window was sampled, and longer clips or stronger spatial augmentation during training would shrink the gap",
-        "The model is broken",
-        "The test set is too small",
-        "Clip accuracy is always lower than video accuracy by definition"
+        "Per-clip predictions шумные; усреднение predictions по нескольким sampled clips на video стабилизирует результат. Большой gap означает чувствительность features к выбранному 8-frame window, а longer clips или stronger spatial augmentation уменьшили бы gap",
+        "Модель сломана",
+        "Test set слишком мал",
+        "Clip accuracy всегда ниже video accuracy по определению"
       ],
       "correct": 0,
-      "explanation": "Clip accuracy evaluates the model on a single sampled window; video accuracy averages predictions across multiple windows. A 6-point gap means the model is sensitive to which window you sampled. Closing the gap means the model has generalised better across the temporal distribution of each video \u2014 which is what you want in deployment. Report both numbers always."
+      "explanation": "Clip accuracy оценивает модель на одном sampled window; video accuracy усредняет predictions по нескольким windows. Разрыв 6 пунктов означает чувствительность к выбранному window. Закрытие gap означает лучшую generalisation по temporal distribution каждого video. Всегда сообщайте оба числа."
     }
   ]
 }

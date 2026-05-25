@@ -2,19 +2,19 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the 'shape' of a tensor describe?",
+      "question": "Что описывает 'shape' тензора?",
       "options": [
-        "A tuple listing the size along each axis",
-        "The total number of elements in the tensor",
-        "The data type of the tensor elements",
-        "The memory address of the tensor"
+        "Кортеж с размером по каждой оси",
+        "Общее количество элементов в тензоре",
+        "Тип данных элементов тензора",
+        "Адрес памяти тензора"
       ],
       "correct": 0,
-      "explanation": "The shape is a tuple listing the size along each axis. For example, a tensor with shape (2, 3, 4) has 2 elements along axis 0, 3 along axis 1, and 4 along axis 2."
+      "explanation": "Shape — это кортеж с размером по каждой оси. Например, тензор shape (2, 3, 4) имеет 2 элемента по оси 0, 3 по оси 1 и 4 по оси 2."
     },
     {
       "stage": "pre",
-      "question": "In PyTorch, what layout does an image batch tensor use by default?",
+      "question": "Какой layout по умолчанию использует tensor batch изображений в PyTorch?",
       "options": [
         "NHWC (batch, height, width, channels)",
         "NCHW (batch, channels, height, width)",
@@ -22,43 +22,43 @@
         "WHCN (width, height, channels, batch)"
       ],
       "correct": 1,
-      "explanation": "PyTorch defaults to NCHW (channels-first) layout. TensorFlow defaults to NHWC (channels-last). Mismatched layouts cause silent errors or performance issues."
+      "explanation": "PyTorch по умолчанию использует layout NCHW (channels-first). TensorFlow по умолчанию использует NHWC (channels-last). Несовпадающие layouts вызывают тихие ошибки или проблемы производительности."
     },
     {
       "stage": "post",
-      "question": "What is the result shape when broadcasting tensors of shape (8, 1, 6, 1) and (7, 1, 5)?",
+      "question": "Какой shape получится при broadcasting тензоров shape (8, 1, 6, 1) и (7, 1, 5)?",
       "options": [
         "(8, 7, 6, 1)",
         "(8, 1, 6, 5)",
         "(8, 7, 6, 5)",
-        "Broadcasting fails — shapes are incompatible"
+        "Broadcasting не сработает — shapes несовместимы"
       ],
       "correct": 2,
-      "explanation": "Align shapes from the right: (8,1,6,1) and (1,7,1,5). Dimensions are compatible when equal or one is 1. The result takes the maximum along each axis: (8, 7, 6, 5)."
+      "explanation": "Выравниваем shapes справа: (8,1,6,1) и (1,7,1,5). Размерности совместимы, если равны или одна из них равна 1. Результат берёт максимум по каждой оси: (8, 7, 6, 5)."
     },
     {
       "stage": "post",
-      "question": "In the einsum expression 'bhtd,bhsd->bhts', what happens to the index 'd'?",
+      "question": "В einsum expression 'bhtd,bhsd->bhts' что происходит с индексом 'd'?",
       "options": [
-        "It is kept in the output as a new axis",
-        "It is summed over (contracted) because it appears in both inputs but not the output",
-        "It is broadcast across both tensors",
-        "It is transposed between the two input tensors"
+        "Он сохраняется в output как новая ось",
+        "Он суммируется (сворачивается), потому что есть в обоих inputs, но отсутствует в output",
+        "Он broadcast across оба тензора",
+        "Он транспонируется между двумя input-тензорами"
       ],
       "correct": 1,
-      "explanation": "In einsum, any index that appears in the inputs but not the output is summed over. Index 'd' appears in both 'bhtd' and 'bhsd' but not in the output 'bhts', so it is contracted (multiplied and summed)."
+      "explanation": "В einsum любой индекс, который есть во inputs, но отсутствует в output, суммируется. Индекс 'd' есть и в 'bhtd', и в 'bhsd', но не в output 'bhts', поэтому он сворачивается (умножается и суммируется)."
     },
     {
       "stage": "post",
-      "question": "Why does calling .view() fail on a transposed tensor in PyTorch?",
+      "question": "Почему вызов .view() падает на транспонированном tensor в PyTorch?",
       "options": [
-        "Transposed tensors have a different data type",
-        "The tensor is non-contiguous in memory after transpose, and view requires contiguous data",
-        "View only works on 2D tensors",
-        "Transpose changes the total number of elements"
+        "Транспонированные tensors имеют другой тип данных",
+        "После transpose tensor становится non-contiguous в памяти, а view требует contiguous data",
+        "View работает только с 2D tensors",
+        "Transpose меняет общее число элементов"
       ],
       "correct": 1,
-      "explanation": "Transpose swaps strides without moving data, making the tensor non-contiguous. The .view() operation requires contiguous memory layout. Use .reshape() or call .contiguous() first."
+      "explanation": "Transpose меняет strides без перемещения данных, делая tensor non-contiguous. Операция .view() требует contiguous memory layout. Используйте .reshape() или сначала вызовите .contiguous()."
     }
   ]
 }

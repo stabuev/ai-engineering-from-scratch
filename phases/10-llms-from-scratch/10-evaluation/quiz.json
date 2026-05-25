@@ -1,37 +1,62 @@
 [
   {
-    "question": "Why have benchmarks like MMLU become less useful for comparing frontier models?",
-    "options": ["They test the wrong subjects", "Frontier models have saturated MMLU (scoring 86-89%), compressing the leaderboard to a range where differences are statistical noise", "MMLU was designed for smaller models", "The questions are too easy"],
+    "question": "Почему benchmarks вроде MMLU стали менее полезны для сравнения frontier models?",
+    "options": [
+      "Они тестируют не те предметы",
+      "Frontier models насытили MMLU (86-89%), сжав leaderboard до диапазона, где различия являются statistical noise",
+      "MMLU был создан для smaller models",
+      "Вопросы слишком легкие"
+    ],
     "correct": 1,
-    "explanation": "When GPT-4, Claude 3, and Llama 3 all score 86-89% on MMLU, a 1-point difference is not meaningful. The benchmark no longer discriminates between models, yet it still dominates leaderboard culture.",
+    "explanation": "Когда GPT-4, Claude 3 и Llama 3 получают 86-89% на MMLU, разница в 1 point незначима. Benchmark больше не различает модели, но все еще доминирует в leaderboard culture.",
     "stage": "pre"
   },
   {
-    "question": "What is Goodhart's Law in the context of LLM evaluation?",
-    "options": ["A law about model scaling", "When a measure becomes a target, it ceases to be a good measure -- models and teams optimize for benchmarks instead of real capabilities", "A rule about learning rate schedules", "A theorem about attention mechanisms"],
+    "question": "Что такое Goodhart's Law в контексте LLM evaluation?",
+    "options": [
+      "Закон о model scaling",
+      "Когда мера становится целью, она перестает быть хорошей мерой -- models и teams оптимизируются под benchmarks вместо реальных capabilities",
+      "Правило о learning rate schedules",
+      "Теорема об attention mechanisms"
+    ],
     "correct": 1,
-    "explanation": "Labs optimize for benchmark scores (data contamination, benchmark-specific prompting). The score goes up, but real-world capability doesn't necessarily improve. Your own task-specific eval is the only reliable measure.",
+    "explanation": "Labs оптимизируют benchmark scores (data contamination, benchmark-specific prompting). Score растет, но real-world capability не обязательно улучшается. Только ваш task-specific eval является надежной мерой.",
     "stage": "pre"
   },
   {
-    "question": "What is the LLM-as-judge evaluation approach?",
-    "options": ["Having a human judge evaluate every response", "Using a strong LLM (e.g., GPT-4) to score responses against rubrics, replacing expensive human evaluation at scale", "Training a separate classifier for evaluation", "Using the model to evaluate itself"],
+    "question": "Что такое подход LLM-as-judge evaluation?",
+    "options": [
+      "Человек оценивает каждый response",
+      "Использование сильной LLM (например, GPT-4) для scoring responses по rubrics, заменяя дорогую human evaluation на масштабе",
+      "Training отдельного classifier для evaluation",
+      "Использование модели для оценки самой себя"
+    ],
     "correct": 1,
-    "explanation": "LLM-as-judge uses a capable model to score responses against defined criteria. It's cheaper and faster than human evaluation, though it has biases (e.g., preferring verbose responses) that must be calibrated.",
+    "explanation": "LLM-as-judge использует способную модель для scoring responses по заданным критериям. Это дешевле и быстрее human evaluation, хотя имеет biases (например, preference for verbose responses), которые нужно калибровать.",
     "stage": "post"
   },
   {
-    "question": "Why is building a custom evaluation suite important rather than relying on public benchmarks?",
-    "options": ["Public benchmarks are always wrong", "Public benchmarks test general capabilities; your application has specific requirements that only a custom eval can measure", "Custom evals are easier to build", "Public benchmarks are too expensive"],
+    "question": "Почему важно строить custom evaluation suite, а не полагаться на public benchmarks?",
+    "options": [
+      "Public benchmarks всегда wrong",
+      "Public benchmarks проверяют general capabilities; у вашего application есть specific requirements, которые измерит только custom eval",
+      "Custom evals проще строить",
+      "Public benchmarks слишком дорогие"
+    ],
     "correct": 1,
-    "explanation": "A model scoring 90% on MMLU might fail on your specific task (e.g., extracting dates from legal documents in your format). Only a custom eval with your data, your edge cases, and your success criteria measures what matters.",
+    "explanation": "Модель с 90% на MMLU может провалиться на вашей specific task (например, extraction dates from legal documents in your format). Только custom eval с вашими data, edge cases и success criteria измеряет важное.",
     "stage": "post"
   },
   {
-    "question": "What is data contamination in the context of LLM benchmarks?",
-    "options": ["When training data is corrupted", "When benchmark questions appear in the model's pre-training data, inflating scores without reflecting true capability", "When the model generates incorrect data", "When evaluation data is mislabeled"],
+    "question": "Что такое data contamination в контексте LLM benchmarks?",
+    "options": [
+      "Когда training data повреждены",
+      "Когда benchmark questions попадают в pre-training data модели, завышая scores без отражения true capability",
+      "Когда модель генерирует incorrect data",
+      "Когда evaluation data mislabeled"
+    ],
     "correct": 1,
-    "explanation": "If MMLU questions appeared in the training corpus, the model memorized the answers rather than reasoning about them. This inflates scores and makes benchmark comparisons unreliable. It's a growing problem as training corpora expand.",
+    "explanation": "Если вопросы MMLU были в training corpus, модель запомнила ответы, а не reasoning about them. Это завышает scores и делает benchmark comparisons ненадежными. Проблема растет по мере расширения training corpora.",
     "stage": "post"
   }
 ]

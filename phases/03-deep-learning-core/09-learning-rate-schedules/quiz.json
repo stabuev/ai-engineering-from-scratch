@@ -1,37 +1,37 @@
 [
   {
-    "question": "Why is a constant learning rate usually suboptimal for training neural networks?",
-    "options": ["It uses too much memory", "It's either too high for late training (causes oscillation) or too low for early training (wastes compute)", "Constant learning rates cause overfitting", "They only work with SGD"],
+    "question": "Почему постоянный learning rate обычно неоптимален для обучения нейронных сетей?",
+    "options": ["Он использует слишком много памяти", "Он либо слишком высок для позднего обучения (вызывает осцилляции), либо слишком низок для раннего обучения (тратит вычисления)", "Постоянные learning rates вызывают переобучение", "Они работают только с SGD"],
     "correct": 1,
-    "explanation": "The optimal step size changes during training. Early on, large steps cover ground quickly. Late in training, small steps are needed to settle into a minimum. A constant rate can't serve both needs.",
+    "explanation": "Оптимальный размер шага меняется во время обучения. В начале большие шаги быстро покрывают пространство. В конце обучения нужны маленькие шаги, чтобы стабилизироваться в минимуме. Постоянная скорость не может удовлетворить обе потребности.",
     "stage": "pre"
   },
   {
-    "question": "What is the purpose of learning rate warmup?",
-    "options": ["To prevent overfitting", "To let adaptive optimizer statistics (momentum, variance) stabilize before taking large steps", "To increase the batch size gradually", "To initialize weights properly"],
+    "question": "Какова цель learning rate warmup?",
+    "options": ["Чтобы предотвратить переобучение", "Дать статистикам адаптивного оптимизатора (momentum, variance) стабилизироваться перед большими шагами", "Постепенно увеличить batch size", "Правильно инициализировать веса"],
     "correct": 1,
-    "explanation": "Adam's moment estimates are initialized to zero. Early gradient updates are based on unreliable statistics. Warmup starts with a tiny LR and ramps up, giving Adam time to accumulate meaningful estimates.",
+    "explanation": "Оценки моментов Adam инициализированы нулем. Ранние обновления градиентов основаны на ненадежных статистиках. Warmup начинается с крошечного LR и повышает его, давая Adam время накопить осмысленные оценки.",
     "stage": "pre"
   },
   {
-    "question": "What learning rate schedule do Llama 3, GPT-3, and most modern LLMs use?",
-    "options": ["Constant learning rate", "Step decay every 30 epochs", "Linear warmup followed by cosine decay", "Exponential decay"],
+    "question": "Какое расписание learning rate используют Llama 3, GPT-3 и большинство современных LLM?",
+    "options": ["Постоянный learning rate", "Step decay каждые 30 эпох", "Linear warmup с последующим cosine decay", "Exponential decay"],
     "correct": 2,
-    "explanation": "Linear warmup + cosine decay is the standard for transformer training. Llama 3 used 2000 warmup steps with cosine decay from 3e-4 to 3e-5. This schedule requires no milestone tuning.",
+    "explanation": "Linear warmup + cosine decay — стандарт для обучения трансформеров. Llama 3 использовала 2000 warmup steps с cosine decay от 3e-4 до 3e-5. Это расписание не требует настройки milestones.",
     "stage": "post"
   },
   {
-    "question": "What makes the 1cycle policy different from other schedules?",
-    "options": ["It uses a constant learning rate", "It ramps the learning rate UP in the first half of training, then back down -- the high LR phase acts as regularization", "It only works with SGD", "It requires no hyperparameter tuning"],
+    "question": "Чем политика 1cycle отличается от других расписаний?",
+    "options": ["Она использует постоянный learning rate", "Она повышает learning rate в первой половине обучения, затем снижает обратно -- фаза высокого LR действует как регуляризация", "Она работает только с SGD", "Она не требует настройки гиперпараметров"],
     "correct": 1,
-    "explanation": "Leslie Smith's 1cycle ramps LR from low to high (first half) then high to very low (second half). The high-LR phase helps the model explore more of the loss landscape before settling into the best basin.",
+    "explanation": "1cycle Лесли Смита повышает LR от низкого к высокому (первая половина), затем от высокого к очень низкому (вторая половина). Фаза высокого LR помогает модели исследовать большую часть loss landscape перед тем, как остановиться в лучшей впадине.",
     "stage": "post"
   },
   {
-    "question": "If training loss suddenly spikes and diverges, what is the most likely learning rate issue?",
-    "options": ["Learning rate is too low", "Learning rate is too high, causing the optimizer to overshoot the minimum", "The warmup period is too long", "The schedule decays too slowly"],
+    "question": "Если training loss внезапно подскакивает и расходится, какая проблема с learning rate наиболее вероятна?",
+    "options": ["Learning rate слишком низок", "Learning rate слишком высок, из-за чего оптимизатор перескакивает минимум", "Период warmup слишком длинный", "Расписание затухает слишком медленно"],
     "correct": 1,
-    "explanation": "A learning rate that's too high causes the optimizer to take steps larger than the loss basin, overshooting the minimum and causing the loss to increase. This manifests as sudden divergence.",
+    "explanation": "Слишком высокий learning rate заставляет оптимизатор делать шаги больше basin функции потерь, перескакивать минимум и увеличивать loss. Это проявляется как внезапная расходимость.",
     "stage": "post"
   }
 ]

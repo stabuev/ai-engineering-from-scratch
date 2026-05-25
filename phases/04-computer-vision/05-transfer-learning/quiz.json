@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "You have 500 labelled images for a new task close to the ImageNet distribution. Which regime makes the most sense?",
-      "options": ["Train a ResNet-50 from scratch", "Freeze an ImageNet-pretrained backbone and train only a new linear head", "Fine-tune every layer with the same large LR", "Ignore pretrained weights; small datasets work best with small models"],
+      "question": "У вас есть 500 размеченных изображений для новой задачи, близкой к распределению ImageNet. Какой режим наиболее разумен?",
+      "options": [
+        "Обучить ResNet-50 с нуля",
+        "Заморозить ImageNet-pretrained backbone и обучить только новую linear head",
+        "Fine-tune все слои с одинаковым большим LR",
+        "Игнорировать pretrained weights; малые датасеты лучше работают с малыми моделями"
+      ],
       "correct": 1,
-      "explanation": "With 500 images you do not have enough signal to train a deep network from scratch or to safely fine-tune all layers end-to-end without destroying pretrained features. Freezing the backbone and training only a new head (linear probe) uses the pretrained features directly and is the standard recipe for small, close-domain datasets."
+      "explanation": "На 500 изображениях недостаточно сигнала, чтобы обучать глубокую сеть с нуля или безопасно fine-tune все слои end-to-end без разрушения pretrained features. Заморозка backbone и обучение новой head (linear probe) напрямую использует предобученные признаки и является стандартным рецептом для малых близких доменов."
     },
     {
       "stage": "pre",
-      "question": "Why do early conv layers of an ImageNet-pretrained network transfer well to medical images even though ImageNet contains no X-rays?",
-      "options": ["PyTorch re-initialises early layers automatically", "Early layers encode generic visual primitives — edges, orientations, contrast — that are shared across almost any visual domain; only late layers specialise to ImageNet categories", "ImageNet secretly contains medical data", "Transfer only works when domains match"],
+      "question": "Почему ранние conv-слои ImageNet-pretrained сети хорошо переносятся на медицинские изображения, хотя ImageNet не содержит X-ray?",
+      "options": [
+        "PyTorch автоматически переинициализирует ранние слои",
+        "Ранние слои кодируют общие визуальные примитивы — края, ориентации, контраст — общие почти для любого визуального домена; только поздние слои специализируются на категориях ImageNet",
+        "ImageNet тайно содержит медицинские данные",
+        "Transfer работает только при совпадении доменов"
+      ],
       "correct": 1,
-      "explanation": "Gabor-like filters and simple texture detectors are the features early CNN layers learn on any natural-image corpus. They reflect the statistics of light, shadow, and edges that hold across photography, medical imaging, microscopy, and satellite data. Late layers progressively specialise, which is why fine-tuning focuses on the last few blocks."
+      "explanation": "Gabor-подобные фильтры и простые детекторы текстур — признаки, которые ранние CNN-слои учат на любом корпусе изображений. Они отражают статистики света, теней и краев, общие для фото, медицины, микроскопии и спутниковых данных. Поздние слои специализируются сильнее."
     },
     {
       "stage": "post",
-      "question": "When fine-tuning end-to-end with discriminative learning rates, why should early layers get a smaller LR than late layers?",
-      "options": ["Early layers have fewer parameters", "Early layers encode general features you want to preserve; late layers encode task-specific features that must move; a smaller LR on early layers prevents feature drift and catastrophic forgetting", "PyTorch requires layer-wise LR for correctness", "A smaller LR in the early layers speeds up training"],
+      "question": "При end-to-end fine-tuning с discriminative learning rates почему ранним слоям нужен меньший LR, чем поздним?",
+      "options": [
+        "У ранних слоев меньше параметров",
+        "Ранние слои кодируют общие признаки, которые нужно сохранить; поздние слои кодируют task-specific признаки, которые должны измениться; меньший LR в ранних слоях предотвращает feature drift и catastrophic forgetting",
+        "PyTorch требует layer-wise LR для корректности",
+        "Меньший LR в ранних слоях ускоряет обучение"
+      ],
       "correct": 1,
-      "explanation": "Early layers already encode the right visual primitives; you want tiny updates so those features are preserved. Late layers need to move toward the new task. One learning rate for the whole model forces a compromise that hurts both ends. Discriminative LRs let each stage move at its own pace, which is the empirical sweet spot for fine-tuning."
+      "explanation": "Ранние слои уже кодируют правильные визуальные примитивы, поэтому нужны малые обновления. Поздние слои должны адаптироваться к новой задаче. Один LR для всей модели — компромисс, вредящий обоим концам. Discriminative LRs позволяют каждой стадии двигаться со своей скоростью."
     },
     {
       "stage": "post",
-      "question": "You fine-tune a ResNet on a 10-class medical dataset of 800 grayscale images (replicated to 3 channels). Accuracy is 10% (random chance for 10 classes). What is the most likely cause?",
-      "options": ["You used the wrong loss function", "BatchNorm running statistics are from ImageNet RGB photos and badly mismatch the grayscale-medical distribution, so the first few BN layers produce noise that propagates forward", "ResNet cannot handle grayscale input", "800 images is simply too few for any transfer learning"],
+      "question": "Вы fine-tune ResNet на 10-классовом медицинском датасете из 800 grayscale-изображений (скопированных в 3 канала). Accuracy равна 10% (random chance). Какова наиболее вероятная причина?",
+      "options": [
+        "Использована неправильная loss function",
+        "BatchNorm running statistics взяты из ImageNet RGB-фото и сильно не совпадают с grayscale-medical распределением, поэтому первые BN-слои создают шум, распространяющийся вперед",
+        "ResNet не умеет работать с grayscale input",
+        "800 изображений просто слишком мало для transfer learning"
+      ],
       "correct": 1,
-      "explanation": "BatchNorm keeps running_mean and running_var from ImageNet. On a small, distribution-shifted dataset those buffers never adapt fast enough during a short fine-tune, and BN normalises activations with the wrong stats. Fixes: freeze BN statistics, switch to GroupNorm, or pretrain BN stats with a BN-only warmup pass on the target dataset."
+      "explanation": "BatchNorm хранит running_mean и running_var из ImageNet. На малом сдвинутом датасете эти buffers не успевают адаптироваться за короткий fine-tune, и BN нормализует активации неверными статистиками. Исправления: заморозить BN statistics, перейти на GroupNorm или провести BN-only warmup на target dataset."
     },
     {
       "stage": "post",
-      "question": "You compare two runs: (a) linear probe on frozen ImageNet backbone, 82% accuracy; (b) end-to-end fine-tune, 78% accuracy. What should you conclude?",
-      "options": ["Fine-tuning is not helpful; ship the linear probe", "A fine-tune that ends below the linear probe is almost always a training bug — LR too high, BN mishandled, or scheduler/optimizer misconfigured; diagnose before concluding anything about transfer", "The dataset is too large", "Pretrained weights are bad"],
+      "question": "Вы сравниваете два запуска: (a) linear probe на замороженном ImageNet backbone, 82% accuracy; (b) end-to-end fine-tune, 78% accuracy. Какой вывод?",
+      "options": [
+        "Fine-tuning не помогает; запускайте linear probe",
+        "Fine-tune ниже linear probe почти всегда означает training bug — слишком высокий LR, неверная работа с BN или ошибка scheduler/optimizer; сначала диагностируйте pipeline",
+        "Датасет слишком большой",
+        "Pretrained weights плохие"
+      ],
       "correct": 1,
-      "explanation": "Fine-tuning should always beat or match the linear probe, since the linear probe is a special case of fine-tuning with backbone LR = 0. If fine-tune is worse, the pipeline is actively destroying pretrained features. The fix is to lower backbone LR, apply discriminative LRs, or freeze BN — not to abandon fine-tuning."
+      "explanation": "Fine-tuning должен совпадать или превосходить linear probe, потому что linear probe — частный случай fine-tuning с backbone LR = 0. Если fine-tune хуже, pipeline разрушает pretrained features. Нужно снизить backbone LR, применить discriminative LRs или заморозить BN."
     }
   ]
 }

@@ -1,37 +1,62 @@
 [
   {
-    "question": "Why do AI startups often fail from cost issues rather than model quality?",
-    "options": ["Models are always good enough", "Per-call costs compound rapidly: 10K users making 10 calls/day costs $250/day in tokens before charging a single dollar", "Cost optimization is easy", "API providers offer unlimited free tiers"],
+    "question": "Почему AI startups часто проваливаются из-за costs, а не model quality?",
+    "options": [
+      "Models всегда good enough",
+      "Per-call costs быстро накапливаются: 10K users с 10 calls/day стоят $250/day в tokens еще до первой оплаты",
+      "Cost optimization проста",
+      "API providers дают unlimited free tiers"
+    ],
     "correct": 1,
-    "explanation": "LLM API costs scale linearly with usage. A feature that costs $0.003 per call seems cheap until it's called 100K times/day ($300/day, $9K/month). Without cost optimization, many AI products are unprofitable at scale.",
+    "explanation": "LLM API costs масштабируются линейно с usage. Feature за $0.003 per call кажется дешевой, пока ее не вызывают 100K times/day ($300/day, $9K/month). Без cost optimization многие AI products нерентабельны на масштабе.",
     "stage": "pre"
   },
   {
-    "question": "What is semantic caching for LLM applications?",
-    "options": ["Caching model weights", "Storing responses for previous queries and serving cached responses when a new query is semantically similar (not just exactly matching)", "Caching embeddings only", "Pre-generating all possible responses"],
+    "question": "Что такое semantic caching для LLM applications?",
+    "options": [
+      "Caching model weights",
+      "Хранение responses для previous queries и выдача cached responses, когда new query семантически похож (не только exact match)",
+      "Caching embeddings only",
+      "Предгенерация all possible responses"
+    ],
     "correct": 1,
-    "explanation": "Exact-match caching only helps with identical queries. Semantic caching embeds queries and serves cached responses when cosine similarity exceeds a threshold. 'What's the weather in NYC?' matches 'NYC weather today?'.",
+    "explanation": "Exact-match caching помогает только identical queries. Semantic caching embeds queries и отдает cached responses, когда cosine similarity превышает threshold. 'What's the weather in NYC?' matches 'NYC weather today?'.",
     "stage": "pre"
   },
   {
-    "question": "What is model routing as a cost optimization strategy?",
-    "options": ["Load balancing across servers", "Sending simple queries to cheap/fast models and complex queries to expensive/powerful models based on query classification", "Routing between different API providers", "Caching responses from multiple models"],
+    "question": "Что такое model routing как cost optimization strategy?",
+    "options": [
+      "Load balancing между servers",
+      "Отправка simple queries в cheap/fast models, а complex queries -- в expensive/powerful models на основе query classification",
+      "Routing между different API providers",
+      "Caching responses from multiple models"
+    ],
     "correct": 1,
-    "explanation": "Not every query needs GPT-4. A classifier routes simple questions (FAQ, greetings) to a cheap model (GPT-3.5, Haiku) and complex questions (reasoning, analysis) to an expensive model. This can cut costs 50-80%.",
+    "explanation": "Не каждый query требует GPT-4. Classifier routes simple questions (FAQ, greetings) к cheap model (GPT-3.5, Haiku), а complex questions (reasoning, analysis) -- к expensive model. Это может снизить costs на 50-80%.",
     "stage": "post"
   },
   {
-    "question": "What is prompt compression and how does it reduce costs?",
-    "options": ["Making prompts shorter by removing words", "Removing redundant tokens, summarizing long contexts, and eliminating boilerplate to reduce input token count while preserving essential information", "Compressing prompts with gzip", "Using shorter variable names"],
+    "question": "Что такое prompt compression и как он снижает costs?",
+    "options": [
+      "Делать prompts короче, удаляя words",
+      "Удаление redundant tokens, summarizing long contexts и elimination boilerplate, чтобы снизить input token count при сохранении essential information",
+      "Сжатие prompts через gzip",
+      "Использование shorter variable names"
+    ],
     "correct": 1,
-    "explanation": "Input tokens dominate cost in RAG applications (large retrieved contexts). Prompt compression removes filler words, summarizes verbose passages, and trims low-relevance chunks to reduce token count without losing key information.",
+    "explanation": "Input tokens доминируют в стоимости RAG applications (large retrieved contexts). Prompt compression удаляет filler words, summarizes verbose passages и trims low-relevance chunks, уменьшая token count без потери key information.",
     "stage": "post"
   },
   {
-    "question": "What is prefix caching and which provider feature enables it?",
-    "options": ["Caching the first word of each response", "Reusing KV-cache computation for shared prompt prefixes (system prompt + tool definitions), reducing latency and cost for repeated patterns", "Caching DNS lookups", "Browser caching of API responses"],
+    "question": "Что такое prefix caching и какая provider feature его включает?",
+    "options": [
+      "Caching первого word каждого response",
+      "Повторное использование KV-cache computation для shared prompt prefixes (system prompt + tool definitions), снижая latency и cost для repeated patterns",
+      "Caching DNS lookups",
+      "Browser caching API responses"
+    ],
     "correct": 1,
-    "explanation": "If your system prompt + tool definitions are 5000 tokens and identical across requests, prefix caching computes the KV-cache once and reuses it. Anthropic's prompt caching and OpenAI's cached tokens both support this.",
+    "explanation": "Если system prompt + tool definitions имеют 5000 tokens и identical across requests, prefix caching один раз вычисляет KV-cache и reuses it. Anthropic prompt caching и OpenAI cached tokens поддерживают это.",
     "stage": "post"
   }
 ]

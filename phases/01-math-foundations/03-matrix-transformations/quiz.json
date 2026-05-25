@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is an eigenvector of a matrix?",
-      "options": ["The largest row in the matrix", "A vector that the matrix only scales (never rotates) when multiplied", "A vector perpendicular to all columns of the matrix", "The diagonal entries of the matrix expressed as a vector"],
+      "question": "Что такое собственный вектор матрицы?",
+      "options": [
+        "Самая большая строка в матрице",
+        "Вектор, который матрица при умножении только масштабирует (никогда не поворачивает)",
+        "Вектор, перпендикулярный всем столбцам матрицы",
+        "Диагональные элементы матрицы, записанные как вектор"
+      ],
       "correct": 1,
-      "explanation": "An eigenvector v satisfies Av = lambda*v, meaning the matrix A only stretches v by the scalar factor lambda (the eigenvalue) without changing its direction."
+      "explanation": "Собственный вектор v удовлетворяет Av = lambda*v, то есть матрица A только растягивает v на скалярный множитель lambda (собственное значение), не меняя его направление."
     },
     {
       "stage": "pre",
-      "question": "What does the determinant of a 2D transformation matrix represent geometrically?",
-      "options": ["The angle of rotation applied by the matrix", "The factor by which the matrix scales area", "The number of eigenvectors the matrix has", "The trace of the matrix"],
+      "question": "Что геометрически означает определитель матрицы 2D-преобразования?",
+      "options": [
+        "Угол поворота, задаваемый матрицей",
+        "Коэффициент, на который матрица масштабирует площадь",
+        "Количество собственных векторов у матрицы",
+        "След матрицы"
+      ],
       "correct": 1,
-      "explanation": "The determinant measures how much the transformation scales area. det=1 preserves area (rotation), det=2 doubles area, det=0 crushes to a lower dimension, and det=-1 preserves area but flips orientation."
+      "explanation": "Определитель показывает, во сколько раз преобразование масштабирует площадь. det=1 сохраняет площадь (поворот), det=2 удваивает площадь, det=0 сжимает в меньшую размерность, а det=-1 сохраняет площадь, но меняет ориентацию."
     },
     {
       "stage": "post",
-      "question": "Why does the order of matrix transformations matter? (i.e., why is R @ S different from S @ R?)",
-      "options": ["Matrix addition is not commutative", "Matrix multiplication is not commutative: rotating then scaling gives a different result than scaling then rotating", "The determinants are different for each order", "One order produces a larger matrix than the other"],
+      "question": "Почему порядок матричных преобразований важен? (то есть почему R @ S отличается от S @ R?)",
+      "options": [
+        "Сложение матриц не коммутативно",
+        "Умножение матриц не коммутативно: поворот затем масштабирование дают другой результат, чем масштабирование затем поворот",
+        "Определители различаются для каждого порядка",
+        "Один порядок даёт матрицу большего размера, чем другой"
+      ],
       "correct": 1,
-      "explanation": "Matrix multiplication is not commutative. Rotating (1,0) by 90 degrees then scaling by (2,0.5) gives (0,0.5), but scaling first then rotating gives (0,2). The geometric operations compose differently."
+      "explanation": "Умножение матриц не коммутативно. Если повернуть (1,0) на 90 градусов, а затем масштабировать на (2,0.5), получится (0,0.5), но если сначала масштабировать, а затем повернуть, получится (0,2). Геометрические операции композиционируются по-разному."
     },
     {
       "stage": "post",
-      "question": "In a recurrent neural network, what happens when the weight matrix has eigenvalues with magnitude greater than 1?",
-      "options": ["The network learns faster", "Outputs explode exponentially over time steps (exploding gradient problem)", "The network becomes more stable", "The eigenvalues converge to 1 over training"],
+      "question": "Что происходит в рекуррентной нейронной сети, когда матрица весов имеет собственные значения с модулем больше 1?",
+      "options": [
+        "Сеть обучается быстрее",
+        "Выходы экспоненциально взрываются по временным шагам (проблема взрывающихся градиентов)",
+        "Сеть становится более стабильной",
+        "Собственные значения сходятся к 1 в процессе обучения"
+      ],
       "correct": 1,
-      "explanation": "Repeated multiplication by a matrix amplifies the eigenvalue directions. Eigenvalues > 1 cause exponential growth (exploding gradients), while eigenvalues < 1 cause exponential decay (vanishing gradients)."
+      "explanation": "Повторное умножение на матрицу усиливает направления собственных векторов. Собственные значения > 1 вызывают экспоненциальный рост (взрывающиеся градиенты), а собственные значения < 1 вызывают экспоненциальное затухание (затухающие градиенты)."
     },
     {
       "stage": "post",
-      "question": "The matrix A = [[2, 1], [1, 2]] has eigenvalues 3 and 1. What does eigendecomposition A = V @ D @ V^(-1) reveal?",
-      "options": ["A is equivalent to two rotations", "A stretches space by 3x along the [1,1] direction and leaves the [1,-1] direction unchanged", "A compresses all vectors by a factor of 2", "A has rank 1 and maps all vectors to a line"],
+      "question": "Матрица A = [[2, 1], [1, 2]] имеет собственные значения 3 и 1. Что показывает собственное разложение A = V @ D @ V^(-1)?",
+      "options": [
+        "A эквивалентна двум поворотам",
+        "A растягивает пространство в 3x вдоль направления [1,1] и оставляет направление [1,-1] без изменений",
+        "A сжимает все векторы в 2 раза",
+        "A имеет ранг 1 и отображает все векторы на прямую"
+      ],
       "correct": 1,
-      "explanation": "The eigenvalue 3 with eigenvector [1,1] means A stretches 3x along the diagonal. The eigenvalue 1 with eigenvector [1,-1] means A leaves the anti-diagonal unchanged. D holds {3,1}, V holds the eigenvectors."
+      "explanation": "Собственное значение 3 с собственным вектором [1,1] означает, что A растягивает в 3x вдоль диагонали. Собственное значение 1 с собственным вектором [1,-1] означает, что A оставляет антидиагональ без изменений. D содержит {3,1}, V содержит собственные векторы."
     }
   ]
 }

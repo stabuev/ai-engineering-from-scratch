@@ -1,37 +1,37 @@
 [
   {
-    "question": "What is the purpose of a hidden layer in a multi-layer network?",
-    "options": ["To store the training data", "To transform inputs into new feature representations that enable nonlinear decision boundaries", "To reduce the number of parameters", "To apply the loss function"],
+    "question": "Какова цель скрытого слоя в многослойной сети?",
+    "options": ["Хранить обучающие данные", "Преобразовывать входы в новые представления признаков, позволяющие строить нелинейные границы решения", "Чтобы уменьшить число параметров", "Применить функцию потерь"],
     "correct": 1,
-    "explanation": "Hidden layers apply weights, biases, and activation functions to create new feature representations. These intermediate features allow the network to learn nonlinear mappings that a single layer cannot.",
+    "explanation": "Скрытые слои применяют веса, biases и функции активации, чтобы создавать новые представления признаков. Эти промежуточные признаки позволяют сети изучать нелинейные отображения, недоступные одному слою.",
     "stage": "pre"
   },
   {
-    "question": "What does the forward pass do in a neural network?",
-    "options": ["Updates the weights using gradients", "Computes gradients for backpropagation", "Pushes input through each layer to produce an output", "Shuffles the training data"],
+    "question": "Что делает forward pass в нейронной сети?",
+    "options": ["Обновляет веса с помощью градиентов", "Вычисляет градиенты для backpropagation", "Пропускает вход через каждый слой, чтобы получить выход", "Перемешивает обучающие данные"],
     "correct": 2,
-    "explanation": "The forward pass is pure computation: for each layer, multiply by weights, add bias, apply activation, and pass the result to the next layer. No learning happens during the forward pass.",
+    "explanation": "Forward pass — это чистое вычисление: для каждого слоя умножить на веса, добавить bias, применить активацию и передать результат следующему слою. Во время forward pass обучение не происходит.",
     "stage": "pre"
   },
   {
-    "question": "For a layer with 3 neurons receiving input from 2 neurons, what is the shape of the weight matrix?",
+    "question": "Для слоя с 3 нейронами, получающего вход от 2 нейронов, какова форма матрицы весов?",
     "options": ["(2, 3)", "(3, 2)", "(3, 3)", "(2, 2)"],
     "correct": 1,
-    "explanation": "The weight matrix has shape (neurons_in_current_layer, neurons_in_previous_layer) = (3, 2). Each row contains one neuron's weights across all inputs.",
+    "explanation": "Матрица весов имеет форму (neurons_in_current_layer, neurons_in_previous_layer) = (3, 2). Каждая строка содержит веса одного нейрона по всем входам.",
     "stage": "post"
   },
   {
-    "question": "What does the Universal Approximation Theorem guarantee?",
-    "options": ["Any network can be trained in polynomial time", "A single hidden layer with enough neurons can approximate any continuous function", "Deeper networks always outperform shallow ones", "Neural networks can solve any computational problem"],
+    "question": "Что гарантирует Universal Approximation Theorem?",
+    "options": ["Любую сеть можно обучить за полиномиальное время", "Один скрытый слой с достаточным числом нейронов может аппроксимировать любую непрерывную функцию", "Более глубокие сети всегда превосходят мелкие", "Нейронные сети могут решить любую вычислительную задачу"],
     "correct": 1,
-    "explanation": "Cybenko (1989) proved that a network with one hidden layer and sufficient neurons can approximate any continuous function to any desired accuracy. In practice, deeper networks achieve the same with fewer total parameters.",
+    "explanation": "Cybenko (1989) доказал, что сеть с одним скрытым слоем и достаточным числом нейронов может аппроксимировать любую непрерывную функцию с любой желаемой точностью. На практике более глубокие сети достигают того же с меньшим общим числом параметров.",
     "stage": "post"
   },
   {
-    "question": "Why does the sigmoid activation function make learning possible, unlike the step function used in perceptrons?",
-    "options": ["Sigmoid outputs larger values", "Sigmoid is faster to compute", "Sigmoid is smooth and differentiable everywhere, so gradients exist for backpropagation", "Sigmoid outputs negative values"],
+    "question": "Почему sigmoid activation function делает обучение возможным, в отличие от step function, использовавшейся в перцептронах?",
+    "options": ["Sigmoid выдает большие значения", "Sigmoid быстрее вычисляется", "Sigmoid гладкая и всюду дифференцируема, поэтому существуют градиенты для backpropagation", "Sigmoid выдает отрицательные значения"],
     "correct": 2,
-    "explanation": "The step function has zero gradient almost everywhere and undefined gradient at the threshold. Sigmoid is smooth with a well-defined derivative (s*(1-s)) at every point, which is essential for gradient-based learning.",
+    "explanation": "Step function имеет нулевой градиент почти всюду и неопределенный градиент на пороге. Sigmoid гладкая, с четко определенной производной (s*(1-s)) в каждой точке, что необходимо для обучения на основе градиентов.",
     "stage": "post"
   }
 ]

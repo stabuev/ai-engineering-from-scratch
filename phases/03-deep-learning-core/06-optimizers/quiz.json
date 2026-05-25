@@ -1,37 +1,37 @@
 [
   {
-    "question": "What problem does momentum solve in gradient descent?",
-    "options": ["It reduces memory usage", "It dampens oscillation by accumulating past gradients, accelerating movement in consistent directions", "It eliminates the need for a learning rate", "It prevents overfitting"],
+    "question": "Какую проблему momentum решает в градиентном спуске?",
+    "options": ["Он снижает использование памяти", "Он гасит осцилляции, накапливая прошлые градиенты и ускоряя движение в согласованных направлениях", "Он устраняет необходимость в learning rate", "Он предотвращает переобучение"],
     "correct": 1,
-    "explanation": "In narrow valleys, gradients oscillate across the valley while making slow progress along it. Momentum accumulates past gradients: consistent directions amplify while oscillating directions cancel, giving smoother, faster convergence.",
+    "explanation": "В узких долинах градиенты осциллируют поперек долины и медленно продвигаются вдоль нее. Momentum накапливает прошлые градиенты: согласованные направления усиливаются, а осциллирующие компенсируются, что дает более гладкую и быструю сходимость.",
     "stage": "pre"
   },
   {
-    "question": "What is the key difference between Adam and AdamW?",
-    "options": ["AdamW uses a higher learning rate", "AdamW applies weight decay directly to weights instead of through the gradient, giving proper regularization", "AdamW doesn't use momentum", "AdamW only works with transformers"],
+    "question": "В чем ключевое различие между Adam и AdamW?",
+    "options": ["AdamW использует более высокий learning rate", "AdamW применяет weight decay напрямую к весам, а не через градиент, что дает корректную регуляризацию", "AdamW не использует momentum", "AdamW работает только с трансформерами"],
     "correct": 1,
-    "explanation": "In Adam + L2, the adaptive learning rate scales the regularization term differently per parameter. AdamW decouples weight decay from the gradient update, applying uniform shrinkage regardless of gradient statistics.",
+    "explanation": "В Adam + L2 адаптивный learning rate масштабирует регуляризационный член по-разному для разных параметров. AdamW отделяет weight decay от обновления градиента, применяя равномерное сжатие независимо от статистик градиента.",
     "stage": "pre"
   },
   {
-    "question": "Why does Adam use bias correction in early training steps?",
-    "options": ["To prevent overfitting", "The moment estimates are initialized to zero, so early values are biased toward zero; correction compensates for this cold start", "To clip large gradients", "To speed up convergence"],
+    "question": "Почему Adam использует bias correction на ранних шагах обучения?",
+    "options": ["Чтобы предотвратить переобучение", "Оценки моментов инициализированы нулем, поэтому ранние значения смещены к нулю; correction компенсирует этот cold start", "Чтобы обрезать большие градиенты", "Чтобы ускорить сходимость"],
     "correct": 1,
-    "explanation": "At step 1 with beta1=0.9, m_1 = 0.1 * gradient (10x too small). Dividing by (1 - 0.9^1) = 0.1 corrects this to the actual gradient. The correction becomes negligible after ~50 steps.",
+    "explanation": "На шаге 1 при beta1=0.9, m_1 = 0.1 * gradient (в 10 раз меньше). Деление на (1 - 0.9^1) = 0.1 исправляет это до фактического градиента. После ~50 шагов correction становится пренебрежимо малой.",
     "stage": "post"
   },
   {
-    "question": "What are the standard default hyperparameters for Adam?",
+    "question": "Каковы стандартные гиперпараметры Adam по умолчанию?",
     "options": ["lr=0.1, beta1=0.5, beta2=0.5", "lr=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8", "lr=0.01, beta1=0.99, beta2=0.99", "lr=0.0001, beta1=0.8, beta2=0.9"],
     "correct": 1,
-    "explanation": "The original Adam paper (Kingma & Ba, 2014) recommended lr=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8. These defaults work well for most problems.",
+    "explanation": "Оригинальная статья Adam (Kingma & Ba, 2014) рекомендовала lr=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8. Эти значения по умолчанию хорошо работают для большинства задач.",
     "stage": "post"
   },
   {
-    "question": "Which optimizer is the modern default for training transformers and LLMs?",
+    "question": "Какой оптимизатор является современным стандартом для обучения трансформеров и LLM?",
     "options": ["Vanilla SGD", "SGD with momentum", "RMSProp", "AdamW"],
     "correct": 3,
-    "explanation": "AdamW (Adam with decoupled weight decay) is used to train BERT, GPT, LLaMA, and virtually all modern transformers. It combines adaptive learning rates with proper weight decay regularization.",
+    "explanation": "AdamW (Adam с decoupled weight decay) используется для обучения BERT, GPT, LLaMA и практически всех современных трансформеров. Он сочетает адаптивные learning rates с корректной регуляризацией weight decay.",
     "stage": "post"
   }
 ]

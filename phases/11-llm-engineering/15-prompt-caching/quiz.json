@@ -4,7 +4,7 @@
   "questions": [
     {
       "stage": "post",
-      "question": "What discount does Anthropic apply to cache reads versus the base input rate?",
+      "question": "Какую discount Anthropic применяет к cache reads относительно base input rate?",
       "options": [
         "25% off",
         "50% off",
@@ -16,34 +16,34 @@
     },
     {
       "stage": "post",
-      "question": "Why must dynamic timestamps go below the cache breakpoint, not above it?",
+      "question": "Почему dynamic timestamps должны быть ниже cache breakpoint, а не выше?",
       "options": [
-        "Caches only hit when the prefix is byte-identical; a changing timestamp breaks the match for everything after it",
-        "Timestamps confuse the tokenizer",
-        "They cost more tokens than static text",
-        "Anthropic explicitly rejects timestamps in cached blocks"
+        "Cache hits происходят только когда prefix byte-identical; меняющийся timestamp ломает match для всего после него",
+        "Timestamps confuse tokenizer",
+        "Они стоят больше tokens, чем static text",
+        "Anthropic явно отклоняет timestamps в cached blocks"
       ],
       "correct": 0,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "OpenAI's prompt caching is configured how?",
+      "question": "Как configured prompt caching у OpenAI?",
       "options": [
-        "Explicit cache_control markers",
-        "A CachedContent API you create and reference",
-        "Automatic prefix matching with no configuration",
-        "A system-level flag you toggle per project"
+        "Явные markers cache_control",
+        "CachedContent API, который вы создаете и reference",
+        "Автоматическое prefix matching без configuration",
+        "System-level flag, который toggled per project"
       ],
       "correct": 2,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "For Anthropic, what write premium does the 1-hour extended TTL cost vs the 5-minute default?",
+      "question": "Для Anthropic сколько стоит write premium у 1-hour extended TTL по сравнению с 5-minute default?",
       "options": [
         "Same",
-        "2x the write premium (50% over baseline)",
+        "2x write premium (50% сверх baseline)",
         "4x the write premium",
         "No write premium"
       ],
@@ -52,7 +52,7 @@
     },
     {
       "stage": "post",
-      "question": "How many reuses are needed to break even on Anthropic's 25% write premium?",
+      "question": "Сколько reuses нужно, чтобы выйти в ноль на Anthropic 25% write premium?",
       "options": [
         "1",
         "2",

@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What advantage does SVD have over eigendecomposition?",
-      "options": ["SVD is always faster to compute", "SVD works on any matrix of any shape, while eigendecomposition requires square matrices with full eigenvector sets", "SVD produces smaller output matrices", "SVD does not require numerical computation"],
+      "question": "Какое преимущество SVD имеет перед eigendecomposition?",
+      "options": [
+        "SVD всегда быстрее вычисляется",
+        "SVD работает с любой матрицей любой формы, тогда как eigendecomposition требует квадратных матриц с полным набором собственных векторов",
+        "SVD создаёт выходные матрицы меньшего размера",
+        "SVD не требует численных вычислений"
+      ],
       "correct": 1,
-      "explanation": "Eigendecomposition only works on square matrices that have n linearly independent eigenvectors. SVD decomposes ANY m x n matrix into U * Sigma * V^T with no restrictions on shape or rank."
+      "explanation": "Eigendecomposition работает только для квадратных матриц, имеющих n линейно независимых собственных векторов. SVD раскладывает ЛЮБУЮ m x n матрицу в U * Sigma * V^T без ограничений на форму или ранг."
     },
     {
       "stage": "pre",
-      "question": "What does 'low-rank approximation' mean?",
-      "options": ["Removing rows with low values from a matrix", "Approximating a matrix by keeping only its most important components, producing a simpler matrix with fewer independent directions", "Converting a matrix to a lower precision data type", "Sorting the rows of a matrix by their magnitude"],
+      "question": "Что означает 'low-rank approximation'?",
+      "options": [
+        "Удаление строк с малыми значениями из матрицы",
+        "Аппроксимация матрицы с сохранением только самых важных компонент, получая более простую матрицу с меньшим числом независимых направлений",
+        "Преобразование матрицы в тип данных с меньшей точностью",
+        "Сортировка строк матрицы по их величине"
+      ],
       "correct": 1,
-      "explanation": "A rank-k approximation keeps only the top k singular values and their vectors, discarding the rest. The Eckart-Young theorem proves this is the BEST possible approximation of that rank."
+      "explanation": "Rank-k approximation оставляет только top k сингулярных значений и соответствующие им векторы, отбрасывая остальные. Теорема Eckart-Young доказывает, что это ЛУЧШАЯ возможная аппроксимация данного ранга."
     },
     {
       "stage": "post",
-      "question": "In SVD A = U * Sigma * V^T, what geometric operation does each factor represent?",
-      "options": ["U scales, Sigma rotates, V^T translates", "V^T rotates in input space, Sigma scales along principal axes, U rotates into output space", "U compresses, Sigma expands, V^T normalizes", "All three factors perform the same operation: rotation"],
+      "question": "В SVD A = U * Sigma * V^T какую геометрическую операцию представляет каждый множитель?",
+      "options": [
+        "U масштабирует, Sigma поворачивает, V^T переносит",
+        "V^T поворачивает во входном пространстве, Sigma масштабирует вдоль главных осей, U поворачивает в выходное пространство",
+        "U сжимает, Sigma расширяет, V^T нормализует",
+        "Все три множителя выполняют одну и ту же операцию: поворот"
+      ],
       "correct": 1,
-      "explanation": "SVD reveals that every matrix performs: (1) V^T rotates inputs to align with principal directions, (2) Sigma stretches/compresses along each axis, (3) U rotates the result into the output space. Rotate, scale, rotate."
+      "explanation": "SVD показывает, что любая матрица выполняет: (1) V^T поворачивает входы для выравнивания с главными направлениями, (2) Sigma растягивает/сжимает вдоль каждой оси, (3) U поворачивает результат в выходное пространство. Поворот, масштабирование, поворот."
     },
     {
       "stage": "post",
-      "question": "Why does sklearn implement PCA using SVD instead of eigendecomposition of the covariance matrix?",
-      "options": ["SVD produces different results that are more accurate for ML", "SVD works directly on the data matrix without forming the covariance matrix, avoiding squaring the condition number and improving numerical stability", "SVD is easier to parallelize on GPUs", "SVD does not require centering the data"],
+      "question": "Почему sklearn реализует PCA через SVD, а не через eigendecomposition ковариационной матрицы?",
+      "options": [
+        "SVD даёт другие результаты, более точные для ML",
+        "SVD работает напрямую с матрицей данных, не формируя ковариационную матрицу, что избегает возведения числа обусловленности в квадрат и улучшает численную стабильность",
+        "SVD проще распараллелить на GPU",
+        "SVD не требует центрирования данных"
+      ],
       "correct": 1,
-      "explanation": "Forming A^T*A squares the singular values (and condition number). If A has singular values [1000, 0.001], A^T*A has eigenvalues [10^6, 10^-6] -- 6 digits of precision lost. SVD avoids this by working directly on A."
+      "explanation": "Формирование A^T*A возводит сингулярные значения (и число обусловленности) в квадрат. Если у A сингулярные значения [1000, 0.001], то у A^T*A собственные значения [10^6, 10^-6] -- теряется 6 цифр точности. SVD избегает этого, работая напрямую с A."
     },
     {
       "stage": "post",
-      "question": "How does truncated SVD enable recommendation systems to predict missing ratings?",
-      "options": ["It fills missing entries with the average rating", "It decomposes the ratings matrix into latent user and movie profiles; the dot product of a user profile with a movie profile predicts the missing rating", "It clusters similar users together and copies their ratings", "It trains a neural network on the observed ratings"],
+      "question": "Как truncated SVD позволяет рекомендательным системам предсказывать пропущенные оценки?",
+      "options": [
+        "Он заполняет пропущенные элементы средней оценкой",
+        "Он раскладывает матрицу оценок на латентные профили пользователей и фильмов; dot product профиля пользователя и профиля фильма предсказывает пропущенную оценку",
+        "Он кластеризует похожих пользователей и копирует их оценки",
+        "Он обучает нейронную сеть на наблюдаемых оценках"
+      ],
       "correct": 1,
-      "explanation": "SVD decomposes the ratings matrix into user profiles (U), latent factor importance (Sigma), and movie profiles (V^T). The low-rank reconstruction fills in missing entries based on the latent factors (genre, era, style) that explain user preferences."
+      "explanation": "SVD раскладывает матрицу оценок на профили пользователей (U), важность латентных факторов (Sigma) и профили фильмов (V^T). Низкоранговая реконструкция заполняет пропуски на основе латентных факторов (жанр, эпоха, стиль), объясняющих предпочтения пользователей."
     }
   ]
 }

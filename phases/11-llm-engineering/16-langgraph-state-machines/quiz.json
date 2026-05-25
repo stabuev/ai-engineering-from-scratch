@@ -3,60 +3,60 @@
   "questions": [
     {
       "stage": "post",
-      "question": "Why does the `messages` field in a LangGraph State TypedDict need `Annotated[list, add_messages]`?",
+      "question": "Почему field `messages` в LangGraph State TypedDict требует `Annotated[list, add_messages]`?",
       "options": [
-        "It enables streaming of token deltas from the model.",
-        "Without the reducer, node updates overwrite the list instead of appending, so every turn loses the prior history.",
-        "It compresses the message list when checkpoints are written to disk.",
-        "It converts plain dicts into LangChain message objects at runtime."
+        "Это включает streaming token deltas from the model.",
+        "Без reducer node updates перезаписывают list вместо append, поэтому каждый turn теряет prior history.",
+        "Это compresses message list при записи checkpoints на disk.",
+        "Это converts plain dicts into LangChain message objects at runtime."
       ],
       "correct": 1,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "What is the difference between `interrupt_before=['tools']` and `interrupt_after=['tools']`?",
+      "question": "В чем разница между `interrupt_before=['tools']` и `interrupt_after=['tools']`?",
       "options": [
-        "No difference; they are aliases.",
-        "`interrupt_before` pauses after the model emits tool_calls but before the tools execute; `interrupt_after` pauses after the tools have already run.",
-        "`interrupt_before` runs the tool in a sandbox first; `interrupt_after` runs it in production.",
-        "`interrupt_before` is for unit tests; `interrupt_after` is for production."
+        "Разницы нет; это aliases.",
+        "`interrupt_before` ставит pause после того, как model emits tool_calls, но до tools execute; `interrupt_after` ставит pause после того, как tools уже run.",
+        "`interrupt_before` сначала runs tool in sandbox; `interrupt_after` runs it in production.",
+        "`interrupt_before` для unit tests; `interrupt_after` для production."
       ],
       "correct": 1,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "Given a thread's checkpoint history, how do you time-travel to a prior state and explore a different branch?",
+      "question": "Имея checkpoint history thread, как time-travel к prior state и исследовать другую branch?",
       "options": [
-        "Call `graph.reset(thread_id)` then `graph.invoke(new_input, config)`.",
-        "Delete the checkpoint directory and reinvoke with the same thread_id.",
-        "Invoke the graph with the desired prior `checkpoint_id` in the config; passing `None` as input replays from that checkpoint, passing a new value appends to it before resuming.",
-        "Set `graph.rewind = True` and reinvoke."
+        "Вызвать `graph.reset(thread_id)`, затем `graph.invoke(new_input, config)`.",
+        "Delete checkpoint directory and reinvoke with same thread_id.",
+        "Invoke graph with desired prior `checkpoint_id` in config; passing `None` as input replays from that checkpoint, passing a new value appends to it before resuming.",
+        "Установить `graph.rewind = True` и повторно invoke."
       ],
       "correct": 2,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "In a four-node ReAct graph (agent, tools, conditional edge, static edge back to agent), where does the conditional edge live?",
+      "question": "В четырехузловом ReAct graph (agent, tools, conditional edge, static edge back to agent), где находится conditional edge?",
       "options": [
-        "From `tools` back to `agent`, routing on whether tool output was empty.",
-        "From `agent`, routing to `tools` if the last message has tool_calls and to `END` otherwise.",
-        "From `START`, routing to either `agent` or `END` based on input length.",
-        "There is no conditional edge; both are static."
+        "От `tools` обратно к `agent`, routing по тому, был ли tool output пустым.",
+        "От `agent`: routing к `tools`, если last message содержит tool_calls, иначе к `END`.",
+        "От `START`: routing либо к `agent`, либо к `END` по input length.",
+        "Conditional edge нет; оба edges static."
       ],
       "correct": 1,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "When should you use `Send(node_name, state)` instead of a plain edge?",
+      "question": "Когда использовать `Send(node_name, state)` вместо plain edge?",
       "options": [
-        "To retry a node after a failure.",
-        "To defer a node until a timer expires.",
-        "To dispatch N parallel executions of a target node whose outputs merge back through the state reducer.",
-        "To invoke a node in a different process for isolation."
+        "Чтобы повторить node после failure.",
+        "Чтобы отложить node до истечения timer.",
+        "Чтобы dispatch N parallel executions целевого node, outputs которых merge back через state reducer.",
+        "Чтобы invoke node в другом process для isolation."
       ],
       "correct": 2,
       "explanation": ""

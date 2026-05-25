@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why does vanilla self-attention scale the dot product by 1/sqrt(d_k)?",
-      "options": ["To make the output values between 0 and 1", "To prevent dot products from growing large in high dimensions, which would push softmax into regions with tiny gradients", "To normalize the query and key vectors to unit length", "To reduce the computational cost of the matrix multiplication"],
+      "question": "Почему в обычном self-attention скалярное произведение масштабируют на 1/sqrt(d_k)?",
+      "options": [
+        "Чтобы выходные значения были между 0 и 1",
+        "Чтобы скалярные произведения не становились слишком большими в высоких размерностях и не загоняли softmax в области с крошечными градиентами",
+        "Чтобы нормализовать векторы query и key до единичной длины",
+        "Чтобы снизить вычислительную стоимость матричного умножения"
+      ],
       "correct": 1,
-      "explanation": "When d_k is large, the dot product of random vectors grows proportionally to sqrt(d_k). Without scaling, softmax receives large inputs, producing near-one-hot outputs where gradients vanish."
+      "explanation": "Когда d_k велико, скалярное произведение случайных векторов растет пропорционально sqrt(d_k). Без масштабирования softmax получает большие входы и дает почти one-hot выходы, где градиенты исчезают."
     },
     {
       "stage": "pre",
-      "question": "What are the three projections in self-attention?",
-      "options": ["Input, hidden, and output", "Query, key, and value -- each a learned linear projection of the same input", "Encoder, decoder, and cross-attention", "Embedding, position, and segment"],
+      "question": "Какие три проекции используются в self-attention?",
+      "options": [
+        "Input, hidden и output",
+        "Query, key и value -- каждая является обучаемой линейной проекцией одного и того же входа",
+        "Encoder, decoder и cross-attention",
+        "Embedding, position и segment"
+      ],
       "correct": 1,
-      "explanation": "Self-attention projects the input through three different weight matrices to produce queries (what am I looking for?), keys (what do I contain?), and values (what do I output if matched?)."
+      "explanation": "Self-attention пропускает вход через три разные матрицы весов, чтобы получить queries (что я ищу?), keys (что во мне содержится?) и values (что я выдаю при совпадении?)."
     },
     {
       "stage": "post",
-      "question": "In multi-head attention with 8 heads and d_model=512, what is the dimension of each head?",
-      "options": ["512 -- each head sees the full dimension", "64 -- d_model is split evenly across heads (512/8=64)", "8 -- one dimension per head", "4096 -- each head expands the representation"],
+      "question": "В multi-head attention с 8 головами и d_model=512 какова размерность каждой головы?",
+      "options": [
+        "512 -- каждая голова видит полную размерность",
+        "64 -- d_model равномерно делится между головами (512/8=64)",
+        "8 -- одна размерность на голову",
+        "4096 -- каждая голова расширяет представление"
+      ],
       "correct": 1,
-      "explanation": "Multi-head attention splits d_model into h heads, each operating on d_k = d_model/h dimensions. With 512/8 = 64 dimensions per head, the total computation cost equals single-head attention at full dimension."
+      "explanation": "Multi-head attention делит d_model на h голов, каждая работает с d_k = d_model/h размерностями. При 512/8 = 64 размерностях на голову суммарная вычислительная стоимость равна single-head attention в полной размерности."
     },
     {
       "stage": "post",
-      "question": "What does the causal mask in autoregressive attention prevent?",
-      "options": ["It prevents the model from attending to padding tokens", "It prevents each position from attending to future positions, ensuring the model can only use past context when predicting the next token", "It prevents attention weights from becoming too large", "It prevents the model from attending to its own position"],
+      "question": "Что предотвращает causal mask в autoregressive attention?",
+      "options": [
+        "Она не дает модели обращать внимание на padding-токены",
+        "Она не дает каждой позиции обращать внимание на будущие позиции, поэтому модель может использовать только прошлый контекст при предсказании следующего токена",
+        "Она не дает весам attention становиться слишком большими",
+        "Она не дает модели обращать внимание на собственную позицию"
+      ],
       "correct": 1,
-      "explanation": "In autoregressive generation, token t must not see tokens t+1, t+2, etc. The causal mask sets future positions to -infinity before softmax, zeroing out their attention weights."
+      "explanation": "В autoregressive generation токен t не должен видеть токены t+1, t+2 и т.д. Causal mask устанавливает будущие позиции в -infinity перед softmax, обнуляя их веса attention."
     },
     {
       "stage": "post",
-      "question": "Why does self-attention have O(n^2) complexity in sequence length n?",
-      "options": ["Because the model has n layers stacked on top of each other", "Because every token computes attention scores with every other token, producing an n x n attention matrix", "Because the feedforward layers after attention are quadratic", "Because backpropagation through attention requires n^2 gradient computations"],
+      "question": "Почему self-attention имеет сложность O(n^2) по длине последовательности n?",
+      "options": [
+        "Потому что модель имеет n слоев, сложенных друг на друга",
+        "Потому что каждый токен вычисляет scores attention с каждым другим токеном, создавая матрицу attention n x n",
+        "Потому что feedforward-слои после attention квадратичны",
+        "Потому что backpropagation через attention требует n^2 вычислений градиентов"
+      ],
       "correct": 1,
-      "explanation": "The QK^T matrix multiplication produces an n x n attention matrix where entry (i,j) is the attention from token i to token j. Both computation and memory scale as O(n^2), which is why long-context models need techniques like FlashAttention."
+      "explanation": "Матричное умножение QK^T создает матрицу attention n x n, где элемент (i,j) -- это attention от токена i к токену j. И вычисления, и память масштабируются как O(n^2), поэтому моделям с длинным контекстом нужны техники вроде FlashAttention."
     }
   ]
 }

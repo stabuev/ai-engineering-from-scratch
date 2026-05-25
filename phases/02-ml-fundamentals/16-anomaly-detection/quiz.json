@@ -2,66 +2,66 @@
   {
     "id": "anomaly-pre-1",
     "stage": "pre",
-    "question": "Why is anomaly detection typically framed as an unsupervised problem rather than classification?",
+    "question": "Почему обнаружение аномалий обычно формулируют как задачу без учителя, а не как классификацию?",
     "options": [
-      "Anomaly detection does not require any data",
-      "Labeled anomalies are extremely rare, and novel anomaly types differ from previously seen ones",
-      "Supervised classification is always less accurate",
-      "Anomaly detection only works on time series data"
+      "Обнаружению аномалий не нужны данные",
+      "Размеченные аномалии крайне редки, а новые типы аномалий отличаются от ранее виденных",
+      "Классификация с учителем всегда менее точна",
+      "Обнаружение аномалий работает только на временных рядах"
     ],
     "correct": 1,
-    "explanation": "Anomalies are rare (often <0.1% of data), so there are too few labeled examples to train a classifier. Also, future anomalies may be of types never seen before. Modeling 'normal' and flagging deviations handles both problems."
+    "explanation": "Аномалии редки (часто <0.1% данных), поэтому размеченных примеров слишком мало для обучения классификатора. Кроме того, будущие аномалии могут относиться к ранее невиданным типам. Моделирование 'normal' и пометка отклонений решает обе проблемы."
   },
   {
     "id": "anomaly-pre-2",
     "stage": "pre",
-    "question": "A temperature of 90F is normal in summer but anomalous in winter. What type of anomaly is this?",
+    "question": "Температура 90F нормальна летом, но аномальна зимой. Какой это тип аномалии?",
     "options": [
-      "Point anomaly",
-      "Contextual anomaly",
-      "Collective anomaly",
-      "Statistical anomaly"
+      "Точечная аномалия",
+      "Контекстная аномалия",
+      "Коллективная аномалия",
+      "Статистическая аномалия"
     ],
     "correct": 1,
-    "explanation": "A contextual anomaly is a value that is unusual given its context (time, location). The value itself might be normal in a different context. Same data point, different interpretation based on surrounding conditions."
+    "explanation": "Контекстная аномалия — это значение, необычное в своем контексте (время, место). Само значение может быть нормальным в другом контексте. Та же точка данных, но другая интерпретация из-за окружающих условий."
   },
   {
     "id": "anomaly-post-1",
     "stage": "post",
-    "question": "The Z-score method flags points more than 3 standard deviations from the mean. When does this approach fail?",
+    "question": "Метод Z-score помечает точки дальше чем на 3 стандартных отклонения от среднего. Когда этот подход не работает?",
     "options": [
-      "When the data is perfectly normally distributed",
-      "When the data is multimodal, skewed, or when outliers in the training data inflate the mean and std",
-      "When there are exactly 3 anomalies in the dataset",
-      "When the features are standardized"
+      "Когда данные идеально нормально распределены",
+      "Когда данные мультимодальны, скошены или когда выбросы в обучающих данных завышают mean и std",
+      "Когда в датасете ровно 3 аномалии",
+      "Когда признаки стандартизированы"
     ],
     "correct": 1,
-    "explanation": "Z-score assumes a single Gaussian distribution. It fails on multimodal data (multiple clusters), skewed distributions, and when outliers in training data shift the mean/std, making real anomalies harder to detect."
+    "explanation": "Z-score предполагает одно Gaussian distribution. Он не работает на мультимодальных данных (несколько кластеров), скошенных распределениях и когда выбросы в обучении сдвигают mean/std, усложняя обнаружение настоящих аномалий."
   },
   {
     "id": "anomaly-post-2",
     "stage": "post",
-    "question": "How does Isolation Forest detect anomalies differently from distance-based methods?",
+    "question": "Чем обнаружение аномалий в Isolation Forest отличается от методов на основе расстояний?",
     "options": [
-      "It uses neural networks instead of trees",
-      "It isolates points using random splits; anomalies require fewer splits to isolate because they are few and different",
-      "It computes distances to every other point in the dataset",
-      "It only works on text data"
+      "Он использует нейронные сети вместо деревьев",
+      "Он изолирует точки случайными разбиениями; аномалиям нужно меньше разбиений для изоляции, потому что их мало и они отличаются",
+      "Он вычисляет расстояния до каждой другой точки в датасете",
+      "Он работает только с текстовыми данными"
     ],
     "correct": 1,
-    "explanation": "Isolation Forest randomly partitions data with tree splits. Anomalies, being rare and different, end up isolated (in their own leaf) with fewer splits. Short average path length = more anomalous."
+    "explanation": "Isolation Forest случайно разбивает данные деревьями. Аномалии, будучи редкими и отличающимися, оказываются изолированными (в своем листе) после меньшего числа разбиений. Короткая средняя длина пути = более аномально."
   },
   {
     "id": "anomaly-post-3",
     "stage": "post",
-    "question": "You build both an unsupervised anomaly detector and a supervised fraud classifier. When should you prefer the unsupervised approach?",
+    "question": "Вы строите и unsupervised anomaly detector, и supervised fraud classifier. Когда стоит предпочесть подход без учителя?",
     "options": [
-      "Always -- unsupervised is always better for anomaly detection",
-      "When you need to detect novel fraud patterns that differ from historical labeled examples",
-      "When you have millions of labeled fraud examples",
-      "When you only care about precision, not recall"
+      "Всегда -- unsupervised всегда лучше для обнаружения аномалий",
+      "Когда нужно обнаруживать новые паттерны мошенничества, отличающиеся от исторических размеченных примеров",
+      "Когда есть миллионы размеченных примеров мошенничества",
+      "Когда важна только precision, а не recall"
     ],
     "correct": 1,
-    "explanation": "Supervised classifiers only catch fraud types present in training data. Unsupervised detectors flag any deviation from normal, catching novel fraud schemes. The tradeoff is higher false positive rate."
+    "explanation": "Классификаторы с учителем ловят только типы мошенничества, присутствующие в обучающих данных. Детекторы без учителя помечают любое отклонение от нормы, ловя новые схемы мошенничества. Компромисс — более высокий false positive rate."
   }
 ]

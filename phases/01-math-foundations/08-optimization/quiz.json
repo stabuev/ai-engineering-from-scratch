@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does 'optimization' mean in the context of training a neural network?",
-      "options": ["Making the code run faster", "Finding the model weights that minimize the loss function", "Reducing the number of parameters in the model", "Choosing the best hardware for training"],
+      "question": "Что означает 'optimization' в контексте обучения нейронной сети?",
+      "options": [
+        "Сделать код быстрее",
+        "Найти веса модели, минимизирующие loss function",
+        "Уменьшить количество параметров в модели",
+        "Выбрать лучшее оборудование для обучения"
+      ],
       "correct": 1,
-      "explanation": "Training a neural network IS optimization. The loss function measures how wrong the model is, and optimization finds the weight values that make it as small as possible."
+      "explanation": "Обучение нейронной сети и есть optimization. Loss function измеряет, насколько модель ошибается, а optimization находит такие значения весов, при которых она как можно меньше."
     },
     {
       "stage": "pre",
-      "question": "What happens if the learning rate is too large during gradient descent?",
-      "options": ["Training converges faster to the global minimum", "The optimizer overshoots the minimum and the loss diverges (bounces or increases)", "The gradients become zero", "The model automatically reduces the learning rate"],
+      "question": "Что произойдёт, если learning rate слишком большой при градиентном спуске?",
+      "options": [
+        "Обучение быстрее сойдётся к глобальному минимуму",
+        "Оптимизатор будет перескакивать минимум, и loss разойдётся (будет прыгать или расти)",
+        "Градиенты станут нулевыми",
+        "Модель автоматически уменьшит learning rate"
+      ],
       "correct": 1,
-      "explanation": "A learning rate that is too large causes each step to overshoot the valley, potentially bouncing between walls or diverging entirely. The loss increases instead of decreasing."
+      "explanation": "Слишком большой learning rate заставляет каждый шаг перескакивать через долину, возможно прыгая между стенками или полностью расходясь. Loss растёт вместо того, чтобы уменьшаться."
     },
     {
       "stage": "post",
-      "question": "How does Adam differ from vanilla gradient descent?",
-      "options": ["Adam uses a fixed learning rate while GD uses adaptive rates", "Adam tracks running averages of gradients and squared gradients to give each weight its own adaptive learning rate", "Adam computes exact second derivatives while GD uses first derivatives", "Adam processes the full dataset per step while GD uses mini-batches"],
+      "question": "Чем Adam отличается от обычного gradient descent?",
+      "options": [
+        "Adam использует фиксированный learning rate, а GD — адаптивные",
+        "Adam отслеживает скользящие средние градиентов и квадратов градиентов, чтобы дать каждому весу собственный адаптивный learning rate",
+        "Adam вычисляет точные вторые производные, а GD использует первые производные",
+        "Adam обрабатывает весь dataset на каждом шаге, а GD использует mini-batches"
+      ],
       "correct": 1,
-      "explanation": "Adam maintains per-weight first moment (gradient direction) and second moment (gradient magnitude) estimates. Dividing by sqrt(second moment) gives small steps for weights with large gradients and large steps for weights with small gradients."
+      "explanation": "Adam поддерживает оценки первого момента (направление градиента) и второго момента (величина градиента) для каждого веса. Деление на sqrt(second moment) даёт маленькие шаги для весов с большими градиентами и большие шаги для весов с малыми градиентами."
     },
     {
       "stage": "post",
-      "question": "Why is the noise in mini-batch SGD considered beneficial rather than just a nuisance?",
-      "options": ["Noise reduces memory usage during training", "Noise helps the optimizer escape shallow local minima and saddle points that a noiseless optimizer would get stuck in", "Noise is not beneficial; it always slows convergence", "Noise makes the loss function convex"],
+      "question": "Почему шум в mini-batch SGD считается полезным, а не просто помехой?",
+      "options": [
+        "Шум уменьшает потребление памяти при обучении",
+        "Шум помогает оптимизатору выходить из неглубоких локальных минимумов и седловых точек, где бесшумный оптимизатор застрял бы",
+        "Шум не полезен; он всегда замедляет сходимость",
+        "Шум делает loss function выпуклой"
+      ],
       "correct": 1,
-      "explanation": "The stochastic noise from random mini-batches provides random perturbations that can push the optimizer out of shallow local minima and saddle points, leading to better generalization."
+      "explanation": "Стохастический шум от случайных mini-batches создаёт случайные возмущения, которые могут вытолкнуть оптимизатор из неглубоких локальных минимумов и седловых точек, приводя к лучшей обобщающей способности."
     },
     {
       "stage": "post",
-      "question": "What does a cosine annealing learning rate schedule do?",
-      "options": ["Increases the learning rate throughout training following a cosine curve", "Starts with a high learning rate and smoothly decreases it following a cosine curve, with optional warmup", "Alternates the learning rate between two fixed values", "Sets the learning rate to the cosine of the current epoch number"],
+      "question": "Что делает cosine annealing schedule для learning rate?",
+      "options": [
+        "Увеличивает learning rate на протяжении обучения по косинусной кривой",
+        "Начинает с высокого learning rate и плавно уменьшает его по косинусной кривой, с опциональным warmup",
+        "Чередует learning rate между двумя фиксированными значениями",
+        "Устанавливает learning rate равным косинусу номера текущей эпохи"
+      ],
       "correct": 1,
-      "explanation": "Cosine annealing smoothly reduces the learning rate from lr_max to lr_min following a half-cosine curve. This provides large steps early for fast progress and small steps late for fine convergence."
+      "explanation": "Cosine annealing плавно уменьшает learning rate от lr_max до lr_min по полукосинусной кривой. Это даёт большие шаги в начале для быстрого прогресса и маленькие шаги в конце для точной сходимости."
     }
   ]
 }

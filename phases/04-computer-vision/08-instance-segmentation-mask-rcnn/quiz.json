@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why did Mask R-CNN replace RoIPool with RoIAlign?",
-      "options": ["RoIAlign is faster on GPUs", "RoIPool rounds box coordinates to integers at multiple steps, misaligning the feature map from the input pixels by up to a feature-map pixel; RoIAlign uses bilinear sampling with no rounding, preserving localisation", "RoIPool only works on CPU", "RoIPool was a copyright issue"],
+      "question": "Почему Mask R-CNN заменил RoIPool на RoIAlign?",
+      "options": [
+        "RoIAlign быстрее на GPU",
+        "RoIPool округляет координаты box до целых на нескольких шагах, смещая feature map относительно input pixels; RoIAlign использует bilinear sampling без округления и сохраняет локализацию",
+        "RoIPool работает только на CPU",
+        "У RoIPool были copyright-проблемы"
+      ],
       "correct": 1,
-      "explanation": "RoIPool's rounding costs up to a stride-sized misalignment (e.g. 32 pixels on a stride-32 feature map). RoIAlign samples at exact float coordinates via bilinear interpolation. The change lifted mask AP by 3-4 points on COCO in the original paper and is now standard in every detector that cares about localisation."
+      "explanation": "Округление RoIPool может давать смещение до размера stride (например, 32 пикселя на stride-32 feature map). RoIAlign сэмплирует в точных float coordinates через bilinear interpolation. В оригинальной статье это подняло mask AP на COCO на 3-4 пункта и стало стандартом."
     },
     {
       "stage": "pre",
-      "question": "Mask R-CNN's mask head outputs a 28x28 mask per class per proposal. Why per class?",
-      "options": ["Because binary masks need per-class channels for backprop", "Decoupling mask prediction from classification: the mask head only has to learn the shape for each class separately, so the classifier's decision does not affect which mask is produced, only which channel is read at inference", "Binary masks overflow in a single channel", "The paper required it"],
+      "question": "Mask head в Mask R-CNN выдает mask 28x28 на каждый class для каждого proposal. Почему per class?",
+      "options": [
+        "Потому что binary masks требуют per-class channels для backprop",
+        "Чтобы отделить mask prediction от classification: mask head учит форму каждого класса отдельно, а решение classifier влияет только на то, какой channel читается при inference",
+        "Binary masks переполняются в одном канале",
+        "Так требовала статья"
+      ],
       "correct": 1,
-      "explanation": "Producing one mask per class per proposal decouples mask shape learning from classification. At inference you read only the channel matching the predicted class. This multi-task decoupling matters because mask shape and class probability are different targets that train with different gradients."
+      "explanation": "Одна mask на class для каждого proposal отделяет обучение формы маски от классификации. На inference читается только channel, соответствующий predicted class. Это multi-task decoupling важно, потому что mask shape и class probability — разные targets с разными gradients."
     },
     {
       "stage": "post",
-      "question": "torchvision's Mask R-CNN prediction dict has `labels` that start at 1, not 0. Why?",
-      "options": ["Legacy bug", "Class 0 is reserved for background; user classes are always 1-based so the classifier head can treat background as a real class with its own logits and gradients", "torchvision uses 1-based indexing throughout", "Training data determined it"],
+      "question": "В prediction dict torchvision Mask R-CNN `labels` начинаются с 1, а не с 0. Почему?",
+      "options": [
+        "Legacy bug",
+        "Class 0 зарезервирован под background; пользовательские классы всегда 1-based, чтобы classifier head мог считать background реальным классом со своими logits и gradients",
+        "torchvision везде использует 1-based indexing",
+        "Так определили training data"
+      ],
       "correct": 1,
-      "explanation": "Most detectors treat background as class 0 and explicit foreground classes as 1..C. The softmax over (C+1) classes lets the network learn to actively predict 'no object here' rather than just low confidence on all classes. A dataset with 4 real classes needs num_classes = 5 when swapping the predictor."
+      "explanation": "Большинство detectors считают background классом 0, а foreground classes — 1..C. Softmax по (C+1) классам позволяет сети активно предсказывать 'no object here', а не просто низкую confidence по всем классам. Датасету с 4 реальными классами нужен num_classes = 5 при замене predictor."
     },
     {
       "stage": "post",
-      "question": "You fine-tune Mask R-CNN on a 500-image dataset and val mAP plateaus while train loss keeps dropping. What is the first thing to try?",
-      "options": ["Add more epochs", "Freeze the backbone and FPN so the model only fine-tunes the RPN and heads; 500 images is too few to update 23M backbone parameters without overfitting", "Switch to segmentation U-Net", "Use a higher learning rate"],
+      "question": "Вы fine-tune Mask R-CNN на датасете из 500 изображений, val mAP выходит на плато, а train loss продолжает падать. Что попробовать первым?",
+      "options": [
+        "Добавить epochs",
+        "Заморозить backbone и FPN, чтобы модель fine-tune только RPN и heads; 500 изображений слишком мало, чтобы обновлять 23M параметров backbone без overfitting",
+        "Перейти на segmentation U-Net",
+        "Использовать больший learning rate"
+      ],
       "correct": 1,
-      "explanation": "On small datasets you do not have enough signal to fine-tune every parameter. Freezing the pretrained backbone and FPN (ImageNet + COCO features) and training only the RPN objectness head and the two classifier/mask heads is the standard recipe and usually fixes this plateau in one training run."
+      "explanation": "На малых датасетах недостаточно сигнала для fine-tune всех параметров. Заморозка pretrained backbone и FPN (ImageNet + COCO features) и обучение только RPN objectness head и classifier/mask heads — стандартный рецепт, часто исправляющий это плато за один запуск."
     },
     {
       "stage": "post",
-      "question": "The FPN inside Mask R-CNN has four levels (P2, P3, P4, P5) at strides 4, 8, 16, 32. Why not just use one level?",
-      "options": ["To use more GPU memory", "Objects in natural images span a range of scales; routing each proposal to the FPN level matching its size gives the head a feature map with the right receptive field for that object, which is strictly better than always using one scale", "Four levels is arbitrary", "To reduce parameter count"],
+      "question": "FPN внутри Mask R-CNN имеет четыре уровня (P2, P3, P4, P5) со strides 4, 8, 16, 32. Почему не использовать один уровень?",
+      "options": [
+        "Чтобы использовать больше GPU memory",
+        "Объекты в естественных изображениях имеют разные масштабы; routing каждого proposal на FPN level, соответствующий его размеру, дает head feature map с подходящим receptive field",
+        "Четыре уровня выбраны произвольно",
+        "Чтобы уменьшить parameter count"
+      ],
       "correct": 1,
-      "explanation": "A small object on a stride-32 feature map occupies a single cell, which has almost no spatial information. FPN routes small objects to the high-resolution, shallow levels (P2) and large objects to the low-resolution, deep levels (P5), matching receptive field to object size. This is why every modern detector has a pyramid."
+      "explanation": "Малый объект на stride-32 feature map занимает одну cell и почти не несет spatial information. FPN направляет малые объекты на high-resolution shallow levels (P2), а большие — на low-resolution deep levels (P5), согласуя receptive field с размером объекта. Поэтому у современных detectors есть pyramid."
     }
   ]
 }

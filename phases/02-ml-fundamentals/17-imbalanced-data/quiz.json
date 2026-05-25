@@ -2,7 +2,7 @@
   {
     "id": "imbalanced-pre-1",
     "stage": "pre",
-    "question": "A fraud detection dataset has 99.9% legitimate transactions and 0.1% fraud. A model predicts 'legitimate' for every transaction. What is its accuracy?",
+    "question": "В датасете обнаружения мошенничества 99.9% легитимных транзакций и 0.1% мошенничества. Модель предсказывает 'legitimate' для каждой транзакции. Какова ее accuracy?",
     "options": [
       "50%",
       "0.1%",
@@ -10,58 +10,58 @@
       "100%"
     ],
     "correct": 2,
-    "explanation": "Accuracy = 999/1000 = 99.9%. The model catches zero fraud but looks great by accuracy. This is exactly why accuracy is dangerous for imbalanced datasets."
+    "explanation": "Accuracy = 999/1000 = 99.9%. Модель не ловит ни одного мошенничества, но по accuracy выглядит отлично. Именно поэтому accuracy опасна для несбалансированных датасетов."
   },
   {
     "id": "imbalanced-pre-2",
     "stage": "pre",
-    "question": "Which metric would correctly identify the always-predict-negative model as useless?",
+    "question": "Какая метрика правильно покажет, что модель, всегда предсказывающая negative, бесполезна?",
     "options": [
       "Accuracy (99.9%)",
-      "Recall (0%) or F1 score (0%)",
+      "Recall (0%) или F1 score (0%)",
       "Specificity (100%)",
       "True negative rate (100%)"
     ],
     "correct": 1,
-    "explanation": "Recall = TP/(TP+FN) = 0/total_positives = 0%. F1 = 2*0*0/(0+0) = 0. Both correctly show the model catches nothing in the positive class. Accuracy hides this failure."
+    "explanation": "Recall = TP/(TP+FN) = 0/total_positives = 0%. F1 = 2*0*0/(0+0) = 0. Обе метрики правильно показывают, что модель ничего не ловит в положительном классе. Accuracy скрывает этот провал."
   },
   {
     "id": "imbalanced-post-1",
     "stage": "post",
-    "question": "How does SMOTE generate synthetic minority samples?",
+    "question": "Как SMOTE генерирует синтетические примеры меньшинства?",
     "options": [
-      "By duplicating existing minority samples exactly",
-      "By randomly generating points anywhere in the feature space",
-      "By interpolating between a minority sample and one of its K nearest minority neighbors",
-      "By flipping the labels of majority class samples"
+      "Точно дублируя существующие примеры меньшинства",
+      "Случайно генерируя точки где угодно в пространстве признаков",
+      "Интерполируя между примером меньшинства и одним из его K ближайших соседей меньшинства",
+      "Меняя метки примеров класса большинства"
     ],
     "correct": 2,
-    "explanation": "SMOTE picks a minority point, selects one of its K nearest minority neighbors, and creates a new point on the line segment between them: new = x + rand(0,1) * (neighbor - x). This produces plausible, non-duplicate samples."
+    "explanation": "SMOTE выбирает точку меньшинства, выбирает одного из ее K ближайших соседей меньшинства и создает новую точку на отрезке между ними: new = x + rand(0,1) * (neighbor - x). Это дает правдоподобные, не дублирующиеся примеры."
   },
   {
     "id": "imbalanced-post-2",
     "stage": "post",
-    "question": "You lower the classification threshold from 0.5 to 0.3 on an imbalanced dataset. What happens to precision and recall?",
+    "question": "Вы снижаете порог классификации с 0.5 до 0.3 на несбалансированном датасете. Что происходит с precision и recall?",
     "options": [
-      "Both precision and recall increase",
-      "Recall increases (more positives caught) but precision decreases (more false positives)",
-      "Precision increases but recall decreases",
-      "Neither changes -- threshold only affects speed"
+      "И precision, и recall растут",
+      "Recall растет (ловится больше положительных), но precision падает (больше false positives)",
+      "Precision растет, но recall падает",
+      "Ни одна не меняется -- порог влияет только на скорость"
     ],
     "correct": 1,
-    "explanation": "Lowering the threshold means more samples are predicted positive. This catches more true positives (recall up) but also adds more false positives (precision down). Threshold tuning trades precision for recall."
+    "explanation": "Снижение порога означает, что больше примеров предсказываются как positive. Это ловит больше true positives (recall вверх), но также добавляет больше false positives (precision вниз). Настройка порога обменивает precision на recall."
   },
   {
     "id": "imbalanced-post-3",
     "stage": "post",
-    "question": "Why is AUPRC (Area Under Precision-Recall Curve) more informative than AUC-ROC for highly imbalanced datasets?",
+    "question": "Почему AUPRC (Area Under Precision-Recall Curve) информативнее AUC-ROC для сильно несбалансированных датасетов?",
     "options": [
-      "AUPRC is always higher than AUC-ROC",
-      "A random classifier has AUPRC equal to the positive class rate (e.g., 0.001), making improvements visible, while AUC-ROC starts at 0.5 regardless of imbalance",
-      "AUPRC does not require a threshold",
-      "AUC-ROC cannot be computed for imbalanced data"
+      "AUPRC всегда выше AUC-ROC",
+      "У случайного классификатора AUPRC равен доле положительного класса (например, 0.001), поэтому улучшения видны, тогда как AUC-ROC стартует с 0.5 независимо от дисбаланса",
+      "AUPRC не требует порога",
+      "AUC-ROC нельзя вычислять для несбалансированных данных"
     ],
     "correct": 1,
-    "explanation": "For imbalanced data, AUC-ROC can look deceptively good because the large number of true negatives inflates the true negative rate. AUPRC's baseline equals the positive rate, making real improvements in detecting the minority class much more apparent."
+    "explanation": "Для несбалансированных данных AUC-ROC может выглядеть обманчиво хорошим, потому что большое число true negatives раздувает true negative rate. Базовый уровень AUPRC равен доле positive, поэтому реальные улучшения в обнаружении класса меньшинства гораздо заметнее."
   }
 ]

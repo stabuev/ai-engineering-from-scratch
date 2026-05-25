@@ -2,63 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is the defining property of a convex function?",
+      "question": "Какое определяющее свойство у convex function?",
       "options": [
-        "It has exactly one critical point",
-        "The line segment between any two points on its graph lies above or on the graph",
-        "Its derivative is always positive",
-        "It can only be defined on positive real numbers"
+        "У неё ровно одна critical point",
+        "Отрезок между любыми двумя точками её графика лежит выше графика или на нём",
+        "Её производная всегда положительна",
+        "Она может быть определена только на положительных действительных числах"
       ],
       "correct": 1,
-      "explanation": "A function is convex if for any two points x, y and any t in [0,1]: f(tx + (1-t)y) <= t*f(x) + (1-t)*f(y). Geometrically, the chord between any two points on the graph never dips below the graph itself."
+      "explanation": "Функция выпукла, если для любых двух точек x, y и любого t in [0,1]: f(tx + (1-t)y) <= t*f(x) + (1-t)*f(y). Геометрически хорда между любыми двумя точками графика никогда не опускается ниже самого графика."
     },
     {
       "stage": "pre",
-      "question": "Which of these ML problems has a convex loss landscape?",
+      "question": "У какой из этих ML-задач convex loss landscape?",
       "options": [
-        "Training a 3-layer neural network with ReLU activations",
-        "Logistic regression with cross-entropy loss",
+        "Обучение 3-layer neural network с ReLU activations",
+        "Logistic regression с cross-entropy loss",
         "k-means clustering",
-        "Matrix factorization for recommendation"
+        "Matrix factorization для рекомендаций"
       ],
       "correct": 1,
-      "explanation": "Logistic regression has a convex loss (log-loss is convex in the weights). Neural networks, k-means, and matrix factorization are all non-convex. For convex problems, any local minimum is the global minimum."
+      "explanation": "Logistic regression имеет выпуклый loss (log-loss выпукл по весам). Neural networks, k-means и matrix factorization — все невыпуклые. Для выпуклых задач любой локальный минимум является глобальным минимумом."
     },
     {
       "stage": "post",
-      "question": "Newton's method converges to the minimum of f(x) = 5x^2 + 3x + 1 in how many steps?",
+      "question": "За сколько шагов метод Ньютона сходится к минимуму f(x) = 5x^2 + 3x + 1?",
       "options": [
-        "1 step (it is exact for quadratic functions)",
-        "About 10 steps",
-        "About 100 steps",
-        "It depends on the learning rate"
+        "1 step (он точен для quadratic functions)",
+        "Около 10 steps",
+        "Около 100 steps",
+        "Это зависит от learning rate"
       ],
       "correct": 0,
-      "explanation": "Newton's method fits a local quadratic approximation and jumps to its minimum. For an actual quadratic function, the approximation is exact, so Newton's method converges in a single step regardless of the starting point."
+      "explanation": "Метод Ньютона строит локальную квадратичную аппроксимацию и прыгает в её минимум. Для настоящей quadratic function аппроксимация точна, поэтому метод Ньютона сходится за один шаг независимо от начальной точки."
     },
     {
       "stage": "post",
-      "question": "In the KKT conditions, what does 'complementary slackness' (lambda_i * g_i(x) = 0) mean?",
+      "question": "Что в KKT conditions означает 'complementary slackness' (lambda_i * g_i(x) = 0)?",
       "options": [
-        "All constraints must be active at the optimum",
-        "Either a constraint is active (g_i = 0) or its multiplier is zero (lambda_i = 0) — an inactive constraint has no effect",
-        "The gradients of all constraints must be orthogonal",
-        "The Lagrangian is always zero at the optimum"
+        "Все constraints должны быть активны в optimum",
+        "Либо constraint активен (g_i = 0), либо его multiplier равен нулю (lambda_i = 0) — неактивный constraint не влияет",
+        "Градиенты всех constraints должны быть ортогональны",
+        "Lagrangian всегда равен нулю в optimum"
       ],
       "correct": 1,
-      "explanation": "Complementary slackness means each constraint is either binding (g_i = 0, sitting on the boundary) or irrelevant (lambda_i = 0, not affecting the solution). In SVMs, this is why only support vectors (active constraints with lambda_i > 0) determine the decision boundary."
+      "explanation": "Complementary slackness означает, что каждое constraint либо связывающее (g_i = 0, находится на границе), либо нерелевантное (lambda_i = 0, не влияет на решение). В SVMs поэтому только support vectors (active constraints with lambda_i > 0) определяют decision boundary."
     },
     {
       "stage": "post",
-      "question": "Why does SGD find good solutions in non-convex neural network landscapes despite the lack of convexity guarantees?",
+      "question": "Почему SGD находит хорошие решения в non-convex landscapes нейронных сетей, несмотря на отсутствие гарантий выпуклости?",
       "options": [
-        "Neural networks are secretly convex in high dimensions",
-        "SGD always finds the global minimum",
-        "In high dimensions, most critical points are saddle points (not bad local minima), and SGD noise helps escape them",
-        "The loss function is irrelevant to model performance"
+        "Neural networks тайно выпуклы в высоких размерностях",
+        "SGD всегда находит global minimum",
+        "В высоких размерностях большинство critical points — saddle points (а не плохие local minima), и шум SGD помогает из них выходить",
+        "Loss function не имеет отношения к качеству модели"
       ],
       "correct": 2,
-      "explanation": "In high-dimensional parameter spaces, random critical points are overwhelmingly saddle points. The few local minima that exist tend to have loss values close to the global minimum. SGD's stochastic noise helps escape saddle points, and overparameterization smooths the landscape."
+      "explanation": "В high-dimensional parameter spaces случайные critical points подавляюще часто являются saddle points. Немногие существующие local minima обычно имеют loss values близкие к global minimum. Стохастический шум SGD помогает выходить из saddle points, а overparameterization сглаживает landscape."
     }
   ]
 }

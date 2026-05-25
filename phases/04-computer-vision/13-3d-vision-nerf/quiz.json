@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why cannot a plain CNN process a point cloud directly?",
-      "options": ["Point clouds are too large", "A CNN assumes input pixels arranged on a regular grid with neighbourhood structure; a point cloud is an unordered set of points in R^3 with no grid and variable size, violating both assumptions", "CNNs only work on grayscale", "Point clouds require quaternions"],
+      "question": "Почему обычная CNN не может напрямую обработать point cloud?",
+      "options": [
+        "Point clouds слишком велики",
+        "CNN предполагает input pixels на регулярной сетке с neighbourhood structure; point cloud — неупорядоченное множество точек в R^3 без сетки и с переменным размером, что нарушает оба предположения",
+        "CNN работают только с grayscale",
+        "Point clouds требуют quaternions"
+      ],
       "correct": 1,
-      "explanation": "CNN convolutions need a regular neighbourhood. A point cloud has neither a grid nor a fixed point count. Voxelising the cloud brings back a grid (used by 3D CNNs) but is memory-expensive. PointNet side-stepped this with a permutation-invariant architecture that treats each point independently then aggregates symmetrically."
+      "explanation": "CNN-сверткам нужна регулярная окрестность. У point cloud нет ни сетки, ни фиксированного числа точек. Voxelising возвращает сетку, но стоит дорого по памяти. PointNet обошел это permutation-invariant архитектурой: обрабатывает точки независимо и агрегирует симметрично."
     },
     {
       "stage": "pre",
-      "question": "What trick makes PointNet permutation-invariant over the input points?",
-      "options": ["Batch normalisation", "A shared MLP applied to every point independently, followed by a symmetric aggregation (max pool or sum); since the aggregation ignores point order, the whole network's output is order-invariant", "A special loss function", "Sorting the points before the forward pass"],
+      "question": "Какой прием делает PointNet permutation-invariant по входным точкам?",
+      "options": [
+        "Batch normalisation",
+        "Shared MLP, применяемый к каждой точке независимо, затем symmetric aggregation (max pool или sum); так как aggregation игнорирует порядок точек, весь network output инвариантен к порядку",
+        "Специальная loss function",
+        "Сортировка точек перед forward pass"
+      ],
       "correct": 1,
-      "explanation": "The symmetric-function trick is the core of every point-cloud network family since 2017. Run the same MLP on every point (same weights, no ordering dependence) and then aggregate with a function that does not depend on order. Max and sum are the two canonical choices; max is used by PointNet and most descendants."
+      "explanation": "Трюк с symmetric function — ядро всех point-cloud network families с 2017 года. Один и тот же MLP применяется к каждой точке (общие weights, нет зависимости от порядка), затем признаки агрегируются функцией, не зависящей от порядка. Max и sum — канонические варианты."
     },
     {
       "stage": "post",
-      "question": "A vanilla NeRF MLP fed with raw (x, y, z) coordinates produces blurry results. What fixes it?",
-      "options": ["Adding more training data", "Positional encoding: project coordinates into Fourier features (sin/cos of 2^l * pi * x for multiple l) before the MLP; this lets the low-frequency-biased MLP represent high-frequency details", "Using 16-bit precision", "Switching to a CNN"],
+      "question": "Vanilla NeRF MLP, получающий raw (x, y, z) coordinates, дает blurry results. Что это исправляет?",
+      "options": [
+        "Больше training data",
+        "Positional encoding: проекция coordinates в Fourier features (sin/cos от 2^l * pi * x для разных l) перед MLP; это позволяет MLP с low-frequency bias представлять high-frequency details",
+        "16-bit precision",
+        "Переход на CNN"
+      ],
       "correct": 1,
-      "explanation": "MLPs are spectrally biased: they easily fit smooth functions and struggle with high frequencies. Positional encoding lifts each coordinate into a vector that already contains high-frequency signals. The MLP then has a much easier job of composing those features into sharp geometry and texture. The same trick is used in transformer positional encoding and in diffusion time embedding."
+      "explanation": "MLP имеют spectral bias: легко аппроксимируют гладкие функции и хуже — высокие частоты. Positional encoding поднимает каждую координату в вектор с high-frequency signals, и MLP проще собрать из них резкую geometry и texture. Тот же принцип есть в transformer positional encoding и diffusion time embedding."
     },
     {
       "stage": "post",
-      "question": "How is a NeRF rendered pixel computed?",
-      "options": ["As the output of the final MLP layer", "By casting a ray from the camera through the pixel, sampling N points along the ray, querying the MLP at each point for (density, colour), and compositing the samples with a volumetric rendering equation that accumulates alpha-weighted colours along the ray", "By looking up a precomputed voxel grid", "By running a convolution over a depth map"],
+      "question": "Как вычисляется rendered pixel в NeRF?",
+      "options": [
+        "Как output последнего MLP layer",
+        "Пускается ray из камеры через pixel, вдоль ray сэмплируются N points, MLP запрашивается в каждой точке для (density, colour), затем samples композитятся volumetric rendering equation с накоплением alpha-weighted colours вдоль ray",
+        "Через lookup в precomputed voxel grid",
+        "Через convolution по depth map"
+      ],
       "correct": 1,
-      "explanation": "NeRF rendering is classical volume rendering with a neural density field. For each pixel you pick a ray, sample along it, query (sigma, c) at each sample, and composite using (1 - exp(-sigma * delta)) alphas and cumulative transmittance. Backprop through this rendering step is what trains the MLP from 2D photos — no explicit 3D supervision ever appears."
+      "explanation": "NeRF rendering — классический volume rendering с neural density field. Для каждого pixel выбирают ray, сэмплируют вдоль него, запрашивают (sigma, c) и композитят через alpha = (1 - exp(-sigma * delta)) и cumulative transmittance. Backprop через этот rendering step обучает MLP по 2D photos без explicit 3D supervision."
     },
     {
       "stage": "post",
-      "question": "Why has 3D Gaussian splatting largely replaced NeRF in production?",
-      "options": ["It produces higher-quality images", "It is an explicit representation (millions of 3D Gaussians with opacity and colour) that renders in real time via rasterisation instead of MLP queries on sampled rays; training is minutes instead of hours, rendering is 100x faster, and quality is comparable", "NeRFs were shown to be mathematically incorrect", "Gaussians are more compressible"],
+      "question": "Почему 3D Gaussian splatting во многом заменил NeRF в production?",
+      "options": [
+        "Он дает изображения более высокого качества",
+        "Это explicit representation (миллионы 3D Gaussians с opacity и colour), который renders в real time через rasterisation вместо MLP queries на sampled rays; training занимает минуты вместо часов, rendering в 100 раз быстрее, quality сопоставима",
+        "NeRF математически некорректен",
+        "Gaussians лучше сжимаются"
+      ],
       "correct": 1,
-      "explanation": "3D Gaussian Splatting (SIGGRAPH 2023) replaces the implicit MLP-based scene with an explicit cloud of 3D Gaussian primitives. Rendering becomes GPU rasterisation, which is orders of magnitude faster than per-pixel ray sampling through an MLP. Most 2026 NeRF products ship with Gaussian splatting or its successors; the NeRF paradigm still informs the training objective and the math."
+      "explanation": "3D Gaussian Splatting заменяет implicit MLP scene на explicit cloud 3D Gaussian primitives. Rendering становится GPU rasterisation, на порядки быстрее per-pixel ray sampling через MLP. В 2026 большинство NeRF-продуктов поставляются с Gaussian splatting или наследниками; NeRF paradigm все еще важен для objective и математики."
     }
   ]
 }

@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why does SimCLR need batch sizes of 512-8192 while supervised ImageNet training works with batch 256?",
-      "options": ["SimCLR is slower", "Each sample needs many negative examples to produce a useful contrastive signal; the batch itself is the pool of negatives. Small batches starve the InfoNCE loss of negatives and training collapses or stalls", "Batch norm requires it", "Contrastive loss divides by batch size"],
+      "question": "Почему SimCLR нужны batch sizes 512-8192, тогда как supervised ImageNet training работает с batch 256?",
+      "options": [
+        "SimCLR медленнее",
+        "Каждому sample нужно много negative examples для полезного contrastive signal; сам batch — pool negatives. Малые batches лишают InfoNCE loss negatives, и training collapses или stalls",
+        "Batch norm требует этого",
+        "Contrastive loss делит на batch size"
+      ],
       "correct": 1,
-      "explanation": "InfoNCE loss ranks the positive pair against all other samples in the batch. A batch of 32 gives 30 negatives per positive; 1024 gives 2046. More negatives = sharper contrastive signal. MoCo introduced a momentum queue of past features so effective negatives scale beyond the batch size; this is the standard trick when GPU memory limits batch size."
+      "explanation": "InfoNCE loss ранжирует positive pair против всех остальных samples в batch. Batch 32 дает 30 negatives на positive; 1024 дает 2046. Больше negatives — sharper contrastive signal. MoCo ввел momentum queue прошлых features, чтобы effective negatives росли за пределы batch size."
     },
     {
       "stage": "pre",
-      "question": "What prevents DINO from collapsing to a constant output?",
-      "options": ["Strong augmentation alone", "A combination of centring (subtract per-dimension EMA mean from the teacher output) and sharpening (low teacher temperature); centring stops one dimension from dominating, sharpening stops the output collapsing to uniform", "Large batch size", "The momentum schedule"],
+      "question": "Что предотвращает collapse DINO в constant output?",
+      "options": [
+        "Только strong augmentation",
+        "Комбинация centring (вычитание per-dimension EMA mean из teacher output) и sharpening (low teacher temperature); centring не дает одной dimension доминировать, sharpening не дает output стать uniform",
+        "Large batch size",
+        "Momentum schedule"
+      ],
       "correct": 1,
-      "explanation": "DINO does not use explicit negatives. Without centring, one output dimension can dominate and the student learns to always predict it. Without sharpening (low teacher temperature), the teacher's output becomes near-uniform and the student learns to match uniform, which is also collapse. The two together keep the output diverse across dimensions and peaked per sample."
+      "explanation": "DINO не использует explicit negatives. Без centring одна output dimension может доминировать, и student учится всегда предсказывать ее. Без sharpening teacher output становится near-uniform, и student учится uniform. Вместе они сохраняют diversity по dimensions и peaked output по sample."
     },
     {
       "stage": "post",
-      "question": "MAE masks 75% of patches. BERT masks 15% of tokens. Why the difference?",
-      "options": ["75% is arbitrary", "Image patches have low entropy — neighbours are highly correlated — so masking only 15% would be trivially solvable by local extrapolation. Masking 75% forces the encoder to learn global semantic features to reconstruct the missing patches", "BERT requires 15% by design", "Text tokens are larger than image patches"],
+      "question": "MAE masks 75% patches. BERT masks 15% tokens. Почему разница?",
+      "options": [
+        "75% выбрано произвольно",
+        "Image patches имеют low entropy — соседи сильно коррелируют — поэтому masking 15% решался бы local extrapolation. Masking 75% вынуждает encoder учить global semantic features для reconstruction",
+        "BERT требует 15% по design",
+        "Text tokens больше image patches"
+      ],
       "correct": 1,
-      "explanation": "The mask ratio should match the information density of the modality. Text: 15% is enough because each token has many plausible completions. Images: neighbouring pixels almost determine each other, so low mask ratios are solvable without real representation learning. MAE's 75% is calibrated to force semantic understanding."
+      "explanation": "Mask ratio должен соответствовать information density modality. В text 15% достаточно, потому что у token много возможных completions. В images соседние pixels почти определяют друг друга, поэтому low mask ratios решаются без representation learning. 75% в MAE заставляет учить semantics."
     },
     {
       "stage": "post",
-      "question": "After self-supervised pretraining, the 'linear probe' evaluation trains only what?",
-      "options": ["The entire encoder", "A single linear classifier on top of the frozen encoder features; this isolates feature quality from fine-tuning dynamics", "A full MLP classifier head", "The positional embedding"],
+      "question": "После self-supervised pretraining evaluation 'linear probe' обучает только что?",
+      "options": [
+        "Весь encoder",
+        "Один linear classifier поверх frozen encoder features; это изолирует feature quality от fine-tuning dynamics",
+        "Полный MLP classifier head",
+        "Positional embedding"
+      ],
       "correct": 1,
-      "explanation": "Linear probe freezes the encoder and fits Linear(features -> num_classes) on a labelled downstream dataset. The accuracy is a direct measure of the feature space's linear separability — a proxy for feature quality. Fine-tuning the whole backbone adds nonlinear capacity and usually lifts accuracy a few points, but mixes in optimisation effects. Both numbers are reported in SSL papers."
+      "explanation": "Linear probe замораживает encoder и обучает Linear(features -> num_classes) на labeled downstream dataset. Accuracy напрямую измеряет linear separability feature space — proxy feature quality. Fine-tuning всего backbone обычно поднимает accuracy, но добавляет optimization effects."
     },
     {
       "stage": "post",
-      "question": "Why does MAE use an asymmetric encoder-decoder design (big encoder on 25% visible patches, small decoder on all tokens)?",
-      "options": ["Memory constraints", "The encoder never processes mask tokens; a small decoder only handles reconstruction. This makes encoder FLOPs proportional to visible patches (1/4 of full input) and lets pretraining run 3x faster than naive designs that process all tokens through the full encoder", "Masked tokens confuse self-attention", "The decoder needs its own backbone"],
+      "question": "Почему MAE использует asymmetric encoder-decoder design (big encoder на 25% visible patches, small decoder на all tokens)?",
+      "options": [
+        "Memory constraints",
+        "Encoder никогда не обрабатывает mask tokens; small decoder отвечает только за reconstruction. Поэтому encoder FLOPs proportional to visible patches (1/4 input), и pretraining идет в 3 раза быстрее naive designs, где full encoder видит all tokens",
+        "Masked tokens путают self-attention",
+        "Decoder нужен свой backbone"
+      ],
       "correct": 1,
-      "explanation": "The key efficiency win in MAE: the expensive encoder only ever sees visible patches, which is 25% of the input. Mask tokens appear only in the shallow decoder. This makes pretraining roughly 3x faster than BEiT (which processes all tokens through the encoder) with equal or better downstream accuracy."
+      "explanation": "Главный efficiency win MAE: expensive encoder видит только visible patches, то есть 25% input. Mask tokens появляются только в shallow decoder. Это делает pretraining примерно в 3 раза быстрее BEiT при равной или лучшей downstream accuracy."
     }
   ]
 }

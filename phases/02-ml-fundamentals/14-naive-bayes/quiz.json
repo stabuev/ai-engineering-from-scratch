@@ -2,59 +2,59 @@
   {
     "id": "nb-pre-1",
     "stage": "pre",
-    "question": "What is the 'naive' assumption in Naive Bayes?",
+    "question": "В чем состоит 'naive' предположение в Naive Bayes?",
     "options": [
-      "The prior probability of each class is equal",
-      "All features are conditionally independent given the class label",
-      "The data is normally distributed",
-      "The model has no parameters to learn"
+      "Априорная вероятность каждого класса одинакова",
+      "Все признаки условно независимы при заданной метке класса",
+      "Данные нормально распределены",
+      "У модели нет параметров для обучения"
     ],
     "correct": 1,
-    "explanation": "Naive Bayes assumes every feature is independent of every other feature, conditioned on the class. This is mathematically wrong (e.g., 'machine' and 'learning' co-occur) but works well in practice."
+    "explanation": "Naive Bayes предполагает, что каждый признак независим от любого другого при условии класса. Математически это неверно (например, 'machine' и 'learning' встречаются вместе), но на практике работает хорошо."
   },
   {
     "id": "nb-pre-2",
     "stage": "pre",
-    "question": "What does Laplace smoothing prevent in Naive Bayes?",
+    "question": "Что предотвращает Laplace smoothing в Naive Bayes?",
     "options": [
-      "Overfitting to large datasets",
-      "Zero probabilities for words never seen in a class during training",
-      "Slow training on high-dimensional data",
-      "Class imbalance in the dataset"
+      "Переобучение на больших датасетах",
+      "Нулевые вероятности для слов, не встречавшихся в классе при обучении",
+      "Медленное обучение на высокомерных данных",
+      "Дисбаланс классов в датасете"
     ],
     "correct": 1,
-    "explanation": "Without smoothing, a word that never appeared in 'spam' training emails would get P(word|spam) = 0, making the entire product zero regardless of other strong evidence. Laplace smoothing adds 1 to each count."
+    "explanation": "Без сглаживания слово, никогда не встречавшееся в обучающих письмах 'spam', получит P(word|spam) = 0, что сделает все произведение нулевым независимо от других сильных свидетельств. Laplace smoothing добавляет 1 к каждому счетчику."
   },
   {
     "id": "nb-post-1",
     "stage": "post",
-    "question": "The naive independence assumption is clearly wrong for text. Why does Naive Bayes still classify well?",
+    "question": "Наивное предположение независимости явно неверно для текста. Почему Naive Bayes все равно хорошо классифицирует?",
     "options": [
-      "It only works on very small vocabularies where independence holds",
-      "Classification only needs correct class rankings, not correct probability estimates, and the assumption introduces stable errors that affect all classes similarly",
-      "Modern implementations secretly remove the independence assumption",
-      "It only works when features are truly independent"
+      "Он работает только на очень маленьких словарях, где независимость выполняется",
+      "Для классификации нужны правильные ранги классов, а не точные оценки вероятностей, и это предположение вносит стабильные ошибки, похожим образом влияющие на все классы",
+      "Современные реализации тайно убирают предположение независимости",
+      "Он работает только когда признаки действительно независимы"
     ],
     "correct": 1,
-    "explanation": "NB needs to rank classes correctly, not estimate exact probabilities. The independence assumption is high bias but low variance, making it stable with limited data. Correlated features double-count evidence for the correct class too."
+    "explanation": "NB нужно правильно ранжировать классы, а не оценивать точные вероятности. Предположение независимости дает высокий bias, но низкую variance, что делает его стабильным при ограниченных данных. Коррелированные признаки также дважды учитывают свидетельства в пользу правильного класса."
   },
   {
     "id": "nb-post-2",
     "stage": "post",
-    "question": "When should you use Multinomial NB versus Gaussian NB?",
+    "question": "Когда следует использовать Multinomial NB вместо Gaussian NB?",
     "options": [
-      "Multinomial for regression, Gaussian for classification",
-      "Multinomial for word count/frequency features, Gaussian for continuous real-valued features",
-      "Multinomial for binary data, Gaussian for multi-class problems",
-      "They are interchangeable -- always use whichever is faster"
+      "Multinomial для регрессии, Gaussian для классификации",
+      "Multinomial для признаков счетчиков/частот слов, Gaussian для непрерывных вещественных признаков",
+      "Multinomial для бинарных данных, Gaussian для многоклассовых задач",
+      "Они взаимозаменяемы -- всегда используйте тот, который быстрее"
     ],
     "correct": 1,
-    "explanation": "Multinomial NB models feature counts (word frequencies in text). Gaussian NB assumes features follow normal distributions, suitable for continuous features like measurements or sensor readings."
+    "explanation": "Multinomial NB моделирует счетчики признаков (частоты слов в тексте). Gaussian NB предполагает, что признаки следуют нормальным распределениям, что подходит для непрерывных признаков вроде измерений или показаний сенсоров."
   },
   {
     "id": "nb-post-3",
     "stage": "post",
-    "question": "An email contains 'free' twice and 'money' once. In Multinomial NB with log probabilities, how is the spam score computed?",
+    "question": "Письмо содержит 'free' дважды и 'money' один раз. Как в Multinomial NB с log probabilities вычисляется spam score?",
     "options": [
       "log P(spam) + log P(free|spam) + log P(money|spam)",
       "log P(spam) + 2 * log P(free|spam) + 1 * log P(money|spam)",
@@ -62,6 +62,6 @@
       "log P(spam) * 2 * log P(free|spam)"
     ],
     "correct": 1,
-    "explanation": "Multinomial NB multiplies the word likelihoods raised to their count. In log space: log P(spam) + 2*log P(free|spam) + 1*log P(money|spam). The word count acts as an exponent."
+    "explanation": "Multinomial NB перемножает likelihood слов, возведенные в степень их количества. В log space: log P(spam) + 2*log P(free|spam) + 1*log P(money|spam). Количество слова играет роль показателя степени."
   }
 ]

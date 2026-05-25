@@ -1,37 +1,62 @@
 [
   {
-    "question": "Why is manually reading a few LLM outputs not a reliable evaluation method?",
-    "options": ["It takes too long", "Small samples miss failure modes that only appear at scale, and human judgment is inconsistent across reviewers and sessions", "Manual review is too expensive", "LLM outputs are always correct"],
+    "question": "Почему ручное чтение нескольких LLM outputs не является reliable evaluation method?",
+    "options": [
+      "Это занимает слишком много времени",
+      "Small samples пропускают failure modes, проявляющиеся только на масштабе, а human judgment непоследователен между reviewers и sessions",
+      "Manual review слишком дорогой",
+      "LLM outputs всегда correct"
+    ],
     "correct": 1,
-    "explanation": "Reading 10 outputs shows you 10 points in a distribution. A prompt change might improve 90% of outputs but break 10% of edge cases. Without systematic evaluation, you'll miss the regression until users report it.",
+    "explanation": "Чтение 10 outputs показывает 10 точек distribution. Prompt change может улучшить 90% outputs, но сломать 10% edge cases. Без systematic evaluation вы пропустите regression, пока users не сообщат о нем.",
     "stage": "pre"
   },
   {
-    "question": "What is regression testing in the context of LLM applications?",
-    "options": ["Testing linear regression models", "Running a fixed set of test cases after every change (prompt, model, parameters) to ensure quality hasn't degraded", "Testing on the training data", "Measuring model loss during training"],
+    "question": "Что такое regression testing в контексте LLM applications?",
+    "options": [
+      "Тестирование linear regression models",
+      "Запуск fixed set of test cases после каждого change (prompt, model, parameters), чтобы убедиться, что quality не degraded",
+      "Testing on training data",
+      "Измерение model loss во время training"
+    ],
     "correct": 1,
-    "explanation": "Every prompt change, model swap, or temperature tweak changes the output distribution. Regression tests catch cases where a change that improves one area silently degrades another.",
+    "explanation": "Каждое изменение prompt, model swap или temperature tweak меняет output distribution. Regression tests ловят случаи, где change улучшает одну область, но silently degrades другую.",
     "stage": "pre"
   },
   {
-    "question": "What is the LLM-as-judge evaluation approach?",
-    "options": ["Having the model evaluate its own training loss", "Using a strong LLM to score outputs against rubrics, replacing expensive human evaluation while scaling to thousands of test cases", "Using the model's confidence scores", "Comparing two models' parameter counts"],
+    "question": "Что такое подход LLM-as-judge evaluation?",
+    "options": [
+      "Модель оценивает собственный training loss",
+      "Использование strong LLM для scoring outputs по rubrics, заменяя expensive human evaluation и масштабируясь на thousands of test cases",
+      "Использование confidence scores модели",
+      "Сравнение parameter counts двух models"
+    ],
     "correct": 1,
-    "explanation": "LLM-as-judge sends (input, output, rubric) to a strong model (e.g., GPT-4) which scores the output. It's cheaper and faster than human evaluation, though it has known biases (e.g., preferring verbose responses).",
+    "explanation": "LLM-as-judge отправляет (input, output, rubric) в strong model (например, GPT-4), которая scores output. Это дешевле и быстрее human evaluation, хотя имеет known biases (например, preference for verbose responses).",
     "stage": "post"
   },
   {
-    "question": "What makes a good evaluation dataset for an LLM application?",
-    "options": ["As many examples as possible", "Diverse inputs covering common cases, edge cases, adversarial inputs, and expected outputs with clear rubrics", "Only the hardest examples", "Random samples from the internet"],
+    "question": "Что делает evaluation dataset хорошим для LLM application?",
+    "options": [
+      "Как можно больше examples",
+      "Diverse inputs, покрывающие common cases, edge cases, adversarial inputs и expected outputs с clear rubrics",
+      "Только самые hard examples",
+      "Случайные samples from the internet"
+    ],
     "correct": 1,
-    "explanation": "A good eval set covers the distribution: happy path cases, edge cases (empty input, very long input), adversarial inputs (prompt injection), and ambiguous queries. Each example has a clear expected output or scoring rubric.",
+    "explanation": "Хороший eval set покрывает distribution: happy path cases, edge cases (empty input, very long input), adversarial inputs (prompt injection) и ambiguous queries. Каждый example имеет clear expected output или scoring rubric.",
     "stage": "post"
   },
   {
-    "question": "How should you handle non-deterministic LLM outputs in evaluation?",
-    "options": ["Set temperature to 0 for all evaluations", "Run each test case multiple times and use aggregate metrics (pass rate, average score) to account for output variance", "Non-determinism doesn't affect evaluation", "Only evaluate the first output"],
+    "question": "Как учитывать non-deterministic LLM outputs в evaluation?",
+    "options": [
+      "Поставить temperature to 0 для всех evaluations",
+      "Запускать каждый test case несколько раз и использовать aggregate metrics (pass rate, average score), чтобы учесть output variance",
+      "Non-determinism не влияет на evaluation",
+      "Оценивать только first output"
+    ],
     "correct": 1,
-    "explanation": "Even at temperature 0, some providers introduce sampling variation. Running each test 3-5 times and measuring pass rate or average score gives a more reliable picture than a single run that might hit a lucky/unlucky sample.",
+    "explanation": "Даже при temperature 0 некоторые providers вводят sampling variation. Запуск каждого test 3-5 раз и измерение pass rate или average score дает более reliable picture, чем single run, который мог быть lucky/unlucky sample.",
     "stage": "post"
   }
 ]
