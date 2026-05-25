@@ -1,37 +1,37 @@
 [
   {
-    "question": "What is the chain rule in the context of neural networks?",
-    "options": ["A rule for chaining layers together", "If y = f(g(x)), then dy/dx = f'(g(x)) * g'(x) -- multiply derivatives along the path", "A method for initializing weights", "A technique for batching data"],
+    "question": "Что такое chain rule в контексте нейронных сетей?",
+    "options": ["Правило соединения слоев в цепочку", "Если y = f(g(x)), то dy/dx = f'(g(x)) * g'(x) -- нужно перемножать производные вдоль пути", "Метод инициализации весов", "Техника пакетирования данных"],
     "correct": 1,
-    "explanation": "The chain rule lets you compute the derivative of a composite function by multiplying the local derivatives at each step. Backpropagation applies this systematically through the computational graph.",
+    "explanation": "Chain rule позволяет вычислять производную составной функции, перемножая локальные производные на каждом шаге. Backpropagation систематически применяет это по вычислительному графу.",
     "stage": "pre"
   },
   {
-    "question": "Why is backpropagation more efficient than computing each gradient independently?",
-    "options": ["It uses less memory", "It computes all gradients in a single backward pass instead of one forward pass per parameter", "It only works on small networks", "It avoids using the chain rule"],
+    "question": "Почему backpropagation эффективнее, чем вычислять каждый градиент независимо?",
+    "options": ["Он использует меньше памяти", "Он вычисляет все градиенты за один backward pass вместо одного forward pass на каждый параметр", "Он работает только на маленьких сетях", "Он избегает использования chain rule"],
     "correct": 1,
-    "explanation": "Computing gradients independently requires one forward pass per parameter (millions of passes for a large network). Backpropagation computes all gradients in one backward pass by reusing intermediate values stored during the forward pass.",
+    "explanation": "Независимое вычисление градиентов требует одного forward pass на параметр (миллионы проходов для большой сети). Backpropagation вычисляет все градиенты за один backward pass, переиспользуя промежуточные значения, сохраненные во время forward pass.",
     "stage": "pre"
   },
   {
-    "question": "In the backward pass, why do we use '+=' instead of '=' when accumulating gradients?",
-    "options": ["It's a Python convention", "A value might be used in multiple operations, so its gradient is the sum of gradients from all paths", "It prevents overflow", "It makes the code run faster"],
+    "question": "Почему в backward pass при накоплении градиентов используют '+=' вместо '='?",
+    "options": ["Это соглашение Python", "Значение может использоваться в нескольких операциях, поэтому его градиент — сумма градиентов со всех путей", "Это предотвращает переполнение", "Это ускоряет код"],
     "correct": 1,
-    "explanation": "When a Value is used as input to multiple operations (e.g., x used in both x*w1 and x*w2), its total gradient is the sum of the gradients flowing back from each operation. Using += accumulates these correctly.",
+    "explanation": "Когда Value используется как вход в нескольких операциях (например, x используется и в x*w1, и в x*w2), его полный градиент — сумма градиентов, текущих обратно из каждой операции. Использование += корректно их накапливает.",
     "stage": "post"
   },
   {
-    "question": "What causes the vanishing gradient problem in deep sigmoid networks?",
-    "options": ["The learning rate is too small", "Sigmoid's derivative has a maximum of 0.25, so gradients shrink exponentially through layers", "The network has too many parameters", "The loss function is poorly chosen"],
+    "question": "Что вызывает проблему vanishing gradient в глубоких sigmoid-сетях?",
+    "options": ["Learning rate слишком мал", "Производная sigmoid имеет максимум 0.25, поэтому градиенты экспоненциально уменьшаются через слои", "У сети слишком много параметров", "Функция потерь выбрана плохо"],
     "correct": 1,
-    "explanation": "The sigmoid derivative peaks at 0.25 (when z=0). Each layer multiplies the gradient by at most 0.25, so after 10 layers the gradient is at most 0.25^10 = ~0.000001 of the original signal.",
+    "explanation": "Производная sigmoid достигает максимума 0.25 (когда z=0). Каждый слой умножает градиент максимум на 0.25, поэтому после 10 слоев градиент не больше 0.25^10 = ~0.000001 исходного сигнала.",
     "stage": "post"
   },
   {
-    "question": "Why does topological sort matter in the backward pass?",
-    "options": ["It makes the code cleaner", "It ensures each node's gradient is fully accumulated before propagating to its children", "It speeds up the forward pass", "It reduces memory usage"],
+    "question": "Почему topological sort важна в backward pass?",
+    "options": ["Она делает код чище", "Она гарантирует, что градиент каждого узла полностью накоплен до распространения к его дочерним узлам", "Она ускоряет forward pass", "Он снижает использование памяти"],
     "correct": 1,
-    "explanation": "Topological sort ensures we process nodes in the correct order: a node's gradient must be fully accumulated from all downstream paths before we propagate through it. Without this ordering, gradients would be incomplete.",
+    "explanation": "Topological sort гарантирует обработку узлов в правильном порядке: градиент узла должен быть полностью накоплен со всех downstream-путей до распространения через него. Без такого порядка градиенты были бы неполными.",
     "stage": "post"
   }
 ]

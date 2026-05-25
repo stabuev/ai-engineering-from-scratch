@@ -1,37 +1,37 @@
 [
   {
-    "question": "What does the loss function represent in neural network training?",
-    "options": ["The number of incorrect predictions", "A differentiable measure of how wrong the model's predictions are, which the optimizer minimizes", "The size of the training dataset", "The learning rate schedule"],
+    "question": "Что представляет функция потерь при обучении нейронной сети?",
+    "options": ["Количество неверных предсказаний", "Дифференцируемую меру того, насколько ошибочны предсказания модели, которую минимизирует оптимизатор", "Размер обучающего датасета", "Расписание learning rate"],
     "correct": 1,
-    "explanation": "The loss function maps predictions and targets to a single scalar that the optimizer minimizes via gradient descent. It must be differentiable so gradients can be computed.",
+    "explanation": "Функция потерь отображает предсказания и targets в один скаляр, который оптимизатор минимизирует градиентным спуском. Она должна быть дифференцируемой, чтобы можно было вычислять градиенты.",
     "stage": "pre"
   },
   {
-    "question": "Why is cross-entropy preferred over MSE for classification tasks?",
-    "options": ["Cross-entropy is faster to compute", "Cross-entropy punishes confident wrong predictions exponentially via -log(p), while MSE gives weak gradients near 0 and 1", "MSE only works for regression", "Cross-entropy doesn't require labels"],
+    "question": "Почему cross-entropy предпочтительнее MSE для задач классификации?",
+    "options": ["Cross-entropy быстрее вычисляется", "Cross-entropy экспоненциально штрафует уверенные неправильные предсказания через -log(p), тогда как MSE дает слабые градиенты около 0 и 1", "MSE работает только для регрессии", "Cross-entropy не требует меток"],
     "correct": 1,
-    "explanation": "When a model confidently predicts the wrong class (p near 0 for true class), -log(p) produces a huge loss and strong gradient. MSE produces weak gradients in the same situation because sigmoid is flat near 0 and 1.",
+    "explanation": "Когда модель уверенно предсказывает неверный класс (p близко к 0 для истинного класса), -log(p) дает огромную потерю и сильный градиент. MSE в той же ситуации дает слабые градиенты, потому что sigmoid плоская около 0 и 1.",
     "stage": "pre"
   },
   {
-    "question": "What happens if you use MSE loss for binary classification?",
-    "options": ["Training diverges immediately", "The model can minimize loss by predicting 0.5 for everything, achieving MSE=0.25 without learning", "The model trains normally", "Gradients explode"],
+    "question": "Что произойдет, если использовать MSE loss для бинарной классификации?",
+    "options": ["Обучение сразу расходится", "Модель может минимизировать loss, предсказывая 0.5 для всего и достигая MSE=0.25 без обучения", "Модель обучается нормально", "Градиенты взрываются"],
     "correct": 1,
-    "explanation": "With MSE on a balanced binary dataset, predicting 0.5 for every input gives MSE=0.25 -- the minimum achievable without discrimination. The model satisfies the loss without learning any useful patterns.",
+    "explanation": "С MSE на сбалансированном бинарном датасете предсказание 0.5 для каждого входа дает MSE=0.25 -- минимум, достижимый без различения классов. Модель удовлетворяет loss, не изучая полезных паттернов.",
     "stage": "post"
   },
   {
-    "question": "What does label smoothing do and why is it useful?",
-    "options": ["It removes noisy labels from the dataset", "It replaces hard 0/1 targets with soft values like 0.1/0.9, preventing overconfident predictions and improving generalization", "It applies a moving average to the loss", "It smooths the learning rate schedule"],
+    "question": "Что делает label smoothing и почему оно полезно?",
+    "options": ["Оно удаляет шумные метки из датасета", "Оно заменяет жесткие targets 0/1 мягкими значениями вроде 0.1/0.9, предотвращая чрезмерно уверенные предсказания и улучшая обобщение", "Оно применяет скользящее среднее к loss", "Оно сглаживает расписание learning rate"],
     "correct": 1,
-    "explanation": "Label smoothing changes targets from [0,0,1,0] to [0.025,0.025,0.925,0.025] (with alpha=0.1). This prevents the model from pushing logits to infinity to achieve hard targets, reducing overconfidence.",
+    "explanation": "Label smoothing меняет targets с [0,0,1,0] на [0.025,0.025,0.925,0.025] (при alpha=0.1). Это мешает модели уводить logits в бесконечность ради жестких targets и снижает чрезмерную уверенность.",
     "stage": "post"
   },
   {
-    "question": "In contrastive loss (InfoNCE), what role does the temperature parameter play?",
-    "options": ["It controls the learning rate", "It controls how sharp the similarity distribution is -- lower temperature means harder separation between positives and negatives", "It sets the number of negative samples", "It determines the embedding dimension"],
+    "question": "Какую роль играет параметр temperature в contrastive loss (InfoNCE)?",
+    "options": ["Он контролирует learning rate", "Он контролирует резкость распределения сходств -- более низкая temperature означает более жесткое разделение positives и negatives", "Он задает число negative samples", "Он определяет размерность embedding"],
     "correct": 1,
-    "explanation": "Temperature divides the similarity scores before softmax. Lower temperature (e.g., 0.07) creates a sharper distribution where the model must clearly separate positives from negatives. Higher temperature is more forgiving.",
+    "explanation": "Temperature делит similarity scores перед softmax. Более низкая temperature (например, 0.07) создает более резкое распределение, где модель должна четко отделять positives от negatives. Более высокая temperature мягче.",
     "stage": "post"
   }
 ]

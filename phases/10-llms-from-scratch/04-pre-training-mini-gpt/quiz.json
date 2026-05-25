@@ -1,37 +1,62 @@
 [
   {
-    "question": "What training objective does GPT use during pre-training?",
-    "options": ["Masked language modeling (predicting masked tokens)", "Next-token prediction: given previous tokens, predict the next one", "Sentence classification", "Image-text alignment"],
+    "question": "Какую training objective использует GPT во время pre-training?",
+    "options": [
+      "Masked language modeling (предсказание masked tokens)",
+      "Next-token prediction: по предыдущим токенам предсказать следующий",
+      "Sentence classification",
+      "Image-text alignment"
+    ],
     "correct": 1,
-    "explanation": "GPT is a causal (autoregressive) language model trained with next-token prediction. Given tokens [t1, t2, ..., tn], it learns to predict tn+1. The loss is cross-entropy between predicted and actual next tokens.",
+    "explanation": "GPT -- causal (autoregressive) language model, обученная на next-token prediction. По токенам [t1, t2, ..., tn] она учится предсказывать tn+1. Loss -- cross-entropy между предсказанным и фактическим следующим токеном.",
     "stage": "pre"
   },
   {
-    "question": "How many transformer layers, attention heads, and embedding dimensions does GPT-2 Small (124M) have?",
-    "options": ["6 layers, 6 heads, 512 dims", "12 layers, 12 heads, 768 dims", "24 layers, 16 heads, 1024 dims", "48 layers, 25 heads, 1600 dims"],
+    "question": "Сколько transformer layers, attention heads и embedding dimensions у GPT-2 Small (124M)?",
+    "options": [
+      "6 layers, 6 heads, 512 dims",
+      "12 layers, 12 heads, 768 dims",
+      "24 layers, 16 heads, 1024 dims",
+      "48 layers, 25 heads, 1600 dims"
+    ],
     "correct": 1,
-    "explanation": "GPT-2 Small has 12 transformer layers, 12 attention heads per layer, and 768-dimensional embeddings. This architecture has 124 million parameters and can be trained on a single GPU in a few hours.",
+    "explanation": "GPT-2 Small имеет 12 transformer layers, 12 attention heads на слой и 768-dimensional embeddings. Эта архитектура имеет 124 million parameters и может обучаться на одном GPU за несколько часов.",
     "stage": "pre"
   },
   {
-    "question": "What is the role of the causal attention mask in GPT?",
-    "options": ["It prevents attention to padding tokens", "It prevents each token from attending to future tokens, ensuring the model can only use past context for predictions", "It masks out low-confidence attention scores", "It reduces memory usage during training"],
+    "question": "Какова роль causal attention mask в GPT?",
+    "options": [
+      "Она предотвращает attention к padding tokens",
+      "Она не дает каждому токену смотреть на будущие токены, гарантируя, что модель использует только прошлый контекст для predictions",
+      "Она маскирует low-confidence attention scores",
+      "Она снижает memory usage во время training"
+    ],
     "correct": 1,
-    "explanation": "The causal mask is a triangular matrix that sets future positions to -infinity before softmax. Token at position 5 can attend to positions 1-5 but not 6+. This ensures the model generates tokens left-to-right.",
+    "explanation": "Causal mask -- треугольная матрица, которая устанавливает будущие позиции в -infinity перед softmax. Токен в позиции 5 может attending to позиции 1-5, но не 6+. Это гарантирует left-to-right generation.",
     "stage": "post"
   },
   {
-    "question": "What does 'temperature' control during text generation?",
-    "options": ["The speed of generation", "The randomness of token selection: lower temperature makes outputs more deterministic, higher makes them more diverse", "The number of tokens generated", "The model's confidence threshold"],
+    "question": "Что контролирует 'temperature' при text generation?",
+    "options": [
+      "Скорость generation",
+      "Случайность выбора токенов: lower temperature делает outputs более детерминированными, higher -- более разнообразными",
+      "Число generated tokens",
+      "Порог уверенности модели"
+    ],
     "correct": 1,
-    "explanation": "Temperature divides logits before softmax. Temperature=0.1 makes the distribution very peaked (nearly deterministic). Temperature=1.0 is the training distribution. Temperature>1.0 flattens it, increasing randomness.",
+    "explanation": "Temperature делит logits перед softmax. Temperature=0.1 делает распределение очень остроконечным (почти детерминированным). Temperature=1.0 -- training distribution. Temperature>1.0 сглаживает его, повышая randomness.",
     "stage": "post"
   },
   {
-    "question": "Why does pre-training require significantly more compute than fine-tuning?",
-    "options": ["Pre-training uses larger batch sizes", "Pre-training processes trillions of tokens from scratch to learn general language patterns, while fine-tuning adjusts an already-capable model on thousands of examples", "Pre-training uses a different architecture", "Fine-tuning doesn't use gradients"],
+    "question": "Почему pre-training требует существенно больше compute, чем fine-tuning?",
+    "options": [
+      "Pre-training использует большие batch sizes",
+      "Pre-training обрабатывает триллионы токенов с нуля, чтобы выучить общие языковые паттерны, тогда как fine-tuning настраивает уже способную модель на тысячах примеров",
+      "Pre-training использует другую архитектуру",
+      "Fine-tuning не использует gradients"
+    ],
     "correct": 1,
-    "explanation": "Pre-training builds all language knowledge from random weights over trillions of tokens. Fine-tuning starts from these learned weights and adjusts them on a much smaller dataset (thousands to millions of examples).",
+    "explanation": "Pre-training строит все языковые знания из случайных весов на триллионах токенов. Fine-tuning стартует с этих выученных весов и корректирует их на гораздо меньшем dataset (тысячи или миллионы примеров).",
     "stage": "post"
   }
 ]

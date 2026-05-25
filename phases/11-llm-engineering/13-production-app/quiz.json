@@ -1,37 +1,62 @@
 [
   {
-    "question": "What is the biggest gap between an LLM demo and a production LLM application?",
-    "options": ["The model quality", "Infrastructure: error handling, streaming, cost tracking, rate limiting, fallbacks, observability, and graceful degradation under load", "The prompt quality", "The choice of API provider"],
+    "question": "Какой самый большой gap между LLM demo и production LLM application?",
+    "options": [
+      "Model quality",
+      "Infrastructure: error handling, streaming, cost tracking, rate limiting, fallbacks, observability и graceful degradation under load",
+      "Prompt quality",
+      "Выбор API provider"
+    ],
     "correct": 1,
-    "explanation": "A demo calls an API and prints the response. Production must handle timeouts, provider outages, concurrent users, cost budgets, streaming delivery, logging, and graceful degradation. The model is the easy part.",
+    "explanation": "Demo вызывает API и печатает response. Production должен обрабатывать timeouts, provider outages, concurrent users, cost budgets, streaming delivery, logging и graceful degradation. Model -- легкая часть.",
     "stage": "pre"
   },
   {
-    "question": "Why is streaming token delivery important in production LLM applications?",
-    "options": ["It reduces cost", "Users perceive the first token arriving quickly as faster, even if total generation time is the same -- reducing perceived latency from seconds to milliseconds", "It uses less memory", "It improves model accuracy"],
+    "question": "Почему streaming token delivery важна в production LLM applications?",
+    "options": [
+      "Она снижает cost",
+      "Users воспринимают быстро пришедший first token как большую скорость, даже если total generation time тот же -- perceived latency падает с seconds до milliseconds",
+      "Она использует меньше memory",
+      "Она улучшает model accuracy"
+    ],
     "correct": 1,
-    "explanation": "Without streaming, users wait 3-10 seconds seeing nothing before the full response appears. With streaming, the first token arrives in ~200ms and text flows continuously, making the experience feel responsive.",
+    "explanation": "Без streaming users ждут 3-10 seconds, ничего не видя, пока не появится full response. Со streaming первый token приходит примерно за ~200ms, и текст течет continuously, делая experience responsive.",
     "stage": "pre"
   },
   {
-    "question": "What should happen when your LLM API provider has an outage?",
-    "options": ["Show users an error page", "The application should automatically fall back to an alternative provider or return a graceful degraded response", "Retry indefinitely until the provider recovers", "Switch to a local model"],
+    "question": "Что должно происходить, когда у вашего LLM API provider outage?",
+    "options": [
+      "Показать users error page",
+      "Application должен автоматически fall back к alternative provider или вернуть graceful degraded response",
+      "Retry indefinitely, пока provider не восстановится",
+      "Switch to a local model"
+    ],
     "correct": 1,
-    "explanation": "Production systems need fallback strategies: try Provider B if Provider A fails, serve cached responses for common queries, or return a helpful 'temporarily unavailable' message. Never let a provider outage crash your application.",
+    "explanation": "Production systems требуют fallback strategies: попробовать Provider B, если Provider A fails, отдать cached responses для common queries или вернуть helpful 'temporarily unavailable' message. Provider outage не должен crash application.",
     "stage": "post"
   },
   {
-    "question": "What observability metrics should a production LLM application track?",
-    "options": ["Only error counts", "Request latency (P50/P95/P99), cost per request, error rates, token usage, cache hit rates, and quality scores from automated evals", "Only model accuracy", "Only monthly cost"],
+    "question": "Какие observability metrics должен отслеживать production LLM application?",
+    "options": [
+      "Только error counts",
+      "Request latency (P50/P95/P99), cost per request, error rates, token usage, cache hit rates и quality scores from automated evals",
+      "Только model accuracy",
+      "Только monthly cost"
+    ],
     "correct": 1,
-    "explanation": "Comprehensive observability covers: latency percentiles (for SLA compliance), cost tracking (for budget management), error rates (for reliability), token usage (for optimization), and quality metrics (for regression detection).",
+    "explanation": "Comprehensive observability покрывает latency percentiles (SLA compliance), cost tracking (budget management), error rates (reliability), token usage (optimization) и quality metrics (regression detection).",
     "stage": "post"
   },
   {
-    "question": "Why should you implement rate limiting in your LLM application?",
-    "options": ["To make the application seem exclusive", "To prevent individual users from exhausting your API budget, protect against abuse, and ensure fair access during high traffic", "To reduce model accuracy", "Rate limiting is only needed for free tiers"],
+    "question": "Зачем implement rate limiting в LLM application?",
+    "options": [
+      "Чтобы application казался exclusive",
+      "Чтобы отдельные users не исчерпали API budget, защититься от abuse и обеспечить fair access при high traffic",
+      "Чтобы снизить model accuracy",
+      "Rate limiting нужен только для free tiers"
+    ],
     "correct": 1,
-    "explanation": "Without rate limiting, a single user (or bot) can exhaust your daily API budget in minutes. Rate limiting protects your costs, prevents abuse, and ensures all users get reasonable response times during peak load.",
+    "explanation": "Без rate limiting один user или bot может исчерпать daily API budget за minutes. Rate limiting защищает costs, предотвращает abuse и обеспечивает reasonable response times всем users при peak load.",
     "stage": "post"
   }
 ]

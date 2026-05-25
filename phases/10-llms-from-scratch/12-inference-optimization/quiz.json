@@ -1,37 +1,62 @@
 [
   {
-    "question": "What are the two phases of LLM inference?",
-    "options": ["Training and evaluation", "Prefill (processes the prompt in parallel, compute-bound) and decode (generates tokens one at a time, memory-bound)", "Encoding and decoding", "Forward and backward"],
+    "question": "Какие две фазы есть у LLM inference?",
+    "options": [
+      "Training и evaluation",
+      "Prefill (обрабатывает prompt параллельно, compute-bound) и decode (генерирует токены по одному, memory-bound)",
+      "Encoding и decoding",
+      "Forward и backward"
+    ],
     "correct": 1,
-    "explanation": "Prefill processes all prompt tokens in parallel (limited by compute). Decode generates tokens autoregressively one at a time (limited by memory bandwidth for loading model weights). Different optimizations target each phase.",
+    "explanation": "Prefill обрабатывает все prompt tokens параллельно (ограничен compute). Decode генерирует tokens autoregressively по одному (ограничен memory bandwidth для загрузки model weights). Для каждой фазы нужны разные optimizations.",
     "stage": "pre"
   },
   {
-    "question": "What does KV-cache eliminate during autoregressive generation?",
-    "options": ["The need for attention masks", "Redundant recomputation of key and value vectors for all previous tokens at each generation step", "The embedding lookup", "The softmax computation"],
+    "question": "Что устраняет KV-cache во время autoregressive generation?",
+    "options": [
+      "Необходимость attention masks",
+      "Повторное redundant recomputation key и value vectors для всех предыдущих токенов на каждом шаге generation",
+      "Embedding lookup",
+      "Softmax computation"
+    ],
     "correct": 1,
-    "explanation": "Without KV-cache, generating token N requires recomputing attention keys and values for all N-1 previous tokens. KV-cache stores these vectors, so each new token only computes its own K and V, saving O(N) computation per step.",
+    "explanation": "Без KV-cache генерация token N требует заново вычислять attention keys and values для всех N-1 previous tokens. KV-cache хранит эти vectors, поэтому новый токен вычисляет только свои K и V, экономя O(N) computation per step.",
     "stage": "pre"
   },
   {
-    "question": "What is continuous batching and why does it improve throughput?",
-    "options": ["Processing all requests in one large batch", "Dynamically adding and removing requests from the running batch as they start and finish, instead of waiting for the entire batch to complete", "Using larger batch sizes", "Batching across multiple models"],
+    "question": "Что такое continuous batching и почему он повышает throughput?",
+    "options": [
+      "Обработка всех requests одним large batch",
+      "Динамическое добавление и удаление requests из running batch по мере старта и завершения, вместо ожидания полного завершения batch",
+      "Использование больших batch sizes",
+      "Batching across multiple models"
+    ],
     "correct": 1,
-    "explanation": "In static batching, a short request holds its batch slot until the longest request finishes. Continuous batching immediately fills completed slots with new requests, keeping the GPU busy and improving overall throughput.",
+    "explanation": "В static batching короткий request удерживает свой batch slot, пока не завершится самый длинный request. Continuous batching сразу заполняет завершенные slots новыми requests, поддерживая загрузку GPU и повышая overall throughput.",
     "stage": "post"
   },
   {
-    "question": "What problem does PagedAttention (used in vLLM) solve?",
-    "options": ["It speeds up the attention computation", "It manages KV-cache memory in fixed-size blocks like virtual memory, eliminating fragmentation from variable-length sequences", "It reduces model size", "It improves tokenization speed"],
+    "question": "Какую проблему решает PagedAttention (используется в vLLM)?",
+    "options": [
+      "Он ускоряет attention computation",
+      "Он управляет KV-cache memory фиксированными blocks как virtual memory, устраняя fragmentation от variable-length sequences",
+      "Он уменьшает model size",
+      "Он улучшает tokenization speed"
+    ],
     "correct": 1,
-    "explanation": "KV-cache for variable-length sequences causes memory fragmentation (wasted gaps between allocations). PagedAttention allocates KV-cache in fixed blocks and maps them with a page table, like OS virtual memory.",
+    "explanation": "KV-cache для variable-length sequences вызывает memory fragmentation (wasted gaps between allocations). PagedAttention выделяет KV-cache фиксированными blocks и отображает их через page table, как OS virtual memory.",
     "stage": "post"
   },
   {
-    "question": "What is speculative decoding?",
-    "options": ["Generating multiple responses and picking the best", "Using a small draft model to propose multiple tokens that the large model verifies in parallel, speeding up generation", "Predicting which tokens the user wants", "Caching frequently generated sequences"],
+    "question": "Что такое speculative decoding?",
+    "options": [
+      "Генерация нескольких responses и выбор лучшего",
+      "Использование small draft model, чтобы предложить несколько tokens, которые large model проверяет параллельно, ускоряя generation",
+      "Предсказание, какие tokens хочет пользователь",
+      "Caching часто generated sequences"
+    ],
     "correct": 1,
-    "explanation": "A small fast model generates N candidate tokens. The large model verifies all N in a single forward pass (parallel). If K tokens are accepted, you've generated K tokens in the time of roughly 1 large-model step.",
+    "explanation": "Маленькая быстрая модель генерирует N candidate tokens. Большая модель проверяет все N за один forward pass (parallel). Если принято K tokens, вы сгенерировали K tokens за время примерно одного шага large model.",
     "stage": "post"
   }
 ]

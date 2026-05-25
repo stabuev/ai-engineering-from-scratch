@@ -2,66 +2,66 @@
   {
     "id": "timeseries-pre-1",
     "stage": "pre",
-    "question": "Why is a random train/test split invalid for time series data?",
+    "question": "Почему случайное train/test-разделение некорректно для временных рядов?",
     "options": [
-      "Random splits make the dataset too small",
-      "Random splits leak future information into the training set, allowing the model to cheat",
-      "Time series data cannot be split at all",
-      "Random splits only work for classification problems"
+      "Случайные разбиения делают датасет слишком маленьким",
+      "Случайные разбиения пропускают будущую информацию в обучающую выборку, позволяя модели жульничать",
+      "Данные временных рядов вообще нельзя разделять",
+      "Случайные разбиения работают только для задач классификации"
     ],
     "correct": 1,
-    "explanation": "In a random split, future data points can end up in the training set while past points are in the test set. The model then uses future information to predict the past, giving falsely optimistic results."
+    "explanation": "При случайном разбиении будущие точки данных могут попасть в обучение, а прошлые — в тест. Тогда модель использует будущую информацию для предсказания прошлого, давая ложно оптимистичные результаты."
   },
   {
     "id": "timeseries-pre-2",
     "stage": "pre",
-    "question": "What does it mean for a time series to be stationary?",
+    "question": "Что означает стационарность временного ряда?",
     "options": [
-      "The values never change over time",
-      "Its statistical properties (mean, variance, autocorrelation) do not change over time",
-      "It has no seasonal patterns",
-      "It always trends upward"
+      "Значения никогда не меняются со временем",
+      "Его статистические свойства (mean, variance, autocorrelation) не меняются со временем",
+      "У него нет сезонных паттернов",
+      "Он всегда имеет восходящий тренд"
     ],
     "correct": 1,
-    "explanation": "A stationary series has constant mean, variance, and autocorrelation structure over time. Most forecasting methods assume stationarity. Non-stationary series need differencing or detrending first."
+    "explanation": "Стационарный ряд имеет постоянные mean, variance и структуру autocorrelation во времени. Большинство методов прогнозирования предполагают стационарность. Нестационарным рядам сначала нужны differencing или detrending."
   },
   {
     "id": "timeseries-post-1",
     "stage": "post",
-    "question": "What is the purpose of differencing a time series?",
+    "question": "Какова цель differencing временного ряда?",
     "options": [
-      "To increase the number of data points",
-      "To remove trend and make the series stationary by modeling changes between consecutive values",
-      "To convert regression into classification",
-      "To normalize the values between 0 and 1"
+      "Увеличить число точек данных",
+      "Удалить тренд и сделать ряд стационарным, моделируя изменения между соседними значениями",
+      "Преобразовать регрессию в классификацию",
+      "Нормализовать значения между 0 и 1"
     ],
     "correct": 1,
-    "explanation": "Differencing replaces each value with the change from the previous value: diff[t] = value[t] - value[t-1]. This removes trend, making the series closer to stationary."
+    "explanation": "Differencing заменяет каждое значение изменением относительно предыдущего: diff[t] = value[t] - value[t-1]. Это удаляет тренд, делая ряд ближе к стационарному."
   },
   {
     "id": "timeseries-post-2",
     "stage": "post",
-    "question": "Lag features convert a time series into a supervised learning problem. What is a lag-3 feature for predicting y[t]?",
+    "question": "Lag features превращают временной ряд в задачу обучения с учителем. Что такое lag-3 feature для предсказания y[t]?",
     "options": [
-      "The average of the next 3 values: (y[t+1] + y[t+2] + y[t+3]) / 3",
-      "The value 3 time steps ago: y[t-3]",
-      "The 3rd derivative of the series",
-      "The difference between the current value and 3 steps ahead"
+      "Среднее следующих 3 значений: (y[t+1] + y[t+2] + y[t+3]) / 3",
+      "Значение 3 временных шага назад: y[t-3]",
+      "Третья производная ряда",
+      "Разница между текущим значением и значением через 3 шага вперед"
     ],
     "correct": 1,
-    "explanation": "A lag-3 feature is y[t-3]: the value 3 time steps in the past. Using past values as input features lets standard ML models (regression, trees) make time series predictions without specialized algorithms."
+    "explanation": "Lag-3 feature — это y[t-3]: значение 3 временных шага в прошлом. Использование прошлых значений как входных признаков позволяет стандартным ML-моделям (регрессия, деревья) делать предсказания временных рядов без специализированных алгоритмов."
   },
   {
     "id": "timeseries-post-3",
     "stage": "post",
-    "question": "Walk-forward validation splits time data into expanding or sliding windows. Why is this better than K-fold CV for time series?",
+    "question": "Walk-forward validation делит временные данные на расширяющиеся или скользящие окна. Почему это лучше, чем K-fold CV, для временных рядов?",
     "options": [
-      "Walk-forward is faster to compute",
-      "Walk-forward respects temporal order, training only on past data and testing on future data, preventing lookahead bias",
-      "K-fold CV cannot be used on numeric data",
-      "Walk-forward uses more data for training"
+      "Walk-forward быстрее вычисляется",
+      "Walk-forward соблюдает временной порядок, обучаясь только на прошлых данных и тестируясь на будущих, предотвращая lookahead bias",
+      "K-fold CV нельзя использовать на числовых данных",
+      "Walk-forward использует больше данных для обучения"
     ],
     "correct": 1,
-    "explanation": "Walk-forward validation always trains on past data and tests on future data, mimicking real-world deployment. K-fold CV shuffles data, potentially training on future to predict past (temporal leakage)."
+    "explanation": "Walk-forward validation всегда обучается на прошлых данных и тестируется на будущих, имитируя реальное развертывание. K-fold CV перемешивает данные, потенциально обучаясь на будущем для предсказания прошлого (temporal leakage)."
   }
 ]

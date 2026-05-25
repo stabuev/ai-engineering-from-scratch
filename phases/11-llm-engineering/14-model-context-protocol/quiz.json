@@ -4,7 +4,7 @@
   "questions": [
     {
       "stage": "post",
-      "question": "What three primitives does an MCP server expose?",
+      "question": "Какие три primitives предоставляет MCP server?",
       "options": [
         "Functions, types, classes",
         "Tools, resources, prompts",
@@ -16,7 +16,7 @@
     },
     {
       "stage": "post",
-      "question": "What wire format does MCP use?",
+      "question": "Какой wire format использует MCP?",
       "options": [
         "GraphQL over HTTP",
         "gRPC with protobuf",
@@ -28,7 +28,7 @@
     },
     {
       "stage": "post",
-      "question": "Which metadata field signals a tool mutates state and should require human approval?",
+      "question": "Какое metadata field показывает, что tool изменяет state и должен требовать human approval?",
       "options": [
         "readonly: false",
         "mutating: true",
@@ -40,7 +40,7 @@
     },
     {
       "stage": "post",
-      "question": "What is the 2025-06-18 transport that replaced the earlier SSE-only remote transport?",
+      "question": "Какой transport 2025-06-18 заменил более ранний remote transport только на SSE?",
       "options": [
         "WebTransport",
         "Streamable HTTP",
@@ -52,12 +52,12 @@
     },
     {
       "stage": "post",
-      "question": "When should a tool be split into its own MCP server instead of staying inline?",
+      "question": "Когда tool стоит вынести в собственный MCP server вместо inline-реализации?",
       "options": [
-        "When it is called fewer than 10 times per day",
-        "When it is called from two or more hosts and is read-only/cacheable",
-        "When it returns more than 1KB of data",
-        "Never; MCP is only for local dev"
+        "Когда его вызывают меньше 10 times per day",
+        "Когда его вызывают из двух или более hosts, и он read-only/cacheable",
+        "Когда он возвращает больше 1KB data",
+        "Никогда; MCP нужен только для local dev"
       ],
       "correct": 1,
       "explanation": ""

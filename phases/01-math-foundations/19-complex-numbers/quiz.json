@@ -2,7 +2,7 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is the imaginary unit i defined by?",
+      "question": "Как определяется imaginary unit i?",
       "options": [
         "i = sqrt(2)",
         "i^2 = -1",
@@ -10,11 +10,11 @@
         "i^2 = 1"
       ],
       "correct": 1,
-      "explanation": "The imaginary unit i is defined by the property i^2 = -1. It extends the real number line into a 2D plane. Geometrically, multiplying by i is a 90-degree rotation — two multiplications (i^2) give a 180-degree rotation, which is -1."
+      "explanation": "Мнимая единица i определяется свойством i^2 = -1. Она расширяет действительную числовую прямую до 2D-плоскости. Геометрически умножение на i — это поворот на 90 градусов; два умножения (i^2) дают поворот на 180 градусов, то есть -1."
     },
     {
       "stage": "pre",
-      "question": "What does Euler's formula e^(i*theta) equal?",
+      "question": "Чему равна формула Эйлера e^(i*theta)?",
       "options": [
         "theta + i",
         "cos(theta) + i*sin(theta)",
@@ -22,11 +22,11 @@
         "i^theta"
       ],
       "correct": 1,
-      "explanation": "Euler's formula states e^(i*theta) = cos(theta) + i*sin(theta). This connects complex exponentials to trigonometry and shows that e^(i*theta) traces the unit circle as theta varies."
+      "explanation": "Формула Эйлера утверждает e^(i*theta) = cos(theta) + i*sin(theta). Она связывает комплексные экспоненты с тригонометрией и показывает, что e^(i*theta) описывает единичную окружность при изменении theta."
     },
     {
       "stage": "post",
-      "question": "What is the result of (3 + 2i)(1 + 4i)?",
+      "question": "Каков результат (3 + 2i)(1 + 4i)?",
       "options": [
         "3 + 8i",
         "4 + 6i",
@@ -34,23 +34,23 @@
         "5 + 14i"
       ],
       "correct": 2,
-      "explanation": "Using FOIL: (3)(1) + (3)(4i) + (2i)(1) + (2i)(4i) = 3 + 12i + 2i + 8i^2 = 3 + 14i + 8(-1) = 3 + 14i - 8 = -5 + 14i."
+      "explanation": "Используем FOIL: (3)(1) + (3)(4i) + (2i)(1) + (2i)(4i) = 3 + 12i + 2i + 8i^2 = 3 + 14i + 8(-1) = 3 + 14i - 8 = -5 + 14i."
     },
     {
       "stage": "post",
-      "question": "Why are complex numbers used in Rotary Position Embedding (RoPE) for transformers?",
+      "question": "Почему complex numbers используются в Rotary Position Embedding (RoPE) для transformers?",
       "options": [
-        "Complex numbers compress the position encoding to use less memory",
-        "Multiplying query/key vectors by complex rotations encodes relative position as a rotation angle",
-        "Complex numbers are required by the attention softmax function",
-        "RoPE uses imaginary numbers to handle negative positions"
+        "Complex numbers сжимают position encoding, чтобы использовать меньше памяти",
+        "Умножение query/key vectors на complex rotations кодирует relative position как угол поворота",
+        "Complex numbers требуются функцией attention softmax",
+        "RoPE использует imaginary numbers для обработки отрицательных позиций"
       ],
       "correct": 1,
-      "explanation": "RoPE multiplies query and key vectors by complex rotation matrices e^(i*m*theta) where m is the position. The relative position between two tokens becomes a rotation angle, and attention naturally becomes sensitive to relative (not absolute) position through complex multiplication."
+      "explanation": "RoPE умножает query и key vectors на матрицы комплексного поворота e^(i*m*theta), где m — позиция. Relative position между двумя токенами становится углом поворота, и attention естественно становится чувствительным к relative (а не absolute) position через комплексное умножение."
     },
     {
       "stage": "post",
-      "question": "The N-th roots of unity are N equally spaced points on the unit circle. What is their sum?",
+      "question": "N-th roots of unity — это N равномерно расположенных точек на единичной окружности. Чему равна их сумма?",
       "options": [
         "N",
         "1",
@@ -58,7 +58,7 @@
         "N/2"
       ],
       "correct": 2,
-      "explanation": "The N roots of unity are e^(2*pi*i*k/N) for k = 0, ..., N-1. They are symmetrically distributed around the unit circle, so their vector sum cancels out to zero. This symmetry property is what makes the DFT invertible."
+      "explanation": "N roots of unity равны e^(2*pi*i*k/N) для k = 0, ..., N-1. Они симметрично распределены по единичной окружности, поэтому их векторная сумма сокращается до нуля. Это свойство симметрии делает DFT обратимым."
     }
   ]
 }

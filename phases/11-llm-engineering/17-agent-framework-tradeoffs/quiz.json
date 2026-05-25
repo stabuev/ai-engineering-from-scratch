@@ -3,7 +3,7 @@
   "questions": [
     {
       "stage": "post",
-      "question": "Which framework is the right first pick for a workflow that must resume after a crash, accept a human approval mid-run, and fan out to three retrievers in parallel?",
+      "question": "Какой framework будет правильным first pick для workflow, который должен resume after crash, принять human approval mid-run и fan out to three retrievers in parallel?",
       "options": [
         "CrewAI",
         "AutoGen",
@@ -15,19 +15,19 @@
     },
     {
       "stage": "post",
-      "question": "Why does LLM-selected routing cost more tokens per turn than explicit routing?",
+      "question": "Почему LLM-selected routing стоит больше tokens per turn, чем explicit routing?",
       "options": [
-        "It pre-fetches the next node in parallel to hedge latency.",
-        "A planner LLM call picks the next step each turn, adding prompt and completion tokens for every decision.",
-        "It duplicates the tool list for every agent in the crew.",
-        "It sends the whole conversation history to a verifier model."
+        "Он заранее fetches next node параллельно, чтобы снизить риск latency.",
+        "Planner LLM call выбирает next step каждый turn, добавляя prompt и completion tokens для каждого decision.",
+        "Он дублирует tool list для каждого agent in the crew.",
+        "Он отправляет всю conversation history в verifier model."
       ],
       "correct": 1,
       "explanation": ""
     },
     {
       "stage": "post",
-      "question": "Proposer-critic dialogue in code review naturally maps to which framework's core abstraction?",
+      "question": "Proposer-critic dialogue в code review естественно отображается на core abstraction какого framework?",
       "options": [
         "CrewAI's sequential Crew",
         "LangGraph's StateGraph",
@@ -39,7 +39,7 @@
     },
     {
       "stage": "post",
-      "question": "Which framework has built-in storage drivers (SQLite, Postgres, Redis, Mongo, DynamoDB) attached directly to the Agent primitive for session and memory persistence?",
+      "question": "У какого framework есть built-in storage drivers (SQLite, Postgres, Redis, Mongo, DynamoDB), attached directly to Agent primitive для session и memory persistence?",
       "options": [
         "LangGraph",
         "CrewAI",
@@ -51,12 +51,12 @@
     },
     {
       "stage": "post",
-      "question": "You have a two-call summarizer: fetch text, summarize. Which option is the right framework choice?",
+      "question": "У вас two-call summarizer: fetch text, summarize. Какой framework choice правильный?",
       "options": [
-        "LangGraph StateGraph \u2014 always use a framework for reliability.",
-        "CrewAI with researcher + summarizer roles \u2014 roles make it clearer.",
-        "Plain Python with the provider SDK \u2014 no framework is the fastest framework for tiny pipelines.",
-        "AutoGen GroupChat \u2014 two agents can argue about the best summary."
+        "LangGraph StateGraph — всегда используйте framework ради reliability.",
+        "CrewAI с ролями researcher + summarizer — roles делают workflow понятнее.",
+        "Plain Python с provider SDK — отсутствие framework является самым быстрым framework для tiny pipelines.",
+        "AutoGen GroupChat — два agents могут спорить о лучшем summary."
       ],
       "correct": 2,
       "explanation": ""

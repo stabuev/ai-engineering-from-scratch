@@ -2,66 +2,66 @@
   {
     "id": "svm-pre-1",
     "stage": "pre",
-    "question": "What are support vectors in an SVM?",
+    "question": "Что такое support vectors в SVM?",
     "options": [
-      "All data points in the training set",
-      "The training points closest to the decision boundary that determine the hyperplane",
-      "The feature vectors after kernel transformation",
-      "The weight vectors learned during training"
+      "Все точки данных в обучающей выборке",
+      "Обучающие точки, ближайшие к границе решения и определяющие гиперплоскость",
+      "Векторы признаков после kernel-преобразования",
+      "Векторы весов, выученные при обучении"
     ],
     "correct": 1,
-    "explanation": "Support vectors are the training points that lie exactly on the margin boundaries. They are the only points that determine the decision hyperplane. Removing non-support-vector points does not change the boundary."
+    "explanation": "Support vectors — это обучающие точки, лежащие точно на границах margin. Только они определяют разделяющую гиперплоскость. Удаление точек, не являющихся support vectors, не изменит границу."
   },
   {
     "id": "svm-pre-2",
     "stage": "pre",
-    "question": "What does the SVM maximize when finding the decision boundary?",
+    "question": "Что максимизирует SVM при поиске границы решения?",
     "options": [
-      "The number of correctly classified training points",
-      "The margin -- the distance between the decision boundary and the nearest points of each class",
-      "The total distance from all points to the boundary",
-      "The complexity of the decision boundary"
+      "Количество правильно классифицированных обучающих точек",
+      "Margin -- расстояние между границей решения и ближайшими точками каждого класса",
+      "Суммарное расстояние от всех точек до границы",
+      "Сложность границы решения"
     ],
     "correct": 1,
-    "explanation": "SVMs find the hyperplane that maximizes the margin between the two classes. A wider margin leads to better generalization on unseen data."
+    "explanation": "SVM находят гиперплоскость, максимизирующую margin между двумя классами. Более широкий margin ведет к лучшему обобщению на невидимых данных."
   },
   {
     "id": "svm-post-1",
     "stage": "post",
-    "question": "What happens when you increase the C parameter in an SVM?",
+    "question": "Что происходит при увеличении параметра C в SVM?",
     "options": [
-      "The margin gets wider and more misclassifications are allowed",
-      "The margin gets narrower, fewer misclassifications are tolerated, and the model may overfit",
-      "The kernel function changes from linear to RBF",
-      "The number of support vectors always increases"
+      "Margin становится шире, и допускается больше ошибочных классификаций",
+      "Margin становится уже, допускается меньше ошибочных классификаций, и модель может переобучиться",
+      "Kernel-функция меняется с linear на RBF",
+      "Количество support vectors всегда увеличивается"
     ],
     "correct": 1,
-    "explanation": "Large C penalizes misclassifications heavily, producing a narrow margin that closely fits the training data. This can lead to overfitting. Small C allows more violations for a wider, more regularized margin."
+    "explanation": "Большое C сильно штрафует ошибочные классификации, создавая узкий margin, плотно подогнанный под обучающие данные. Это может привести к переобучению. Малое C допускает больше нарушений ради более широкого и регуляризованного margin."
   },
   {
     "id": "svm-post-2",
     "stage": "post",
-    "question": "How does the kernel trick enable SVMs to learn nonlinear boundaries?",
+    "question": "Как kernel trick позволяет SVM изучать нелинейные границы?",
     "options": [
-      "It replaces the SVM with a neural network",
-      "It computes dot products in a high-dimensional space without explicitly mapping data to that space",
-      "It removes outliers from the dataset before training",
-      "It adds polynomial features to the input data directly"
+      "Он заменяет SVM нейронной сетью",
+      "Он вычисляет скалярные произведения в высокомерном пространстве без явного отображения данных в это пространство",
+      "Он удаляет выбросы из датасета перед обучением",
+      "Он напрямую добавляет полиномиальные признаки к входным данным"
     ],
     "correct": 1,
-    "explanation": "The kernel trick replaces every dot product x_i . x_j with K(x_i, x_j), computing the dot product in a high-dimensional (even infinite-dimensional for RBF) feature space without ever constructing it."
+    "explanation": "Kernel trick заменяет каждое скалярное произведение x_i . x_j на K(x_i, x_j), вычисляя скалярное произведение в высокомерном (для RBF даже бесконечномерном) пространстве признаков без его явного построения."
   },
   {
     "id": "svm-post-3",
     "stage": "post",
-    "question": "Hinge loss is zero when y * f(x) >= 1. What does this mean in terms of classification?",
+    "question": "Hinge loss равен нулю, когда y * f(x) >= 1. Что это означает с точки зрения классификации?",
     "options": [
-      "The point is misclassified",
-      "The point is correctly classified and lies outside the margin",
-      "The point is exactly on the decision boundary",
-      "The point is a noise sample that should be ignored"
+      "Точка классифицирована неправильно",
+      "Точка классифицирована правильно и лежит вне margin",
+      "Точка лежит точно на границе решения",
+      "Точка является шумовым примером, который нужно игнорировать"
     ],
     "correct": 1,
-    "explanation": "When y * f(x) >= 1, the point is correctly classified AND lies on or beyond the margin boundary. Only points inside the margin or misclassified (y * f(x) < 1) contribute to the hinge loss."
+    "explanation": "Когда y * f(x) >= 1, точка классифицирована правильно И лежит на границе margin или за ней. В hinge loss вносят вклад только точки внутри margin или ошибочно классифицированные (y * f(x) < 1)."
   }
 ]

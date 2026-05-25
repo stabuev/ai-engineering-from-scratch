@@ -2,63 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the Fourier transform do to a signal?",
+      "question": "Что Fourier transform делает с сигналом?",
       "options": [
-        "Compresses the signal to use less storage",
-        "Decomposes the signal into sine waves of different frequencies, amplitudes, and phases",
-        "Removes noise from the signal",
-        "Converts the signal from analog to digital"
+        "Сжимает сигнал, чтобы использовать меньше места",
+        "Разлагает сигнал на синусоиды разных частот, амплитуд и фаз",
+        "Удаляет шум из сигнала",
+        "Преобразует сигнал из аналогового в цифровой"
       ],
       "correct": 1,
-      "explanation": "The Fourier transform converts a signal from the time domain to the frequency domain. Each frequency coefficient X[k] tells you the amplitude and phase of a sine wave at frequency k. The signal is re-expressed as a sum of these sine waves."
+      "explanation": "Fourier transform переводит сигнал из time domain в frequency domain. Каждый frequency coefficient X[k] сообщает амплитуду и фазу синусоиды на частоте k. Сигнал переописывается как сумма этих синусоид."
     },
     {
       "stage": "pre",
-      "question": "What is the time complexity of the Fast Fourier Transform (FFT) compared to the direct DFT?",
+      "question": "Какова time complexity Fast Fourier Transform (FFT) по сравнению с прямым DFT?",
       "options": [
-        "Both are O(N^2)",
-        "FFT is O(N log N), DFT is O(N^2)",
-        "FFT is O(N), DFT is O(N log N)",
-        "FFT is O(log N), DFT is O(N)"
+        "Оба имеют O(N^2)",
+        "FFT имеет O(N log N), DFT имеет O(N^2)",
+        "FFT имеет O(N), DFT имеет O(N log N)",
+        "FFT имеет O(log N), DFT имеет O(N)"
       ],
       "correct": 1,
-      "explanation": "The direct DFT computes N outputs, each summing over N inputs: O(N^2). The Cooley-Tukey FFT splits the signal into even/odd halves recursively, doing O(N) work at each of log2(N) levels, giving O(N log N). For N = 1 million, this is 20 million vs 1 trillion operations."
+      "explanation": "Прямой DFT вычисляет N выходов, каждый суммирует по N входам: O(N^2). Cooley-Tukey FFT рекурсивно делит сигнал на чётную/нечётную половины, выполняя O(N) работы на каждом из log2(N) уровней, что даёт O(N log N). Для N = 1 million это 20 million против 1 trillion операций."
     },
     {
       "stage": "post",
-      "question": "What does the convolution theorem state?",
+      "question": "Что утверждает convolution theorem?",
       "options": [
-        "Convolution in the time domain equals addition in the frequency domain",
-        "Convolution in the time domain equals pointwise multiplication in the frequency domain",
-        "Convolution always increases the length of a signal",
-        "Convolution and correlation are identical operations"
+        "Convolution в time domain равна сложению в frequency domain",
+        "Convolution в time domain равна pointwise multiplication в frequency domain",
+        "Convolution всегда увеличивает длину сигнала",
+        "Convolution и correlation — идентичные операции"
       ],
       "correct": 1,
-      "explanation": "The convolution theorem states that convolution in the time domain equals pointwise multiplication in the frequency domain: x * h = IFFT(FFT(x) . FFT(h)). This is why FFT-based convolution is O(N log N) instead of O(N*M) for large kernels."
+      "explanation": "Convolution theorem утверждает, что свёртка во time domain равна поэлементному умножению во frequency domain: x * h = IFFT(FFT(x) . FFT(h)). Поэтому FFT-based convolution имеет O(N log N) вместо O(N*M) для больших kernels."
     },
     {
       "stage": "post",
-      "question": "Why does zero-padding a signal before FFT NOT increase the true frequency resolution?",
+      "question": "Почему zero-padding сигнала перед FFT НЕ увеличивает истинное frequency resolution?",
       "options": [
-        "Zero-padding introduces noise that cancels the improvement",
-        "Zero-padding interpolates between existing frequency bins but cannot reveal frequency detail absent from the original samples",
-        "Zero-padding only works for power-of-2 signal lengths",
-        "The FFT algorithm ignores zero-padded samples"
+        "Zero-padding добавляет шум, который отменяет улучшение",
+        "Zero-padding интерполирует между существующими frequency bins, но не может раскрыть частотные детали, отсутствующие в исходных samples",
+        "Zero-padding работает только для lengths сигнала, равных степени 2",
+        "Алгоритм FFT игнорирует zero-padded samples"
       ],
       "correct": 1,
-      "explanation": "True frequency resolution depends on the observation time T = N/fs. Zero-padding adds more frequency bins (finer grid) but only interpolates the existing spectrum — it gives a smoother-looking result without resolving frequencies closer than 1/T Hz apart."
+      "explanation": "Истинное frequency resolution зависит от времени наблюдения T = N/fs. Zero-padding добавляет больше frequency bins (более тонкую сетку), но только интерполирует существующий spectrum — результат выглядит более гладким, но не разрешает частоты ближе, чем 1/T Hz."
     },
     {
       "stage": "post",
-      "question": "In the original Transformer's sinusoidal positional encodings, why are different dimension pairs assigned geometrically spaced frequencies?",
+      "question": "Почему в оригинальных sinusoidal positional encodings Transformer разным парам измерений назначены геометрически разнесённые frequencies?",
       "options": [
-        "It reduces the computational cost of attention",
-        "Each frequency provides a different resolution — high frequencies encode fine position, low frequencies encode coarse position, giving each position a unique fingerprint",
-        "Geometric spacing is required by the FFT algorithm",
-        "It ensures all encoding values are between 0 and 1"
+        "Это снижает вычислительную стоимость attention",
+        "Каждая frequency даёт разное разрешение — high frequencies кодируют точную позицию, low frequencies кодируют грубую позицию, давая каждой позиции уникальный отпечаток",
+        "Geometric spacing требуется алгоритмом FFT",
+        "Это гарантирует, что все encoding values находятся между 0 и 1"
       ],
       "correct": 1,
-      "explanation": "High-frequency dimensions change rapidly with position (fine resolution), while low-frequency dimensions change slowly (coarse resolution). Together, the multi-frequency encoding gives every position a unique pattern — similar to how Fourier coefficients uniquely identify a signal."
+      "explanation": "High-frequency dimensions быстро меняются с позицией (тонкое разрешение), а low-frequency dimensions меняются медленно (грубое разрешение). Вместе multi-frequency encoding даёт каждой позиции уникальный pattern — похоже на то, как Fourier coefficients uniquely identify a signal."
     }
   ]
 }

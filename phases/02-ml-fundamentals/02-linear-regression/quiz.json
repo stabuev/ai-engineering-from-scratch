@@ -2,66 +2,66 @@
   {
     "id": "linreg-pre-1",
     "stage": "pre",
-    "question": "What does the learning rate control in gradient descent?",
+    "question": "Что контролирует learning rate в градиентном спуске?",
     "options": [
-      "The number of features used by the model",
-      "How many epochs the model trains for",
-      "The size of each parameter update step",
-      "The ratio of training to test data"
+      "Количество признаков, используемых моделью",
+      "Сколько эпох обучается модель",
+      "Размер каждого шага обновления параметров",
+      "Соотношение обучающих и тестовых данных"
     ],
     "correct": 2,
-    "explanation": "The learning rate is a scalar that controls how much weights change per gradient descent step. Too large causes divergence, too small causes slow convergence."
+    "explanation": "Learning rate — скаляр, который задает, насколько веса меняются за один шаг градиентного спуска. Слишком большой вызывает расходимость, слишком маленький — медленную сходимость."
   },
   {
     "id": "linreg-pre-2",
     "stage": "pre",
-    "question": "What does R-squared = 0 mean for a regression model?",
+    "question": "Что означает R-squared = 0 для регрессионной модели?",
     "options": [
-      "The model makes perfect predictions",
-      "The model is no better than always predicting the mean of the target",
-      "The model has negative error",
-      "The model has not been trained yet"
+      "Модель делает идеальные предсказания",
+      "Модель не лучше постоянного предсказания среднего значения целевой переменной",
+      "У модели отрицательная ошибка",
+      "Модель еще не обучалась"
     ],
     "correct": 1,
-    "explanation": "R-squared = 0 means the model explains none of the variance in the target. It performs exactly as well as simply predicting the mean every time."
+    "explanation": "R-squared = 0 означает, что модель не объясняет дисперсию целевой переменной. Она работает ровно так же, как постоянное предсказание среднего."
   },
   {
     "id": "linreg-post-1",
     "stage": "post",
-    "question": "Why is feature scaling important for gradient descent in multiple linear regression?",
+    "question": "Почему масштабирование признаков важно для градиентного спуска в множественной линейной регрессии?",
     "options": [
-      "It makes the model more interpretable",
-      "It prevents the cost surface from being elongated, allowing faster convergence",
-      "It reduces the number of features needed",
-      "It guarantees the model will find the global minimum"
+      "Оно делает модель более интерпретируемой",
+      "Оно предотвращает вытянутость поверхности функции стоимости и ускоряет сходимость",
+      "Оно уменьшает необходимое количество признаков",
+      "Оно гарантирует, что модель найдет глобальный минимум"
     ],
     "correct": 1,
-    "explanation": "When features have very different scales, the cost surface becomes elongated. Gradient descent takes many more steps to converge. Standardizing features makes the surface more spherical."
+    "explanation": "Когда признаки имеют сильно разные масштабы, поверхность функции стоимости становится вытянутой. Градиентному спуску нужно гораздо больше шагов для сходимости. Стандартизация признаков делает поверхность более сферичной."
   },
   {
     "id": "linreg-post-2",
     "stage": "post",
-    "question": "The normal equation gives optimal weights directly. Why would you prefer gradient descent instead?",
+    "question": "Нормальное уравнение дает оптимальные веса напрямую. Почему вместо него можно предпочесть градиентный спуск?",
     "options": [
-      "Gradient descent always gives more accurate results",
-      "The normal equation does not work for linear regression",
-      "Matrix inversion in the normal equation is O(n^3) in features, which is too slow for thousands of features",
-      "Gradient descent requires less memory than storing the data"
+      "Градиентный спуск всегда дает более точные результаты",
+      "Нормальное уравнение не работает для линейной регрессии",
+      "Обращение матрицы в нормальном уравнении имеет сложность O(n^3) по числу признаков, что слишком медленно для тысяч признаков",
+      "Градиентный спуск требует меньше памяти, чем хранение данных"
     ],
     "correct": 2,
-    "explanation": "The normal equation requires inverting X^T * X, which is O(n^3) in the number of features. For large feature counts, gradient descent is more efficient."
+    "explanation": "Нормальное уравнение требует обращения X^T * X, что имеет сложность O(n^3) по числу признаков. При большом количестве признаков градиентный спуск эффективнее."
   },
   {
     "id": "linreg-post-3",
     "stage": "post",
-    "question": "A degree-10 polynomial regression model fits training data perfectly (R^2 = 1.0) but has R^2 = 0.3 on test data. What should you do?",
+    "question": "Полиномиальная регрессионная модель степени 10 идеально подгоняет обучающие данные (R^2 = 1.0), но имеет R^2 = 0.3 на тесте. Что следует сделать?",
     "options": [
-      "Increase the polynomial degree to 20 for even better training fit",
-      "Reduce model complexity (lower degree) or add regularization (Ridge) to prevent overfitting",
-      "Collect less training data so the model cannot memorize",
-      "Remove the test set and report training R^2 only"
+      "Увеличить степень полинома до 20 для еще лучшей подгонки обучения",
+      "Снизить сложность модели (меньшая степень) или добавить регуляризацию (Ridge), чтобы предотвратить переобучение",
+      "Собрать меньше обучающих данных, чтобы модель не могла запомнить",
+      "Убрать тестовую выборку и сообщать только обучающий R^2"
     ],
     "correct": 1,
-    "explanation": "Perfect training fit with poor test fit is overfitting. The fix is to reduce complexity (lower polynomial degree) or add regularization to penalize large weights."
+    "explanation": "Идеальная подгонка обучения при плохой подгонке теста — это переобучение. Исправление: снизить сложность (меньшая степень полинома) или добавить регуляризацию, штрафующую большие веса."
   }
 ]

@@ -1,37 +1,37 @@
 [
   {
-    "question": "What happens if you initialize all weights in a neural network to zero?",
-    "options": ["The network trains normally but slowly", "All neurons compute identical outputs and receive identical gradients, so the network has only 1 effective neuron per layer", "The network diverges", "Zero init is the recommended default"],
+    "question": "Что произойдет, если инициализировать все веса нейронной сети нулями?",
+    "options": ["Сеть обучается нормально, но медленно", "Все нейроны вычисляют одинаковые выходы и получают одинаковые градиенты, поэтому сеть имеет только 1 эффективный нейрон на слой", "Сеть расходится", "Zero init — рекомендуемое значение по умолчанию"],
     "correct": 1,
-    "explanation": "With zero weights, every neuron in a layer computes the same function, receives the same gradient, and updates identically. This 'symmetry' means hundreds of parameters behave as one.",
+    "explanation": "При нулевых весах каждый нейрон слоя вычисляет одну и ту же функцию, получает один и тот же градиент и обновляется одинаково. Эта 'symmetry' означает, что сотни параметров ведут себя как один.",
     "stage": "pre"
   },
   {
-    "question": "Why does the scale of random weight initialization matter?",
-    "options": ["Larger weights train faster", "If variance is too high, activations explode; if too low, activations vanish -- both prevent training", "Scale only matters for the output layer", "It doesn't matter as long as weights are nonzero"],
+    "question": "Почему важен масштаб случайной инициализации весов?",
+    "options": ["Большие веса обучаются быстрее", "Если variance слишком высока, активации взрываются; если слишком низка, активации исчезают -- оба случая мешают обучению", "Масштаб важен только для выходного слоя", "Это не важно, если веса ненулевые"],
     "correct": 1,
-    "explanation": "Each layer multiplies variance by fan_in * Var(w). If this product is > 1, signal explodes exponentially through layers. If < 1, it vanishes. Proper initialization keeps this product at exactly 1.",
+    "explanation": "Каждый слой умножает variance на fan_in * Var(w). Если произведение > 1, сигнал экспоненциально взрывается через слои. Если < 1, он исчезает. Правильная инициализация удерживает это произведение ровно на 1.",
     "stage": "pre"
   },
   {
-    "question": "What is the formula for Kaiming/He initialization variance?",
+    "question": "Какова формула variance для Kaiming/He initialization?",
     "options": ["Var(w) = 1/fan_in", "Var(w) = 2/fan_in", "Var(w) = 2/(fan_in + fan_out)", "Var(w) = 1/(fan_in + fan_out)"],
     "correct": 1,
-    "explanation": "Kaiming init uses Var(w) = 2/fan_in. The factor of 2 compensates for ReLU zeroing half the activations (negative values become 0), which effectively halves the fan_in.",
+    "explanation": "Kaiming init использует Var(w) = 2/fan_in. Множитель 2 компенсирует то, что ReLU зануляет половину активаций (отрицательные значения становятся 0), фактически уменьшая fan_in вдвое.",
     "stage": "post"
   },
   {
-    "question": "When should you use Xavier/Glorot initialization instead of Kaiming/He?",
-    "options": ["Always -- Xavier is universally better", "When using sigmoid or tanh activations, which don't zero half the outputs like ReLU", "When training on small datasets", "When using Adam optimizer"],
+    "question": "Когда следует использовать Xavier/Glorot initialization вместо Kaiming/He?",
+    "options": ["Всегда -- Xavier универсально лучше", "При использовании sigmoid или tanh активаций, которые не зануляют половину выходов как ReLU", "При обучении на маленьких датасетах", "При использовании оптимизатора Adam"],
     "correct": 1,
-    "explanation": "Xavier init uses Var(w) = 2/(fan_in + fan_out), designed for activations that are roughly linear near zero (sigmoid, tanh). Kaiming's extra factor of 2 compensates for ReLU's half-zeroing, which Xavier doesn't need.",
+    "explanation": "Xavier init использует Var(w) = 2/(fan_in + fan_out) и рассчитан на активации, примерно линейные около нуля (sigmoid, tanh). Дополнительный множитель 2 в Kaiming компенсирует half-zeroing у ReLU, что Xavier не нужно.",
     "stage": "post"
   },
   {
-    "question": "Why does GPT-2 scale residual layer weights by 1/sqrt(2N)?",
-    "options": ["To speed up training", "Each residual addition increases variance, so scaling prevents the accumulated signal from growing unbounded through N layers", "To reduce the number of parameters", "To improve tokenization"],
+    "question": "Почему GPT-2 масштабирует веса residual layers на 1/sqrt(2N)?",
+    "options": ["Чтобы ускорить обучение", "Каждое residual addition увеличивает variance, поэтому масштабирование не дает накопленному сигналу неограниченно расти через N слоев", "Чтобы уменьшить число параметров", "Чтобы улучшить tokenization"],
     "correct": 1,
-    "explanation": "Residual connections add sublayer output to the input: x = x + sublayer(x). Each addition increases variance. With N residual layers, variance grows proportionally to N. Scaling by 1/sqrt(2N) keeps the signal stable.",
+    "explanation": "Residual connections добавляют выход подслоя ко входу: x = x + sublayer(x). Каждое сложение увеличивает variance. При N residual layers variance растет пропорционально N. Масштабирование на 1/sqrt(2N) сохраняет сигнал стабильным.",
     "stage": "post"
   }
 ]

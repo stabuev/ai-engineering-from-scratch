@@ -2,7 +2,7 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is the approximate range of numbers that float32 can represent?",
+      "question": "Какой приблизительный диапазон чисел может представлять float32?",
       "options": [
         "+/- 65,504",
         "+/- 3.4e38",
@@ -10,55 +10,55 @@
         "+/- 1.0e10"
       ],
       "correct": 1,
-      "explanation": "Float32 has an 8-bit exponent giving a range of approximately +/- 3.4e38. Float16 is limited to +/- 65,504, and float64 reaches +/- 1.8e308."
+      "explanation": "Float32 имеет 8-битную экспоненту, что даёт диапазон примерно +/- 3.4e38. Float16 ограничен +/- 65,504, а float64 достигает +/- 1.8e308."
     },
     {
       "stage": "pre",
-      "question": "Why does 0.1 + 0.2 not equal 0.3 in floating-point arithmetic?",
+      "question": "Почему 0.1 + 0.2 не равно 0.3 в арифметике с плавающей точкой?",
       "options": [
-        "Python rounds all decimals to integers",
-        "0.1 and 0.2 cannot be represented exactly in binary floating point",
-        "The CPU has a bug in its addition circuit",
-        "0.3 is not a valid floating-point number"
+        "Python округляет все десятичные числа до целых",
+        "0.1 и 0.2 нельзя точно представить в двоичной форме с плавающей точкой",
+        "В CPU есть ошибка в схеме сложения",
+        "0.3 не является допустимым числом с плавающей точкой"
       ],
       "correct": 1,
-      "explanation": "The number 0.1 is a repeating fraction in binary (like 1/3 in decimal). Float32 truncates it, so the stored value is approximately 0.100000001490116. The accumulated error makes the sum differ from 0.3."
+      "explanation": "Число 0.1 — периодическая дробь в двоичной системе (как 1/3 в десятичной). Float32 усекает её, поэтому сохранённое значение примерно равно 0.100000001490116. Накопленная ошибка делает сумму отличной от 0.3."
     },
     {
       "stage": "post",
-      "question": "In the stable softmax implementation, why do you subtract max(logits) before exponentiating?",
+      "question": "Почему в стабильной реализации softmax вы вычитаете max(logits) перед exponentiating?",
       "options": [
-        "It makes the output probabilities more uniform",
-        "It prevents exp() from overflowing by ensuring the largest exponent is 0",
-        "It converts logits from float16 to float32",
-        "It normalizes the logits to have zero mean"
+        "Это делает выходные вероятности более равномерными",
+        "Это предотвращает overflow в exp(), гарантируя, что максимальная экспонента равна 0",
+        "Это преобразует logits из float16 в float32",
+        "Это нормализует logits к нулевому среднему"
       ],
       "correct": 1,
-      "explanation": "After subtracting max(logits), the largest value is 0 and exp(0) = 1, which cannot overflow. All other values are negative, so their exponentials are less than 1. The probabilities are mathematically identical to the naive version."
+      "explanation": "После вычитания max(logits) наибольшее значение равно 0, а exp(0) = 1 и не может переполниться. Все остальные значения отрицательны, поэтому их экспоненты меньше 1. Вероятности математически идентичны наивной версии."
     },
     {
       "stage": "post",
-      "question": "When using centered finite differences for gradient checking, what happens if the step size h is too small (e.g., 1e-15)?",
+      "question": "Что происходит при использовании centered finite differences для gradient checking, если step size h слишком мал (например, 1e-15)?",
       "options": [
-        "The approximation becomes more accurate",
-        "Catastrophic cancellation destroys the result because f(x+h) and f(x-h) are nearly identical",
-        "The function evaluation becomes faster",
-        "The gradient automatically becomes zero"
+        "Аппроксимация становится точнее",
+        "Катастрофическое вычитание разрушает результат, потому что f(x+h) и f(x-h) почти одинаковы",
+        "Вычисление функции становится быстрее",
+        "Градиент автоматически становится нулевым"
       ],
       "correct": 1,
-      "explanation": "When h is extremely small, f(x+h) and f(x-h) differ only in their last few significant digits. Subtracting them cancels the leading digits, leaving mostly rounding noise. Typical good values are h = 1e-5 to 1e-7."
+      "explanation": "Когда h крайне мал, f(x+h) и f(x-h) различаются только в последних значащих цифрах. При вычитании старшие цифры сокращаются, оставляя в основном шум округления. Обычно хорошие значения: h = 1e-5 to 1e-7."
     },
     {
       "stage": "post",
-      "question": "Why is bfloat16 generally preferred over float16 for neural network training?",
+      "question": "Почему bfloat16 обычно предпочитают float16 при обучении нейронных сетей?",
       "options": [
-        "bfloat16 has more mantissa bits, giving better precision",
-        "bfloat16 has the same exponent range as float32, avoiding overflow on large activations without loss scaling",
-        "bfloat16 uses less memory than float16",
-        "bfloat16 is supported by more GPU architectures than float16"
+        "bfloat16 имеет больше битов мантиссы и даёт лучшую точность",
+        "bfloat16 имеет тот же диапазон экспоненты, что и float32, избегая overflow на больших activation без loss scaling",
+        "bfloat16 использует меньше памяти, чем float16",
+        "bfloat16 поддерживается большим числом GPU architectures, чем float16"
       ],
       "correct": 1,
-      "explanation": "bfloat16 has 8 exponent bits (same as float32, range up to 3.4e38) while float16 has only 5 exponent bits (max ~65,504). During training, activations and gradients can exceed 65,504, causing float16 overflow. bfloat16 handles this without loss scaling."
+      "explanation": "bfloat16 имеет 8 битов экспоненты (как float32, диапазон до 3.4e38), тогда как float16 имеет только 5 битов экспоненты (максимум ~65,504). При обучении activations и gradients могут превышать 65,504, вызывая overflow в float16. bfloat16 справляется с этим без loss scaling."
     }
   ]
 }

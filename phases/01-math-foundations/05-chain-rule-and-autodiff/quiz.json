@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the chain rule in calculus state?",
-      "options": ["The derivative of a sum is the sum of derivatives", "The derivative of composed functions is the product of their individual derivatives", "The integral of a product is the product of integrals", "Functions can only be differentiated if they are linear"],
+      "question": "Что утверждает цепное правило в математическом анализе?",
+      "options": [
+        "Производная суммы равна сумме производных",
+        "Производная композиции функций равна произведению их отдельных производных",
+        "Интеграл произведения равен произведению интегралов",
+        "Функции можно дифференцировать только если они линейны"
+      ],
       "correct": 1,
-      "explanation": "For y = f(g(x)), the chain rule says dy/dx = f'(g(x)) * g'(x). You multiply the derivatives at each link in the chain. This is the mathematical basis of backpropagation."
+      "explanation": "Для y = f(g(x)) цепное правило говорит: dy/dx = f'(g(x)) * g'(x). Вы умножаете производные на каждом звене цепочки. Это математическая основа backpropagation."
     },
     {
       "stage": "pre",
-      "question": "What is a computational graph?",
-      "options": ["A plot of loss vs training steps", "A directed graph where nodes are operations and edges carry values forward or gradients backward", "A diagram showing the architecture of a neural network", "A graph database used for storing training data"],
+      "question": "Что такое вычислительный граф?",
+      "options": [
+        "График loss в зависимости от шагов обучения",
+        "Ориентированный граф, где узлы — операции, а рёбра переносят значения вперёд или градиенты назад",
+        "Диаграмма архитектуры нейронной сети",
+        "Графовая база данных для хранения обучающих данных"
+      ],
       "correct": 1,
-      "explanation": "A computational graph represents the sequence of operations in a computation. Data flows forward through the graph, and gradients flow backward during backpropagation."
+      "explanation": "Вычислительный граф представляет последовательность операций в вычислении. Данные проходят по графу вперёд, а градиенты текут назад во время backpropagation."
     },
     {
       "stage": "post",
-      "question": "Why does PyTorch use reverse-mode autodiff (backpropagation) instead of forward-mode?",
-      "options": ["Reverse mode is more numerically accurate", "Reverse mode computes all gradients in one backward pass, while forward mode needs one pass per input variable -- neural networks have millions of inputs but one loss output", "Reverse mode uses less memory", "Forward mode cannot handle non-linear functions"],
+      "question": "Почему PyTorch использует reverse-mode autodiff (backpropagation), а не forward-mode?",
+      "options": [
+        "Reverse mode численно точнее",
+        "Reverse mode вычисляет все градиенты за один обратный проход, тогда как forward mode требует один проход на каждую входную переменную -- у нейронных сетей миллионы входов, но один выход loss",
+        "Reverse mode использует меньше памяти",
+        "Forward mode не может обрабатывать нелинейные функции"
+      ],
       "correct": 1,
-      "explanation": "Neural networks have millions of weight inputs but produce a single scalar loss. Reverse mode needs one backward pass total. Forward mode would need one pass per weight -- millions of passes -- making it impractical."
+      "explanation": "У нейронных сетей миллионы входных весов, но один скалярный loss. Reverse mode требует всего один обратный проход. Forward mode потребовал бы по одному проходу на каждый вес -- миллионы проходов -- что делает его непрактичным."
     },
     {
       "stage": "post",
-      "question": "In the Value class autograd engine, why does the backward function use '+=' instead of '=' for accumulating gradients?",
-      "options": ["To average the gradients across multiple samples", "Because a value used in multiple operations receives gradient contributions from each one, which must be summed", "To prevent numerical overflow in the gradients", "Because Python does not support the '=' operator in closures"],
+      "question": "Почему в autograd-движке класса Value функция backward использует '+=' вместо '=' для накопления градиентов?",
+      "options": [
+        "Чтобы усреднять градиенты по нескольким примерам",
+        "Потому что значение, использованное в нескольких операциях, получает вклад в градиент от каждой из них, и эти вклады нужно суммировать",
+        "Чтобы предотвратить численное переполнение в градиентах",
+        "Потому что Python не поддерживает оператор '=' в замыканиях"
+      ],
       "correct": 1,
-      "explanation": "When a value feeds into multiple operations (e.g., x used in both x*y and x+z), its total gradient is the sum of all incoming gradient contributions. Using '=' would overwrite earlier contributions."
+      "explanation": "Когда значение поступает в несколько операций (например, x используется и в x*y, и в x+z), его полный градиент равен сумме всех входящих вкладов. Использование '=' перезаписало бы более ранние вклады."
     },
     {
       "stage": "post",
-      "question": "What is gradient checking and when should you use it?",
-      "options": ["Checking that gradients are below a threshold to prevent exploding gradients", "Comparing autodiff gradients against numerical finite-difference gradients to verify correctness of the backward pass", "Checking that all parameters received non-zero gradients during training", "Monitoring gradient magnitudes during training to detect vanishing gradients"],
+      "question": "Что такое gradient checking и когда его следует использовать?",
+      "options": [
+        "Проверка, что градиенты ниже порога, чтобы предотвратить взрывающиеся градиенты",
+        "Сравнение autodiff-градиентов с численными градиентами конечных разностей для проверки корректности backward pass",
+        "Проверка, что все параметры получили ненулевые градиенты при обучении",
+        "Мониторинг величин градиентов при обучении для обнаружения затухающих градиентов"
+      ],
       "correct": 1,
-      "explanation": "Gradient checking computes numerical derivatives via (f(x+h) - f(x-h)) / 2h and compares them to autodiff gradients. Use it when adding new operations to your autograd engine or debugging training failures."
+      "explanation": "Gradient checking вычисляет численные производные через (f(x+h) - f(x-h)) / 2h и сравнивает их с autodiff-градиентами. Используйте его при добавлении новых операций в autograd-движок или при отладке сбоев обучения."
     }
   ]
 }

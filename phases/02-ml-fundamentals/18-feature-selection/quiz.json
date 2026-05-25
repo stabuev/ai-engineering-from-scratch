@@ -2,66 +2,66 @@
   {
     "id": "featsel-pre-1",
     "stage": "pre",
-    "question": "Why can adding more features actually make a model perform worse?",
+    "question": "Почему добавление новых признаков может на самом деле ухудшить качество модели?",
     "options": [
-      "More features always improve model accuracy",
-      "Irrelevant features add noise, increase overfitting risk, and dilute the signal from useful features",
-      "Models have a hard limit on the number of features they can accept",
-      "More features make the model run out of memory"
+      "Большее число признаков всегда улучшает accuracy модели",
+      "Нерелевантные признаки добавляют шум, повышают риск переобучения и разбавляют сигнал полезных признаков",
+      "У моделей есть жесткий предел числа признаков, которые они могут принять",
+      "Из-за большего числа признаков у модели заканчивается память"
     ],
     "correct": 1,
-    "explanation": "Irrelevant features give the model opportunities to overfit on noise in the training data. They increase dimensionality, making the data sparser and distances less meaningful (curse of dimensionality)."
+    "explanation": "Нерелевантные признаки дают модели возможности переобучиться на шуме обучающих данных. Они увеличивают размерность, делая данные более разреженными, а расстояния менее осмысленными (проклятие размерности)."
   },
   {
     "id": "featsel-pre-2",
     "stage": "pre",
-    "question": "What is the key difference between filter and wrapper feature selection methods?",
+    "question": "В чем ключевое различие между filter и wrapper методами отбора признаков?",
     "options": [
-      "Filter methods use a model to evaluate features; wrapper methods use statistics",
-      "Filter methods score features using statistics without a model; wrapper methods train a model to evaluate feature subsets",
-      "Filter methods are always more accurate than wrapper methods",
-      "Wrapper methods can only select one feature at a time"
+      "Filter methods используют модель для оценки признаков; wrapper methods используют статистики",
+      "Filter methods оценивают признаки статистиками без модели; wrapper methods обучают модель для оценки подмножеств признаков",
+      "Filter methods всегда точнее wrapper methods",
+      "Wrapper methods могут выбирать только один признак за раз"
     ],
     "correct": 1,
-    "explanation": "Filter methods (variance threshold, mutual information, correlation) score features with statistical measures. Wrapper methods (RFE, forward selection) train models repeatedly to evaluate different feature subsets."
+    "explanation": "Filter methods (variance threshold, mutual information, correlation) оценивают признаки статистическими мерами. Wrapper methods (RFE, forward selection) многократно обучают модели, чтобы оценивать разные подмножества признаков."
   },
   {
     "id": "featsel-post-1",
     "stage": "post",
-    "question": "Mutual information can detect relationships that Pearson correlation cannot. What kind?",
+    "question": "Mutual information может обнаруживать зависимости, которые Pearson correlation не видит. Какие?",
     "options": [
-      "Linear relationships between continuous features",
-      "Nonlinear relationships such as quadratic or periodic dependencies",
-      "Relationships between categorical features only",
-      "Relationships that require more than 1000 data points"
+      "Линейные зависимости между непрерывными признаками",
+      "Нелинейные зависимости, например квадратичные или периодические",
+      "Зависимости только между категориальными признаками",
+      "Зависимости, требующие больше 1000 точек данных"
     ],
     "correct": 1,
-    "explanation": "Pearson correlation only measures linear association. A quadratic relationship (y = x^2) has zero correlation but high mutual information. MI captures any statistical dependency between variables."
+    "explanation": "Pearson correlation измеряет только линейную связь. Квадратичная зависимость (y = x^2) имеет нулевую корреляцию, но высокую mutual information. MI улавливает любую статистическую зависимость между переменными."
   },
   {
     "id": "featsel-post-2",
     "stage": "post",
-    "question": "L1 (Lasso) regularization performs feature selection as part of training. How?",
+    "question": "L1 (Lasso) regularization выполняет отбор признаков как часть обучения. Как?",
     "options": [
-      "It removes features with low variance before training starts",
-      "It drives the weights of irrelevant features to exactly zero, effectively eliminating them from the model",
-      "It ranks features by correlation with the target",
-      "It trains separate models for each feature"
+      "Она удаляет признаки с низкой variance до начала обучения",
+      "Она приводит веса нерелевантных признаков ровно к нулю, фактически исключая их из модели",
+      "Она ранжирует признаки по корреляции с target",
+      "Она обучает отдельные модели для каждого признака"
     ],
     "correct": 1,
-    "explanation": "L1 regularization adds |w| penalty to the loss. The geometry of the L1 constraint (diamond shape) causes some weight solutions to land exactly at zero, producing sparse models that automatically select features."
+    "explanation": "L1 regularization добавляет к loss штраф |w|. Геометрия L1-ограничения (форма ромба) приводит к тому, что некоторые решения для весов оказываются ровно в нуле, создавая разреженные модели, автоматически выбирающие признаки."
   },
   {
     "id": "featsel-post-3",
     "stage": "post",
-    "question": "RFE removes the least important feature and retrains. Why is this better than just removing all low-importance features at once?",
+    "question": "RFE удаляет наименее важный признак и переобучает модель. Почему это лучше, чем просто удалить все маловажные признаки сразу?",
     "options": [
-      "It is not better -- removing all at once is always preferred",
-      "Feature importances change as features are removed, so iterative removal accounts for interactions between features",
-      "RFE uses a different importance metric than single-step removal",
-      "Removing one at a time is only necessary for neural networks"
+      "Это не лучше -- всегда предпочтительнее удалить все сразу",
+      "Важности признаков меняются по мере удаления признаков, поэтому итеративное удаление учитывает взаимодействия между признаками",
+      "RFE использует другую метрику важности, чем одношаговое удаление",
+      "Удалять по одному необходимо только для нейронных сетей"
     ],
     "correct": 1,
-    "explanation": "Feature importances are relative. When a correlated feature is removed, the importance of its counterpart may increase. Iterative removal lets the model reassess importances at each step, capturing these interactions."
+    "explanation": "Важности признаков относительны. Когда удаляется коррелированный признак, важность его аналога может вырасти. Итеративное удаление позволяет модели переоценивать важности на каждом шаге и учитывать эти взаимодействия."
   }
 ]

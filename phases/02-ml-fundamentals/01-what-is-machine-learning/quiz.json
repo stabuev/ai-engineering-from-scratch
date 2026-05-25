@@ -2,66 +2,66 @@
   {
     "id": "ml-intro-pre-1",
     "stage": "pre",
-    "question": "In supervised learning, what does the model receive during training?",
+    "question": "Что модель получает во время обучения в обучении с учителем?",
     "options": [
-      "Only input data with no labels",
-      "Input-output pairs where the correct answer is provided",
-      "A reward signal for each action taken",
-      "A set of rules written by a human expert"
+      "Только входные данные без меток",
+      "Пары вход-выход, где дан правильный ответ",
+      "Сигнал награды за каждое выполненное действие",
+      "Набор правил, написанных экспертом-человеком"
     ],
     "correct": 1,
-    "explanation": "Supervised learning trains on input-output pairs (labeled data). The model learns to map inputs to known correct outputs."
+    "explanation": "Обучение с учителем выполняется на парах вход-выход (размеченных данных). Модель учится сопоставлять входы с известными правильными выходами."
   },
   {
     "id": "ml-intro-pre-2",
     "stage": "pre",
-    "question": "What is the purpose of splitting data into training and test sets?",
+    "question": "Зачем данные делят на обучающую и тестовую выборки?",
     "options": [
-      "To make training faster by using less data",
-      "To have backup data in case the training data is lost",
-      "To evaluate whether the model generalizes to data it has never seen during training",
-      "To balance the classes in the dataset"
+      "Чтобы ускорить обучение за счет использования меньшего объема данных",
+      "Чтобы иметь резервные данные на случай потери обучающих данных",
+      "Чтобы оценить, обобщает ли модель на данные, которых она не видела при обучении",
+      "Чтобы сбалансировать классы в датасете"
     ],
     "correct": 2,
-    "explanation": "The test set measures generalization. If you evaluate on training data, you measure memorization, not learning."
+    "explanation": "Тестовая выборка измеряет обобщение. Если оценивать модель на обучающих данных, вы измеряете запоминание, а не обучение."
   },
   {
     "id": "ml-intro-post-1",
     "stage": "post",
-    "question": "A model gets 98% accuracy on training data but 55% on test data. What is this an example of?",
+    "question": "Модель получает accuracy 98% на обучающих данных, но 55% на тестовых. Пример чего это?",
     "options": [
-      "Underfitting: the model is too simple",
-      "Overfitting: the model memorized training noise instead of learning general patterns",
-      "Data drift: the test distribution changed",
-      "Good generalization: the model learned the true patterns"
+      "Недообучение: модель слишком проста",
+      "Переобучение: модель запомнила шум обучающих данных вместо изучения общих закономерностей",
+      "Дрейф данных: тестовое распределение изменилось",
+      "Хорошее обобщение: модель выучила истинные закономерности"
     ],
     "correct": 1,
-    "explanation": "A large gap between training accuracy (high) and test accuracy (low) is the hallmark of overfitting. The model memorized the training data."
+    "explanation": "Большой разрыв между accuracy на обучении (высокой) и на тесте (низкой) является признаком переобучения. Модель запомнила обучающие данные."
   },
   {
     "id": "ml-intro-post-2",
     "stage": "post",
-    "question": "An e-commerce site wants to group customers into segments based on purchase behavior without any predefined labels. Which type of ML is this?",
+    "question": "Интернет-магазин хочет сгруппировать клиентов в сегменты по поведению покупок без заранее заданных меток. Какой это тип ML?",
     "options": [
-      "Supervised learning (classification)",
-      "Supervised learning (regression)",
-      "Unsupervised learning (clustering)",
-      "Reinforcement learning"
+      "Обучение с учителем (классификация)",
+      "Обучение с учителем (регрессия)",
+      "Обучение без учителя (кластеризация)",
+      "Обучение с подкреплением"
     ],
     "correct": 2,
-    "explanation": "Finding natural groupings in data without predefined labels is clustering, which is a form of unsupervised learning."
+    "explanation": "Поиск естественных групп в данных без заранее заданных меток называется кластеризацией, это форма обучения без учителя."
   },
   {
     "id": "ml-intro-post-3",
     "stage": "post",
-    "question": "Which scenario is NOT a good use case for machine learning?",
+    "question": "Какой сценарий НЕ является хорошим случаем применения машинного обучения?",
     "options": [
-      "Predicting customer churn from historical behavior data",
-      "Detecting fraudulent transactions in a stream of millions of payments",
-      "Converting temperatures from Celsius to Fahrenheit",
-      "Classifying images of skin lesions as benign or malignant"
+      "Прогнозирование оттока клиентов по историческим данным поведения",
+      "Обнаружение мошеннических транзакций в потоке из миллионов платежей",
+      "Перевод температуры из градусов Цельсия в градусы Фаренгейта",
+      "Классификация изображений кожных образований как доброкачественных или злокачественных"
     ],
     "correct": 2,
-    "explanation": "Celsius to Fahrenheit is a fixed formula (F = 9/5 * C + 32). Simple, well-defined rules do not need ML. ML adds complexity with no benefit."
+    "explanation": "Цельсий в Фаренгейт переводится фиксированной формулой (F = 9/5 * C + 32). Простым, четко определенным правилам ML не нужен. ML добавит сложность без пользы."
   }
 ]

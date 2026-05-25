@@ -1,37 +1,37 @@
 [
   {
-    "question": "Why is neural network debugging harder than traditional software debugging?",
-    "options": ["Neural networks use different programming languages", "Networks can produce wrong outputs without any error messages or crashes -- the code runs but the results are silently incorrect", "Neural networks can't be tested", "There are no debugging tools for neural networks"],
+    "question": "Почему отладка нейронных сетей сложнее традиционной отладки ПО?",
+    "options": ["Нейронные сети используют другие языки программирования", "Сети могут выдавать неправильные выходы без сообщений об ошибках или сбоев -- код выполняется, но результаты тихо неверны", "Нейронные сети нельзя тестировать", "Для нейронных сетей нет инструментов отладки"],
     "correct": 1,
-    "explanation": "Traditional bugs crash or throw exceptions. Neural network bugs produce a number that's just wrong -- a loss that doesn't decrease, accuracy that plateaus, or outputs that are subtly incorrect. No error message tells you what went wrong.",
+    "explanation": "Традиционные баги приводят к сбоям или исключениям. Баги нейронных сетей дают просто неверное число -- loss, который не уменьшается, accuracy, вышедшую на плато, или слегка неправильные выходы. Сообщение об ошибке не скажет, что пошло не так.",
     "stage": "pre"
   },
   {
-    "question": "What is the 'overfit one batch' debugging technique?",
-    "options": ["Training on the full dataset until it overfits", "Training on a single small batch until the loss reaches near-zero, verifying the model can memorize at least a few examples", "Using a very large batch size", "Overfitting the validation set"],
+    "question": "Что такое отладочная техника 'overfit one batch'?",
+    "options": ["Обучение на всем датасете до переобучения", "Обучение на одном маленьком batch, пока loss не станет близким к нулю, проверяя, что модель может запомнить хотя бы несколько примеров", "Использование очень большого batch size", "Переобучение на валидационной выборке"],
     "correct": 1,
-    "explanation": "If your model can't memorize a tiny batch (e.g., 4-8 samples) to near-zero loss, something is fundamentally broken: wrong architecture, broken loss function, or incorrect training loop. This is the first diagnostic to run.",
+    "explanation": "Если модель не может запомнить крошечный batch (например, 4-8 примеров) до почти нулевого loss, что-то фундаментально сломано: неверная архитектура, сломанная функция потерь или неправильный training loop. Это первая диагностика, которую нужно выполнить.",
     "stage": "pre"
   },
   {
-    "question": "Your loss is NaN after a few training steps. What is the most likely cause?",
-    "options": ["The dataset is too small", "Exploding gradients or numerical overflow, often from a learning rate that's too high or missing gradient clipping", "The model has too few parameters", "The activation function is wrong"],
+    "question": "Ваш loss становится NaN после нескольких шагов обучения. Какова наиболее вероятная причина?",
+    "options": ["Датасет слишком мал", "Exploding gradients или численное переполнение, часто из-за слишком высокого learning rate или отсутствия gradient clipping", "У модели слишком мало параметров", "Функция активации неверна"],
     "correct": 1,
-    "explanation": "NaN loss typically comes from numerical overflow: gradients explode, weights grow unbounded, and operations like log(0) or exp(1000) produce infinity/NaN. Lower the learning rate or add gradient clipping.",
+    "explanation": "NaN loss обычно возникает из-за численного переполнения: градиенты взрываются, веса неограниченно растут, а операции вроде log(0) или exp(1000) дают infinity/NaN. Уменьшите learning rate или добавьте gradient clipping.",
     "stage": "post"
   },
   {
-    "question": "Your training loss decreases but validation loss stays flat from the start. What does this indicate?",
-    "options": ["The model is overfitting", "The model is learning training data patterns but they don't generalize -- likely a data pipeline issue (train/val data mismatch) or severe overfitting", "The learning rate is too low", "The model needs more layers"],
+    "question": "Training loss уменьшается, но validation loss с самого начала остается плоским. Что это означает?",
+    "options": ["Модель переобучается", "Модель изучает паттерны обучающих данных, но они не обобщаются -- вероятно, проблема data pipeline (несоответствие train/val данных) или сильное переобучение", "Learning rate слишком низкий", "Модели нужно больше слоев"],
     "correct": 1,
-    "explanation": "If validation loss never improves, the model is either memorizing training noise (overfitting), or there's a data pipeline bug where train and validation distributions are fundamentally different.",
+    "explanation": "Если validation loss никогда не улучшается, модель либо запоминает обучающий шум (переобучение), либо есть баг data pipeline, из-за которого train и validation распределения фундаментально различаются.",
     "stage": "post"
   },
   {
-    "question": "What should you check first when your loss curve is completely flat (loss doesn't decrease at all)?",
-    "options": ["Try a different architecture", "Verify gradients are nonzero, the learning rate is high enough, and the loss function actually depends on the model's predictions", "Add more training data", "Switch to a different optimizer"],
+    "question": "Что нужно проверить первым, если кривая loss полностью плоская (loss вообще не уменьшается)?",
+    "options": ["Попробовать другую архитектуру", "Проверить, что градиенты ненулевые, learning rate достаточно высок, а функция потерь действительно зависит от предсказаний модели", "Добавить больше обучающих данных", "Переключиться на другой оптимизатор"],
     "correct": 1,
-    "explanation": "A flat loss means the model isn't updating. Common causes: zero gradients (dead neurons, detached tensors), learning rate too small, or a loss function that doesn't flow gradients to the model (e.g., using .item() before .backward()).",
+    "explanation": "Плоский loss означает, что модель не обновляется. Частые причины: нулевые градиенты (dead neurons, detached tensors), слишком маленький learning rate или функция потерь, не передающая градиенты в модель (например, использование .item() перед .backward()).",
     "stage": "post"
   }
 ]

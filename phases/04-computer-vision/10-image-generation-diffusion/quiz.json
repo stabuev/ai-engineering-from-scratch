@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Why can diffusion training pick any timestep t directly instead of simulating the forward Markov chain step by step?",
-      "options": ["It is an approximation that ignores the intermediate steps", "Because the composition of many Gaussian additions still yields a Gaussian, giving a closed-form q(x_t|x_0) = N(sqrt(alpha_bar_t) x_0, (1 - alpha_bar_t) I) that you can sample in one step", "Because x_t is independent of x_0", "It is required by PyTorch's autograd"],
+      "question": "Почему diffusion training может выбирать любой timestep t напрямую, а не симулировать forward Markov chain шаг за шагом?",
+      "options": [
+        "Это approximation, игнорирующая intermediate steps",
+        "Потому что композиция многих добавлений Gaussian noise остается Gaussian, давая closed-form q(x_t|x_0) = N(sqrt(alpha_bar_t) x_0, (1 - alpha_bar_t) I), который можно сэмплировать за один шаг",
+        "Потому что x_t независим от x_0",
+        "Это требуется autograd в PyTorch"
+      ],
       "correct": 1,
-      "explanation": "Repeated Gaussian additions close up analytically. The cumulative product alpha_bar_t encodes 'how much signal is left after t steps', and you can sample x_t directly without running the chain. This is why diffusion training is O(1) per step rather than O(T)."
+      "explanation": "Повторные добавления Gaussian noise аналитически сворачиваются. Cumulative product alpha_bar_t кодирует, сколько signal осталось после t steps, и x_t можно сэмплировать напрямую. Поэтому diffusion training стоит O(1) на step, а не O(T)."
     },
     {
       "stage": "pre",
-      "question": "What does a DDPM's neural network actually predict?",
-      "options": ["The next image x_{t-1} directly", "The noise epsilon that was added at step t, from which x_{t-1}'s mean is derived analytically", "The class label of the input", "The signal-to-noise ratio"],
+      "question": "Что на самом деле предсказывает neural network в DDPM?",
+      "options": [
+        "Следующее изображение x_{t-1} напрямую",
+        "Шум epsilon, добавленный на step t, из которого mean для x_{t-1} выводится аналитически",
+        "Class label входа",
+        "Signal-to-noise ratio"
+      ],
       "correct": 1,
-      "explanation": "DDPM parameterises the model to predict epsilon. Given the noise prediction and the noise schedule, x_{t-1}'s Gaussian mean and variance are closed-form. Predicting epsilon instead of x_0 or x_{t-1} simplifies the loss to a plain MSE and gives numerically better gradients."
+      "explanation": "DDPM параметризует модель для предсказания epsilon. По prediction noise и noise schedule Gaussian mean и variance для x_{t-1} имеют closed-form. Предсказывать epsilon вместо x_0 или x_{t-1} упрощает loss до MSE и дает более стабильные gradients."
     },
     {
       "stage": "post",
-      "question": "Why does DDIM achieve similar sample quality to DDPM with ~20x fewer steps?",
-      "options": ["DDIM changes the training objective", "DDIM reformulates sampling as a deterministic ODE whose trajectory can be discretised with far fewer steps while hitting nearly the same endpoint; no retraining required", "DDIM uses a faster model architecture", "DDIM generates smaller images"],
+      "question": "Почему DDIM достигает похожего sample quality с DDPM примерно в 20 раз меньшим числом steps?",
+      "options": [
+        "DDIM меняет training objective",
+        "DDIM формулирует sampling как deterministic ODE, траекторию которого можно дискретизировать гораздо меньшим числом steps почти к той же конечной точке; retraining не нужен",
+        "DDIM использует более быструю architecture",
+        "DDIM генерирует меньшие images"
+      ],
       "correct": 1,
-      "explanation": "DDIM's key observation is that the reverse process, when re-parameterised deterministically, becomes an ODE that a few steps approximate well. The model (weights and loss) is unchanged from DDPM; only the sampler differs. A DDPM checkpoint can be used with a DDIM, DPM-Solver, or Euler sampler interchangeably."
+      "explanation": "Ключ DDIM в том, что reverse process при deterministic re-parameterisation становится ODE, который хорошо аппроксимируется несколькими steps. Model weights и loss не меняются; отличается только sampler. DDPM checkpoint можно использовать с DDIM, DPM-Solver или Euler sampler."
     },
     {
       "stage": "post",
-      "question": "You plot `alpha_bar_t` for a linear beta schedule with T=1000 and see it drops to near-zero by t=600. Why does this matter?",
-      "options": ["It does not matter", "The last 40% of timesteps add almost no signal; training those timesteps teaches the network to denoise noise that is already approximately N(0, I), which wastes capacity. Cosine or sigmoid schedules fix this by spreading the noise injection more evenly", "alpha_bar_t must be zero at the end", "PyTorch requires a linear schedule"],
+      "question": "Вы строите `alpha_bar_t` для linear beta schedule с T=1000 и видите, что он падает почти до нуля к t=600. Почему это важно?",
+      "options": [
+        "Это не важно",
+        "Последние 40% timesteps почти не добавляют signal; обучение этих timesteps учит сеть denoise шум, уже близкий к N(0, I), что тратит capacity. Cosine или sigmoid schedules распределяют noise injection равномернее",
+        "alpha_bar_t должен быть нулем в конце",
+        "PyTorch требует linear schedule"
+      ],
       "correct": 1,
-      "explanation": "Linear beta schedules finish the diffusion process too early. By t=600 the signal is already destroyed; training and sampling through t=600-1000 adds nothing. Cosine schedules (Nichol & Dhariwal) keep signal around longer, which is why modern models use them, especially at lower resolutions."
+      "explanation": "Linear beta schedules заканчивают diffusion process слишком рано. К t=600 signal уже разрушен; training и sampling через t=600-1000 почти ничего не добавляют. Cosine schedules удерживают signal дольше, поэтому современные модели используют их, особенно на низких resolutions."
     },
     {
       "stage": "post",
-      "question": "Why does time conditioning get added to the U-Net via a sinusoidal embedding instead of a one-hot timestep?",
-      "options": ["One-hot vectors are too large", "A sinusoidal embedding is smooth in t, which lets the network interpolate between timesteps it has not seen exactly and encodes scale information the architecture can use additively at multiple depths", "Sinusoidal is required by BatchNorm", "One-hot would violate the chain rule"],
+      "question": "Почему time conditioning добавляют в U-Net через sinusoidal embedding, а не one-hot timestep?",
+      "options": [
+        "One-hot vectors слишком велики",
+        "Sinusoidal embedding гладок по t, позволяет сети интерполировать между timesteps, которых она не видела точно, и кодирует scale information для additive use на разных depth",
+        "Sinusoidal требуется BatchNorm",
+        "One-hot нарушил бы chain rule"
+      ],
       "correct": 1,
-      "explanation": "Sinusoidal embeddings give the network a continuous representation of t at multiple frequencies. Any timestep is a unique point in that embedding space, and nearby timesteps are nearby embeddings. That lets the model generalise across all T values with far fewer parameters than a learned per-timestep embedding. Same idea as transformer positional encoding."
+      "explanation": "Sinusoidal embeddings дают сети непрерывное представление t на разных частотах. Каждый timestep — уникальная точка, а близкие timesteps имеют близкие embeddings. Это позволяет generalise по всем T значениям с меньшим числом параметров, как positional encoding в transformer."
     }
   ]
 }

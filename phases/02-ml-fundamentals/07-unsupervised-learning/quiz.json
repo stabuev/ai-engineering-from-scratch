@@ -2,66 +2,66 @@
   {
     "id": "unsupervised-pre-1",
     "stage": "pre",
-    "question": "What distinguishes unsupervised learning from supervised learning?",
+    "question": "Что отличает обучение без учителя от обучения с учителем?",
     "options": [
-      "Unsupervised learning uses more data",
-      "Unsupervised learning has no labeled outputs -- the algorithm finds structure on its own",
-      "Unsupervised learning only works with text data",
-      "Unsupervised learning always produces better results"
+      "Обучение без учителя использует больше данных",
+      "В обучении без учителя нет размеченных выходов -- алгоритм сам находит структуру",
+      "Обучение без учителя работает только с текстовыми данными",
+      "Обучение без учителя всегда дает лучшие результаты"
     ],
     "correct": 1,
-    "explanation": "In unsupervised learning, there are no labels. The algorithm discovers patterns, groupings, or structure in the data without being told what the correct output should be."
+    "explanation": "В обучении без учителя нет меток. Алгоритм обнаруживает паттерны, группы или структуру в данных без указания правильного выхода."
   },
   {
     "id": "unsupervised-pre-2",
     "stage": "pre",
-    "question": "What does K-Means require you to specify before training?",
+    "question": "Что K-Means требует указать перед обучением?",
     "options": [
-      "The exact cluster centers",
-      "The number of clusters K",
-      "The labels for each data point",
-      "The distance metric to use"
+      "Точные центры кластеров",
+      "Количество кластеров K",
+      "Метки для каждой точки данных",
+      "Используемую метрику расстояния"
     ],
     "correct": 1,
-    "explanation": "K-Means requires the number of clusters K as input. It then iteratively assigns points to the nearest centroid and recomputes centroids until convergence."
+    "explanation": "K-Means требует на вход число кластеров K. Затем он итеративно назначает точки ближайшему центроиду и пересчитывает центроиды до сходимости."
   },
   {
     "id": "unsupervised-post-1",
     "stage": "post",
-    "question": "K-Means fails on two interlocking half-moon shapes but DBSCAN succeeds. Why?",
+    "question": "K-Means не справляется с двумя сцепленными формами полумесяцев, а DBSCAN справляется. Почему?",
     "options": [
-      "DBSCAN uses more data than K-Means",
-      "DBSCAN finds clusters based on density, so it can discover arbitrary shapes, while K-Means assumes spherical clusters",
-      "DBSCAN always outperforms K-Means on every dataset",
-      "K-Means cannot handle 2D data"
+      "DBSCAN использует больше данных, чем K-Means",
+      "DBSCAN находит кластеры по плотности, поэтому может обнаруживать произвольные формы, тогда как K-Means предполагает сферические кластеры",
+      "DBSCAN всегда превосходит K-Means на любом датасете",
+      "K-Means не может работать с 2D-данными"
     ],
     "correct": 1,
-    "explanation": "K-Means assigns points to the nearest centroid, producing spherical (convex) clusters. DBSCAN grows clusters from dense regions, discovering any shape as long as the cluster is connected by density."
+    "explanation": "K-Means назначает точки ближайшему центроиду, создавая сферические (выпуклые) кластеры. DBSCAN выращивает кластеры из плотных областей, обнаруживая любую форму, если кластер связан плотностью."
   },
   {
     "id": "unsupervised-post-2",
     "stage": "post",
-    "question": "What is the silhouette score measuring?",
+    "question": "Что измеряет silhouette score?",
     "options": [
-      "The total number of clusters found",
-      "How similar each point is to its own cluster compared to the nearest other cluster",
-      "The speed of the clustering algorithm",
-      "The percentage of outliers in the data"
+      "Общее число найденных кластеров",
+      "Насколько каждая точка похожа на свой кластер по сравнению с ближайшим другим кластером",
+      "Скорость алгоритма кластеризации",
+      "Долю выбросов в данных"
     ],
     "correct": 1,
-    "explanation": "Silhouette score = (b - a) / max(a, b), where a is mean intra-cluster distance and b is mean nearest-cluster distance. It ranges from -1 (wrong cluster) to +1 (well-clustered)."
+    "explanation": "Silhouette score = (b - a) / max(a, b), где a — среднее внутрикластерное расстояние, а b — среднее расстояние до ближайшего другого кластера. Диапазон: от -1 (неверный кластер) до +1 (хорошая кластеризация)."
   },
   {
     "id": "unsupervised-post-3",
     "stage": "post",
-    "question": "How does a Gaussian Mixture Model differ from K-Means in its cluster assignments?",
+    "question": "Чем Gaussian Mixture Model отличается от K-Means в назначении кластеров?",
     "options": [
-      "GMM uses hard assignments where each point belongs to exactly one cluster",
-      "GMM gives soft (probabilistic) assignments where each point has a probability of belonging to each cluster",
-      "GMM does not use centroids at all",
-      "GMM only works with one-dimensional data"
+      "GMM использует жесткие назначения, где каждая точка принадлежит ровно одному кластеру",
+      "GMM дает мягкие (вероятностные) назначения, где у каждой точки есть вероятность принадлежности к каждому кластеру",
+      "GMM вообще не использует центроиды",
+      "GMM работает только с одномерными данными"
     ],
     "correct": 1,
-    "explanation": "K-Means assigns each point to exactly one cluster (hard). GMM computes the probability that each point belongs to each Gaussian component (soft), and can model elliptical, overlapping clusters."
+    "explanation": "K-Means назначает каждую точку ровно одному кластеру (жестко). GMM вычисляет вероятность принадлежности каждой точки к каждой Gaussian-компоненте (мягко) и может моделировать эллиптические, перекрывающиеся кластеры."
   }
 ]

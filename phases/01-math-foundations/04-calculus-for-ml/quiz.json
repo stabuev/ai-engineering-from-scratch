@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does the derivative of a function at a point tell you?",
-      "options": ["The value of the function at that point", "The rate of change (slope) of the function at that point", "The area under the function up to that point", "The maximum value the function can reach"],
+      "question": "Что показывает производная функции в точке?",
+      "options": [
+        "Значение функции в этой точке",
+        "Скорость изменения (наклон) функции в этой точке",
+        "Площадь под функцией до этой точки",
+        "Максимальное значение, которого может достичь функция"
+      ],
       "correct": 1,
-      "explanation": "The derivative f'(x) measures how much the output changes per unit change in input. Geometrically, it is the slope of the tangent line at that point."
+      "explanation": "Производная f'(x) измеряет, насколько выход меняется при единичном изменении входа. Геометрически это наклон касательной в этой точке."
     },
     {
       "stage": "pre",
-      "question": "What is a gradient in the context of machine learning?",
-      "options": ["A measure of model accuracy", "A vector of all partial derivatives that points in the direction of steepest ascent", "The learning rate used during training", "The difference between predicted and actual values"],
+      "question": "Что такое градиент в контексте машинного обучения?",
+      "options": [
+        "Мера точности модели",
+        "Вектор всех частных производных, указывающий направление наискорейшего возрастания",
+        "Скорость обучения, используемая при обучении",
+        "Разница между предсказанными и фактическими значениями"
+      ],
       "correct": 1,
-      "explanation": "The gradient collects every partial derivative into one vector. It points in the direction that increases the function fastest. To minimize loss, you move opposite the gradient."
+      "explanation": "Градиент собирает все частные производные в один вектор. Он указывает направление, в котором функция растёт быстрее всего. Чтобы минимизировать loss, нужно двигаться против градиента."
     },
     {
       "stage": "post",
-      "question": "In gradient descent, what does the update rule 'w = w - lr * dL/dw' accomplish?",
-      "options": ["It increases the loss to test model robustness", "It adjusts each weight in the direction that reduces the loss, scaled by the learning rate", "It resets the weight to its initial value minus the gradient", "It normalizes the weight to have magnitude 1"],
+      "question": "Что делает правило обновления 'w = w - lr * dL/dw' в градиентном спуске?",
+      "options": [
+        "Увеличивает loss, чтобы проверить устойчивость модели",
+        "Корректирует каждый вес в направлении уменьшения loss с масштабированием на learning rate",
+        "Сбрасывает вес к начальному значению минус градиент",
+        "Нормализует вес так, чтобы его модуль был равен 1"
+      ],
       "correct": 1,
-      "explanation": "dL/dw tells you which direction increases the loss. Subtracting it (times the learning rate) moves the weight in the direction that decreases the loss. This is repeated for every weight in the model."
+      "explanation": "dL/dw показывает направление, в котором loss увеличивается. Вычитание этого значения (умноженного на learning rate) двигает вес в направлении уменьшения loss. Это повторяется для каждого веса модели."
     },
     {
       "stage": "post",
-      "question": "Why can't Newton's method (which uses the Hessian matrix) be directly applied to neural networks with millions of parameters?",
-      "options": ["Newton's method only works for convex functions", "The Hessian is an N x N matrix, requiring O(N^2) storage and O(N^3) computation per step, which is intractable for millions of parameters", "Newton's method requires analytical derivatives which cannot be computed for neural networks", "Newton's method converges too slowly for deep networks"],
+      "question": "Почему метод Ньютона (использующий матрицу Гессе) нельзя напрямую применять к нейронным сетям с миллионами параметров?",
+      "options": [
+        "Метод Ньютона работает только для выпуклых функций",
+        "Гессиан — это матрица N x N, требующая O(N^2) памяти и O(N^3) вычислений на шаг, что неосуществимо для миллионов параметров",
+        "Методу Ньютона нужны аналитические производные, которые нельзя вычислить для нейронных сетей",
+        "Метод Ньютона слишком медленно сходится для глубоких сетей"
+      ],
       "correct": 1,
-      "explanation": "For N=1 million parameters, the Hessian has 1 trillion entries. Computing and inverting it is impossible. This is why we use first-order methods (SGD, Adam) that approximate second-order information cheaply."
+      "explanation": "Для N=1 million параметров Гессиан содержит 1 trillion элементов. Вычислить и обратить его невозможно. Поэтому мы используем методы первого порядка (SGD, Adam), которые дёшево аппроксимируют информацию второго порядка."
     },
     {
       "stage": "post",
-      "question": "What is the numerical (central difference) approximation for f'(x)?",
-      "options": ["f(x+h) / h", "(f(x+h) - f(x)) / h", "(f(x+h) - f(x-h)) / (2*h)", "f(x) * h"],
+      "question": "Какова численная аппроксимация f'(x) центральной разностью?",
+      "options": [
+        "f(x+h) / h",
+        "(f(x+h) - f(x)) / h",
+        "(f(x+h) - f(x-h)) / (2*h)",
+        "f(x) * h"
+      ],
       "correct": 2,
-      "explanation": "The central difference (f(x+h) - f(x-h)) / (2h) is more accurate than the forward difference because it averages the slope on both sides of x, canceling out the leading error term."
+      "explanation": "Центральная разность (f(x+h) - f(x-h)) / (2h) точнее прямой разности, потому что усредняет наклон с обеих сторон от x и компенсирует главный член ошибки."
     }
   ]
 }

@@ -2,63 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is Promptable Concept Segmentation (PCS), introduced by SAM 3?",
+      "question": "Что такое Promptable Concept Segmentation (PCS), введенная SAM 3?",
       "options": [
-        "Segmenting all instances of a concept described by a short noun phrase or image exemplar in a single forward pass, returning masks plus unique instance IDs",
-        "A visual prompt (point/box) segmentation like classic SAM",
-        "A multi-step chain of a detector followed by SAM",
-        "A tracking-only mode"
+        "Сегментация всех instances concept, описанного короткой noun phrase или image exemplar, за один forward pass с возвратом masks и unique instance IDs",
+        "Visual prompt (point/box) segmentation как classic SAM",
+        "Multi-step chain из detector followed by SAM",
+        "Tracking-only mode"
       ],
       "correct": 0,
-      "explanation": "PCS is SAM 3's signature capability. You pass 'yellow school bus' or an image exemplar of a bus; SAM 3 returns every matching instance with its own mask and unique ID, plus a presence score. Classic SAM needed one prompt per instance; PCS produces all matches end-to-end."
+      "explanation": "PCS — signature capability SAM 3. Вы передаете 'yellow school bus' или image exemplar автобуса; SAM 3 возвращает все matching instances с mask, unique ID и presence score. Classic SAM требовал prompt на instance; PCS находит все matches end-to-end."
     },
     {
       "stage": "pre",
-      "question": "Why keep a decoupled detector + SAM 2 pipeline (Grounded SAM 2) in 2026 if SAM 3 already does text-prompted segmentation?",
+      "question": "Зачем сохранять decoupled detector + SAM 2 pipeline (Grounded SAM 2) в 2026, если SAM 3 уже делает text-prompted segmentation?",
       "options": [
-        "Grounded SAM 2 is always more accurate",
-        "Modularity \u2014 you can swap in different open-vocabulary detectors (DINO-X, Florence-2, Grounding DINO 1.5) for different domains, license constraints, or threshold behaviour; SAM 3's architecture is monolithic",
-        "SAM 3 does not support video",
-        "SAM 3 is only available in the cloud"
+        "Grounded SAM 2 всегда точнее",
+        "Modularity — можно заменить open-vocabulary detectors (DINO-X, Florence-2, Grounding DINO 1.5) под разные domains, license constraints или threshold behaviour; architecture SAM 3 monolithic",
+        "SAM 3 не поддерживает video",
+        "SAM 3 доступен только в cloud"
       ],
       "correct": 1,
-      "explanation": "Grounded SAM 2 is a composition of a detector and SAM 2 with frozen weights. That modularity is sometimes exactly what you need \u2014 a medical-imaging detector, a license-friendly detector, or tight threshold control. SAM 3 is more accurate end-to-end for common use but harder to customise. Both have production roles in 2026."
+      "explanation": "Grounded SAM 2 — composition detector и SAM 2 с frozen weights. Такая modularity иногда именно нужна: medical-imaging detector, license-friendly detector или tight threshold control. SAM 3 точнее end-to-end для common use, но труднее customisation. У обоих есть production roles."
     },
     {
       "stage": "post",
-      "question": "SAM 3's presence head produces what?",
+      "question": "Что выдает presence head SAM 3?",
       "options": [
-        "The list of candidate bounding boxes",
-        "A tracking memory bank",
-        "A scalar probability that the queried concept exists in the image, decoupled from localisation; lets the model say 'not present' cleanly and reduces false positives on absent concepts",
-        "The final mask"
+        "List candidate bounding boxes",
+        "Tracking memory bank",
+        "Scalar probability, что queried concept существует в image, decoupled from localisation; позволяет model чисто сказать 'not present' и снижает false positives для absent concepts",
+        "Final mask"
       ],
       "correct": 2,
-      "explanation": "The presence head separates the 'is this here?' decision from the 'where is it?' decision. A model that must produce boxes whenever asked tends to hallucinate matches for absent concepts. With a presence head, SAM 3 can return zero detections cleanly. This also improves discrimination between closely related prompts (e.g., 'a player in white' vs 'a player in red')."
+      "explanation": "Presence head отделяет decision 'is this here?' от 'where is it?'. Model, вынужденная выдавать boxes на любой prompt, склонна hallucinate matches для absent concepts. Presence head позволяет SAM 3 возвращать zero detections и лучше различать близкие prompts, например 'a player in white' vs 'a player in red'."
     },
     {
       "stage": "post",
-      "question": "SAM 3.1 Object Multiplex (March 2026) introduced a shared-memory mechanism for tracking. What does it replace?",
+      "question": "SAM 3.1 Object Multiplex (March 2026) ввел shared-memory mechanism для tracking. Что он заменяет?",
       "options": [
-        "SAM 2 altogether",
-        "Per-instance separate memory banks; Multiplex collapses them into one shared memory with per-instance queries so tracking N objects runs substantially faster while keeping accuracy",
-        "The whole presence head",
-        "The ViT backbone"
+        "SAM 2 целиком",
+        "Per-instance separate memory banks; Multiplex сворачивает их в one shared memory с per-instance queries, поэтому tracking N objects работает существенно быстрее при сохранении accuracy",
+        "Весь presence head",
+        "ViT backbone"
       ],
       "correct": 1,
-      "explanation": "Prior SAM 2 / SAM 3 tracking maintained one memory bank per tracked instance, so cost grew linearly with object count. Object Multiplex introduces a single shared memory plus per-instance queries that fetch instance-specific features. Many-instance tracking is now efficient \u2014 essential for crowds and dense multi-object scenes."
+      "explanation": "Ранний SAM 2 / SAM 3 tracking держал memory bank на каждый tracked instance, поэтому cost рос линейно с object count. Object Multiplex вводит single shared memory плюс per-instance queries, извлекающие instance-specific features. Many-instance tracking стал эффективным для crowds и dense scenes."
     },
     {
       "stage": "post",
-      "question": "You need real-time open-vocabulary DETECTION (boxes only, no masks) on an edge device. Which 2026 model family is the right choice?",
+      "question": "Вам нужен real-time open-vocabulary DETECTION (только boxes, без masks) на edge device. Какая model family 2026 подходит?",
       "options": [
         "SAM 3",
-        "A custom CLIP + detector chain",
+        "Custom CLIP + detector chain",
         "Grounded SAM 2",
-        "YOLO-World (and related real-time open-vocab detectors); SAM 3 produces masks and is heavier, while YOLO-World is designed specifically for boxes at high fps on edge hardware"
+        "YOLO-World (и related real-time open-vocab detectors); SAM 3 выдает masks и тяжелее, а YOLO-World специально создан для boxes на high fps на edge hardware"
       ],
       "correct": 3,
-      "explanation": "YOLO-World and similar models (OV-DINO, LLMDet) are real-time open-vocabulary detectors. They do not produce masks but they hit 30-60 fps at 640x640 on modest GPUs. SAM 3 is the right choice when masks and tracking matter. Always match tool weight to the task: detection-only is fine without mask overhead."
+      "explanation": "YOLO-World и похожие models (OV-DINO, LLMDet) — real-time open-vocabulary detectors. Они не дают masks, но достигают 30-60 fps при 640x640 на modest GPUs. SAM 3 нужен, когда важны masks и tracking. Всегда сопоставляйте weight инструмента с задачей."
     }
   ]
 }

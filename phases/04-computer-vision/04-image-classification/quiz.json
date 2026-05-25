@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "Your model outputs raw logits of shape (N, C). You write `loss = cross_entropy(softmax(logits), y)`. What goes wrong?",
-      "options": ["Nothing — that is the correct API", "cross_entropy re-applies softmax inside, so you end up computing softmax(softmax(logits)), producing nearly-uniform probabilities and useless gradients", "cross_entropy raises a ValueError about the shape", "Accuracy drops by exactly 1/C"],
+      "question": "Модель выдает raw logits shape (N, C). Вы пишете `loss = cross_entropy(softmax(logits), y)`. Что идет не так?",
+      "options": [
+        "Ничего — это правильный API",
+        "cross_entropy повторно применяет softmax внутри, поэтому получается softmax(softmax(logits)), почти равномерные вероятности и бесполезные градиенты",
+        "cross_entropy выбрасывает ValueError о shape",
+        "Точность падает ровно на 1/C"
+      ],
       "correct": 1,
-      "explanation": "PyTorch's cross_entropy expects raw logits — it fuses log_softmax and NLL internally for numerical stability. Applying softmax first gives softmax(softmax(x)), which compresses logits toward uniform and makes gradients nearly zero. Training loss looks plausible for a few steps then stalls. Always pass raw logits."
+      "explanation": "PyTorch cross_entropy ожидает raw logits: внутри он объединяет log_softmax и NLL для численной стабильности. Если сначала применить softmax, logits сжимаются к uniform, градиенты почти исчезают, а обучение быстро застревает. Всегда передавайте raw logits."
     },
     {
       "stage": "pre",
-      "question": "You evaluate a 10-class classifier and get 92% accuracy. Class 0 has 9,000 examples; classes 1-9 share 1,000 examples (roughly 111 each, 10,000 total). What does the headline number hide?",
-      "options": ["Nothing — accuracy is accuracy", "The model could be predicting class 0 for every input and still score 90% (9000/10000); the remaining 2% could come from any other class. Per-class precision/recall tells you what is really happening", "The validation loss is wrong", "The model is definitely over-fitting"],
+      "question": "Вы оцениваете 10-классовый классификатор и получаете 92% accuracy. В классе 0 — 9,000 примеров; классы 1-9 делят 1,000 примеров (примерно по 111, всего 10,000). Что скрывает headline-число?",
+      "options": [
+        "Ничего — accuracy есть accuracy",
+        "Модель могла бы предсказывать класс 0 для каждого входа и уже получить 90% (9000/10000); оставшиеся 2% могли прийти от любого другого класса. Per-class precision/recall показывает реальную картину",
+        "Validation loss неверен",
+        "Модель точно переобучается"
+      ],
       "correct": 1,
-      "explanation": "On a 9000/1000 split (90/10 imbalance with 10,000 total examples), always predicting the majority class gets 9000/10000 = 90% accuracy. A 92% number could hide nine minority classes at roughly 20% accuracy each. Per-class precision, recall, F1, and the confusion matrix are the diagnostics that surface this, which is why aggregate accuracy alone never justifies shipping a classifier."
+      "explanation": "При дисбалансе 9000/1000 всегда предсказывать majority class дает 90% accuracy. Значение 92% может скрывать провал по девяти minority-классам. Нужны per-class precision, recall, F1 и confusion matrix; агрегированная accuracy сама по себе не оправдывает запуск классификатора."
     },
     {
       "stage": "post",
-      "question": "Mixup replaces one-hot labels with interpolated soft targets like lambda * y_i + (1-lambda) * y_j. Why does this help generalisation?",
-      "options": ["It doubles the effective batch size", "The model is forced to produce smooth predictions between classes instead of memorising hard one-hot targets, which improves both calibration and test accuracy", "It lets you train with a larger learning rate", "It guarantees zero train loss"],
+      "question": "Mixup заменяет one-hot labels на интерполированные soft targets вроде lambda * y_i + (1-lambda) * y_j. Почему это помогает generalisation?",
+      "options": [
+        "Он удваивает эффективный batch size",
+        "Модель вынуждена давать гладкие предсказания между классами вместо запоминания жестких one-hot targets, что улучшает calibration и test accuracy",
+        "Он позволяет обучать с большим learning rate",
+        "Он гарантирует нулевой train loss"
+      ],
       "correct": 1,
-      "explanation": "Training against hard one-hot targets pushes logits to be arbitrarily sharp at each training point, which hurts calibration and invites overfitting. Mixup's convex combination of inputs and labels forces the classifier to behave smoothly between training points, which is a reasonable prior for natural image classes and consistently improves test accuracy without extra data."
+      "explanation": "Обучение на жестких one-hot targets толкает logits к чрезмерной уверенности в каждой обучающей точке, ухудшая calibration и повышая риск overfitting. Mixup заставляет классификатор вести себя гладко между обучающими примерами, что является разумным prior для естественных изображений."
     },
     {
       "stage": "post",
-      "question": "You swap `RandomCrop(32, padding=4, padding_mode='zeros')` for `padding_mode='reflect'` on CIFAR-10. Why is reflect better here?",
-      "options": ["Reflect pad is faster", "Zero padding creates hard black borders that the model learns to depend on; reflect pad mirrors the edge pixels so augmented crops look like natural photographs", "Reflect pad changes the output size", "Reflect pad is required by batch normalization"],
+      "question": "Вы заменяете `RandomCrop(32, padding=4, padding_mode='zeros')` на `padding_mode='reflect'` для CIFAR-10. Почему reflect лучше?",
+      "options": [
+        "Reflect pad быстрее",
+        "Zero padding создает жесткие черные границы, на которые модель учится опираться; reflect pad зеркалит краевые пиксели, поэтому augmented crops выглядят как естественные фотографии",
+        "Reflect pad меняет размер выхода",
+        "Reflect pad требуется batch normalization"
+      ],
       "correct": 1,
-      "explanation": "Zero-padded crops have visible black borders that leak information about crop position into the features. The network can learn to look at the corner and implicitly undo the augmentation. Reflect pad mirrors real content, so every crop still looks like a natural image and the network cannot cheat on the augmentation."
+      "explanation": "Кропы с zero padding имеют заметные черные границы, которые раскрывают позицию crop в признаках. Сеть может научиться смотреть на угол и обходить augmentation. Reflect pad зеркалит реальный контент, поэтому каждый crop остается похожим на естественное изображение."
     },
     {
       "stage": "post",
-      "question": "You train a classifier and the confusion matrix shows most errors are class 3 predicted as class 5 and class 5 predicted as class 3. What is the single most impactful next step?",
-      "options": ["Add more training data across all classes equally", "Increase batch size", "Look at a sample of class-3 and class-5 images that confuse the model; the two classes may be genuinely ambiguous, mislabelled, or visually similar in a way that calls for a targeted augmentation or a re-labelled training set", "Switch from SGD to Adam"],
+      "question": "Вы обучаете классификатор, и confusion matrix показывает, что большинство ошибок — class 3 predicted as class 5 и class 5 predicted as class 3. Какой следующий шаг наиболее полезен?",
+      "options": [
+        "Добавить больше данных равномерно по всем классам",
+        "Увеличить batch size",
+        "Посмотреть выборку изображений классов 3 и 5, которые путает модель; классы могут быть неоднозначными, неверно размеченными или визуально похожими, что требует targeted augmentation или relabeling",
+        "Перейти с SGD на Adam"
+      ],
       "correct": 2,
-      "explanation": "A confusion matrix concentrated on one off-diagonal pair means the failure mode is specific. The right action is to inspect those images: you often find mislabelled data, near-duplicate classes, or a simple invariance the model has not learnt. Blanket changes (more data, new optimizer) rarely help when the failure is this localised."
+      "explanation": "Концентрация confusion matrix на одной off-diagonal паре означает конкретный failure mode. Нужно инспектировать эти изображения: часто обнаруживаются неверные метки, почти дублирующиеся классы или отсутствующая инвариантность. Общие изменения редко помогают при такой локальной ошибке."
     }
   ]
 }

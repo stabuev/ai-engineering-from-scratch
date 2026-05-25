@@ -1,37 +1,62 @@
 [
   {
-    "question": "What is the most common mistake people make when writing prompts for LLMs?",
-    "options": ["Using too many tokens", "Writing vague, underspecified instructions that leave the model guessing about format, scope, and constraints", "Using the wrong API", "Not using enough examples"],
+    "question": "Какая самая частая ошибка при написании prompts для LLM?",
+    "options": [
+      "Использовать слишком много tokens",
+      "Писать расплывчатые, недоопределенные instructions, оставляя модели угадывать format, scope и constraints",
+      "Использовать неправильный API",
+      "Не использовать достаточно examples"
+    ],
     "correct": 1,
-    "explanation": "LLMs follow instructions literally. 'Write me a marketing email' gives the model no constraints. Specifying tone, audience, length, format, and constraints produces dramatically better results.",
+    "explanation": "LLM следуют instructions буквально. 'Write me a marketing email' не дает модели constraints. Указание tone, audience, length, format и constraints дает намного лучшие results.",
     "stage": "pre"
   },
   {
-    "question": "What are the four core components of an effective prompt?",
-    "options": ["Input, output, model, temperature", "Role, context, constraints, and output format", "System, user, assistant, function", "Query, document, answer, score"],
+    "question": "Каковы четыре ключевых компонента эффективного prompt?",
+    "options": [
+      "Input, output, model, temperature",
+      "Role, context, constraints и output format",
+      "System, user, assistant, function",
+      "Query, document, answer, score"
+    ],
     "correct": 1,
-    "explanation": "Effective prompts specify: who the model should be (role), what it should know (context), what it should and shouldn't do (constraints), and how to structure the response (output format).",
+    "explanation": "Эффективные prompts задают: кем должна быть модель (role), что она должна знать (context), что ей можно и нельзя делать (constraints), и как структурировать response (output format).",
     "stage": "pre"
   },
   {
-    "question": "Why should you include output format instructions in your prompts?",
-    "options": ["It makes the prompt shorter", "Without format instructions, the model chooses its own structure, which varies between calls and is hard to parse programmatically", "It reduces API costs", "It prevents hallucination"],
+    "question": "Почему стоит включать instructions по output format в prompts?",
+    "options": [
+      "Это делает prompt короче",
+      "Без format instructions модель сама выбирает структуру, она меняется между calls и плохо парсится programmatically",
+      "Это снижает API costs",
+      "Это предотвращает hallucination"
+    ],
     "correct": 1,
-    "explanation": "LLMs are non-deterministic. Without explicit format instructions, one call might return bullet points, the next prose, the next markdown. Specifying format ensures consistent, parseable outputs.",
+    "explanation": "LLM недетерминированы. Без явных format instructions один call может вернуть bullet points, следующий prose, следующий markdown. Заданный format обеспечивает consistent, parseable outputs.",
     "stage": "post"
   },
   {
-    "question": "What is the purpose of a system prompt?",
-    "options": ["To authenticate the API call", "To set persistent behavioral rules, role, and constraints that apply to the entire conversation", "To define the model's architecture", "To compress the conversation history"],
+    "question": "Какова цель system prompt?",
+    "options": [
+      "Аутентифицировать API call",
+      "Задать постоянные behavioral rules, role и constraints для всей conversation",
+      "Определить architecture модели",
+      "Сжать conversation history"
+    ],
     "correct": 1,
-    "explanation": "The system prompt establishes the model's persona, rules, and constraints for the entire session. It runs before every user turn and is the primary mechanism for controlling model behavior in production.",
+    "explanation": "System prompt задает persona, rules и constraints модели на всю session. Он применяется перед каждым user turn и является основным механизмом контроля model behavior в production.",
     "stage": "post"
   },
   {
-    "question": "How should you test whether a prompt change actually improved output quality?",
-    "options": ["Read a few outputs and make a judgment call", "Run the prompt on a diverse test set and measure changes in defined metrics (accuracy, format compliance, relevance)", "Ask the model if it's doing better", "Check the API response time"],
+    "question": "Как проверить, что изменение prompt действительно улучшило output quality?",
+    "options": [
+      "Прочитать несколько outputs и принять judgment call",
+      "Запустить prompt на разнообразном test set и измерить изменения в заданных metrics (accuracy, format compliance, relevance)",
+      "Спросить модель, стала ли она лучше",
+      "Проверить API response time"
+    ],
     "correct": 1,
-    "explanation": "Evaluating prompt changes on a handful of examples is unreliable. A systematic evaluation harness with diverse test cases and defined metrics shows whether changes help across the distribution, not just cherry-picked examples.",
+    "explanation": "Оценка изменений prompt на горстке examples ненадежна. Systematic evaluation harness с разнообразными test cases и defined metrics показывает, помогают ли изменения на всей distribution, а не только на cherry-picked examples.",
     "stage": "post"
   }
 ]

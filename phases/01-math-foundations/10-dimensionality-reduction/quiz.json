@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What is the 'curse of dimensionality'?",
-      "options": ["High-dimensional data takes too long to download", "As dimensions grow, distances become meaningless, volume concentrates in corners, and you need exponentially more data", "Neural networks cannot process data with more than 100 features", "High-dimensional data always contains noise"],
+      "question": "Что такое 'curse of dimensionality'?",
+      "options": [
+        "Высокоразмерные данные слишком долго скачиваются",
+        "С ростом размерности расстояния становятся малоинформативными, объём концентрируется в углах, и требуется экспоненциально больше данных",
+        "Нейронные сети не могут обрабатывать данные с более чем 100 признаками",
+        "Высокоразмерные данные всегда содержат шум"
+      ],
       "correct": 1,
-      "explanation": "In high dimensions, all pairwise distances converge to similar values, data points spread to corners, and maintaining sample density requires exponentially more data. Dimensionality reduction counteracts these effects."
+      "explanation": "В высоких размерностях все попарные расстояния сходятся к похожим значениям, точки данных расползаются к углам, а поддержание плотности выборки требует экспоненциально больше данных. Dimensionality reduction противодействует этим эффектам."
     },
     {
       "stage": "pre",
-      "question": "What does PCA find?",
-      "options": ["The most important features by name", "The orthogonal directions of maximum variance in the data", "Clusters of similar data points", "The optimal number of features to keep"],
+      "question": "Что находит PCA?",
+      "options": [
+        "Самые важные признаки по названию",
+        "Ортогональные направления максимальной дисперсии в данных",
+        "Кластеры похожих точек данных",
+        "Оптимальное количество признаков, которое нужно оставить"
+      ],
       "correct": 1,
-      "explanation": "PCA computes the eigenvectors of the covariance matrix, which are orthogonal directions ranked by how much data variance they capture. The first principal component points along the direction of maximum spread."
+      "explanation": "PCA вычисляет собственные векторы ковариационной матрицы: ортогональные направления, упорядоченные по тому, сколько дисперсии данных они объясняют. Первая главная компонента указывает направление максимального разброса."
     },
     {
       "stage": "post",
-      "question": "After running PCA on 784-dimensional MNIST data with k=50 components, you find 95% of variance is captured. What does this tell you?",
-      "options": ["Only 50 pixels matter in each image", "The data effectively lives in a ~50-dimensional subspace; the remaining 734 dimensions are mostly noise or redundancy", "95% of images belong to the same class", "The model will achieve 95% accuracy"],
+      "question": "После запуска PCA на 784-мерных данных MNIST с k=50 компонентами вы видите, что объяснено 95% дисперсии. Что это говорит?",
+      "options": [
+        "В каждом изображении важны только 50 пикселей",
+        "Данные фактически лежат примерно в 50-мерном подпространстве; оставшиеся 734 измерения в основном шум или избыточность",
+        "95% изображений относятся к одному классу",
+        "Модель достигнет 95% accuracy"
+      ],
       "correct": 1,
-      "explanation": "95% explained variance with 50 components means the essential structure of 784-dimensional data is captured by just 50 directions. The rest carries only 5% of the variation -- mostly noise."
+      "explanation": "95% explained variance при 50 компонентах означает, что основная структура 784-мерных данных описывается всего 50 направлениями. Остальное несёт только 5% вариации -- в основном шум."
     },
     {
       "stage": "post",
-      "question": "Why should you NOT use t-SNE as preprocessing before training a classifier?",
-      "options": ["t-SNE is too slow for large datasets", "t-SNE is designed for visualization only: it distorts global distances, is stochastic, and the output coordinates have no consistent meaning across runs", "t-SNE reduces data to exactly 2 dimensions which is too few", "t-SNE requires the labels to be known in advance"],
+      "question": "Почему НЕ следует использовать t-SNE как preprocessing перед обучением классификатора?",
+      "options": [
+        "t-SNE слишком медленный для больших наборов данных",
+        "t-SNE предназначен только для визуализации: он искажает глобальные расстояния, является стохастическим, а выходные координаты не имеют согласованного смысла между запусками",
+        "t-SNE уменьшает данные ровно до 2 измерений, а это слишком мало",
+        "t-SNE требует заранее известных меток"
+      ],
       "correct": 1,
-      "explanation": "t-SNE preserves local neighborhoods but distorts global structure. Distances between clusters are meaningless, and different runs produce different layouts. Use PCA for preprocessing and t-SNE/UMAP only for visualization."
+      "explanation": "t-SNE сохраняет локальные окрестности, но искажает глобальную структуру. Расстояния между кластерами бессмысленны, а разные запуски дают разные раскладки. Используйте PCA для preprocessing, а t-SNE/UMAP только для визуализации."
     },
     {
       "stage": "post",
-      "question": "When would you choose kernel PCA over standard PCA?",
-      "options": ["When you have more samples than features", "When the data lies on a nonlinear manifold that standard PCA cannot separate, like concentric circles", "When you need the fastest possible computation", "When you want interpretable principal components"],
+      "question": "Когда стоит выбрать kernel PCA вместо стандартного PCA?",
+      "options": [
+        "Когда у вас больше примеров, чем признаков",
+        "Когда данные лежат на нелинейном многообразии, которое стандартный PCA не может разделить, например концентрические окружности",
+        "Когда нужна максимально быстрая вычислительная процедура",
+        "Когда нужны интерпретируемые главные компоненты"
+      ],
       "correct": 1,
-      "explanation": "Standard PCA finds linear subspaces. If data has nonlinear structure (e.g., two concentric rings), PCA projects both onto the same line. Kernel PCA maps data to a higher-dimensional space where the structure becomes linear."
+      "explanation": "Стандартный PCA находит линейные подпространства. Если данные имеют нелинейную структуру (например, два концентрических кольца), PCA проецирует оба на одну линию. Kernel PCA отображает данные в пространство большей размерности, где структура становится линейной."
     }
   ]
 }

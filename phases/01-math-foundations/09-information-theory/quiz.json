@@ -2,38 +2,63 @@
   "questions": [
     {
       "stage": "pre",
-      "question": "What does 'entropy' measure in information theory?",
-      "options": ["The energy of a physical system", "The average surprise or uncertainty in a probability distribution", "The number of bits in a binary message", "The error rate of a communication channel"],
+      "question": "Что измеряет 'entropy' в теории информации?",
+      "options": [
+        "Энергию физической системы",
+        "Среднюю неожиданность или неопределённость в распределении вероятностей",
+        "Количество битов в бинарном сообщении",
+        "Частоту ошибок канала связи"
+      ],
       "correct": 1,
-      "explanation": "Entropy H(P) = -sum(p(x) * log(p(x))) measures the average amount of surprise across all outcomes. High entropy means high uncertainty (uniform distribution). Low entropy means the outcome is predictable."
+      "explanation": "Энтропия H(P) = -sum(p(x) * log(p(x))) измеряет среднюю величину неожиданности по всем исходам. Высокая энтропия означает высокую неопределённость (равномерное распределение). Низкая энтропия означает предсказуемый исход."
     },
     {
       "stage": "pre",
-      "question": "What is the cross-entropy loss commonly used for in neural networks?",
-      "options": ["Regression tasks with continuous outputs", "Classification tasks, measuring how far predicted probabilities are from true labels", "Generating new data samples", "Regularizing model weights to prevent overfitting"],
+      "question": "Для чего обычно используется cross-entropy loss в нейронных сетях?",
+      "options": [
+        "Для задач регрессии с непрерывными выходами",
+        "Для задач классификации: он измеряет, насколько предсказанные вероятности отличаются от истинных меток",
+        "Для генерации новых примеров данных",
+        "Для регуляризации весов модели, чтобы предотвратить переобучение"
+      ],
       "correct": 1,
-      "explanation": "Cross-entropy loss H(P,Q) = -sum(p(x)*log(q(x))) measures the difference between the true distribution (labels) and the model's predicted distribution. It is THE standard loss for classification."
+      "explanation": "Cross-entropy loss H(P,Q) = -sum(p(x)*log(q(x))) измеряет различие между истинным распределением (метками) и предсказанным распределением модели. Это стандартный loss для классификации."
     },
     {
       "stage": "post",
-      "question": "Why is minimizing cross-entropy equivalent to minimizing KL divergence during training?",
-      "options": ["Because KL divergence is always zero during training", "Because cross-entropy = entropy + KL divergence, and the entropy of the true labels is constant, so minimizing cross-entropy minimizes KL divergence", "Because cross-entropy and KL divergence are the same formula", "Because the model's entropy equals zero at convergence"],
+      "question": "Почему минимизация cross-entropy эквивалентна минимизации KL divergence во время обучения?",
+      "options": [
+        "Потому что KL divergence всегда равна нулю во время обучения",
+        "Потому что cross-entropy = entropy + KL divergence, а энтропия истинных меток постоянна, поэтому минимизация cross-entropy минимизирует KL divergence",
+        "Потому что cross-entropy и KL divergence — одна и та же формула",
+        "Потому что энтропия модели равна нулю при сходимости"
+      ],
       "correct": 1,
-      "explanation": "H(P,Q) = H(P) + D_KL(P||Q). Since the true distribution P doesn't change during training, H(P) is constant. Minimizing H(P,Q) is the same as minimizing D_KL(P||Q) -- pushing the model toward the true distribution."
+      "explanation": "H(P,Q) = H(P) + D_KL(P||Q). Поскольку истинное распределение P не меняется во время обучения, H(P) постоянна. Минимизация H(P,Q) — то же самое, что минимизация D_KL(P||Q), то есть приближение модели к истинному распределению."
     },
     {
       "stage": "post",
-      "question": "A language model has perplexity 50 on a test set. What does this mean?",
-      "options": ["The model makes 50 errors per sentence", "On average, the model is as uncertain as if it were choosing uniformly from 50 possible next tokens at each step", "The model has 50 layers", "The model was trained for 50 epochs"],
+      "question": "Языковая модель имеет perplexity 50 на тестовом наборе. Что это означает?",
+      "options": [
+        "Модель делает 50 ошибок на предложение",
+        "В среднем модель настолько же неопределённа, как если бы на каждом шаге выбирала равномерно из 50 возможных следующих токенов",
+        "У модели 50 слоёв",
+        "Модель обучалась 50 эпох"
+      ],
       "correct": 1,
-      "explanation": "Perplexity = e^(cross-entropy). A perplexity of 50 means the model's uncertainty at each token is equivalent to picking randomly from 50 equally likely options. Lower perplexity means better predictions."
+      "explanation": "Perplexity = e^(cross-entropy). Perplexity 50 означает, что неопределённость модели на каждом токене эквивалентна случайному выбору из 50 равновероятных вариантов. Более низкая perplexity означает лучшие предсказания."
     },
     {
       "stage": "post",
-      "question": "How does mutual information differ from Pearson correlation for feature selection?",
-      "options": ["Mutual information is faster to compute", "Mutual information detects any statistical dependency (linear or nonlinear) while correlation only detects linear relationships", "Pearson correlation works for any data type while mutual information only works for continuous data", "They always give the same feature rankings"],
+      "question": "Чем mutual information отличается от Pearson correlation при отборе признаков?",
+      "options": [
+        "Mutual information быстрее вычисляется",
+        "Mutual information обнаруживает любую статистическую зависимость (линейную или нелинейную), тогда как correlation обнаруживает только линейные связи",
+        "Pearson correlation работает с любым типом данных, а mutual information — только с непрерывными данными",
+        "Они всегда дают одинаковый рейтинг признаков"
+      ],
       "correct": 1,
-      "explanation": "Mutual information I(X;Y) captures all statistical dependencies between variables, including nonlinear and non-monotonic ones. Pearson correlation only measures linear association, missing many important relationships."
+      "explanation": "Mutual information I(X;Y) улавливает все статистические зависимости между переменными, включая нелинейные и немонотонные. Pearson correlation измеряет только линейную связь и пропускает многие важные отношения."
     }
   ]
 }

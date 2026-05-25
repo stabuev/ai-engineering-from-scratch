@@ -1,37 +1,37 @@
 [
   {
-    "question": "What is overfitting in neural networks?",
-    "options": ["The model is too small to learn the data", "The model memorizes training data instead of learning generalizable patterns, showing a large gap between train and test accuracy", "The model trains too slowly", "The loss function is wrong"],
+    "question": "Что такое переобучение в нейронных сетях?",
+    "options": ["Модель слишком мала, чтобы выучить данные", "Модель запоминает обучающие данные вместо изучения обобщаемых паттернов, показывая большой разрыв между train и test accuracy", "Модель обучается слишком медленно", "Функция потерь неверна"],
     "correct": 1,
-    "explanation": "Overfitting occurs when a model achieves high training accuracy but poor test accuracy. It has memorized the training data's noise rather than learning the underlying patterns.",
+    "explanation": "Переобучение возникает, когда модель достигает высокой training accuracy, но плохой test accuracy. Она запомнила шум обучающих данных вместо изучения базовых паттернов.",
     "stage": "pre"
   },
   {
-    "question": "How does dropout regularize a neural network?",
-    "options": ["It removes the worst-performing neurons permanently", "It randomly zeroes neurons during training, forcing the network to learn redundant representations", "It reduces the learning rate", "It removes outliers from the training data"],
+    "question": "Как dropout регуляризует нейронную сеть?",
+    "options": ["Он навсегда удаляет нейроны с худшим качеством", "Он случайно зануляет нейроны во время обучения, заставляя сеть изучать избыточные представления", "Он снижает learning rate", "Он удаляет выбросы из обучающих данных"],
     "correct": 1,
-    "explanation": "During each forward pass, dropout randomly sets neuron outputs to zero with probability p. This prevents co-adaptation (neurons relying on specific others) and is equivalent to training an ensemble of 2^N subnetworks.",
+    "explanation": "Во время каждого forward pass dropout случайно устанавливает выходы нейронов в ноль с вероятностью p. Это предотвращает коадаптацию (зависимость нейронов от конкретных других) и эквивалентно обучению ансамбля из 2^N подсетей.",
     "stage": "pre"
   },
   {
-    "question": "Why do transformers use LayerNorm instead of BatchNorm?",
-    "options": ["LayerNorm is faster to compute", "LayerNorm normalizes across features per sample (batch-independent), which works with variable sequence lengths and small batch sizes", "BatchNorm causes gradient explosion", "LayerNorm was invented more recently"],
+    "question": "Почему трансформеры используют LayerNorm вместо BatchNorm?",
+    "options": ["LayerNorm быстрее вычисляется", "LayerNorm нормализует по признакам внутри каждого примера (независимо от batch), что работает с переменными длинами последовательностей и малыми batch sizes", "BatchNorm вызывает gradient explosion", "LayerNorm был изобретен позже"],
     "correct": 1,
-    "explanation": "BatchNorm depends on batch statistics, which are noisy with small batches and meaningless with batch size 1 (common during generation). LayerNorm normalizes across features within each sample, independent of batch size.",
+    "explanation": "BatchNorm зависит от batch statistics, которые шумны при малых batch и бессмысленны при batch size 1 (обычно при генерации). LayerNorm нормализует по признакам внутри каждого примера независимо от размера batch.",
     "stage": "post"
   },
   {
-    "question": "What is the key difference between RMSNorm and LayerNorm?",
-    "options": ["RMSNorm uses batch statistics", "RMSNorm skips the mean subtraction, only dividing by the root mean square, giving ~10% speedup with equal accuracy", "RMSNorm adds learnable parameters", "RMSNorm only works on CNNs"],
+    "question": "В чем ключевое различие между RMSNorm и LayerNorm?",
+    "options": ["RMSNorm использует batch statistics", "RMSNorm пропускает вычитание среднего и только делит на root mean square, давая ускорение ~10% при той же accuracy", "RMSNorm добавляет обучаемые параметры", "RMSNorm работает только на CNN"],
     "correct": 1,
-    "explanation": "RMSNorm removes the mean subtraction step from LayerNorm, which contributes little to accuracy but adds computation. LLaMA, Mistral, and most modern LLMs use RMSNorm for this efficiency gain.",
+    "explanation": "RMSNorm убирает из LayerNorm шаг вычитания среднего, который мало влияет на accuracy, но добавляет вычисления. LLaMA, Mistral и большинство современных LLM используют RMSNorm ради этого выигрыша эффективности.",
     "stage": "post"
   },
   {
-    "question": "Why is it critical to call model.eval() before running inference in PyTorch?",
-    "options": ["It speeds up computation", "It disables dropout and switches BatchNorm to use running statistics instead of batch statistics, giving deterministic outputs", "It frees GPU memory", "It enables gradient computation"],
+    "question": "Почему критично вызывать model.eval() перед inference в PyTorch?",
+    "options": ["Это ускоряет вычисления", "Это отключает dropout и переключает BatchNorm на running statistics вместо batch statistics, давая детерминированные выходы", "Это освобождает GPU-память", "Это включает вычисление градиентов"],
     "correct": 1,
-    "explanation": "Without model.eval(), dropout randomly zeroes neurons during inference (causing random output variation) and BatchNorm uses current-batch statistics instead of the stable running averages accumulated during training.",
+    "explanation": "Без model.eval() dropout случайно зануляет нейроны во время inference (вызывая случайные изменения выхода), а BatchNorm использует статистики текущего batch вместо стабильных running averages, накопленных при обучении.",
     "stage": "post"
   }
 ]

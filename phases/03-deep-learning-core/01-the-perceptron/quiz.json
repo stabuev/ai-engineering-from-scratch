@@ -1,37 +1,37 @@
 [
   {
-    "question": "What mathematical operation does a perceptron perform on its inputs before applying the activation function?",
-    "options": ["Matrix inversion", "Weighted sum plus bias", "Fourier transform", "Eigenvalue decomposition"],
+    "question": "Какую математическую операцию перцептрон выполняет над входами перед применением функции активации?",
+    "options": ["Обращение матрицы", "Взвешенная сумма плюс bias", "Преобразование Фурье", "Разложение по собственным значениям"],
     "correct": 1,
-    "explanation": "A perceptron computes the dot product of inputs and weights, adds a bias term, then passes the result through a step function. This weighted sum plus bias is the core computation.",
+    "explanation": "Перцептрон вычисляет скалярное произведение входов и весов, добавляет bias term, затем пропускает результат через step function. Эта взвешенная сумма плюс bias — основное вычисление.",
     "stage": "pre"
   },
   {
-    "question": "What does 'linearly separable' mean for a classification problem?",
-    "options": ["The data can be sorted in order", "A single straight line (or hyperplane) can perfectly separate the classes", "The features have a linear relationship with the label", "The data has only two dimensions"],
+    "question": "Что означает 'linearly separable' для задачи классификации?",
+    "options": ["Данные можно отсортировать по порядку", "Одна прямая линия (или гиперплоскость) может идеально разделить классы", "Признаки имеют линейную зависимость с меткой", "Данные имеют только два измерения"],
     "correct": 1,
-    "explanation": "A dataset is linearly separable when you can draw a single hyperplane that perfectly divides the input space into the correct classes. AND and OR are linearly separable; XOR is not.",
+    "explanation": "Датасет linearly separable, если можно провести одну гиперплоскость, которая идеально делит входное пространство на правильные классы. AND и OR линейно разделимы; XOR — нет.",
     "stage": "pre"
   },
   {
-    "question": "Why does a single perceptron fail to learn the XOR function?",
-    "options": ["The learning rate is too low", "XOR has too many inputs", "XOR is not linearly separable -- no single line can separate the classes", "The step function prevents gradient flow"],
+    "question": "Почему один перцептрон не может выучить функцию XOR?",
+    "options": ["Learning rate слишком низкий", "У XOR слишком много входов", "XOR не является linearly separable -- ни одна прямая не может разделить классы", "Step function препятствует потоку градиентов"],
     "correct": 2,
-    "explanation": "XOR places [0,1] and [1,0] on one side and [0,0] and [1,1] on the other. No single straight line can separate these groups, so a single perceptron, which can only draw one linear boundary, cannot solve XOR.",
+    "explanation": "XOR помещает [0,1] и [1,0] на одну сторону, а [0,0] и [1,1] — на другую. Ни одна прямая не может разделить эти группы, поэтому один перцептрон, способный провести только одну линейную границу, не может решить XOR.",
     "stage": "post"
   },
   {
-    "question": "In the perceptron learning rule, what happens when the prediction matches the target?",
-    "options": ["Weights are doubled", "Weights are set to zero", "Nothing changes -- error is zero so the update is zero", "The learning rate is halved"],
+    "question": "Что происходит в правиле обучения перцептрона, когда предсказание совпадает с target?",
+    "options": ["Веса удваиваются", "Веса устанавливаются в ноль", "Ничего не меняется -- error равна нулю, поэтому update равен нулю", "Learning rate уменьшается вдвое"],
     "correct": 2,
-    "explanation": "The update rule is w_i = w_i + lr * error * x_i. When prediction equals target, error = 0, so all weight updates are zero. The perceptron only adjusts when it makes a mistake.",
+    "explanation": "Правило обновления: w_i = w_i + lr * error * x_i. Когда prediction равно target, error = 0, поэтому все обновления весов равны нулю. Перцептрон корректируется только при ошибке.",
     "stage": "post"
   },
   {
-    "question": "How is XOR solved using multiple perceptrons?",
-    "options": ["By using a larger learning rate on a single perceptron", "By combining OR, NAND, and AND perceptrons in two layers", "By adding more inputs to a single perceptron", "By removing the bias term"],
+    "question": "Как XOR решается с помощью нескольких перцептронов?",
+    "options": ["Использованием большего learning rate на одном перцептроне", "Комбинированием перцептронов OR, NAND и AND в двух слоях", "Добавлением большего числа входов к одному перцептрону", "Удалением bias term"],
     "correct": 1,
-    "explanation": "XOR = (x1 OR x2) AND NOT(x1 AND x2). A hidden layer with an OR neuron and a NAND neuron feeds into an output AND neuron, creating a nonlinear decision boundary from linear components.",
+    "explanation": "XOR = (x1 OR x2) AND NOT(x1 AND x2). Скрытый слой с OR-нейроном и NAND-нейроном подается в выходной AND-нейрон, создавая нелинейную границу решения из линейных компонентов.",
     "stage": "post"
   }
 ]

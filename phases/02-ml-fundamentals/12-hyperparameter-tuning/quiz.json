@@ -2,20 +2,20 @@
   {
     "id": "hptune-pre-1",
     "stage": "pre",
-    "question": "What is the difference between a parameter and a hyperparameter?",
+    "question": "В чем разница между параметром и гиперпараметром?",
     "options": [
-      "Parameters are set by the user; hyperparameters are learned during training",
-      "Parameters are learned during training (weights, biases); hyperparameters are set before training starts (learning rate, max depth)",
-      "There is no difference; they are synonyms",
-      "Parameters apply to neural networks only; hyperparameters apply to tree models"
+      "Параметры задаются пользователем; гиперпараметры изучаются при обучении",
+      "Параметры изучаются при обучении (weights, biases); гиперпараметры задаются до начала обучения (learning rate, max depth)",
+      "Разницы нет; это синонимы",
+      "Параметры относятся только к нейронным сетям; гиперпараметры — к древовидным моделям"
     ],
     "correct": 1,
-    "explanation": "Parameters are learned by the optimization algorithm during training (e.g., weights). Hyperparameters are set before training and control how learning happens (e.g., learning rate, regularization strength)."
+    "explanation": "Параметры изучаются алгоритмом оптимизации во время обучения (например, веса). Гиперпараметры задаются до обучения и управляют тем, как идет обучение (например, learning rate, сила регуляризации)."
   },
   {
     "id": "hptune-pre-2",
     "stage": "pre",
-    "question": "Grid search over 4 hyperparameters with 5 values each requires how many evaluations?",
+    "question": "Сколько оценок требует grid search по 4 гиперпараметрам с 5 значениями у каждого?",
     "options": [
       "20",
       "25",
@@ -23,45 +23,45 @@
       "4"
     ],
     "correct": 2,
-    "explanation": "Grid search evaluates every combination: 5^4 = 625. This exponential scaling is why grid search becomes impractical with many hyperparameters."
+    "explanation": "Grid search оценивает каждую комбинацию: 5^4 = 625. Из-за такого экспоненциального роста grid search становится непрактичным при большом числе гиперпараметров."
   },
   {
     "id": "hptune-post-1",
     "stage": "post",
-    "question": "Why does random search often outperform grid search with the same evaluation budget?",
+    "question": "Почему random search часто превосходит grid search при том же бюджете оценок?",
     "options": [
-      "Random search uses a better optimization algorithm",
-      "Most hyperparameters have low effective dimensionality, so random search covers the important ones more densely",
-      "Random search always finds the global optimum",
-      "Grid search cannot handle continuous hyperparameters"
+      "Random search использует лучший алгоритм оптимизации",
+      "У большинства гиперпараметров низкая эффективная размерность, поэтому random search плотнее покрывает важные параметры",
+      "Random search всегда находит глобальный оптимум",
+      "Grid search не может работать с непрерывными гиперпараметрами"
     ],
     "correct": 1,
-    "explanation": "Usually only 1-2 hyperparameters matter for a given problem. Grid search wastes evaluations varying unimportant ones. Random search gives unique values for every parameter per trial, covering important dimensions more densely."
+    "explanation": "Обычно для конкретной задачи важны только 1-2 гиперпараметра. Grid search тратит оценки на варьирование неважных параметров. Random search дает уникальные значения каждого параметра в каждой попытке, плотнее покрывая важные измерения."
   },
   {
     "id": "hptune-post-2",
     "stage": "post",
-    "question": "In Bayesian optimization, what does the acquisition function balance?",
+    "question": "Что балансирует acquisition function в Bayesian optimization?",
     "options": [
-      "Training speed and model accuracy",
-      "Exploitation (searching near known good points) and exploration (searching uncertain regions)",
-      "The number of features and the number of samples",
-      "Bias and variance in the surrogate model"
+      "Скорость обучения и accuracy модели",
+      "Exploitation (поиск рядом с известными хорошими точками) и exploration (поиск в неопределенных областях)",
+      "Количество признаков и количество примеров",
+      "Bias и variance в surrogate model"
     ],
     "correct": 1,
-    "explanation": "The acquisition function decides where to evaluate next by balancing exploitation (near known good results) and exploration (where the surrogate model is uncertain). This directs search more efficiently than random."
+    "explanation": "Acquisition function решает, где выполнять следующую оценку, балансируя exploitation (рядом с известными хорошими результатами) и exploration (там, где surrogate model неопределенна). Это направляет поиск эффективнее случайного."
   },
   {
     "id": "hptune-post-3",
     "stage": "post",
-    "question": "You tune hyperparameters using the test set and report the best test performance. What is wrong with this approach?",
+    "question": "Вы настраиваете гиперпараметры по тестовой выборке и сообщаете лучший тестовый результат. Что не так с этим подходом?",
     "options": [
-      "Nothing -- this is standard practice",
-      "You overfitted to the test set; the reported performance is optimistic and will not generalize",
-      "The test set should be used for training, not tuning",
-      "Hyperparameters should only be integers"
+      "Ничего -- это стандартная практика",
+      "Вы переобучились на тестовую выборку; заявленное качество оптимистично и не обобщится",
+      "Тестовую выборку нужно использовать для обучения, а не для настройки",
+      "Гиперпараметры должны быть только целыми числами"
     ],
     "correct": 1,
-    "explanation": "Tuning on the test set means you selected hyperparameters that happen to perform well on those specific samples. This is overfitting to the test set. Use a validation set for tuning and reserve the test set for final evaluation."
+    "explanation": "Настройка по тестовой выборке означает, что вы выбрали гиперпараметры, случайно хорошо работающие на этих конкретных примерах. Это переобучение на тестовую выборку. Используйте валидационную выборку для настройки, а тестовую оставьте для финальной оценки."
   }
 ]
