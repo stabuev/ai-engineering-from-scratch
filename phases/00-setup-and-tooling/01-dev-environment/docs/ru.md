@@ -26,9 +26,9 @@
 
 ```mermaid
 graph TD
-    A["4. AI/ML Libraries\nPyTorch, JAX, transformers, etc."] --> B["3. Language Runtimes\nPython 3.11+, Node 20+, Rust, Julia"]
-    B --> C["2. Package Managers\nuv, pnpm, cargo, juliaup"]
-    C --> D["1. System Foundation\nOS, shell, git, editor, GPU drivers"]
+    A["4. AI/ML библиотеки\nPyTorch, JAX, transformers, etc."] --> B["3. Среды выполнения языка\nPython 3.11+, Node 20+, Rust, Julia"]
+    B --> C["2. Менеджеры пакетов\nuv, pnpm, cargo, juliaup"]
+    C --> D["1. Основа системы\nOS, shell, git, editor, GPU drivers"]
 ```
 
 Мы устанавливаем всё снизу вверх. Каждый уровень зависит от предыдущего.
