@@ -96,8 +96,6 @@ body {
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  hyphens: auto;
-  -webkit-hyphens: auto;
   transition: background-color 0.2s, color 0.2s;
 }
 

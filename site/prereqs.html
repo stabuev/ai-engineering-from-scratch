@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="ru" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Roadmap - AI Engineering from Scratch</title>
+  <title>Дорожная карта - AI Engineering from Scratch</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
-  <meta name="description" content="Interactive prerequisite map for 416 AI engineering lessons. See which phases depend on which, and plan your learning path.">
-  <meta property="og:title" content="Roadmap · AI Engineering from Scratch">
-  <meta property="og:description" content="Interactive prerequisite map. See what each phase depends on and what it unlocks downstream.">
+  <meta name="description" content="Интерактивная карта предварительных требований для 416 уроков по AI Engineering. Посмотрите, какие фазы от каких зависят, и спланируйте свой путь обучения.">
+  <meta property="og:title" content="Дорожная карта · AI Engineering from Scratch">
+  <meta property="og:description" content="Интерактивная карта предварительных требований. Посмотрите, от чего зависит каждая фаза и что она открывает дальше.">
   <meta property="og:image" content="https://aiengineeringfromscratch.com/og-image.png?v=2">
   <meta property="og:url" content="https://aiengineeringfromscratch.com/prereqs.html">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Roadmap · AI Engineering from Scratch">
-  <meta name="twitter:description" content="Interactive prerequisite map across 20 phases.">
+  <meta name="twitter:title" content="Дорожная карта · AI Engineering from Scratch">
+  <meta name="twitter:description" content="Интерактивная карта предварительных требований для 20 фаз.">
   <meta name="twitter:image" content="https://aiengineeringfromscratch.com/og-image.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=20260526a">
 
-<!-- Yandex.Metrika counter -->
+<!-- Счетчик Yandex.Metrika -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -32,11 +32,11 @@
     ym(86601085, 'init', {clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/86601085" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
+<!-- /Счетчик Yandex.Metrika -->
 
   <style>
     /* ===================================================
-       Learning Path — Page Styles
+       Путь обучения - стили страницы
     =================================================== */
 
     .prereqs-page {
@@ -61,7 +61,7 @@
       margin: 0 auto;
     }
 
-    /* --- Controls bar --- */
+    /* --- Панель управления --- */
     .prereqs-controls {
       display: flex;
       justify-content: center;
@@ -119,7 +119,7 @@
       color: var(--accent);
     }
 
-    /* --- Graph container --- */
+    /* --- Контейнер графа --- */
     .graph-wrap {
       overflow-x: auto;
       overflow-y: visible;
@@ -146,7 +146,7 @@
 
     .graph-svg { display: block; }
 
-    /* --- SVG Node styles --- */
+    /* --- Стили SVG-узлов --- */
     .node-group { cursor: pointer; }
 
     .node-rect {
@@ -207,7 +207,7 @@
       transition: opacity 0.25s;
     }
 
-    /* --- SVG Edge styles --- */
+    /* --- Стили SVG-ребер --- */
     .edge-path {
       fill: none;
       stroke: var(--border);
@@ -230,7 +230,7 @@
     .edge-arrow.descendant-edge { fill: var(--complete);  opacity: 0.7; }
     .edge-arrow.dimmed-edge     { opacity: 0.08; }
 
-    /* --- Detail panel --- */
+    /* --- Панель деталей --- */
     .detail-panel {
       max-width: 700px;
       margin: 0 auto;
@@ -398,7 +398,7 @@
       border-color: var(--accent-hover);
     }
 
-    /* --- Responsive --- */
+    /* --- Адаптивность --- */
     @media (max-width: 768px) {
       .prereqs-page        { padding: 80px 0 48px; }
       .graph-scroll-hint   { display: block; }
@@ -415,17 +415,17 @@
         <span class="logo-icon" aria-hidden="true"></span> AI / FROM SCRATCH
       </a>
       <nav class="header-nav">
-        <a href="index.html#contents">Contents</a>
-        <a href="catalog.html">Catalog</a>
-        <a href="prereqs.html">Roadmap</a>
-        <a href="glossary.html">Glossary</a>
+        <a href="index.html#contents">Содержание</a>
+        <a href="catalog.html">Каталог</a>
+        <a href="prereqs.html">Дорожная карта</a>
+        <a href="glossary.html">Глоссарий</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener" class="header-github">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
           <svg class="star-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.896l-7.416 3.517 1.48-8.279L0 9.306l8.332-1.151z"/></svg>
-          <span class="star-count" data-loading="true" aria-label="GitHub stars">…</span>
+          <span class="star-count" data-loading="true" aria-label="Звезды GitHub">…</span>
         </a>
       </nav>
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
     </div>
@@ -434,20 +434,20 @@
   <main class="prereqs-page">
     <div class="container">
       <div class="prereqs-header">
-        <h1>Roadmap</h1>
-        <p>Click any phase to see its prerequisites and what it unlocks downstream.</p>
+        <h1>Дорожная карта</h1>
+        <p>Нажмите на любую фазу, чтобы увидеть ее предварительные требования и то, что она открывает дальше.</p>
       </div>
 
       <div class="prereqs-controls">
         <div class="prereqs-legend">
-          <div class="legend-item"><span class="legend-dot complete"></span> Complete</div>
-          <div class="legend-item"><span class="legend-dot in-progress"></span> In Progress</div>
-          <div class="legend-item"><span class="legend-dot planned"></span> Planned</div>
+          <div class="legend-item"><span class="legend-dot complete"></span> Завершено</div>
+          <div class="legend-item"><span class="legend-dot in-progress"></span> В процессе</div>
+          <div class="legend-item"><span class="legend-dot planned"></span> Запланировано</div>
         </div>
-        <button class="reset-btn" id="resetBtn">&#10005; Clear selection</button>
+        <button class="reset-btn" id="resetBtn">&#10005; Сбросить выбор</button>
       </div>
 
-      <div class="graph-scroll-hint">&#8596; Scroll to explore the full graph</div>
+      <div class="graph-scroll-hint">&#8596; Прокрутите, чтобы изучить весь граф</div>
 
       <div class="graph-wrap">
         <div class="graph-container" id="graphContainer">
@@ -461,13 +461,13 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>AI Engineering from Scratch · open source · free forever.</p>
+      <p>AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
       <div class="footer-links">
-        <a href="index.html">Home</a>
+        <a href="index.html">Главная</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener">GitHub</a>
-        <a href="catalog.html">Catalog</a>
-        <a href="glossary.html">Glossary</a>
-              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Report / Suggest</a>
+        <a href="catalog.html">Каталог</a>
+        <a href="glossary.html">Глоссарий</a>
+              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Сообщить / предложить</a>
       </div>
     </div>
   </footer>
@@ -478,7 +478,7 @@
   <script>
   (function () {
     /* ===================================================
-       Theme Toggle — matches site-wide pattern
+       Переключатель темы - общий паттерн сайта
     =================================================== */
     var root   = document.documentElement;
     var stored = localStorage.getItem('theme');
@@ -513,13 +513,13 @@
     });
 
     /* ===================================================
-       Prerequisite data.
+       Данные предварительных требований.
 
-       To add a new phase, add its id and prerequisite
-       list here. Any phase present in PHASES (data.js)
-       but missing from this map will automatically
-       appear as a standalone node at the bottom of the
-       graph — no manual positioning needed.
+       Чтобы добавить новую фазу, добавьте сюда ее id
+       и список предварительных требований. Любая фаза из PHASES (data.js),
+       отсутствующая в этой карте, автоматически появится
+       как отдельный узел внизу графа - ручное позиционирование
+       не требуется.
     =================================================== */
     var PREREQS = {
       0:  [],
@@ -545,11 +545,11 @@
     };
 
     /*
-     * Tier definitions control the visual layout.
-     * Each sub-array is one horizontal row; the order
-     * within a row controls left-to-right placement.
-     * Phases in PHASES but not in any tier are collected
-     * into an auto-generated row at the bottom.
+     * Определения ярусов управляют визуальной раскладкой.
+     * Каждый вложенный массив - одна горизонтальная строка;
+     * порядок внутри строки задает размещение слева направо.
+     * Фазы из PHASES, не попавшие ни в один ярус, собираются
+     * в автоматически созданную строку внизу.
      */
     var TIER_ORDER = [
       [0],
@@ -566,9 +566,9 @@
     ];
 
     /* ===================================================
-       Layout constants
+       Константы раскладки
     =================================================== */
-    var NODE_W   = 168;
+    var NODE_W   = 208;
     var NODE_H   = 56;
     var TIER_GAP = 130;
     var COL_GAP  = 40;
@@ -576,7 +576,7 @@
     var PAD_Y    = 50;
 
     /* ===================================================
-       Build lookups from PHASES (data.js)
+       Построение справочников из PHASES (data.js)
     =================================================== */
     var PHASE_MAP   = {};
     var allPhaseIds = {};
@@ -585,12 +585,12 @@
       allPhaseIds[PHASES[i].id] = true;
     }
 
-    /* Ensure every phase in PHASES has a PREREQS entry */
+    /* У каждой фазы из PHASES должна быть запись в PREREQS */
     for (var pid in allPhaseIds) {
       if (!(pid in PREREQS)) PREREQS[pid] = [];
     }
 
-    /* Build reverse map: parent → children */
+    /* Обратная карта: parent -> children */
     var CHILDREN = {};
     for (var pid in PREREQS) CHILDREN[pid] = [];
     for (var pid in PREREQS) {
@@ -602,11 +602,11 @@
     }
 
     /* ===================================================
-       Auto-compute node positions from TIER_ORDER
+       Автоматический расчет позиций узлов по TIER_ORDER
     =================================================== */
     var POSITIONS = {};
 
-    /* Collect phase IDs not yet in any tier */
+    /* Собрать id фаз, которых еще нет ни в одном ярусе */
     var tieredIds = {};
     for (var t = 0; t < TIER_ORDER.length; t++) {
       for (var n = 0; n < TIER_ORDER[t].length; n++) {
@@ -622,7 +622,7 @@
       TIER_ORDER.push(extraTier);
     }
 
-    /* Determine SVG dimensions from widest tier */
+    /* Определить размеры SVG по самому широкому ярусу */
     var maxPerTier = 1;
     for (var t = 0; t < TIER_ORDER.length; t++) {
       if (TIER_ORDER[t].length > maxPerTier) maxPerTier = TIER_ORDER[t].length;
@@ -630,7 +630,7 @@
     var SVG_W = Math.max(960, maxPerTier * (NODE_W + COL_GAP) + PAD_X * 2);
     var SVG_H = TIER_ORDER.length * TIER_GAP + PAD_Y * 2;
 
-    /* Place nodes — centred within each tier */
+    /* Разместить узлы по центру каждого яруса */
     for (var t = 0; t < TIER_ORDER.length; t++) {
       var tier  = TIER_ORDER[t];
       var count = tier.length;
@@ -644,7 +644,7 @@
     }
 
     /* ===================================================
-       Graph traversal helpers
+       Помощники для обхода графа
     =================================================== */
     function getAncestors(id) {
       var result = {};
@@ -675,7 +675,7 @@
     }
 
     /* ===================================================
-       SVG utility functions
+       Утилиты для SVG
     =================================================== */
     function svgEl(tag, attrs) {
       var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -689,7 +689,7 @@
       return div.innerHTML;
     }
 
-    /** Split a phase name into 1 or 2 lines for SVG text */
+    /** Разбить название фазы на 1 или 2 строки для SVG-текста */
     function splitName(name) {
       if (name.length <= 20) return [name];
       var mid = Math.ceil(name.length / 2);
@@ -699,7 +699,7 @@
       return [name.substring(0, idx), name.substring(idx + 1)];
     }
 
-    /** Cubic bezier edge between two nodes */
+    /** Кубическая кривая Безье между двумя узлами */
     function edgePath(fromId, toId) {
       var fp = POSITIONS[fromId], tp = POSITIONS[toId];
       if (!fp || !tp) return '';
@@ -712,7 +712,7 @@
              ' ' + x2 + ' ' + y2;
     }
 
-    /** Arrow polygon at the target end of an edge */
+    /** Полигон стрелки на целевом конце ребра */
     function arrowPoints(toId) {
       var tp = POSITIONS[toId];
       if (!tp) return '0,0 0,0 0,0';
@@ -726,6 +726,13 @@
       return '#807060';
     }
 
+    function displayStatus(status) {
+      if (status === 'complete') return 'завершена';
+      if (status === 'in-progress') return 'в процессе';
+      if (status === 'planned') return 'запланирована';
+      return status;
+    }
+
     function lessonStats(phase) {
       var done = 0;
       var lessons = Array.isArray(phase.lessons) ? phase.lessons : [];
@@ -736,7 +743,7 @@
     }
 
     /* ===================================================
-       Build and render the graph
+       Построение и рендеринг графа
     =================================================== */
     var selectedId   = null;
     var nodeEls      = {};
@@ -753,7 +760,7 @@
       container.style.width  = SVG_W + 'px';
       container.style.height = SVG_H + 'px';
 
-      /* --- Edges (drawn first, behind nodes) --- */
+      /* --- Ребра: рисуются первыми, позади узлов --- */
       var edgeGroup = svgEl('g', { class: 'edges-layer' });
       svg.appendChild(edgeGroup);
 
@@ -776,7 +783,7 @@
         }
       }
 
-      /* --- Nodes --- */
+      /* --- Узлы --- */
       var nodeGroup = svgEl('g', { class: 'nodes-layer' });
       svg.appendChild(nodeGroup);
 
@@ -791,20 +798,20 @@
           transform: 'translate(' + (pos.x - NODE_W / 2) + ',' + (pos.y - NODE_H / 2) + ')',
           tabindex: '0',
           role: 'button',
-          'aria-label': 'Select Phase ' + id + ': ' + phase.name
+          'aria-label': 'Выбрать фазу ' + id + ': ' + phase.name
         });
 
-        /* Background */
+        /* Фон */
         g.appendChild(svgEl('rect', { class: 'node-rect', width: NODE_W, height: NODE_H, rx: 12 }));
 
-        /* Status colour bar */
+        /* Цветовая полоса статуса */
         g.appendChild(svgEl('rect', {
           class: 'node-status-bar',
           x: 8, y: 0, width: NODE_W - 16, height: 3, rx: 1.5,
           fill: statusColor(phase.status)
         }));
 
-        /* Label content */
+        /* Содержимое подписи */
         var lines = splitName(phase.name);
         var stats = lessonStats(phase);
 
@@ -837,14 +844,14 @@
     }
 
     /* ===================================================
-       Selection logic
+       Логика выбора
     =================================================== */
     function selectNode(id) {
       selectedId = id;
       var ancestors   = getAncestors(id);
       var descendants = getDescendants(id);
 
-      /* Highlight nodes */
+      /* Подсветить узлы */
       for (var nid in nodeEls) {
         var n  = parseInt(nid);
         var el = nodeEls[n];
@@ -855,7 +862,7 @@
         else                     el.classList.add('dimmed');
       }
 
-      /* Highlight edges */
+      /* Подсветить ребра */
       var aEdges = buildEdgeSet(id, ancestors,   true);
       var dEdges = buildEdgeSet(id, descendants, false);
 
@@ -875,8 +882,8 @@
     }
 
     /**
-     * Collect the set of edge keys (from-to) that belong
-     * to the ancestor or descendant subgraph.
+     * Собрать множество ключей ребер (from-to), относящихся
+     * к подграфу предков или потомков.
      */
     function buildEdgeSet(id, group, isAncestor) {
       var set = {};
@@ -928,7 +935,7 @@
     }
 
     /* ===================================================
-       Detail panel
+       Панель деталей
     =================================================== */
     function showDetail(id, ancestors, descendants) {
       var panel = document.getElementById('detailPanel');
@@ -937,40 +944,40 @@
 
       var stats = lessonStats(phase);
 
-      /* Prerequisites list */
+      /* Список предварительных требований */
       var directPrereqs = PREREQS[id] || [];
       var prereqHtml    = '';
       if (directPrereqs.length) {
         prereqHtml = '<ul class="detail-prereq-list">';
         for (var i = 0; i < directPrereqs.length; i++) {
           var ppid = directPrereqs[i];
-          var pn   = PHASE_MAP[ppid] ? PHASE_MAP[ppid].name : 'Phase ' + ppid;
-          prereqHtml += '<li data-goto="' + ppid + '" tabindex="0" role="button" aria-label="Go to Phase ' + ppid + ': ' + escapeHtml(pn) + '"><span class="li-num">' + String(ppid).padStart(2, '0') + '</span> ' + escapeHtml(pn) + '</li>';
+          var pn   = PHASE_MAP[ppid] ? PHASE_MAP[ppid].name : 'Фаза ' + ppid;
+          prereqHtml += '<li data-goto="' + ppid + '" tabindex="0" role="button" aria-label="Перейти к фазе ' + ppid + ': ' + escapeHtml(pn) + '"><span class="li-num">' + String(ppid).padStart(2, '0') + '</span> ' + escapeHtml(pn) + '</li>';
         }
         prereqHtml += '</ul>';
       } else {
-        prereqHtml = '<div class="detail-empty">None. This is a starting point.</div>';
+        prereqHtml = '<div class="detail-empty">Нет. Это стартовая точка.</div>';
       }
 
-      /* Unlocks list */
+      /* Список того, что открывается дальше */
       var childIds   = CHILDREN[id] || [];
       var unlockHtml = '';
       if (childIds.length) {
         unlockHtml = '<ul class="detail-unlock-list">';
         for (var i = 0; i < childIds.length; i++) {
           var cid = childIds[i];
-          var cn  = PHASE_MAP[cid] ? PHASE_MAP[cid].name : 'Phase ' + cid;
-          unlockHtml += '<li data-goto="' + cid + '" tabindex="0" role="button" aria-label="Go to Phase ' + cid + ': ' + escapeHtml(cn) + '"><span class="li-num">' + String(cid).padStart(2, '0') + '</span> ' + escapeHtml(cn) + '</li>';
+          var cn  = PHASE_MAP[cid] ? PHASE_MAP[cid].name : 'Фаза ' + cid;
+          unlockHtml += '<li data-goto="' + cid + '" tabindex="0" role="button" aria-label="Перейти к фазе ' + cid + ': ' + escapeHtml(cn) + '"><span class="li-num">' + String(cid).padStart(2, '0') + '</span> ' + escapeHtml(cn) + '</li>';
         }
         unlockHtml += '</ul>';
       } else {
-        unlockHtml = '<div class="detail-empty">Final destination. End of the curriculum.</div>';
+        unlockHtml = '<div class="detail-empty">Финальная точка. Конец учебной программы.</div>';
       }
 
-      /* Compute exact GitHub tree URL using standard slug logic */
+      /* Вычислить точный URL дерева GitHub через стандартную slug-логику */
       var phaseGithubUrl = 'https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/' + extractPhaseSlug(phase);
 
-      /* Find first readable lesson for Read button */
+      /* Найти первый доступный для чтения урок для кнопки чтения */
       var readLink = '';
       var lessonsArray = Array.isArray(phase.lessons) ? phase.lessons : [];
       for (var li = 0; li < lessonsArray.length; li++) {
@@ -988,28 +995,28 @@
 
       panel.innerHTML =
         '<div class="detail-top">' +
-          '<span class="detail-phase-num">Phase ' + String(id).padStart(2, '0') + '</span>' +
-          '<span class="detail-status ' + phase.status + '">' + phase.status.replace('-', ' ') + '</span>' +
+          '<span class="detail-phase-num">Фаза ' + String(id).padStart(2, '0') + '</span>' +
+          '<span class="detail-status ' + phase.status + '">' + displayStatus(phase.status) + '</span>' +
         '</div>' +
         '<div class="detail-title">' + escapeHtml(phase.name) + '</div>' +
         '<div class="detail-desc">' + escapeHtml(phase.desc) + '</div>' +
         '<div class="detail-stats">' +
-          '<strong>' + stats.done + '</strong> of <strong>' + stats.total + '</strong> lessons complete' +
-          ' &nbsp;·&nbsp; <strong>' + ancestorCount + '</strong> prerequisite phases' +
-          ' &nbsp;·&nbsp; <strong>' + descendantCount + '</strong> phases unlocked' +
+          'завершено <strong>' + stats.done + '</strong> из <strong>' + stats.total + '</strong> уроков' +
+          ' &nbsp;·&nbsp; требует фаз: <strong>' + ancestorCount + '</strong>' +
+          ' &nbsp;·&nbsp; открывает фаз: <strong>' + descendantCount + '</strong>' +
         '</div>' +
         '<div class="detail-sections">' +
-          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--accent)">&#9664;</span> Prerequisites</div>' + prereqHtml + '</div>' +
-          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--complete)">&#9654;</span> Unlocks</div>' + unlockHtml + '</div>' +
+          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--accent)">&#9664;</span> Предварительные требования</div>' + prereqHtml + '</div>' +
+          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--complete)">&#9654;</span> Открывает</div>' + unlockHtml + '</div>' +
         '</div>' +
         '<div class="detail-actions">' +
-          (readLink ? '<a href="' + readLink + '" class="detail-link detail-link-read">Read</a>' : '') +
-          '<a href="' + phaseGithubUrl + '" target="_blank" rel="noopener" class="detail-link">View on GitHub</a>' +
+          (readLink ? '<a href="' + readLink + '" class="detail-link detail-link-read">Читать</a>' : '') +
+          '<a href="' + phaseGithubUrl + '" target="_blank" rel="noopener" class="detail-link">Открыть на GitHub</a>' +
         '</div>';
 
       panel.classList.add('open');
 
-      /* Clickable prereq/unlock items navigate the graph */
+      /* Кликабельные элементы предварительных требований и открываемых фаз перемещают по графу */
       var clickables = panel.querySelectorAll('[data-goto]');
       for (var i = 0; i < clickables.length; i++) {
         (function (el) {
