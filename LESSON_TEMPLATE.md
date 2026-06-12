@@ -1,6 +1,13 @@
 # Lesson Template
 
-Use this template when creating a new lesson. Copy the folder structure and fill in the content.
+Use this template when creating a new lesson. The quickest start is
+`scripts/scaffold-lesson.sh <phase-dir> <lesson-slug> [title]` — it creates the
+folder structure and prefilled `docs/en.md` + `docs/ru.md` skeletons.
+
+After writing the lesson, register it in `lessons.json` and run
+`node site/build.js` — README/ROADMAP tables and the website data are generated
+from the manifest, and CI rejects lessons that exist on disk but are not
+registered.
 
 ## Folder Structure
 
@@ -11,14 +18,19 @@ NN-lesson-name/
 │   ├── main.ts            (TypeScript version, if applicable)
 │   ├── main.rs            (Rust version, if applicable)
 │   └── main.jl            (Julia version, if applicable)
-├── notebook/
-│   └── lesson.ipynb       (Jupyter notebook for experimentation)
 ├── docs/
-│   └── en.md              (lesson documentation)
+│   ├── en.md              (lesson narrative, English)
+│   └── ru.md              (lesson narrative, Russian — keep in sync with en.md)
+├── quiz.json              (optional quiz, Russian; rendered on the website)
+├── quiz_en.json           (optional quiz, English)
 └── outputs/
     ├── prompt-*.md         (prompts produced by this lesson)
     └── skill-*.md          (skills produced by this lesson)
 ```
+
+Quiz format: either a bare array of questions or `{"questions": [...]}`. Each
+question needs `question`, `options` (2+), integer `correct` index; optional
+`explanation` and `stage` (`"pre"` / `"post"`). CI validates every quiz file.
 
 ## Documentation Format (docs/en.md)
 
@@ -28,9 +40,13 @@ NN-lesson-name/
 > [One-line motto — the core idea that sticks]
 
 **Type:** Build | Learn
-**Languages:** Python, TypeScript, Rust, Julia (list what's used)
+**Languages:** Python, TypeScript, Rust, Julia (list only what code/ actually contains)
 **Prerequisites:** [List prior lessons needed]
 **Time:** ~[estimated time] minutes
+
+## Learning Objectives
+
+- [3-5 bullets: what the learner can do after this lesson]
 
 ## The Problem
 

@@ -16,6 +16,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 - This `CHANGELOG.md`.
 
 - `ROADMAP.md` now has a «Квиз» column (✓/—) derived from `quiz.json` presence on disk. Current coverage: 124/434 lessons. Quiz files are schema-validated in CI: both accepted shapes (bare array or `{questions: [...]}`, matching what `site/lesson.html` renders), per-question text/options/correct-index checks.
+- Language toggle (RU/EN) on lesson pages: a header button switches `docs/ru.md` ↔ `docs/en.md` and `quiz.json` ↔ `quiz_en.json`; choice persists in localStorage and is shareable via `?lang=en`. Verified in a live preview both directions.
+- `outputs/index.json` is now generated from `phases/*/*/outputs/` by `site/build.js` (was an empty stub): 473 artifacts indexed — 99 prompts, 373 skills, 1 agent pack. The «портфолио из N артефактов» counter in README now uses the real artifact count.
+- `scripts/scaffold-lesson.sh` now also creates a `docs/ru.md` skeleton and points contributors at the `lessons.json` workflow instead of hand-editing ROADMAP; `LESSON_TEMPLATE.md` documents `ru.md`, the quiz format and the Learning Objectives section.
+- `.claude/launch.json` — preview config for the static site (`python3 -m http.server`).
 
 ### Changed
 - `site/build.js` rewritten: README/ROADMAP are no longer parsed as the data source — lesson tables, counters and hour estimates are generated from `lessons.json`. The build is idempotent (timestamp dropped from `data.js`).
@@ -24,6 +28,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 - Renumbered orphans to close numbering gaps: `8/19-visual-autoregressive-var` → `8/15-...`, `10/34-gradient-checkpointing` → `10/23-...`. Every phase is now sequentially numbered from 01.
 - Language claims now match the code. Course-level «four languages: Python, TypeScript, Rust, Julia» wording replaced with «Python-first, with TypeScript, Rust and Julia in selected lessons» (README + site meta). 7 lessons that claimed TypeScript/Rust with Python-only `code/` now list Python (capstone «Язык» columns are the recommended project stack and stay as-is).
 - Phase 19 description now says what capstones actually are: specs + starter skeletons for 20–40 h of self-directed work, not «готовые end-to-end продукты».
+- `find-your-level` skill no longer claims a «260-lesson» curriculum — lesson counts in both skill copies are synced by `site/build.js`.
+
+### Removed
+- 295 empty `notebook/` directories (`.gitkeep` only, zero actual notebooks in the repo) — and the `notebook/lesson.ipynb` promise in `LESSON_TEMPLATE.md` and the scaffolder.
 
 ### Fixed
 - Phase 19 (Capstones) never reached the website: the parser did not understand the «Проект» table format, so the site showed 0 capstone lessons.

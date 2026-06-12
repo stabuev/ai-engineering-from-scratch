@@ -325,6 +325,20 @@ p.dropcap::first-letter {
   transition: border-color 0.15s, color 0.15s;
 }
 
+.lang-toggle {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.lang-toggle:hover {
+  color: var(--blueprint);
+  border-color: var(--blueprint);
+}
+
 .theme-toggle:hover {
   border-color: var(--blueprint);
   color: var(--blueprint);

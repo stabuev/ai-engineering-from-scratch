@@ -9,8 +9,8 @@ Examples:
   scripts/scaffold-lesson.sh 05-nlp-foundations-to-advanced 03-tokenizers
   scripts/scaffold-lesson.sh 05-nlp-foundations-to-advanced 03-tokenizers "Tokenizers from Scratch"
 
-Creates phases/<phase-dir>/<lesson-slug>/ with code/, notebook/, docs/, outputs/
-and a docs/en.md skeleton prefilled from LESSON_TEMPLATE.md.
+Creates phases/<phase-dir>/<lesson-slug>/ with code/, docs/, outputs/ and
+docs/en.md + docs/ru.md skeletons prefilled from LESSON_TEMPLATE.md.
 USAGE
   exit 2
 fi
@@ -44,7 +44,7 @@ if [[ ! "$LESSON" =~ ^[0-9]{2}-[a-z0-9-]+$ ]]; then
   exit 1
 fi
 
-mkdir -p "$LESSON_DIR/code" "$LESSON_DIR/notebook" "$LESSON_DIR/docs" "$LESSON_DIR/outputs"
+mkdir -p "$LESSON_DIR/code" "$LESSON_DIR/docs" "$LESSON_DIR/outputs"
 
 PRETTY_TITLE="$TITLE"
 if [[ -z "$PRETTY_TITLE" ]]; then
@@ -124,14 +124,66 @@ if __name__ == "__main__":
     main()
 EOF
 
-touch "$LESSON_DIR/notebook/.gitkeep"
 touch "$LESSON_DIR/outputs/.gitkeep"
+
+cat >"$LESSON_DIR/docs/ru.md" <<EOF
+# $PRETTY_TITLE
+
+> [Однострочный девиз. Главная идея, которая запоминается.]
+
+**Тип:** Build
+**Языки:** Python
+**Пререквизиты:** [предыдущие уроки]
+**Время:** ~75 минут
+
+## Проблема
+
+[2-3 абзаца. Что без этого нельзя сделать? Конкретно.]
+
+## Концепция
+
+[Сначала интуиция. Диаграммы, таблицы, ментальные модели. Пока без кода.]
+
+## Build It
+
+### Шаг 1: [название]
+
+[объяснение]
+
+\\`\\`\\`python
+\\`\\`\\`
+
+## Use It
+
+[Как то же самое решает реальный фреймворк. Сравните со своей версией.]
+
+## Ship It
+
+[Переиспользуемый артефакт этого урока. Сохраните в outputs/.]
+
+## Упражнения
+
+1. [Легкое — закрепить основную идею]
+2. [Среднее — применить к другой задаче]
+3. [Сложное — расширить или скомбинировать с прошлыми уроками]
+
+## Ключевые термины
+
+| Термин | Что говорят | Что это на самом деле |
+|--------|-------------|----------------------|
+|        |             |                      |
+
+## Что почитать
+
+- []() — []
+EOF
 
 echo "created phases/$PHASE/$LESSON/"
 echo ""
 echo "next:"
-echo "  1. edit phases/$PHASE/$LESSON/docs/en.md"
+echo "  1. edit phases/$PHASE/$LESSON/docs/en.md and docs/ru.md"
 echo "  2. write phases/$PHASE/$LESSON/code/main.py"
-echo "  3. add a markdown-link row to ROADMAP.md under Phase $PHASE_NUM:"
-echo "     | $LESSON_NUM | [$PRETTY_TITLE](phases/$PHASE/$LESSON) | ✅ | ~75 min |"
-echo "  4. atomic commit: git add phases/$PHASE/$LESSON ROADMAP.md && git commit -m \"feat(phase-$PHASE_NUM/$LESSON_NUM): $PRETTY_TITLE\""
+echo "  3. register the lesson in lessons.json (phase $PHASE_NUM) and run: node site/build.js"
+echo "     (README/ROADMAP tables and site data regenerate from the manifest; CI rejects unregistered lessons)"
+echo "  4. optional: add quiz.json + quiz_en.json (see existing lessons for the format; validated by CI)"
+echo "  5. atomic commit: git add phases/$PHASE/$LESSON lessons.json README.md ROADMAP.md site/ && git commit -m \"feat(phase-$PHASE_NUM/$LESSON_NUM): $PRETTY_TITLE\""

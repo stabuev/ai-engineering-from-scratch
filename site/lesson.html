@@ -1588,6 +1588,7 @@
         <a href="prereqs.html">Дорожная карта</a>
         <a href="glossary.html">Глоссарий</a>
       </nav>
+      <button class="theme-toggle lang-toggle" id="langToggle" aria-label="Lesson language: Russian / English" type="button" title="Язык урока / Lesson language">RU</button>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
@@ -1678,6 +1679,14 @@
       var params = new URLSearchParams(window.location.search);
       var lessonPath = params.get('path');
 
+      var docLang = (function () {
+        var stored = null;
+        try { stored = localStorage.getItem('aifs-lesson-lang'); } catch (e) {}
+        var lang = params.get('lang') || stored || 'ru';
+        return lang === 'en' ? 'en' : 'ru';
+      })();
+      try { localStorage.setItem('aifs-lesson-lang', docLang); } catch (e) {}
+
       if (!lessonPath) {
         showError('No lesson path specified', 'Add ?path=phases/01-math-foundations/01-linear-algebra-intuition to the URL.');
         return;
@@ -1729,6 +1738,7 @@
       buildSidebar();
       initSidebarToggle();
       initScrollProgress();
+      initLangToggle();
       fetchLesson(lessonPath);
 
       function extractPhaseSlug(phase, index) {
@@ -1829,9 +1839,22 @@
         }, { passive: true });
       }
 
+      function initLangToggle() {
+        var btn = document.getElementById('langToggle');
+        if (!btn) return;
+        btn.textContent = docLang.toUpperCase();
+        btn.addEventListener('click', function () {
+          var next = docLang === 'ru' ? 'en' : 'ru';
+          try { localStorage.setItem('aifs-lesson-lang', next); } catch (e) {}
+          var url = new URL(window.location.href);
+          url.searchParams.set('lang', next);
+          window.location.href = url.toString();
+        });
+      }
+
       function fetchLesson(path) {
-        var rawUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/docs/ru.md';
-        var quizUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/quiz.json';
+        var rawUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/docs/' + docLang + '.md';
+        var quizUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + (docLang === 'en' ? '/quiz_en.json' : '/quiz.json');
 
         fetch(rawUrl)
           .then(function (res) {
