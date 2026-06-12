@@ -4,129 +4,129 @@
 сайт (`site/build.js` парсит их в `site/data.js`); не меняйте
 их форму.
 
-Общее оценочное время: ~314 часов, в своем темпе.
+Общее оценочное время: ~487 часов уроков (фазы 0–18) + ~525 часов capstone-проектов, в своем темпе.
 
 **Легенда:** ✅ Завершено &nbsp;·&nbsp; 🚧 В работе &nbsp;·&nbsp; ⬚ Запланировано
 
-## Фаза 0: Настройка и инструменты — ✅ (~14 часов)
+## Фаза 0: Настройка и инструменты — ✅ (~13.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Среда разработки | ✅ | ~75 мин |
-| 02 | Git и совместная работа | ✅ | ~45 мин |
-| 03 | Настройка GPU и облако | ✅ | ~75 мин |
-| 04 | API и ключи | ✅ | ~75 мин |
-| 05 | Jupyter Notebook | ✅ | ~75 мин |
-| 06 | Окружения Python | ✅ | ~75 мин |
-| 07 | Docker для AI | ✅ | ~75 мин |
-| 08 | Настройка редактора | ✅ | ~75 мин |
-| 09 | Управление данными | ✅ | ~75 мин |
-| 10 | Терминал и shell | ✅ | ~45 мин |
-| 11 | Linux для AI | ✅ | ~45 мин |
-| 12 | Отладка и профилирование | ✅ | ~75 мин |
+| 01 | [Среда разработки](phases/00-setup-and-tooling/01-dev-environment) | ✅ | ~75 мин |
+| 02 | [Git и совместная работа](phases/00-setup-and-tooling/02-git-and-collaboration) | ✅ | ~45 мин |
+| 03 | [Настройка GPU и облако](phases/00-setup-and-tooling/03-gpu-setup-and-cloud) | ✅ | ~75 мин |
+| 04 | [API и ключи](phases/00-setup-and-tooling/04-apis-and-keys) | ✅ | ~75 мин |
+| 05 | [Jupyter Notebook](phases/00-setup-and-tooling/05-jupyter-notebooks) | ✅ | ~75 мин |
+| 06 | [Окружения Python](phases/00-setup-and-tooling/06-python-environments) | ✅ | ~75 мин |
+| 07 | [Docker для AI](phases/00-setup-and-tooling/07-docker-for-ai) | ✅ | ~75 мин |
+| 08 | [Настройка редактора](phases/00-setup-and-tooling/08-editor-setup) | ✅ | ~75 мин |
+| 09 | [Управление данными](phases/00-setup-and-tooling/09-data-management) | ✅ | ~75 мин |
+| 10 | [Терминал и shell](phases/00-setup-and-tooling/10-terminal-and-shell) | ✅ | ~45 мин |
+| 11 | [Linux для AI](phases/00-setup-and-tooling/11-linux-for-ai) | ✅ | ~45 мин |
+| 12 | [Отладка и профилирование](phases/00-setup-and-tooling/12-debugging-and-profiling) | ✅ | ~75 мин |
 
-## Фаза 1: Математические основы — ✅ (~23 часа)
+## Фаза 1: Математические основы — ✅ (~22.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Интуиция линейной алгебры | ✅ | ~45 мин |
-| 02 | Векторы, матрицы и операции | ✅ | ~75 мин |
-| 03 | Матричные преобразования и собственные значения | ✅ | ~75 мин |
-| 04 | Математический анализ для ML — производные и градиенты | ✅ | ~45 мин |
-| 05 | Правило цепочки и автоматическое дифференцирование | ✅ | ~75 мин |
-| 06 | Вероятность и распределения | ✅ | ~45 мин |
-| 07 | Теорема Байеса и статистическое мышление | ✅ | ~75 мин |
-| 08 | Оптимизация — семейство градиентного спуска | ✅ | ~75 мин |
-| 09 | Теория информации — энтропия, KL-дивергенция | ✅ | ~45 мин |
-| 10 | Снижение размерности — PCA, t-SNE, UMAP | ✅ | ~75 мин |
-| 11 | Сингулярное разложение | ✅ | ~75 мин |
-| 12 | Тензорные операции | ✅ | ~75 мин |
-| 13 | Численная устойчивость | ✅ | ~45 мин |
-| 14 | Нормы и расстояния | ✅ | ~45 мин |
-| 15 | Статистика для ML | ✅ | ~45 мин |
-| 16 | Методы выборки | ✅ | ~75 мин |
-| 17 | Линейные системы | ✅ | ~75 мин |
-| 18 | Выпуклая оптимизация | ✅ | ~75 мин |
-| 19 | Комплексные числа для AI | ✅ | ~45 мин |
-| 20 | Преобразование Фурье | ✅ | ~75 мин |
-| 21 | Теория графов для ML | ✅ | ~45 мин |
-| 22 | Стохастические процессы | ✅ | ~45 мин |
+| 01 | [Интуиция линейной алгебры](phases/01-math-foundations/01-linear-algebra-intuition) | ✅ | ~45 мин |
+| 02 | [Векторы, матрицы и операции](phases/01-math-foundations/02-vectors-matrices-operations) | ✅ | ~75 мин |
+| 03 | [Матричные преобразования и собственные значения](phases/01-math-foundations/03-matrix-transformations) | ✅ | ~75 мин |
+| 04 | [Математический анализ для ML: производные и градиенты](phases/01-math-foundations/04-calculus-for-ml) | ✅ | ~45 мин |
+| 05 | [Правило цепочки и автоматическое дифференцирование](phases/01-math-foundations/05-chain-rule-and-autodiff) | ✅ | ~75 мин |
+| 06 | [Вероятность и распределения](phases/01-math-foundations/06-probability-and-distributions) | ✅ | ~45 мин |
+| 07 | [Теорема Байеса и статистическое мышление](phases/01-math-foundations/07-bayes-theorem) | ✅ | ~75 мин |
+| 08 | [Оптимизация: семейство градиентного спуска](phases/01-math-foundations/08-optimization) | ✅ | ~75 мин |
+| 09 | [Теория информации: энтропия, KL-дивергенция](phases/01-math-foundations/09-information-theory) | ✅ | ~45 мин |
+| 10 | [Снижение размерности: PCA, t-SNE, UMAP](phases/01-math-foundations/10-dimensionality-reduction) | ✅ | ~75 мин |
+| 11 | [Сингулярное разложение](phases/01-math-foundations/11-singular-value-decomposition) | ✅ | ~75 мин |
+| 12 | [Тензорные операции](phases/01-math-foundations/12-tensor-operations) | ✅ | ~75 мин |
+| 13 | [Численная устойчивость](phases/01-math-foundations/13-numerical-stability) | ✅ | ~45 мин |
+| 14 | [Нормы и расстояния](phases/01-math-foundations/14-norms-and-distances) | ✅ | ~45 мин |
+| 15 | [Статистика для ML](phases/01-math-foundations/15-statistics-for-ml) | ✅ | ~45 мин |
+| 16 | [Методы выборки](phases/01-math-foundations/16-sampling-methods) | ✅ | ~75 мин |
+| 17 | [Линейные системы](phases/01-math-foundations/17-linear-systems) | ✅ | ~75 мин |
+| 18 | [Выпуклая оптимизация](phases/01-math-foundations/18-convex-optimization) | ✅ | ~75 мин |
+| 19 | [Комплексные числа для AI](phases/01-math-foundations/19-complex-numbers) | ✅ | ~45 мин |
+| 20 | [Преобразование Фурье](phases/01-math-foundations/20-fourier-transform) | ✅ | ~75 мин |
+| 21 | [Теория графов для ML](phases/01-math-foundations/21-graph-theory) | ✅ | ~45 мин |
+| 22 | [Стохастические процессы](phases/01-math-foundations/22-stochastic-processes) | ✅ | ~45 мин |
 
 ## Фаза 2: Основы ML — ✅ (~21 час)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Что такое машинное обучение — типы и таксономия | ✅ | ~45 мин |
-| 02 | Линейная регрессия с нуля | ✅ | ~75 мин |
-| 03 | Логистическая регрессия и классификация | ✅ | ~75 мин |
-| 04 | Деревья решений и случайные леса | ✅ | ~75 мин |
-| 05 | Метод опорных векторов | ✅ | ~75 мин |
-| 06 | K-nearest neighbors и метрики расстояния | ✅ | ~75 мин |
-| 07 | Обучение без учителя — K-Means, DBSCAN | ✅ | ~75 мин |
-| 08 | Проектирование и отбор признаков | ✅ | ~75 мин |
-| 09 | Оценка моделей — метрики, кросс-валидация | ✅ | ~75 мин |
-| 10 | Смещение, дисперсия и кривая обучения | ✅ | ~45 мин |
-| 11 | Ансамблевые методы — boosting, bagging, stacking | ✅ | ~75 мин |
-| 12 | Настройка гиперпараметров и AutoML | ✅ | ~75 мин |
-| 13 | ML-пайплайны и отслеживание экспериментов | ✅ | ~75 мин |
-| 14 | Наивный Байес — multinomial, gaussian, Bernoulli | ✅ | ~75 мин |
-| 15 | Основы временных рядов | ✅ | ~45 мин |
-| 16 | Обнаружение аномалий | ✅ | ~75 мин |
-| 17 | Работа с несбалансированными данными | ✅ | ~75 мин |
-| 18 | Отбор признаков | ✅ | ~75 мин |
+| 01 | [Что такое машинное обучение](phases/02-ml-fundamentals/01-what-is-machine-learning) | ✅ | ~45 мин |
+| 02 | [Линейная регрессия с нуля](phases/02-ml-fundamentals/02-linear-regression) | ✅ | ~75 мин |
+| 03 | [Логистическая регрессия и классификация](phases/02-ml-fundamentals/03-logistic-regression) | ✅ | ~75 мин |
+| 04 | [Деревья решений и случайные леса](phases/02-ml-fundamentals/04-decision-trees) | ✅ | ~75 мин |
+| 05 | [Метод опорных векторов](phases/02-ml-fundamentals/05-support-vector-machines) | ✅ | ~75 мин |
+| 06 | [KNN и метрики расстояния](phases/02-ml-fundamentals/06-knn-and-distances) | ✅ | ~75 мин |
+| 07 | [Обучение без учителя: K-Means, DBSCAN](phases/02-ml-fundamentals/07-unsupervised-learning) | ✅ | ~75 мин |
+| 08 | [Проектирование и отбор признаков](phases/02-ml-fundamentals/08-feature-engineering) | ✅ | ~75 мин |
+| 09 | [Оценка моделей: метрики, кросс-валидация](phases/02-ml-fundamentals/09-model-evaluation) | ✅ | ~75 мин |
+| 10 | [Смещение, дисперсия и кривая обучения](phases/02-ml-fundamentals/10-bias-variance) | ✅ | ~45 мин |
+| 11 | [Ансамблевые методы: boosting, bagging, stacking](phases/02-ml-fundamentals/11-ensemble-methods) | ✅ | ~75 мин |
+| 12 | [Настройка гиперпараметров](phases/02-ml-fundamentals/12-hyperparameter-tuning) | ✅ | ~75 мин |
+| 13 | [ML-пайплайны и отслеживание экспериментов](phases/02-ml-fundamentals/13-ml-pipelines) | ✅ | ~75 мин |
+| 14 | [Наивный Байес](phases/02-ml-fundamentals/14-naive-bayes) | ✅ | ~75 мин |
+| 15 | [Основы временных рядов](phases/02-ml-fundamentals/15-time-series) | ✅ | ~45 мин |
+| 16 | [Обнаружение аномалий](phases/02-ml-fundamentals/16-anomaly-detection) | ✅ | ~75 мин |
+| 17 | [Работа с несбалансированными данными](phases/02-ml-fundamentals/17-imbalanced-data) | ✅ | ~75 мин |
+| 18 | [Отбор признаков](phases/02-ml-fundamentals/18-feature-selection) | ✅ | ~75 мин |
 
-## Фаза 3: Ядро deep learning — ✅ (~15 часов)
-
-| # | Урок | Статус | Оценка |
-|---|--------|--------|------|
-| 01 | Перцептрон — с чего все началось | ✅ | ~45 мин |
-| 02 | Многослойные сети и прямой проход | ✅ | ~75 мин |
-| 03 | Backpropagation с нуля | ✅ | ~75 мин |
-| 04 | Функции активации — ReLU, Sigmoid, GELU и зачем они нужны | ✅ | ~45 мин |
-| 05 | Функции потерь — MSE, Cross-Entropy, Contrastive | ✅ | ~45 мин |
-| 06 | Оптимизаторы — SGD, Momentum, Adam, AdamW | ✅ | ~75 мин |
-| 07 | Регуляризация — Dropout, Weight Decay, BatchNorm | ✅ | ~75 мин |
-| 08 | Инициализация весов и стабильность обучения | ✅ | ~45 мин |
-| 09 | Расписания learning rate и warmup | ✅ | ~45 мин |
-| 10 | Соберите собственный мини-фреймворк | ✅ | ~120 мин |
-| 11 | Введение в PyTorch | ✅ | ~75 мин |
-| 12 | Введение в JAX | ✅ | ~75 мин |
-| 13 | Отладка нейросетей | ✅ | ~75 мин |
-
-## Фаза 4: Computer Vision — ✅ (~27 часов)
+## Фаза 3: Ядро deep learning — ✅ (~14.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Основы изображений — пиксели, каналы, цветовые пространства | ✅ | ~45 мин |
-| 02 | Свертки с нуля | ✅ | ~75 мин |
-| 03 | CNN — от LeNet до ResNet | ✅ | ~75 мин |
-| 04 | Классификация изображений | ✅ | ~75 мин |
-| 05 | Transfer learning и fine-tuning | ✅ | ~75 мин |
-| 06 | Обнаружение объектов — YOLO с нуля | ✅ | ~75 мин |
-| 07 | Семантическая сегментация — U-Net | ✅ | ~75 мин |
-| 08 | Instance segmentation — Mask R-CNN | ✅ | ~75 мин |
-| 09 | Генерация изображений — GAN | ✅ | ~75 мин |
-| 10 | Генерация изображений — diffusion models | ✅ | ~75 мин |
-| 11 | Stable Diffusion — архитектура и fine-tuning | ✅ | ~75 мин |
-| 12 | Понимание видео — временное моделирование | ✅ | ~45 мин |
-| 13 | 3D vision — облака точек, NeRF | ✅ | ~45 мин |
-| 14 | Vision Transformers (ViT) | ✅ | ~45 мин |
-| 15 | Зрение в реальном времени — edge-деплой | ✅ | ~75 мин |
-| 16 | Соберите полный vision-пайплайн | ✅ | ~120 мин |
-| 17 | Self-supervised vision — SimCLR, DINO, MAE | ✅ | ~75 мин |
-| 18 | Open-vocabulary vision — CLIP | ✅ | ~45 мин |
-| 19 | OCR и понимание документов | ✅ | ~45 мин |
-| 20 | Поиск изображений и metric learning | ✅ | ~45 мин |
-| 21 | Обнаружение ключевых точек и оценка позы | ✅ | ~45 мин |
-| 22 | 3D Gaussian Splatting с нуля | ✅ | ~90 мин |
-| 23 | Diffusion Transformers и Rectified Flow | ✅ | ~75 мин |
-| 24 | SAM 3 и open-vocabulary сегментация | ✅ | ~60 мин |
-| 25 | Vision-language models (ViT-MLP-LLM) | ✅ | ~75 мин |
-| 26 | Монокулярная глубина и оценка геометрии | ✅ | ~60 мин |
-| 27 | Multi-object tracking и видеопамять | ✅ | ~60 мин |
-| 28 | Модели мира и video diffusion | ✅ | ~75 мин |
+| 01 | [Перцептрон: с чего все началось](phases/03-deep-learning-core/01-the-perceptron) | ✅ | ~45 мин |
+| 02 | [Многослойные сети и прямой проход](phases/03-deep-learning-core/02-multi-layer-networks) | ✅ | ~75 мин |
+| 03 | [Backpropagation с нуля](phases/03-deep-learning-core/03-backpropagation) | ✅ | ~75 мин |
+| 04 | [Функции активации: ReLU, Sigmoid, GELU и зачем они нужны](phases/03-deep-learning-core/04-activation-functions) | ✅ | ~45 мин |
+| 05 | [Функции потерь: MSE, Cross-Entropy, Contrastive](phases/03-deep-learning-core/05-loss-functions) | ✅ | ~45 мин |
+| 06 | [Оптимизаторы: SGD, Momentum, Adam, AdamW](phases/03-deep-learning-core/06-optimizers) | ✅ | ~75 мин |
+| 07 | [Регуляризация: Dropout, Weight Decay, BatchNorm](phases/03-deep-learning-core/07-regularization) | ✅ | ~75 мин |
+| 08 | [Инициализация весов и стабильность обучения](phases/03-deep-learning-core/08-weight-initialization) | ✅ | ~45 мин |
+| 09 | [Расписания learning rate и warmup](phases/03-deep-learning-core/09-learning-rate-schedules) | ✅ | ~45 мин |
+| 10 | [Соберите собственный мини-фреймворк](phases/03-deep-learning-core/10-mini-framework) | ✅ | ~120 мин |
+| 11 | [Введение в PyTorch](phases/03-deep-learning-core/11-intro-to-pytorch) | ✅ | ~75 мин |
+| 12 | [Введение в JAX](phases/03-deep-learning-core/12-intro-to-jax) | ✅ | ~75 мин |
+| 13 | [Отладка нейросетей](phases/03-deep-learning-core/13-debugging-neural-networks) | ✅ | ~75 мин |
 
-## Фаза 5: NLP — от основ к продвинутому уровню — ✅ (~30 часов)
+## Фаза 4: Computer Vision — ✅ (~31.3 часа)
+
+| # | Урок | Статус | Оценка |
+|---|--------|--------|------|
+| 01 | [Основы изображений: пиксели, каналы, цветовые пространства](phases/04-computer-vision/01-image-fundamentals) | ✅ | ~45 мин |
+| 02 | [Свертки с нуля](phases/04-computer-vision/02-convolutions-from-scratch) | ✅ | ~75 мин |
+| 03 | [CNN: от LeNet до ResNet](phases/04-computer-vision/03-cnns-lenet-to-resnet) | ✅ | ~75 мин |
+| 04 | [Классификация изображений](phases/04-computer-vision/04-image-classification) | ✅ | ~75 мин |
+| 05 | [Transfer learning и fine-tuning](phases/04-computer-vision/05-transfer-learning) | ✅ | ~75 мин |
+| 06 | [Обнаружение объектов — YOLO с нуля](phases/04-computer-vision/06-object-detection-yolo) | ✅ | ~75 мин |
+| 07 | [Семантическая сегментация — U-Net](phases/04-computer-vision/07-semantic-segmentation-unet) | ✅ | ~75 мин |
+| 08 | [Instance segmentation — Mask R-CNN](phases/04-computer-vision/08-instance-segmentation-mask-rcnn) | ✅ | ~75 мин |
+| 09 | [Генерация изображений — GAN](phases/04-computer-vision/09-image-generation-gans) | ✅ | ~75 мин |
+| 10 | [Генерация изображений — diffusion models](phases/04-computer-vision/10-image-generation-diffusion) | ✅ | ~75 мин |
+| 11 | [Stable Diffusion — архитектура и fine-tuning](phases/04-computer-vision/11-stable-diffusion) | ✅ | ~75 мин |
+| 12 | [Понимание видео — временное моделирование](phases/04-computer-vision/12-video-understanding) | ✅ | ~45 мин |
+| 13 | [3D vision: облака точек, NeRF](phases/04-computer-vision/13-3d-vision-nerf) | ✅ | ~45 мин |
+| 14 | [Vision Transformers (ViT)](phases/04-computer-vision/14-vision-transformers) | ✅ | ~45 мин |
+| 15 | [Зрение в реальном времени: edge-деплой](phases/04-computer-vision/15-real-time-edge) | ✅ | ~75 мин |
+| 16 | [Соберите полный vision-пайплайн](phases/04-computer-vision/16-vision-pipeline-capstone) | ✅ | ~120 мин |
+| 17 | [Self-supervised vision — SimCLR, DINO, MAE](phases/04-computer-vision/17-self-supervised-vision) | ✅ | ~75 мин |
+| 18 | [Open-vocabulary vision — CLIP](phases/04-computer-vision/18-open-vocab-clip) | ✅ | ~45 мин |
+| 19 | [OCR и понимание документов](phases/04-computer-vision/19-ocr-document-understanding) | ✅ | ~45 мин |
+| 20 | [Поиск изображений и metric learning](phases/04-computer-vision/20-image-retrieval-metric) | ✅ | ~45 мин |
+| 21 | [Обнаружение ключевых точек и оценка позы](phases/04-computer-vision/21-keypoint-pose) | ✅ | ~45 мин |
+| 22 | [3D Gaussian Splatting с нуля](phases/04-computer-vision/22-3d-gaussian-splatting) | ✅ | ~90 мин |
+| 23 | [Diffusion Transformers и Rectified Flow](phases/04-computer-vision/23-diffusion-transformers-rectified-flow) | ✅ | ~75 мин |
+| 24 | [SAM 3 и open-vocabulary сегментация](phases/04-computer-vision/24-sam3-open-vocab-segmentation) | ✅ | ~60 мин |
+| 25 | [Vision-language models (ViT-MLP-LLM)](phases/04-computer-vision/25-vision-language-models) | ✅ | ~75 мин |
+| 26 | [Монокулярная глубина и оценка геометрии](phases/04-computer-vision/26-monocular-depth) | ✅ | ~60 мин |
+| 27 | [Multi-object tracking и видеопамять](phases/04-computer-vision/27-multi-object-tracking) | ✅ | ~60 мин |
+| 28 | [Модели мира и video diffusion](phases/04-computer-vision/28-world-models-video-diffusion) | ✅ | ~75 мин |
+
+## Фаза 5: NLP — от основ к продвинутому уровню — ✅ (~30.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -160,7 +160,7 @@
 | 28 | [Оценка длинного контекста: NIAH, RULER, LongBench, MRCR](phases/05-nlp-foundations-to-advanced/28-long-context-evaluation) | ✅ | ~60 мин |
 | 29 | [Отслеживание состояния диалога](phases/05-nlp-foundations-to-advanced/29-dialogue-state-tracking) | ✅ | ~75 мин |
 
-## Фаза 6: Speech & Audio — ✅ (~18 часов)
+## Фаза 6: Speech & Audio — ✅ (~18.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -182,7 +182,7 @@
 | 16 | [Voice anti-spoofing и аудиоводяные знаки](phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking) | ✅ | ~75 мин |
 | 17 | [Оценка аудио — WER, MOS, MMAU, лидерборды](phases/06-speech-and-audio/17-audio-evaluation-metrics) | ✅ | ~60 мин |
 
-## Фаза 7: Глубокий разбор Transformers — ✅ (~14 часов)
+## Фаза 7: Глубокий разбор Transformers — ✅ (~16.3 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -200,44 +200,47 @@
 | 12 | [KV cache, Flash Attention и оптимизация inference](phases/07-transformers-deep-dive/12-kv-cache-flash-attention) | ✅ | ~75 мин |
 | 13 | [Законы масштабирования](phases/07-transformers-deep-dive/13-scaling-laws) | ✅ | ~45 мин |
 | 14 | [Соберите Transformer с нуля](phases/07-transformers-deep-dive/14-build-a-transformer-capstone) | ✅ | ~120 мин |
+| 15 | [Варианты Attention — Sliding Window, Sparse, Differential](phases/07-transformers-deep-dive/15-attention-variants) | ✅ | ~60 мин |
+| 16 | [Speculative Decoding — черновик, проверка, повтор](phases/07-transformers-deep-dive/16-speculative-decoding) | ✅ | ~60 мин |
 
-## Фаза 8: Generative AI — ✅ (~14 часов)
+## Фаза 8: Generative AI — ✅ (~15.5 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | [Генеративные модели: таксономия и история](phases/08-generative-ai/01-generative-models-taxonomy-history/) | ✅ | ~45 мин |
-| 02 | [Автоэнкодеры и VAE](phases/08-generative-ai/02-autoencoders-vae/) | ✅ | ~75 мин |
-| 03 | [GAN: генератор против дискриминатора](phases/08-generative-ai/03-gans-generator-discriminator/) | ✅ | ~75 мин |
-| 04 | [Conditional GAN и Pix2Pix](phases/08-generative-ai/04-conditional-gans-pix2pix/) | ✅ | ~75 мин |
-| 05 | [StyleGAN](phases/08-generative-ai/05-stylegan/) | ✅ | ~45 мин |
-| 06 | [Diffusion models — DDPM с нуля](phases/08-generative-ai/06-diffusion-ddpm-from-scratch/) | ✅ | ~75 мин |
-| 07 | [Latent diffusion и Stable Diffusion](phases/08-generative-ai/07-latent-diffusion-stable-diffusion/) | ✅ | ~75 мин |
-| 08 | [ControlNet, LoRA и conditioning](phases/08-generative-ai/08-controlnet-lora-conditioning/) | ✅ | ~75 мин |
-| 09 | [Inpainting, outpainting и редактирование](phases/08-generative-ai/09-inpainting-outpainting-editing/) | ✅ | ~75 мин |
-| 10 | [Генерация видео](phases/08-generative-ai/10-video-generation/) | ✅ | ~45 мин |
-| 11 | [Генерация аудио](phases/08-generative-ai/11-audio-generation/) | ✅ | ~45 мин |
-| 12 | [Генерация 3D](phases/08-generative-ai/12-3d-generation/) | ✅ | ~45 мин |
-| 13 | [Flow matching и Rectified Flows](phases/08-generative-ai/13-flow-matching-rectified-flows/) | ✅ | ~45 мин |
-| 14 | [Оценка: FID, CLIP Score](phases/08-generative-ai/14-evaluation-fid-clip-score/) | ✅ | ~45 мин |
+| 01 | [Генеративные модели: таксономия и история](phases/08-generative-ai/01-generative-models-taxonomy-history) | ✅ | ~45 мин |
+| 02 | [Автоэнкодеры и VAE](phases/08-generative-ai/02-autoencoders-vae) | ✅ | ~75 мин |
+| 03 | [GAN: генератор против дискриминатора](phases/08-generative-ai/03-gans-generator-discriminator) | ✅ | ~75 мин |
+| 04 | [Conditional GAN и Pix2Pix](phases/08-generative-ai/04-conditional-gans-pix2pix) | ✅ | ~75 мин |
+| 05 | [StyleGAN](phases/08-generative-ai/05-stylegan) | ✅ | ~45 мин |
+| 06 | [Diffusion models — DDPM с нуля](phases/08-generative-ai/06-diffusion-ddpm-from-scratch) | ✅ | ~75 мин |
+| 07 | [Latent diffusion и Stable Diffusion](phases/08-generative-ai/07-latent-diffusion-stable-diffusion) | ✅ | ~75 мин |
+| 08 | [ControlNet, LoRA и conditioning](phases/08-generative-ai/08-controlnet-lora-conditioning) | ✅ | ~75 мин |
+| 09 | [Inpainting, outpainting и редактирование](phases/08-generative-ai/09-inpainting-outpainting-editing) | ✅ | ~75 мин |
+| 10 | [Генерация видео](phases/08-generative-ai/10-video-generation) | ✅ | ~45 мин |
+| 11 | [Генерация аудио](phases/08-generative-ai/11-audio-generation) | ✅ | ~45 мин |
+| 12 | [Генерация 3D](phases/08-generative-ai/12-3d-generation) | ✅ | ~45 мин |
+| 13 | [Flow matching и Rectified Flows](phases/08-generative-ai/13-flow-matching-rectified-flows) | ✅ | ~45 мин |
+| 14 | [Оценка: FID, CLIP Score](phases/08-generative-ai/14-evaluation-fid-clip-score) | ✅ | ~45 мин |
+| 19 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/19-visual-autoregressive-var) | 🚧 | ~90 мин |
 
 ## Фаза 9: Reinforcement Learning — ✅ (~13 часов)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | MDP, состояния, действия и награды | ✅ | ~45 мин |
-| 02 | Динамическое программирование | ✅ | ~75 мин |
-| 03 | Методы Monte Carlo | ✅ | ~75 мин |
-| 04 | Temporal difference — Q-learning, SARSA | ✅ | ~75 мин |
-| 05 | Deep Q-Networks (DQN) | ✅ | ~75 мин |
-| 06 | Policy gradient methods — REINFORCE | ✅ | ~75 мин |
-| 07 | Actor-critic — A2C, A3C | ✅ | ~75 мин |
-| 08 | Proximal Policy Optimization (PPO) | ✅ | ~75 мин |
-| 09 | Reward modeling и RLHF | ✅ | ~45 мин |
-| 10 | Multi-agent RL | ✅ | ~45 мин |
-| 11 | Sim-to-real transfer | ✅ | ~45 мин |
-| 12 | RL для игр | ✅ | ~75 мин |
+| 01 | [MDP, состояния, действия и награды](phases/09-reinforcement-learning/01-mdps-states-actions-rewards) | ✅ | ~45 мин |
+| 02 | [Динамическое программирование](phases/09-reinforcement-learning/02-dynamic-programming) | ✅ | ~75 мин |
+| 03 | [Методы Monte Carlo](phases/09-reinforcement-learning/03-monte-carlo-methods) | ✅ | ~75 мин |
+| 04 | [Q-learning, SARSA](phases/09-reinforcement-learning/04-q-learning-sarsa) | ✅ | ~75 мин |
+| 05 | [Deep Q-Networks (DQN)](phases/09-reinforcement-learning/05-dqn) | ✅ | ~75 мин |
+| 06 | [Policy gradients — REINFORCE](phases/09-reinforcement-learning/06-policy-gradients-reinforce) | ✅ | ~75 мин |
+| 07 | [Actor-critic — A2C, A3C](phases/09-reinforcement-learning/07-actor-critic-a2c-a3c) | ✅ | ~75 мин |
+| 08 | [PPO](phases/09-reinforcement-learning/08-ppo) | ✅ | ~75 мин |
+| 09 | [Reward modeling и RLHF](phases/09-reinforcement-learning/09-reward-modeling-rlhf) | ✅ | ~45 мин |
+| 10 | [Multi-agent RL](phases/09-reinforcement-learning/10-multi-agent-rl) | ✅ | ~45 мин |
+| 11 | [Sim-to-real transfer](phases/09-reinforcement-learning/11-sim-to-real-transfer) | ✅ | ~45 мин |
+| 12 | [RL для игр](phases/09-reinforcement-learning/12-rl-for-games) | ✅ | ~75 мин |
 
-## Фаза 10: LLM с нуля — ✅ (~26 часов)
+## Фаза 10: LLM с нуля — ✅ (~28.4 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -263,8 +266,10 @@
 | 20 | [Разбор архитектуры DeepSeek-V3](phases/10-llms-from-scratch/20-deepseek-v3-walkthrough) | ✅ | ~75 мин |
 | 21 | [Jamba — гибридный SSM-Transformer](phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer) | ✅ | ~60 мин |
 | 22 | [Async и Hogwild! inference](phases/10-llms-from-scratch/22-async-hogwild-inference) | ✅ | ~60 мин |
+| 25 | [Speculative Decoding and EAGLE](phases/10-llms-from-scratch/25-speculative-decoding) | 🚧 | ~75 мин |
+| 34 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/34-gradient-checkpointing) | 🚧 | ~70 мин |
 
-## Фаза 11: LLM Engineering — ✅ (~17 часов)
+## Фаза 11: LLM Engineering — ✅ (~18.8 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -283,8 +288,10 @@
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app) | ✅ | ~120 мин |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol) | ✅ | ~75 мин |
 | 15 | [Prompt caching и context caching](phases/11-llm-engineering/15-prompt-caching) | ✅ | ~60 мин |
+| 16 | [LangGraph — конечные автоматы для агентов](phases/11-llm-engineering/16-langgraph-state-machines) | 🚧 | ~75 мин |
+| 17 | [Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno](phases/11-llm-engineering/17-agent-framework-tradeoffs) | 🚧 | ~45 мин |
 
-## Фаза 12: Multimodal AI — ✅ (~65 часов)
+## Фаза 12: Multimodal AI — ✅ (~67 часов)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -314,172 +321,172 @@
 | 24 | [Multimodal RAG и cross-modal retrieval](phases/12-multimodal-ai/24-multimodal-rag-cross-modal) | ✅ | ~180 мин |
 | 25 | [Мультимодальные агенты и computer-use (capstone)](phases/12-multimodal-ai/25-multimodal-agents-computer-use) | ✅ | ~240 мин |
 
-## Фаза 13: Инструменты и протоколы — ✅ (~24.5 часа)
+## Фаза 13: Инструменты и протоколы — ✅ (~24.8 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | [Интерфейс инструмента](phases/13-tools-and-protocols/01-the-tool-interface/) | ✅ | ~45 мин |
-| 02 | [Глубокий разбор function calling](phases/13-tools-and-protocols/02-function-calling-deep-dive/) | ✅ | ~75 мин |
-| 03 | [Параллельные и потоковые вызовы инструментов](phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls/) | ✅ | ~75 мин |
-| 04 | [Структурированный выход](phases/13-tools-and-protocols/04-structured-output/) | ✅ | ~75 мин |
-| 05 | [Проектирование схем инструментов](phases/13-tools-and-protocols/05-tool-schema-design/) | ✅ | ~45 мин |
-| 06 | [Основы MCP](phases/13-tools-and-protocols/06-mcp-fundamentals/) | ✅ | ~45 мин |
-| 07 | [Создание MCP-сервера](phases/13-tools-and-protocols/07-building-an-mcp-server/) | ✅ | ~75 мин |
-| 08 | [Создание MCP-клиента](phases/13-tools-and-protocols/08-building-an-mcp-client/) | ✅ | ~75 мин |
-| 09 | [Транспорты MCP](phases/13-tools-and-protocols/09-mcp-transports/) | ✅ | ~45 мин |
-| 10 | [MCP resources и prompts](phases/13-tools-and-protocols/10-mcp-resources-and-prompts/) | ✅ | ~45 мин |
-| 11 | [MCP sampling](phases/13-tools-and-protocols/11-mcp-sampling/) | ✅ | ~75 мин |
-| 12 | [MCP roots и elicitation](phases/13-tools-and-protocols/12-mcp-roots-and-elicitation/) | ✅ | ~45 мин |
-| 13 | [MCP async tasks](phases/13-tools-and-protocols/13-mcp-async-tasks/) | ✅ | ~75 мин |
-| 14 | [MCP apps](phases/13-tools-and-protocols/14-mcp-apps/) | ✅ | ~75 мин |
-| 15 | [Безопасность MCP I — tool poisoning](phases/13-tools-and-protocols/15-mcp-security-tool-poisoning/) | ✅ | ~45 мин |
-| 16 | [Безопасность MCP II — OAuth 2.1](phases/13-tools-and-protocols/16-mcp-security-oauth-2-1/) | ✅ | ~75 мин |
-| 17 | [MCP gateways и registries](phases/13-tools-and-protocols/17-mcp-gateways-and-registries/) | ✅ | ~45 мин |
-| 18 | [MCP auth в production — DCR + JWKS на iii](phases/13-tools-and-protocols/18-mcp-auth-production/) | ✅ | ~90 мин |
-| 19 | [Протокол A2A](phases/13-tools-and-protocols/19-a2a-protocol/) | ✅ | ~75 мин |
-| 20 | [OpenTelemetry GenAI](phases/13-tools-and-protocols/20-opentelemetry-genai/) | ✅ | ~75 мин |
-| 21 | [Слой маршрутизации LLM](phases/13-tools-and-protocols/21-llm-routing-layer/) | ✅ | ~45 мин |
-| 22 | [Skills и agent SDK](phases/13-tools-and-protocols/22-skills-and-agent-sdks/) | ✅ | ~45 мин |
-| 23 | [Capstone — экосистема инструментов](phases/13-tools-and-protocols/23-capstone-tool-ecosystem/) | ✅ | ~120 мин |
+| 01 | [Интерфейс инструмента](phases/13-tools-and-protocols/01-the-tool-interface) | ✅ | ~45 мин |
+| 02 | [Глубокий разбор function calling](phases/13-tools-and-protocols/02-function-calling-deep-dive) | ✅ | ~75 мин |
+| 03 | [Параллельные и потоковые вызовы инструментов](phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls) | ✅ | ~75 мин |
+| 04 | [Структурированный выход](phases/13-tools-and-protocols/04-structured-output) | ✅ | ~75 мин |
+| 05 | [Проектирование схем инструментов](phases/13-tools-and-protocols/05-tool-schema-design) | ✅ | ~45 мин |
+| 06 | [Основы MCP](phases/13-tools-and-protocols/06-mcp-fundamentals) | ✅ | ~45 мин |
+| 07 | [Создание MCP-сервера](phases/13-tools-and-protocols/07-building-an-mcp-server) | ✅ | ~75 мин |
+| 08 | [Создание MCP-клиента](phases/13-tools-and-protocols/08-building-an-mcp-client) | ✅ | ~75 мин |
+| 09 | [Транспорты MCP](phases/13-tools-and-protocols/09-mcp-transports) | ✅ | ~45 мин |
+| 10 | [MCP resources и prompts](phases/13-tools-and-protocols/10-mcp-resources-and-prompts) | ✅ | ~45 мин |
+| 11 | [MCP sampling](phases/13-tools-and-protocols/11-mcp-sampling) | ✅ | ~75 мин |
+| 12 | [MCP roots и elicitation](phases/13-tools-and-protocols/12-mcp-roots-and-elicitation) | ✅ | ~45 мин |
+| 13 | [MCP async tasks](phases/13-tools-and-protocols/13-mcp-async-tasks) | ✅ | ~75 мин |
+| 14 | [MCP apps](phases/13-tools-and-protocols/14-mcp-apps) | ✅ | ~75 мин |
+| 15 | [Безопасность MCP I — tool poisoning](phases/13-tools-and-protocols/15-mcp-security-tool-poisoning) | ✅ | ~45 мин |
+| 16 | [Безопасность MCP II — OAuth 2.1](phases/13-tools-and-protocols/16-mcp-security-oauth-2-1) | ✅ | ~75 мин |
+| 17 | [MCP gateways и registries](phases/13-tools-and-protocols/17-mcp-gateways-and-registries) | ✅ | ~45 мин |
+| 18 | [MCP auth в production — DCR + JWKS на iii](phases/13-tools-and-protocols/18-mcp-auth-production) | ✅ | ~90 мин |
+| 19 | [Протокол A2A](phases/13-tools-and-protocols/19-a2a-protocol) | ✅ | ~75 мин |
+| 20 | [OpenTelemetry GenAI](phases/13-tools-and-protocols/20-opentelemetry-genai) | ✅ | ~75 мин |
+| 21 | [Слой маршрутизации LLM](phases/13-tools-and-protocols/21-llm-routing-layer) | ✅ | ~45 мин |
+| 22 | [Skills и agent SDK](phases/13-tools-and-protocols/22-skills-and-agent-sdks) | ✅ | ~45 мин |
+| 23 | [Capstone — экосистема инструментов](phases/13-tools-and-protocols/23-capstone-tool-ecosystem) | ✅ | ~120 мин |
 
-## Фаза 14: Agent Engineering — ✅ (~42 часа)
+## Фаза 14: Agent Engineering — ✅ (~42.9 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Цикл агента | ✅ | ~60 мин |
-| 02 | ReWOO и plan-and-execute | ✅ | ~60 мин |
-| 03 | Reflexion и verbal reinforcement learning | ✅ | ~60 мин |
-| 04 | Tree of Thoughts и LATS | ✅ | ~75 мин |
-| 05 | Self-Refine и CRITIC | ✅ | ~60 мин |
-| 06 | Использование инструментов и function calling | ✅ | ~60 мин |
-| 07 | Память — virtual context и MemGPT | ✅ | ~75 мин |
-| 08 | Блоки памяти и sleep-time compute (Letta) | ✅ | ~75 мин |
-| 09 | Гибридная память — vector + graph + KV (Mem0) | ✅ | ~75 мин |
-| 10 | Библиотеки skills и lifelong learning (Voyager) | ✅ | ~75 мин |
-| 11 | Планирование с HTN и evolutionary search | ✅ | ~75 мин |
-| 12 | Паттерны workflow Anthropic | ✅ | ~60 мин |
-| 13 | LangGraph — stateful graphs и durable execution | ✅ | ~75 мин |
-| 14 | AutoGen v0.4 — actor model | ✅ | ~75 мин |
-| 15 | CrewAI — role-based crews и flows | ✅ | ~60 мин |
-| 16 | OpenAI Agents SDK — handoffs, guardrails, tracing | ✅ | ~75 мин |
-| 17 | Claude Agent SDK — subagents и session store | ✅ | ~75 мин |
-| 18 | Agno и Mastra — production runtimes | ✅ | ~45 мин |
-| 19 | Бенчмарки — SWE-bench, GAIA, AgentBench | ✅ | ~60 мин |
-| 20 | Бенчмарки — WebArena и OSWorld | ✅ | ~60 мин |
-| 21 | Computer use — Claude, OpenAI CUA, Gemini | ✅ | ~60 мин |
-| 22 | Голосовые агенты — Pipecat и LiveKit | ✅ | ~60 мин |
-| 23 | Семантические соглашения OpenTelemetry GenAI | ✅ | ~60 мин |
-| 24 | Agent observability — Langfuse, Phoenix, Opik | ✅ | ~45 мин |
-| 25 | Multi-agent debate и collaboration | ✅ | ~60 мин |
-| 26 | Failure modes — почему агенты ломаются | ✅ | ~60 мин |
-| 27 | Prompt injection и защита PVE | ✅ | ~75 мин |
-| 28 | Паттерны оркестрации — supervisor, swarm, hierarchical | ✅ | ~60 мин |
-| 29 | Production runtimes — queue, event, cron | ✅ | ~60 мин |
-| 30 | Eval-driven разработка агентов | ✅ | ~60 мин |
-| 31 | Agent Workbench: почему способные модели все еще ошибаются | ✅ | ~45 мин |
-| 32 | Минимальный Agent Workbench | ✅ | ~45 мин |
-| 33 | Инструкции агента как исполняемые ограничения | ✅ | ~50 мин |
-| 34 | Память репозитория и durable state | ✅ | ~60 мин |
-| 35 | Скрипты инициализации для агентов | ✅ | ~45 мин |
-| 36 | Scope contracts и границы задачи | ✅ | ~50 мин |
-| 37 | Runtime feedback loops | ✅ | ~50 мин |
-| 38 | Verification gates | ✅ | ~55 мин |
-| 39 | Reviewer agent: отделить builder от marker | ✅ | ~55 мин |
-| 40 | Multi-session handoff | ✅ | ~50 мин |
-| 41 | Workbench на реальном репозитории | ✅ | ~60 мин |
-| 42 | Capstone: поставьте переиспользуемый пакет Agent Workbench | ✅ | ~75 мин |
+| 01 | [Цикл агента](phases/14-agent-engineering/01-the-agent-loop) | ✅ | ~60 мин |
+| 02 | [ReWOO и plan-and-execute](phases/14-agent-engineering/02-rewoo-plan-and-execute) | ✅ | ~60 мин |
+| 03 | [Reflexion и verbal reinforcement learning](phases/14-agent-engineering/03-reflexion-verbal-rl) | ✅ | ~60 мин |
+| 04 | [Tree of Thoughts и LATS](phases/14-agent-engineering/04-tree-of-thoughts-lats) | ✅ | ~75 мин |
+| 05 | [Self-Refine и CRITIC](phases/14-agent-engineering/05-self-refine-and-critic) | ✅ | ~60 мин |
+| 06 | [Использование инструментов и function calling](phases/14-agent-engineering/06-tool-use-and-function-calling) | ✅ | ~60 мин |
+| 07 | [Память — virtual context и MemGPT](phases/14-agent-engineering/07-memory-virtual-context-memgpt) | ✅ | ~75 мин |
+| 08 | [Блоки памяти и sleep-time compute](phases/14-agent-engineering/08-memory-blocks-sleep-time-compute) | ✅ | ~75 мин |
+| 09 | [Гибридная память — Mem0 vector + graph + KV](phases/14-agent-engineering/09-hybrid-memory-mem0) | ✅ | ~75 мин |
+| 10 | [Библиотеки skills и lifelong learning — Voyager](phases/14-agent-engineering/10-skill-libraries-voyager) | ✅ | ~75 мин |
+| 11 | [Планирование с HTN и evolutionary search](phases/14-agent-engineering/11-planning-htn-and-evolutionary) | ✅ | ~75 мин |
+| 12 | [Паттерны workflow Anthropic](phases/14-agent-engineering/12-anthropic-workflow-patterns) | ✅ | ~60 мин |
+| 13 | [LangGraph — stateful graphs и durable execution](phases/14-agent-engineering/13-langgraph-stateful-graphs) | ✅ | ~75 мин |
+| 14 | [AutoGen v0.4 — actor model](phases/14-agent-engineering/14-autogen-actor-model) | ✅ | ~75 мин |
+| 15 | [CrewAI — role-based crews и flows](phases/14-agent-engineering/15-crewai-role-based-crews) | ✅ | ~60 мин |
+| 16 | [OpenAI Agents SDK — handoffs, guardrails, tracing](phases/14-agent-engineering/16-openai-agents-sdk) | ✅ | ~75 мин |
+| 17 | [Claude Agent SDK — subagents и session store](phases/14-agent-engineering/17-claude-agent-sdk) | ✅ | ~75 мин |
+| 18 | [Agno и Mastra — production runtimes](phases/14-agent-engineering/18-agno-and-mastra-runtimes) | ✅ | ~45 мин |
+| 19 | [Benchmarks — SWE-bench, GAIA, AgentBench](phases/14-agent-engineering/19-benchmarks-swebench-gaia) | ✅ | ~60 мин |
+| 20 | [Бенчмарки — WebArena и OSWorld](phases/14-agent-engineering/20-benchmarks-webarena-osworld) | ✅ | ~60 мин |
+| 21 | [Computer use — Claude, OpenAI CUA, Gemini](phases/14-agent-engineering/21-computer-use-agents) | ✅ | ~60 мин |
+| 22 | [Голосовые агенты — Pipecat и LiveKit](phases/14-agent-engineering/22-voice-agents-pipecat-livekit) | ✅ | ~60 мин |
+| 23 | [Семантические соглашения OpenTelemetry GenAI](phases/14-agent-engineering/23-otel-genai-conventions) | ✅ | ~60 мин |
+| 24 | [Agent observability — Langfuse, Phoenix, Opik](phases/14-agent-engineering/24-agent-observability-platforms) | ✅ | ~45 мин |
+| 25 | [Multi-agent debate и collaboration](phases/14-agent-engineering/25-multi-agent-debate) | ✅ | ~60 мин |
+| 26 | [Failure modes — почему агенты ломаются](phases/14-agent-engineering/26-failure-modes-agentic) | ✅ | ~60 мин |
+| 27 | [Prompt injection и защита PVE](phases/14-agent-engineering/27-prompt-injection-defense) | ✅ | ~75 мин |
+| 28 | [Паттерны оркестрации — supervisor, swarm, hierarchical](phases/14-agent-engineering/28-orchestration-patterns) | ✅ | ~60 мин |
+| 29 | [Production runtimes — queue, event, cron](phases/14-agent-engineering/29-production-runtimes) | ✅ | ~60 мин |
+| 30 | [Eval-driven разработка агентов](phases/14-agent-engineering/30-eval-driven-agent-development) | ✅ | ~60 мин |
+| 31 | [Agent Workbench: почему способные модели все еще ошибаются](phases/14-agent-engineering/31-agent-workbench-why-models-fail) | ✅ | ~45 мин |
+| 32 | [Минимальный Agent Workbench](phases/14-agent-engineering/32-minimal-agent-workbench) | ✅ | ~45 мин |
+| 33 | [Инструкции агента как исполняемые ограничения](phases/14-agent-engineering/33-instructions-as-executable-constraints) | ✅ | ~50 мин |
+| 34 | [Память репозитория и durable state](phases/14-agent-engineering/34-repo-memory-and-state) | ✅ | ~60 мин |
+| 35 | [Скрипты инициализации для агентов](phases/14-agent-engineering/35-initialization-scripts) | ✅ | ~45 мин |
+| 36 | [Scope contracts и границы задачи](phases/14-agent-engineering/36-scope-contracts) | ✅ | ~50 мин |
+| 37 | [Runtime feedback loops](phases/14-agent-engineering/37-runtime-feedback-loops) | ✅ | ~50 мин |
+| 38 | [Verification gates](phases/14-agent-engineering/38-verification-gates) | ✅ | ~55 мин |
+| 39 | [Reviewer agent: отделить builder от marker](phases/14-agent-engineering/39-reviewer-agent) | ✅ | ~55 мин |
+| 40 | [Multi-session handoff](phases/14-agent-engineering/40-multi-session-handoff) | ✅ | ~50 мин |
+| 41 | [Workbench на реальном репозитории](phases/14-agent-engineering/41-workbench-for-real-repos) | ✅ | ~60 мин |
+| 42 | [Capstone: поставьте переиспользуемый пакет Agent Workbench](phases/14-agent-engineering/42-agent-workbench-capstone) | ✅ | ~75 мин |
 
 ## Фаза 15: Автономные системы — ✅ (~20 часов)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | От чат-ботов к долгосрочным агентам (METR) | ✅ | ~45 мин |
-| 02 | STaR, V-STaR, Quiet-STaR — самообучающееся рассуждение | ✅ | ~60 мин |
-| 03 | AlphaEvolve — эволюционные coding agents | ✅ | ~60 мин |
-| 04 | Darwin Gödel Machine — самомодифицирующиеся агенты | ✅ | ~60 мин |
-| 05 | AI Scientist v2 — исследования уровня workshop | ✅ | ~60 мин |
-| 06 | Автоматизированные alignment-исследования (Anthropic AAR) | ✅ | ~60 мин |
-| 07 | Рекурсивное self-improvement — capability vs alignment | ✅ | ~60 мин |
-| 08 | Дизайны ограниченного self-improvement | ✅ | ~60 мин |
-| 09 | Ландшафт автономных coding agents (SWE-bench, CodeAct) | ✅ | ~45 мин |
-| 10 | Режимы разрешений Claude Code и auto mode | ✅ | ~45 мин |
-| 11 | Браузерные агенты и indirect prompt injection | ✅ | ~45 мин |
-| 12 | Durable execution для долгих запусков агентов | ✅ | ~60 мин |
-| 13 | Бюджеты действий, лимиты итераций, cost governors | ✅ | ~60 мин |
-| 14 | Kill switches, circuit breakers, canary tokens | ✅ | ~60 мин |
-| 15 | HITL — propose-then-commit | ✅ | ~60 мин |
-| 16 | Checkpoints и rollback | ✅ | ~60 мин |
-| 17 | Constitutional AI и переопределения правил | ✅ | ~60 мин |
-| 18 | Llama Guard и классификация input/output | ✅ | ~45 мин |
-| 19 | Anthropic Responsible Scaling Policy v3.0 | ✅ | ~45 мин |
-| 20 | OpenAI Preparedness Framework и DeepMind FSF | ✅ | ~45 мин |
-| 21 | Временные горизонты METR и внешняя оценка | ✅ | ~60 мин |
-| 22 | CAIS, CAISI и риски общественного масштаба | ✅ | ~45 мин |
+| 01 | [От чат-ботов к долгосрочным агентам (METR)](phases/15-autonomous-systems/01-long-horizon-agents) | ✅ | ~45 мин |
+| 02 | [STaR, V-STaR, Quiet-STaR: самообучающееся рассуждение](phases/15-autonomous-systems/02-star-family-reasoning) | ✅ | ~60 мин |
+| 03 | [AlphaEvolve: эволюционные coding agents](phases/15-autonomous-systems/03-alphaevolve-evolutionary-coding) | ✅ | ~60 мин |
+| 04 | [Darwin Gödel Machine: самомодифицирующиеся агенты](phases/15-autonomous-systems/04-darwin-godel-machine) | ✅ | ~60 мин |
+| 05 | [AI Scientist v2: исследования уровня workshop](phases/15-autonomous-systems/05-ai-scientist-v2) | ✅ | ~60 мин |
+| 06 | [Автоматизированные alignment-исследования (Anthropic AAR)](phases/15-autonomous-systems/06-automated-alignment-research) | ✅ | ~60 мин |
+| 07 | [Рекурсивное self-improvement: capability vs alignment](phases/15-autonomous-systems/07-recursive-self-improvement) | ✅ | ~60 мин |
+| 08 | [Дизайны ограниченного self-improvement](phases/15-autonomous-systems/08-bounded-self-improvement) | ✅ | ~60 мин |
+| 09 | [Ландшафт автономных coding agents (SWE-bench, CodeAct)](phases/15-autonomous-systems/09-coding-agent-landscape) | ✅ | ~45 мин |
+| 10 | [Режимы разрешений Claude Code и auto mode](phases/15-autonomous-systems/10-claude-code-permission-modes) | ✅ | ~45 мин |
+| 11 | [Браузерные агенты и indirect prompt injection](phases/15-autonomous-systems/11-browser-agents) | ✅ | ~45 мин |
+| 12 | [Durable execution для долгих запусков агентов](phases/15-autonomous-systems/12-durable-execution) | ✅ | ~60 мин |
+| 13 | [Бюджеты действий, лимиты итераций, cost governors](phases/15-autonomous-systems/13-cost-governors) | ✅ | ~60 мин |
+| 14 | [Kill switches, circuit breakers, canary tokens](phases/15-autonomous-systems/14-kill-switches-canaries) | ✅ | ~60 мин |
+| 15 | [HITL: propose-then-commit](phases/15-autonomous-systems/15-propose-then-commit) | ✅ | ~60 мин |
+| 16 | [Checkpoints и rollback](phases/15-autonomous-systems/16-checkpoints-rollback) | ✅ | ~60 мин |
+| 17 | [Constitutional AI и переопределения правил](phases/15-autonomous-systems/17-constitutional-ai) | ✅ | ~60 мин |
+| 18 | [Llama Guard и классификация input/output](phases/15-autonomous-systems/18-llama-guard) | ✅ | ~45 мин |
+| 19 | [Anthropic Responsible Scaling Policy v3.0](phases/15-autonomous-systems/19-anthropic-rsp) | ✅ | ~45 мин |
+| 20 | [OpenAI Preparedness Framework и DeepMind FSF](phases/15-autonomous-systems/20-openai-preparedness-deepmind-fsf) | ✅ | ~45 мин |
+| 21 | [Временные горизонты METR и внешняя оценка](phases/15-autonomous-systems/21-metr-external-evaluation) | ✅ | ~60 мин |
+| 22 | [CAIS, CAISI и риски общественного масштаба](phases/15-autonomous-systems/22-cais-caisi-societal-risk) | ✅ | ~45 мин |
 
-## Фаза 16: Multi-Agent и Swarms — ✅ (~28 часов)
-
-| # | Урок | Статус | Оценка |
-|---|--------|--------|------|
-| 01 | [Зачем нужен multi-agent подход](phases/16-multi-agent-and-swarms/01-why-multi-agent/) | ✅ | ~45 мин |
-| 02 | [Наследие FIPA-ACL и speech acts](phases/16-multi-agent-and-swarms/02-fipa-acl-heritage/) | ✅ | ~60 мин |
-| 03 | [Коммуникационные протоколы](phases/16-multi-agent-and-swarms/03-communication-protocols/) | ✅ | ~45 мин |
-| 04 | [Примитивная multi-agent модель](phases/16-multi-agent-and-swarms/04-primitive-model/) | ✅ | ~60 мин |
-| 05 | [Паттерн supervisor / orchestrator-worker](phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern/) | ✅ | ~75 мин |
-| 06 | [Иерархическая архитектура и decomposition drift](phases/16-multi-agent-and-swarms/06-hierarchical-architecture/) | ✅ | ~60 мин |
-| 07 | [Society of Mind и multi-agent debate](phases/16-multi-agent-and-swarms/07-society-of-mind-debate/) | ✅ | ~75 мин |
-| 08 | [Специализация ролей — planner / critic / executor / verifier](phases/16-multi-agent-and-swarms/08-role-specialization/) | ✅ | ~75 мин |
-| 09 | [Параллельный swarm и сетевые архитектуры](phases/16-multi-agent-and-swarms/09-parallel-swarm-networks/) | ✅ | ~60 мин |
-| 10 | [Групповой чат и выбор говорящего](phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection/) | ✅ | ~60 мин |
-| 11 | [Handoffs и routines (stateless orchestration)](phases/16-multi-agent-and-swarms/11-handoffs-and-routines/) | ✅ | ~60 мин |
-| 12 | [A2A — протокол agent-to-agent](phases/16-multi-agent-and-swarms/12-a2a-protocol/) | ✅ | ~75 мин |
-| 13 | [Shared memory и blackboard patterns](phases/16-multi-agent-and-swarms/13-shared-memory-blackboard/) | ✅ | ~75 мин |
-| 14 | [Консенсус и Byzantine fault tolerance](phases/16-multi-agent-and-swarms/14-consensus-and-bft/) | ✅ | ~75 мин |
-| 15 | [Голосование, self-consistency и debate topology](phases/16-multi-agent-and-swarms/15-voting-debate-topology/) | ✅ | ~75 мин |
-| 16 | [Переговоры и bargaining](phases/16-multi-agent-and-swarms/16-negotiation-bargaining/) | ✅ | ~75 мин |
-| 17 | [Generative agents и emergent simulation](phases/16-multi-agent-and-swarms/17-generative-agents-simulation/) | ✅ | ~75 мин |
-| 18 | [Theory of mind и emergent coordination](phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination/) | ✅ | ~75 мин |
-| 19 | [Swarm optimization (PSO, ACO)](phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco/) | ✅ | ~75 мин |
-| 20 | [MARL — MADDPG, QMIX, MAPPO](phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo/) | ✅ | ~90 мин |
-| 21 | [Agent economies, token incentives, reputation](phases/16-multi-agent-and-swarms/21-agent-economies/) | ✅ | ~75 мин |
-| 22 | [Production scaling — очереди, checkpoints, durability](phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints/) | ✅ | ~75 мин |
-| 23 | [Failure modes — MAST, groupthink, monoculture](phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink/) | ✅ | ~75 мин |
-| 24 | [Оценка и coordination benchmarks](phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks/) | ✅ | ~75 мин |
-| 25 | [Case studies и state of the art 2026 года](phases/16-multi-agent-and-swarms/25-case-studies-2026-sota/) | ✅ | ~90 мин |
-
-## Фаза 17: Infrastructure и Production — ✅ (~32 часа)
+## Фаза 16: Multi-Agent и Swarms — ✅ (~29.3 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
-| 01 | Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI | ✅ | ~60 мин |
-| 02 | Экономика inference-платформ — Fireworks, Together, Baseten, Modal | ✅ | ~60 мин |
-| 03 | GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler | ✅ | ~75 мин |
-| 04 | Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill | ✅ | ~75 мин |
-| 05 | EAGLE-3 speculative decoding в production | ✅ | ~60 мин |
-| 06 | SGLang и RadixAttention для prefix-heavy нагрузок | ✅ | ~60 мин |
-| 07 | TensorRT-LLM на Blackwell с FP8 и NVFP4 | ✅ | ~75 мин |
-| 08 | Метрики inference — TTFT, TPOT, ITL, goodput, P99 | ✅ | ~60 мин |
-| 09 | Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4 | ✅ | ~75 мин |
-| 10 | Смягчение cold start для serverless LLM | ✅ | ~60 мин |
-| 11 | Multi-region LLM serving и локальность KV cache | ✅ | ~60 мин |
-| 12 | Edge inference — ANE, Hexagon, WebGPU, Jetson | ✅ | ~60 мин |
-| 13 | Выбор стека observability для LLM | ✅ | ~60 мин |
-| 14 | Prompt caching и экономика semantic caching | ✅ | ~60 мин |
-| 15 | Batch APIs — скидка 50% как отраслевой стандарт | ✅ | ~45 мин |
-| 16 | Model routing как примитив снижения стоимости | ✅ | ~60 мин |
-| 17 | Раздельные prefill/decode — NVIDIA Dynamo и llm-d | ✅ | ~75 мин |
-| 18 | Production-стек vLLM с LMCache KV offloading | ✅ | ~60 мин |
-| 19 | AI gateways — LiteLLM, Portkey, Kong, Bifrost | ✅ | ~60 мин |
-| 20 | Shadow, canary и progressive deployment | ✅ | ~60 мин |
-| 21 | A/B testing LLM-функций — GrowthBook и Statsig | ✅ | ~60 мин |
-| 22 | Load testing LLM API — k6, LLMPerf, GenAI-Perf | ✅ | ~75 мин |
-| 23 | SRE для AI — multi-agent incident response | ✅ | ~60 мин |
-| 24 | Chaos engineering для LLM production | ✅ | ~60 мин |
-| 25 | Безопасность — secrets, PII scrubbing, audit logs | ✅ | ~60 мин |
-| 26 | Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001 | ✅ | ~60 мин |
-| 27 | FinOps для LLM — unit economics и multi-tenant attribution | ✅ | ~60 мин |
-| 28 | Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang | ✅ | ~45 мин |
+| 01 | [Зачем нужен multi-agent подход](phases/16-multi-agent-and-swarms/01-why-multi-agent) | ✅ | ~45 мин |
+| 02 | [Наследие FIPA-ACL и speech acts](phases/16-multi-agent-and-swarms/02-fipa-acl-heritage) | ✅ | ~60 мин |
+| 03 | [Коммуникационные протоколы](phases/16-multi-agent-and-swarms/03-communication-protocols) | ✅ | ~45 мин |
+| 04 | [Примитивная multi-agent модель](phases/16-multi-agent-and-swarms/04-primitive-model) | ✅ | ~60 мин |
+| 05 | [Паттерн supervisor / orchestrator-worker](phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern) | ✅ | ~75 мин |
+| 06 | [Иерархическая архитектура и decomposition drift](phases/16-multi-agent-and-swarms/06-hierarchical-architecture) | ✅ | ~60 мин |
+| 07 | [Society of Mind и multi-agent debate](phases/16-multi-agent-and-swarms/07-society-of-mind-debate) | ✅ | ~75 мин |
+| 08 | [Специализация ролей — planner / critic / executor / verifier](phases/16-multi-agent-and-swarms/08-role-specialization) | ✅ | ~75 мин |
+| 09 | [Параллельный swarm и сетевые архитектуры](phases/16-multi-agent-and-swarms/09-parallel-swarm-networks) | ✅ | ~60 мин |
+| 10 | [Групповой чат и выбор говорящего](phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection) | ✅ | ~60 мин |
+| 11 | [Handoffs и routines (stateless orchestration)](phases/16-multi-agent-and-swarms/11-handoffs-and-routines) | ✅ | ~60 мин |
+| 12 | [A2A — протокол agent-to-agent](phases/16-multi-agent-and-swarms/12-a2a-protocol) | ✅ | ~75 мин |
+| 13 | [Shared memory и blackboard patterns](phases/16-multi-agent-and-swarms/13-shared-memory-blackboard) | ✅ | ~75 мин |
+| 14 | [Консенсус и Byzantine fault tolerance](phases/16-multi-agent-and-swarms/14-consensus-and-bft) | ✅ | ~75 мин |
+| 15 | [Голосование, self-consistency и debate topology](phases/16-multi-agent-and-swarms/15-voting-debate-topology) | ✅ | ~75 мин |
+| 16 | [Переговоры и bargaining](phases/16-multi-agent-and-swarms/16-negotiation-bargaining) | ✅ | ~75 мин |
+| 17 | [Generative agents и emergent simulation](phases/16-multi-agent-and-swarms/17-generative-agents-simulation) | ✅ | ~75 мин |
+| 18 | [Theory of mind и emergent coordination](phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination) | ✅ | ~75 мин |
+| 19 | [Swarm optimization (PSO, ACO)](phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco) | ✅ | ~75 мин |
+| 20 | [MARL — MADDPG, QMIX, MAPPO](phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo) | ✅ | ~90 мин |
+| 21 | [Agent economies, token incentives, reputation](phases/16-multi-agent-and-swarms/21-agent-economies) | ✅ | ~75 мин |
+| 22 | [Production scaling — очереди, checkpoints, durability](phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints) | ✅ | ~75 мин |
+| 23 | [Failure modes — MAST, groupthink, monoculture](phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink) | ✅ | ~75 мин |
+| 24 | [Оценка и coordination benchmarks](phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks) | ✅ | ~75 мин |
+| 25 | [Case studies и state of the art 2026 года](phases/16-multi-agent-and-swarms/25-case-studies-2026-sota) | ✅ | ~90 мин |
 
-## Фаза 18: Этика, безопасность и alignment — ✅ (~31 час)
+## Фаза 17: Infrastructure и Production — ✅ (~29 часов)
+
+| # | Урок | Статус | Оценка |
+|---|--------|--------|------|
+| 01 | [Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI](phases/17-infrastructure-and-production/01-managed-llm-platforms) | ✅ | ~60 мин |
+| 02 | [Экономика inference-платформ — Fireworks, Together, Baseten, Modal](phases/17-infrastructure-and-production/02-inference-platform-economics) | ✅ | ~60 мин |
+| 03 | [GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler](phases/17-infrastructure-and-production/03-gpu-autoscaling-kubernetes) | ✅ | ~75 мин |
+| 04 | [Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill](phases/17-infrastructure-and-production/04-vllm-serving-internals) | ✅ | ~75 мин |
+| 05 | [EAGLE-3 speculative decoding в production](phases/17-infrastructure-and-production/05-eagle3-speculative-decoding) | ✅ | ~60 мин |
+| 06 | [SGLang и RadixAttention для prefix-heavy нагрузок](phases/17-infrastructure-and-production/06-sglang-radixattention) | ✅ | ~60 мин |
+| 07 | [TensorRT-LLM на Blackwell с FP8 и NVFP4](phases/17-infrastructure-and-production/07-tensorrt-llm-blackwell) | ✅ | ~75 мин |
+| 08 | [Метрики inference — TTFT, TPOT, ITL, goodput, P99](phases/17-infrastructure-and-production/08-inference-metrics-goodput) | ✅ | ~60 мин |
+| 09 | [Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4](phases/17-infrastructure-and-production/09-production-quantization) | ✅ | ~75 мин |
+| 10 | [Смягчение cold start для serverless LLM](phases/17-infrastructure-and-production/10-cold-start-mitigation) | ✅ | ~60 мин |
+| 11 | [Multi-region LLM serving и локальность KV cache](phases/17-infrastructure-and-production/11-multi-region-kv-locality) | ✅ | ~60 мин |
+| 12 | [Edge inference — ANE, Hexagon, WebGPU, Jetson](phases/17-infrastructure-and-production/12-edge-inference) | ✅ | ~60 мин |
+| 13 | [Выбор стека observability для LLM](phases/17-infrastructure-and-production/13-llm-observability) | ✅ | ~60 мин |
+| 14 | [Prompt caching и экономика semantic caching](phases/17-infrastructure-and-production/14-prompt-semantic-caching) | ✅ | ~60 мин |
+| 15 | [Batch APIs — скидка 50% как отраслевой стандарт](phases/17-infrastructure-and-production/15-batch-apis) | ✅ | ~45 мин |
+| 16 | [Model routing как примитив снижения стоимости](phases/17-infrastructure-and-production/16-model-routing) | ✅ | ~60 мин |
+| 17 | [Раздельные prefill/decode — NVIDIA Dynamo и llm-d](phases/17-infrastructure-and-production/17-disaggregated-prefill-decode) | ✅ | ~75 мин |
+| 18 | [Production-стек vLLM с LMCache KV offloading](phases/17-infrastructure-and-production/18-vllm-production-stack-lmcache) | ✅ | ~60 мин |
+| 19 | [AI gateways — LiteLLM, Portkey, Kong, Bifrost](phases/17-infrastructure-and-production/19-ai-gateways) | ✅ | ~60 мин |
+| 20 | [Shadow, canary и progressive deployment](phases/17-infrastructure-and-production/20-shadow-canary-progressive) | ✅ | ~60 мин |
+| 21 | [A/B testing LLM-функций — GrowthBook и Statsig](phases/17-infrastructure-and-production/21-ab-testing-llm-features) | ✅ | ~60 мин |
+| 22 | [Load testing LLM API — k6, LLMPerf, GenAI-Perf](phases/17-infrastructure-and-production/22-load-testing-llm-apis) | ✅ | ~75 мин |
+| 23 | [SRE для AI — multi-agent incident response](phases/17-infrastructure-and-production/23-sre-for-ai) | ✅ | ~60 мин |
+| 24 | [Chaos engineering для LLM production](phases/17-infrastructure-and-production/24-chaos-engineering-llm) | ✅ | ~60 мин |
+| 25 | [Безопасность — secrets, PII scrubbing, audit logs](phases/17-infrastructure-and-production/25-security-secrets-audit) | ✅ | ~60 мин |
+| 26 | [Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001](phases/17-infrastructure-and-production/26-compliance-frameworks) | ✅ | ~60 мин |
+| 27 | [FinOps для LLM — unit economics и multi-tenant attribution](phases/17-infrastructure-and-production/27-finops-llms) | ✅ | ~60 мин |
+| 28 | [Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang](phases/17-infrastructure-and-production/28-self-hosted-serving-selection) | ✅ | ~45 мин |
+
+## Фаза 18: Этика, безопасность и alignment — ✅ (~30.8 часа)
 
 | # | Урок | Статус | Оценка |
 |---|--------|--------|------|
@@ -514,7 +521,7 @@
 | 29 | [Системы модерации: OpenAI, Perspective, Llama Guard](phases/18-ethics-safety-alignment/29-moderation-systems-openai-perspective-llamaguard) | ✅ | ~60 мин |
 | 30 | [Dual-use risk: cyber, bio, chem, nuclear](phases/18-ethics-safety-alignment/30-dual-use-risk-cyber-bio-chem-nuclear) | ✅ | ~75 мин |
 
-## Фаза 19: Capstone-проекты — ✅ (~500 часов)
+## Фаза 19: Capstone-проекты — ✅ (~525 часов)
 
 | # | Проект | Статус | Оценка |
 |---|---------|--------|------|
@@ -538,6 +545,6 @@
 
 ---
 
-**Итого: 20 фаз, 380+ уроков | 350+ завершено | ~950 часов по оценке**
+**Итого: 20 фаз, 435 уроков | 430 завершено | ~1012 часов по оценке (включая capstone-проекты)**
 
 Хотите помочь? Выберите любой урок со статусом ⬚ и отправьте PR. См. [CONTRIBUTING.md](CONTRIBUTING.md).
