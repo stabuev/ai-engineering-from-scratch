@@ -7,7 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
-- `lessons.json` — single machine-readable course manifest (20 phases, 435 lessons). Source of truth: every lesson directory on disk must be registered there, and vice versa.
+- `lessons.json` — single machine-readable course manifest (20 phases, 434 lessons). Source of truth: every lesson directory on disk must be registered there, and vice versa.
 - `.github/workflows/validate.yml` — CI gate running `node site/build.js --check`: disk ↔ manifest ↔ generated files.
 - 7 lessons that existed on disk but were never registered in README/ROADMAP are now part of the course: `7/15-attention-variants`, `7/16-speculative-decoding`, `8/19-visual-autoregressive-var`, `10/25-speculative-decoding`, `10/34-gradient-checkpointing`, `11/16-langgraph-state-machines`, `11/17-agent-framework-tradeoffs` (five marked 🚧 — missing `code/` or `outputs/`).
 - `scripts/scaffold-lesson.sh` — scaffolder that creates `phases/NN-phase/NN-lesson/` with the full folder structure and a `docs/en.md` skeleton prefilled from `LESSON_TEMPLATE.md`.
@@ -15,9 +15,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 - `.github/ISSUE_TEMPLATE/bug_report.md` and `new_lesson_proposal.md` — structured intake for bug reports and lesson pitches.
 - This `CHANGELOG.md`.
 
+- `ROADMAP.md` now has a «Квиз» column (✓/—) derived from `quiz.json` presence on disk. Current coverage: 124/434 lessons. Quiz files are schema-validated in CI: both accepted shapes (bare array or `{questions: [...]}`, matching what `site/lesson.html` renders), per-question text/options/correct-index checks.
+
 ### Changed
 - `site/build.js` rewritten: README/ROADMAP are no longer parsed as the data source — lesson tables, counters and hour estimates are generated from `lessons.json`. The build is idempotent (timestamp dropped from `data.js`).
-- Every course counter now agrees on one number: 435 lessons (430 complete), ~487 h of lessons + ~525 h of capstones. Previously they diverged: 428 (README badge), 416 (site meta), 411 (data.js), 380+ (ROADMAP footer).
+- Every course counter now agrees on one number: 434 lessons (430 complete), ~486 h of lessons + ~525 h of capstones. Previously they diverged: 428 (README badge), 416 (site meta), 411 (data.js), 380+ (ROADMAP footer).
+- Merged duplicate lesson `10/25-speculative-decoding` into `10/15-speculative-decoding-eagle3` (the only unique content — the draft-distillation recipe — carried over). `7/16-speculative-decoding` stays: it is the math-first lesson the EAGLE-3 lesson explicitly builds on.
+- Renumbered orphans to close numbering gaps: `8/19-visual-autoregressive-var` → `8/15-...`, `10/34-gradient-checkpointing` → `10/23-...`. Every phase is now sequentially numbered from 01.
+- Language claims now match the code. Course-level «four languages: Python, TypeScript, Rust, Julia» wording replaced with «Python-first, with TypeScript, Rust and Julia in selected lessons» (README + site meta). 7 lessons that claimed TypeScript/Rust with Python-only `code/` now list Python (capstone «Язык» columns are the recommended project stack and stay as-is).
+- Phase 19 description now says what capstones actually are: specs + starter skeletons for 20–40 h of self-directed work, not «готовые end-to-end продукты».
 
 ### Fixed
 - Phase 19 (Capstones) never reached the website: the parser did not understand the «Проект» table format, so the site showed 0 capstone lessons.

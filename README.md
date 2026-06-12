@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1a1a1a?style=flat-square&labelColor=fafaf5" alt="Лицензия MIT"></a>
-  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-435-3553ff?style=flat-square&labelColor=fafaf5" alt="435 уроков"></a>
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-434-3553ff?style=flat-square&labelColor=fafaf5" alt="434 уроков"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 фаз"></a>
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="Звезды GitHub"></a>
   <a href="https://aiengineeringfromscratch.com"><img src="https://img.shields.io/badge/web-aiengineeringfromscratch.com-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
@@ -17,7 +17,7 @@
 > **84% студентов уже используют AI-инструменты. Только 18% чувствуют себя готовыми
 > применять их профессионально.** Этот курс закрывает этот разрыв.
 >
-> 435 уроков. 20 фаз. ~487 часов уроков + ~525 часов capstone-проектов. Python, TypeScript, Rust, Julia. Каждый урок поставляет
+> 434 уроков. 20 фаз. ~486 часов уроков + ~525 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
 > переиспользуемый артефакт: промпт, навык, агента, MCP-сервер. Бесплатно, с открытым исходным кодом, MIT.
 >
 > Вы не просто изучаете AI. Вы его строите. От начала до конца. Вручную.
@@ -30,7 +30,7 @@ fine-tuning, где-то еще эффектная демонстрация аг
 подключаете функцию к агенту, но не можете сказать, что делает attention внутри модели,
 которая ее вызывает.
 
-Этот курс - каркас. 20 фаз, 435 уроков, четыре языка: Python, TypeScript, Rust, Julia.
+Этот курс - каркас. 20 фаз, 434 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
 На одном конце линейная алгебра, на другом - автономные swarms. Каждый алгоритм сначала
 строится из чистой математики. Backprop. Tokenizer. Attention. Agent loop. К моменту,
 когда появляется PyTorch, вы уже знаете, что он делает под капотом.
@@ -86,7 +86,7 @@ flowchart TB
 
 ```
 phases/<NN>-<phase-name>/<NN>-<lesson-name>/
-├── code/      runnable implementations (Python, TypeScript, Rust, Julia)
+├── code/      runnable implementations (Python; местами TypeScript, Rust, Julia)
 ├── docs/
 │   └── en.md  lesson narrative
 └── outputs/   prompts, skills, agents, or MCP servers this lesson produces
@@ -176,7 +176,7 @@ ls phases/03-deep-learning-core/05-loss-functions/outputs/
 </table>
 
 > Установите весь набор через [SkillKit](https://github.com/stabuev/skillkit). Настоящие
-> инструменты, не домашние задания. К концу курса у вас будет портфолио из 435 артефактов,
+> инструменты, не домашние задания. К концу курса у вас будет портфолио из 434 артефактов,
 > которые вы действительно понимаете, потому что сами их построили.
 
 ### FIG_002 · Рабочий пример
@@ -360,7 +360,7 @@ the agent went wrong and explain why...
 | 12 | [Понимание видео — временное моделирование](phases/04-computer-vision/12-video-understanding/) | Практика | Python |
 | 13 | [3D vision: облака точек, NeRF](phases/04-computer-vision/13-3d-vision-nerf/) | Практика | Python |
 | 14 | [Vision Transformers (ViT)](phases/04-computer-vision/14-vision-transformers/) | Практика | Python |
-| 15 | [Зрение в реальном времени: edge-деплой](phases/04-computer-vision/15-real-time-edge/) | Практика | Python, Rust |
+| 15 | [Зрение в реальном времени: edge-деплой](phases/04-computer-vision/15-real-time-edge/) | Практика | Python |
 | 16 | [Соберите полный vision-пайплайн](phases/04-computer-vision/16-vision-pipeline-capstone/) | Практика | Python |
 | 17 | [Self-supervised vision — SimCLR, DINO, MAE](phases/04-computer-vision/17-self-supervised-vision/) | Практика | Python |
 | 18 | [Open-vocabulary vision — CLIP](phases/04-computer-vision/18-open-vocab-clip/) | Практика | Python |
@@ -431,7 +431,7 @@ the agent went wrong and explain why...
 | 08 | [Клонирование и преобразование голоса](phases/06-speech-and-audio/08-voice-cloning-conversion/) | Практика | Python |
 | 09 | [Генерация музыки](phases/06-speech-and-audio/09-music-generation/) | Практика | Python |
 | 10 | [Audio-language models](phases/06-speech-and-audio/10-audio-language-models/) | Практика | Python |
-| 11 | [Обработка аудио в реальном времени](phases/06-speech-and-audio/11-real-time-audio-processing/) | Практика | Python, Rust |
+| 11 | [Обработка аудио в реальном времени](phases/06-speech-and-audio/11-real-time-audio-processing/) | Практика | Python |
 | 12 | [Соберите пайплайн голосового ассистента](phases/06-speech-and-audio/12-voice-assistant-pipeline/) | Практика | Python |
 | 13 | [Нейронные аудиокодеки — EnCodec, SNAC, Mimi, DAC](phases/06-speech-and-audio/13-neural-audio-codecs/) | Теория | Python |
 | 14 | [Voice activity detection и turn-taking](phases/06-speech-and-audio/14-voice-activity-detection-turn-taking/) | Практика | Python |
@@ -486,7 +486,7 @@ the agent went wrong and explain why...
 | 12 | [Генерация 3D](phases/08-generative-ai/12-3d-generation/) | Практика | Python |
 | 13 | [Flow matching и Rectified Flows](phases/08-generative-ai/13-flow-matching-rectified-flows/) | Практика | Python |
 | 14 | [Оценка: FID, CLIP Score](phases/08-generative-ai/14-evaluation-fid-clip-score/) | Практика | Python |
-| 19 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/19-visual-autoregressive-var/) | Практика | Python |
+| 15 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/15-visual-autoregressive-var/) | Практика | Python |
 
 </details>
 
@@ -512,7 +512,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-10">
-<summary><b>Фаза 10 — LLM с нуля</b> &nbsp;<code>24 урока</code>&nbsp; <em>Стройте, обучайте и понимайте большие языковые модели.</em></summary>
+<summary><b>Фаза 10 — LLM с нуля</b> &nbsp;<code>23 урока</code>&nbsp; <em>Стройте, обучайте и понимайте большие языковые модели.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -527,7 +527,7 @@ the agent went wrong and explain why...
 | 08 | [DPO — Direct Preference Optimization](phases/10-llms-from-scratch/08-dpo/) | Практика | Python |
 | 09 | [Constitutional AI и self-improvement](phases/10-llms-from-scratch/09-constitutional-ai-self-improvement/) | Практика | Python |
 | 10 | [Оценка — бенчмарки, evals](phases/10-llms-from-scratch/10-evaluation/) | Практика | Python |
-| 11 | [Квантизация: INT8, GPTQ, AWQ, GGUF](phases/10-llms-from-scratch/11-quantization/) | Практика | Python, Rust |
+| 11 | [Квантизация: INT8, GPTQ, AWQ, GGUF](phases/10-llms-from-scratch/11-quantization/) | Практика | Python |
 | 12 | [Оптимизация inference](phases/10-llms-from-scratch/12-inference-optimization/) | Практика | Python |
 | 13 | [Создание полного LLM-пайплайна](phases/10-llms-from-scratch/13-building-complete-llm-pipeline/) | Практика | Python |
 | 14 | [Открытые модели: разбор архитектур](phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs/) | Теория | Python |
@@ -539,8 +539,7 @@ the agent went wrong and explain why...
 | 20 | [Разбор архитектуры DeepSeek-V3](phases/10-llms-from-scratch/20-deepseek-v3-walkthrough/) | Теория | Python |
 | 21 | [Jamba — гибридный SSM-Transformer](phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer/) | Теория | Python |
 | 22 | [Async и Hogwild! inference](phases/10-llms-from-scratch/22-async-hogwild-inference/) | Практика | Python |
-| 25 | [Speculative Decoding and EAGLE](phases/10-llms-from-scratch/25-speculative-decoding/) | Практика | Python |
-| 34 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/34-gradient-checkpointing/) | Практика | Python |
+| 23 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/23-gradient-checkpointing/) | Практика | Python |
 
 </details>
 
@@ -552,10 +551,10 @@ the agent went wrong and explain why...
 |:---:|--------|:----:|------|
 | 01 | [Prompt engineering: техники и паттерны](phases/11-llm-engineering/01-prompt-engineering/) | Практика | Python |
 | 02 | [Few-shot, CoT, Tree-of-Thought](phases/11-llm-engineering/02-few-shot-cot/) | Практика | Python |
-| 03 | [Структурированные выходы](phases/11-llm-engineering/03-structured-outputs/) | Практика | Python, TypeScript |
+| 03 | [Структурированные выходы](phases/11-llm-engineering/03-structured-outputs/) | Практика | Python |
 | 04 | [Embeddings и векторные представления](phases/11-llm-engineering/04-embeddings/) | Практика | Python |
-| 05 | [Context engineering](phases/11-llm-engineering/05-context-engineering/) | Практика | Python, TypeScript |
-| 06 | [RAG: Retrieval-Augmented Generation](phases/11-llm-engineering/06-rag/) | Практика | Python, TypeScript |
+| 05 | [Context engineering](phases/11-llm-engineering/05-context-engineering/) | Практика | Python |
+| 06 | [RAG: Retrieval-Augmented Generation](phases/11-llm-engineering/06-rag/) | Практика | Python |
 | 07 | [Продвинутый RAG: chunking, reranking](phases/11-llm-engineering/07-advanced-rag/) | Практика | Python |
 | 08 | [Fine-tuning с LoRA и QLoRA](phases/11-llm-engineering/08-fine-tuning-lora/) | Практика | Python |
 | 09 | [Function calling и использование инструментов](phases/11-llm-engineering/09-function-calling/) | Практика | Python |
@@ -659,7 +658,7 @@ the agent went wrong and explain why...
 | 15 | [CrewAI — role-based crews и flows](phases/14-agent-engineering/15-crewai-role-based-crews/) | Практика | Python |
 | 16 | [OpenAI Agents SDK — handoffs, guardrails, tracing](phases/14-agent-engineering/16-openai-agents-sdk/) | Практика | Python |
 | 17 | [Claude Agent SDK — subagents и session store](phases/14-agent-engineering/17-claude-agent-sdk/) | Практика | Python |
-| 18 | [Agno и Mastra — production runtimes](phases/14-agent-engineering/18-agno-and-mastra-runtimes/) | Теория | Python, TypeScript |
+| 18 | [Agno и Mastra — production runtimes](phases/14-agent-engineering/18-agno-and-mastra-runtimes/) | Теория | Python |
 | 19 | [Benchmarks — SWE-bench, GAIA, AgentBench](phases/14-agent-engineering/19-benchmarks-swebench-gaia/) | Теория | Python |
 | 20 | [Бенчмарки — WebArena и OSWorld](phases/14-agent-engineering/20-benchmarks-webarena-osworld/) | Теория | Python |
 | 21 | [Computer use — Claude, OpenAI CUA, Gemini](phases/14-agent-engineering/21-computer-use-agents/) | Практика | Python |
@@ -829,7 +828,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-19">
-<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>17 проектов</code>&nbsp; <em>Готовые end-to-end продукты 2026 года, по 20-40 часов каждый.</em></summary>
+<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>17 проектов</code>&nbsp; <em>Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.</em></summary>
 <br/>
 
 | # | Проект | Объединяет | Язык |

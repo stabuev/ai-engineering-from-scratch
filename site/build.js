@@ -115,6 +115,33 @@ function loadManifest() {
           errors.push(`missing docs/${doc}: phases/${phase.dir}/${lesson.dir}`);
         }
       }
+      // Two accepted shapes, matching site/lesson.html (`data.questions || data`):
+      // a bare array of questions, or an object with a `questions` array.
+      for (const quizFile of ['quiz.json', 'quiz_en.json']) {
+        const quizPath = path.join(abs, quizFile);
+        if (!fs.existsSync(quizPath)) continue;
+        const where = `phases/${phase.dir}/${lesson.dir}/${quizFile}`;
+        try {
+          const parsed = JSON.parse(fs.readFileSync(quizPath, 'utf8'));
+          const questions = Array.isArray(parsed) ? parsed : parsed.questions;
+          if (!Array.isArray(questions) || questions.length === 0) {
+            errors.push(`no questions array: ${where}`);
+            continue;
+          }
+          questions.forEach((q, i) => {
+            if (typeof q.question !== 'string' || !q.question.trim()) {
+              errors.push(`question ${i + 1} has no text: ${where}`);
+            }
+            if (!Array.isArray(q.options) || q.options.length < 2) {
+              errors.push(`question ${i + 1} needs >= 2 options: ${where}`);
+            } else if (!Number.isInteger(q.correct) || q.correct < 0 || q.correct >= q.options.length) {
+              errors.push(`question ${i + 1} has bad correct index: ${where}`);
+            }
+          });
+        } catch (e) {
+          errors.push(`invalid JSON: ${where} (${e.message})`);
+        }
+      }
       if (!lesson.title || !lesson.type || !STATUS_EMOJI[lesson.status] || !(lesson.minutes > 0)) {
         errors.push(`incomplete manifest entry: phases/${phase.dir}/${lesson.dir}`);
       }
@@ -138,12 +165,14 @@ function loadManifest() {
 function computeStats(manifest) {
   let total = 0;
   let complete = 0;
+  let quizzes = 0;
   let lessonMinutes = 0; // phases 0–18
   let capstoneMinutes = 0; // phase 19
   for (const phase of manifest.phases) {
     for (const lesson of phase.lessons) {
       total += 1;
       if (lesson.status === 'complete') complete += 1;
+      if (hasQuiz(phase, lesson)) quizzes += 1;
       if (phase.number === 19) capstoneMinutes += lesson.minutes;
       else lessonMinutes += lesson.minutes;
     }
@@ -151,6 +180,7 @@ function computeStats(manifest) {
   return {
     total,
     complete,
+    quizzes,
     lessonHours: lessonMinutes / 60,
     capstoneHours: capstoneMinutes / 60,
     totalHours: (lessonMinutes + capstoneMinutes) / 60,
@@ -284,15 +314,20 @@ function renderReadme(content, manifest, stats) {
 }
 
 // ─── ROADMAP.md ──────────────────────────────────────────────────────
+function hasQuiz(phase, lesson) {
+  return fs.existsSync(path.join(REPO_ROOT, lessonRel(phase, lesson), 'quiz.json'));
+}
+
 function roadmapTable(phase) {
   const isCapstone = phase.number === 19;
   const lines = isCapstone
-    ? ['| # | Проект | Статус | Оценка |', '|---|---------|--------|------|']
-    : ['| # | Урок | Статус | Оценка |', '|---|--------|--------|------|'];
+    ? ['| # | Проект | Статус | Квиз | Оценка |', '|---|---------|--------|------|------|']
+    : ['| # | Урок | Статус | Квиз | Оценка |', '|---|--------|--------|------|------|'];
   for (const lesson of phase.lessons) {
     const link = `[${lesson.title}](${lessonRel(phase, lesson)})`;
     const time = isCapstone ? `~${Math.round(lesson.minutes / 60)} ч` : `~${lesson.minutes} мин`;
-    lines.push(`| ${lesson.number} | ${link} | ${STATUS_EMOJI[lesson.status]} | ${time} |`);
+    const quiz = hasQuiz(phase, lesson) ? '✓' : '—';
+    lines.push(`| ${lesson.number} | ${link} | ${STATUS_EMOJI[lesson.status]} | ${quiz} | ${time} |`);
   }
   return lines;
 }
@@ -367,7 +402,7 @@ function main() {
 
   console.log(`\n📊 Stats:`);
   console.log(`   Phases: ${manifest.phases.length}`);
-  console.log(`   Lessons: ${stats.total} (${stats.complete} complete)`);
+  console.log(`   Lessons: ${stats.total} (${stats.complete} complete, ${stats.quizzes} with quizzes)`);
   console.log(`   Hours: ~${Math.round(stats.lessonHours)} lessons + ~${Math.round(stats.capstoneHours)} capstones`);
   console.log(`   Glossary terms: ${glossaryTerms.length}`);
 

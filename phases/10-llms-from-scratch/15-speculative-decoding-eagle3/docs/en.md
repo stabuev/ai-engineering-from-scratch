@@ -46,7 +46,7 @@ The single biggest lever is `α`. Going from `α = 0.6` (vanilla draft) to `α =
 
 ### The two-year progression
 
-**Vanilla speculative (Leviathan, 2023).** Draft model is an independently trained smaller LLM from the same family. Easy to wire up, `α ≈ 0.6`, speedup around 2× at best.
+**Vanilla speculative (Leviathan, 2023).** Draft model is an independently trained smaller LLM from the same family. Easy to wire up, `α ≈ 0.6`, speedup around 2× at best. Distilling the draft on the verifier's own next-token distributions (KL loss against the verifier's outputs, not ground-truth tokens) pushes `α` to 0.6–0.8 without touching the serving stack — the cheapest upgrade before reaching for EAGLE.
 
 **EAGLE-1 (Li et al., 2024).** Draft is a tiny transformer — typically one or two layers — that takes the verifier's last-layer hidden state as input and predicts the next token directly. Because the draft sees the verifier's feature representation, its distribution is much closer to the verifier's. `α` climbs to 0.7–0.8.
 

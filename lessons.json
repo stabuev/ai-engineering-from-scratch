@@ -759,7 +759,7 @@
           "dir": "15-real-time-edge",
           "title": "Зрение в реальном времени: edge-деплой",
           "type": "Практика",
-          "languages": "Python, Rust",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -1254,7 +1254,7 @@
           "dir": "11-real-time-audio-processing",
           "title": "Обработка аудио в реальном времени",
           "type": "Практика",
-          "languages": "Python, Rust",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -1601,8 +1601,8 @@
           "minutes": 45
         },
         {
-          "number": "19",
-          "dir": "19-visual-autoregressive-var",
+          "number": "15",
+          "dir": "15-visual-autoregressive-var",
           "title": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
           "type": "Практика",
           "languages": "Python",
@@ -1830,7 +1830,7 @@
           "dir": "11-quantization",
           "title": "Квантизация: INT8, GPTQ, AWQ, GGUF",
           "type": "Практика",
-          "languages": "Python, Rust",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -1934,17 +1934,8 @@
           "minutes": 60
         },
         {
-          "number": "25",
-          "dir": "25-speculative-decoding",
-          "title": "Speculative Decoding and EAGLE",
-          "type": "Практика",
-          "languages": "Python",
-          "status": "in-progress",
-          "minutes": 75
-        },
-        {
-          "number": "34",
-          "dir": "34-gradient-checkpointing",
+          "number": "23",
+          "dir": "23-gradient-checkpointing",
           "title": "Gradient Checkpointing и Activation Recomputation",
           "type": "Практика",
           "languages": "Python",
@@ -1983,7 +1974,7 @@
           "dir": "03-structured-outputs",
           "title": "Структурированные выходы",
           "type": "Практика",
-          "languages": "Python, TypeScript",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -2001,7 +1992,7 @@
           "dir": "05-context-engineering",
           "title": "Context engineering",
           "type": "Практика",
-          "languages": "Python, TypeScript",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -2010,7 +2001,7 @@
           "dir": "06-rag",
           "title": "RAG: Retrieval-Augmented Generation",
           "type": "Практика",
-          "languages": "Python, TypeScript",
+          "languages": "Python",
           "status": "complete",
           "minutes": 75
         },
@@ -2730,7 +2721,7 @@
           "dir": "18-agno-and-mastra-runtimes",
           "title": "Agno и Mastra — production runtimes",
           "type": "Теория",
-          "languages": "Python, TypeScript",
+          "languages": "Python",
           "status": "complete",
           "minutes": 45
         },
@@ -3937,7 +3928,7 @@
       "number": 19,
       "dir": "19-capstone-projects",
       "name": "Capstone-проекты",
-      "desc": "Готовые end-to-end продукты 2026 года, по 20-40 часов каждый.",
+      "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
       "status": "complete",
       "lessons": [
         {

@@ -596,7 +596,7 @@ const PHASES = [
         "name": "Зрение в реальном времени: edge-деплой",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, Rust",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/15-real-time-edge/"
       },
       {
@@ -983,7 +983,7 @@ const PHASES = [
         "name": "Обработка аудио в реальном времени",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, Rust",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/11-real-time-audio-processing/"
       },
       {
@@ -1259,7 +1259,7 @@ const PHASES = [
         "status": "in-progress",
         "type": "Практика",
         "lang": "Python",
-        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/19-visual-autoregressive-var/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/15-visual-autoregressive-var/"
       }
     ]
   },
@@ -1435,7 +1435,7 @@ const PHASES = [
         "name": "Квантизация: INT8, GPTQ, AWQ, GGUF",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, Rust",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/11-quantization/"
       },
       {
@@ -1516,18 +1516,11 @@ const PHASES = [
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/22-async-hogwild-inference/"
       },
       {
-        "name": "Speculative Decoding and EAGLE",
-        "status": "in-progress",
-        "type": "Практика",
-        "lang": "Python",
-        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/25-speculative-decoding/"
-      },
-      {
         "name": "Gradient Checkpointing и Activation Recomputation",
         "status": "in-progress",
         "type": "Практика",
         "lang": "Python",
-        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/34-gradient-checkpointing/"
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/23-gradient-checkpointing/"
       }
     ]
   },
@@ -1555,7 +1548,7 @@ const PHASES = [
         "name": "Структурированные выходы",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, TypeScript",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/03-structured-outputs/"
       },
       {
@@ -1569,14 +1562,14 @@ const PHASES = [
         "name": "Context engineering",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, TypeScript",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/05-context-engineering/"
       },
       {
         "name": "RAG: Retrieval-Augmented Generation",
         "status": "complete",
         "type": "Практика",
-        "lang": "Python, TypeScript",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/06-rag/"
       },
       {
@@ -2139,7 +2132,7 @@ const PHASES = [
         "name": "Agno и Mastra — production runtimes",
         "status": "complete",
         "type": "Теория",
-        "lang": "Python, TypeScript",
+        "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/18-agno-and-mastra-runtimes/"
       },
       {
@@ -3083,7 +3076,7 @@ const PHASES = [
     "id": 19,
     "name": "Capstone-проекты",
     "status": "complete",
-    "desc": "Готовые end-to-end продукты 2026 года, по 20-40 часов каждый.",
+    "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
     "lessons": [
       {
         "name": "Terminal-native coding agent",
