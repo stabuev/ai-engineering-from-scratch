@@ -7,6 +7,19 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 1** — closed the backlog of incomplete lessons and added hardware/cost metadata:
+  - All four `🚧` lessons completed → the course is now 434/434 lessons ✅.
+    `08/15-visual-autoregressive-var` got a from-scratch PyTorch toy (multi-scale
+    residual-VQ tokenizer, scale-ordered attention mask, parallel-within-scale
+    generation; CPU, deterministic) plus its skill; `10/23-gradient-checkpointing`,
+    `11/16-langgraph-state-machines`, `11/17-agent-framework-tradeoffs` got their
+    promised artifacts. This also fixed the last 2 Ship-It artifact bugs.
+  - `requires` field in `lessons.json` (cpu-only / gpu / paid-api) with a
+    `**Requires:**` header line on the lessons that need more than a laptop.
+    Precise finding: the from-scratch design means **0 lessons strictly need a GPU**
+    and only **3 need a paid API key** (their code imports the SDK) — every other
+    lesson runs on CPU offline. README states the laptop-default; CI checks the
+    manifest `requires` and the doc header agree.
 - **Content-review wave 0** (cheap, high-ROI fixes from `CONTENT_REVIEW.md`):
   - Clickable prerequisites on lesson pages — `site/lesson.html` resolves the
     prose "Phase N · MM" / "Phase N" references on the Prerequisites line into

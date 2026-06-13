@@ -43,7 +43,7 @@ question needs `question`, `options` (2+), integer `correct` index; optional
 **Languages:** Python, TypeScript, Rust, Julia (list only what code/ actually contains)
 **Prerequisites:** [List prior lessons as "Phase N · MM (Name)" — the site turns these into links]
 **Time:** ~[estimated time] minutes
-**Requires:** CPU-only | GPU | Paid API (Anthropic/OpenAI) — what the learner needs to run this lesson, no dollar estimates (they rot faster than versions)
+**Requires:** Paid API (Anthropic/OpenAI) | GPU — *omit this line for CPU-only lessons.* CPU-only is the default (the from-scratch code runs on a laptop); add a Requires line only when the lesson's own code needs more — a paid API key or a GPU. No dollar estimates (they rot faster than versions). Mirror it in `lessons.json` (`"requires": "paid-api"` / `"gpu"`); CI checks the two agree.
 
 ## Learning Objectives
 

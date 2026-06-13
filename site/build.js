@@ -121,6 +121,24 @@ function loadManifest() {
           errors.push(`missing docs/${doc}: phases/${phase.dir}/${lesson.dir}`);
         }
       }
+      // `requires` (default cpu-only) must match the doc header: a Requires
+      // line appears only when the lesson needs more than a laptop (paid API).
+      const requires = lesson.requires || 'cpu-only';
+      if (!['cpu-only', 'gpu', 'paid-api'].includes(requires)) {
+        errors.push(`invalid requires "${requires}": phases/${phase.dir}/${lesson.dir}`);
+      }
+      const enHead = fs.existsSync(path.join(abs, 'docs', 'en.md'))
+        ? fs.readFileSync(path.join(abs, 'docs', 'en.md'), 'utf8') : '';
+      const ruHead = fs.existsSync(path.join(abs, 'docs', 'ru.md'))
+        ? fs.readFileSync(path.join(abs, 'docs', 'ru.md'), 'utf8') : '';
+      const enHasReq = /^\*\*Requires:\*\*/m.test(enHead);
+      const ruHasReq = /^\*\*Требуется:\*\*/m.test(ruHead);
+      if (requires === 'cpu-only' && (enHasReq || ruHasReq)) {
+        errors.push(`requires=cpu-only but a Requires line is present: phases/${phase.dir}/${lesson.dir}`);
+      }
+      if (requires !== 'cpu-only' && !(enHasReq && ruHasReq)) {
+        errors.push(`requires=${requires} but the Requires line is missing in en.md and/or ru.md: phases/${phase.dir}/${lesson.dir}`);
+      }
       // Two accepted shapes, matching site/lesson.html (`data.questions || data`):
       // a bare array of questions, or an object with a `questions` array.
       for (const quizFile of ['quiz.json', 'quiz_en.json']) {

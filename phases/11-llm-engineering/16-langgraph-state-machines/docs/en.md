@@ -6,6 +6,7 @@
 **Languages:** Python
 **Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 14 (Model Context Protocol)
 **Time:** ~75 minutes
+**Requires:** Paid API (Anthropic/OpenAI)
 
 ## The Problem
 
