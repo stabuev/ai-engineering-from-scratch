@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 11 · 01 (Prompt Engineering), Phase 11 · 05 (Context Engineering), Phase 11 · 11 (Caching and Cost)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain how prompt caching avoids re-processing a stable prefix on every request.
+- Place cache breakpoints to maximize hit rate on the system prompt plus RAG context.
+- Compute the break-even savings and reason about the cache TTL tradeoff.
+
 ## The Problem
 
 A coding agent sends the same 15,000-token system prompt to Claude on every turn of a conversation. Twenty turns at $3/M input tokens is $0.90 in input cost alone — before any of the user's actual messages. Multiply by 10,000 daily conversations and the bill hits $9,000/day for text that never changes.

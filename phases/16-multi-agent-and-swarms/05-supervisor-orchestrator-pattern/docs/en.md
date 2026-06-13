@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build the supervisor / orchestrator-worker pattern: one lead plans and delegates, workers run in parallel.
+- Explain why it wins and the engineering lessons from Anthropic's Research system.
+- Diagnose its failure modes.
+
 ## Problem
 
 Research is the prototypical task that single-agent systems fail. You ask "what changed in multi-agent systems between 2023 and 2026?" A single agent reads five papers sequentially, fills half its context with their text, and then has to reason about all of them together. It forgets the first paper by the time it reaches the fifth. It cannot parallelize.

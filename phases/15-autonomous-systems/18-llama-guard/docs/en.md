@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 10 (Permission modes), Phase 15 · 17 (Constitution)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain how Llama Guard classifies both inputs and outputs against a hazard taxonomy.
+- Place Llama Guard in an input/output moderation pipeline.
+- Read its multilingual coverage and limits.
+
 ## The Problem
 
 Classifiers for LLM inputs and outputs sit at the narrowest point in the agent stack: every request passes through, every response passes through. A good classifier layer is fast, taxonomy-based, and catches a large fraction of obvious misuse for a small compute cost. A bad classifier layer is a false sense of security.

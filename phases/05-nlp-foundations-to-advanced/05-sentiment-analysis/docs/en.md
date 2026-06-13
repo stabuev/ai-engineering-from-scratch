@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 2 · 14 (Naive Bayes)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement multinomial Naive Bayes and logistic regression from scratch for text classification.
+- Handle negation scoping, the classic failure mode.
+- Evaluate with the metrics that matter for imbalanced sentiment.
+
 ## The Problem
 
 "The food was not great." Positive or negative?

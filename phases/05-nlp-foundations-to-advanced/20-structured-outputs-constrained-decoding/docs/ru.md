@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 5 · 17 (Chatbots), Phase 5 · 19 (Subword Tokenization)
 **Время:** ~60 минут
 
+## Цели обучения
+
+- Реализовывать генерацию с regex-ограничением с нуля через logit processor.
+- Использовать Outlines для JSON Schema и Instructor для провайдер-независимого Pydantic.
+- Объяснять, почему constrained decoding превращает «почти всегда» в «всегда» — и его подвох с порядком полей схемы.
+
 ## Проблема
 
 Классификатор отправляет LLM промпт: "Return one of {positive, negative, neutral}." Модель возвращает "The sentiment is positive — this review is overwhelmingly favorable because the customer explicitly states that they ...". Ваш парсер падает. F1 вашего классификатора равен 0.0.

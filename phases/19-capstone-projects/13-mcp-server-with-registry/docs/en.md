@@ -8,6 +8,12 @@
 **Phases exercised:** P11 · P13 · P14 · P17 · P18
 **Time:** 25 hours
 
+## Learning Objectives
+
+- Build a production MCP server plus a registry and governance layer.
+- Implement tools, resources, and prompts with auth and a discovery registry.
+- Add policy controls over which tools clients can mount.
+
 ## Problem
 
 MCP became the tool-use lingua franca. Claude Code, Cursor 3, Amp, OpenCode, Gemini CLI, and every managed agent now consume MCP servers. The production challenges are not authoring servers (FastMCP makes that easy) but deploying them at scale with enterprise requirements: per-tenant OAuth scopes, OPA policy on destructive tools, StreamableHTTP stateless scaling, a registry for discovery, audit logs per tool call. Pinterest's internal MCP ecosystem and the AAIF Registry spec set the 2026 bar.

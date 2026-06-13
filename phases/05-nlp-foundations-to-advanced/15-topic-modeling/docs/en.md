@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 03 (Word2Vec)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Fit LDA and BERTopic on a corpus.
+- Explain mixed membership (LDA) versus embedding clusters (BERTopic).
+- Evaluate topics with c_v coherence.
+
 ## The Problem
 
 You have 10,000 customer support tickets, 50,000 news articles, or 200,000 tweets. You need to know what the collection is about without reading it. You do not have labeled categories. You do not even know how many categories exist.

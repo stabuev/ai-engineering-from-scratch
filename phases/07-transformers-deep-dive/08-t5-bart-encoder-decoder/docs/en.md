@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 06 (BERT), Phase 7 · 07 (GPT)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain the encoder-decoder shape for input→output tasks and how cross-attention links the two stacks.
+- Contrast T5 span corruption with BART's multi-noise denoising pretraining.
+- Choose between encoder-decoder variants for translate / summarize / rewrite in 2026.
+
 ## The Problem
 
 Decoder-only GPT and encoder-only BERT each strip down the 2017 architecture for a different goal. But many tasks are naturally input-output:

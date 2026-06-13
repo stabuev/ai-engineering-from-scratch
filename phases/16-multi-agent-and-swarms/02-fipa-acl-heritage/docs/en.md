@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 01 (Why Multi-Agent)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain speech acts and the FIPA-ACL performatives that predate MCP and A2A.
+- Read a canonical FIPA-ACL message.
+- Explain why FIPA faded and what modern protocols kept from it.
+
 ## Problem
 
 The 2026 agent-protocol landscape is busy: MCP for tools, A2A for agents, ACP for enterprise audit, ANP for decentralized trust, NLIP for natural-language content, plus CA-MCP and two dozen research proposals. Each spec announces itself as foundational.

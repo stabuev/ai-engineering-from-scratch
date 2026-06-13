@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 5 · 11 (Machine Translation), Phase 5 · 10 (Attention Mechanism)
 **Время:** ~75 минут
 
+## Цели обучения
+
+- Строить экстрактивный QA, retrieval-augmented конвейер и генеративные RAG-ответы.
+- Оценивать QA метриками в стиле RAGAS, отражающими реальное использование.
+- Рассуждать о калибровке отказов и галлюцинациях.
+
 ## Проблема
 
 Пользователь вводит "When did the first iPhone launch?" и ожидает "June 29, 2007." Не "Apple's history is long and varied." Не "2007", висящее в изоляции без sentence. Нужен direct, grounded, correct answer.

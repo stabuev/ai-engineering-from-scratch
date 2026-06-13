@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P4 · P6 · P7 · P11 · P12 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить пайплайн понимания видео от сегментации сцен до ответов на вопросы.
+- Сочетать video-VLM с длинноконтекстным поиском по кадрам.
+- Отвечать на временные вопросы, опираясь на конкретные сцены.
+
 ## Проблема
 
 Long-form video QA — самая требовательная к bandwidth multimodal problem в масштабе 2026 года. Gemini 2.5 Pro может нативно читать двухчасовое video, но ingest 100 часов видео в queryable corpus все равно требует scene-level index. Продакшен-форма объединяет scene segmentation (TransNetV2 или PySceneDetect), per-scene captioning с VLM (Gemini 2.5, Qwen3-VL-Max или Molmo 2), transcript alignment (Whisper-v3-turbo с word timestamps) и multi-vector index, который хранит caption, frame embedding и transcript рядом. Query pipeline отвечает timestamps (start, end) плюс frame previews.

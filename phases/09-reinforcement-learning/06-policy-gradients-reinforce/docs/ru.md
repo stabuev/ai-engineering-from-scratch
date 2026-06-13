@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 03 (Monte Carlo), Phase 9 · 04 (TD Learning)
 **Time:** ~75 minutes
 
+## Цели обучения
+
+- Выводить оценку policy gradient через log-derivative trick и реализовывать REINFORCE на softmax-политике.
+- Объяснять, почему baseline или reward-to-go снижает дисперсию, не смещая градиент.
+- Связывать REINFORCE с современным LLM-RL циклом (PPO, GRPO).
+
 ## Проблема
 
 Q-learning и DQN параметризуют *value* function. Actions выбираются через `argmax Q`. Это нормально для discrete actions и discrete states. Но ломается, когда actions continuous (какой `argmax` по 10-dimensional torque?) или когда нужна stochastic policy (`argmax` по конструкции deterministic).

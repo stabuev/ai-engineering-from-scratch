@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 14 · 01 (The Agent Loop)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain what "long-horizon" means for 2026 agents (minutes-to-hours on a single task).
+- Read METR's Time Horizon benchmark and what a doubling of horizon implies.
+- Name the engineering primitives long-horizon runs require (durable state, checkpoints, cost governance).
+
 ## The Problem
 
 A chatbot is a stateless function. It takes a prompt, returns a reply, and forgets. Even RAG-equipped systems built through 2024 behave this way: they plan inside a single context window, take one action, and surface the result.

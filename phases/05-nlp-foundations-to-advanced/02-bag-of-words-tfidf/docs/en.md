@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 01 (Text Processing), Phase 2 · 02 (Linear Regression from Scratch)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a vocabulary, a bag-of-words matrix, and TF-IDF weights, then L2-normalize and score with cosine similarity.
+- Explain what TF, DF, and IDF each measure.
+- Say why TF-IDF still beats embeddings on well-defined tasks.
+
 ## The Problem
 
 The model needs numbers. You have strings.

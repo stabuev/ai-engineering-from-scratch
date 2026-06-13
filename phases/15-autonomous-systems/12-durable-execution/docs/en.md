@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 10 (Permission modes), Phase 15 · 01 (Long-horizon agents)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain why long-horizon agents need durable execution (checkpoint, retry, replay) instead of a while-loop.
+- Model each LLM call as a durable activity.
+- Name a durable-execution stack (Temporal) and what it guarantees.
+
 ## The Problem
 
 Consider an agent that runs for four hours. It calls three tools, prompts the user twice, and makes forty LLM calls. Halfway through, the host it is running on reboots. What happens?

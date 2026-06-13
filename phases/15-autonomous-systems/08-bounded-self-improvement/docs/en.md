@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 07 (RSI), Phase 15 · 04 (DGM)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Name the four primitives that bound a self-improvement loop (formal invariants, alignment anchors, and the rest).
+- Explain how each primitive constrains an edit.
+- Apply the primitives to a hypothetical self-editing agent.
+
 ## The Problem
 
 Lesson 7's race simulator showed that small rate differences compound into large gaps. Lesson 4's DGM case study showed that loops can actively game their own evaluators. Both results point to the same engineering question: what constraints can you put on a self-improvement loop such that the constraints cannot be silently weakened by the loop itself?

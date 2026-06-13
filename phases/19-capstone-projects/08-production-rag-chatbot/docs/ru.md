@@ -8,6 +8,12 @@
 **Задействованные фазы:** P5 · P7 · P11 · P12 · P17 · P18
 **Время:** 30 hours
 
+## Цели обучения
+
+- Построить продакшен RAG-чатбот для регулируемой вертикали с приёмом данных, гибридным поиском и переранжированием.
+- Добавить ссылки, ограждения и набор для оценки.
+- Обрабатывать визуальные документы поиском в стиле ColPali.
+
 ## Проблема
 
 Regulated-domain RAG (legal contracts, clinical trial protocols, insurance policies) — самая часто поставляемая production-форма 2026 года, потому что ROI очевиден, а stakes конкретны. Harvey (Allen & Overy) построил это для legal. Mendable поставляет вариант для developer-docs. Glean покрывает enterprise search. Pattern таков: ingest high-fidelity, retrieve hybrid with rerank, synthesize with citation enforcement and prompt caching, guard with multiple safety layers и monitor drift continuously.

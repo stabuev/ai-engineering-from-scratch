@@ -7,6 +7,12 @@
 **Prerequisites:** all of Phase 16 (Lessons 01-24)
 **Time:** ~90 minutes
 
+## Learning Objectives
+
+- Study three production multi-agent systems end-to-end (Anthropic Research, MetaGPT/ChatDev, OpenClaw).
+- Extract the patterns common to all three.
+- Map the April 2026 multi-agent framework landscape.
+
 ## Problem
 
 Multi-agent engineering is a young discipline. The production references are few, and each covers a different part of the space. Reading them one at a time is useful; comparing them as a set is more useful. This lesson treats three canonical 2026 case studies as an end-to-end reading list, pins the common patterns, and maps the framework landscape so you can make framework choices from knowledge, not marketing.

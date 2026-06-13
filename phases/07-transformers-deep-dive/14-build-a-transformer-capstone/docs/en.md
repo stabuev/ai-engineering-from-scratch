@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 01 through 13. Don't skip.
 **Time:** ~120 minutes
 
+## Learning Objectives
+
+- Train a small GPT end-to-end on tinyshakespeare with a real training loop (bf16 autocast, gradient clipping, cosine LR).
+- Use tied embeddings and report MFU against the target metrics.
+- Sample from the trained model and read its output critically.
+
 ## The Problem
 
 You've read every paper. You've implemented attention, multi-head splits, positional encodings, encoder and decoder blocks, BERT and GPT losses, MoE, KV cache. Now make them work together on a real task.

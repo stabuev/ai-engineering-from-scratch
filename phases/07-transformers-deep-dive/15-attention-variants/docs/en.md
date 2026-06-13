@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 03 (Multi-Head), Phase 7 · 12 (KV Cache / Flash Attention)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement sliding-window, block-sparse, and differential attention masks against a full-attention baseline.
+- Explain how each variant recovers memory and what it costs in effective receptive field.
+- Compare SWA, Longformer/BigBird, native sparse attention, and the DIFF Transformer.
+
 ## The Problem
 
 Full attention costs `O(N²)` memory and `O(N²)` compute in sequence length. For a 128K-context Llama 3 70B that is 16 billion attention entries per layer, times 80 layers. Flash Attention (Lesson 12) hides the `O(N²)` activation memory but does not change the arithmetic cost — every token still attends to every other token.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 03 (Monte Carlo), Phase 9 · 04 (TD Learning)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Derive the policy-gradient estimator via the log-derivative trick and implement REINFORCE on a softmax policy.
+- Explain why a baseline or reward-to-go cuts variance without biasing the gradient.
+- Connect REINFORCE to the modern LLM-RL loop (PPO, GRPO).
+
 ## The Problem
 
 Q-learning and DQN parameterize the *value* function. You pick actions by `argmax Q`. That is fine for discrete actions and discrete states. It breaks when actions are continuous (which `argmax` over a 10-dimensional torque?) or when you want a stochastic policy (`argmax` is deterministic by construction).

@@ -8,6 +8,12 @@
 **Phases exercised:** P6 · P7 · P11 · P13 · P14 · P17
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build a voice assistant with sub-800 ms end-to-end latency over an ASR → LLM → TTS loop.
+- Handle turn-taking (end-pointing) and barge-in.
+- Let the agent call a tool mid-conversation without stalling.
+
 ## Problem
 
 Voice has been the fastest-moving AI UX category of 2025-2026. The technical ceiling dropped each quarter. OpenAI Realtime API, Gemini 2.5 Live, Cartesia Sonic-2, ElevenLabs Flash v3, LiveKit Agents 1.0, and Pipecat 0.0.70 all put sub-800ms first-audio-out within reach. The bar is not latency alone. It is the interaction feel: not cutting the user off, not getting cut off, recovering from a mid-sentence interruption, calling a tool mid-conversation without stalling the audio, surviving jittery mobile networks.

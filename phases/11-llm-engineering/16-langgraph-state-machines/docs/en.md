@@ -8,6 +8,12 @@
 **Time:** ~75 minutes
 **Requires:** Paid API (Anthropic/OpenAI)
 
+## Learning Objectives
+
+- Build a ReAct agent as a checkpointed LangGraph state machine.
+- Declare typed state with reducers and add a human-in-the-loop interrupt.
+- Swap the checkpointer for production and use time-travel for debugging.
+
 ## The Problem
 
 You ship a function-calling agent. It works for three turns, then something goes wrong: the model tries a tool that returns 500, the user changes their mind mid-task, or the agent decides to refund an order without a human signing off. The `while True:` loop has no hooks. You can't pause it, you can't rewind it, and you can't branch off into "what if the model had picked the other tool." The moment you ship this past a demo, the agent becomes a black box that either worked or didn't.

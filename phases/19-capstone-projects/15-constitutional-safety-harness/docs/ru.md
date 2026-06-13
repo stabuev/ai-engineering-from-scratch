@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P10 · P11 · P13 · P14 · P18
 **Время:** 25 часов
 
+## Цели обучения
+
+- Построить constitutional safety harness плюс red-team полигон.
+- Сочетать классификатор входа/выхода (в стиле Llama Guard) с конституционной самокритикой.
+- Оценивать harness против red-team атак.
+
 ## Задача
 
 Передний край LLM safety в 2026 году — не в том, работают ли classifiers (примерно работают), а в том, как правильно собрать их вокруг production app без чрезмерных отказов и очевидных дыр. Llama Guard 4 обрабатывает English policy violations. X-Guard (132 languages) обрабатывает multilingual jailbreak. ShieldGemma-2 ловит image-based prompt injection. NVIDIA Nemotron 3 Content Safety покрывает enterprise categories. Anthropic Constitutional Classifiers — отдельный подход, используемый во время training, а не serving.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 07 (Society of Mind and Debate), Phase 16 · 13 (Shared Memory)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Explain what classical Byzantine fault tolerance gives you and the three LLM-specific attacks.
+- Implement the core consensus protocol stripped down.
+- Read the 2025-2026 LLM-BFT responses (CP-WBFT).
+
 ## Problem
 
 You have N LLM agents each producing an answer. They disagree. Majority vote picks the wrong one because two agents are correlated (same base model, same training data, same failure modes). A third agent happens to be wrong in a novel way — so the majority is a false majority.

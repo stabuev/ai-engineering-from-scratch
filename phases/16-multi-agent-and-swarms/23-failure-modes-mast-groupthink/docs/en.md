@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 13 (Shared Memory), Phase 16 · 14 (Consensus and BFT), Phase 16 · 15 (Voting and Debate Topology)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Use the MAST taxonomy to classify multi-agent failures.
+- Recognize groupthink, cascading retry storms, and memory poisoning.
+- Place failure-detection agents (STRATUS) in the loop.
+
 ## Problem
 
 Multi-agent systems fail 41-86.7% of the time on real tasks (Cemri et al. 2025 measured this across 7 open-source MAS). That is not debuggable by "just add more agents." The failures have structural causes. The MAST taxonomy gives you the categories. This lesson maps each category to a concrete detection, diagnosis, and mitigation pattern so the numbers stop looking arbitrary.

@@ -8,6 +8,12 @@
 **Phases exercised:** P5 · P7 · P11 · P13 · P14 · P15 · P17
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build a repo-level migration agent (for example a language or version upgrade).
+- Combine deterministic AST rewrites with LLM repair and test-driven verification.
+- Validate each migrated module against its test suite.
+
 ## Problem
 
 Large-scale code migration is one of the cleanest production applications of 2026 coding agents. The ground truth is obvious (does the test suite pass after the migration?), the rewards are real (a Java-8 fleet migration is a headcount-scale project), and the benchmarks are public (MigrationBench 50-repo subset). Moderne's OpenRewrite handles the deterministic side. The agent layer handles everything OpenRewrite recipes cannot: ambiguous rewrites, build-system drift, long-tail syntax, transitive dependency breakage.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 02 (Audio Features), Phase 6 · 04 (ASR), Phase 8 · 06 (DDPM)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain why audio generation runs on neural-codec tokens (RVQ) instead of raw samples.
+- Train a small token predictor and sample audio conditionally.
+- Contrast the two production paradigms — autoregressive token prediction and flow matching.
+
 ## The Problem
 
 Three audio generation tasks:

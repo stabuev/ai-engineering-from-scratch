@@ -8,6 +8,12 @@
 **Задействованные фазы:** P6 · P7 · P11 · P13 · P14 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить голосового ассистента со сквозной задержкой менее 800 мс по циклу ASR → LLM → TTS.
+- Обрабатывать смену реплик (end-pointing) и barge-in.
+- Дать агенту вызывать инструмент посреди разговора без зависания.
+
 ## Проблема
 
 Voice была самой быстро развивающейся категорией AI UX в 2025-2026. Technical ceiling снижался каждый квартал. OpenAI Realtime API, Gemini 2.5 Live, Cartesia Sonic-2, ElevenLabs Flash v3, LiveKit Agents 1.0 и Pipecat 0.0.70 все сделали sub-800ms first-audio-out достижимым. Планка — не только latency. Это interaction feel: не перебивать user, не быть перебитым неправильно, восстанавливаться после mid-sentence interruption, вызывать tool mid-conversation без остановки audio, переживать jittery mobile networks.

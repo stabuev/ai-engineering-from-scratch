@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 06 (AAR), Phase 15 · 07 (RSI)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Read the RSP v3.0 diff versus v2 — what was added, removed, and reframed.
+- Explain the two-tier mitigation schedule and the AI R&D-4 threshold.
+- Reason about why a more polished policy can score lower on rigor.
+
 ## The Problem
 
 Frontier labs publish scaling policies that are partly technical documents, partly governance documents, and partly signals to regulators. RSP v3.0 is the current Anthropic document. Reading it closely matters not because compliance with it is binding (it is not), but because the framing shapes how a lab conceives of catastrophic risk and how they communicate trade-offs to the public.

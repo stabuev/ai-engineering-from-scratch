@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model), Phase 16 · 09 (Parallel Swarm Networks)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Contrast the message-pool and blackboard memory topologies.
+- Identify when each wins and how memory poisoning happens.
+- Trace the blackboard precedent (Hayes-Roth, 1985).
+
 ## Problem
 
 Multi-agent systems need a place for agents to share facts. A literal option is "pass everything in messages" — but that reinvents shared state with extra copying. Another is "give everyone a global log" — but global logs grow unbounded and poison easily. A third is "project a view per agent" — scalable but schema-heavy.

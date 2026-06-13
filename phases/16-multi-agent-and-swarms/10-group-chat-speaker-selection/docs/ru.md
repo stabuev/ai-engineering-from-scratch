@@ -7,6 +7,12 @@
 **Пререквизиты:** Phase 16 · 04 (Primitive Model)
 **Время:** ~60 минут
 
+## Цели обучения
+
+- Строить групповой чат из N агентов с функцией выбора говорящего (LLM, round-robin или своя).
+- Использовать API ConversableAgent и задавать условия завершения.
+- Прослеживать линию AutoGen → AG2 → Microsoft Agent Framework.
+
 ## Проблема
 
 Static graphs (LangGraph) отличны, когда workflow известен. Реальные conversations не static: иногда coder спрашивает reviewer, иногда researcher, иногда writer. Жестко прописывать every possible handoff создает edge explosion. Вам нужны *agents reacting to a shared pool*, с некоторой function, которая решает, кто говорит следующим.

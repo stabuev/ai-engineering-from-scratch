@@ -8,6 +8,12 @@
 **Phases exercised:** P0 · P5 · P7 · P10 · P11 · P13 · P14 · P15 · P17 · P18
 **Time:** 35 hours
 
+## Learning Objectives
+
+- Build a terminal-native coding agent: a TUI harness, a stateful plan, a sandboxed tool surface, and a plan-act-observe-recover loop.
+- Implement the agent loop with file and shell tools plus error recovery.
+- Add guardrails and verification so the agent can edit a real repository safely.
+
 ## Problem
 
 Coding agents became the dominant AI application category in 2026. Claude Code (Anthropic), Cursor 3 with Composer 2 and Agent Tabs (Cursor), Amp (Sourcegraph), OpenCode (112k stars), Factory Droids, and Google Jules all ship variations of the same architecture: a terminal harness, a permissioned tool surface, a sandbox, and a plan-act-observe loop built around a frontier model. The frontier is narrow — Live-SWE-agent reached 79.2% on SWE-bench Verified with Opus 4.5 — but the engineering craft is wide. Most failure modes are not model mistakes. They are tool-loop instability, context poisoning, runaway token cost, and destructive filesystem operations.

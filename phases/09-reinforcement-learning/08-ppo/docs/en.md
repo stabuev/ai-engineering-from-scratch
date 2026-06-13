@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 06 (REINFORCE), Phase 9 · 07 (Actor-Critic)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement PPO's clipped surrogate objective so one rollout supports many update epochs without policy collapse.
+- Compute GAE advantages and combine the policy, value, and entropy losses.
+- Read PPO diagnostics (clip fraction, KL) to tell a healthy run from a diverging one.
+
 ## The Problem
 
 A2C (Lesson 07) is on-policy: the gradient `E_{π_θ}[A · ∇ log π_θ]` requires data sampled from the *current* `π_θ`. Take one update, and `π_θ` changes; the data you used is now off-policy. Re-use it and your gradient is biased.

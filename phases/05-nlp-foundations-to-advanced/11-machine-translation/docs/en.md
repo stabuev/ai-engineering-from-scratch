@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 10 (Attention Mechanism), Phase 5 · 04 (GloVe, FastText, Subword)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Call a pretrained NMT model and score it with BLEU and chrF.
+- Apply the three-tier 2026 evaluation hierarchy and fine-tune for a domain.
+- Diagnose what breaks in production translation (hallucination, constrained decoding).
+
 ## The Problem
 
 A model reads a sentence in one language and produces a sentence in another. Length varies. Word order varies. Some source words map to multiple target words and vice versa. Idioms refuse one-to-one mapping. "I miss you" in French is "tu me manques" — literally "you are lacking to me." No word-level alignment survives that.

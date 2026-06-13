@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 02 (Spectrograms & Mel), Phase 5 · 22 (Embedding Models)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Build speaker embeddings and score verification with cosine similarity and a threshold.
+- Compute EER from similarity pairs and explain why it is the production number.
+- Distinguish verification, identification, and open-set, and place diarization.
+
 ## The Problem
 
 A user says a passphrase. You want to know: is this the person they claim to be (*verification*, 1:1), or is it the first person in your enrollment bank (*identification*, 1:N)? Or neither — is this an unknown speaker (*open-set*)?

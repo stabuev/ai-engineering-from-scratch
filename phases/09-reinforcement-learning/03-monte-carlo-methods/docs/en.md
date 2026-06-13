@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 01 (MDPs), Phase 9 · 02 (Dynamic Programming)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Estimate a value function from sampled episodes alone with first-visit Monte Carlo — no model of the environment required.
+- Implement ε-greedy on-policy Monte Carlo control and compare it against the dynamic-programming gold standard.
+- Distinguish on-policy from off-policy learning and explain where importance sampling enters.
+
 ## The Problem
 
 Dynamic programming is elegant, but it assumes you can query `P(s' | s, a)` for every state and action. Almost nothing in the real world works that way. A robot cannot analytically compute the distribution over camera pixels after a joint torque. A pricing algorithm cannot integrate over every possible customer reaction. An LLM cannot enumerate all possible continuations after a token.

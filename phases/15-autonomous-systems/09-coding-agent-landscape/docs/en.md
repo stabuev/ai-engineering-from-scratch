@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 14 · 07 (Tool use), Phase 15 · 01 (Long-horizon agents)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain why SWE-bench scores jumped mostly from scaffolding, not base-model change.
+- Compare agent scaffolds (SWE-agent, Cline) at a fixed model.
+- Read a coding-agent benchmark critically.
+
 ## The Problem
 
 "Which coding agent is best" is the wrong question. The right question is: on a task distribution that matches my work, with the scaffolding I will run in production, what end-to-end reliability do I get?

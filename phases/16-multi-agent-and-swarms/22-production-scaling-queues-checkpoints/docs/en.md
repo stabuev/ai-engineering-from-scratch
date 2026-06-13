@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 09 (Parallel Swarm Networks), Phase 16 · 13 (Shared Memory)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Scale a multi-agent system with durable execution, queues, and checkpoints.
+- Compare async versus thread-per-job and per-agent queues (MegaAgent).
+- Write a checkpoint after each super-step (the LangGraph runtime pattern).
+
 ## Problem
 
 A prototype multi-agent system works on one laptop with three agents in an in-memory event loop. You move to production:

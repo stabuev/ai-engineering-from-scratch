@@ -8,6 +8,12 @@
 **Phases exercised:** P0 · P2 · P3 · P7 · P10 · P14 · P15 · P16 · P18
 **Time:** 40 hours
 
+## Learning Objectives
+
+- Build an AI-Scientist-style agent that plans, runs experiments, and verifies results via tree search.
+- Wire an execution-and-verification loop over an experiment space.
+- Produce a written-up result from the agent's traces.
+
 ## Problem
 
 Autonomous research agents crossed a threshold in 2026. Sakana AI's AI-Scientist-v2 was published in Nature with generated papers that cleared workshop peer review. ShinkaEvolve (ICLR 2026) extended the line to evolving hypotheses. AMD's Agent Laboratory shipped reproducible traces. The agents are not magic — they are a plan-execute-verify loop running over a tree of candidate experiments, with cost caps, seed-bound sandboxes, and automated review. The craft is in the loop, the budget, and the safety story.

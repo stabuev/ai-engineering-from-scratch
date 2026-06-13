@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 1 · 06 (Probability & Distributions), Phase 2 · 01 (ML Taxonomy)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Define a Markov Decision Process by its five components — states, actions, transitions, rewards, and discount — and say what each one contributes.
+- Roll out a policy on a small MDP and compute its value function exactly with the Bellman equation.
+- Explain what the discount factor γ controls and why it has a physical meaning (the effective horizon).
+
 ## The Problem
 
 You are writing a chess bot. Or an inventory planner. Or a trading agent. Or the PPO loop that trains a reasoning model. Four different domains, one surprising fact: all four collapse to the same mathematical object.

@@ -8,6 +8,12 @@
 **Phases exercised:** P11 · P13 · P14 · P15 · P17 · P18
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build a Kubernetes troubleshooting agent that reasons over telemetry and runbooks.
+- Tie diagnoses to per-service SLOs and propose remediations.
+- Gate any cluster-changing action behind approval.
+
 ## Problem
 
 The 2025-2026 SRE narrative became: "AI agents triage incidents, humans approve remediations." AWS DevOps Agent, Resolve AI, NeuBird, Metoro, PagerDuty AIOps all ship this shape in production. The agent reads Prometheus metrics, Loki logs, Tempo traces, kube-state-metrics, and a knowledge graph of K8s objects. It produces a ranked root-cause hypothesis with telemetry citations in under five minutes. It never executes destructive commands without explicit human approval through Slack.

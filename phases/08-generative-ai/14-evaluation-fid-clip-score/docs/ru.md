@@ -7,6 +7,12 @@
 **Предварительные требования:** Фаза 8 · 01 (Taxonomy), Фаза 2 · 04 (Evaluation Metrics)
 **Время:** ~45 минут
 
+## Цели обучения
+
+- Считать FID, CLIP score и Elo из парных человеческих предпочтений.
+- Называть слабое место, через которое каждую метрику можно обмануть.
+- Выбирать правильную метрику под качество сэмплов, следование промпту или общее предпочтение.
+
 ## Проблема
 
 Generative model оценивают по *sample quality* и *conditioning adherence*. Ни у того, ни у другого нет closed-form measure. Ваша model должна render 10,000 images; что-то должно назначить им numbers; вы должны доверять numbers across model families, resolutions и architectures. Три metrics прошли gauntlet 2014-2026:

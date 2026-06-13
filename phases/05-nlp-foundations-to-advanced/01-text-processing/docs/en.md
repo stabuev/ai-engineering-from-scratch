@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 2 · 14 (Naive Bayes)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Implement a regex tokenizer, a Porter stemmer, and a lookup lemmatizer from scratch and pipe them together.
+- Explain the difference between a token, a stem, and a lemma.
+- Compare your pipeline against NLTK.
+
 ## The Problem
 
 A model cannot read "The cats were running." It reads integers.

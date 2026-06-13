@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 07 (GPT)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- State the Chinchilla (Hoffmann) law and compute the compute-optimal parameter/token split.
+- Explain why labs over-train past the compute-optimal point anyway.
+- Distinguish emergence from smooth scaling and read the irreducible-loss term.
+
 ## The Problem
 
 When you have C FLOPs of training compute and want the best model, you face two knobs:

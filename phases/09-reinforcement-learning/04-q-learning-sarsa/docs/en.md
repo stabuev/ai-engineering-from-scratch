@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 01 (MDPs), Phase 9 · 02 (Dynamic Programming), Phase 9 · 03 (Monte Carlo)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement Q-learning (off-policy) and SARSA (on-policy) as one-line temporal-difference updates.
+- Explain the TD error and bootstrapping, and why Q-learning is optimistic while SARSA is cautious.
+- Diagnose maximization bias and name the fix (Double Q-learning).
+
 ## The Problem
 
 Monte Carlo works but it has two expensive demands. It needs episodes that terminate, and it only updates after the final return is in. If your episode is 1,000 steps, MC waits 1,000 steps to update anything. It is high-variance, low-bias, and slow in practice.

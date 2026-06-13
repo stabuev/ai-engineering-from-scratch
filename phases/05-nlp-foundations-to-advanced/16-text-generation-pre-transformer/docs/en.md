@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 01 (Text Processing), Phase 2 · 14 (Naive Bayes)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Build an n-gram language model with Laplace and Kneser-Ney smoothing.
+- Generate text by sampling and measure perplexity.
+- Explain backoff and continuation probability.
+
 ## The Problem
 
 Before transformers, before RNNs, before word embeddings, a language model predicted the next word by counting how often it followed the previous `n-1` words. Count "the cat" → "sat" 47 times, "the cat" → "jumped" 12 times, "the cat" → "refrigerator" 0 times. Normalize to get a probability distribution.

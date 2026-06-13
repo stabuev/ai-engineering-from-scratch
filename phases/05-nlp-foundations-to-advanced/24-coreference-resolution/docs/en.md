@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 06 (NER), Phase 5 · 07 (POS & Parsing)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Run neural coreference and a rule-based pronoun resolver, and use an LLM for coreference.
+- Distinguish anaphora, cataphora, and bridging references.
+- Evaluate coreference clusters.
+
 ## The Problem
 
 Extract every mention of Apple Inc. from a 300-word article. Easy when the article says "Apple." Hard when it says "the company," "they," "Cupertino's technology giant," or "Jobs's firm." Without resolving these mentions to the same entity, your NER pipeline misses 60-80% of the mentions.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 09 (Parallel Swarm Networks), Phase 16 · 14 (Consensus and BFT)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement PSO and ACO over LLM outputs (LMPSO, Model Swarms).
+- Map particle velocity to a prompt and pheromone trails to agent routing.
+- Connect bio-inspired optimization to agent search.
+
 ## Problem
 
 You have a prompt that scores 62% on your task eval. You want to improve it. The naive move is gradient-free manual tweaking, which scales badly. Reinforcement learning needs reward signals and enough rollouts to train. Backprop through prompts is not really possible — the prompt is a discrete string, not a differentiable parameter.

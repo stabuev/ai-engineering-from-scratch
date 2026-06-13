@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P11 · P13 · P14 · P15 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить автономного GitHub-агента issue-to-PR, работающего в песочнице.
+- Планировать от issue, править код, запускать тесты и открывать pull request.
+- Добавить гейты верификации и проход ревьюера перед отправкой.
+
 ## Задача
 
 Async cloud coding agent — отдельная product category по сравнению с interactive coding agents (capstone 01). UX — это GitHub label. Ты ставишь label `@agent fix this` на issue, worker поднимается в cloud sandbox, клонирует repo, запускает tests, редактирует files, проверяет результат и открывает PR с rationale agent в body. Никакого interactive loop, никакого terminal. AWS Remote SWE Agents, Cursor Background Agents, OpenAI Codex cloud, Google Jules и Factory Droids сходятся к этому.

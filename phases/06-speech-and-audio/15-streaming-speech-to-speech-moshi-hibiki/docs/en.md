@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 13 (Neural Audio Codecs), Phase 6 · 11 (Real-Time Audio), Phase 7 · 05 (Full Transformer)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Explain how Moshi listens and speaks simultaneously at roughly 200 ms latency.
+- Describe why an inner-monologue text stream helps full-duplex speech.
+- Place Hibiki (streaming speech-to-speech translation) and Sesame CSM in the 2026 stack.
+
 ## The Problem
 
 Every voice agent built from Lessons 11 + 12 has a fundamental latency floor around 300-500 ms: VAD fires, STT processes, LLM reasons, TTS generates. Each stage has its own minimum latency. You can tune and parallelize, but the pipeline shape caps you.

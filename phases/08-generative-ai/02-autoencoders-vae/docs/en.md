@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 02 (Backprop), Phase 3 · 07 (CNNs), Phase 8 · 01 (Taxonomy)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement a VAE encoder, the reparameterization z = μ + σ·ε, and a decoder that can sample.
+- Derive and optimize the ELBO, balancing reconstruction against the KL-to-prior term.
+- Recognize posterior collapse and explain how β-VAE trades off reconstruction and disentanglement.
+
 ## The Problem
 
 Compress a 784-pixel MNIST digit to a 16-number code, then reconstruct. A plain autoencoder will ace reconstruction MSE but the code space is a lumpy mess. Pick a random point in the code space, decode it, and you get noise. It has no sampler. It is a compression model dressed up.

@@ -8,6 +8,12 @@
 **Задействованные фазы:** P5 · P7 · P11 · P13 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить кросс-репозиторный семантический поиск по коду, понимающий смысл, а не только строки.
+- Резать код по структуре, эмбеддить его и обслуживать гибридный (семантический + лексический) поиск.
+- Отвечать на вопросы о кодовой базе из найденного контекста со ссылками.
+
 ## Проблема
 
 К 2026 году каждый frontier coding agent поставляется с codebase retrieval layer, потому что context windows сами по себе не решают cross-repo questions. Claude's 1M-token context помогает; он не устраняет потребность в ranked retrieval. Naive cosine search по raw chunks отравляет results на generated code, на monorepo duplication и на long tail of rarely-imported symbols. Production answer — hybrid (dense + BM25) search over AST-aware chunks with a re-ranker, backed by a graph of symbol references.

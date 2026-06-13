@@ -7,6 +7,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 2** — Learning Objectives across the 8 phases that lacked them. Added a `## Learning Objectives` (en) / `## Цели обучения` (ru) section with 3 specific, capability-framed bullets to **155 lessons** in phases 5, 6, 7, 8, 9, 15, 16, 19 (plus 5 stragglers in 10–11). Objectives are derived from each lesson's own motto, Build It steps, and key terms, and inserted bilingually before the first content section. The readiness backlog's `missing objectives` dropped from 155 → 0; every lesson now carries Learning Objectives, matching `LESSON_TEMPLATE`.
 - **Content-review wave 1** — closed the backlog of incomplete lessons and added hardware/cost metadata:
   - All four `🚧` lessons completed → the course is now 434/434 lessons ✅.
     `08/15-visual-autoregressive-var` got a from-scratch PyTorch toy (multi-scale

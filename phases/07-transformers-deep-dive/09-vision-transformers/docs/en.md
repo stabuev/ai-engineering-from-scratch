@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 4 · 03 (CNNs), Phase 4 · 14 (Vision Transformers intro)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Patchify an image, linearly embed the patches, prepend a [CLS] token, and feed a standard transformer encoder.
+- Explain what inductive bias a ViT gives up versus a CNN and why it needed scale to win.
+- Place DINOv2, SigLIP, and Swin as the variants that mattered.
+
 ## The Problem
 
 Before 2020, computer vision meant convolutions. Every SOTA on ImageNet, COCO, and detection benchmarks used a CNN backbone. Transformers were for language.

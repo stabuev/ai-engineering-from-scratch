@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement OpenAI Swarm's two primitives — routines and handoffs.
+- Explain the stateless tradeoff that makes handoffs viral.
+- Identify when handoffs fit and when they struggle.
+
 ## Problem
 
 Every multi-agent framework wants you to learn its DSL: LangGraph nodes and edges, CrewAI crews and tasks, AutoGen GroupChat and managers. The DSLs are real abstractions, but they make the thing feel heavier than it needs to be.

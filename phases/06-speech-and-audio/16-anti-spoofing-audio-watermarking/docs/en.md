@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 06 (Speaker Recognition), Phase 6 · 08 (Voice Cloning)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a spoof detector (AASIST / RawNet2) that classifies real versus fake speech.
+- Embed and recover an audio watermark (AudioSeal) and measure bit-recovery accuracy.
+- Read ASVspoof 5 results and name the gap adversaries exploit.
+
 ## The Problem
 
 Three related defenses:

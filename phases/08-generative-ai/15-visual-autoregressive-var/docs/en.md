@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 Lesson 03 (Multi-Head Attention), Phase 8 Lesson 06 (DDPM)
 **Time:** ~90 minutes
 
+## Learning Objectives
+
+- Explain next-scale prediction: generating an image as a pyramid of token grids from 1×1 up to full resolution.
+- Build a multi-scale residual-VQ tokenizer and a scale-ordered attention mask that is causal across scales but parallel within a scale.
+- Explain why next-scale beats next-token (coarse-to-fine, parallel within scale, no order bias) and how VAR matches GPT-style scaling laws.
+
 ## The Problem
 
 Autoregressive generation dominated language modeling because it scales predictably: more compute, more parameters, lower perplexity, better outputs. Image generation had two main AR attempts before 2024: PixelRNN/PixelCNN (pixel-by-pixel) and DALL-E 1 / Parti / MuseGAN (token-by-token on VQ-VAE codes).

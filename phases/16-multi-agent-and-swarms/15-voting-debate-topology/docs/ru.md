@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 16 · 07 (Society of Mind and Debate), Phase 16 · 14 (Consensus and BFT)
 **Время:** ~75 minutes
 
+## Цели обучения
+
+- Реализовывать self-consistency (голосование одной модели) и его гетерогенное мультиагентное расширение.
+- Сравнивать четыре топологии агрегации.
+- Рассуждать о coordination tax мультиагентного голосования.
+
 ## Проблема
 
 Debate может improve accuracy (Du et al., arXiv:2305.14325). Он также может degrade it. Поможет ли debate, зависит от четырех structural choices:

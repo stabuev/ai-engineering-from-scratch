@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 14 (Agent Engineering), Phase 16 · 01 (Why Multi-Agent)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain the four primitives that every 2026 multi-agent framework reduces to.
+- Map AutoGen, LangGraph, CrewAI, and the OpenAI Agents SDK onto those primitives.
+- Explain the stateless insight behind the primitive model.
+
 ## Problem
 
 Every six months a new multi-agent framework ships. AutoGen in 2023. CrewAI in 2024. LangGraph and OpenAI Swarm in 2024. Google ADK in April 2025. Microsoft Agent Framework RC in February 2026. Each press release claims to be "the right abstraction."

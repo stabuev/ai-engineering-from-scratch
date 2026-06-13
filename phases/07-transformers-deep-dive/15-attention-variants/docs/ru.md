@@ -7,6 +7,12 @@
 **Предварительные требования:** Фаза 7 · 02 (self-attention), Фаза 7 · 03 (multi-head), Фаза 7 · 12 (KV cache / Flash Attention)
 **Время:** ~60 минут
 
+## Цели обучения
+
+- Реализовывать маски sliding-window, block-sparse и differential внимания относительно baseline полного внимания.
+- Объяснять, как каждый вариант возвращает память и чем платит в эффективном рецептивном поле.
+- Сравнивать SWA, Longformer/BigBird, native sparse attention и DIFF Transformer.
+
 ## Проблема
 
 Full attention стоит `O(N²)` memory и `O(N²)` compute по длине sequence. Для 128K-context Llama 3 70B это 16 billion attention entries per layer, умножить на 80 layers. Flash Attention (Урок 12) скрывает `O(N²)` activation memory, но не меняет arithmetic cost — каждый token все еще attends to every other token.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 04 (GloVe, FastText, Subword)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement BM25 from scratch and dense retrieval with a bi-encoder.
+- Fuse them with Reciprocal Rank Fusion and add a cross-encoder rerank.
+- Evaluate retrieval with Recall@k.
+
 ## The Problem
 
 The user types "what happens if someone lies to get money" and expects to find the statute that actually covers that: "Section 420 IPC." A keyword search misses it entirely (no shared vocabulary). A semantic search misses it if the embeddings were not trained on legal text. Real search has to handle both.

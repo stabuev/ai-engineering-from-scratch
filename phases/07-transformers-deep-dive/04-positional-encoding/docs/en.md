@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 03 (Multi-Head Attention)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain why self-attention is permutation-invariant and needs an injected positional signal.
+- Implement sinusoidal, RoPE, and ALiBi position encodings and verify RoPE's relative-distance property.
+- Choose a position scheme for 2026 long-context models (RoPE with NTK-aware / YaRN scaling).
+
 ## The Problem
 
 Scaled dot-product attention is order-blind. The attention matrix `softmax(Q K^T / √d) V` is computed from pairwise similarities. Shuffle the rows of `X`, get the rows of the output shuffled the same way. Nothing inside attention cares about position.

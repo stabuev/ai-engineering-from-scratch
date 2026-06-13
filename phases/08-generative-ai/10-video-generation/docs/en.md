@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 8 · 07 (Latent Diffusion), Phase 7 · 09 (ViT), Phase 8 · 06 (DDPM)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Patchify a video into spatiotemporal tokens and run a DiT denoiser over the whole sequence.
+- Add per-frame position embeddings and test for temporal coherence.
+- Name the levers of production video models (video VAE, factorized attention, image-to-video, re-captioning).
+
 ## The Problem
 
 A 10-second 1080p video at 24fps is 240 frames of 1920×1080×3 pixels. That's ~1.5 GB of raw data per clip. Pixel-space diffusion is infeasible. You need:

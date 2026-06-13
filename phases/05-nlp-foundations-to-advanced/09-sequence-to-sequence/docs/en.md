@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 08 (CNNs + RNNs for Text), Phase 3 · 11 (PyTorch Intro)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build an encoder-decoder with teacher forcing and a greedy inference loop.
+- Demonstrate the fixed context-vector bottleneck that motivates attention.
+- Explain teacher forcing, exposure bias, and beam search.
+
 ## The Problem
 
 Classification maps a variable-length sequence to a single label. Translation maps a variable-length sequence to another variable-length sequence. The input and output live in different vocabularies, possibly different languages, with no guarantee of length parity.

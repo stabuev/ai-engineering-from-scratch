@@ -8,6 +8,12 @@
 **Phases exercised:** P11 · P13 · P14 · P15 · P16 · P17
 **Time:** 40 hours
 
+## Learning Objectives
+
+- Build a multi-agent software team with role specialization and a typed actor/message graph.
+- Coordinate planning, coding, and review across agents.
+- Add shared state and a verification gate before merge.
+
 ## Problem
 
 Single-agent coding harnesses hit a ceiling on large tasks. Not because any individual agent is weak, but because a 200k-token context cannot hold an architecture plan plus four parallel codebase slices plus reviewer commentary plus test output. Multi-agent factories split the problem: an architect owns the plan, coders own implementation in parallel worktrees, a reviewer gates, a tester verifies. SWE-AF's "factory" architecture, MetaGPT's roles, AutoGen's typed actor graph — all three framings describe the same shape.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 01 (Text Processing), Phase 5 · 04 (GloVe / FastText / Subword)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement BPE from scratch and encode text with the learned merges.
+- Use SentencePiece and tiktoken in practice.
+- Explain why subword tokenization beats word-level and character-level.
+
 ## The Problem
 
 Your vocabulary has 50,000 words. A user types "untokenizable". Your tokenizer returns `[UNK]`. The model now has no signal about the word. Worse: the 90th-percentile document in your corpus has 40 rare words, which means 40 bits of dropped information per document.

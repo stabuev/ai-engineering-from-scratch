@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 11 (PyTorch Intro), Phase 5 · 03 (Word Embeddings), Phase 4 · 02 (Convolutions from Scratch)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a TextCNN and an LSTM classifier in PyTorch.
+- Explain n-gram features (convolutions) versus memory (recurrence) and the vanishing-gradient problem.
+- Explain why attention superseded both — and where they still fit constrained hardware.
+
 ## The Problem
 
 TF-IDF and Word2Vec produced flat vectors that ignored word order. A classifier built on them could not tell `dog bites man` from `man bites dog`. Word order sometimes carries the signal.

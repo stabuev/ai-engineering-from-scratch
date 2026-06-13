@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 19 (Anthropic RSP)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Compare the OpenAI Preparedness Framework v2 research categories with DeepMind's Frontier Safety Framework.
+- Explain capability thresholds and the mitigations they trigger.
+- Reason about cross-lab alignment of frontier-safety policies.
+
 ## The Problem
 
 Lesson 19 read Anthropic's scaling policy closely. This lesson completes the picture by reading OpenAI's and DeepMind's. The three documents are cousin artifacts addressing the same question — when should a frontier lab pause or gate a model — and they converge on a small set of categories and diverge in specific places that matter.

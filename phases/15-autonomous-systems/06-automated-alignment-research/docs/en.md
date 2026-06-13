@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 05 (AI Scientist v2), Phase 15 · 04 (DGM)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain the setup of parallel autonomous alignment-researcher agents coordinating via a shared forum.
+- Reason about why alignment research is a candidate for automation and its risks.
+- Identify the oversight structure placed around such agents.
+
 ## The Problem
 
 Alignment research is expensive in human-researcher time. Problems like scalable oversight, reward specification, or weak-to-strong training require experiments that take weeks per iteration. As frontier capabilities advance, the alignment workload grows faster than the supply of qualified researchers.

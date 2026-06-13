@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 02 (Spectrograms), Phase 4 · 10 (Diffusion Models)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Generate music with a token LM over neural-codec tokens (MusicGen) and add melody conditioning.
+- Contrast token-LM, diffusion, and hybrid production approaches.
+- Evaluate with FAD and CLAP, and name the legal problem.
+
 ## The Problem
 
 Text → a 30-second to 4-minute music clip, with lyrics, vocals, and structure. Three sub-problems:

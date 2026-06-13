@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 06 (Automated alignment research), Phase 15 · 10 (Permission modes)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain the shift from rule-based to reason-based alignment in the 2026 Claude Constitution.
+- Describe its four-tier priority hierarchy.
+- Reason about what CC0-publishing a model constitution means.
+
 ## The Problem
 
 A fielded agent sees inputs that its designers never saw. No rule list is long enough to cover them. No rule list is short enough to apply quickly under compute pressure. The practical question: how do you align an agent to principles that survive both a long tail of cases and fast inference?

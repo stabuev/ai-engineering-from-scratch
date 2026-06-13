@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 03 (evolutionary coding), Phase 14 · 01 (the agent loop)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Contrast Schmidhuber's proof-required Gödel Machine with the empirical Darwin-Gödel Machine.
+- Explain why provably beneficial self-modification is impractical and what replaces it.
+- Reason about the risks of open-ended self-modification.
+
 ## The Problem
 
 Can an agent edit its own code and get better at its job? Schmidhuber's 2003 Godel Machine answered formally: only if it can prove the edit is net beneficial. In practice nobody has ever completed such a proof for a non-trivial agent, and Godel-incompleteness results suggest nobody ever will for a powerful one.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 13 · 01-03 (Reasoning and CoT), Phase 15 · 01 (long-horizon framing)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain the STaR self-improvement loop: generate rationales, keep the correct ones, fine-tune on them.
+- Distinguish STaR, rejection sampling, and the rationalization variant.
+- Reason about why correctness-filtered self-training improves a model.
+
 ## The Problem
 
 The straightforward way to teach a model to reason is to collect human-written reasoning traces. That is expensive, slow, and bounded by how much high-quality chain-of-thought humans are willing to write.

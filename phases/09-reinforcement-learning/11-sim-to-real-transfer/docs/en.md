@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 08 (PPO), Phase 2 · 10 (Bias/Variance)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain the reality gap and why a sim-only policy can end up memorising the simulator.
+- Train a policy with domain randomization and evaluate its zero-shot transfer.
+- Distinguish domain randomization, domain adaptation, and system identification.
+
 ## The Problem
 
 Training a real robot is slow, dangerous, and expensive. A biped takes millions of training episodes to learn to walk; a real biped that falls over even once breaks hardware. Simulation gives you unlimited resets, deterministic reproducibility, parallel environments, and no physical damage.

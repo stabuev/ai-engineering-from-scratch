@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 16 · 04 (Primitive Model), Phase 16 · 09 (Parallel Swarm Networks)
 **Время:** ~75 minutes
 
+## Цели обучения
+
+- Противопоставлять топологии памяти message-pool и blackboard.
+- Определять, когда каждая выигрывает и как происходит отравление памяти.
+- Прослеживать прецедент blackboard (Hayes-Roth, 1985).
+
 ## Проблема
 
 Multi-agent systems нужно место, где agents могут делиться facts. Буквальный вариант — "pass everything in messages" — но это заново изобретает shared state с лишним copying. Другой вариант — "give everyone a global log" — но global logs растут без ограничений и легко poison. Третий — "project a view per agent" — scalable, но schema-heavy.

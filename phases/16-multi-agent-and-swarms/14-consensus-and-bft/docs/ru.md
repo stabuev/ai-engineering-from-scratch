@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 16 · 07 (Society of Mind and Debate), Phase 16 · 13 (Shared Memory)
 **Время:** ~75 minutes
 
+## Цели обучения
+
+- Объяснять, что даёт классическая Byzantine fault tolerance, и три LLM-специфичных атаки.
+- Реализовывать ядро протокола консенсуса в упрощённом виде.
+- Читать ответы LLM-BFT 2025-2026 (CP-WBFT).
+
 ## Проблема
 
 У вас есть N LLM agents, каждый производит answer. Они disagree. Majority vote выбирает неправильный вариант, потому что два agents correlated (same base model, same training data, same failure modes). Третий agent просто ошибается по-новому — и majority становится false majority.

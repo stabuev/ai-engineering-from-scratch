@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 04 (Q-learning, SARSA)
 **Time:** ~75 minutes
 
+## Цели обучения
+
+- Собирать DQN из Q-learning плюс experience replay и target-сеть и объяснять, как каждый приём стабилизирует аппроксимацию функции.
+- Называть смертельную триаду (бутстрэппинг + off-policy + аппроксимация) и как трюки DQN её обезвреживают.
+- Размещать Double, Dueling и Rainbow как пошаговые улучшения базового агента.
+
 ## Проблема
 
 Tabular Q-learning требует отдельный Q-value для каждой пары (state, action). В шахматах примерно ~10⁴³ states. Atari frame имеет 210×160×3 = 100,800 features. Tabular RL умирает уже на тысячах states, не говоря о миллиардах.

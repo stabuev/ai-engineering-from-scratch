@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P5 · P6 · P11 · P12 · P14 · P17 · P18
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить адаптивного мультимодального AI-репетитора, отслеживающего состояние ученика.
+- Персонализировать объяснения и генерировать практику с обратной связью.
+- Добавить модель освоения, адаптирующую сложность в течение сессии.
+
 ## Задача
 
 Adaptive tutoring раньше был нишей ed-tech research. К 2026 году это consumer product. Khanmigo развернут в большинстве US school districts. Duolingo Max достиг десятков миллионов MAUs. Google LearnLM / Gemini for Education поддерживает tutoring в Google Classroom. Quizlet Q-Chat находится рядом с flashcards. Synthesis Tutor стал вирусным как tutor-for-curious-kids. Общие элементы: multimodal input (type, speak, photograph equations), Socratic pedagogy (сначала спросить, потом объяснить), learner model, которая обновляется после каждого interaction, и strict age-appropriate safety.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 02 (Spectrograms & Mel), Phase 3 · 06 (CNNs), Phase 5 · 08 (CNNs & RNNs for Text)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Featurize audio with log-mels and classify it, from a k-NN baseline up to a CNN.
+- Handle class imbalance with Mixup and SpecAugment.
+- Evaluate with the right metrics (AUC, F1, mAP).
+
 ## The Problem
 
 You get a 10-second clip. You want to know: "what is it?" Urban sound (siren, drill, dog), speech command (yes/no/stop), language ID (en/es/ar), speaker emotion (angry/neutral), or environmental sound (indoor/outdoor, babble). All of these are *audio classification*, and in 2026 the baseline architecture is mature: log-mel → CNN or Transformer → softmax.

@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P11 · P13 · P14 · P17 · P18
 **Время:** 25 часов
 
+## Цели обучения
+
+- Построить продакшен MCP-сервер плюс реестр и слой governance.
+- Реализовать tools, resources и prompts с авторизацией и реестром обнаружения.
+- Добавить политики над тем, какие инструменты клиенты могут подключать.
+
 ## Задача
 
 MCP стал lingua franca для использования инструментов. Claude Code, Cursor 3, Amp, OpenCode, Gemini CLI и каждый managed agent теперь потребляют MCP-серверы. Производственные сложности не в написании серверов (FastMCP делает это простым), а в их масштабном развертывании с enterprise-требованиями: OAuth scopes на tenant, OPA policy для destructive tools, stateless-масштабирование StreamableHTTP, registry для discovery, audit logs по каждому tool call. Внутренняя MCP-экосистема Pinterest и спецификация AAIF Registry задают планку 2026 года.

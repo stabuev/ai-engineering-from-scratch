@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Explain the four elements of the A2A agent-to-agent protocol.
+- Distinguish A2A from MCP and walk the discovery flow.
+- Set up auth for an A2A interaction.
+
 ## Problem
 
 Your agent needs to call another agent on another system. How? You can expose an HTTP endpoint, define a bespoke JSON schema, and hope the other side speaks it. Every pair of agents becomes a custom integration.
