@@ -41,8 +41,9 @@ question needs `question`, `options` (2+), integer `correct` index; optional
 
 **Type:** Build | Learn
 **Languages:** Python, TypeScript, Rust, Julia (list only what code/ actually contains)
-**Prerequisites:** [List prior lessons needed]
+**Prerequisites:** [List prior lessons as "Phase N · MM (Name)" — the site turns these into links]
 **Time:** ~[estimated time] minutes
+**Requires:** CPU-only | GPU | Paid API (Anthropic/OpenAI) — what the learner needs to run this lesson, no dollar estimates (they rot faster than versions)
 
 ## Learning Objectives
 
@@ -63,7 +64,13 @@ Build mental models before implementation.]
 
 [Step-by-step implementation from scratch.
 Start with the simplest version, then add complexity.
-Every code block should be runnable on its own.]
+Every code block should be runnable on its own.
+End with an "Expected output" block so the learner can check their run:]
+
+    Expected output:
+    Epoch 0 | Loss: 0.69
+    ...
+    [0.0, 0.0] -> 0.01 (expected 0)
 
 ### Step 1: [Name]
 
@@ -96,6 +103,14 @@ Include it here and save it in the outputs/ folder.]
 1. [Easy — reinforce the core concept]
 2. [Medium — apply it to a different problem]
 3. [Hard — extend or combine with prior lessons]
+
+   <details><summary>Solution</summary>
+
+   [Reference solution for the hard exercise — code and/or a one-line "why".
+   Collapsed by default on GitHub and the site, so it does not spoil the
+   attempt but closes the self-check loop for a learner without a mentor.]
+
+   </details>
 
 ## Key Terms
 
