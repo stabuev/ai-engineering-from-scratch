@@ -174,6 +174,8 @@ Before you reach for LangGraph, do a 60-second design:
 
 Refuse to ship a LangGraph agent that has no checkpointer. Refuse to ship one that interrupts *after* the side effect. Refuse to ship a `messages` field without `add_messages` as its reducer.
 
+Saved as `outputs/skill-langgraph-graph-designer.md`.
+
 ## Exercises
 
 1. **Easy.** Implement the four-node ReAct graph above with a calculator tool and a web-search tool. Verify that `list(app.get_state_history(config))` returns at least four checkpoints for a two-turn conversation.

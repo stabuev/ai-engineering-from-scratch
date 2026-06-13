@@ -89,6 +89,8 @@ Pre-build checklist:
 
 Refuse to reach for a framework before you can draw the graph, the org chart, the chat, or the agent box. Refuse to pick one that forces you to fight its state model for the thing you actually need.
 
+Saved as `outputs/skill-agent-framework-selector.md`.
+
 ## The Decision Matrix
 
 | Problem shape | Preferred framework | Why |

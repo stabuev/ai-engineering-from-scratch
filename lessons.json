@@ -1606,7 +1606,7 @@
           "title": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
           "type": "Практика",
           "languages": "Python",
-          "status": "in-progress",
+          "status": "complete",
           "minutes": 90
         }
       ]
@@ -1939,7 +1939,7 @@
           "title": "Gradient Checkpointing и Activation Recomputation",
           "type": "Практика",
           "languages": "Python",
-          "status": "in-progress",
+          "status": "complete",
           "minutes": 70
         }
       ]
@@ -2092,7 +2092,7 @@
           "title": "LangGraph — конечные автоматы для агентов",
           "type": "Практика",
           "languages": "Python",
-          "status": "in-progress",
+          "status": "complete",
           "minutes": 75
         },
         {
@@ -2101,7 +2101,7 @@
           "title": "Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno",
           "type": "Теория",
           "languages": "Python",
-          "status": "in-progress",
+          "status": "complete",
           "minutes": 45
         }
       ]

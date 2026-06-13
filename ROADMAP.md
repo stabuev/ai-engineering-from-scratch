@@ -221,7 +221,7 @@
 | 12 | [Генерация 3D](phases/08-generative-ai/12-3d-generation) | ✅ | — | ~45 мин |
 | 13 | [Flow matching и Rectified Flows](phases/08-generative-ai/13-flow-matching-rectified-flows) | ✅ | — | ~45 мин |
 | 14 | [Оценка: FID, CLIP Score](phases/08-generative-ai/14-evaluation-fid-clip-score) | ✅ | — | ~45 мин |
-| 15 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/15-visual-autoregressive-var) | 🚧 | — | ~90 мин |
+| 15 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/15-visual-autoregressive-var) | ✅ | — | ~90 мин |
 
 ## Фаза 9: Reinforcement Learning — ✅ (~13 часов)
 
@@ -266,7 +266,7 @@
 | 20 | [Разбор архитектуры DeepSeek-V3](phases/10-llms-from-scratch/20-deepseek-v3-walkthrough) | ✅ | — | ~75 мин |
 | 21 | [Jamba — гибридный SSM-Transformer](phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer) | ✅ | — | ~60 мин |
 | 22 | [Async и Hogwild! inference](phases/10-llms-from-scratch/22-async-hogwild-inference) | ✅ | — | ~60 мин |
-| 23 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/23-gradient-checkpointing) | 🚧 | — | ~70 мин |
+| 23 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/23-gradient-checkpointing) | ✅ | — | ~70 мин |
 
 ## Фаза 11: LLM Engineering — ✅ (~18.8 часа)
 
@@ -287,8 +287,8 @@
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app) | ✅ | ✓ | ~120 мин |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol) | ✅ | ✓ | ~75 мин |
 | 15 | [Prompt caching и context caching](phases/11-llm-engineering/15-prompt-caching) | ✅ | ✓ | ~60 мин |
-| 16 | [LangGraph — конечные автоматы для агентов](phases/11-llm-engineering/16-langgraph-state-machines) | 🚧 | ✓ | ~75 мин |
-| 17 | [Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno](phases/11-llm-engineering/17-agent-framework-tradeoffs) | 🚧 | ✓ | ~45 мин |
+| 16 | [LangGraph — конечные автоматы для агентов](phases/11-llm-engineering/16-langgraph-state-machines) | ✅ | ✓ | ~75 мин |
+| 17 | [Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno](phases/11-llm-engineering/17-agent-framework-tradeoffs) | ✅ | ✓ | ~45 мин |
 
 ## Фаза 12: Multimodal AI — ✅ (~67 часов)
 
@@ -544,6 +544,6 @@
 
 ---
 
-**Итого: 20 фаз, 434 уроков | 430 завершено | ~1011 часов по оценке (включая capstone-проекты)**
+**Итого: 20 фаз, 434 уроков | 434 завершено | ~1011 часов по оценке (включая capstone-проекты)**
 
 Хотите помочь? Выберите любой урок со статусом ⬚ и отправьте PR. См. [CONTRIBUTING.md](CONTRIBUTING.md).
