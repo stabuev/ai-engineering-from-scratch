@@ -23,6 +23,13 @@ You need a policy that is *robust to sim-to-real distribution shift*. Three hist
 
 ## The Concept
 
+```mermaid
+graph LR
+  S["Simulator (randomized params)"] --> POL["train policy (domain randomization)"]
+  POL --> R["Real hardware"]
+  R -- "reality gap" --> POL
+```
+
 ![Three sim-to-real regimes: domain randomization, adaptation, system identification](../assets/sim-to-real.svg)
 
 **Domain Randomization (DR).** Tobin et al. 2017, Peng et al. 2018. During training, randomize every sim parameter that might differ on the real robot: masses, friction coefficients, motor PD gains, sensor noise, camera position, lighting, textures, contact models. The policy learns a conditional distribution over "which sim it is in today" and generalizes across the full span. If the real robot falls within the training envelope, the policy works.

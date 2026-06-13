@@ -27,6 +27,16 @@ DQN на Atari был первым случаем, когда одна architect
 
 ## Концепция
 
+```mermaid
+graph LR
+  E["Env"] --> B["Replay buffer"]
+  B -- "minibatch" --> Q["Q-network"]
+  T["Target network (frozen)"] -- "r + γ·max Q_target" --> L["loss"]
+  Q --> L
+  L --> Q
+  Q -. "periodic copy" .-> T
+```
+
 ![DQN training loop: env, replay buffer, online net, target net, Bellman TD loss](../assets/dqn.svg)
 
 **The objective.** DQN минимизирует one-step TD loss на neural Q-function:

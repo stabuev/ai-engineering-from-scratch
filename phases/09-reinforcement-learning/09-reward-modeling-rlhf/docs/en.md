@@ -25,6 +25,14 @@ In 2026 the PPO step is mostly replaced by DPO (Phase 10 · 08) because it is ch
 
 ## The Concept
 
+```mermaid
+graph LR
+  H["human prefs (a ≻ b)"] --> RM["reward model (Bradley-Terry)"]
+  RM --> PPO["PPO policy"]
+  REF["reference model"] -- "KL penalty" --> PPO
+  PPO --> O["aligned LM"]
+```
+
 ![Three-stage RLHF: SFT, RM training on pairwise prefs, PPO with KL penalty](../assets/rlhf.svg)
 
 **Stage 1: Supervised Fine-Tuning (SFT).** Start from a pretrained base model. Fine-tune on human-written demonstrations of the target behavior (instruction-following responses, helpful replies, etc.). Result: a model `π_SFT` that is *biased toward good behavior* but still has an unbounded action space.

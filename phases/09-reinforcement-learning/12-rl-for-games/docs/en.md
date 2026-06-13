@@ -23,6 +23,15 @@ This capstone surveys the three landmark architectures — AlphaZero, MuZero, an
 
 ## The Concept
 
+```mermaid
+graph LR
+  P["policy"] --> G["sample group of K answers"]
+  G --> V["verifier reward per answer"]
+  V --> ADV["group-relative advantage (vs group mean)"]
+  ADV --> U["policy update (GRPO, value-free)"]
+  U --> P
+```
+
 ![AlphaZero ↔ MuZero ↔ GRPO: same loop, different environments](../assets/rl-games.svg)
 
 **The unifying loop.**

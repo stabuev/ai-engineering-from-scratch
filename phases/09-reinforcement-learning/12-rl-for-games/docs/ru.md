@@ -23,6 +23,15 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  P["policy"] --> G["sample group of K answers"]
+  G --> V["verifier reward per answer"]
+  V --> ADV["group-relative advantage (vs group mean)"]
+  ADV --> U["policy update (GRPO, value-free)"]
+  U --> P
+```
+
 ![AlphaZero ↔ MuZero ↔ GRPO: тот же цикл, разные среды](../assets/rl-games.svg)
 
 **Объединяющий цикл.**

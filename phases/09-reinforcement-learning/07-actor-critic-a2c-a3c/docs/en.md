@@ -25,6 +25,14 @@ An action is good if it produced above-average return; bad if below. REINFORCE w
 
 ## The Concept
 
+```mermaid
+graph LR
+  A["Actor π_θ"] -- "action" --> E["Env"]
+  E -- "r, s'" --> C["Critic V̂"]
+  C -- "advantage A = r + γV̂(s') − V̂(s)" --> A
+  C --> CU["update V̂ (TD)"]
+```
+
 ![Actor-critic: policy net plus value net, TD residual as advantage](../assets/actor-critic.svg)
 
 **Two networks, one shared loss:**
