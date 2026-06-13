@@ -193,6 +193,82 @@ function computeStats(manifest) {
   };
 }
 
+// ─── Lesson readiness (non-blocking backlog report) ──────────────────
+// Eight criteria from LESSON_TEMPLATE. Never fails the build — this is a
+// visible backlog so the polish tracks (Objectives, diagrams, sources …)
+// have a moving target, and a regression shows up as a higher count.
+const READINESS_CRITERIA = [
+  'objectives', 'problem', 'concept', 'code',
+  'artifact', 'exercises', 'visual', 'sources',
+];
+
+function lessonReadiness(manifest) {
+  const missingByCriterion = Object.fromEntries(READINESS_CRITERIA.map(c => [c, 0]));
+  const missingByPhase = {};
+  let fullyReady = 0;
+
+  for (const phase of manifest.phases) {
+    missingByPhase[phase.number] = 0;
+    for (const lesson of phase.lessons) {
+      const dir = path.join(REPO_ROOT, lessonRel(phase, lesson));
+      const enPath = path.join(dir, 'docs', 'en.md');
+      const en = fs.existsSync(enPath) ? fs.readFileSync(enPath, 'utf8') : '';
+
+      const codeDir = path.join(dir, 'code');
+      const hasCodeFile = fs.existsSync(codeDir)
+        && fs.readdirSync(codeDir).some(f => /\.(py|ts|rs|jl)$/.test(f));
+      const outDir = path.join(dir, 'outputs');
+      const hasArtifact = fs.existsSync(outDir)
+        && fs.readdirSync(outDir).some(f => f !== '.gitkeep');
+
+      const exMatch = en.match(/##\s+Exercises[\s\S]*?(?=\n##\s|$)/i);
+      const exCount = exMatch ? (exMatch[0].match(/^\s*\d+\./gm) || []).length : 0;
+      const frMatch = en.match(/##\s+Further Reading[\s\S]*?(?=\n##\s|$)/i);
+      const frLinks = frMatch ? (frMatch[0].match(/\]\(https?:/g) || []).length : 0;
+      const hasVisual = /```mermaid/.test(en) || /[┌│└├─┐┘►▼▲]|--->|═══/.test(en);
+
+      const checks = {
+        objectives: /##\s+Learning Objectives/i.test(en),
+        problem: /^##\s+.*Problem/im.test(en),   // any "… Problem" heading
+        concept: /^##\s+.*Concept/im.test(en),   // any "… Concept" heading
+        code: lesson.type !== 'Практика' || hasCodeFile, // Learn lessons may be codeless
+        artifact: hasArtifact,
+        exercises: exCount >= 3,
+        visual: hasVisual,
+        sources: frLinks >= 1,
+      };
+
+      let lessonMissing = 0;
+      for (const c of READINESS_CRITERIA) {
+        if (!checks[c]) { missingByCriterion[c] += 1; lessonMissing += 1; }
+      }
+      if (lessonMissing === 0) fullyReady += 1;
+      else missingByPhase[phase.number] += 1;
+    }
+  }
+
+  return { missingByCriterion, missingByPhase, fullyReady };
+}
+
+function printReadiness(manifest, stats) {
+  const r = lessonReadiness(manifest);
+  console.log(`\n📋 Readiness backlog (non-blocking — see CONTENT_REVIEW.md):`);
+  console.log(`   Fully ready: ${r.fullyReady}/${stats.total}`);
+  const order = [...READINESS_CRITERIA].sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
+  for (const c of order) {
+    if (r.missingByCriterion[c] > 0) {
+      console.log(`   missing ${c.padEnd(11)} ${r.missingByCriterion[c]}`);
+    }
+  }
+  const worst = Object.entries(r.missingByPhase)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([p, n]) => `P${p}:${n}`)
+    .join('  ');
+  if (worst) console.log(`   phases with most incomplete lessons: ${worst}`);
+}
+
 // ─── Glossary ────────────────────────────────────────────────────────
 function parseGlossary(content) {
   const terms = [];
@@ -470,6 +546,8 @@ function main() {
   console.log(`   Hours: ~${Math.round(stats.lessonHours)} lessons + ~${Math.round(stats.capstoneHours)} capstones`);
   console.log(`   Artifacts: ${stats.artifacts}`);
   console.log(`   Glossary terms: ${glossaryTerms.length}`);
+
+  printReadiness(manifest, stats);
 
   if (checkMode) {
     if (stale.length) {

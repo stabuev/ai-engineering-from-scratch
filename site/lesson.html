@@ -1852,6 +1852,40 @@
         });
       }
 
+      function resolvePrereqPath(phaseNum, lessonNum) {
+        for (var i = 0; i < flatLessons.length; i++) {
+          var fl = flatLessons[i];
+          if (fl.phaseId !== phaseNum) continue;
+          if (lessonNum == null) return fl.path;           // phase-level ref → that phase's first lesson
+          if (fl.lessonSlug.slice(0, 2) === lessonNum) return fl.path;
+        }
+        return null;
+      }
+
+      // Turn the prose "Phase N · MM" / "Phase N" references on the
+      // Prerequisites line into in-site lesson links. Scoped to that one line
+      // so we never linkify inside code or body prose, and only emits a link
+      // when the target actually resolves (no dead links).
+      function linkifyPrereqs(root) {
+        var blocks = root.querySelectorAll('p, li');
+        for (var i = 0; i < blocks.length; i++) {
+          var el = blocks[i];
+          if (!/Prerequisites:/.test(el.textContent)) continue;
+          el.innerHTML = el.innerHTML
+            .replace(/Phase\s+(\d+)\s+·\s+(\d+)/g, function (m, p, l) {
+              var path = resolvePrereqPath(parseInt(p, 10), l.length === 1 ? '0' + l : l);
+              if (!path) return m;
+              return '<a href="lesson.html?path=' + encodeURIComponent(path) + '&lang=' + docLang + '">' + m + '</a>';
+            })
+            .replace(/Phase\s+(\d+)(?!\s*[·\d])/g, function (m, p) {
+              var path = resolvePrereqPath(parseInt(p, 10), null);
+              if (!path) return m;
+              return '<a href="lesson.html?path=' + encodeURIComponent(path) + '&lang=' + docLang + '">' + m + '</a>';
+            });
+          break;
+        }
+      }
+
       function fetchLesson(path) {
         var rawUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/docs/' + docLang + '.md';
         var quizUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + (docLang === 'en' ? '/quiz_en.json' : '/quiz.json');
@@ -1897,6 +1931,7 @@
 
         document.title = extractTitle(md) + ' - AI Engineering from Scratch';
 
+        linkifyPrereqs(el);
         initCodeCopy();
         renderMermaidBlocks();
         renderAIPanels();

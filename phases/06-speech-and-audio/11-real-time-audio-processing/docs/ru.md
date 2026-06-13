@@ -141,7 +141,7 @@ class Dialog:
 
 ## Доведите до результата
 
-Сохраните как `outputs/skill-realtime-designer.md`. Спроектируйте real-time audio pipeline с конкретными latency budgets по стадиям.
+Сохраните как `outputs/skill-realtime-pipeline.md`. Спроектируйте real-time audio pipeline с конкретными latency budgets по стадиям.
 
 ## Упражнения
 

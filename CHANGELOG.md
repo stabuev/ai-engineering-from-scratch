@@ -7,6 +7,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 0** (cheap, high-ROI fixes from `CONTENT_REVIEW.md`):
+  - Clickable prerequisites on lesson pages — `site/lesson.html` resolves the
+    prose "Phase N · MM" / "Phase N" references on the Prerequisites line into
+    in-site lesson links (language preserved). Render-time only, no source churn;
+    links are emitted only when the target resolves. Verified live both forms.
+  - Readiness backlog in `site/build.js` — a non-blocking report (8 criteria from
+    `LESSON_TEMPLATE`: objectives/problem/concept/code/artifact/exercises/visual/
+    sources). Surfaces the polish backlog (104/434 fully ready) without failing CI.
+  - README "Когда застрял" section — non-agent paths for a stuck learner
+    (run-and-compare, read both languages, check env, Discussions/Issues).
 - `lessons.json` — single machine-readable course manifest (20 phases, 434 lessons). Source of truth: every lesson directory on disk must be registered there, and vice versa.
 - `.github/workflows/validate.yml` — CI gate running `node site/build.js --check`: disk ↔ manifest ↔ generated files.
 - 7 lessons that existed on disk but were never registered in README/ROADMAP are now part of the course: `7/15-attention-variants`, `7/16-speculative-decoding`, `8/19-visual-autoregressive-var`, `10/25-speculative-decoding`, `10/34-gradient-checkpointing`, `11/16-langgraph-state-machines`, `11/17-agent-framework-tradeoffs` (five marked 🚧 — missing `code/` or `outputs/`).
@@ -34,6 +44,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 - 295 empty `notebook/` directories (`.gitkeep` only, zero actual notebooks in the repo) — and the `notebook/lesson.ipynb` promise in `LESSON_TEMPLATE.md` and the scaffolder.
 
 ### Fixed
+- `06/11-real-time-audio-processing` Ship It pointed at `skill-realtime-designer.md`; the file on disk is `skill-realtime-pipeline.md`. Doc text (en + ru) now matches the existing, indexed artifact.
 - Phase 19 (Capstones) never reached the website: the parser did not understand the «Проект» table format, so the site showed 0 capstone lessons.
 - Phase statuses on the site were always "planned": the ROADMAP parser stored keys as `Phase N` but looked them up as `Фаза N`.
 - Phase 17 lesson rows in README had no links to lesson folders — links added.

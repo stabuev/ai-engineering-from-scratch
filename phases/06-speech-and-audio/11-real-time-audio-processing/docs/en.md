@@ -141,7 +141,7 @@ The 2026 stack:
 
 ## Ship It
 
-Save as `outputs/skill-realtime-designer.md`. Design a real-time audio pipeline with concrete latency budgets per stage.
+Save as `outputs/skill-realtime-pipeline.md`. Design a real-time audio pipeline with concrete latency budgets per stage.
 
 ## Exercises
 
