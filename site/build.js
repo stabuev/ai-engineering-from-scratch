@@ -212,13 +212,18 @@ function computeStats(manifest) {
 }
 
 // ─── Lesson readiness (non-blocking backlog report) ──────────────────
-// Eight criteria from LESSON_TEMPLATE. Never fails the build — this is a
-// visible backlog so the polish tracks (Objectives, diagrams, sources …)
-// have a moving target, and a regression shows up as a higher count.
-const READINESS_CRITERIA = [
-  'objectives', 'problem', 'concept', 'code',
-  'artifact', 'exercises', 'visual', 'sources',
+// Criteria from LESSON_TEMPLATE. Never fails the build — this is a visible
+// backlog so the polish tracks have a moving target and regressions show up.
+// REQUIRED criteria define "fully ready". `visual` is ADVISORY: a diagram
+// earns its place only when a lesson carries structural information
+// (architecture, pipeline, process). Conceptual / policy / comparison lessons
+// are complete without one, so a missing visual is a triage candidate, not a
+// defect — it does not count against readiness.
+const REQUIRED_CRITERIA = [
+  'objectives', 'problem', 'concept', 'code', 'artifact', 'exercises', 'sources',
 ];
+const ADVISORY_CRITERIA = ['visual'];
+const READINESS_CRITERIA = [...REQUIRED_CRITERIA, ...ADVISORY_CRITERIA];
 
 function lessonReadiness(manifest) {
   const missingByCriterion = Object.fromEntries(READINESS_CRITERIA.map(c => [c, 0]));
@@ -258,11 +263,11 @@ function lessonReadiness(manifest) {
         sources: frLinks >= 1,
       };
 
-      let lessonMissing = 0;
       for (const c of READINESS_CRITERIA) {
-        if (!checks[c]) { missingByCriterion[c] += 1; lessonMissing += 1; }
+        if (!checks[c]) missingByCriterion[c] += 1;
       }
-      if (lessonMissing === 0) fullyReady += 1;
+      const missingRequired = REQUIRED_CRITERIA.filter(c => !checks[c]).length;
+      if (missingRequired === 0) fullyReady += 1;
       else missingByPhase[phase.number] += 1;
     }
   }
@@ -273,8 +278,8 @@ function lessonReadiness(manifest) {
 function printReadiness(manifest, stats) {
   const r = lessonReadiness(manifest);
   console.log(`\n📋 Readiness backlog (non-blocking — see CONTENT_REVIEW.md):`);
-  console.log(`   Fully ready: ${r.fullyReady}/${stats.total}`);
-  const order = [...READINESS_CRITERIA].sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
+  console.log(`   Fully ready: ${r.fullyReady}/${stats.total} (required criteria)`);
+  const order = [...REQUIRED_CRITERIA].sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
   for (const c of order) {
     if (r.missingByCriterion[c] > 0) {
       console.log(`   missing ${c.padEnd(11)} ${r.missingByCriterion[c]}`);
@@ -287,6 +292,11 @@ function printReadiness(manifest, stats) {
     .map(([p, n]) => `P${p}:${n}`)
     .join('  ');
   if (worst) console.log(`   phases with most incomplete lessons: ${worst}`);
+  for (const c of ADVISORY_CRITERIA) {
+    if (r.missingByCriterion[c] > 0) {
+      console.log(`   advisory: ${r.missingByCriterion[c]} lessons have no ${c} (triage candidates, not a defect)`);
+    }
+  }
 }
 
 // ─── Glossary ────────────────────────────────────────────────────────
