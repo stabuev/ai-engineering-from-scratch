@@ -25,6 +25,13 @@ GPT-1 (2018), GPT-2 (2019), GPT-3 (2020), GPT-4 (2023), GPT-5 (2024), Claude, Ll
 
 ## Концепция
 
+```mermaid
+graph LR
+  I["The cat sat"] --> M["causal mask: each token sees only the past"]
+  M --> P["predict next token: on"]
+  P -. "append, repeat (autoregressive)" .-> I
+```
+
 ![Causal mask creates a triangular attention matrix](../assets/causal-attention.svg)
 
 ### Маска

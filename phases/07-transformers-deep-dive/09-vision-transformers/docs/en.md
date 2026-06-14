@@ -25,6 +25,15 @@ By 2026, ViT and its descendants (DeiT, Swin, DINOv2, ViT-22B, SAM 3) own most o
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image"] --> PA["patchify 16×16"]
+  PA --> EM["linear embed"]
+  EM --> CLS["prepend [CLS] + positional emb"]
+  CLS --> ENC["transformer encoder"]
+  ENC --> HD["[CLS] → MLP head → class"]
+```
+
 ![Image → patches → tokens → transformer](../assets/vit.svg)
 
 ### Step 1 — patchify

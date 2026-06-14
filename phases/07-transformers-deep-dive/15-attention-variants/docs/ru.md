@@ -27,6 +27,13 @@ Full attention стоит `O(N²)` memory и `O(N²)` compute по длине se
 
 ## Концепция
 
+```mermaid
+graph TB
+  F["full attention: O(n²), every token sees all"] --> SWA["Sliding Window: each token sees ±w"]
+  F --> SP["Sparse / Block: fixed block pattern"]
+  F --> DIFF["Differential: subtract two softmaxes (denoise)"]
+```
+
 ### Sliding Window Attention (SWA)
 
 Каждый query at position `i` attends only to positions in `[i - W, i]` (causal SWA) или `[i - W/2, i + W/2]` (bidirectional). Tokens вне window получают `-inf` в score matrix.

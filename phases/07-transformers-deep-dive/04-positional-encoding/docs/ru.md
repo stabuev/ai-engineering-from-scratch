@@ -29,6 +29,13 @@ Scaled dot-product attention не видит порядок. Матрица atte
 
 ## Концепция
 
+```mermaid
+graph TB
+  Q["attention is permutation-invariant — needs position"] --> A["Sinusoidal: add fixed sin/cos to embeddings"]
+  Q --> B["RoPE: rotate Q,K by a position angle"]
+  Q --> C["ALiBi: bias scores by −distance"]
+```
+
 ![Sinusoidal absolute vs RoPE rotations vs ALiBi distance bias](../assets/positional-encoding.svg)
 
 ### Абсолютное sinusoidal-кодирование

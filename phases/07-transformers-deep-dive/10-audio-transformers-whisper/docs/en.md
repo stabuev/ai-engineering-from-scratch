@@ -27,6 +27,15 @@ The result: Whisper large-v3 is robust across accents, noise, and languages that
 
 ## The Concept
 
+```mermaid
+graph LR
+  A["audio"] --> MEL["log-mel spectrogram"]
+  MEL --> CONV["conv stem"]
+  CONV --> ENC["encoder"]
+  ENC --> DEC["decoder + task tokens"]
+  DEC --> T["text"]
+```
+
 ![Whisper pipeline: audio → mel → encoder → decoder → text](../assets/whisper.svg)
 
 ### Step 1 — resample + window

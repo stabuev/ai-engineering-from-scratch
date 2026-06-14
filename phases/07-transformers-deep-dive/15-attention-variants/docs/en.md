@@ -27,6 +27,13 @@ These coexist. A 2026 frontier model often mixes them: most layers are SWA-1024,
 
 ## The Concept
 
+```mermaid
+graph TB
+  F["full attention: O(n²), every token sees all"] --> SWA["Sliding Window: each token sees ±w"]
+  F --> SP["Sparse / Block: fixed block pattern"]
+  F --> DIFF["Differential: subtract two softmaxes (denoise)"]
+```
+
 ### Sliding Window Attention (SWA)
 
 Each query at position `i` attends only to positions in `[i - W, i]` (causal SWA) or `[i - W/2, i + W/2]` (bidirectional). Tokens outside the window get `-inf` in the score matrix.

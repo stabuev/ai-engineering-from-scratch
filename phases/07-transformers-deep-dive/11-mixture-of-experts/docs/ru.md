@@ -23,6 +23,16 @@ Frontier 2026 года почти полностью MoE: DeepSeek-V3 (671B tota
 
 ## Концепция
 
+```mermaid
+graph LR
+  X["token"] --> R["router"]
+  R -- "top-k" --> E1["expert 1"]
+  R -- "top-k" --> E2["expert 2"]
+  R -. "skipped" .-> E3["experts 3 ... N"]
+  E1 --> S["weighted sum → output"]
+  E2 --> S
+```
+
 ![MoE layer: router selects k of E experts per token](../assets/moe.svg)
 
 ### Замена FFN

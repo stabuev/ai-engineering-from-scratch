@@ -23,6 +23,18 @@ Multi-head attention is the default every transformer in 2026 ships with. The on
 
 ## The Concept
 
+```mermaid
+graph LR
+  X["input"] --> S["split into h heads"]
+  S --> H1["head 1: softmax(QKᵀ/√d)·V"]
+  S --> H2["head 2 ..."]
+  S --> Hh["head h"]
+  H1 --> C["concat"]
+  H2 --> C
+  Hh --> C
+  C --> O["W_o → output"]
+```
+
 ![Multi-head attention splits, attends, concatenates](../assets/multi-head-attention.svg)
 
 **Split.** Take `X` of shape `(N, d_model)`. Project to Q, K, V each of shape `(N, d_model)`. Reshape to `(N, n_heads, d_head)` where `d_head = d_model / n_heads`. Transpose to `(n_heads, N, d_head)`.

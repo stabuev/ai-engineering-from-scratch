@@ -29,6 +29,18 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  subgraph RNN["RNN — serial, depth grows with length"]
+    direction LR
+    r1["t1"] --> r2["t2"] --> r3["t3"] --> r4["t4"]
+  end
+  subgraph TF["Transformer — all tokens attend at once, O(1) depth"]
+    direction LR
+    a1["t1"]; a2["t2"]; a3["t3"]; a4["t4"]
+  end
+```
+
 ![RNN sequential compute vs Transformer parallel attention](../assets/rnn-vs-transformer.svg)
 
 **Recurrence как bottleneck.** RNN вычисляет `h_t = f(h_{t-1}, x_t)`. Каждый шаг зависит от предыдущего. Нельзя вычислить `h_5` до `h_4`. На современных GPU с 10,000+ параллельными ядрами это впустую тратит 99% кремния на длинной последовательности.

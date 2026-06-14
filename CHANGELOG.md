@@ -7,7 +7,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
-- **Content-review wave 4 (start)** — diagrams. Added a mermaid diagram to all 12 Phase 9 (Reinforcement Learning) lessons: the agent-environment loop, generalized policy iteration, the TD targets, actor-critic, the PPO clip, the RLHF reward-model loop, and GRPO group-relative advantage. Inserted into the Concept section, identical block in en + ru (labels are English, like existing diagrams), and validated with `mermaid.parse`. Readiness `missing visual` 284 → 272; fully-ready 123 → 135. (Remaining diagram phases — P12, P7, P6, P13 — are follow-ups.)
+- **Content-review wave 4 (diagrams).** A mermaid diagram added to the Concept section of each lesson that lacked one, identical block in en + ru (labels English, like existing diagrams), every block validated with `mermaid.parse`:
+  - Phase 9 (Reinforcement Learning), all 12: agent-environment loop, generalized policy iteration, TD targets, actor-critic, PPO clip, RLHF reward-model loop, GRPO.
+  - Phase 7 (Transformers), the 11 that lacked one: RNN-vs-transformer parallelism, multi-head split/concat, positional schemes, BERT vs GPT masking, ViT patch pipeline, Whisper audio pipeline, MoE routing, KV-cache + Flash Attention, Chinchilla scaling, attention variants.
+  - Remaining diagram phases — P12, P6, P13, P5, P8, P15, P17 — are follow-ups.
 - **Content-review wave 2** — Learning Objectives across the 8 phases that lacked them. Added a `## Learning Objectives` (en) / `## Цели обучения` (ru) section with 3 specific, capability-framed bullets to **155 lessons** in phases 5, 6, 7, 8, 9, 15, 16, 19 (plus 5 stragglers in 10–11). Objectives are derived from each lesson's own motto, Build It steps, and key terms, and inserted bilingually before the first content section. The readiness backlog's `missing objectives` dropped from 155 → 0; every lesson now carries Learning Objectives, matching `LESSON_TEMPLATE`.
 - **Content-review wave 1** — closed the backlog of incomplete lessons and added hardware/cost metadata:
   - All four `🚧` lessons completed → the course is now 434/434 lessons ✅.

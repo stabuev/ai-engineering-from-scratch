@@ -27,6 +27,15 @@ Whisper сделал три ставки:
 
 ## Концепция
 
+```mermaid
+graph LR
+  A["audio"] --> MEL["log-mel spectrogram"]
+  MEL --> CONV["conv stem"]
+  CONV --> ENC["encoder"]
+  ENC --> DEC["decoder + task tokens"]
+  DEC --> T["text"]
+```
+
 ![Whisper pipeline: audio → mel → encoder → decoder → text](../assets/whisper.svg)
 
 ### Шаг 1 — resample + window

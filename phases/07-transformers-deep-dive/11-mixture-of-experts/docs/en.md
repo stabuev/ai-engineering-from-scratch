@@ -23,6 +23,16 @@ The 2026 frontier is almost entirely MoE: DeepSeek-V3 (671B total / 37B active),
 
 ## The Concept
 
+```mermaid
+graph LR
+  X["token"] --> R["router"]
+  R -- "top-k" --> E1["expert 1"]
+  R -- "top-k" --> E2["expert 2"]
+  R -. "skipped" .-> E3["experts 3 ... N"]
+  E1 --> S["weighted sum → output"]
+  E2 --> S
+```
+
 ![MoE layer: router selects k of E experts per token](../assets/moe.svg)
 
 ### The FFN swap
