@@ -29,6 +29,16 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  subgraph Old["OCR pipeline"]
+    O1["OCR"] --> O2["layout"] --> O3["LLM"]
+  end
+  subgraph New["VLM-native (OCR-free)"]
+    N["image → VLM → answer"]
+  end
+```
+
 ### Эпоха 1 — OCR pipeline (до 2021)
 
 Классический стек:

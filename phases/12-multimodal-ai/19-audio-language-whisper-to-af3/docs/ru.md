@@ -28,6 +28,14 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  A["audio"] --> MEL["log-mel spectrogram"]
+  MEL --> ENC["audio encoder (Whisper / BEATs)"]
+  ENC --> QF["audio Q-former"]
+  QF --> LLM["LLM"]
+```
+
 ### Log-Mel spectrogram: the input feature
 
 Каждый audio encoder начинается с одного и того же признака: log-Mel spectrogram.

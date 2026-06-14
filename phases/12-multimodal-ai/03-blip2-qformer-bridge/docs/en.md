@@ -24,6 +24,13 @@ The answer: a Q-Former. 32 learnable "query" vectors that cross-attend to the Vi
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image"] --> VE["frozen image encoder"]
+  VE --> QF["Q-Former: learnable queries cross-attend"]
+  QF --> LLM["frozen LLM"]
+```
+
 ### Learnable queries
 
 The Q-Former's core trick: instead of letting the LLM's text tokens attend to image patches, introduce a new set of 32 learnable query vectors `Q` and let *them* attend to image patches. The queries are parameters of the model — they are learned during training and the same 32 queries are used for every image.

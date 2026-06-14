@@ -30,6 +30,14 @@ The result: a VLM that ran on 8 A100s for one day, beat Flamingo on MMMU, and sh
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image"] --> VE["CLIP encoder"]
+  VE --> MLP["2-layer MLP projector"]
+  MLP --> SEQ["image tokens + text tokens"]
+  SEQ --> LLM["LLM"]
+```
+
 ### The architecture
 
 LLaVA-1.5 at 13B:

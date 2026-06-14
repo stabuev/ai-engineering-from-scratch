@@ -30,6 +30,13 @@ Pre-OneVision, the default answer was "train one scenario, ignore the others." V
 
 ## The Concept
 
+```mermaid
+graph LR
+  S["single-image"] --> MU["multi-image"]
+  MU --> V["video"]
+  V --> E["emergent cross-scenario skills"]
+```
+
 ### The OneVision token budget
 
 LLaVA-OneVision picks a unified visual-token budget of approximately 3000-4000 tokens per sample, allocated differently per scenario:

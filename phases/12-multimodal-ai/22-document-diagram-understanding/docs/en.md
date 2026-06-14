@@ -29,6 +29,16 @@ Raw OCR dumps the text and loses the rest. A system that cares about invoices ne
 
 ## The Concept
 
+```mermaid
+graph TB
+  subgraph Old["OCR pipeline"]
+    O1["OCR"] --> O2["layout"] --> O3["LLM"]
+  end
+  subgraph New["VLM-native (OCR-free)"]
+    N["image → VLM → answer"]
+  end
+```
+
 ### Era 1 — OCR pipeline (pre-2021)
 
 The classic stack:

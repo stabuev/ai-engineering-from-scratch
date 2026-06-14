@@ -24,6 +24,14 @@ Three scaling paths emerged.
 
 ## The Concept
 
+```mermaid
+graph TB
+  V["hour-long video → millions of tokens"] --> B["brute context"]
+  V --> R["ring attention"]
+  V --> C["token compression"]
+  V --> AG["agentic retrieval"]
+```
+
 ### Path 1: Brute context (Gemini 1.5, Claude Opus)
 
 Throw hardware at the problem. Scale context to millions of tokens, process everything in one forward pass.

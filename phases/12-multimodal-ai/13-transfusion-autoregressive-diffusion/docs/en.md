@@ -26,6 +26,13 @@ Transfusion asks: can we have both? Keep images continuous, still train one mode
 
 ## The Concept
 
+```mermaid
+graph LR
+  SEQ["text tokens + image patches"] --> TF["single transformer"]
+  TF --> L1["text: next-token (causal)"]
+  TF --> L2["image: diffusion (bidirectional)"]
+```
+
 ### The two-loss architecture
 
 A single decoder-only transformer processes a sequence that contains:

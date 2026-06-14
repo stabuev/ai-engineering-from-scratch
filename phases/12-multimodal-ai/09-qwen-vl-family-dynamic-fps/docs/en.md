@@ -28,6 +28,14 @@ Every Qwen-VL generation extends one of these three axes.
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["native-res image / video"] --> VE["ViT"]
+  FPS["dynamic FPS + absolute time"] --> MR["M-RoPE: time × height × width positions"]
+  VE --> MR
+  MR --> LLM["LLM"]
+```
+
 ### Qwen-VL (August 2023)
 
 The first generation: OpenCLIP ViT-bigG/14 as encoder (2.5B params), LLama-compatible Q-Former (1-step with 256 queries), Qwen-7B base. Contributions:

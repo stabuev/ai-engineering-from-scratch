@@ -30,6 +30,14 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  VID["video"] --> FR["sample frames"]
+  FR --> PE["per-frame patch + pool"]
+  PE --> TM["TMRoPE temporal positions"]
+  TM --> LLM["LLM"]
+```
+
 ### Video-LLaMA: Q-former per clip + audio branch
 
 Video-LLaMA (2023) была первой открытой video-LLM. Архитектура:

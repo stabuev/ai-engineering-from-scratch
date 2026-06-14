@@ -24,6 +24,13 @@ The bet was controversial when it published. Two years on, the open-source unifi
 
 ## The Concept
 
+```mermaid
+graph LR
+  M["image / text / video"] --> TOK["discrete tokens (one vocabulary)"]
+  TOK --> AR["Llama-style decoder, next-token"]
+  AR --> OUT["generate any modality"]
+```
+
 ### The Emu3 tokenizer
 
 The key ingredient is the visual tokenizer. Emu3 trains a custom IBQ-class tokenizer (Inverse Bottleneck Quantizer, SBER-MoVQGAN family) at 8x8 resolution-reduction per token. A 512x512 image becomes 64x64 = 4096 tokens at codebook size 32768.

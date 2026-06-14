@@ -24,6 +24,15 @@ The 2024 wave (MM1, Idefics2, Molmo, Cambrian-1, Prismatic VLMs) ran exhaustive 
 
 ## The Concept
 
+```mermaid
+graph TB
+  D["VLM design space"] --> E["encoder choice — matters most"]
+  D --> C["connector — largely a wash"]
+  D --> L["LLM size — sets the ceiling"]
+  D --> DA["data — detailed human captions"]
+  D --> R["resolution"]
+```
+
 ### The five-axis design space
 
 Idefics2 (Laurençon et al., 2024) named the axes:

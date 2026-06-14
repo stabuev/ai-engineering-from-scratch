@@ -28,6 +28,14 @@ Chameleon rejects the premise: images are just sequences of discrete tokens from
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image"] --> VQ["VQ-VAE → discrete image tokens"]
+  VQ --> V["shared vocabulary"]
+  TXT["text tokens"] --> V
+  V --> TF["single transformer, one next-token loss"]
+```
+
 ### VQ-VAE as image tokenizer
 
 The tokenizer is a vector-quantized variational autoencoder. The architecture:

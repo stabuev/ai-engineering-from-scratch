@@ -26,6 +26,15 @@ Dosovitskiy et al. (2020) задали прямой вопрос: что есл�
 
 ## Концепция
 
+```mermaid
+graph LR
+  IMG["image"] --> P["patchify 16×16"]
+  P --> E["linear patch embedding"]
+  E --> CLS["prepend [CLS] + position emb"]
+  CLS --> ENC["transformer encoder"]
+  ENC --> O["patch tokens + pooled output"]
+```
+
 ### Patches as tokens
 
 Дано изображение `x` формы `(H, W, 3)` и размер патча `P`. Вы нарезаете изображение на сетку непересекающихся патчей `(H/P) x (W/P)`. Каждый патч — это куб пикселей `P x P x 3`. Разверните каждый куб в вектор `3 P^2`. Примените общую линейную проекцию `W_E` формы `(3 P^2, D)`, чтобы отобразить каждый патч в скрытую размерность модели `D`.

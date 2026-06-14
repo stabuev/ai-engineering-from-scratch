@@ -26,6 +26,13 @@ Transfusion спрашивает: можем ли мы получить оба �
 
 ## Концепция
 
+```mermaid
+graph LR
+  SEQ["text tokens + image patches"] --> TF["single transformer"]
+  TF --> L1["text: next-token (causal)"]
+  TF --> L2["image: diffusion (bidirectional)"]
+```
+
 ### Архитектура с двумя loss
 
 Один decoder-only transformer обрабатывает последовательность, содержащую:

@@ -27,6 +27,16 @@ The engineering challenges:
 
 ## The Concept
 
+```mermaid
+graph LR
+  subgraph In["4 modalities"]
+    T["text"]; I["image"]; A["audio"]; V["video"]
+  end
+  In --> TOK["residual-VQ tokenizers"]
+  TOK --> M["unified model"]
+  M --> S["streaming decode"]
+```
+
 ### Four tokenizers for four modalities
 
 MIO's tokenizer stack:

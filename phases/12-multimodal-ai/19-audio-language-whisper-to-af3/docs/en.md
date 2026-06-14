@@ -28,6 +28,14 @@ Three obvious routes:
 
 ## The Concept
 
+```mermaid
+graph LR
+  A["audio"] --> MEL["log-mel spectrogram"]
+  MEL --> ENC["audio encoder (Whisper / BEATs)"]
+  ENC --> QF["audio Q-former"]
+  QF --> LLM["LLM"]
+```
+
 ### Log-Mel spectrogram: the input feature
 
 Every audio encoder starts with the same feature: a log-Mel spectrogram.

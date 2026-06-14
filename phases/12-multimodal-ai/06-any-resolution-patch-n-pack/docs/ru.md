@@ -30,6 +30,14 @@ Transformers ожидают последовательность. Batch — эт
 
 ## Концепция
 
+```mermaid
+graph LR
+  A["image A patches"] --> PK["pack into one sequence"]
+  B["image B patches"] --> PK
+  PK --> M["block-diagonal mask: each image attends only to itself"]
+  M --> ENC["encoder"]
+```
+
 ### NaViT and patch-n'-pack
 
 NaViT (Dehghani et al., 2023) был статьей, которая показала, что это работает в масштабе. Идея механическая:

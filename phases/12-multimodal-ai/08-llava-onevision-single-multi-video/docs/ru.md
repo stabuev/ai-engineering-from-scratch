@@ -30,6 +30,13 @@ Video требует много frames в low resolution (~196 tokens per frame 
 
 ## Концепция
 
+```mermaid
+graph LR
+  S["single-image"] --> MU["multi-image"]
+  MU --> V["video"]
+  V --> E["emergent cross-scenario skills"]
+```
+
 ### The OneVision token budget
 
 LLaVA-OneVision выбирает unified visual-token budget примерно 3000-4000 tokens per sample, распределенный по-разному для каждого сценария:

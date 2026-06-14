@@ -26,6 +26,13 @@ The resulting embedding space does more than CLIP was trained for. ImageNet zero
 
 ## The Concept
 
+```mermaid
+graph LR
+  I["image"] --> IE["image encoder"] --> S["shared vector space"]
+  T["text"] --> TE["text encoder"] --> S
+  S --> C["contrastive align (InfoNCE / sigmoid)"]
+```
+
 ### The dual encoder
 
 CLIP has two towers:

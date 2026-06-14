@@ -29,6 +29,13 @@ Every component needs to stream. Nothing can be "batch everything then decode."
 
 ## The Concept
 
+```mermaid
+graph LR
+  IN["voice + video"] --> TH["Thinker: reason over multimodal"]
+  TH --> TK["Talker: streaming speech synthesis"]
+  TK --> OUT["audio out"]
+```
+
 ### Thinker and Talker
 
 Qwen2.5-Omni's decomposition:
