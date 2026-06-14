@@ -25,12 +25,6 @@ BERT (Devlin et al. 2018) спросил: что если взять transformer
 
 ## Концепция
 
-```mermaid
-graph LR
-  I["The [MASK] sat on the mat"] --> E["bidirectional encoder (sees both sides)"]
-  E --> P["predict masked token: cat"]
-```
-
 ![Masked language modeling: pick tokens, mask them, predict originals](../assets/bert-mlm.svg)
 
 ### Обучающий сигнал

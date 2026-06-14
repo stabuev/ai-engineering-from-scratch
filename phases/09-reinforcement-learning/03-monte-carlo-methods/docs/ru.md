@@ -23,14 +23,6 @@ Dynamic programming элегантен, но предполагает, что м
 
 ## Концепция
 
-```mermaid
-graph LR
-  P["policy π"] --> E["run episode"]
-  E --> R["returns G_t (reverse sweep)"]
-  R --> A["average -> V(s)"]
-  A --> P
-```
-
 ![Monte Carlo: rollout, compute returns, average; first-visit vs every-visit](../assets/monte-carlo.svg)
 
 **Основная идея в одну строку:** `V^π(s) = E_π[G_t | s_t = s] ≈ (1/N) Σ_i G^{(i)}(s)`, где `G^{(i)}(s)` — observed returns после visits to `s` under policy `π`.

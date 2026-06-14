@@ -6,12 +6,33 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 
 ## [Unreleased]
 
+### Fixed
+- **The website never rendered lesson figures.** `site/lesson.html`'s markdown
+  parser had no image support, so the ~89 `![](…/assets/*.svg)` figures across
+  phases 5–11 showed nothing on the site (they only rendered on GitHub). Added
+  image rendering with relative-path resolution to a CDN (`cdn.jsdelivr.net/gh`,
+  which serves the repo's assets with a correct `image/svg+xml` content-type —
+  raw.githubusercontent serves `text/plain`, which browsers refuse in `<img>`).
+  Verified live: the SVG figures now load on the site. The readiness `visual`
+  check now counts figures too, so the backlog reflects reality (174 lessons
+  genuinely have no visual, not 284).
+
 ### Added
-- **Content-review wave 4 (diagrams).** A mermaid diagram added to the Concept section of each lesson that lacked one, identical block in en + ru (labels English, like existing diagrams), every block validated with `mermaid.parse`:
-  - Phase 9 (Reinforcement Learning), all 12: agent-environment loop, generalized policy iteration, TD targets, actor-critic, PPO clip, RLHF reward-model loop, GRPO.
-  - Phase 7 (Transformers), the 11 that lacked one: RNN-vs-transformer parallelism, multi-head split/concat, positional schemes, BERT vs GPT masking, ViT patch pipeline, Whisper audio pipeline, MoE routing, KV-cache + Flash Attention, Chinchilla scaling, attention variants.
-  - Phase 12 (Multimodal AI), all 25 — the review's #1 diagram gap: each architecture's fusion pattern (ViT patches, CLIP dual-encoder, BLIP-2 Q-Former, Flamingo gated cross-attention, LLaVA projector, patch-n'-pack, Chameleon/Emu3 early fusion, Transfusion/Show-o two-loss, Janus decoupled encoders, MIO any-to-any, video TMRoPE, long-video paths, audio Q-former, omni Thinker-Talker, embodied VLA, OCR-free docs, ColPali late interaction, cross-modal RAG, computer-use loop).
-  - Remaining diagram phases — P6, P13, P5, P8, P15, P17 — are follow-ups.
+- **Content-review wave 4 (diagrams).** Mermaid diagrams in the Concept section,
+  identical block in en + ru (English labels), each validated with
+  `mermaid.parse`. Scoped to lessons that have **no** existing figure:
+  - Phase 12 (Multimodal AI), all 25 — the review's #1 diagram gap (these
+    architecture lessons shipped with zero figures): each fusion pattern (ViT
+    patches, CLIP dual-encoder, BLIP-2 Q-Former, Flamingo gated cross-attention,
+    LLaVA projector, patch-n'-pack, Chameleon/Emu3 early fusion, Transfusion/
+    Show-o two-loss, Janus decoupled encoders, MIO any-to-any, video TMRoPE,
+    long-video paths, audio Q-former, omni Thinker-Talker, embodied VLA, OCR-free
+    docs, ColPali late interaction, cross-modal RAG, computer-use loop).
+  - Phase 7 · 15 (attention variants) — the one transformer lesson without a figure.
+  - Phases 9 (all 12) and 7 (the other 10) were diagrammed first, then reverted:
+    those lessons already ship polished SVG figures, which now render on the site,
+    so a second mermaid diagram was redundant.
+  - Remaining figure-less phases — P13, P14, P15, P16, P17, P18, P19 — are follow-ups.
 - **Content-review wave 2** — Learning Objectives across the 8 phases that lacked them. Added a `## Learning Objectives` (en) / `## Цели обучения` (ru) section with 3 specific, capability-framed bullets to **155 lessons** in phases 5, 6, 7, 8, 9, 15, 16, 19 (plus 5 stragglers in 10–11). Objectives are derived from each lesson's own motto, Build It steps, and key terms, and inserted bilingually before the first content section. The readiness backlog's `missing objectives` dropped from 155 → 0; every lesson now carries Learning Objectives, matching `LESSON_TEMPLATE`.
 - **Content-review wave 1** — closed the backlog of incomplete lessons and added hardware/cost metadata:
   - All four `🚧` lessons completed → the course is now 434/434 lessons ✅.

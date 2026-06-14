@@ -23,18 +23,6 @@ Multi-head attention — default, с которым в 2026 году поста�
 
 ## Концепция
 
-```mermaid
-graph LR
-  X["input"] --> S["split into h heads"]
-  S --> H1["head 1: softmax(QKᵀ/√d)·V"]
-  S --> H2["head 2 ..."]
-  S --> Hh["head h"]
-  H1 --> C["concat"]
-  H2 --> C
-  Hh --> C
-  C --> O["W_o → output"]
-```
-
 ![Multi-head attention splits, attends, concatenates](../assets/multi-head-attention.svg)
 
 **Разделение.** Возьмите `X` формы `(N, d_model)`. Спроецируйте в Q, K, V, каждую формы `(N, d_model)`. Измените форму на `(N, n_heads, d_head)`, где `d_head = d_model / n_heads`. Транспонируйте в `(n_heads, N, d_head)`.

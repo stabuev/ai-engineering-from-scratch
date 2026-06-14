@@ -23,13 +23,6 @@ You need them in 2026 for three reasons. First, every tabular environment in RL 
 
 ## The Concept
 
-```mermaid
-graph LR
-  V["V (value estimate)"] -- "improve: act greedy" --> P["π (policy)"]
-  P -- "evaluate (Bellman)" --> V
-  P --> O["converges to π*"]
-```
-
 ![Policy iteration and value iteration, side by side](../assets/dp.svg)
 
 **Two algorithms, both fixed-point iteration on Bellman.**

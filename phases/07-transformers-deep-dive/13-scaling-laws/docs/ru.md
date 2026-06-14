@@ -30,14 +30,6 @@ Hoffmann et al. (2022), обучая небольшое семейство мо�
 
 ## Концепция
 
-```mermaid
-graph TB
-  C["compute budget C ≈ 6·N·D"] --> N["parameters N"]
-  C --> D["tokens D"]
-  N --> O["Chinchilla-optimal: scale N and D together (~20 tokens/param)"]
-  D --> O
-```
-
 ![Chinchilla curves: loss vs compute at various N/D ratios](../assets/scaling-laws.svg)
 
 ### Закон Hoffmann

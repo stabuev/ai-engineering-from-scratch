@@ -23,13 +23,6 @@ Supervised learning дает вам пары `(x, y)` и просит подоб
 
 ## Концепция
 
-```mermaid
-graph LR
-  A["Agent"] -- "action a_t" --> E["Environment"]
-  E -- "state s_t+1" --> A
-  E -- "reward r_t+1" --> A
-```
-
 ![Markov decision process: states, actions, transitions, rewards, discount](../assets/mdp.svg)
 
 **Пять объектов.**

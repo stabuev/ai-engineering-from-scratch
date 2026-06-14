@@ -29,18 +29,6 @@ The result dominates every modality by 2026. Language (GPT-5, Claude 4, Llama 4)
 
 ## The Concept
 
-```mermaid
-graph TB
-  subgraph RNN["RNN — serial, depth grows with length"]
-    direction LR
-    r1["t1"] --> r2["t2"] --> r3["t3"] --> r4["t4"]
-  end
-  subgraph TF["Transformer — all tokens attend at once, O(1) depth"]
-    direction LR
-    a1["t1"]; a2["t2"]; a3["t3"]; a4["t4"]
-  end
-```
-
 ![RNN sequential compute vs Transformer parallel attention](../assets/rnn-vs-transformer.svg)
 
 **Recurrence as a bottleneck.** An RNN computes `h_t = f(h_{t-1}, x_t)`. Each step depends on the previous. You cannot compute `h_5` before `h_4`. On modern GPUs with 10,000+ parallel cores, this wastes 99% of the silicon on a long sequence.

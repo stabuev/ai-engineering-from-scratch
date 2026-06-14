@@ -25,14 +25,6 @@ RLHF (Christiano et al. 2017; Ouyang et al. 2022) превращает preferenc
 
 ## Концепция
 
-```mermaid
-graph LR
-  H["human prefs (a ≻ b)"] --> RM["reward model (Bradley-Terry)"]
-  RM --> PPO["PPO policy"]
-  REF["reference model"] -- "KL penalty" --> PPO
-  PPO --> O["aligned LM"]
-```
-
 ![Three-stage RLHF: SFT, RM training on pairwise prefs, PPO with KL penalty](../assets/rlhf.svg)
 
 **Stage 1: Supervised Fine-Tuning (SFT).** Начните с pretrained base model. Fine-tune на написанных людьми demonstrations целевого поведения (instruction-following responses, helpful replies и т. д.). Результат: модель `π_SFT`, которая *смещена в сторону хорошего поведения*, но все еще имеет неограниченное action space.

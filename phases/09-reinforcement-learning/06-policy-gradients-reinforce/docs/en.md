@@ -25,14 +25,6 @@ Every LLM-RL algorithm in 2026 — PPO, DPO, GRPO — is a refinement of REINFOR
 
 ## The Concept
 
-```mermaid
-graph LR
-  P["policy π_θ"] --> R["rollout, log π(a|s)"]
-  R --> G["return G_t (or G_t − baseline)"]
-  G --> U["θ ← θ + α·G·∇log π"]
-  U --> P
-```
-
 ![Policy gradient: softmax policy, log-π gradient, return-weighted update](../assets/policy-gradient.svg)
 
 **The policy gradient theorem.** For any policy `π_θ` parameterized by `θ`:

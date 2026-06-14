@@ -28,13 +28,6 @@ By 2026 both are universal. Every production inference stack (vLLM, TensorRT-LLM
 
 ## The Concept
 
-```mermaid
-graph LR
-  P["new token"] --> KV["append K,V to cache"]
-  KV --> AT["attend over cached K,V (memory-bound)"]
-  AT --> FA["Flash Attention: tile in SRAM, never materialize full scores"]
-```
-
 ![KV cache growth and Flash Attention tiling](../assets/kv-cache-flash-attn.svg)
 
 ### KV cache math

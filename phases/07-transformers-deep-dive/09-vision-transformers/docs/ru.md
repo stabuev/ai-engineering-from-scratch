@@ -25,15 +25,6 @@ ViT стал началом паттерна 2026 года: одна architectur
 
 ## Концепция
 
-```mermaid
-graph LR
-  IMG["image"] --> PA["patchify 16×16"]
-  PA --> EM["linear embed"]
-  EM --> CLS["prepend [CLS] + positional emb"]
-  CLS --> ENC["transformer encoder"]
-  ENC --> HD["[CLS] → MLP head → class"]
-```
-
 ![Image → patches → tokens → transformer](../assets/vit.svg)
 
 ### Шаг 1 — patchify

@@ -243,7 +243,9 @@ function lessonReadiness(manifest) {
       const exCount = exMatch ? (exMatch[0].match(/^\s*\d+\./gm) || []).length : 0;
       const frMatch = en.match(/##\s+Further Reading[\s\S]*?(?=\n##\s|$)/i);
       const frLinks = frMatch ? (frMatch[0].match(/\]\(https?:/g) || []).length : 0;
-      const hasVisual = /```mermaid/.test(en) || /[┌│└├─┐┘►▼▲]|--->|═══/.test(en);
+      const hasVisual = /```mermaid/.test(en)
+        || /[┌│└├─┐┘►▼▲]|--->|═══/.test(en)
+        || /!\[[^\]]*\]\([^)]*\.(svg|png|jpg)\)/.test(en); // figures render on the site too
 
       const checks = {
         objectives: /##\s+Learning Objectives/i.test(en),

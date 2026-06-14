@@ -23,13 +23,6 @@ You cannot learn from this stream until you formalize it. "What I saw," "what I 
 
 ## The Concept
 
-```mermaid
-graph LR
-  A["Agent"] -- "action a_t" --> E["Environment"]
-  E -- "state s_t+1" --> A
-  E -- "reward r_t+1" --> A
-```
-
 ![Markov decision process: states, actions, transitions, rewards, discount](../assets/mdp.svg)
 
 **The five objects.**

@@ -23,14 +23,6 @@ The shift from DP to MC is philosophically important: we move from *known model 
 
 ## The Concept
 
-```mermaid
-graph LR
-  P["policy π"] --> E["run episode"]
-  E --> R["returns G_t (reverse sweep)"]
-  R --> A["average -> V(s)"]
-  A --> P
-```
-
 ![Monte Carlo: rollout, compute returns, average; first-visit vs every-visit](../assets/monte-carlo.svg)
 
 **The core idea, in one line:** `V^π(s) = E_π[G_t | s_t = s] ≈ (1/N) Σ_i G^{(i)}(s)` where `G^{(i)}(s)` are observed returns following visits to `s` under policy `π`.

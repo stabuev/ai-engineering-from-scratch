@@ -25,15 +25,6 @@ This breaks tabular convergence proofs (Q-learning's guarantee assumes a station
 
 ## The Concept
 
-```mermaid
-graph LR
-  A1["Agent 1 (learning)"] --> ENV["Shared Env"]
-  A2["Agent 2 (learning)"] --> ENV
-  ENV --> A1
-  ENV --> A2
-  A1 -. "each is part of the other's env (non-stationary)" .- A2
-```
-
 ![Four MARL regimes: indep, centralized critic, self-play, league](../assets/marl.svg)
 
 **Formalism: Markov Game.** A generalization of MDP: states `S`, a joint action `a = (a_1, …, a_n)`, transition `P(s' | s, a)`, and per-agent rewards `R_i(s, a, s')`. Each agent `i` maximizes its own return under its own policy `π_i`. If rewards are identical, it is **fully cooperative**. If zero-sum, it is **adversarial**. If mixed, it is **general-sum**.

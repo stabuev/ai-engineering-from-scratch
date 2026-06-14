@@ -25,14 +25,6 @@ PPO (Schulman et al. 2017) replaces the hard trust-region constraint with a simp
 
 ## The Concept
 
-```mermaid
-graph LR
-  D["rollout: log π_old"] --> R["ratio = π_θ / π_old"]
-  Adv["GAE advantage"] --> CL["clip(ratio, 1±ε)·A"]
-  R --> CL
-  CL --> U["maximize, K epochs on same data"]
-```
-
 ![PPO clipped surrogate objective: ratio clipping at 1 ± ε](../assets/ppo.svg)
 
 **The importance ratio.**

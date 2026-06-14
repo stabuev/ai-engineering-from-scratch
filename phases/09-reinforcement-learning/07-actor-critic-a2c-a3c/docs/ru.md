@@ -25,14 +25,6 @@ Action хорош, если дал return выше среднего, и плох
 
 ## Концепция
 
-```mermaid
-graph LR
-  A["Actor π_θ"] -- "action" --> E["Env"]
-  E -- "r, s'" --> C["Critic V̂"]
-  C -- "advantage A = r + γV̂(s') − V̂(s)" --> A
-  C --> CU["update V̂ (TD)"]
-```
-
 ![Actor-critic: policy net plus value net, TD residual as advantage](../assets/actor-critic.svg)
 
 **Две сети, один shared loss:**

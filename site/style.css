@@ -334,6 +334,13 @@ p.dropcap::first-letter {
   flex-shrink: 0;
 }
 
+.lesson-article img.lesson-figure {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+}
+
 .lang-toggle:hover {
   color: var(--blueprint);
   border-color: var(--blueprint);

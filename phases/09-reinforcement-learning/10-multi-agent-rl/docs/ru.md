@@ -25,15 +25,6 @@
 
 ## Концепция
 
-```mermaid
-graph LR
-  A1["Agent 1 (learning)"] --> ENV["Shared Env"]
-  A2["Agent 2 (learning)"] --> ENV
-  ENV --> A1
-  ENV --> A2
-  A1 -. "each is part of the other's env (non-stationary)" .- A2
-```
-
 ![Четыре режима MARL: indep, centralized critic, self-play, league](../assets/marl.svg)
 
 **Формализм: Markov Game.** Обобщение MDP: состояния `S`, joint action `a = (a_1, …, a_n)`, переход `P(s' | s, a)` и награды по агентам `R_i(s, a, s')`. Каждый агент `i` максимизирует собственный return в рамках собственной политики `π_i`. Если награды идентичны, это **fully cooperative**. Если zero-sum, это **adversarial**. Если смешанный случай, это **general-sum**.

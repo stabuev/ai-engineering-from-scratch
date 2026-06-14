@@ -25,15 +25,6 @@ Temporal difference (TD) learning занимает середину. Из одн
 
 ## Концепция
 
-```mermaid
-graph TB
-  T1["Q-learning: target = r + γ·max_a' Q(s',a')   (off-policy)"]
-  T2["SARSA: target = r + γ·Q(s',a')   (on-policy)"]
-  T1 --> D["δ = target − Q(s,a)"]
-  T2 --> D
-  D --> U["Q(s,a) ← Q(s,a) + α·δ"]
-```
-
 ![Q-learning vs SARSA: off-policy max vs on-policy Q(s', a')](../assets/td.svg)
 
 **The TD(0) update for V:**

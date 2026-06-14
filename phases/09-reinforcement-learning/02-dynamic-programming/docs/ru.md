@@ -23,13 +23,6 @@ Model-free RL (Q-learning, PPO, REINFORCE) был придуман для слу
 
 ## Концепция
 
-```mermaid
-graph LR
-  V["V (value estimate)"] -- "improve: act greedy" --> P["π (policy)"]
-  P -- "evaluate (Bellman)" --> V
-  P --> O["converges to π*"]
-```
-
 ![Policy iteration and value iteration, side by side](../assets/dp.svg)
 
 **Два алгоритма, оба — fixed-point iteration по Bellman.**

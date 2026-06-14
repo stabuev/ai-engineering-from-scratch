@@ -23,13 +23,6 @@
 
 ## Концепция
 
-```mermaid
-graph LR
-  S["Simulator (randomized params)"] --> POL["train policy (domain randomization)"]
-  POL --> R["Real hardware"]
-  R -- "reality gap" --> POL
-```
-
 ![Three sim-to-real regimes: domain randomization, adaptation, system identification](../assets/sim-to-real.svg)
 
 **Domain Randomization (DR).** Tobin et al. 2017, Peng et al. 2018. Во время обучения рандомизируйте каждый sim-параметр, который может отличаться на реальном роботе: массы, коэффициенты трения, motor PD gains, шум сенсоров, положение камеры, освещение, текстуры, contact models. Политика учит условное распределение по тому, "в каком sim она сегодня находится", и обобщает по всему диапазону. Если реальный робот попадает внутрь training envelope, политика работает.

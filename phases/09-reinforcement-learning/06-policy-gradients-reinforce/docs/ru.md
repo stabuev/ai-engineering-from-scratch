@@ -25,14 +25,6 @@ Policy gradients параметризуют *policy* вместо value. `π_θ(
 
 ## Концепция
 
-```mermaid
-graph LR
-  P["policy π_θ"] --> R["rollout, log π(a|s)"]
-  R --> G["return G_t (or G_t − baseline)"]
-  G --> U["θ ← θ + α·G·∇log π"]
-  U --> P
-```
-
 ![Policy gradient: softmax policy, log-π gradient, return-weighted update](../assets/policy-gradient.svg)
 
 **The policy gradient theorem.** Для любой policy `π_θ`, parameterized by `θ`:
