@@ -354,6 +354,20 @@ def lr_sensitivity(data):
         print(f"  {lr:>10.4f} {start:>12.6f} {end_str:>12} {status:>15}")
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+LR at key training points:
+  Schedule                 Step 0   Step T/4   Step T/2  Step 3T/4     Step T
+  ------------------------------------------------------------
+  Constant               0.050000   0.050000   0.050000   0.050000   0.050000
+  Cosine                 0.050000   0.042679   0.025005   0.007331   0.000010
+  Warmup+Cosine          0.000000   0.044730   0.027069   0.008076   0.000010
+  1cycle                 0.002000   0.026000   0.050000   0.025003   0.000010
+```
+
 ## Use It
 
 PyTorch provides schedulers in `torch.optim.lr_scheduler`:

@@ -589,6 +589,21 @@ def demo_broken_networks():
     gradient_check(model_grad, x[:4], y[:4], criterion)
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/debug_neural_nets.py` — последние строки должны быть такими:
+
+```
+=== GRADIENT CHECK ===
+  0.weight: max_rel_diff=1.03e-08 [OK]
+  0.bias: max_rel_diff=5.05e-09 [OK]
+  2.weight: max_rel_diff=3.93e-12 [OK]
+  2.bias: max_rel_diff=1.94e-13 [OK]
+
+  Checked 14 parameters
+  PASS: Gradients match (rel_diff < 1e-5)
+```
+
 ## Используйте это
 
 ### Встроенные инструменты PyTorch

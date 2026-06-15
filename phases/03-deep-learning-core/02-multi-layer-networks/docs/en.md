@@ -290,6 +290,20 @@ print(f"Accuracy with random weights: {correct}/{len(data)} ({100*correct/len(da
 
 Random weights give poor accuracy -- often worse than guessing the majority class. After training (Lesson 03), this same architecture with 8 hidden neurons will draw a curved boundary that separates inside from outside.
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+============================================================
+DEMO 4: Parameter count for classic architectures
+============================================================
+  2-3-1 (this lesson): 13 parameters
+  2-8-1 (circle): 33 parameters
+  784-256-128-10 (MNIST): 235,146 parameters
+  784-512-256-128-10 (deep MNIST): 567,434 parameters
+```
+
 ## Use It
 
 PyTorch does everything above in four lines:

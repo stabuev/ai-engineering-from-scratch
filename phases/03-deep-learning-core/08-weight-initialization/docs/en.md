@@ -316,6 +316,21 @@ def magnitude_report(name, magnitudes):
             print(f"  Layer {i+1:3d}: {bar} ({mag:.6f})")
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+  Config                           Start Loss     End Loss  Improvement
+  ------------------------------------------------------------------
+  Random(0.01) + Sigmoid             0.213427     0.205097         3.9%
+  Random(1.0) + Sigmoid              0.257682     0.018135        93.0%
+  Xavier + Sigmoid                   0.220716     0.022327        89.9%
+  Random(0.01) + ReLU                0.222634     0.007044        96.8%
+  Random(1.0) + ReLU                 0.395736     0.004482        98.9%
+  Kaiming + ReLU                     0.261864     0.004715        98.2%
+```
+
 ## Use It
 
 PyTorch provides these as built-in functions:

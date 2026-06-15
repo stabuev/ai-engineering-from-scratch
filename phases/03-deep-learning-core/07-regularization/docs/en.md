@@ -433,6 +433,21 @@ class RegularizedNetwork:
         return history
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+  No regularization                   99.3%      97.3%     2.0%
+  Dropout p=0.3                       96.0%      98.0%    -2.0%
+  Weight decay 0.01                   96.7%      94.0%     2.7%
+  Dropout + weight decay              87.3%      90.7%    -3.3%
+
+  Key insight: regularization reduces the train-test gap.
+  The model with dropout + weight decay generalizes best,
+  even if its training accuracy is lower.
+```
+
 ## Use It
 
 PyTorch provides all normalization and regularization as modules:

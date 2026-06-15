@@ -6,6 +6,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 
 ## [Unreleased]
 
+### Added
+- **Content-review wave 3 (start) — self-check loop.** Added an `### Expected
+  output` / `### Ожидаемый вывод` block to the end of Build It in 11 Phase 3
+  (Deep Learning Core) lessons, showing the **real, captured** final output of
+  each lesson's code (run twice to confirm determinism — nothing fabricated).
+  Closes the beginner gap "I ran it, is this right?" for the phase. Skipped
+  `11-intro-to-pytorch` (non-deterministic, no fixed seed) and `12-intro-to-jax`
+  (jax not installed, no output). The hard-exercise `<details>` solutions are a
+  separate follow-up: the format renders on GitHub but `site/lesson.html`'s
+  parser escapes raw HTML, so it needs a `<details>` passthrough first.
+
 ### Fixed
 - **The website never rendered lesson figures.** `site/lesson.html`'s markdown
   parser had no image support, so the ~89 `![](…/assets/*.svg)` figures across

@@ -320,6 +320,21 @@ Two key differences from Step 4. First, sigmoid replaces the step function -- it
 
 This is the bridge to Lesson 03. The math behind `d_output` and `hidden_deltas` is the chain rule applied to the network graph. We'll derive it properly there.
 
+### Expected output
+
+Run `code/perceptron.py` — the final lines should read:
+
+```
+  Epoch 4000, error: 0.0007
+  Epoch 6000, error: 0.0005
+  Epoch 8000, error: 0.0003
+
+  [0, 0] -> 0.0074 (rounded: 0, expected 0)
+  [0, 1] -> 0.9923 (rounded: 1, expected 1)
+  [1, 0] -> 0.9923 (rounded: 1, expected 1)
+  [1, 1] -> 0.0094 (rounded: 0, expected 0)
+```
+
 ## Use It
 
 Everything you just built from scratch exists in one import:

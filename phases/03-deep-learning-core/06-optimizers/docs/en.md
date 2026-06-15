@@ -381,6 +381,21 @@ class OptimizerTestNetwork:
         return losses
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+============================================================
+STEP 4: Weight Decay Effect
+============================================================
+  Initial weight L2 norm: 10.0550
+  After 100 steps:
+    Adam  weight L2 norm: 10.0433
+    AdamW weight L2 norm: 9.9434
+    AdamW shrinks weights 1.0x more
+```
+
 ## Use It
 
 PyTorch optimizers handle parameter groups, gradient clipping, and learning rate scheduling:

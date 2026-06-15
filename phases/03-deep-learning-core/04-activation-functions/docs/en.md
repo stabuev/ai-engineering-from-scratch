@@ -457,6 +457,21 @@ for name, losses in results.items():
     print(f"  {name:10s}: start={losses[0]:.4f} -> end={losses[-1]:.4f} (improvement: {(1 - losses[-1]/losses[0])*100:.1f}%)")
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+    Epoch 100: loss=0.0133, accuracy=98.5%
+    Epoch 150: loss=0.0081, accuracy=99.5%
+    Epoch 199: loss=0.0056, accuracy=99.5%
+
+=== Final Loss Comparison ===
+  Sigmoid   : start=0.2222 -> end=0.0319 (improvement: 85.6%)
+  ReLU      : start=0.2232 -> end=0.0102 (improvement: 95.4%)
+  GELU      : start=0.2225 -> end=0.0056 (improvement: 97.5%)
+```
+
 ## Use It
 
 PyTorch provides all of these as both functional and module forms:

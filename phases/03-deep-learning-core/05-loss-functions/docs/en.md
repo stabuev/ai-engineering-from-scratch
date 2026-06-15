@@ -388,6 +388,21 @@ class LossComparisonNetwork:
         return losses
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+    Epoch 150: loss=0.0256, accuracy=99.0%
+    Epoch 199: loss=0.0219, accuracy=99.0%
+  Final: loss=0.0219, accuracy=99.0%
+
+=== Key Takeaway ===
+  Cross-entropy converges faster on classification because its
+  gradient is strong when predictions are wrong and weak when correct.
+  MSE gradient flattens near 0 and 1 due to sigmoid saturation.
+```
+
 ## Use It
 
 PyTorch provides all standard loss functions with numerical stability built in:

@@ -390,6 +390,21 @@ We use online SGD here -- update weights after each sample instead of accumulati
 
 No hand-tuning. The network discovers the circular decision boundary on its own. That's the power of backpropagation: you define the architecture, the loss function, and the data. The algorithm figures out the weights.
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+Epoch 1800 | Loss: 0.0132 | Accuracy: 100.0%
+
+Sample Circle Results:
+  [0.0, 0.0] -> 1.0000 (inside, expected inside) OK
+  [0.5, 0.5] -> 0.9901 (inside, expected inside) OK
+  [1.2, 1.2] -> 0.0000 (outside, expected outside) OK
+  [0.0, 1.2] -> 0.0004 (outside, expected outside) OK
+  [-0.3, 0.3] -> 1.0000 (inside, expected inside) OK
+```
+
 ## Use It
 
 PyTorch does everything above in a few lines. The core idea is identical -- autograd builds a computational graph during the forward pass and traces it backward to compute gradients.

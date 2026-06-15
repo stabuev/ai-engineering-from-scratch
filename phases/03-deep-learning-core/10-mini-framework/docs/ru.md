@@ -627,6 +627,21 @@ def train():
     return model, test_accuracy
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/main.py` — последние строки должны быть такими:
+
+```
+FRAMEWORK COMPONENTS
+======================================================================
+  Modules:    Linear, ReLU, Sigmoid, Tanh, Dropout, BatchNorm
+  Containers: Sequential
+  Losses:     MSELoss, BCELoss
+  Optimizers: SGD, Adam
+  Data:       DataLoader (batching + shuffle)
+  Total:      ~500 lines of pure Python
+```
+
 ## Используйте это
 
 Вот эквивалент PyTorch того, что вы только что построили:
