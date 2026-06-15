@@ -13,9 +13,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
   each lesson's code (run twice to confirm determinism — nothing fabricated).
   Closes the beginner gap "I ran it, is this right?" for the phase. Skipped
   `11-intro-to-pytorch` (non-deterministic, no fixed seed) and `12-intro-to-jax`
-  (jax not installed, no output). The hard-exercise `<details>` solutions are a
-  separate follow-up: the format renders on GitHub but `site/lesson.html`'s
-  parser escapes raw HTML, so it needs a `<details>` passthrough first.
+  (jax not installed, no output).
+- **Wave 3 (cont.) — collapsible solutions enabled.** `site/lesson.html` now
+  passes `<details>`/`<summary>` through its markdown parser (it previously
+  escaped raw HTML, so collapsible solutions would have shown as literal tags),
+  with CSS styling — verified live (cursor, colour, left border, native toggle).
+  First verified solution added to `03-backpropagation` exercise 3 (`__pow__`):
+  the code was run and produces loss and gradients identical to the original
+  `mse_loss`. Remaining Phase 3 hard-exercise solutions are the next chunk (each
+  authored and verified by running before paste).
 
 ### Fixed
 - **The website never rendered lesson figures.** `site/lesson.html`'s markdown

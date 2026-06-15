@@ -460,6 +460,25 @@ This lesson produces:
 
 5. Build a visualization: after training on XOR, print the gradient of every parameter in the network. Identify which layer has the smallest gradients. This demonstrates the vanishing gradient problem you read about in the Concept section.
 
+<details>
+<summary>Solution — exercise 3 (`__pow__`)</summary>
+
+```python
+def __pow__(self, k):
+    assert isinstance(k, int)
+    out = Value(self.data ** k, (self,), f'**{k}')
+
+    def _backward():
+        self.grad += k * (self.data ** (k - 1)) * out.grad
+
+    out._backward = _backward
+    return out
+```
+
+Then `mse = (predicted + Value(-target)) ** 2`. The power rule `d(x**n)/dx = n*x**(n-1)` reproduces the gradient that `diff * diff` gives — verified identical loss and gradients on several inputs.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

@@ -104,13 +104,19 @@ Include it here and save it in the outputs/ folder.]
 2. [Medium — apply it to a different problem]
 3. [Hard — extend or combine with prior lessons]
 
-   <details><summary>Solution</summary>
+After the list (not nested inside it — keeps the numbering intact), add a
+collapsed solution for the hard exercise. Each tag on its own line; the parser
+passes them through and the block renders collapsed on GitHub and the site:
 
-   [Reference solution for the hard exercise — code and/or a one-line "why".
-   Collapsed by default on GitHub and the site, so it does not spoil the
-   attempt but closes the self-check loop for a learner without a mentor.]
+```
+<details>
+<summary>Solution — exercise 3</summary>
 
-   </details>
+[reference solution — code and/or a one-line "why". For code exercises,
+run your solution first and only paste what you verified.]
+
+</details>
+```
 
 ## Key Terms
 

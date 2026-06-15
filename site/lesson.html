@@ -2269,6 +2269,23 @@
             continue;
           }
 
+          // Collapsible solution blocks: pass <details>/<summary>/</details>
+          // lines through as raw HTML (the parser otherwise escapes them).
+          var detailLine = line.match(/^\s*(<details>|<\/details>|<summary>[\s\S]*?<\/summary>)\s*$/);
+          if (detailLine) {
+            out += flushList();
+            out += flushTable();
+            out += flushBlockquote();
+            var rawTag = line.trim();
+            if (rawTag.indexOf('<summary>') === 0) {
+              var inner = rawTag.replace(/^<summary>/, '').replace(/<\/summary>$/, '');
+              out += '<summary>' + inlineFormat(inner) + '</summary>';
+            } else {
+              out += rawTag;
+            }
+            continue;
+          }
+
           if (line.match(/^\|.+\|/)) {
             out += flushList();
             out += flushBlockquote();

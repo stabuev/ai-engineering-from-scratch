@@ -341,6 +341,27 @@ p.dropcap::first-letter {
   margin: 1.5rem auto;
 }
 
+.lesson-article details {
+  border: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--blueprint);
+  padding: 0 16px;
+  margin: 1.2rem 0;
+  background: transparent;
+}
+
+.lesson-article details summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--blueprint);
+}
+
+.lesson-article details[open] summary {
+  margin-bottom: 4px;
+}
+
 .lang-toggle:hover {
   color: var(--blueprint);
   border-color: var(--blueprint);
