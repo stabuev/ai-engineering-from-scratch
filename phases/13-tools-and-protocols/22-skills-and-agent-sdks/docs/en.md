@@ -30,6 +30,14 @@ Three layers, one portable artifact.
 
 ## The Concept
 
+```mermaid
+graph LR
+  MCP["MCP: what tools exist"] --> AGENT["agent"]
+  SKILL["SKILL.md: how to do a task"] --> AGENT
+  AGENTS["AGENTS.md: repo instructions"] --> AGENT
+  SKILL --> PD["progressive disclosure: load on demand"]
+```
+
 ### AGENTS.md (agents.md)
 
 Launched late 2025, adopted by 60,000+ repos by April 2026. One file at repo root. Format:

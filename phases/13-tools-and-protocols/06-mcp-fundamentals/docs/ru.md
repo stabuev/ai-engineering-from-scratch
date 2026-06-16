@@ -26,6 +26,16 @@ Spec revision, используемая в этой phase, — **2025-11-25**. �
 
 ## Концепция
 
+```mermaid
+graph LR
+  C["Client"] -- "1. initialize" --> S["Server"]
+  S -- "2. capabilities" --> C
+  C -- "3. tools/list" --> S
+  S -- "4. tools" --> C
+  C -- "5. tools/call" --> S
+  S -- "6. result" --> C
+```
+
 ### Три server primitives
 
 1. **Tools.** Вызываемые действия. Тот же четырехшаговый цикл из Phase 13 · 01.

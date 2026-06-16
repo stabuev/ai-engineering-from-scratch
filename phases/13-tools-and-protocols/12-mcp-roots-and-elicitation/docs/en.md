@@ -26,6 +26,14 @@ Roots fix the first: the client declares at `initialize` the set of URIs the ser
 
 ## The Concept
 
+```mermaid
+graph LR
+  ROOT["client: roots/list → workspace dirs"] --> SRV["server scopes work to roots"]
+  SRV -. "needs input" .-> EL["elicitation/create → form"]
+  EL --> USER["user fills form"]
+  USER --> SRV
+```
+
 ### Roots
 
 The client declares a root list at `initialize`:

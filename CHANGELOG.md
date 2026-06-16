@@ -77,6 +77,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
     Show-o two-loss, Janus decoupled encoders, MIO any-to-any, video TMRoPE,
     long-video paths, audio Q-former, omni Thinker-Talker, embodied VLA, OCR-free
     docs, ColPali late interaction, cross-modal RAG, computer-use loop).
+  - Phase 13 (Tools & Protocols), all 21 figure-less lessons: the tool-call loop,
+    the three providers' shapes, parallel/id-correlated calls, constrained
+    decoding, MCP client↔server handshake, server dispatch, client namespace
+    merging, transports, the tools/resources/prompts decision rule, sampling,
+    roots + elicitation, async-task states, MCP Apps iframe bridge, the tool-
+    poisoning attack surface, the OAuth 2.1 + PKCE flow, gateways, the production
+    auth RFC stack, A2A, the routing layer, and MCP-vs-Skills. All 21 validated
+    with mermaid.parse.
   - Phase 7 · 15 (attention variants) — the one transformer lesson without a figure.
   - Phases 9 (all 12) and 7 (the other 10) were diagrammed first, then reverted:
     those lessons already ship polished SVG figures, which now render on the site,

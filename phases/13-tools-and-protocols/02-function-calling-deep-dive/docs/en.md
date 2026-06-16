@@ -30,6 +30,13 @@ This lesson builds a translator that unifies the three formats into one canonica
 
 ## The Concept
 
+```mermaid
+graph TB
+  LOOP["same tool-call loop"] --> O["OpenAI: tools / tool_choice"]
+  LOOP --> A["Anthropic: tool_use / tool_result blocks"]
+  LOOP --> G["Google: functionCall / functionResponse parts"]
+```
+
 ### The common structure
 
 Every provider needs five things:

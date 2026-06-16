@@ -26,6 +26,13 @@ The right split: expose data as a resource, expose mutating or computed actions 
 
 ## The Concept
 
+```mermaid
+graph TB
+  Q["what to expose?"] --> TO["action with side effects → Tool"]
+  Q --> RE["read-only data → Resource"]
+  Q --> PR["user-invoked template → Prompt"]
+```
+
 ### Tools vs resources vs prompts — the decision rule
 
 | Capability | Primitive |

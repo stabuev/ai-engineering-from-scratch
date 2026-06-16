@@ -28,6 +28,14 @@ A2A is the "let agents across frameworks talk to each other" protocol. It does n
 
 ## The Concept
 
+```mermaid
+graph LR
+  A["Agent A"] -- "discover" --> CARD["Agent Card"]
+  A -- "send Message / Parts" --> B["Agent B"]
+  B --> TASK["Task lifecycle"]
+  TASK --> A
+```
+
 ### Agent Card
 
 Every A2A-compliant agent publishes a card at `/.well-known/agent.json`:

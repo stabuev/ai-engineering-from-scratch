@@ -24,6 +24,13 @@ Every compatible client (Claude Desktop, ChatGPT, Goose, VS Code) renders the sa
 
 ## The Concept
 
+```mermaid
+graph LR
+  TOOL["tool returns ui:// resource"] --> IFR["sandboxed iframe (text/html;profile=mcp-app)"]
+  IFR -- "postMessage JSON-RPC" --> HOST["host"]
+  HOST -- "permissions" --> IFR
+```
+
 ### The `ui://` resource scheme
 
 A tool returns:

@@ -30,6 +30,14 @@ Simulator Lesson 16 запускает OAuth 2.1 in memory. Production имее�
 
 ## Концепция
 
+```mermaid
+graph TB
+  PROD["production MCP auth"] --> ASM["RFC 8414: server metadata"]
+  PROD --> PRM["RFC 9728: protected-resource metadata"]
+  PROD --> DCR["RFC 7591: dynamic client registration"]
+  PROD --> RI["RFC 8707: resource indicators"]
+```
+
 ### RFC 8414 — OAuth Authorization Server Metadata
 
 Документ по адресу `/.well-known/oauth-authorization-server` описывает все, что нужно client:

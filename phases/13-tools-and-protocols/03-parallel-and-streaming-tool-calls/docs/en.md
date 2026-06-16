@@ -46,6 +46,17 @@ The price is correlation complexity. When the three calls complete out of order,
 
 ## The Concept
 
+```mermaid
+graph LR
+  M["model emits N tool calls"] --> P1["call 1 (id=a)"]
+  M --> P2["call 2 (id=b)"]
+  M --> P3["call 3 (id=c)"]
+  P1 --> R["results matched by id"]
+  P2 --> R
+  P3 --> R
+  R --> M
+```
+
 ### Enabling parallel
 
 - **OpenAI.** `parallel_tool_calls: true` on by default. Set `false` to force serial.

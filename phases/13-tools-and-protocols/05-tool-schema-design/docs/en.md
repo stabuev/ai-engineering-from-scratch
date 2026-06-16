@@ -28,6 +28,16 @@ Description and name quality is the cheapest lever you have.
 
 ## The Concept
 
+```mermaid
+graph TB
+  T["tool schema"] --> N["name: verb_noun"]
+  T --> D["description: when to use it"]
+  T --> P["params: atomic, enum-closed"]
+  N --> SEL["model selects the right tool"]
+  D --> SEL
+  P --> SEL
+```
+
 ### Naming rules
 
 1. **`snake_case`.** Every provider's tokenizer handles it cleanly. `camelCase` fragments across token boundaries on some tokenizers.

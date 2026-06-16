@@ -36,6 +36,13 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  S["JSON Schema 2020-12"] --> CD["constrained decoding"]
+  CD --> V["valid JSON (parses every time)"]
+  CD --> REF["refusal (explicit, not malformed)"]
+```
+
 ### JSON Schema 2020-12 — lingua franca
 
 Каждый provider принимает JSON Schema 2020-12. Конструкции, которые вы используете чаще всего:

@@ -26,6 +26,15 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  CALL["tools/call with _meta.task"] --> SUB["submitted"]
+  SUB --> WORK["working"]
+  WORK --> DONE["completed → tasks/result"]
+  WORK --> FAIL["failed"]
+  POLL["client polls tasks/status"] -. "while working" .-> WORK
+```
+
 ### Task augmentation
 
 Запрос становится задачей при установке `params._meta.task.required: true` (или `optional: true`, тогда решает сервер). Сервер сразу отвечает:

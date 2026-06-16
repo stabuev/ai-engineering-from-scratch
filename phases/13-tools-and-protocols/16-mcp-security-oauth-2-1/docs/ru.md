@@ -28,6 +28,15 @@ OAuth 2.1 не новый. Новое — профиль MCP: конкретны
 
 ## Концепция
 
+```mermaid
+graph LR
+  C["Client"] -- "authorize + PKCE challenge" --> AS["Auth Server"]
+  AS -- "code" --> C
+  C -- "token + verifier + resource indicator" --> AS
+  AS -- "access token (aud = server)" --> C
+  C -- "request + token" --> MS["MCP Server"]
+```
+
 ### Роли
 
 - **Client.** MCP client (Claude Desktop, Cursor и т. д.).

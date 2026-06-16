@@ -29,6 +29,15 @@ Hand-rolling all of that is what separates "toy" from "serviceable". The officia
 
 ## The Concept
 
+```mermaid
+graph LR
+  C["MCP client"] --> S1["server A session"]
+  C --> S2["server B session"]
+  S1 --> NS["merged tool namespace"]
+  S2 --> NS
+  NS --> RT["route each call to its owning server"]
+```
+
 ### Child-process spawning
 
 `subprocess.Popen` with `stdin=PIPE, stdout=PIPE, stderr=PIPE`. Set `bufsize=1` and use text mode for line-by-line reads. Each server is one process; the client holds one `Popen` handle per server.

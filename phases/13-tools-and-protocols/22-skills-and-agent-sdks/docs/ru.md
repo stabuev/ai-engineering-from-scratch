@@ -30,6 +30,14 @@ AGENTS.md и SKILL.md вместе исправляют это:
 
 ## Концепция
 
+```mermaid
+graph LR
+  MCP["MCP: what tools exist"] --> AGENT["agent"]
+  SKILL["SKILL.md: how to do a task"] --> AGENT
+  AGENTS["AGENTS.md: repo instructions"] --> AGENT
+  SKILL --> PD["progressive disclosure: load on demand"]
+```
+
 ### AGENTS.md (agents.md)
 
 Запущен в конце 2025 года, к апрелю 2026 года принят в 60,000+ repos. Один файл в корне repo. Формат:
