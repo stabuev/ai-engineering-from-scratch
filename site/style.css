@@ -650,12 +650,14 @@ p.dropcap::first-letter {
   text-align: center;
 }
 
-.modal-lesson-type[data-type="Build"] {
+.modal-lesson-type[data-type="Build"],
+.modal-lesson-type[data-type="Практика"] {
   color: var(--blueprint);
   border-color: var(--blueprint);
 }
 
-.modal-lesson-type[data-type="Learn"] {
+.modal-lesson-type[data-type="Learn"],
+.modal-lesson-type[data-type="Теория"] {
   color: var(--ink);
   border-color: var(--ink);
 }

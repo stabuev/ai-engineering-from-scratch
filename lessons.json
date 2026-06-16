@@ -1,0 +1,4107 @@
+{
+  "phases": [
+    {
+      "number": 0,
+      "dir": "00-setup-and-tooling",
+      "name": "Настройка и инструменты",
+      "desc": "Подготовьте среду для всего, что будет дальше.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-dev-environment",
+          "title": "Среда разработки",
+          "type": "Практика",
+          "languages": "Python, TypeScript, Rust",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "02",
+          "dir": "02-git-and-collaboration",
+          "title": "Git и совместная работа",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "03",
+          "dir": "03-gpu-setup-and-cloud",
+          "title": "Настройка GPU и облако",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-apis-and-keys",
+          "title": "API и ключи",
+          "type": "Практика",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-jupyter-notebooks",
+          "title": "Jupyter Notebook",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-python-environments",
+          "title": "Окружения Python",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-docker-for-ai",
+          "title": "Docker для AI",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-editor-setup",
+          "title": "Настройка редактора",
+          "type": "Практика",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-data-management",
+          "title": "Управление данными",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-terminal-and-shell",
+          "title": "Терминал и shell",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-linux-for-ai",
+          "title": "Linux для AI",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-debugging-and-profiling",
+          "title": "Отладка и профилирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 1,
+      "dir": "01-math-foundations",
+      "name": "Математические основы",
+      "desc": "Интуиция за каждым AI-алгоритмом через код.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-linear-algebra-intuition",
+          "title": "Интуиция линейной алгебры",
+          "type": "Теория",
+          "languages": "Python, Julia",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-vectors-matrices-operations",
+          "title": "Векторы, матрицы и операции",
+          "type": "Практика",
+          "languages": "Python, Julia",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-matrix-transformations",
+          "title": "Матричные преобразования и собственные значения",
+          "type": "Практика",
+          "languages": "Python, Julia",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-calculus-for-ml",
+          "title": "Математический анализ для ML: производные и градиенты",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-chain-rule-and-autodiff",
+          "title": "Правило цепочки и автоматическое дифференцирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-probability-and-distributions",
+          "title": "Вероятность и распределения",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "07",
+          "dir": "07-bayes-theorem",
+          "title": "Теорема Байеса и статистическое мышление",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-optimization",
+          "title": "Оптимизация: семейство градиентного спуска",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-information-theory",
+          "title": "Теория информации: энтропия, KL-дивергенция",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-dimensionality-reduction",
+          "title": "Снижение размерности: PCA, t-SNE, UMAP",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "11",
+          "dir": "11-singular-value-decomposition",
+          "title": "Сингулярное разложение",
+          "type": "Практика",
+          "languages": "Python, Julia",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-tensor-operations",
+          "title": "Тензорные операции",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-numerical-stability",
+          "title": "Численная устойчивость",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "14",
+          "dir": "14-norms-and-distances",
+          "title": "Нормы и расстояния",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "15",
+          "dir": "15-statistics-for-ml",
+          "title": "Статистика для ML",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "16",
+          "dir": "16-sampling-methods",
+          "title": "Методы выборки",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-linear-systems",
+          "title": "Линейные системы",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-convex-optimization",
+          "title": "Выпуклая оптимизация",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "19",
+          "dir": "19-complex-numbers",
+          "title": "Комплексные числа для AI",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "20",
+          "dir": "20-fourier-transform",
+          "title": "Преобразование Фурье",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "21",
+          "dir": "21-graph-theory",
+          "title": "Теория графов для ML",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "22",
+          "dir": "22-stochastic-processes",
+          "title": "Стохастические процессы",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "dir": "02-ml-fundamentals",
+      "name": "Основы ML",
+      "desc": "Классический ML все еще остается основой большей части production AI.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-what-is-machine-learning",
+          "title": "Что такое машинное обучение",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-linear-regression",
+          "title": "Линейная регрессия с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-logistic-regression",
+          "title": "Логистическая регрессия и классификация",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-decision-trees",
+          "title": "Деревья решений и случайные леса",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-support-vector-machines",
+          "title": "Метод опорных векторов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-knn-and-distances",
+          "title": "KNN и метрики расстояния",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-unsupervised-learning",
+          "title": "Обучение без учителя: K-Means, DBSCAN",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-feature-engineering",
+          "title": "Проектирование и отбор признаков",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-model-evaluation",
+          "title": "Оценка моделей: метрики, кросс-валидация",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-bias-variance",
+          "title": "Смещение, дисперсия и кривая обучения",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-ensemble-methods",
+          "title": "Ансамблевые методы: boosting, bagging, stacking",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-hyperparameter-tuning",
+          "title": "Настройка гиперпараметров",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-ml-pipelines",
+          "title": "ML-пайплайны и отслеживание экспериментов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "14",
+          "dir": "14-naive-bayes",
+          "title": "Наивный Байес",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-time-series",
+          "title": "Основы временных рядов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "16",
+          "dir": "16-anomaly-detection",
+          "title": "Обнаружение аномалий",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-imbalanced-data",
+          "title": "Работа с несбалансированными данными",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-feature-selection",
+          "title": "Отбор признаков",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "dir": "03-deep-learning-core",
+      "name": "Ядро deep learning",
+      "desc": "Нейросети с первых принципов. Никаких фреймворков, пока вы не соберете свой.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-the-perceptron",
+          "title": "Перцептрон: с чего все началось",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-multi-layer-networks",
+          "title": "Многослойные сети и прямой проход",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-backpropagation",
+          "title": "Backpropagation с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-activation-functions",
+          "title": "Функции активации: ReLU, Sigmoid, GELU и зачем они нужны",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-loss-functions",
+          "title": "Функции потерь: MSE, Cross-Entropy, Contrastive",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "06",
+          "dir": "06-optimizers",
+          "title": "Оптимизаторы: SGD, Momentum, Adam, AdamW",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-regularization",
+          "title": "Регуляризация: Dropout, Weight Decay, BatchNorm",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-weight-initialization",
+          "title": "Инициализация весов и стабильность обучения",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "09",
+          "dir": "09-learning-rate-schedules",
+          "title": "Расписания learning rate и warmup",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-mini-framework",
+          "title": "Соберите собственный мини-фреймворк",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "11",
+          "dir": "11-intro-to-pytorch",
+          "title": "Введение в PyTorch",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-intro-to-jax",
+          "title": "Введение в JAX",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-debugging-neural-networks",
+          "title": "Отладка нейросетей",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "dir": "04-computer-vision",
+      "name": "Computer Vision",
+      "desc": "От пикселей к пониманию: изображения, видео, 3D, VLM и модели мира.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-image-fundamentals",
+          "title": "Основы изображений: пиксели, каналы, цветовые пространства",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-convolutions-from-scratch",
+          "title": "Свертки с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-cnns-lenet-to-resnet",
+          "title": "CNN: от LeNet до ResNet",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-image-classification",
+          "title": "Классификация изображений",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-transfer-learning",
+          "title": "Transfer learning и fine-tuning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-object-detection-yolo",
+          "title": "Обнаружение объектов — YOLO с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-semantic-segmentation-unet",
+          "title": "Семантическая сегментация — U-Net",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-instance-segmentation-mask-rcnn",
+          "title": "Instance segmentation — Mask R-CNN",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-image-generation-gans",
+          "title": "Генерация изображений — GAN",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-image-generation-diffusion",
+          "title": "Генерация изображений — diffusion models",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "11",
+          "dir": "11-stable-diffusion",
+          "title": "Stable Diffusion — архитектура и fine-tuning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-video-understanding",
+          "title": "Понимание видео — временное моделирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "13",
+          "dir": "13-3d-vision-nerf",
+          "title": "3D vision: облака точек, NeRF",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "14",
+          "dir": "14-vision-transformers",
+          "title": "Vision Transformers (ViT)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "15",
+          "dir": "15-real-time-edge",
+          "title": "Зрение в реальном времени: edge-деплой",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "16",
+          "dir": "16-vision-pipeline-capstone",
+          "title": "Соберите полный vision-пайплайн",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "17",
+          "dir": "17-self-supervised-vision",
+          "title": "Self-supervised vision — SimCLR, DINO, MAE",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-open-vocab-clip",
+          "title": "Open-vocabulary vision — CLIP",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "19",
+          "dir": "19-ocr-document-understanding",
+          "title": "OCR и понимание документов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "20",
+          "dir": "20-image-retrieval-metric",
+          "title": "Поиск изображений и metric learning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "21",
+          "dir": "21-keypoint-pose",
+          "title": "Обнаружение ключевых точек и оценка позы",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "22",
+          "dir": "22-3d-gaussian-splatting",
+          "title": "3D Gaussian Splatting с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 90
+        },
+        {
+          "number": "23",
+          "dir": "23-diffusion-transformers-rectified-flow",
+          "title": "Diffusion Transformers и Rectified Flow",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "24",
+          "dir": "24-sam3-open-vocab-segmentation",
+          "title": "SAM 3 и open-vocabulary сегментация",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "25",
+          "dir": "25-vision-language-models",
+          "title": "Vision-language models (ViT-MLP-LLM)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "26",
+          "dir": "26-monocular-depth",
+          "title": "Монокулярная глубина и оценка геометрии",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "27",
+          "dir": "27-multi-object-tracking",
+          "title": "Multi-object tracking и видеопамять",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "28",
+          "dir": "28-world-models-video-diffusion",
+          "title": "Модели мира и video diffusion",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "dir": "05-nlp-foundations-to-advanced",
+      "name": "NLP: от основ к продвинутому уровню",
+      "desc": "Язык — интерфейс к интеллекту.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-text-processing",
+          "title": "Обработка текста: токенизация, stemming, лемматизация",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-bag-of-words-tfidf",
+          "title": "Bag of Words, TF-IDF и представление текста",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-word-embeddings-word2vec",
+          "title": "Word embeddings: Word2Vec с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-glove-fasttext-subword",
+          "title": "GloVe, FastText и subword embeddings",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-sentiment-analysis",
+          "title": "Анализ тональности",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-named-entity-recognition",
+          "title": "Распознавание именованных сущностей (NER)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-pos-tagging-parsing",
+          "title": "POS-tagging и синтаксический парсинг",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "08",
+          "dir": "08-cnns-rnns-for-text",
+          "title": "Классификация текста — CNN и RNN для текста",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-sequence-to-sequence",
+          "title": "Sequence-to-sequence модели",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-attention-mechanism",
+          "title": "Механизм attention — прорыв",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-machine-translation",
+          "title": "Машинный перевод",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-text-summarization",
+          "title": "Суммаризация текста",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-question-answering",
+          "title": "Системы ответов на вопросы",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "14",
+          "dir": "14-information-retrieval-search",
+          "title": "Information retrieval и поиск",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-topic-modeling",
+          "title": "Topic modeling: LDA, BERTopic",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "16",
+          "dir": "16-text-generation-pre-transformer",
+          "title": "Генерация текста",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "17",
+          "dir": "17-chatbots-rule-to-neural",
+          "title": "Чат-боты: от правил к нейросетям",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-multilingual-nlp",
+          "title": "Многоязычный NLP",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "19",
+          "dir": "19-subword-tokenization",
+          "title": "Subword tokenization: BPE, WordPiece, Unigram, SentencePiece",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "20",
+          "dir": "20-structured-outputs-constrained-decoding",
+          "title": "Структурированные выходы и constrained decoding",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "21",
+          "dir": "21-nli-textual-entailment",
+          "title": "NLI и textual entailment",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-embedding-models-deep-dive",
+          "title": "Глубокий разбор embedding models",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "23",
+          "dir": "23-chunking-strategies-rag",
+          "title": "Стратегии chunking для RAG",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "24",
+          "dir": "24-coreference-resolution",
+          "title": "Разрешение кореференции",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "25",
+          "dir": "25-entity-linking",
+          "title": "Entity linking и устранение неоднозначности",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "26",
+          "dir": "26-relation-extraction-kg",
+          "title": "Извлечение отношений и построение knowledge graph",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "27",
+          "dir": "27-llm-evaluation-frameworks",
+          "title": "Оценка LLM: RAGAS, DeepEval, G-Eval",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "28",
+          "dir": "28-long-context-evaluation",
+          "title": "Оценка длинного контекста: NIAH, RULER, LongBench, MRCR",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "29",
+          "dir": "29-dialogue-state-tracking",
+          "title": "Отслеживание состояния диалога",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "dir": "06-speech-and-audio",
+      "name": "Speech & Audio",
+      "desc": "Слышать, понимать, говорить.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-audio-fundamentals",
+          "title": "Основы аудио: волновые формы, sampling, FFT",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-spectrograms-mel-features",
+          "title": "Спектрограммы, Mel scale и audio features",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "03",
+          "dir": "03-audio-classification",
+          "title": "Классификация аудио",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-speech-recognition-asr",
+          "title": "Распознавание речи (ASR)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-whisper-architecture-finetuning",
+          "title": "Whisper: архитектура и fine-tuning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-speaker-recognition-verification",
+          "title": "Распознавание и верификация говорящего",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "07",
+          "dir": "07-text-to-speech",
+          "title": "Text-to-Speech (TTS)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-voice-cloning-conversion",
+          "title": "Клонирование и преобразование голоса",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-music-generation",
+          "title": "Генерация музыки",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-audio-language-models",
+          "title": "Audio-language models",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-real-time-audio-processing",
+          "title": "Обработка аудио в реальном времени",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-voice-assistant-pipeline",
+          "title": "Соберите пайплайн голосового ассистента",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "13",
+          "dir": "13-neural-audio-codecs",
+          "title": "Нейронные аудиокодеки — EnCodec, SNAC, Mimi, DAC",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "14",
+          "dir": "14-voice-activity-detection-turn-taking",
+          "title": "Voice activity detection и turn-taking",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "15",
+          "dir": "15-streaming-speech-to-speech-moshi-hibiki",
+          "title": "Потоковый speech-to-speech — Moshi, Hibiki",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "16",
+          "dir": "16-anti-spoofing-audio-watermarking",
+          "title": "Voice anti-spoofing и аудиоводяные знаки",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-audio-evaluation-metrics",
+          "title": "Оценка аудио — WER, MOS, MMAU, лидерборды",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "dir": "07-transformers-deep-dive",
+      "name": "Глубокий разбор Transformers",
+      "desc": "Архитектура, которая изменила все.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-why-transformers",
+          "title": "Зачем нужны Transformers: проблемы RNN",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-self-attention-from-scratch",
+          "title": "Self-attention с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-multi-head-attention",
+          "title": "Multi-head attention",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-positional-encoding",
+          "title": "Позиционное кодирование: sinusoidal, RoPE, ALiBi",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-full-transformer",
+          "title": "Полный Transformer: encoder + decoder",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-bert-masked-language-modeling",
+          "title": "BERT — masked language modeling",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "07",
+          "dir": "07-gpt-causal-language-modeling",
+          "title": "GPT — causal language modeling",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-t5-bart-encoder-decoder",
+          "title": "T5, BART — encoder-decoder модели",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "09",
+          "dir": "09-vision-transformers",
+          "title": "Vision Transformers (ViT)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-audio-transformers-whisper",
+          "title": "Audio Transformers — архитектура Whisper",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-mixture-of-experts",
+          "title": "Mixture of Experts (MoE)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-kv-cache-flash-attention",
+          "title": "KV cache, Flash Attention и оптимизация inference",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-scaling-laws",
+          "title": "Законы масштабирования",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "14",
+          "dir": "14-build-a-transformer-capstone",
+          "title": "Соберите Transformer с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "15",
+          "dir": "15-attention-variants",
+          "title": "Варианты Attention — Sliding Window, Sparse, Differential",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "16",
+          "dir": "16-speculative-decoding",
+          "title": "Speculative Decoding — черновик, проверка, повтор",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "dir": "08-generative-ai",
+      "name": "Generative AI",
+      "desc": "Создавайте изображения, видео, аудио, 3D и многое другое.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-generative-models-taxonomy-history",
+          "title": "Генеративные модели: таксономия и история",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-autoencoders-vae",
+          "title": "Автоэнкодеры и VAE",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-gans-generator-discriminator",
+          "title": "GAN: генератор против дискриминатора",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-conditional-gans-pix2pix",
+          "title": "Conditional GAN и Pix2Pix",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-stylegan",
+          "title": "StyleGAN",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "06",
+          "dir": "06-diffusion-ddpm-from-scratch",
+          "title": "Diffusion models — DDPM с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-latent-diffusion-stable-diffusion",
+          "title": "Latent diffusion и Stable Diffusion",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-controlnet-lora-conditioning",
+          "title": "ControlNet, LoRA и conditioning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-inpainting-outpainting-editing",
+          "title": "Inpainting, outpainting и редактирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-video-generation",
+          "title": "Генерация видео",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-audio-generation",
+          "title": "Генерация аудио",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-3d-generation",
+          "title": "Генерация 3D",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "13",
+          "dir": "13-flow-matching-rectified-flows",
+          "title": "Flow matching и Rectified Flows",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "14",
+          "dir": "14-evaluation-fid-clip-score",
+          "title": "Оценка: FID, CLIP Score",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "15",
+          "dir": "15-visual-autoregressive-var",
+          "title": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "in-progress",
+          "minutes": 90
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "dir": "09-reinforcement-learning",
+      "name": "Reinforcement Learning",
+      "desc": "Основа RLHF и AI для игр.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-mdps-states-actions-rewards",
+          "title": "MDP, состояния, действия и награды",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-dynamic-programming",
+          "title": "Динамическое программирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-monte-carlo-methods",
+          "title": "Методы Monte Carlo",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-q-learning-sarsa",
+          "title": "Q-learning, SARSA",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-dqn",
+          "title": "Deep Q-Networks (DQN)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-policy-gradients-reinforce",
+          "title": "Policy gradients — REINFORCE",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-actor-critic-a2c-a3c",
+          "title": "Actor-critic — A2C, A3C",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-ppo",
+          "title": "PPO",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-reward-modeling-rlhf",
+          "title": "Reward modeling и RLHF",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-multi-agent-rl",
+          "title": "Multi-agent RL",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-sim-to-real-transfer",
+          "title": "Sim-to-real transfer",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-rl-for-games",
+          "title": "RL для игр",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "dir": "10-llms-from-scratch",
+      "name": "LLM с нуля",
+      "desc": "Стройте, обучайте и понимайте большие языковые модели.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-tokenizers",
+          "title": "Токенизаторы: BPE, WordPiece, SentencePiece",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-building-a-tokenizer",
+          "title": "Создание токенизатора с нуля",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-data-pipelines",
+          "title": "Пайплайны данных для pre-training",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-pre-training-mini-gpt",
+          "title": "Pre-training мини-GPT (124M)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "05",
+          "dir": "05-scaling-distributed",
+          "title": "Распределенное обучение, FSDP, DeepSpeed",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-instruction-tuning-sft",
+          "title": "Instruction tuning — SFT",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-rlhf",
+          "title": "RLHF — reward model + PPO",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-dpo",
+          "title": "DPO — Direct Preference Optimization",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-constitutional-ai-self-improvement",
+          "title": "Constitutional AI и self-improvement",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-evaluation",
+          "title": "Оценка — бенчмарки, evals",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "11",
+          "dir": "11-quantization",
+          "title": "Квантизация: INT8, GPTQ, AWQ, GGUF",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-inference-optimization",
+          "title": "Оптимизация inference",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-building-complete-llm-pipeline",
+          "title": "Создание полного LLM-пайплайна",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "14",
+          "dir": "14-open-models-architecture-walkthroughs",
+          "title": "Открытые модели: разбор архитектур",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "15",
+          "dir": "15-speculative-decoding-eagle3",
+          "title": "Speculative decoding и EAGLE-3",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "16",
+          "dir": "16-differential-attention-v2",
+          "title": "Differential Attention (V2)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "17",
+          "dir": "17-native-sparse-attention",
+          "title": "Native Sparse Attention (DeepSeek NSA)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "18",
+          "dir": "18-multi-token-prediction",
+          "title": "Multi-token prediction (MTP)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "19",
+          "dir": "19-dualpipe-parallelism",
+          "title": "Параллелизм DualPipe",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "20",
+          "dir": "20-deepseek-v3-walkthrough",
+          "title": "Разбор архитектуры DeepSeek-V3",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "21",
+          "dir": "21-jamba-hybrid-ssm-transformer",
+          "title": "Jamba — гибридный SSM-Transformer",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-async-hogwild-inference",
+          "title": "Async и Hogwild! inference",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "23",
+          "dir": "23-gradient-checkpointing",
+          "title": "Gradient Checkpointing и Activation Recomputation",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "in-progress",
+          "minutes": 70
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "dir": "11-llm-engineering",
+      "name": "LLM Engineering",
+      "desc": "Заставьте LLM работать в production.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-prompt-engineering",
+          "title": "Prompt engineering: техники и паттерны",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-few-shot-cot",
+          "title": "Few-shot, CoT, Tree-of-Thought",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "03",
+          "dir": "03-structured-outputs",
+          "title": "Структурированные выходы",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-embeddings",
+          "title": "Embeddings и векторные представления",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-context-engineering",
+          "title": "Context engineering",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-rag",
+          "title": "RAG: Retrieval-Augmented Generation",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-advanced-rag",
+          "title": "Продвинутый RAG: chunking, reranking",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-fine-tuning-lora",
+          "title": "Fine-tuning с LoRA и QLoRA",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-function-calling",
+          "title": "Function calling и использование инструментов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-evaluation",
+          "title": "Оценка и тестирование",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-caching-cost",
+          "title": "Кеширование, rate limiting и стоимость",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-guardrails",
+          "title": "Guardrails и безопасность",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "13",
+          "dir": "13-production-app",
+          "title": "Создание production LLM-приложения",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "14",
+          "dir": "14-model-context-protocol",
+          "title": "Model Context Protocol (MCP)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-prompt-caching",
+          "title": "Prompt caching и context caching",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "16",
+          "dir": "16-langgraph-state-machines",
+          "title": "LangGraph — конечные автоматы для агентов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "in-progress",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-agent-framework-tradeoffs",
+          "title": "Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "in-progress",
+          "minutes": 45
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "dir": "12-multimodal-ai",
+      "name": "Multimodal AI",
+      "desc": "Видеть, слышать, читать и рассуждать между модальностями — от ViT patches до computer-use агентов.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-vision-transformer-patch-tokens",
+          "title": "Vision Transformers и примитив patch-token",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "02",
+          "dir": "02-clip-contrastive-pretraining",
+          "title": "CLIP и contrastive vision-language pretraining",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "03",
+          "dir": "03-blip2-qformer-bridge",
+          "title": "BLIP-2 Q-Former как мост между модальностями",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "04",
+          "dir": "04-flamingo-gated-cross-attention",
+          "title": "Flamingo и gated cross-attention",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "05",
+          "dir": "05-llava-visual-instruction-tuning",
+          "title": "LLaVA и visual instruction tuning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "06",
+          "dir": "06-any-resolution-patch-n-pack",
+          "title": "Any-resolution vision — Patch-n'-Pack и NaFlex",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "07",
+          "dir": "07-open-weight-vlm-recipes",
+          "title": "Рецепты open-weight VLM: что действительно важно",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "08",
+          "dir": "08-llava-onevision-single-multi-video",
+          "title": "LLaVA-OneVision: single, multi, video",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "09",
+          "dir": "09-qwen-vl-family-dynamic-fps",
+          "title": "Семейство Qwen-VL и видео с dynamic FPS",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "10",
+          "dir": "10-internvl3-native-multimodal",
+          "title": "InternVL3 native multimodal pretraining",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "11",
+          "dir": "11-chameleon-early-fusion-tokens",
+          "title": "Chameleon early-fusion token-only",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "12",
+          "dir": "12-emu3-next-token-for-generation",
+          "title": "Emu3 next-token prediction для генерации",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "13",
+          "dir": "13-transfusion-autoregressive-diffusion",
+          "title": "Transfusion autoregressive + diffusion",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "14",
+          "dir": "14-show-o-discrete-diffusion-unified",
+          "title": "Show-o unified discrete diffusion",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "15",
+          "dir": "15-janus-pro-decoupled-encoders",
+          "title": "Janus-Pro decoupled encoders",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "16",
+          "dir": "16-mio-any-to-any-streaming",
+          "title": "MIO any-to-any streaming",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        },
+        {
+          "number": "17",
+          "dir": "17-video-language-temporal-grounding",
+          "title": "Video-language temporal grounding",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "18",
+          "dir": "18-long-video-million-token",
+          "title": "Длинное видео в million-token context",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "19",
+          "dir": "19-audio-language-whisper-to-af3",
+          "title": "Audio-language models: от Whisper до AF3",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "20",
+          "dir": "20-omni-models-thinker-talker",
+          "title": "Omni models: thinker-talker streaming",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "21",
+          "dir": "21-embodied-vlas-openvla-pi0-groot",
+          "title": "Embodied VLA: RT-2, OpenVLA, π0, GR00T",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "22",
+          "dir": "22-document-diagram-understanding",
+          "title": "Понимание документов и диаграмм",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "23",
+          "dir": "23-colpali-vision-native-rag",
+          "title": "ColPali vision-native document RAG",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "24",
+          "dir": "24-multimodal-rag-cross-modal",
+          "title": "Multimodal RAG и cross-modal retrieval",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 180
+        },
+        {
+          "number": "25",
+          "dir": "25-multimodal-agents-computer-use",
+          "title": "Мультимодальные агенты и computer-use (capstone)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 240
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "dir": "13-tools-and-protocols",
+      "name": "Инструменты и протоколы",
+      "desc": "Интерфейсы между AI и реальным миром.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-the-tool-interface",
+          "title": "Интерфейс инструмента",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-function-calling-deep-dive",
+          "title": "Глубокий разбор function calling",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "03",
+          "dir": "03-parallel-and-streaming-tool-calls",
+          "title": "Параллельные и потоковые вызовы инструментов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-structured-output",
+          "title": "Структурированный выход",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-tool-schema-design",
+          "title": "Проектирование схем инструментов",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "06",
+          "dir": "06-mcp-fundamentals",
+          "title": "Основы MCP",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "07",
+          "dir": "07-building-an-mcp-server",
+          "title": "Создание MCP-сервера",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-building-an-mcp-client",
+          "title": "Создание MCP-клиента",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-mcp-transports",
+          "title": "Транспорты MCP",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-mcp-resources-and-prompts",
+          "title": "MCP resources и prompts",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-mcp-sampling",
+          "title": "MCP sampling",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-mcp-roots-and-elicitation",
+          "title": "MCP roots и elicitation",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "13",
+          "dir": "13-mcp-async-tasks",
+          "title": "MCP async tasks",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "14",
+          "dir": "14-mcp-apps",
+          "title": "MCP apps",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-mcp-security-tool-poisoning",
+          "title": "Безопасность MCP I — tool poisoning",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "16",
+          "dir": "16-mcp-security-oauth-2-1",
+          "title": "Безопасность MCP II — OAuth 2.1",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-mcp-gateways-and-registries",
+          "title": "MCP gateways и registries",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "18",
+          "dir": "18-mcp-auth-production",
+          "title": "MCP auth в production — DCR + JWKS на iii",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 90
+        },
+        {
+          "number": "19",
+          "dir": "19-a2a-protocol",
+          "title": "Протокол A2A",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "20",
+          "dir": "20-opentelemetry-genai",
+          "title": "OpenTelemetry GenAI",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "21",
+          "dir": "21-llm-routing-layer",
+          "title": "Слой маршрутизации LLM",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "22",
+          "dir": "22-skills-and-agent-sdks",
+          "title": "Skills и agent SDK",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "23",
+          "dir": "23-capstone-tool-ecosystem",
+          "title": "Capstone — экосистема инструментов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 120
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "dir": "14-agent-engineering",
+      "name": "Agent Engineering",
+      "desc": "Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-the-agent-loop",
+          "title": "Цикл агента",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "02",
+          "dir": "02-rewoo-plan-and-execute",
+          "title": "ReWOO и plan-and-execute",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "03",
+          "dir": "03-reflexion-verbal-rl",
+          "title": "Reflexion и verbal reinforcement learning",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "04",
+          "dir": "04-tree-of-thoughts-lats",
+          "title": "Tree of Thoughts и LATS",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-self-refine-and-critic",
+          "title": "Self-Refine и CRITIC",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "06",
+          "dir": "06-tool-use-and-function-calling",
+          "title": "Использование инструментов и function calling",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "07",
+          "dir": "07-memory-virtual-context-memgpt",
+          "title": "Память — virtual context и MemGPT",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-memory-blocks-sleep-time-compute",
+          "title": "Блоки памяти и sleep-time compute",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-hybrid-memory-mem0",
+          "title": "Гибридная память — Mem0 vector + graph + KV",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-skill-libraries-voyager",
+          "title": "Библиотеки skills и lifelong learning — Voyager",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "11",
+          "dir": "11-planning-htn-and-evolutionary",
+          "title": "Планирование с HTN и evolutionary search",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "12",
+          "dir": "12-anthropic-workflow-patterns",
+          "title": "Паттерны workflow Anthropic",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "13",
+          "dir": "13-langgraph-stateful-graphs",
+          "title": "LangGraph — stateful graphs и durable execution",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "14",
+          "dir": "14-autogen-actor-model",
+          "title": "AutoGen v0.4 — actor model",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-crewai-role-based-crews",
+          "title": "CrewAI — role-based crews и flows",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "16",
+          "dir": "16-openai-agents-sdk",
+          "title": "OpenAI Agents SDK — handoffs, guardrails, tracing",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-claude-agent-sdk",
+          "title": "Claude Agent SDK — subagents и session store",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-agno-and-mastra-runtimes",
+          "title": "Agno и Mastra — production runtimes",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "19",
+          "dir": "19-benchmarks-swebench-gaia",
+          "title": "Benchmarks — SWE-bench, GAIA, AgentBench",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "20",
+          "dir": "20-benchmarks-webarena-osworld",
+          "title": "Бенчмарки — WebArena и OSWorld",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "21",
+          "dir": "21-computer-use-agents",
+          "title": "Computer use — Claude, OpenAI CUA, Gemini",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-voice-agents-pipecat-livekit",
+          "title": "Голосовые агенты — Pipecat и LiveKit",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "23",
+          "dir": "23-otel-genai-conventions",
+          "title": "Семантические соглашения OpenTelemetry GenAI",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "24",
+          "dir": "24-agent-observability-platforms",
+          "title": "Agent observability — Langfuse, Phoenix, Opik",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "25",
+          "dir": "25-multi-agent-debate",
+          "title": "Multi-agent debate и collaboration",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "26",
+          "dir": "26-failure-modes-agentic",
+          "title": "Failure modes — почему агенты ломаются",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "27",
+          "dir": "27-prompt-injection-defense",
+          "title": "Prompt injection и защита PVE",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "28",
+          "dir": "28-orchestration-patterns",
+          "title": "Паттерны оркестрации — supervisor, swarm, hierarchical",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "29",
+          "dir": "29-production-runtimes",
+          "title": "Production runtimes — queue, event, cron",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "30",
+          "dir": "30-eval-driven-agent-development",
+          "title": "Eval-driven разработка агентов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "31",
+          "dir": "31-agent-workbench-why-models-fail",
+          "title": "Agent Workbench: почему способные модели все еще ошибаются",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "32",
+          "dir": "32-minimal-agent-workbench",
+          "title": "Минимальный Agent Workbench",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "33",
+          "dir": "33-instructions-as-executable-constraints",
+          "title": "Инструкции агента как исполняемые ограничения",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 50
+        },
+        {
+          "number": "34",
+          "dir": "34-repo-memory-and-state",
+          "title": "Память репозитория и durable state",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "35",
+          "dir": "35-initialization-scripts",
+          "title": "Скрипты инициализации для агентов",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "36",
+          "dir": "36-scope-contracts",
+          "title": "Scope contracts и границы задачи",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 50
+        },
+        {
+          "number": "37",
+          "dir": "37-runtime-feedback-loops",
+          "title": "Runtime feedback loops",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 50
+        },
+        {
+          "number": "38",
+          "dir": "38-verification-gates",
+          "title": "Verification gates",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 55
+        },
+        {
+          "number": "39",
+          "dir": "39-reviewer-agent",
+          "title": "Reviewer agent: отделить builder от marker",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 55
+        },
+        {
+          "number": "40",
+          "dir": "40-multi-session-handoff",
+          "title": "Multi-session handoff",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 50
+        },
+        {
+          "number": "41",
+          "dir": "41-workbench-for-real-repos",
+          "title": "Workbench на реальном репозитории",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "42",
+          "dir": "42-agent-workbench-capstone",
+          "title": "Capstone: поставьте переиспользуемый пакет Agent Workbench",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "dir": "15-autonomous-systems",
+      "name": "Автономные системы",
+      "desc": "Долгосрочные агенты, self-improvement и стек безопасности 2026 года.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-long-horizon-agents",
+          "title": "От чат-ботов к долгосрочным агентам (METR)",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-star-family-reasoning",
+          "title": "STaR, V-STaR, Quiet-STaR: самообучающееся рассуждение",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "03",
+          "dir": "03-alphaevolve-evolutionary-coding",
+          "title": "AlphaEvolve: эволюционные coding agents",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "04",
+          "dir": "04-darwin-godel-machine",
+          "title": "Darwin Gödel Machine: самомодифицирующиеся агенты",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "05",
+          "dir": "05-ai-scientist-v2",
+          "title": "AI Scientist v2: исследования уровня workshop",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "06",
+          "dir": "06-automated-alignment-research",
+          "title": "Автоматизированные alignment-исследования (Anthropic AAR)",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "07",
+          "dir": "07-recursive-self-improvement",
+          "title": "Рекурсивное self-improvement: capability vs alignment",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "08",
+          "dir": "08-bounded-self-improvement",
+          "title": "Дизайны ограниченного self-improvement",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "09",
+          "dir": "09-coding-agent-landscape",
+          "title": "Ландшафт автономных coding agents (SWE-bench, CodeAct)",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "10",
+          "dir": "10-claude-code-permission-modes",
+          "title": "Режимы разрешений Claude Code и auto mode",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "11",
+          "dir": "11-browser-agents",
+          "title": "Браузерные агенты и indirect prompt injection",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "12",
+          "dir": "12-durable-execution",
+          "title": "Durable execution для долгих запусков агентов",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "13",
+          "dir": "13-cost-governors",
+          "title": "Бюджеты действий, лимиты итераций, cost governors",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "14",
+          "dir": "14-kill-switches-canaries",
+          "title": "Kill switches, circuit breakers, canary tokens",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "15",
+          "dir": "15-propose-then-commit",
+          "title": "HITL: propose-then-commit",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "16",
+          "dir": "16-checkpoints-rollback",
+          "title": "Checkpoints и rollback",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "17",
+          "dir": "17-constitutional-ai",
+          "title": "Constitutional AI и переопределения правил",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "18",
+          "dir": "18-llama-guard",
+          "title": "Llama Guard и классификация input/output",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "19",
+          "dir": "19-anthropic-rsp",
+          "title": "Anthropic Responsible Scaling Policy v3.0",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "20",
+          "dir": "20-openai-preparedness-deepmind-fsf",
+          "title": "OpenAI Preparedness Framework и DeepMind FSF",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "21",
+          "dir": "21-metr-external-evaluation",
+          "title": "Временные горизонты METR и внешняя оценка",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-cais-caisi-societal-risk",
+          "title": "CAIS, CAISI и риски общественного масштаба",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "dir": "16-multi-agent-and-swarms",
+      "name": "Multi-Agent и Swarms",
+      "desc": "Координация, emergence и коллективный интеллект.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-why-multi-agent",
+          "title": "Зачем нужен multi-agent подход",
+          "type": "Теория",
+          "languages": "TypeScript",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-fipa-acl-heritage",
+          "title": "Наследие FIPA-ACL и speech acts",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "03",
+          "dir": "03-communication-protocols",
+          "title": "Коммуникационные протоколы",
+          "type": "Практика",
+          "languages": "TypeScript",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "04",
+          "dir": "04-primitive-model",
+          "title": "Примитивная multi-agent модель",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "05",
+          "dir": "05-supervisor-orchestrator-pattern",
+          "title": "Паттерн supervisor / orchestrator-worker",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "06",
+          "dir": "06-hierarchical-architecture",
+          "title": "Иерархическая архитектура и decomposition drift",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "07",
+          "dir": "07-society-of-mind-debate",
+          "title": "Society of Mind и multi-agent debate",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-role-specialization",
+          "title": "Специализация ролей — planner / critic / executor / verifier",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "09",
+          "dir": "09-parallel-swarm-networks",
+          "title": "Параллельный swarm и сетевые архитектуры",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "10",
+          "dir": "10-group-chat-speaker-selection",
+          "title": "Групповой чат и выбор говорящего",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "11",
+          "dir": "11-handoffs-and-routines",
+          "title": "Handoffs и routines (stateless orchestration)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "12",
+          "dir": "12-a2a-protocol",
+          "title": "A2A — протокол agent-to-agent",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-shared-memory-blackboard",
+          "title": "Shared memory и blackboard patterns",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "14",
+          "dir": "14-consensus-and-bft",
+          "title": "Консенсус и Byzantine fault tolerance",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "15",
+          "dir": "15-voting-debate-topology",
+          "title": "Голосование, self-consistency и debate topology",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "16",
+          "dir": "16-negotiation-bargaining",
+          "title": "Переговоры и bargaining",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-generative-agents-simulation",
+          "title": "Generative agents и emergent simulation",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-theory-of-mind-coordination",
+          "title": "Theory of mind и emergent coordination",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "19",
+          "dir": "19-swarm-optimization-pso-aco",
+          "title": "Swarm optimization (PSO, ACO)",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "20",
+          "dir": "20-marl-maddpg-qmix-mappo",
+          "title": "MARL — MADDPG, QMIX, MAPPO",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 90
+        },
+        {
+          "number": "21",
+          "dir": "21-agent-economies",
+          "title": "Agent economies, token incentives, reputation",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "22",
+          "dir": "22-production-scaling-queues-checkpoints",
+          "title": "Production scaling — очереди, checkpoints, durability",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "23",
+          "dir": "23-failure-modes-mast-groupthink",
+          "title": "Failure modes — MAST, groupthink, monoculture",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "24",
+          "dir": "24-evaluation-coordination-benchmarks",
+          "title": "Оценка и coordination benchmarks",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "25",
+          "dir": "25-case-studies-2026-sota",
+          "title": "Case studies и state of the art 2026 года",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 90
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "dir": "17-infrastructure-and-production",
+      "name": "Infrastructure и Production",
+      "desc": "Доведите AI до реального мира.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-managed-llm-platforms",
+          "title": "Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "02",
+          "dir": "02-inference-platform-economics",
+          "title": "Экономика inference-платформ — Fireworks, Together, Baseten, Modal",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "03",
+          "dir": "03-gpu-autoscaling-kubernetes",
+          "title": "GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "04",
+          "dir": "04-vllm-serving-internals",
+          "title": "Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "05",
+          "dir": "05-eagle3-speculative-decoding",
+          "title": "EAGLE-3 speculative decoding в production",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "06",
+          "dir": "06-sglang-radixattention",
+          "title": "SGLang и RadixAttention для prefix-heavy нагрузок",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "07",
+          "dir": "07-tensorrt-llm-blackwell",
+          "title": "TensorRT-LLM на Blackwell с FP8 и NVFP4",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "08",
+          "dir": "08-inference-metrics-goodput",
+          "title": "Метрики inference — TTFT, TPOT, ITL, goodput, P99",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "09",
+          "dir": "09-production-quantization",
+          "title": "Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "10",
+          "dir": "10-cold-start-mitigation",
+          "title": "Смягчение cold start для serverless LLM",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "11",
+          "dir": "11-multi-region-kv-locality",
+          "title": "Multi-region LLM serving и локальность KV cache",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "12",
+          "dir": "12-edge-inference",
+          "title": "Edge inference — ANE, Hexagon, WebGPU, Jetson",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "13",
+          "dir": "13-llm-observability",
+          "title": "Выбор стека observability для LLM",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "14",
+          "dir": "14-prompt-semantic-caching",
+          "title": "Prompt caching и экономика semantic caching",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "15",
+          "dir": "15-batch-apis",
+          "title": "Batch APIs — скидка 50% как отраслевой стандарт",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "16",
+          "dir": "16-model-routing",
+          "title": "Model routing как примитив снижения стоимости",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "17",
+          "dir": "17-disaggregated-prefill-decode",
+          "title": "Раздельные prefill/decode — NVIDIA Dynamo и llm-d",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "18",
+          "dir": "18-vllm-production-stack-lmcache",
+          "title": "Production-стек vLLM с LMCache KV offloading",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "19",
+          "dir": "19-ai-gateways",
+          "title": "AI gateways — LiteLLM, Portkey, Kong, Bifrost",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "20",
+          "dir": "20-shadow-canary-progressive",
+          "title": "Shadow, canary и progressive deployment",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "21",
+          "dir": "21-ab-testing-llm-features",
+          "title": "A/B testing LLM-функций — GrowthBook и Statsig",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-load-testing-llm-apis",
+          "title": "Load testing LLM API — k6, LLMPerf, GenAI-Perf",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "23",
+          "dir": "23-sre-for-ai",
+          "title": "SRE для AI — multi-agent incident response",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "24",
+          "dir": "24-chaos-engineering-llm",
+          "title": "Chaos engineering для LLM production",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "25",
+          "dir": "25-security-secrets-audit",
+          "title": "Безопасность — secrets, PII scrubbing, audit logs",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "26",
+          "dir": "26-compliance-frameworks",
+          "title": "Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "27",
+          "dir": "27-finops-llms",
+          "title": "FinOps для LLM — unit economics и multi-tenant attribution",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "28",
+          "dir": "28-self-hosted-serving-selection",
+          "title": "Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "dir": "18-ethics-safety-alignment",
+      "name": "Этика, безопасность и alignment",
+      "desc": "Стройте AI, который помогает человечеству. Это не опция.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-instruction-following-alignment-signal",
+          "title": "Следование инструкциям как alignment signal",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "02",
+          "dir": "02-reward-hacking-goodhart",
+          "title": "Reward hacking и закон Гудхарта",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "03",
+          "dir": "03-direct-preference-optimization-family",
+          "title": "Семейство Direct Preference Optimization",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "04",
+          "dir": "04-sycophancy-rlhf-amplification",
+          "title": "Sycophancy как усиление RLHF",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "05",
+          "dir": "05-constitutional-ai-rlaif",
+          "title": "Constitutional AI и RLAIF",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "06",
+          "dir": "06-mesa-optimization-deceptive-alignment",
+          "title": "Mesa-optimization и deceptive alignment",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "07",
+          "dir": "07-sleeper-agents-persistent-deception",
+          "title": "Sleeper agents — устойчивый обман",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "08",
+          "dir": "08-in-context-scheming-frontier-models",
+          "title": "In-context scheming во frontier models",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "09",
+          "dir": "09-alignment-faking",
+          "title": "Alignment faking",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "10",
+          "dir": "10-ai-control-subversion",
+          "title": "AI control — безопасность несмотря на subversion",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "11",
+          "dir": "11-scalable-oversight-weak-to-strong",
+          "title": "Scalable oversight и weak-to-strong",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "12",
+          "dir": "12-red-teaming-pair-automated-attacks",
+          "title": "Red-teaming: PAIR и автоматизированные атаки",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "13",
+          "dir": "13-many-shot-jailbreaking",
+          "title": "Many-shot jailbreaking",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "14",
+          "dir": "14-ascii-art-visual-jailbreaks",
+          "title": "ASCII art и визуальные jailbreaks",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "15",
+          "dir": "15-indirect-prompt-injection",
+          "title": "Indirect prompt injection",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "16",
+          "dir": "16-red-team-tooling-garak-llamaguard-pyrit",
+          "title": "Инструменты red-team: Garak, Llama Guard, PyRIT",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "17",
+          "dir": "17-wmdp-dual-use-evaluation",
+          "title": "WMDP и оценка dual-use capabilities",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "18",
+          "dir": "18-frontier-safety-frameworks-rsp-pf-fsf",
+          "title": "Frontier safety frameworks — RSP, PF, FSF",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "19",
+          "dir": "19-model-welfare-research",
+          "title": "Исследования model welfare",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "20",
+          "dir": "20-bias-representational-harm",
+          "title": "Bias и representational harm",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "21",
+          "dir": "21-fairness-criteria-group-individual-counterfactual",
+          "title": "Критерии fairness: group, individual, counterfactual",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "22",
+          "dir": "22-differential-privacy-for-llms",
+          "title": "Differential privacy для LLM",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "23",
+          "dir": "23-watermarking-synthid-stable-signature-c2pa",
+          "title": "Watermarking: SynthID, Stable Signature, C2PA",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "24",
+          "dir": "24-regulatory-frameworks-eu-us-uk-korea",
+          "title": "Регуляторные frameworks: EU, US, UK, Korea",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 75
+        },
+        {
+          "number": "25",
+          "dir": "25-echoleak-cves-for-ai",
+          "title": "EchoLeak и CVE для AI",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "26",
+          "dir": "26-model-system-dataset-cards",
+          "title": "Model, system и dataset cards",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "27",
+          "dir": "27-data-provenance-training-governance",
+          "title": "Data provenance и управление training data",
+          "type": "Теория",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "28",
+          "dir": "28-alignment-research-ecosystem",
+          "title": "Экосистема alignment research: MATS, Redwood, Apollo, METR",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 45
+        },
+        {
+          "number": "29",
+          "dir": "29-moderation-systems-openai-perspective-llamaguard",
+          "title": "Системы модерации: OpenAI, Perspective, Llama Guard",
+          "type": "Практика",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 60
+        },
+        {
+          "number": "30",
+          "dir": "30-dual-use-risk-cyber-bio-chem-nuclear",
+          "title": "Dual-use risk: cyber, bio, chem, nuclear",
+          "type": "Теория",
+          "languages": "—",
+          "status": "complete",
+          "minutes": 75
+        }
+      ]
+    },
+    {
+      "number": 19,
+      "dir": "19-capstone-projects",
+      "name": "Capstone-проекты",
+      "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
+      "status": "complete",
+      "lessons": [
+        {
+          "number": "01",
+          "dir": "01-terminal-native-coding-agent",
+          "title": "Terminal-native coding agent",
+          "type": "Capstone",
+          "languages": "TypeScript, Python",
+          "status": "complete",
+          "minutes": 2100,
+          "combines": "P0 P5 P7 P10 P11 P13 P14 P15 P17 P18"
+        },
+        {
+          "number": "02",
+          "dir": "02-rag-over-codebase",
+          "title": "RAG поверх codebase (cross-repo semantic search)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P5 P7 P11 P13 P17"
+        },
+        {
+          "number": "03",
+          "dir": "03-realtime-voice-assistant",
+          "title": "Голосовой ассистент в реальном времени (ASR → LLM → TTS)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P6 P7 P11 P13 P14 P17"
+        },
+        {
+          "number": "04",
+          "dir": "04-multimodal-document-qa",
+          "title": "Multimodal document QA (vision-first)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P4 P5 P7 P11 P12 P17"
+        },
+        {
+          "number": "05",
+          "dir": "05-autonomous-research-agent",
+          "title": "Автономный исследовательский агент (класс AI Scientist)",
+          "type": "Capstone",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 2400,
+          "combines": "P0 P2 P3 P7 P10 P14 P15 P16 P18"
+        },
+        {
+          "number": "06",
+          "dir": "06-devops-troubleshooting-agent",
+          "title": "DevOps-агент для troubleshooting Kubernetes",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P11 P13 P14 P15 P17 P18"
+        },
+        {
+          "number": "07",
+          "dir": "07-end-to-end-fine-tuning-pipeline",
+          "title": "End-to-end пайплайн fine-tuning",
+          "type": "Capstone",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 2100,
+          "combines": "P2 P3 P7 P10 P11 P17 P18"
+        },
+        {
+          "number": "08",
+          "dir": "08-production-rag-chatbot",
+          "title": "Production RAG chatbot для регулируемой вертикали",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P5 P7 P11 P12 P17 P18"
+        },
+        {
+          "number": "09",
+          "dir": "09-code-migration-agent",
+          "title": "Агент миграции кода (repo-level upgrade)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P5 P7 P11 P13 P14 P15 P17"
+        },
+        {
+          "number": "10",
+          "dir": "10-multi-agent-software-team",
+          "title": "Multi-agent команда software engineering",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 2400,
+          "combines": "P11 P13 P14 P15 P16 P17"
+        },
+        {
+          "number": "11",
+          "dir": "11-llm-observability-dashboard",
+          "title": "LLM observability и eval dashboard",
+          "type": "Capstone",
+          "languages": "TypeScript, Python",
+          "status": "complete",
+          "minutes": 1500,
+          "combines": "P11 P13 P17 P18"
+        },
+        {
+          "number": "12",
+          "dir": "12-video-understanding-pipeline",
+          "title": "Пайплайн понимания видео (scene → QA)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P4 P6 P7 P11 P12 P17"
+        },
+        {
+          "number": "13",
+          "dir": "13-mcp-server-with-registry",
+          "title": "MCP-сервер с registry и governance",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1500,
+          "combines": "P11 P13 P14 P17 P18"
+        },
+        {
+          "number": "14",
+          "dir": "14-speculative-decoding-server",
+          "title": "Inference server для speculative decoding",
+          "type": "Capstone",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P3 P7 P10 P17"
+        },
+        {
+          "number": "15",
+          "dir": "15-constitutional-safety-harness",
+          "title": "Constitutional safety harness + red-team range",
+          "type": "Capstone",
+          "languages": "Python",
+          "status": "complete",
+          "minutes": 1500,
+          "combines": "P10 P11 P13 P14 P18"
+        },
+        {
+          "number": "16",
+          "dir": "16-github-issue-to-pr-agent",
+          "title": "Автономный агент GitHub issue-to-PR",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P11 P13 P14 P15 P17"
+        },
+        {
+          "number": "17",
+          "dir": "17-personal-ai-tutor",
+          "title": "Персональный AI tutor (adaptive, multimodal)",
+          "type": "Capstone",
+          "languages": "Python, TypeScript",
+          "status": "complete",
+          "minutes": 1800,
+          "combines": "P5 P6 P11 P12 P14 P17 P18"
+        }
+      ]
+    }
+  ]
+}

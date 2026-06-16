@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1a1a1a?style=flat-square&labelColor=fafaf5" alt="Лицензия MIT"></a>
-  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-428-3553ff?style=flat-square&labelColor=fafaf5" alt="428 уроков"></a>
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-434-3553ff?style=flat-square&labelColor=fafaf5" alt="434 уроков"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 фаз"></a>
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="Звезды GitHub"></a>
   <a href="https://aiengineeringfromscratch.com"><img src="https://img.shields.io/badge/web-aiengineeringfromscratch.com-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
@@ -17,7 +17,7 @@
 > **84% студентов уже используют AI-инструменты. Только 18% чувствуют себя готовыми
 > применять их профессионально.** Этот курс закрывает этот разрыв.
 >
-> 428 уроков. 20 фаз. ~320 часов. Python, TypeScript, Rust, Julia. Каждый урок поставляет
+> 434 уроков. 20 фаз. ~486 часов уроков + ~525 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
 > переиспользуемый артефакт: промпт, навык, агента, MCP-сервер. Бесплатно, с открытым исходным кодом, MIT.
 >
 > Вы не просто изучаете AI. Вы его строите. От начала до конца. Вручную.
@@ -30,7 +30,7 @@ fine-tuning, где-то еще эффектная демонстрация аг
 подключаете функцию к агенту, но не можете сказать, что делает attention внутри модели,
 которая ее вызывает.
 
-Этот курс - каркас. 20 фаз, 428 уроков, четыре языка: Python, TypeScript, Rust, Julia.
+Этот курс - каркас. 20 фаз, 434 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
 На одном конце линейная алгебра, на другом - автономные swarms. Каждый алгоритм сначала
 строится из чистой математики. Backprop. Tokenizer. Attention. Agent loop. К моменту,
 когда появляется PyTorch, вы уже знаете, что он делает под капотом.
@@ -86,7 +86,7 @@ flowchart TB
 
 ```
 phases/<NN>-<phase-name>/<NN>-<lesson-name>/
-├── code/      runnable implementations (Python, TypeScript, Rust, Julia)
+├── code/      runnable implementations (Python; местами TypeScript, Rust, Julia)
 ├── docs/
 │   └── en.md  lesson narrative
 └── outputs/   prompts, skills, agents, or MCP servers this lesson produces
@@ -176,7 +176,7 @@ ls phases/03-deep-learning-core/05-loss-functions/outputs/
 </table>
 
 > Установите весь набор через [SkillKit](https://github.com/stabuev/skillkit). Настоящие
-> инструменты, не домашние задания. К концу курса у вас будет портфолио из 428 артефактов,
+> инструменты, не домашние задания. К концу курса у вас будет портфолио из 434 артефактов,
 > которые вы действительно понимаете, потому что сами их построили.
 
 ### FIG_002 · Рабочий пример
@@ -261,7 +261,7 @@ the agent went wrong and explain why...
 | 12 | [Отладка и профилирование](phases/00-setup-and-tooling/12-debugging-and-profiling/) | Практика | Python |
 
 <details id="phase-1">
-<summary><b>Фаза 1 — Математические основы</b> &nbsp;<code>22 уроков</code>&nbsp; <em>Интуиция за каждым AI-алгоритмом через код.</em></summary>
+<summary><b>Фаза 1 — Математические основы</b> &nbsp;<code>22 урока</code>&nbsp; <em>Интуиция за каждым AI-алгоритмом через код.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -360,7 +360,7 @@ the agent went wrong and explain why...
 | 12 | [Понимание видео — временное моделирование](phases/04-computer-vision/12-video-understanding/) | Практика | Python |
 | 13 | [3D vision: облака точек, NeRF](phases/04-computer-vision/13-3d-vision-nerf/) | Практика | Python |
 | 14 | [Vision Transformers (ViT)](phases/04-computer-vision/14-vision-transformers/) | Практика | Python |
-| 15 | [Зрение в реальном времени: edge-деплой](phases/04-computer-vision/15-real-time-edge/) | Практика | Python, Rust |
+| 15 | [Зрение в реальном времени: edge-деплой](phases/04-computer-vision/15-real-time-edge/) | Практика | Python |
 | 16 | [Соберите полный vision-пайплайн](phases/04-computer-vision/16-vision-pipeline-capstone/) | Практика | Python |
 | 17 | [Self-supervised vision — SimCLR, DINO, MAE](phases/04-computer-vision/17-self-supervised-vision/) | Практика | Python |
 | 18 | [Open-vocabulary vision — CLIP](phases/04-computer-vision/18-open-vocab-clip/) | Практика | Python |
@@ -421,28 +421,28 @@ the agent went wrong and explain why...
 
 | # | Урок | Тип | Язык |
 |:---:|--------|:----:|------|
-| 01 | [Основы аудио: волновые формы, sampling, FFT](phases/06-speech-and-audio/01-audio-fundamentals) | Теория | Python |
-| 02 | [Спектрограммы, Mel scale и audio features](phases/06-speech-and-audio/02-spectrograms-mel-features) | Практика | Python |
-| 03 | [Классификация аудио](phases/06-speech-and-audio/03-audio-classification) | Практика | Python |
-| 04 | [Распознавание речи (ASR)](phases/06-speech-and-audio/04-speech-recognition-asr) | Практика | Python |
-| 05 | [Whisper: архитектура и fine-tuning](phases/06-speech-and-audio/05-whisper-architecture-finetuning) | Практика | Python |
-| 06 | [Распознавание и верификация говорящего](phases/06-speech-and-audio/06-speaker-recognition-verification) | Практика | Python |
-| 07 | [Text-to-Speech (TTS)](phases/06-speech-and-audio/07-text-to-speech) | Практика | Python |
-| 08 | [Клонирование и преобразование голоса](phases/06-speech-and-audio/08-voice-cloning-conversion) | Практика | Python |
-| 09 | [Генерация музыки](phases/06-speech-and-audio/09-music-generation) | Практика | Python |
-| 10 | [Audio-language models](phases/06-speech-and-audio/10-audio-language-models) | Практика | Python |
-| 11 | [Обработка аудио в реальном времени](phases/06-speech-and-audio/11-real-time-audio-processing) | Практика | Python, Rust |
-| 12 | [Соберите пайплайн голосового ассистента](phases/06-speech-and-audio/12-voice-assistant-pipeline) | Практика | Python |
-| 13 | [Нейронные аудиокодеки — EnCodec, SNAC, Mimi, DAC](phases/06-speech-and-audio/13-neural-audio-codecs) | Теория | Python |
-| 14 | [Voice activity detection и turn-taking](phases/06-speech-and-audio/14-voice-activity-detection-turn-taking) | Практика | Python |
-| 15 | [Потоковый speech-to-speech — Moshi, Hibiki](phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki) | Теория | Python |
-| 16 | [Voice anti-spoofing и аудиоводяные знаки](phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking) | Практика | Python |
-| 17 | [Оценка аудио — WER, MOS, MMAU, лидерборды](phases/06-speech-and-audio/17-audio-evaluation-metrics) | Теория | Python |
+| 01 | [Основы аудио: волновые формы, sampling, FFT](phases/06-speech-and-audio/01-audio-fundamentals/) | Теория | Python |
+| 02 | [Спектрограммы, Mel scale и audio features](phases/06-speech-and-audio/02-spectrograms-mel-features/) | Практика | Python |
+| 03 | [Классификация аудио](phases/06-speech-and-audio/03-audio-classification/) | Практика | Python |
+| 04 | [Распознавание речи (ASR)](phases/06-speech-and-audio/04-speech-recognition-asr/) | Практика | Python |
+| 05 | [Whisper: архитектура и fine-tuning](phases/06-speech-and-audio/05-whisper-architecture-finetuning/) | Практика | Python |
+| 06 | [Распознавание и верификация говорящего](phases/06-speech-and-audio/06-speaker-recognition-verification/) | Практика | Python |
+| 07 | [Text-to-Speech (TTS)](phases/06-speech-and-audio/07-text-to-speech/) | Практика | Python |
+| 08 | [Клонирование и преобразование голоса](phases/06-speech-and-audio/08-voice-cloning-conversion/) | Практика | Python |
+| 09 | [Генерация музыки](phases/06-speech-and-audio/09-music-generation/) | Практика | Python |
+| 10 | [Audio-language models](phases/06-speech-and-audio/10-audio-language-models/) | Практика | Python |
+| 11 | [Обработка аудио в реальном времени](phases/06-speech-and-audio/11-real-time-audio-processing/) | Практика | Python |
+| 12 | [Соберите пайплайн голосового ассистента](phases/06-speech-and-audio/12-voice-assistant-pipeline/) | Практика | Python |
+| 13 | [Нейронные аудиокодеки — EnCodec, SNAC, Mimi, DAC](phases/06-speech-and-audio/13-neural-audio-codecs/) | Теория | Python |
+| 14 | [Voice activity detection и turn-taking](phases/06-speech-and-audio/14-voice-activity-detection-turn-taking/) | Практика | Python |
+| 15 | [Потоковый speech-to-speech — Moshi, Hibiki](phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki/) | Теория | Python |
+| 16 | [Voice anti-spoofing и аудиоводяные знаки](phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking/) | Практика | Python |
+| 17 | [Оценка аудио — WER, MOS, MMAU, лидерборды](phases/06-speech-and-audio/17-audio-evaluation-metrics/) | Теория | Python |
 
 </details>
 
 <details id="phase-7">
-<summary><b>Фаза 7 — Глубокий разбор Transformers</b> &nbsp;<code>14 уроков</code>&nbsp; <em>Архитектура, которая изменила все.</em></summary>
+<summary><b>Фаза 7 — Глубокий разбор Transformers</b> &nbsp;<code>16 уроков</code>&nbsp; <em>Архитектура, которая изменила все.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -461,11 +461,13 @@ the agent went wrong and explain why...
 | 12 | [KV cache, Flash Attention и оптимизация inference](phases/07-transformers-deep-dive/12-kv-cache-flash-attention/) | Практика | Python |
 | 13 | [Законы масштабирования](phases/07-transformers-deep-dive/13-scaling-laws/) | Теория | Python |
 | 14 | [Соберите Transformer с нуля](phases/07-transformers-deep-dive/14-build-a-transformer-capstone/) | Практика | Python |
+| 15 | [Варианты Attention — Sliding Window, Sparse, Differential](phases/07-transformers-deep-dive/15-attention-variants/) | Практика | Python |
+| 16 | [Speculative Decoding — черновик, проверка, повтор](phases/07-transformers-deep-dive/16-speculative-decoding/) | Практика | Python |
 
 </details>
 
 <details id="phase-8">
-<summary><b>Фаза 8 — Generative AI</b> &nbsp;<code>14 уроков</code>&nbsp; <em>Создавайте изображения, видео, аудио, 3D и многое другое.</em></summary>
+<summary><b>Фаза 8 — Generative AI</b> &nbsp;<code>15 уроков</code>&nbsp; <em>Создавайте изображения, видео, аудио, 3D и многое другое.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -484,6 +486,7 @@ the agent went wrong and explain why...
 | 12 | [Генерация 3D](phases/08-generative-ai/12-3d-generation/) | Практика | Python |
 | 13 | [Flow matching и Rectified Flows](phases/08-generative-ai/13-flow-matching-rectified-flows/) | Практика | Python |
 | 14 | [Оценка: FID, CLIP Score](phases/08-generative-ai/14-evaluation-fid-clip-score/) | Практика | Python |
+| 15 | [Visual Autoregressive Modeling (VAR): Next-Scale Prediction](phases/08-generative-ai/15-visual-autoregressive-var/) | Практика | Python |
 
 </details>
 
@@ -509,7 +512,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-10">
-<summary><b>Фаза 10 — LLM с нуля</b> &nbsp;<code>22 уроков</code>&nbsp; <em>Стройте, обучайте и понимайте большие языковые модели.</em></summary>
+<summary><b>Фаза 10 — LLM с нуля</b> &nbsp;<code>23 урока</code>&nbsp; <em>Стройте, обучайте и понимайте большие языковые модели.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -524,7 +527,7 @@ the agent went wrong and explain why...
 | 08 | [DPO — Direct Preference Optimization](phases/10-llms-from-scratch/08-dpo/) | Практика | Python |
 | 09 | [Constitutional AI и self-improvement](phases/10-llms-from-scratch/09-constitutional-ai-self-improvement/) | Практика | Python |
 | 10 | [Оценка — бенчмарки, evals](phases/10-llms-from-scratch/10-evaluation/) | Практика | Python |
-| 11 | [Квантизация: INT8, GPTQ, AWQ, GGUF](phases/10-llms-from-scratch/11-quantization/) | Практика | Python, Rust |
+| 11 | [Квантизация: INT8, GPTQ, AWQ, GGUF](phases/10-llms-from-scratch/11-quantization/) | Практика | Python |
 | 12 | [Оптимизация inference](phases/10-llms-from-scratch/12-inference-optimization/) | Практика | Python |
 | 13 | [Создание полного LLM-пайплайна](phases/10-llms-from-scratch/13-building-complete-llm-pipeline/) | Практика | Python |
 | 14 | [Открытые модели: разбор архитектур](phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs/) | Теория | Python |
@@ -536,21 +539,22 @@ the agent went wrong and explain why...
 | 20 | [Разбор архитектуры DeepSeek-V3](phases/10-llms-from-scratch/20-deepseek-v3-walkthrough/) | Теория | Python |
 | 21 | [Jamba — гибридный SSM-Transformer](phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer/) | Теория | Python |
 | 22 | [Async и Hogwild! inference](phases/10-llms-from-scratch/22-async-hogwild-inference/) | Практика | Python |
+| 23 | [Gradient Checkpointing и Activation Recomputation](phases/10-llms-from-scratch/23-gradient-checkpointing/) | Практика | Python |
 
 </details>
 
 <details id="phase-11">
-<summary><b>Фаза 11 — LLM Engineering</b> &nbsp;<code>15 уроков</code>&nbsp; <em>Заставьте LLM работать в production.</em></summary>
+<summary><b>Фаза 11 — LLM Engineering</b> &nbsp;<code>17 уроков</code>&nbsp; <em>Заставьте LLM работать в production.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
 |:---:|--------|:----:|------|
 | 01 | [Prompt engineering: техники и паттерны](phases/11-llm-engineering/01-prompt-engineering/) | Практика | Python |
 | 02 | [Few-shot, CoT, Tree-of-Thought](phases/11-llm-engineering/02-few-shot-cot/) | Практика | Python |
-| 03 | [Структурированные выходы](phases/11-llm-engineering/03-structured-outputs/) | Практика | Python, TypeScript |
+| 03 | [Структурированные выходы](phases/11-llm-engineering/03-structured-outputs/) | Практика | Python |
 | 04 | [Embeddings и векторные представления](phases/11-llm-engineering/04-embeddings/) | Практика | Python |
-| 05 | [Context engineering](phases/11-llm-engineering/05-context-engineering/) | Практика | Python, TypeScript |
-| 06 | [RAG: Retrieval-Augmented Generation](phases/11-llm-engineering/06-rag/) | Практика | Python, TypeScript |
+| 05 | [Context engineering](phases/11-llm-engineering/05-context-engineering/) | Практика | Python |
+| 06 | [RAG: Retrieval-Augmented Generation](phases/11-llm-engineering/06-rag/) | Практика | Python |
 | 07 | [Продвинутый RAG: chunking, reranking](phases/11-llm-engineering/07-advanced-rag/) | Практика | Python |
 | 08 | [Fine-tuning с LoRA и QLoRA](phases/11-llm-engineering/08-fine-tuning-lora/) | Практика | Python |
 | 09 | [Function calling и использование инструментов](phases/11-llm-engineering/09-function-calling/) | Практика | Python |
@@ -560,6 +564,8 @@ the agent went wrong and explain why...
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app/) | Практика | Python |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol/) | Практика | Python |
 | 15 | [Prompt caching и context caching](phases/11-llm-engineering/15-prompt-caching/) | Практика | Python |
+| 16 | [LangGraph — конечные автоматы для агентов](phases/11-llm-engineering/16-langgraph-state-machines/) | Практика | Python |
+| 17 | [Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno](phases/11-llm-engineering/17-agent-framework-tradeoffs/) | Теория | Python |
 
 </details>
 
@@ -598,7 +604,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-13">
-<summary><b>Фаза 13 — Инструменты и протоколы</b> &nbsp;<code>23 уроков</code>&nbsp; <em>Интерфейсы между AI и реальным миром.</em></summary>
+<summary><b>Фаза 13 — Инструменты и протоколы</b> &nbsp;<code>23 урока</code>&nbsp; <em>Интерфейсы между AI и реальным миром.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -630,7 +636,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-14">
-<summary><b>Фаза 14 — Agent Engineering</b> &nbsp;<code>42 уроков</code>&nbsp; <em>Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.</em></summary>
+<summary><b>Фаза 14 — Agent Engineering</b> &nbsp;<code>42 урока</code>&nbsp; <em>Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -652,7 +658,7 @@ the agent went wrong and explain why...
 | 15 | [CrewAI — role-based crews и flows](phases/14-agent-engineering/15-crewai-role-based-crews/) | Практика | Python |
 | 16 | [OpenAI Agents SDK — handoffs, guardrails, tracing](phases/14-agent-engineering/16-openai-agents-sdk/) | Практика | Python |
 | 17 | [Claude Agent SDK — subagents и session store](phases/14-agent-engineering/17-claude-agent-sdk/) | Практика | Python |
-| 18 | [Agno и Mastra — production runtimes](phases/14-agent-engineering/18-agno-and-mastra-runtimes/) | Теория | Python, TypeScript |
+| 18 | [Agno и Mastra — production runtimes](phases/14-agent-engineering/18-agno-and-mastra-runtimes/) | Теория | Python |
 | 19 | [Benchmarks — SWE-bench, GAIA, AgentBench](phases/14-agent-engineering/19-benchmarks-swebench-gaia/) | Теория | Python |
 | 20 | [Бенчмарки — WebArena и OSWorld](phases/14-agent-engineering/20-benchmarks-webarena-osworld/) | Теория | Python |
 | 21 | [Computer use — Claude, OpenAI CUA, Gemini](phases/14-agent-engineering/21-computer-use-agents/) | Практика | Python |
@@ -681,7 +687,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-15">
-<summary><b>Фаза 15 — Автономные системы</b> &nbsp;<code>22 уроков</code>&nbsp; <em>Долгосрочные агенты, self-improvement и стек безопасности 2026 года.</em></summary>
+<summary><b>Фаза 15 — Автономные системы</b> &nbsp;<code>22 урока</code>&nbsp; <em>Долгосрочные агенты, self-improvement и стек безопасности 2026 года.</em></summary>
 <br/>
 
 | # | Урок | Тип | Язык |
@@ -751,34 +757,34 @@ the agent went wrong and explain why...
 
 | # | Урок | Тип | Язык |
 |:---:|--------|:----:|------|
-| 01 | Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI | Теория | Python |
-| 02 | Экономика inference-платформ — Fireworks, Together, Baseten, Modal | Теория | Python |
-| 03 | GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler | Теория | Python |
-| 04 | Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill | Теория | Python |
-| 05 | EAGLE-3 speculative decoding в production | Теория | Python |
-| 06 | SGLang и RadixAttention для prefix-heavy нагрузок | Теория | Python |
-| 07 | TensorRT-LLM на Blackwell с FP8 и NVFP4 | Теория | Python |
-| 08 | Метрики inference — TTFT, TPOT, ITL, goodput, P99 | Теория | Python |
-| 09 | Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4 | Теория | Python |
-| 10 | Смягчение cold start для serverless LLM | Теория | Python |
-| 11 | Multi-region LLM serving и локальность KV cache | Теория | Python |
-| 12 | Edge inference — ANE, Hexagon, WebGPU, Jetson | Теория | Python |
-| 13 | Выбор стека observability для LLM | Теория | Python |
-| 14 | Prompt caching и экономика semantic caching | Теория | Python |
-| 15 | Batch APIs — скидка 50% как отраслевой стандарт | Теория | Python |
-| 16 | Model routing как примитив снижения стоимости | Теория | Python |
-| 17 | Раздельные prefill/decode — NVIDIA Dynamo и llm-d | Теория | Python |
-| 18 | Production-стек vLLM с LMCache KV offloading | Теория | Python |
-| 19 | AI gateways — LiteLLM, Portkey, Kong, Bifrost | Теория | Python |
-| 20 | Shadow, canary и progressive deployment | Теория | Python |
-| 21 | A/B testing LLM-функций — GrowthBook и Statsig | Теория | Python |
-| 22 | Load testing LLM API — k6, LLMPerf, GenAI-Perf | Практика | Python |
-| 23 | SRE для AI — multi-agent incident response | Теория | Python |
-| 24 | Chaos engineering для LLM production | Теория | Python |
-| 25 | Безопасность — secrets, PII scrubbing, audit logs | Теория | Python |
-| 26 | Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001 | Теория | Python |
-| 27 | FinOps для LLM — unit economics и multi-tenant attribution | Теория | Python |
-| 28 | Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang | Теория | Python |
+| 01 | [Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI](phases/17-infrastructure-and-production/01-managed-llm-platforms/) | Теория | Python |
+| 02 | [Экономика inference-платформ — Fireworks, Together, Baseten, Modal](phases/17-infrastructure-and-production/02-inference-platform-economics/) | Теория | Python |
+| 03 | [GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler](phases/17-infrastructure-and-production/03-gpu-autoscaling-kubernetes/) | Теория | Python |
+| 04 | [Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill](phases/17-infrastructure-and-production/04-vllm-serving-internals/) | Теория | Python |
+| 05 | [EAGLE-3 speculative decoding в production](phases/17-infrastructure-and-production/05-eagle3-speculative-decoding/) | Теория | Python |
+| 06 | [SGLang и RadixAttention для prefix-heavy нагрузок](phases/17-infrastructure-and-production/06-sglang-radixattention/) | Теория | Python |
+| 07 | [TensorRT-LLM на Blackwell с FP8 и NVFP4](phases/17-infrastructure-and-production/07-tensorrt-llm-blackwell/) | Теория | Python |
+| 08 | [Метрики inference — TTFT, TPOT, ITL, goodput, P99](phases/17-infrastructure-and-production/08-inference-metrics-goodput/) | Теория | Python |
+| 09 | [Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4](phases/17-infrastructure-and-production/09-production-quantization/) | Теория | Python |
+| 10 | [Смягчение cold start для serverless LLM](phases/17-infrastructure-and-production/10-cold-start-mitigation/) | Теория | Python |
+| 11 | [Multi-region LLM serving и локальность KV cache](phases/17-infrastructure-and-production/11-multi-region-kv-locality/) | Теория | Python |
+| 12 | [Edge inference — ANE, Hexagon, WebGPU, Jetson](phases/17-infrastructure-and-production/12-edge-inference/) | Теория | Python |
+| 13 | [Выбор стека observability для LLM](phases/17-infrastructure-and-production/13-llm-observability/) | Теория | Python |
+| 14 | [Prompt caching и экономика semantic caching](phases/17-infrastructure-and-production/14-prompt-semantic-caching/) | Теория | Python |
+| 15 | [Batch APIs — скидка 50% как отраслевой стандарт](phases/17-infrastructure-and-production/15-batch-apis/) | Теория | Python |
+| 16 | [Model routing как примитив снижения стоимости](phases/17-infrastructure-and-production/16-model-routing/) | Теория | Python |
+| 17 | [Раздельные prefill/decode — NVIDIA Dynamo и llm-d](phases/17-infrastructure-and-production/17-disaggregated-prefill-decode/) | Теория | Python |
+| 18 | [Production-стек vLLM с LMCache KV offloading](phases/17-infrastructure-and-production/18-vllm-production-stack-lmcache/) | Теория | Python |
+| 19 | [AI gateways — LiteLLM, Portkey, Kong, Bifrost](phases/17-infrastructure-and-production/19-ai-gateways/) | Теория | Python |
+| 20 | [Shadow, canary и progressive deployment](phases/17-infrastructure-and-production/20-shadow-canary-progressive/) | Теория | Python |
+| 21 | [A/B testing LLM-функций — GrowthBook и Statsig](phases/17-infrastructure-and-production/21-ab-testing-llm-features/) | Теория | Python |
+| 22 | [Load testing LLM API — k6, LLMPerf, GenAI-Perf](phases/17-infrastructure-and-production/22-load-testing-llm-apis/) | Практика | Python |
+| 23 | [SRE для AI — multi-agent incident response](phases/17-infrastructure-and-production/23-sre-for-ai/) | Теория | Python |
+| 24 | [Chaos engineering для LLM production](phases/17-infrastructure-and-production/24-chaos-engineering-llm/) | Теория | Python |
+| 25 | [Безопасность — secrets, PII scrubbing, audit logs](phases/17-infrastructure-and-production/25-security-secrets-audit/) | Теория | Python |
+| 26 | [Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001](phases/17-infrastructure-and-production/26-compliance-frameworks/) | Теория | Python |
+| 27 | [FinOps для LLM — unit economics и multi-tenant attribution](phases/17-infrastructure-and-production/27-finops-llms/) | Теория | Python |
+| 28 | [Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang](phases/17-infrastructure-and-production/28-self-hosted-serving-selection/) | Теория | Python |
 
 </details>
 
@@ -822,7 +828,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-19">
-<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>17 проектов</code>&nbsp; <em>Готовые end-to-end продукты 2026 года, по 20-40 часов каждый.</em></summary>
+<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>17 проектов</code>&nbsp; <em>Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.</em></summary>
 <br/>
 
 | # | Проект | Объединяет | Язык |
@@ -870,11 +876,11 @@ Codex, OpenClaw, Hermes или любому MCP-совместимому аге�
 
 | Бэкграунд | Начать с | Оценка времени |
 |---|---|---|
-| Новичок в программировании и AI | Фаза 0 — Setup | ~306 часов |
-| Знаете Python, но новичок в ML | Фаза 1 — Математические основы | ~270 часов |
-| Знаете ML, но новичок в deep learning | Фаза 3 — Ядро deep learning | ~200 часов |
-| Знаете deep learning, хотите LLM и агентов | Фаза 10 — LLM с нуля | ~100 часов |
-| Senior engineer, нужен только agent engineering | Фаза 14 — Agent Engineering | ~60 часов |
+| Новичок в программировании и AI | Фаза 0 — Setup | ~490 часов |
+| Знаете Python, но новичок в ML | Фаза 1 — Математические основы | ~470 часов |
+| Знаете ML, но новичок в deep learning | Фаза 3 — Ядро deep learning | ~430 часов |
+| Знаете deep learning, хотите LLM и агентов | Фаза 10 — LLM с нуля | ~290 часов |
+| Senior engineer, нужен только agent engineering | Фаза 14 — Agent Engineering | ~150 часов |
 
 ```
 ░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒░░░▒▒▒
