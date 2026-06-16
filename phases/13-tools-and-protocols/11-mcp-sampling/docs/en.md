@@ -28,6 +28,16 @@ Sampling is option C. It is the mechanism by which a trusted server can host an 
 
 ## The Concept
 
+```mermaid
+graph LR
+  SRV["Server"] -- "sampling/createMessage" --> CL["Client"]
+  CL -- "approve?" --> H["Human"]
+  H --> CL
+  CL -- "run model" --> L["LLM"]
+  L --> CL
+  CL -- "completion" --> SRV
+```
+
 ### `sampling/createMessage` request
 
 Server sends:

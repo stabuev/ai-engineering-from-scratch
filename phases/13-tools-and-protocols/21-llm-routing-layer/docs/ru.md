@@ -32,6 +32,15 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  APP["app: OpenAI-compatible call"] --> R["routing gateway"]
+  R --> ALIAS["model alias"]
+  R --> P1["provider 1"]
+  R -. "fallback" .-> P2["provider 2"]
+  R --> CACHE["semantic cache"]
+```
+
 ### Форма OpenAI-compatible proxy
 
 Все говорят в OpenAI-shape. Routing gateway предоставляет `/v1/chat/completions`, принимает OpenAI schema и внутри проксирует в Anthropic / Gemini / Cohere / Ollama / anything. Клиенту все равно.

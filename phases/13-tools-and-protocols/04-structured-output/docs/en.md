@@ -36,6 +36,13 @@ The common thread: declare the schema once, enforce it end to end.
 
 ## The Concept
 
+```mermaid
+graph LR
+  S["JSON Schema 2020-12"] --> CD["constrained decoding"]
+  CD --> V["valid JSON (parses every time)"]
+  CD --> REF["refusal (explicit, not malformed)"]
+```
+
 ### JSON Schema 2020-12 — the lingua franca
 
 Every provider accepts JSON Schema 2020-12. The constructs you use most:

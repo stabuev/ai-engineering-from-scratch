@@ -24,6 +24,13 @@ MCP Apps (SEP-1724, shipped 2026-01-26) стандартизируют конт�
 
 ## Концепция
 
+```mermaid
+graph LR
+  TOOL["tool returns ui:// resource"] --> IFR["sandboxed iframe (text/html;profile=mcp-app)"]
+  IFR -- "postMessage JSON-RPC" --> HOST["host"]
+  HOST -- "permissions" --> IFR
+```
+
 ### Схема ресурсов `ui://`
 
 Инструмент возвращает:

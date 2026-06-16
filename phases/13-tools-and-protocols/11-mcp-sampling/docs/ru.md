@@ -28,6 +28,16 @@ Sampling — это вариант C. Это механизм, с помощью
 
 ## Концепция
 
+```mermaid
+graph LR
+  SRV["Server"] -- "sampling/createMessage" --> CL["Client"]
+  CL -- "approve?" --> H["Human"]
+  H --> CL
+  CL -- "run model" --> L["LLM"]
+  L --> CL
+  CL -- "completion" --> SRV
+```
+
 ### Request `sampling/createMessage`
 
 Server отправляет:

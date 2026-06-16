@@ -478,7 +478,7 @@ grad = p.copy(); grad[y] -= 1      # KL(one-hot || p) gradient == cross-entropy'
 
 ## Дополнительное чтение
 
-- Lin et al., "Focal Loss for Dense Object Detection" (2017) -- предложили focal loss для работы с экстремальным дисбалансом классов в детекции объектов (RetinaNet)
-- Chen et al., "A Simple Framework for Contrastive Learning of Visual Representations" (SimCLR, 2020) -- определили современный конвейер контрастивного обучения с NT-Xent loss
-- Szegedy et al., "Rethinking the Inception Architecture" (2016) -- предложили сглаживание меток как технику регуляризации, теперь стандартную в большинстве больших моделей
-- Hinton et al., "Distilling the Knowledge in a Neural Network" (2015) -- knowledge distillation с soft targets и KL divergence, основа для сжатия моделей
+- [Lin et al., "Focal Loss for Dense Object Detection" (2017)](https://arxiv.org/abs/1708.02002) -- предложили focal loss для работы с экстремальным дисбалансом классов в детекции объектов (RetinaNet)
+- [Chen et al., "A Simple Framework for Contrastive Learning of Visual Representations" (SimCLR, 2020)](https://arxiv.org/abs/2002.05709) -- определили современный конвейер контрастивного обучения с NT-Xent loss
+- [Szegedy et al., "Rethinking the Inception Architecture" (2016)](https://arxiv.org/abs/1512.00567) -- предложили сглаживание меток как технику регуляризации, теперь стандартную в большинстве больших моделей
+- [Hinton et al., "Distilling the Knowledge in a Neural Network" (2015)](https://arxiv.org/abs/1503.02531) -- knowledge distillation с soft targets и KL divergence, основа для сжатия моделей

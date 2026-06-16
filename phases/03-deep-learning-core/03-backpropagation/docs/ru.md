@@ -496,5 +496,5 @@ def __pow__(self, k):
 
 ## Дополнительное чтение
 
-- Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986) - статья, которая сделала обратное распространение массовым подходом и открыла обучение многослойных сетей
+- [Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986)](https://doi.org/10.1038/323533a0) - статья, которая сделала обратное распространение массовым подходом и открыла обучение многослойных сетей
 - 3Blue1Brown, серия "Neural Networks" (https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - лучшее визуальное объяснение обратного распространения и потока градиентов через сети

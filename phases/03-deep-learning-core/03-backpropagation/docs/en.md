@@ -496,5 +496,5 @@ Then `mse = (predicted + Value(-target)) ** 2`. The power rule `d(x**n)/dx = n*x
 
 ## Further Reading
 
-- Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986) -- the paper that made backpropagation mainstream and unlocked multi-layer network training
+- [Rumelhart, Hinton & Williams, "Learning representations by back-propagating errors" (1986)](https://doi.org/10.1038/323533a0) -- the paper that made backpropagation mainstream and unlocked multi-layer network training
 - 3Blue1Brown, "Neural Networks" series (https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) -- the best visual explanation of backpropagation and gradient flow through networks

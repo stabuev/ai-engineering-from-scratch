@@ -557,7 +557,7 @@ Stop when test loss has not improved for `patience` epochs and restore the best 
 
 ## Further Reading
 
-- Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014) -- the original dropout paper with the ensemble interpretation and extensive experiments
-- Ioffe & Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift" (2015) -- introduced BatchNorm and its training procedure, one of the most cited deep learning papers
-- Zhang & Sennrich, "Root Mean Square Layer Normalization" (2019) -- showed RMSNorm matches LayerNorm accuracy with reduced computation; adopted by LLaMA and Mistral
-- Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017) -- the landmark paper showing neural networks can memorize random labels, challenging traditional views of generalization
+- [Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014)](https://jmlr.org/papers/v15/srivastava14a.html) -- the original dropout paper with the ensemble interpretation and extensive experiments
+- [Ioffe & Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift" (2015)](https://arxiv.org/abs/1502.03167) -- introduced BatchNorm and its training procedure, one of the most cited deep learning papers
+- [Zhang & Sennrich, "Root Mean Square Layer Normalization" (2019)](https://arxiv.org/abs/1910.07467) -- showed RMSNorm matches LayerNorm accuracy with reduced computation; adopted by LLaMA and Mistral
+- [Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017)](https://arxiv.org/abs/1611.03530) -- the landmark paper showing neural networks can memorize random labels, challenging traditional views of generalization

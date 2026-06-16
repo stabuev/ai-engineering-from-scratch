@@ -28,6 +28,15 @@ OAuth 2.1 is not new. What is new is MCP's profile: specific required flows (aut
 
 ## The Concept
 
+```mermaid
+graph LR
+  C["Client"] -- "authorize + PKCE challenge" --> AS["Auth Server"]
+  AS -- "code" --> C
+  C -- "token + verifier + resource indicator" --> AS
+  AS -- "access token (aud = server)" --> C
+  C -- "request + token" --> MS["MCP Server"]
+```
+
 ### Roles
 
 - **Client.** The MCP client (Claude Desktop, Cursor, etc.).

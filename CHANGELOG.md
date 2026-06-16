@@ -7,6 +7,29 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 5 — reproducible environment (`requirements.lock`).**
+  `requirements.txt` was all `>=` with no lock, so a future learner would get
+  bleeding-edge versions and silent breakage. Added a pinned, internally
+  consistent `requirements.lock` (uv-resolved, dry-run verified). The from-scratch
+  core the Phase 0-3 lessons were run against is pinned to its tested versions
+  (numpy 1.26.4, torch 2.7.1 + matching torchvision/torchaudio, scikit-learn
+  1.7.0, pandas 2.2.2, matplotlib 3.9.2, pillow 10.4.0); the rest is pinned to the
+  course's target generation (transformers 4.x, datasets 3.x) for coherence. A
+  naive fresh resolve pulled bleeding-edge majors (numpy 2.4, pandas 3.0,
+  transformers 5.x) and a torch/torchaudio mismatch — rejected in favour of the
+  course-era stack. `requirements.txt` keeps the flexible `>=` path and now points
+  at the lock; README's clone-and-run uses the lock.
+- **Content-review wave 5 (start) — clickable sources.** Phases 1 and 3 cited
+  classic papers by name only, so Further Reading had no links. Wrapped the
+  references in real, HTTP-verified canonical URLs (arxiv / DOI / PMLR / JMLR) —
+  Adam, BatchNorm, GELU, Dropout, AdamW, SGDR, He/Xavier init, GCN/GAT, DDPM,
+  Rumelhart 1986, Rosenblatt 1958, Cybenko 1989, and more (~40 references across
+  14 lessons, en + ru). Added a short Further Reading section to the two math
+  lessons that had none (linear-algebra, statistics) and converted the JAX
+  lesson's bare doc URLs to links. Only links that returned HTTP 200 were used —
+  one wrong path (a 3Blue1Brown page) was caught and swapped for the verified
+  playlist. Readiness `missing sources` 30 → 13 (the rest are Phase 0 tooling
+  tutorials, where references are optional). Fully ready: 404 → 420.
 - **Content-review wave 3 (start) — self-check loop.** Added an `### Expected
   output` / `### Ожидаемый вывод` block to the end of Build It in 11 Phase 3
   (Deep Learning Core) lessons, showing the **real, captured** final output of
@@ -54,6 +77,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
     Show-o two-loss, Janus decoupled encoders, MIO any-to-any, video TMRoPE,
     long-video paths, audio Q-former, omni Thinker-Talker, embodied VLA, OCR-free
     docs, ColPali late interaction, cross-modal RAG, computer-use loop).
+  - Phase 13 (Tools & Protocols), all 21 figure-less lessons: the tool-call loop,
+    the three providers' shapes, parallel/id-correlated calls, constrained
+    decoding, MCP client↔server handshake, server dispatch, client namespace
+    merging, transports, the tools/resources/prompts decision rule, sampling,
+    roots + elicitation, async-task states, MCP Apps iframe bridge, the tool-
+    poisoning attack surface, the OAuth 2.1 + PKCE flow, gateways, the production
+    auth RFC stack, A2A, the routing layer, and MCP-vs-Skills. All 21 validated
+    with mermaid.parse.
   - Phase 7 · 15 (attention variants) — the one transformer lesson without a figure.
   - Phases 9 (all 12) and 7 (the other 10) were diagrammed first, then reverted:
     those lessons already ship polished SVG figures, which now render on the site,

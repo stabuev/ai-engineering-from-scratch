@@ -32,6 +32,14 @@ Meanwhile, the Official MCP Registry launched as the canonical upstream: curated
 
 ## The Concept
 
+```mermaid
+graph LR
+  DEVS["clients"] --> GW["gateway: auth, RBAC, audit, rate-limit, vaulting, tool-hash pin"]
+  GW --> S1["server 1"]
+  GW --> S2["server 2"]
+  GW --> S3["server N"]
+```
+
 ### Five gateway responsibilities
 
 1. **Auth.** OAuth 2.1 to identify the developer; maps to user roles.

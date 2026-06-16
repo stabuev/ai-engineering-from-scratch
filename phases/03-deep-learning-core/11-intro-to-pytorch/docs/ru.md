@@ -526,7 +526,7 @@ PyTorch поставляется с 15+ scheduler: StepLR, ExponentialLR, Cosine
 
 ## Дополнительное чтение
 
-- Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019) -- оригинальная статья, объясняющая дизайнерские компромиссы PyTorch
+- [Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019)](https://arxiv.org/abs/1912.01703) -- оригинальная статья, объясняющая дизайнерские компромиссы PyTorch
 - PyTorch Tutorials: "Learning PyTorch with Examples" (https://pytorch.org/tutorials/beginner/pytorch_with_examples.html) -- официальный путь от тензоров к nn.Module
 - PyTorch Performance Tuning Guide (https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html) -- mixed precision, DataLoader workers, pinned memory и другие production-оптимизации
 - Horace He, "Making Deep Learning Go Brrrr" (https://horace.io/brrr_intro.html) -- почему обучение на GPU быстрое, со стратегиями оптимизации специально для PyTorch

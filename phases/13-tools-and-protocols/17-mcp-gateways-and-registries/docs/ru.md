@@ -32,6 +32,14 @@ Cloudflare MCP Portals, Kong AI Gateway, IBM ContextForge, MintMCP, TrueFoundry,
 
 ## Концепция
 
+```mermaid
+graph LR
+  DEVS["clients"] --> GW["gateway: auth, RBAC, audit, rate-limit, vaulting, tool-hash pin"]
+  GW --> S1["server 1"]
+  GW --> S2["server 2"]
+  GW --> S3["server N"]
+```
+
 ### Пять обязанностей gateway
 
 1. **Auth.** OAuth 2.1 для идентификации developer; сопоставляет его с ролями пользователя.

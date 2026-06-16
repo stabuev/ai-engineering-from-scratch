@@ -26,6 +26,14 @@ Roots исправляют первое: client declares at `initialize` set of 
 
 ## Концепция
 
+```mermaid
+graph LR
+  ROOT["client: roots/list → workspace dirs"] --> SRV["server scopes work to roots"]
+  SRV -. "needs input" .-> EL["elicitation/create → form"]
+  EL --> USER["user fills form"]
+  USER --> SRV
+```
+
 ### Roots
 
 Client объявляет root list в `initialize`:

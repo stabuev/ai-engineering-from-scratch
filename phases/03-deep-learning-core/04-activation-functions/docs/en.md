@@ -557,7 +557,7 @@ Call it after `backward()`, before the optimizer step. In a deep sigmoid net the
 ## Further Reading
 
 - Nair & Hinton, "Rectified Linear Units Improve Restricted Boltzmann Machines" (2010) -- the paper that introduced ReLU and enabled training of deep networks
-- Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016) -- introduced the activation function that became the default for transformers
-- Ramachandran et al., "Searching for Activation Functions" (2017) -- used automated search to discover Swish, showing that activation design can be automated
-- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) -- the paper that diagnosed vanishing/exploding gradients and proposed Xavier initialization
+- [Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016)](https://arxiv.org/abs/1606.08415) -- introduced the activation function that became the default for transformers
+- [Ramachandran et al., "Searching for Activation Functions" (2017)](https://arxiv.org/abs/1710.05941) -- used automated search to discover Swish, showing that activation design can be automated
+- [Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)](https://proceedings.mlr.press/v9/glorot10a.html) -- the paper that diagnosed vanishing/exploding gradients and proposed Xavier initialization
 - Goodfellow, Bengio, Courville, "Deep Learning" Chapter 6.3 (https://www.deeplearningbook.org/) -- rigorous treatment of hidden units and activation functions

@@ -402,7 +402,7 @@ Verified `max|U @ U.T - I| ~ 8e-16`. An orthogonal matrix preserves vector norms
 
 ## Further Reading
 
-- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) -- the original Xavier initialization paper with variance analysis
-- He et al., "Delving Deep into Rectifiers" (2015) -- introduced Kaiming initialization for ReLU networks
+- [Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)](https://proceedings.mlr.press/v9/glorot10a.html) -- the original Xavier initialization paper with variance analysis
+- [He et al., "Delving Deep into Rectifiers" (2015)](https://arxiv.org/abs/1502.01852) -- introduced Kaiming initialization for ReLU networks
 - Radford et al., "Language Models are Unsupervised Multitask Learners" (2019) -- GPT-2 paper with residual scaling initialization
-- Mishkin & Matas, "All You Need is a Good Init" (2016) -- layer-sequential unit-variance initialization, an empirical alternative to analytical formulas
+- [Mishkin & Matas, "All You Need is a Good Init" (2016)](https://arxiv.org/abs/1511.06422) -- layer-sequential unit-variance initialization, an empirical alternative to analytical formulas

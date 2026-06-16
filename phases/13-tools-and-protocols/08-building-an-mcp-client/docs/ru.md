@@ -29,6 +29,15 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  C["MCP client"] --> S1["server A session"]
+  C --> S2["server B session"]
+  S1 --> NS["merged tool namespace"]
+  S2 --> NS
+  NS --> RT["route each call to its owning server"]
+```
+
 ### Запуск дочерних процессов
 
 `subprocess.Popen` с `stdin=PIPE, stdout=PIPE, stderr=PIPE`. Установите `bufsize=1` и используйте текстовый режим для построчного чтения. Каждый сервер — отдельный процесс; клиент держит по одному handle `Popen` на сервер.

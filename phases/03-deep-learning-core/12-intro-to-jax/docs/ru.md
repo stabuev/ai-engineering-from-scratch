@@ -497,9 +497,9 @@ restored = checkpointer.restore('/tmp/model')
 
 ## Дополнительное чтение
 
-- Документация JAX: https://jax.readthedocs.io/ — официальная документация с отличными tutorials по grad, jit и vmap
+- [Документация JAX](https://jax.readthedocs.io) — официальная документация с отличными tutorials по grad, jit и vmap
 - "JAX: composable transformations of Python+NumPy programs" (Bradbury et al., 2018) — исходная статья, объясняющая философию дизайна
-- Документация Flax: https://flax.readthedocs.io/ — библиотека нейронных сетей Google для JAX
+- [Документация Flax](https://flax.readthedocs.io) — библиотека нейронных сетей Google для JAX
 - Patrick Kidger, "Equinox: neural networks in JAX via callable PyTrees and filtered transformations" (2021) — Pythonic-альтернатива Flax
 - DeepMind, "Optax: composable gradient transformation and optimisation" — стандартная библиотека оптимизаторов
 - "You Don't Know JAX" (Colin Raffel, 2020) — практическое руководство по подводным камням и паттернам JAX от одного из авторов T5

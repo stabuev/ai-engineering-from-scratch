@@ -378,6 +378,6 @@ def leaky_step(z):
 ## Дополнительное чтение
 
 - Michael Nielsen, "Neural Networks and Deep Learning", Chapter 1-2 (http://neuralnetworksanddeeplearning.com/) -- самое ясное бесплатное объяснение прямых проходов и структуры сети, с интерактивными визуализациями
-- Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989) -- оригинальная статья о теореме универсальной аппроксимации, на удивление читаемая
+- [Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989)](https://doi.org/10.1007/BF02551274) -- оригинальная статья о теореме универсальной аппроксимации, на удивление читаемая
 - 3Blue1Brown, "But what is a neural network?" (https://www.youtube.com/watch?v=aircAruvnKk) -- 20-минутный визуальный разбор слоев, весов и прямых проходов, который строит правильную ментальную модель
 - Goodfellow, Bengio, Courville, "Deep Learning", Chapter 6 (https://www.deeplearningbook.org/) -- стандартный справочник по многослойным сетям, бесплатно доступный онлайн

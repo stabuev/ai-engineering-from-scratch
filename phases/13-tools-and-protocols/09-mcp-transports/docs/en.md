@@ -24,6 +24,13 @@ And stdio still matters for local servers. Claude Desktop, VS Code, and every ID
 
 ## The Concept
 
+```mermaid
+graph TB
+  T["MCP transport"] --> STD["stdio: local, child process"]
+  T --> HTTP["Streamable HTTP: remote, single endpoint, Mcp-Session-Id"]
+  HTTP --> SSE["HTTP+SSE (deprecated)"]
+```
+
 ### stdio
 
 - Child-process transport. Client spawns server, communicates via stdin/stdout.

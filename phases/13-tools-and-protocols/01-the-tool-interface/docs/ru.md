@@ -26,6 +26,14 @@ LLM выдает распределение вероятностей по сле
 
 ## Концепция
 
+```mermaid
+graph LR
+  D["describe: tool schema"] --> M["model decides: tool call"]
+  M --> E["execute: run the function"]
+  E --> O["observe: tool result"]
+  O --> M
+```
+
 ### Шаг первый: describe
 
 Host объявляет каждый инструмент тремя полями.

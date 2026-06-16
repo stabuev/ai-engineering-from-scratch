@@ -3220,418 +3220,418 @@ const PHASES = [
 
 const GLOSSARY = [
   {
-    "term": "Agent / агент",
-    "says": "Автономный ИИ, который думает и действует сам",
-    "means": "Цикл while, в котором LLM решает, какой инструмент вызвать следующим, выполняет его, видит результат и повторяет процесс"
+    "term": "Agent",
+    "says": "An autonomous AI that thinks and acts on its own",
+    "means": "A while loop where an LLM decides what tool to call next, executes it, sees the result, and repeats"
   },
   {
-    "term": "Attention / внимание",
-    "says": "Как ИИ фокусируется на важных частях",
-    "means": "Механизм, в котором каждый токен вычисляет взвешенную сумму значений всех остальных токенов, а веса определяются их релевантностью (через скалярное произведение векторов query и key)"
+    "term": "Attention",
+    "says": "How the AI focuses on important parts",
+    "means": "A mechanism where every token computes a weighted sum of all other tokens' values, with weights determined by how relevant they are (via dot product of query and key vectors)"
   },
   {
-    "term": "Alignment / выравнивание",
-    "says": "Как сделать ИИ безопасным",
-    "means": "Техническая задача сделать поведение AI-системы согласованным с человеческими намерениями, ценностями и предпочтениями, включая краевые случаи, которые разработчик не предусмотрел"
+    "term": "Alignment",
+    "says": "Making AI safe",
+    "means": "The technical challenge of making an AI system's behavior match human intentions, values, and preferences, including edge cases the designer didn't anticipate"
   },
   {
-    "term": "Autoregressive / авторегрессионный",
-    "says": "ИИ генерирует по одному слову за раз",
-    "means": "Модель, которая предсказывает следующий токен при условии всех предыдущих токенов, а затем подает это предсказание обратно как вход для следующего шага. GPT, LLaMA и Claude являются авторегрессионными моделями."
+    "term": "Autoregressive",
+    "says": "The AI generates one word at a time",
+    "means": "A model that predicts the next token conditioned on all previous tokens, then feeds that prediction back as input for the next step. GPT, LLaMA, and Claude are all autoregressive."
   },
   {
-    "term": "Activation Function / функция активации",
-    "says": "Нелинейная часть между слоями",
-    "means": "Функция, применяемая после каждого линейного слоя и вносящая нелинейность. Без нее последовательность любого числа линейных слоев сводится к одному линейному преобразованию. ReLU, GELU и SiLU встречаются чаще всего. Выбор напрямую влияет на то, будут ли градиенты проходить во время обучения."
+    "term": "Activation Function",
+    "says": "The nonlinear thing between layers",
+    "means": "A function applied after each linear layer that introduces nonlinearity. Without it, stacking any number of linear layers collapses to a single linear transformation. ReLU, GELU, and SiLU are the most common. The choice directly affects whether gradients flow during training."
   },
   {
-    "term": "Adam (Optimizer) / Adam (оптимизатор)",
-    "says": "Оптимизатор по умолчанию",
-    "means": "Adaptive Moment Estimation. Сочетает momentum (первый момент) с адаптивными скоростями обучения для каждого параметра (второй момент). Использует коррекцию смещения на ранних шагах. Хорошо работает в большинстве задач без долгой настройки."
+    "term": "Adam (Optimizer)",
+    "says": "The default optimizer",
+    "means": "Adaptive Moment Estimation. Combines momentum (first moment) with adaptive learning rates per parameter (second moment). Has bias correction for early steps. Works well across most tasks without much tuning."
   },
   {
-    "term": "AdamW / AdamW",
-    "says": "Adam, но лучше",
-    "means": "Adam с отделенным weight decay. В стандартном Adam L2-регуляризация масштабируется адаптивной скоростью обучения для каждого параметра, а это обычно не то, что нужно. AdamW применяет weight decay напрямую к весам, независимо от статистики градиентов. Оптимизатор по умолчанию для обучения трансформеров."
+    "term": "AdamW",
+    "says": "Adam but better",
+    "means": "Adam with decoupled weight decay. In standard Adam, L2 regularization gets scaled by the adaptive learning rate per parameter, which is not what you want. AdamW applies weight decay directly to the weights, independent of the gradient statistics. The default optimizer for training transformers."
   },
   {
-    "term": "Autograd / автоматическое дифференцирование",
-    "says": "Автоматические градиенты",
-    "means": "Система, которая записывает операции над тензорами и автоматически вычисляет градиенты с помощью дифференцирования в обратном режиме. Autograd в PyTorch строит вычислительный граф на лету (динамический граф), а JAX использует функциональные преобразования (grad). Именно это делает обратное распространение ошибки практичным: вы пишете прямой проход, а фреймворк вычисляет все производные."
+    "term": "Autograd",
+    "says": "Automatic gradients",
+    "means": "A system that records operations on tensors and automatically computes gradients via reverse-mode differentiation. PyTorch's autograd builds a computation graph on-the-fly (dynamic graph), while JAX uses function transformations (grad). This is what makes backpropagation practical -- you write the forward pass, and the framework computes all the derivatives."
   },
   {
-    "term": "Batch Size / размер батча",
-    "says": "Сколько примеров обрабатывается за раз",
-    "means": "Количество обучающих примеров, обрабатываемых за один прямой и обратный проход перед обновлением весов. Большие батчи дают более стабильные оценки градиента, но требуют больше памяти. Типичные значения: 32-512 для обучения, больше для инференса. Размер батча связан со скоростью обучения: удвоили батч, удвойте LR (правило линейного масштабирования)."
+    "term": "Batch Size",
+    "says": "How many examples at once",
+    "means": "The number of training examples processed in one forward/backward pass before updating weights. Larger batches give more stable gradient estimates but use more memory. Typical values: 32-512 for training, larger for inference. Batch size interacts with learning rate -- double the batch, double the LR (linear scaling rule)."
   },
   {
-    "term": "Backpropagation / обратное распространение ошибки",
-    "says": "Как нейронные сети учатся",
-    "means": "Алгоритм, который вычисляет, какой вклад каждый вес внес в ошибку, применяя правило цепочки в обратном направлении через сеть, а затем пропорционально корректирует веса"
+    "term": "Backpropagation",
+    "says": "How neural networks learn",
+    "means": "An algorithm that computes how much each weight contributed to the error by applying the chain rule backward through the network, then adjusts weights proportionally"
   },
   {
-    "term": "Context Window / контекстное окно",
-    "says": "Сколько ИИ может помнить",
-    "means": "Максимальное число токенов (вход + выход), которое помещается в один API-вызов. Это не память, а буфер фиксированного размера, который сбрасывается при каждом вызове"
+    "term": "Context Window",
+    "says": "How much the AI can remember",
+    "means": "The maximum number of tokens (input + output) that fit in a single API call. Not memory — it's a fixed-size buffer that resets every call"
   },
   {
-    "term": "Chain of Thought (CoT) / цепочка рассуждений",
-    "says": "Заставить ИИ думать пошагово",
-    "means": "Техника prompting, при которой модель просят показать шаги рассуждения. Это повышает точность в многошаговых задачах, потому что каждый шаг задает условия для генерации следующего токена"
+    "term": "Chain of Thought (CoT)",
+    "says": "Making the AI think step by step",
+    "means": "A prompting technique where you ask the model to show its reasoning steps, which improves accuracy on multi-step problems because each step conditions the next token generation"
   },
   {
-    "term": "CNN (Convolutional Neural Network) / CNN (сверточная нейронная сеть)",
-    "says": "ИИ для изображений",
-    "means": "Нейронная сеть, которая использует операции свертки (скользящие фильтры по входу) для обнаружения локальных паттернов. Последовательность сверток обнаруживает все более сложные признаки: границы, текстуры, объекты."
+    "term": "CNN (Convolutional Neural Network)",
+    "says": "Image AI",
+    "means": "A neural network that uses convolution operations (sliding filters over the input) to detect local patterns. Stacking convolutions detects increasingly complex features: edges, textures, objects."
   },
   {
-    "term": "CUDA / CUDA",
-    "says": "Программирование для GPU",
-    "means": "Платформа NVIDIA для параллельных вычислений. Позволяет одновременно выполнять матричные операции на тысячах ядер GPU. PyTorch и TensorFlow используют CUDA под капотом."
+    "term": "CUDA",
+    "says": "GPU programming",
+    "means": "NVIDIA's parallel computing platform. Lets you run matrix operations on thousands of GPU cores simultaneously. PyTorch and TensorFlow use CUDA under the hood."
   },
   {
-    "term": "Chunking / разбиение на чанки",
-    "says": "Разделение документов на части",
-    "means": "Разбиение текста на сегменты перед построением эмбеддингов для поиска. Размер чанка определяет гранулярность результатов поиска. Слишком маленький: теряется контекст. Слишком большой: размывается релевантность. Распространенные стратегии: фиксированный размер с перекрытием, разбиение по предложениям или семантическое разбиение. Типичный размер чанка: 256-512 токенов с перекрытием 10-20%."
+    "term": "Chunking",
+    "says": "Splitting documents into pieces",
+    "means": "Breaking text into segments before embedding for retrieval. Chunk size determines the granularity of search results. Too small: loses context. Too large: dilutes relevance. Common strategies: fixed-size with overlap, sentence-based, or semantic splitting. Typical chunk size: 256-512 tokens with 10-20% overlap."
   },
   {
-    "term": "Contrastive Learning / контрастивное обучение",
-    "says": "Обучение через сравнение",
-    "means": "Обучение, при котором похожие пары сближаются, а непохожие пары отталкиваются друг от друга в пространстве эмбеддингов. CLIP использует именно это: соответствующие пары изображение-текст противопоставляются несоответствующим."
+    "term": "Contrastive Learning",
+    "says": "Learning by comparison",
+    "means": "Training by pulling similar pairs closer and pushing dissimilar pairs apart in embedding space. CLIP uses this: matching image-text pairs vs non-matching ones."
   },
   {
-    "term": "Cosine Similarity / косинусное сходство",
-    "says": "Насколько похожи два вектора",
-    "means": "Косинус угла между двумя векторами: dot(a, b) / (||a|| * ||b||). Диапазон от -1 (противоположные направления) до 1 (одинаковое направление). Игнорирует длину и учитывает только направление. Стандартная метрика сходства для эмбеддингов и семантического поиска."
+    "term": "Cosine Similarity",
+    "says": "How similar two vectors are",
+    "means": "The cosine of the angle between two vectors: dot(a, b) / (||a|| * ||b||). Ranges from -1 (opposite) to 1 (identical direction). Ignores magnitude, only cares about direction. The standard similarity metric for embeddings and semantic search."
   },
   {
-    "term": "Cross-Entropy / кросс-энтропия",
-    "says": "Функция потерь для классификации",
-    "means": "Измеряет различие между двумя вероятностными распределениями. Для классификации: -sum(y_true * log(y_pred)). Для языковых моделей: отрицательный логарифм вероятности правильного следующего токена. Чем ниже, тем лучше. Perplexity — это просто exp(cross-entropy)."
+    "term": "Cross-Entropy",
+    "says": "The classification loss",
+    "means": "Measures the difference between two probability distributions. For classification: -sum(y_true * log(y_pred)). For language models: the negative log probability of the correct next token. Lower is better. Perplexity is just exp(cross-entropy)."
   },
   {
-    "term": "Data Augmentation / аугментация данных",
-    "says": "Создание большего числа обучающих данных",
-    "means": "Создание модифицированных копий существующих данных (поворот изображений, добавление шума, перефразирование текста), чтобы увеличить разнообразие обучающей выборки без сбора новых данных. Снижает переобучение."
+    "term": "Data Augmentation",
+    "says": "Making more training data",
+    "means": "Creating modified copies of existing data (rotate images, add noise, paraphrase text) to increase training set diversity without collecting new data. Reduces overfitting."
   },
   {
-    "term": "Decoder / декодер",
-    "says": "Выходная часть",
-    "means": "В трансформерах декодер использует causal (masked) self-attention, поэтому каждая позиция может обращать внимание только на более ранние позиции. GPT — decoder-only. BERT — encoder-only. T5 — encoder-decoder."
+    "term": "Decoder",
+    "says": "The output part",
+    "means": "In transformers, a decoder uses causal (masked) self-attention so each position can only attend to earlier positions. GPT is decoder-only. BERT is encoder-only. T5 is encoder-decoder."
   },
   {
-    "term": "Diffusion Model / диффузионная модель",
-    "says": "ИИ, который генерирует изображения из шума",
-    "means": "Модель, обученная обращать постепенный процесс зашумления: она учится предсказывать и удалять шум, а при генерации стартует с чистого шума и итеративно его убирает"
+    "term": "Diffusion Model",
+    "says": "AI that generates images from noise",
+    "means": "A model trained to reverse a gradual noising process — it learns to predict and remove noise, and at generation time starts from pure noise and iteratively denoises"
   },
   {
-    "term": "DPO (Direct Preference Optimization) / DPO (прямая оптимизация предпочтений)",
-    "says": "Более простой RLHF",
-    "means": "Метод обучения, который полностью пропускает reward model и напрямую оптимизирует языковую модель так, чтобы она предпочитала лучший ответ в парах человеческих предпочтений"
+    "term": "DPO (Direct Preference Optimization)",
+    "says": "A simpler RLHF",
+    "means": "A training method that skips the reward model entirely — it directly optimizes the language model to prefer the better response in pairs of human preferences"
   },
   {
-    "term": "Dropout / дропаут",
-    "says": "Случайное отключение нейронов",
-    "means": "Во время обучения случайная доля активаций зануляется. Это заставляет сеть не полагаться на один конкретный нейрон. Во время инференса отключается. Простая, но эффективная регуляризация."
+    "term": "Dropout",
+    "says": "Randomly turning off neurons",
+    "means": "During training, randomly set a fraction of activations to zero. Forces the network to not rely on any single neuron. Turned off during inference. Simple but effective regularization."
   },
   {
-    "term": "Eigenvalue / собственное значение",
-    "says": "Какая-то математическая штука для PCA",
-    "means": "Для матрицы A собственное значение lambda удовлетворяет Av = lambda*v для некоторого вектора v. Оно показывает, насколько матрица масштабирует векторы в этом направлении. Большие собственные значения = направления высокой дисперсии в данных."
+    "term": "Eigenvalue",
+    "says": "Some math thing for PCA",
+    "means": "For a matrix A, an eigenvalue lambda satisfies Av = lambda*v for some vector v. It tells you how much the matrix scales vectors in that direction. Large eigenvalues = directions of high variance in your data."
   },
   {
-    "term": "Embedding / эмбеддинг",
-    "says": "Магия ИИ, превращающая слова в числа",
-    "means": "Выученное отображение дискретных объектов (слов, изображений, пользователей) в плотные векторы в непрерывном пространстве, где похожие объекты оказываются близко друг к другу"
+    "term": "Embedding",
+    "says": "Some AI magic that turns words into numbers",
+    "means": "A learned mapping from discrete items (words, images, users) to dense vectors in continuous space, where similar items end up close together"
   },
   {
-    "term": "Encoder / энкодер",
-    "says": "Входная часть",
-    "means": "В трансформерах энкодер использует двунаправленное self-attention, поэтому каждая позиция может обращать внимание на все позиции. BERT — encoder-only. Хорошо подходит для задач понимания (классификация, NER), но не для генерации."
+    "term": "Encoder",
+    "says": "The input part",
+    "means": "In transformers, an encoder uses bidirectional self-attention so each position can attend to all positions. BERT is encoder-only. Good for understanding tasks (classification, NER) but not generation."
   },
   {
-    "term": "Epoch / эпоха",
-    "says": "Один проход по данным",
-    "means": "Именно это. Один полный проход по каждому примеру в обучающей выборке. Несколько эпох = модель видит данные несколько раз. Большее число эпох может улучшить обучение, но повышает риск переобучения."
+    "term": "Epoch",
+    "says": "One pass through the data",
+    "means": "Exactly that. One complete pass through every example in the training set. Multiple epochs = seeing the data multiple times. More epochs can improve learning but risks overfitting."
   },
   {
-    "term": "Feature / признак",
-    "says": "Столбец в ваших данных",
-    "means": "Отдельное измеримое свойство данных. В классическом ML признаки конструируют вручную. В deep learning сеть автоматически выучивает признаки из сырых данных."
+    "term": "Feature",
+    "says": "A column in your data",
+    "means": "An individual measurable property of the data. In classical ML, you engineer features by hand. In deep learning, the network learns features automatically from raw data."
   },
   {
-    "term": "Few-Shot / обучение по нескольким примерам",
-    "says": "Сначала дать ИИ несколько примеров",
-    "means": "Добавление небольшого числа примеров вход-выход в промпт перед тем, как попросить модель выполнить задачу. Обычно 3-5 примеров. Модель сопоставляет паттерны по этим примерам, чтобы понять желаемый формат и поведение. Сравните с zero-shot (без примеров) и fine-tuning (тысячи примеров, встроенных в веса)."
+    "term": "Few-Shot",
+    "says": "Give the AI some examples first",
+    "means": "Including a small number of input-output examples in the prompt before asking the model to perform a task. Typically 3-5 examples. The model pattern-matches on these examples to understand the desired format and behavior. Contrast with zero-shot (no examples) and fine-tuning (thousands of examples baked into weights)."
   },
   {
-    "term": "Fine-tuning / дообучение",
-    "says": "Обучение ИИ на ваших данных",
-    "means": "Старт с весов предобученной модели и продолжение обучения на меньшем датасете под конкретную задачу. Обновляет только существующие веса, не добавляет новые знания с нуля"
+    "term": "Fine-tuning",
+    "says": "Training the AI on your data",
+    "means": "Starting with a pre-trained model's weights and continuing training on a smaller, task-specific dataset. Only updates existing weights, doesn't add new knowledge from scratch"
   },
   {
-    "term": "Function Calling / вызов функций",
-    "says": "ИИ, который умеет использовать инструменты",
-    "means": "Структурированный способ, с помощью которого LLM запрашивают выполнение внешних функций. Вы задаете инструменты через описания JSON Schema, модель выводит структурированный JSON-объект с указанием, какую функцию вызвать и с какими аргументами, ваш код выполняет ее, а результат возвращается модели. Это не то же самое, что агенты: вызов функций — механизм, агенты — цикл."
+    "term": "Function Calling",
+    "says": "AI that can use tools",
+    "means": "A structured way for LLMs to request execution of external functions. You define tools with JSON Schema descriptions, the model outputs a structured JSON object specifying which function to call with what arguments, your code executes it, and the result goes back to the model. Not the same as agents -- function calling is the mechanism, agents are the loop."
   },
   {
-    "term": "Guardrails / защитные ограничения",
-    "says": "Фильтры безопасности для ИИ",
-    "means": "Слои валидации входа и выхода вокруг LLM, которые обнаруживают и блокируют вредоносный контент, попытки инъекции промпта, утечки PII или ответы не по теме. Обычно это pipeline: input filter -> LLM -> output filter. Может быть rule-based (regex, списки ключевых слов) или model-based (классификатор, оценивающий безопасность)."
+    "term": "Guardrails",
+    "says": "Safety filters for AI",
+    "means": "Input/output validation layers around an LLM that detect and block harmful content, prompt injection attempts, PII leakage, or off-topic responses. Typically a pipeline: input filter -> LLM -> output filter. Can be rule-based (regex, keyword lists) or model-based (classifier that scores safety)."
   },
   {
-    "term": "GPT / GPT",
-    "says": "«ChatGPT» или «тот самый ИИ»",
-    "means": "Generative Pre-trained Transformer — конкретная архитектура, которая предсказывает следующий токен с помощью decoder-only transformer, обученного на больших текстовых корпусах"
+    "term": "GPT",
+    "says": "ChatGPT\" or \"The AI",
+    "means": "Generative Pre-trained Transformer — a specific architecture that predicts the next token using a decoder-only transformer trained on large text corpora"
   },
   {
-    "term": "GAN (Generative Adversarial Network) / GAN (генеративно-состязательная сеть)",
-    "says": "Два ИИ соревнуются друг с другом",
-    "means": "Сеть-генератор пытается создавать реалистичные данные, а сеть-дискриминатор пытается отличить настоящие данные от поддельных. Они обучаются вместе: генератор лучше обманывает дискриминатор, а дискриминатор лучше обнаруживает подделки."
+    "term": "GAN (Generative Adversarial Network)",
+    "says": "Two AIs fighting each other",
+    "means": "A generator network tries to create realistic data while a discriminator network tries to tell real from fake. They train together: the generator gets better at fooling the discriminator, and the discriminator gets better at detecting fakes."
   },
   {
-    "term": "Gradient / градиент",
-    "says": "Наклон",
-    "means": "Вектор частных производных, указывающий направление наибольшего возрастания. В ML идут в направлении, противоположном градиенту (gradient descent), чтобы минимизировать функцию потерь."
+    "term": "Gradient",
+    "says": "The slope",
+    "means": "A vector of partial derivatives pointing in the direction of steepest increase. In ML, you go opposite to the gradient (gradient descent) to minimize the loss."
   },
   {
-    "term": "Gradient Descent / градиентный спуск",
-    "says": "Как ИИ улучшается",
-    "means": "Алгоритм оптимизации, который корректирует параметры в направлении, где функция потерь убывает быстрее всего, как движение вниз по склону в высокоразмерном ландшафте"
+    "term": "Gradient Descent",
+    "says": "How AI improves",
+    "means": "An optimization algorithm that adjusts parameters in the direction that reduces the loss function most steeply, like walking downhill in a high-dimensional landscape"
   },
   {
-    "term": "Hyperparameter / гиперпараметр",
-    "says": "Настройки, которые вы подбираете",
-    "means": "Значения, задаваемые до обучения и управляющие самим процессом обучения: скорость обучения (learning rate), размер батча (batch size), число слоев, доля дропаута (dropout rate). В отличие от параметров модели (весов), они не выучиваются из данных."
+    "term": "Hyperparameter",
+    "says": "Settings you tune",
+    "means": "Values set before training that control the training process itself: learning rate, batch size, number of layers, dropout rate. Unlike model parameters (weights), these aren't learned from data."
   },
   {
-    "term": "Hallucination / галлюцинация",
-    "says": "ИИ «лжет» или «выдумывает»",
-    "means": "Модель генерирует правдоподобный текст, который не основан на ее обучающих данных или заданном контексте: она достраивает паттерн, а не извлекает факт"
+    "term": "Hallucination",
+    "says": "The AI is lying\" or \"making things up",
+    "means": "The model generates plausible-sounding text that isn't grounded in its training data or the given context — it's pattern-completing, not fact-retrieving"
   },
   {
-    "term": "Inference / инференс",
-    "says": "Запуск ИИ",
-    "means": "Использование обученной модели для предсказаний на новых данных. Обновления весов не происходят. Именно это делают в production-среде: отправляют вход и получают выход."
+    "term": "Inference",
+    "says": "Running the AI",
+    "means": "Using a trained model to make predictions on new data. No weight updates happen. This is what you do in production: send input, get output."
   },
   {
-    "term": "Inductive Bias / индуктивное смещение",
-    "says": "Никогда о таком не слышал",
-    "means": "Предположения, встроенные в архитектуру модели. CNN предполагают, что важны локальные паттерны (convolution). RNN предполагают, что важен порядок (sequential processing). Transformers предполагают, что все может быть связано со всем (attention). Правильное индуктивное смещение помогает модели быстрее учиться на меньшем объеме данных."
+    "term": "Inductive Bias",
+    "says": "Never heard of it",
+    "means": "The assumptions built into a model's architecture. CNNs assume local patterns matter (convolution). RNNs assume order matters (sequential processing). Transformers assume everything might relate to everything (attention). The right bias helps the model learn faster from less data."
   },
   {
-    "term": "JAX / JAX",
-    "says": "ML-фреймворк от Google",
-    "means": "NumPy-совместимая библиотека, добавляющая автоматическое дифференцирование (grad), JIT-компиляцию (jit), автоматическую векторизацию (vmap) и параллелизм на нескольких устройствах (pmap). В отличие от объектно-ориентированного стиля PyTorch, JAX является чисто функциональным: без скрытого состояния и мутаций in-place. Используется Google DeepMind для AlphaFold, Gemini и крупномасштабных исследований."
+    "term": "JAX",
+    "says": "Google's ML framework",
+    "means": "A NumPy-compatible library that adds automatic differentiation (grad), JIT compilation (jit), automatic vectorization (vmap), and multi-device parallelism (pmap). Unlike PyTorch's object-oriented style, JAX is purely functional -- no hidden state, no in-place mutation. Used by Google DeepMind for AlphaFold, Gemini, and large-scale research."
   },
   {
-    "term": "KV Cache / KV-кэш",
-    "says": "Ускоряет инференс",
-    "means": "При авторегрессионной генерации кеширование матриц key и value из предыдущих токенов, чтобы не пересчитывать их на каждом шаге. Обменивает память на скорость. Необходим для быстрого LLM-инференса."
+    "term": "KV Cache",
+    "says": "Makes inference faster",
+    "means": "During autoregressive generation, caching the key and value matrices from previous tokens so you don't recompute them at each step. Trades memory for speed. Essential for fast LLM inference."
   },
   {
-    "term": "Latent Space / латентное пространство",
-    "says": "Скрытое представление",
-    "means": "Сжатое выученное пространство представлений, в котором похожие входы отображаются в близкие точки. Автоэнкодеры, VAE и диффузионные модели работают в латентном пространстве. Оно имеет меньшую размерность, чем вход, но захватывает важную структуру."
+    "term": "Latent Space",
+    "says": "The hidden representation",
+    "means": "A compressed, learned representation space where similar inputs map to nearby points. Autoencoders, VAEs, and diffusion models all work in latent space. It's lower-dimensional than the input but captures the important structure."
   },
   {
-    "term": "Learning Rate / скорость обучения",
-    "says": "Как быстро ИИ учится",
-    "means": "Скаляр, управляющий размером шага при градиентном спуске. Слишком высокий: перескакивает минимум и расходится. Слишком низкий: сходится слишком медленно или застревает. Самый важный гиперпараметр."
+    "term": "Learning Rate",
+    "says": "How fast the AI learns",
+    "means": "A scalar that controls step size during gradient descent. Too high: overshoots the minimum and diverges. Too low: converges too slowly or gets stuck. The single most important hyperparameter."
   },
   {
-    "term": "LLM (Large Language Model) / LLM (большая языковая модель)",
-    "says": "«ИИ» или «мозг»",
-    "means": "Нейронная сеть на основе трансформера, обученная предсказывать следующий токен в последовательности, с миллиардами параметров и обучением на текстовых данных интернет-масштаба"
+    "term": "LLM (Large Language Model)",
+    "says": "AI\" or \"the brain",
+    "means": "A transformer-based neural network trained to predict the next token in a sequence, with billions of parameters, trained on internet-scale text data"
   },
   {
-    "term": "LoRA (Low-Rank Adaptation) / LoRA (низкоранговая адаптация)",
-    "says": "Эффективное дообучение",
-    "means": "Вместо обновления всех весов рядом с исходными весами вставляются небольшие низкоранговые матрицы. Обучаются только эти малые матрицы, что снижает расход памяти в 10-100 раз"
+    "term": "LoRA (Low-Rank Adaptation)",
+    "says": "Efficient fine-tuning",
+    "means": "Instead of updating all weights, insert small low-rank matrices alongside the original weights. Only these small matrices are trained, reducing memory by 10-100x"
   },
   {
-    "term": "Loss Function / функция потерь",
-    "says": "Насколько ИИ ошибается",
-    "means": "Функция, измеряющая разрыв между предсказанным и фактическим выходом. Обучение минимизирует эту функцию. MSE для регрессии, cross-entropy для классификации, contrastive loss для эмбеддингов. Выбор функции потерь определяет, что для модели значит \"хорошо\"."
+    "term": "Loss Function",
+    "says": "How wrong the AI is",
+    "means": "A function that measures the gap between predicted and actual output. Training minimizes this function. MSE for regression, cross-entropy for classification, contrastive loss for embeddings. The choice of loss function defines what \"good\" means to the model."
   },
   {
-    "term": "Mixed Precision / смешанная точность",
-    "says": "Прием для ускорения обучения",
-    "means": "Использование float16 для прямого прохода и большинства операций (быстрее, меньше памяти), но сохранение float32 для накопления градиентов и обновления весов (точнее). Дает ускорение в 2 раза с пренебрежимо малой потерей точности."
+    "term": "Mixed Precision",
+    "says": "Training trick for speed",
+    "means": "Using float16 for forward pass and most operations (faster, less memory) but keeping float32 for gradient accumulation and weight updates (more precise). Gets 2x speedup with negligible accuracy loss."
   },
   {
-    "term": "MoE (Mixture of Experts) / MoE (смесь экспертов)",
-    "says": "Запускается только часть модели",
-    "means": "Модель со множеством \"экспертных\" подсетей, где механизм маршрутизации отправляет каждый вход только нескольким экспертам. Полная модель огромна, но каждый прямой проход дешевый, потому что большинство экспертов пропускаются. Mixtral и GPT-4 используют этот подход."
+    "term": "MoE (Mixture of Experts)",
+    "says": "Only part of the model runs",
+    "means": "A model with many \"expert\" subnetworks where a routing mechanism sends each input to only a few experts. The full model is huge but each forward pass is cheap because most experts are skipped. Mixtral and GPT-4 use this."
   },
   {
-    "term": "MCP (Model Context Protocol) / MCP (протокол контекста модели)",
-    "says": "Способ, с помощью которого ИИ использует инструменты",
-    "means": "Открытый протокол (JSON-RPC поверх stdio/HTTP), стандартизирующий подключение AI-приложений к внешним источникам данных и инструментам, с типизированными схемами для tools, resources и prompts"
+    "term": "MCP (Model Context Protocol)",
+    "says": "A way for AI to use tools",
+    "means": "An open protocol (JSON-RPC over stdio/HTTP) that standardizes how AI applications connect to external data sources and tools, with typed schemas for tools, resources, and prompts"
   },
   {
-    "term": "NaN (Not a Number) / NaN (не число)",
-    "says": "Обучение сломалось",
-    "means": "Значение с плавающей точкой, обозначающее неопределенные результаты (0/0, inf-inf). В обучении NaN loss обычно означает: learning rate слишком высокий, взрывающиеся градиенты, log от нуля или деление на ноль. Это первое, что нужно проверять при сбое обучения."
+    "term": "NaN (Not a Number)",
+    "says": "Training crashed",
+    "means": "A floating-point value indicating undefined results (0/0, inf-inf). In training, NaN loss usually means: learning rate too high, exploding gradients, log of zero, or division by zero. Always the first thing to check when training fails."
   },
   {
-    "term": "Normalization / нормализация",
-    "says": "Масштабирование данных",
-    "means": "Приведение значений к стандартному диапазону. Batch normalization нормализует по батчу. Layer normalization нормализует по признакам. Оба подхода стабилизируют обучение и позволяют использовать более высокие скорости обучения."
+    "term": "Normalization",
+    "says": "Scaling the data",
+    "means": "Adjusting values to a standard range. Batch normalization normalizes across a batch. Layer normalization normalizes across features. Both stabilize training and allow higher learning rates."
   },
   {
-    "term": "Overfitting / переобучение",
-    "says": "Модель запомнила данные",
-    "means": "Модель хорошо работает на обучающих данных, но плохо на невиданных данных. Она выучила шум, а не сигнал. Исправляется так: больше данных, регуляризация (dropout, weight decay), ранняя остановка (early stopping), аугментация данных (data augmentation), более простая модель."
+    "term": "Overfitting",
+    "says": "The model memorized the data",
+    "means": "The model performs well on training data but poorly on unseen data. It learned the noise, not the signal. Fix with: more data, regularization (dropout, weight decay), early stopping, data augmentation, simpler model."
   },
   {
-    "term": "Optimizer / оптимизатор",
-    "says": "Штука, которая обновляет веса",
-    "means": "Алгоритм, использующий градиенты для обновления параметров модели. SGD — самый простой. Adam — самый распространенный. У каждого оптимизатора свои свойства: скорость сходимости, потребление памяти, чувствительность к гиперпараметрам."
+    "term": "Optimizer",
+    "says": "The thing that updates weights",
+    "means": "An algorithm that uses gradients to update model parameters. SGD is the simplest. Adam is the most common. Each optimizer has different properties: convergence speed, memory usage, sensitivity to hyperparameters."
   },
   {
-    "term": "Parameter / параметр",
-    "says": "Размер модели",
-    "means": "Обучаемое значение в модели, обычно вес или смещение (bias). \"7B parameters\" означает 7 миллиардов обучаемых чисел. Каждый параметр float32 занимает 4 байта, поэтому 7B parameters = 28GB памяти только для весов."
+    "term": "Parameter",
+    "says": "Model size",
+    "means": "A learnable value in the model, typically a weight or bias. \"7B parameters\" means 7 billion learnable numbers. Each float32 parameter takes 4 bytes, so 7B parameters = 28GB of memory just for the weights."
   },
   {
-    "term": "Perplexity / перплексия",
-    "says": "Насколько модель растеряна",
-    "means": "Экспонента средней cross-entropy loss. Чем ниже, тем лучше. Perplexity 10 означает, что модель настолько же неопределенна, как если бы на каждом шаге равномерно выбирала среди 10 токенов."
+    "term": "Perplexity",
+    "says": "How confused the model is",
+    "means": "The exponential of the average cross-entropy loss. Lower is better. A perplexity of 10 means the model is as uncertain as if it were choosing uniformly among 10 tokens at each step."
   },
   {
-    "term": "Precision & Recall / точность и полнота",
-    "says": "Метрики качества",
-    "means": "Precision = какая доля отмеченных объектов была правильной. Recall = какую долю всех правильных объектов вы нашли. Между ними есть компромисс: поймать каждое спам-письмо (высокий recall) означает больше ложных срабатываний (низкий precision). F1 score — их гармоническое среднее. Используйте precision, когда дороги false positives, и recall, когда дороги false negatives."
+    "term": "Precision & Recall",
+    "says": "Accuracy metrics",
+    "means": "Precision = of items you flagged, how many were correct. Recall = of all correct items, how many did you find. They trade off: catching every spam email (high recall) means more false alarms (low precision). F1 score is their harmonic mean. Use precision when false positives are costly, recall when false negatives are costly."
   },
   {
-    "term": "Prompt Engineering / инжиниринг промптов",
-    "says": "Правильно разговаривать с ИИ",
-    "means": "Проектирование входного текста так, чтобы он надежно давал желаемые выходы, включая системные промпты (system prompts), few-shot примеры, инструкции по формату и триггеры chain-of-thought"
+    "term": "Prompt Engineering",
+    "says": "Talking to AI the right way",
+    "means": "Designing the input text to reliably produce desired outputs -- including system prompts, few-shot examples, format instructions, and chain-of-thought triggers"
   },
   {
-    "term": "Prompt Injection / инъекция промпта",
-    "says": "Взлом ИИ словами",
-    "means": "Атака, при которой вредоносный текст во входе переопределяет system prompt или инструкции. Прямая инъекция: пользователь вводит \"Ignore previous instructions.\" Непрямая инъекция: извлеченный документ содержит скрытые инструкции. LLM-аналог SQL injection. Полного решения не существует: защита строится слоями из валидации входа, фильтрации выхода и разделения привилегий."
+    "term": "Prompt Injection",
+    "says": "Hacking the AI with words",
+    "means": "An attack where malicious text in the input overrides the system prompt or instructions. Direct injection: user types \"Ignore previous instructions.\" Indirect injection: a retrieved document contains hidden instructions. The LLM equivalent of SQL injection. No complete solution exists -- defense is layers of input validation, output filtering, and privilege separation."
   },
   {
-    "term": "QLoRA / QLoRA",
-    "says": "LoRA, но дешевле",
-    "means": "Quantized LoRA. Хранит замороженные веса базовой модели в 4-bit precision (формат NF4), обучая LoRA-адаптеры в 16-bit. Снижает расход памяти еще в 3-4 раза по сравнению со стандартной LoRA. Модель 7B, которой с LoRA нужно 14GB, с QLoRA помещается в 4-6GB. Качество находится в пределах 1% от полного fine-tuning на большинстве бенчмарков."
+    "term": "QLoRA",
+    "says": "LoRA but cheaper",
+    "means": "Quantized LoRA. Keeps the frozen base model weights in 4-bit precision (NF4 format) while training LoRA adapters in 16-bit. Reduces memory by another 3-4x compared to standard LoRA. A 7B model that needs 14GB with LoRA fits in 4-6GB with QLoRA. Quality is within 1% of full fine-tuning on most benchmarks."
   },
   {
-    "term": "RAG (Retrieval-Augmented Generation) / RAG (генерация с дополнением через поиск)",
-    "says": "ИИ, который умеет искать",
-    "means": "Паттерн, при котором релевантные документы извлекаются из базы знаний (с помощью сходства эмбеддингов), добавляются в промпт, а LLM отвечает на основе этого контекста"
+    "term": "RAG (Retrieval-Augmented Generation)",
+    "says": "AI that can search",
+    "means": "A pattern where you retrieve relevant documents from a knowledge base (using embedding similarity), stuff them into the prompt, and let the LLM answer based on that context"
   },
   {
-    "term": "RLHF (Reinforcement Learning from Human Feedback) / RLHF (обучение с подкреплением на основе обратной связи от человека)",
-    "says": "Как ИИ делают полезным",
-    "means": "Пайплайн обучения: (1) собрать человеческие предпочтения по выходам модели, (2) обучить reward model на этих предпочтениях, (3) использовать PPO, чтобы оптимизировать LLM на генерацию выходов с более высокой наградой"
+    "term": "RLHF (Reinforcement Learning from Human Feedback)",
+    "says": "How they make AI helpful",
+    "means": "A training pipeline: (1) collect human preferences on model outputs, (2) train a reward model on those preferences, (3) use PPO to optimize the LLM to produce higher-reward outputs"
   },
   {
-    "term": "Quantization / квантизация",
-    "says": "Уменьшение модели",
-    "means": "Снижение точности весов модели с float32 (4 байта) до int8 (1 байт) или int4 (0.5 байта). Обменивает небольшую потерю точности на уменьшение памяти в 4-8 раз и более быстрый инференс. GPTQ, AWQ и GGUF — распространенные форматы."
+    "term": "Quantization",
+    "says": "Making the model smaller",
+    "means": "Reducing the precision of model weights from float32 (4 bytes) to int8 (1 byte) or int4 (0.5 bytes). Trades a small amount of accuracy for 4-8x less memory and faster inference. GPTQ, AWQ, and GGUF are common formats."
   },
   {
-    "term": "ReLU / ReLU",
-    "says": "Функция активации",
-    "means": "Rectified Linear Unit: f(x) = max(0, x). Самая простая нелинейная активация. Быстро вычисляется, не насыщается при положительных значениях. Используется повсюду, потому что работает и дешева. Варианты: LeakyReLU, GELU, SiLU."
+    "term": "ReLU",
+    "says": "Activation function",
+    "means": "Rectified Linear Unit: f(x) = max(0, x). The simplest non-linear activation. Fast to compute, doesn't saturate for positive values. Used everywhere because it works and is cheap. Variants: LeakyReLU, GELU, SiLU."
   },
   {
-    "term": "ROUGE / ROUGE",
-    "says": "Метрика для суммаризации",
-    "means": "Recall-Oriented Understudy for Gisting Evaluation. Измеряет перекрытие между сгенерированным текстом и эталонным текстом. ROUGE-1 считает совпадения униграмм, ROUGE-2 считает совпадения биграмм, ROUGE-L находит самую длинную общую подпоследовательность. Дешева в вычислении, но измеряет только поверхностное сходство: два предложения с одинаковым смыслом, но разными словами получат низкую оценку."
+    "term": "ROUGE",
+    "says": "Summarization metric",
+    "means": "Recall-Oriented Understudy for Gisting Evaluation. Measures overlap between generated text and reference text. ROUGE-1 counts unigram matches, ROUGE-2 counts bigram matches, ROUGE-L finds the longest common subsequence. Cheap to compute but only measures surface similarity -- two sentences with the same meaning but different words score poorly."
   },
   {
-    "term": "Semantic Search / семантический поиск",
-    "says": "Умный поиск, который понимает смысл",
-    "means": "Поиск документов по смыслу, а не по совпадению ключевых слов. Запрос и все документы преобразуются в эмбеддинги в одном и том же векторном пространстве, затем возвращаются документы, чьи эмбеддинги ближе всего к эмбеддингу запроса. \"payment failed\" находит \"transaction declined\", хотя у них нет общих слов. Работает на embedding models + vector databases."
+    "term": "Semantic Search",
+    "says": "Smart search that understands meaning",
+    "means": "Finding documents by meaning rather than keyword matching. Embed the query and all documents into the same vector space, then return documents whose embeddings are closest to the query embedding. \"payment failed\" finds \"transaction declined\" even though they share no words. Powered by embedding models + vector databases."
   },
   {
-    "term": "Streaming / потоковая генерация",
-    "says": "Ответ появляется слово за словом",
-    "means": "LLM отправляет токены по мере их генерации, не дожидаясь полного ответа. Использует протоколы Server-Sent Events (SSE) или WebSocket. Снижает воспринимаемую задержку первого токена с секунд до миллисекунд. Необходима для production-чатов. Каждый chunk содержит delta (частичный токен или слово)."
+    "term": "Streaming",
+    "says": "Seeing the response appear word by word",
+    "means": "The LLM sends tokens as they are generated rather than waiting for the complete response. Uses Server-Sent Events (SSE) or WebSocket protocols. Reduces perceived latency from seconds to milliseconds for the first token. Essential for production chat interfaces. Each chunk contains a delta (partial token or word)."
   },
   {
-    "term": "Self-Attention / самовнимание",
-    "says": "Как модель решает, на чем сфокусироваться",
-    "means": "Каждый токен вычисляет векторы query, key и value. Вес attention между двумя токенами = скалярное произведение их query и key, масштабированное и пропущенное через softmax. Выход = взвешенная сумма векторов value. Позволяет каждому токену видеть каждый другой токен."
+    "term": "Self-Attention",
+    "says": "How the model decides what to focus on",
+    "means": "Each token computes query, key, and value vectors. Attention weight between two tokens = dot product of their query and key, scaled and softmaxed. Output = weighted sum of value vectors. Lets every token see every other token."
   },
   {
-    "term": "SFT (Supervised Fine-Tuning) / SFT (дообучение с учителем)",
-    "says": "Обучение модели следовать инструкциям",
-    "means": "Fine-tuning предобученной модели на парах (instruction, response). Модель учится генерировать response по заданной instruction. Именно это превращает базовую модель в chat model."
+    "term": "SFT (Supervised Fine-Tuning)",
+    "says": "Teaching the model to follow instructions",
+    "means": "Fine-tuning a pre-trained model on (instruction, response) pairs. The model learns to generate the response given the instruction. This is what turns a base model into a chat model."
   },
   {
-    "term": "Softmax / softmax-функция",
-    "says": "Превращает числа в вероятности",
-    "means": "softmax(x_i) = exp(x_i) / sum(exp(x_j)). Преобразует вектор произвольных вещественных чисел в вероятностное распределение (все значения положительные, сумма равна 1). Используется в classification heads, attention weights и везде, где нужны вероятности."
+    "term": "Softmax",
+    "says": "Turns numbers into probabilities",
+    "means": "softmax(x_i) = exp(x_i) / sum(exp(x_j)). Transforms a vector of arbitrary real numbers into a probability distribution (all positive, sums to 1). Used in classification heads, attention weights, and anywhere you need probabilities."
   },
   {
-    "term": "Swarm / рой",
-    "says": "Группа AI-агентов, работающих вместе как рой",
-    "means": "Несколько агентов, которые разделяют состояние и координируются через передачу сообщений; эмерджентное поведение возникает из простых индивидуальных правил, а не из централизованного управления"
+    "term": "Swarm",
+    "says": "A bunch of AI agents working together like bees",
+    "means": "Multiple agents sharing state and coordinating through message passing, with emergent behavior arising from simple individual rules rather than central control"
   },
   {
-    "term": "System Prompt / системный промпт",
-    "says": "Инструкции для ИИ",
-    "means": "Специальное сообщение в начале диалога, задающее поведение модели, персону и ограничения. Обрабатывается до пользовательских сообщений. В большинстве UI не видно пользователю. Определяет, что модель должна и не должна делать, ее тон, предпочтения по формату и предметную область. Отличается от пользовательских промптов: system prompts задаются разработчиком."
+    "term": "System Prompt",
+    "says": "The AI's instructions",
+    "means": "A special message at the start of a conversation that sets the model's behavior, persona, and constraints. Processed before user messages. Not visible to the user in most UIs. Defines what the model should and shouldn't do, its tone, format preferences, and domain focus. Different from user prompts -- system prompts are set by the developer."
   },
   {
-    "term": "Tensor / тензор",
-    "says": "Многомерный массив",
-    "means": "Базовая структура данных во фреймворках глубокого обучения. 0D-тензор — скаляр, 1D — вектор, 2D — матрица, 3D+ — тензор. В PyTorch и JAX тензоры отслеживают историю вычислений для автоматического дифференцирования и могут находиться на CPU или GPU. Все входы, выходы, веса и градиенты нейронных сетей являются тензорами."
+    "term": "Tensor",
+    "says": "A multi-dimensional array",
+    "means": "The fundamental data structure in deep learning frameworks. A 0D tensor is a scalar, 1D is a vector, 2D is a matrix, 3D+ is a tensor. In PyTorch and JAX, tensors track their computation history for automatic differentiation and can live on CPU or GPU. All neural network inputs, outputs, weights, and gradients are tensors."
   },
   {
-    "term": "Token / токен",
-    "says": "Слово",
-    "means": "Подсловная единица (обычно 3-4 символа в английском), создаваемая токенизатором вроде BPE. \"unbelievable\" может быть 3 токенами: \"un\" + \"believ\" + \"able\""
+    "term": "Token",
+    "says": "A word",
+    "means": "A subword unit (typically 3-4 characters in English) produced by a tokenizer like BPE. \"unbelievable\" might be 3 tokens: \"un\" + \"believ\" + \"able\""
   },
   {
-    "term": "Temperature / температура",
-    "says": "Настройка креативности",
-    "means": "Скаляр, который делит логиты (logits) перед softmax. Temperature=1 — значение по умолчанию. Выше = более плоское распределение = более случайные выходы. Ниже = более резкое распределение = более детерминированные выходы. Temperature=0 — это argmax (всегда выбирается наиболее вероятный токен)."
+    "term": "Temperature",
+    "says": "Creativity setting",
+    "means": "A scalar that divides logits before softmax. Temperature=1 is default. Higher = flatter distribution = more random outputs. Lower = sharper distribution = more deterministic. Temperature=0 is argmax (always pick the most likely token)."
   },
   {
-    "term": "Transfer Learning / перенос обучения",
-    "says": "Использование предобученной модели",
-    "means": "Взять модель, обученную на одной задаче, и адаптировать ее к другой задаче. Ранние слои выучивают общие признаки (границы, синтаксические паттерны), которые переносятся. Только поздним слоям нужно обучение под конкретную задачу. Поэтому BERT можно fine-tune для любой NLP-задачи."
+    "term": "Transfer Learning",
+    "says": "Using a pre-trained model",
+    "means": "Taking a model trained on one task and adapting it to a different task. The early layers learn general features (edges, syntax patterns) that transfer. Only the later layers need task-specific training. This is why you can fine-tune BERT for any NLP task."
   },
   {
-    "term": "Transformer / трансформер",
-    "says": "Архитектура, лежащая в основе современного ИИ",
-    "means": "Архитектура нейронной сети, которая обрабатывает последовательности с помощью self-attention (позволяя каждой позиции обращать внимание на каждую другую позицию) вместо рекуррентности (recurrence), что обеспечивает масштабное распараллеливание"
+    "term": "Transformer",
+    "says": "The architecture behind modern AI",
+    "means": "A neural network architecture that processes sequences using self-attention (letting every position attend to every other position) instead of recurrence, enabling massive parallelization"
   },
   {
-    "term": "Underfitting / недообучение",
-    "says": "Модель не учится",
-    "means": "Модель слишком проста, чтобы уловить паттерны в данных. Training loss остается высоким. Исправляется так: больше параметров, больше слоев, более долгое обучение, более слабая регуляризация, лучшие признаки."
+    "term": "Underfitting",
+    "says": "The model isn't learning",
+    "means": "The model is too simple to capture the patterns in the data. Training loss stays high. Fix with: more parameters, more layers, longer training, lower regularization, better features."
   },
   {
-    "term": "VAE (Variational Autoencoder) / VAE (вариационный автоэнкодер)",
-    "says": "Генеративная модель",
-    "means": "Автоэнкодер, который выучивает гладкое латентное пространство, заставляя выход энкодера следовать гауссовскому распределению. Из этого распределения можно сэмплировать и декодировать результат для генерации новых данных. Трюк репараметризации (reparameterization trick) делает его обучаемым через backpropagation."
+    "term": "VAE (Variational Autoencoder)",
+    "says": "A generative model",
+    "means": "An autoencoder that learns a smooth latent space by forcing the encoder output to follow a Gaussian distribution. You can sample from this distribution and decode to generate new data. The reparameterization trick makes it trainable via backpropagation."
   },
   {
-    "term": "Vector Database / векторная база данных",
-    "says": "Специальная база данных для ИИ",
-    "means": "База данных, оптимизированная для хранения векторов (плотных массивов чисел с плавающей точкой) и быстрого приближенного поиска ближайших соседей (approximate nearest-neighbor search). Базовая операция в similarity search, RAG и рекомендательных системах."
+    "term": "Vector Database",
+    "says": "A special database for AI",
+    "means": "A database optimized for storing vectors (dense arrays of floats) and performing fast approximate nearest-neighbor search. The core operation in similarity search, RAG, and recommendation systems."
   },
   {
-    "term": "Weight / вес",
-    "says": "То, что модель выучила",
-    "means": "Одно число в матрице параметров модели. Линейный слой с input size 768 и output size 3072 имеет 768*3072 = 2,359,296 весов. Обучение корректирует каждый вес, чтобы минимизировать функцию потерь."
+    "term": "Weight",
+    "says": "What the model learned",
+    "means": "A single number in a model's parameter matrix. A linear layer with input size 768 and output size 3072 has 768*3072 = 2,359,296 weights. Training adjusts each weight to minimize the loss function."
   },
   {
-    "term": "Weight Decay / распад весов",
-    "says": "Регуляризация",
-    "means": "Добавление к функции потерь штрафа, пропорционального величине весов. Эквивалентно L2-регуляризации. Не дает весам становиться слишком большими. Типичное значение: 0.01-0.1."
+    "term": "Weight Decay",
+    "says": "Regularization",
+    "means": "Adding a penalty proportional to the magnitude of weights to the loss function. Equivalent to L2 regularization. Prevents weights from growing too large. Typical value: 0.01-0.1."
   },
   {
-    "term": "Zero-Shot / обучение без примеров",
-    "says": "Обучение не требуется",
-    "means": "Использование модели для задачи, на которой ее явно не обучали, без специализированных под задачу примеров в промпте. Модель обобщает из pre-training. Это работает, потому что большие модели видели достаточно разнообразия, чтобы справляться с новыми форматами задач."
+    "term": "Zero-Shot",
+    "says": "No training needed",
+    "means": "Using a model on a task it wasn't explicitly trained for, with no task-specific examples in the prompt. The model generalizes from pre-training. Works because large models have seen enough variety to handle new task formats."
   }
 ];

@@ -32,6 +32,15 @@ Hand-coding all of this per integration is repetitive. A routing gateway gives o
 
 ## The Concept
 
+```mermaid
+graph LR
+  APP["app: OpenAI-compatible call"] --> R["routing gateway"]
+  R --> ALIAS["model alias"]
+  R --> P1["provider 1"]
+  R -. "fallback" .-> P2["provider 2"]
+  R --> CACHE["semantic cache"]
+```
+
 ### OpenAI-compatible proxy shape
 
 Everyone speaks OpenAI-shape. The routing gateway exposes `/v1/chat/completions`, accepts the OpenAI schema, and internally proxies to Anthropic / Gemini / Cohere / Ollama / anything. The client does not care.

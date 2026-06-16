@@ -26,6 +26,13 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  Q["what to expose?"] --> TO["action with side effects → Tool"]
+  Q --> RE["read-only data → Resource"]
+  Q --> PR["user-invoked template → Prompt"]
+```
+
 ### Tools, resources и prompts — правило выбора
 
 | Capability | Primitive |

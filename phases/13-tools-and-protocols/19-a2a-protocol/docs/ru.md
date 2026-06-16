@@ -28,6 +28,14 @@ A2A — это протокол, который "позволяет агента
 
 ## Концепция
 
+```mermaid
+graph LR
+  A["Agent A"] -- "discover" --> CARD["Agent Card"]
+  A -- "send Message / Parts" --> B["Agent B"]
+  B --> TASK["Task lifecycle"]
+  TASK --> A
+```
+
 ### Agent Card
 
 Каждый A2A-совместимый агент публикует карточку по адресу `/.well-known/agent.json`:

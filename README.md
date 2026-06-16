@@ -119,6 +119,7 @@ flowchart LR
 ```bash
 git clone https://github.com/stabuev/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
+pip install -r requirements.lock   # точный воспроизводимый набор (или requirements.txt — свежие версии)
 python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
 ```
 
@@ -158,7 +159,7 @@ ls phases/03-deep-learning-core/05-loss-functions/outputs/
 
 1. **Запустите код урока и сверьте вывод.** Каждый `code/main.py` печатает результат и запускается сам по себе (`python phases/.../code/main.py`). Если вывод не такой, как в уроке, — вы нашли, где сломалось.
 2. **Прочитайте оба языка.** У каждого урока есть `docs/en.md` и `docs/ru.md` — другая формулировка часто проясняет затык.
-3. **Проверьте окружение.** Несовпадение версий — частая причина: см. [`requirements.txt`](requirements.txt) и фазу 0 (Настройка и инструменты).
+3. **Проверьте окружение.** Несовпадение версий — частая причина. Поставьте точный проверенный набор: `pip install -r requirements.lock` (см. также [`requirements.txt`](requirements.txt) и фазу 0).
 4. **Спросите.** Вопрос по уроку — в [Discussions](https://github.com/stabuev/ai-engineering-from-scratch/discussions); ошибка в материале (битый код, неверная формула, обещанный артефакт не там) — [заведите issue](https://github.com/stabuev/ai-engineering-from-scratch/issues/new?template=bug_report.md).
 
 ```

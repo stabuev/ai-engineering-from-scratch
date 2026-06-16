@@ -28,6 +28,16 @@ Field guide Composio 2025 года измерил колебания accuracy н
 
 ## Концепция
 
+```mermaid
+graph TB
+  T["tool schema"] --> N["name: verb_noun"]
+  T --> D["description: when to use it"]
+  T --> P["params: atomic, enum-closed"]
+  N --> SEL["model selects the right tool"]
+  D --> SEL
+  P --> SEL
+```
+
 ### Правила naming
 
 1. **`snake_case`.** Tokenizer каждого provider чисто его обрабатывает. `camelCase` фрагментируется по token boundaries в некоторых tokenizers.

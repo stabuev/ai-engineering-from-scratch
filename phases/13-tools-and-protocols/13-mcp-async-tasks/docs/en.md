@@ -26,6 +26,15 @@ None are good. SEP-1686 adds a fourth: task augmentation. Any request (typically
 
 ## The Concept
 
+```mermaid
+graph LR
+  CALL["tools/call with _meta.task"] --> SUB["submitted"]
+  SUB --> WORK["working"]
+  WORK --> DONE["completed → tasks/result"]
+  WORK --> FAIL["failed"]
+  POLL["client polls tasks/status"] -. "while working" .-> WORK
+```
+
 ### Task augmentation
 
 A request becomes a task by setting `params._meta.task.required: true` (or `optional: true`, server decides). The server responds immediately with:

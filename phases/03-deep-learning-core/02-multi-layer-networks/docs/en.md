@@ -378,6 +378,6 @@ The hard "leaky step" still computes XOR in the forward pass — thresholding is
 ## Further Reading
 
 - Michael Nielsen, "Neural Networks and Deep Learning", Chapter 1-2 (http://neuralnetworksanddeeplearning.com/) -- the clearest free explanation of forward passes and network structure, with interactive visualizations
-- Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989) -- the original universal approximation theorem paper, surprisingly readable
+- [Cybenko, "Approximation by Superpositions of a Sigmoidal Function" (1989)](https://doi.org/10.1007/BF02551274) -- the original universal approximation theorem paper, surprisingly readable
 - 3Blue1Brown, "But what is a neural network?" (https://www.youtube.com/watch?v=aircAruvnKk) -- 20-minute visual walkthrough of layers, weights, and forward passes that builds the right mental model
 - Goodfellow, Bengio, Courville, "Deep Learning", Chapter 6 (https://www.deeplearningbook.org/) -- the standard reference for multi-layer networks, free online

@@ -735,7 +735,7 @@ def validate(X, y, X_test):
 
 ## Дополнительное чтение
 
-- Smith, "Cyclical Learning Rates for Training Neural Networks" (2017) -- статья, вводящая тест диапазона скорости обучения (LR finder)
-- Northcutt et al., "Pervasive Label Errors in Test Sets Destabilize Machine Learning Benchmarks" (2021) -- показывает, что 3-6% меток в ImageNet, CIFAR-10 и других крупных бенчмарках неверны
-- Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017) -- статья, показывающая, что нейронные сети могут запоминать случайные метки, поэтому тест overfit-one-batch работает
+- [Smith, "Cyclical Learning Rates for Training Neural Networks" (2017)](https://arxiv.org/abs/1506.01186) -- статья, вводящая тест диапазона скорости обучения (LR finder)
+- [Northcutt et al., "Pervasive Label Errors in Test Sets Destabilize Machine Learning Benchmarks" (2021)](https://arxiv.org/abs/2103.14749) -- показывает, что 3-6% меток в ImageNet, CIFAR-10 и других крупных бенчмарках неверны
+- [Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017)](https://arxiv.org/abs/1611.03530) -- статья, показывающая, что нейронные сети могут запоминать случайные метки, поэтому тест overfit-one-batch работает
 - Документация PyTorch по `torch.autograd.detect_anomaly` и `torch.autograd.set_detect_anomaly` для встроенного обнаружения NaN/Inf

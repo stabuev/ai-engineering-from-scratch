@@ -26,6 +26,14 @@ The four-step loop is the invariant underneath all of these. Everything else in 
 
 ## The Concept
 
+```mermaid
+graph LR
+  D["describe: tool schema"] --> M["model decides: tool call"]
+  M --> E["execute: run the function"]
+  E --> O["observe: tool result"]
+  O --> M
+```
+
 ### Step one: describe
 
 The host declares each tool with three fields.

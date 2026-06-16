@@ -477,7 +477,7 @@ def clip_global_norm(params, max_norm=1.0):
 
 ## Дополнительное чтение
 
-- Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014) -- оригинальная статья Adam с анализом сходимости и выводом коррекции смещения
-- Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017) -- доказали, что L2-регуляризация и weight decay не эквивалентны в Adam, и предложили AdamW
-- Smith, "Cyclical Learning Rates for Training Neural Networks" (2017) -- ввел LR range test и циклические расписания, которые устраняют необходимость настраивать фиксированную скорость обучения
-- Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016) -- лучший единый обзор всех вариантов оптимизаторов, с ясными сравнениями и интуициями
+- [Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014)](https://arxiv.org/abs/1412.6980) -- оригинальная статья Adam с анализом сходимости и выводом коррекции смещения
+- [Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017)](https://arxiv.org/abs/1711.05920) -- доказали, что L2-регуляризация и weight decay не эквивалентны в Adam, и предложили AdamW
+- [Smith, "Cyclical Learning Rates for Training Neural Networks" (2017)](https://arxiv.org/abs/1506.01186) -- ввел LR range test и циклические расписания, которые устраняют необходимость настраивать фиксированную скорость обучения
+- [Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016)](https://arxiv.org/abs/1609.04747) -- лучший единый обзор всех вариантов оптимизаторов, с ясными сравнениями и интуициями

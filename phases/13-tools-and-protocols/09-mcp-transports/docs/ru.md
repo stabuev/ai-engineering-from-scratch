@@ -24,6 +24,13 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  T["MCP transport"] --> STD["stdio: local, child process"]
+  T --> HTTP["Streamable HTTP: remote, single endpoint, Mcp-Session-Id"]
+  HTTP --> SSE["HTTP+SSE (deprecated)"]
+```
+
 ### stdio
 
 - Transport дочернего процесса. Client запускает server, общается через stdin/stdout.

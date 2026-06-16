@@ -514,3 +514,8 @@ All from scratch, using only `math` and `random`. No numpy, no scipy.
 | Central limit theorem | Sample means converge to a normal distribution as sample size grows. |
 | Parametric test | Assumes a specific distribution for the data (usually normal). |
 | Non-parametric test | Makes no distributional assumptions. Works on ranks or signs. |
+
+## Further Reading
+
+- [Seeing Theory (Brown University)](https://seeing-theory.brown.edu/) — an interactive visual introduction to probability and statistics.
+- [Khan Academy — Statistics and Probability](https://www.khanacademy.org/math/statistics-probability) — a complete free course from descriptive stats to hypothesis testing.

@@ -401,6 +401,6 @@ def majority(x): return 1 if (w[0]*x[0] + w[1]*x[1] + w[2]*x[2] + b) > 0 else 0
 
 ## Дополнительное чтение
 
-- Frank Rosenblatt, "The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain" (1958) - оригинальная статья, с которой все началось
+- [Frank Rosenblatt, "The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain" (1958)](https://doi.org/10.1037/h0042519) - оригинальная статья, с которой все началось
 - Minsky & Papert, "Perceptrons" (1969) - книга, доказавшая, что XOR не решается однослойными сетями, и остановившая исследования перцептронов на десятилетие
 - Michael Nielsen, "Neural Networks and Deep Learning", Chapter 1 (http://neuralnetworksanddeeplearning.com/) - бесплатная онлайн-глава, лучшее визуальное объяснение того, как перцептроны складываются в сети

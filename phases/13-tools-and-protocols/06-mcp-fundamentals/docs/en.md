@@ -26,6 +26,16 @@ The spec revision used in this phase is **2025-11-25**. It adds async Tasks (SEP
 
 ## The Concept
 
+```mermaid
+graph LR
+  C["Client"] -- "1. initialize" --> S["Server"]
+  S -- "2. capabilities" --> C
+  C -- "3. tools/list" --> S
+  S -- "4. tools" --> C
+  C -- "5. tools/call" --> S
+  S -- "6. result" --> C
+```
+
 ### Three server primitives
 
 1. **Tools.** Callable actions. Same four-step loop from Phase 13 · 01.

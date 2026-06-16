@@ -24,6 +24,15 @@ Notes server — удачная форма, потому что он задей�
 
 ## Концепция
 
+```mermaid
+graph LR
+  REQ["JSON-RPC request"] --> DISP["dispatcher"]
+  DISP --> I["initialize"]
+  DISP --> TL["tools/list"]
+  DISP --> TC["tools/call → content block"]
+  DISP --> RS["resources / prompts"]
+```
+
 ### Dispatch loop
 
 ```
