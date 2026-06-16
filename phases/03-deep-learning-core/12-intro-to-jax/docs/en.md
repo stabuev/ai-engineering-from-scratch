@@ -497,9 +497,9 @@ restored = checkpointer.restore('/tmp/model')
 
 ## Further Reading
 
-- JAX documentation: https://jax.readthedocs.io/ -- the official docs, with excellent tutorials on grad, jit, and vmap
+- [JAX documentation](https://jax.readthedocs.io) -- the official docs, with excellent tutorials on grad, jit, and vmap
 - "JAX: composable transformations of Python+NumPy programs" (Bradbury et al., 2018) -- the original paper explaining the design philosophy
-- Flax documentation: https://flax.readthedocs.io/ -- Google's neural network library for JAX
+- [Flax documentation](https://flax.readthedocs.io) -- Google's neural network library for JAX
 - Patrick Kidger, "Equinox: neural networks in JAX via callable PyTrees and filtered transformations" (2021) -- the Pythonic alternative to Flax
 - DeepMind, "Optax: composable gradient transformation and optimisation" -- the standard optimizer library
 - "You Don't Know JAX" (Colin Raffel, 2020) -- a practical guide to JAX gotchas and patterns, from one of the T5 authors

@@ -402,7 +402,7 @@ def orthogonal(n):
 
 ## Дополнительное чтение
 
-- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) -- исходная статья об инициализации Xavier с анализом дисперсии
-- He et al., "Delving Deep into Rectifiers" (2015) -- представила инициализацию Kaiming для ReLU-сетей
+- [Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)](https://proceedings.mlr.press/v9/glorot10a.html) -- исходная статья об инициализации Xavier с анализом дисперсии
+- [He et al., "Delving Deep into Rectifiers" (2015)](https://arxiv.org/abs/1502.01852) -- представила инициализацию Kaiming для ReLU-сетей
 - Radford et al., "Language Models are Unsupervised Multitask Learners" (2019) -- статья GPT-2 с инициализацией через остаточное масштабирование
-- Mishkin & Matas, "All You Need is a Good Init" (2016) -- послойная инициализация с единичной дисперсией, эмпирическая альтернатива аналитическим формулам
+- [Mishkin & Matas, "All You Need is a Good Init" (2016)](https://arxiv.org/abs/1511.06422) -- послойная инициализация с единичной дисперсией, эмпирическая альтернатива аналитическим формулам

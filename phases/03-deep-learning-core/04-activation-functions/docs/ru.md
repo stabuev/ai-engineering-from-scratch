@@ -557,7 +557,7 @@ def gradient_health(layers):
 ## Дополнительное чтение
 
 - Nair & Hinton, "Rectified Linear Units Improve Restricted Boltzmann Machines" (2010) - статья, которая представила ReLU и сделала возможным обучение глубоких сетей
-- Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016) - представила функцию активации, ставшую стандартом для трансформеров
-- Ramachandran et al., "Searching for Activation Functions" (2017) - использовала автоматический поиск для обнаружения Swish и показала, что дизайн активаций можно автоматизировать
-- Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010) - статья, которая диагностировала затухающие/взрывающиеся градиенты и предложила инициализацию Xavier
+- [Hendrycks & Gimpel, "Gaussian Error Linear Units (GELUs)" (2016)](https://arxiv.org/abs/1606.08415) - представила функцию активации, ставшую стандартом для трансформеров
+- [Ramachandran et al., "Searching for Activation Functions" (2017)](https://arxiv.org/abs/1710.05941) - использовала автоматический поиск для обнаружения Swish и показала, что дизайн активаций можно автоматизировать
+- [Glorot & Bengio, "Understanding the difficulty of training deep feedforward neural networks" (2010)](https://proceedings.mlr.press/v9/glorot10a.html) - статья, которая диагностировала затухающие/взрывающиеся градиенты и предложила инициализацию Xavier
 - Goodfellow, Bengio, Courville, "Deep Learning" Chapter 6.3 (https://www.deeplearningbook.org/) - строгий разбор скрытых узлов и функций активации

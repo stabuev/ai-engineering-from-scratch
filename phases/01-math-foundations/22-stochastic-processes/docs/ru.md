@@ -465,8 +465,8 @@ SGLD (Stochastic Gradient Langevin Dynamics) объединяет mini-batch gra
 
 ## Дополнительное чтение
 
-- **Ho, Jain, Abbeel (2020)** -- "Denoising Diffusion Probabilistic Models." Статья DDPM, запустившая революцию diffusion models. Ясный вывод прямой и обратной марковских цепей.
-- **Song & Ermon (2019)** -- "Generative Modeling by Estimating Gradients of the Data Distribution." Score-based подход, использующий Langevin dynamics для сэмплирования.
+- [**Ho, Jain, Abbeel (2020)**](https://arxiv.org/abs/2006.11239) -- "Denoising Diffusion Probabilistic Models." Статья DDPM, запустившая революцию diffusion models. Ясный вывод прямой и обратной марковских цепей.
+- [**Song & Ermon (2019)**](https://arxiv.org/abs/1907.05600) -- "Generative Modeling by Estimating Gradients of the Data Distribution." Score-based подход, использующий Langevin dynamics для сэмплирования.
 - **Roberts & Rosenthal (2004)** -- "General state space Markov chains and MCMC algorithms." Теория того, когда и почему работает MCMC.
 - **Norris (1997)** -- "Markov Chains." Стандартный учебник. Покрывает сходимость, стационарные распределения и hitting times.
 - **Welling & Teh (2011)** -- "Bayesian Learning via Stochastic Gradient Langevin Dynamics." Объединяет SGD с Langevin dynamics для масштабируемого байесовского вывода.

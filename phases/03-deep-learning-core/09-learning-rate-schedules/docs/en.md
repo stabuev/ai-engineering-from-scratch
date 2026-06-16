@@ -449,7 +449,7 @@ Every `T` steps the schedule jumps back to `lr_max` and decays again (verified: 
 
 ## Further Reading
 
-- Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017) -- introduced cosine annealing and warm restarts
-- Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018) -- the 1cycle policy paper
-- Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023) -- documents the warmup + cosine schedule used at scale
-- Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017) -- linear scaling rule and warmup for large batch training
+- [Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017)](https://arxiv.org/abs/1608.03983) -- introduced cosine annealing and warm restarts
+- [Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018)](https://arxiv.org/abs/1708.07120) -- the 1cycle policy paper
+- [Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023)](https://arxiv.org/abs/2307.09288) -- documents the warmup + cosine schedule used at scale
+- [Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017)](https://arxiv.org/abs/1706.02677) -- linear scaling rule and warmup for large batch training

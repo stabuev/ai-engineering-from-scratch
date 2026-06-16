@@ -557,7 +557,7 @@ for epoch in range(1000):
 
 ## Дополнительное чтение
 
-- Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014) -- исходная статья о dropout с ансамблевой интерпретацией и обширными экспериментами
-- Ioffe & Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift" (2015) -- представила BatchNorm и процедуру его обучения, одна из самых цитируемых статей по deep learning
-- Zhang & Sennrich, "Root Mean Square Layer Normalization" (2019) -- показала, что RMSNorm достигает точности LayerNorm с меньшими вычислениями; используется в LLaMA и Mistral
-- Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017) -- знаковая статья, показавшая, что нейронные сети могут запоминать случайные метки, бросая вызов традиционным взглядам на обобщение
+- [Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014)](https://jmlr.org/papers/v15/srivastava14a.html) -- исходная статья о dropout с ансамблевой интерпретацией и обширными экспериментами
+- [Ioffe & Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift" (2015)](https://arxiv.org/abs/1502.03167) -- представила BatchNorm и процедуру его обучения, одна из самых цитируемых статей по deep learning
+- [Zhang & Sennrich, "Root Mean Square Layer Normalization" (2019)](https://arxiv.org/abs/1910.07467) -- показала, что RMSNorm достигает точности LayerNorm с меньшими вычислениями; используется в LLaMA и Mistral
+- [Zhang et al., "Understanding Deep Learning Requires Rethinking Generalization" (2017)](https://arxiv.org/abs/1611.03530) -- знаковая статья, показавшая, что нейронные сети могут запоминать случайные метки, бросая вызов традиционным взглядам на обобщение

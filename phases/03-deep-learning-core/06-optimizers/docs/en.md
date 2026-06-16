@@ -477,7 +477,7 @@ Scale *all* gradients by one factor so the update *direction* is preserved and o
 
 ## Further Reading
 
-- Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014) -- the original Adam paper with convergence analysis and the bias correction derivation
-- Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017) -- proved that L2 regularization and weight decay are not equivalent in Adam, and proposed AdamW
-- Smith, "Cyclical Learning Rates for Training Neural Networks" (2017) -- introduced the LR range test and cyclical schedules that remove the need to tune a fixed learning rate
-- Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016) -- the best single survey of all optimizer variants, with clear comparisons and intuitions
+- [Kingma & Ba, "Adam: A Method for Stochastic Optimization" (2014)](https://arxiv.org/abs/1412.6980) -- the original Adam paper with convergence analysis and the bias correction derivation
+- [Loshchilov & Hutter, "Decoupled Weight Decay Regularization" (2017)](https://arxiv.org/abs/1711.05920) -- proved that L2 regularization and weight decay are not equivalent in Adam, and proposed AdamW
+- [Smith, "Cyclical Learning Rates for Training Neural Networks" (2017)](https://arxiv.org/abs/1506.01186) -- introduced the LR range test and cyclical schedules that remove the need to tune a fixed learning rate
+- [Ruder, "An Overview of Gradient Descent Optimization Algorithms" (2016)](https://arxiv.org/abs/1609.04747) -- the best single survey of all optimizer variants, with clear comparisons and intuitions

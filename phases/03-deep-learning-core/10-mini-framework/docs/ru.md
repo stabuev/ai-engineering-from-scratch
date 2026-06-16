@@ -731,6 +731,6 @@ p.data -= lr * (m_hat / (v_hat ** 0.5 + eps) + weight_decay * p.data)
 
 ## Дополнительное чтение
 
-- Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019) -- статья, описывающая проектные решения PyTorch
+- [Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019)](https://arxiv.org/abs/1912.01703) -- статья, описывающая проектные решения PyTorch
 - Chollet, "Deep Learning with Python, Second Edition" (2021) -- глава 3 рассматривает внутреннее устройство Keras с той же абстракцией module/layer
 - Johnson, "Tiny-DNN" (https://github.com/tiny-dnn/tiny-dnn) -- header-only C++ фреймворк глубокого обучения для понимания внутреннего устройства фреймворков

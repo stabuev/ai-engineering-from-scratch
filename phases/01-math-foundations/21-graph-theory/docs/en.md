@@ -510,8 +510,8 @@ where A_hat = A + I (adjacency plus self-loops) and D_hat is the degree matrix o
 
 ## Further Reading
 
-- **Kipf & Welling (2017)** -- "Semi-Supervised Classification with Graph Convolutional Networks." The paper that launched modern GNNs. Shows that spectral graph convolutions simplify to message passing.
+- [**Kipf & Welling (2017)**](https://arxiv.org/abs/1609.02907) -- "Semi-Supervised Classification with Graph Convolutional Networks." The paper that launched modern GNNs. Shows that spectral graph convolutions simplify to message passing.
 - **Spielman (2012)** -- "Spectral Graph Theory" lecture notes. The definitive introduction to Laplacians, spectral gaps, and graph partitioning.
-- **Hamilton (2020)** -- "Graph Representation Learning." Book covering GNNs from fundamentals to applications.
-- **Bronstein et al. (2021)** -- "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges." The unifying framework paper.
-- **Veličković et al. (2018)** -- "Graph Attention Networks." Extends message passing with attention mechanisms.
+- [**Hamilton (2020)**](https://www.cs.mcgill.ca/~wlh/grl_book/) -- "Graph Representation Learning." Book covering GNNs from fundamentals to applications.
+- [**Bronstein et al. (2021)**](https://arxiv.org/abs/2104.13478) -- "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges." The unifying framework paper.
+- [**Veličković et al. (2018)**](https://arxiv.org/abs/1710.10903) -- "Graph Attention Networks." Extends message passing with attention mechanisms.

@@ -472,3 +472,8 @@ LoRA deserves special mention. It fine-tunes large language models by decomposin
 | Projection | "The shadow" | The component of one vector in the direction of another |
 | Basis | "The coordinate axes" | A minimal set of independent vectors that span the space |
 | Orthonormal | "Perpendicular unit vectors" | Vectors that are mutually perpendicular and each have length 1 |
+
+## Further Reading
+
+- [3Blue1Brown — "Essence of Linear Algebra"](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab) — the best visual intuition for vectors, matrices, and transformations.
+- [Gilbert Strang — MIT 18.06 Linear Algebra](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) — the classic linear-algebra course, free on MIT OpenCourseWare.

@@ -449,7 +449,7 @@ def sgdr(t, T, lr_min=0.0, lr_max=0.1):
 
 ## Дополнительное чтение
 
-- Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017) -- представили косинусный отжиг и теплые перезапуски
-- Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018) -- статья о политике 1cycle
-- Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023) -- документирует расписание разогрев + косинус, используемое в масштабе
-- Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017) -- правило линейного масштабирования и разогрев для обучения с большими батчами
+- [Loshchilov & Hutter, "SGDR: Stochastic Gradient Descent with Warm Restarts" (2017)](https://arxiv.org/abs/1608.03983) -- представили косинусный отжиг и теплые перезапуски
+- [Smith, "Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates" (2018)](https://arxiv.org/abs/1708.07120) -- статья о политике 1cycle
+- [Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023)](https://arxiv.org/abs/2307.09288) -- документирует расписание разогрев + косинус, используемое в масштабе
+- [Goyal et al., "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour" (2017)](https://arxiv.org/abs/1706.02677) -- правило линейного масштабирования и разогрев для обучения с большими батчами

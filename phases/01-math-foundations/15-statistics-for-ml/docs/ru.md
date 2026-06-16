@@ -514,3 +514,8 @@ For highly skewed distributions, you might need n >= 100.
 | Central limit theorem | Выборочные средние сходятся к нормальному распределению по мере роста размера выборки. |
 | Parametric test | Предполагает конкретное распределение данных (обычно нормальное). |
 | Non-parametric test | Не делает предположений о распределении. Работает с рангами или знаками. |
+
+## Дополнительное чтение
+
+- [Seeing Theory (Университет Брауна)](https://seeing-theory.brown.edu/) — интерактивное визуальное введение в вероятность и статистику.
+- [Khan Academy — Statistics and Probability](https://www.khanacademy.org/math/statistics-probability) — полный бесплатный курс от описательной статистики до проверки гипотез.

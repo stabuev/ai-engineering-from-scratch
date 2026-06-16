@@ -478,7 +478,7 @@ When the target is one-hot, `KL(true || pred)` differs from cross-entropy only b
 
 ## Further Reading
 
-- Lin et al., "Focal Loss for Dense Object Detection" (2017) -- introduced focal loss for handling extreme class imbalance in object detection (RetinaNet)
-- Chen et al., "A Simple Framework for Contrastive Learning of Visual Representations" (SimCLR, 2020) -- defined the modern contrastive learning pipeline with NT-Xent loss
-- Szegedy et al., "Rethinking the Inception Architecture" (2016) -- introduced label smoothing as a regularization technique, now standard in most large models
-- Hinton et al., "Distilling the Knowledge in a Neural Network" (2015) -- knowledge distillation using soft targets and KL divergence, foundational for model compression
+- [Lin et al., "Focal Loss for Dense Object Detection" (2017)](https://arxiv.org/abs/1708.02002) -- introduced focal loss for handling extreme class imbalance in object detection (RetinaNet)
+- [Chen et al., "A Simple Framework for Contrastive Learning of Visual Representations" (SimCLR, 2020)](https://arxiv.org/abs/2002.05709) -- defined the modern contrastive learning pipeline with NT-Xent loss
+- [Szegedy et al., "Rethinking the Inception Architecture" (2016)](https://arxiv.org/abs/1512.00567) -- introduced label smoothing as a regularization technique, now standard in most large models
+- [Hinton et al., "Distilling the Knowledge in a Neural Network" (2015)](https://arxiv.org/abs/1503.02531) -- knowledge distillation using soft targets and KL divergence, foundational for model compression

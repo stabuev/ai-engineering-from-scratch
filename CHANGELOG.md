@@ -7,6 +7,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 5 (start) — clickable sources.** Phases 1 and 3 cited
+  classic papers by name only, so Further Reading had no links. Wrapped the
+  references in real, HTTP-verified canonical URLs (arxiv / DOI / PMLR / JMLR) —
+  Adam, BatchNorm, GELU, Dropout, AdamW, SGDR, He/Xavier init, GCN/GAT, DDPM,
+  Rumelhart 1986, Rosenblatt 1958, Cybenko 1989, and more (~40 references across
+  14 lessons, en + ru). Added a short Further Reading section to the two math
+  lessons that had none (linear-algebra, statistics) and converted the JAX
+  lesson's bare doc URLs to links. Only links that returned HTTP 200 were used —
+  one wrong path (a 3Blue1Brown page) was caught and swapped for the verified
+  playlist. Readiness `missing sources` 30 → 13 (the rest are Phase 0 tooling
+  tutorials, where references are optional). Fully ready: 404 → 420.
 - **Content-review wave 3 (start) — self-check loop.** Added an `### Expected
   output` / `### Ожидаемый вывод` block to the end of Build It in 11 Phase 3
   (Deep Learning Core) lessons, showing the **real, captured** final output of
