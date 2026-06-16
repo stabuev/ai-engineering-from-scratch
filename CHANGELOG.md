@@ -7,6 +7,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Content-review wave 5 — reproducible environment (`requirements.lock`).**
+  `requirements.txt` was all `>=` with no lock, so a future learner would get
+  bleeding-edge versions and silent breakage. Added a pinned, internally
+  consistent `requirements.lock` (uv-resolved, dry-run verified). The from-scratch
+  core the Phase 0-3 lessons were run against is pinned to its tested versions
+  (numpy 1.26.4, torch 2.7.1 + matching torchvision/torchaudio, scikit-learn
+  1.7.0, pandas 2.2.2, matplotlib 3.9.2, pillow 10.4.0); the rest is pinned to the
+  course's target generation (transformers 4.x, datasets 3.x) for coherence. A
+  naive fresh resolve pulled bleeding-edge majors (numpy 2.4, pandas 3.0,
+  transformers 5.x) and a torch/torchaudio mismatch — rejected in favour of the
+  course-era stack. `requirements.txt` keeps the flexible `>=` path and now points
+  at the lock; README's clone-and-run uses the lock.
 - **Content-review wave 5 (start) — clickable sources.** Phases 1 and 3 cited
   classic papers by name only, so Further Reading had no links. Wrapped the
   references in real, HTTP-verified canonical URLs (arxiv / DOI / PMLR / JMLR) —

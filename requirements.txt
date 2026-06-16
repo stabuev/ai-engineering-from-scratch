@@ -1,3 +1,9 @@
+# requirements.txt — latest / flexible install (lower bounds).
+# For an exact, reproducible, tested environment use requirements.lock instead:
+#   uv pip install -r requirements.lock      (or: pip install -r requirements.lock)
+# Verified against Python 3.12 + torch 2.7.1 + numpy 1.26.4 (the from-scratch core
+# the Phase 0-3 lessons were run against).
+
 numpy>=1.24
 matplotlib>=3.7
 jupyter>=1.0
