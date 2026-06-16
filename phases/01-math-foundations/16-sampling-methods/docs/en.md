@@ -604,6 +604,19 @@ Show how decreasing temperature makes the output approach a one-hot vector.
 
 Full implementations with all visualizations are in `code/sampling.py`.
 
+### Expected output
+
+Run `code/sampling.py` — the final lines should read:
+
+```
+--- 14. Visualizations ---
+  Saved: sampling_methods.png
+
+=================================================================
+All sampling methods complete.
+=================================================================
+```
+
 ## Use It
 
 With NumPy and SciPy, the production versions:

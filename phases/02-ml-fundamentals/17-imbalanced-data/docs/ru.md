@@ -457,6 +457,21 @@ preds_thresh = (probs_cw >= best_thresh).astype(int)
 
 Файл с кодом запускает все это в одном скрипте и печатает результаты.
 
+### Ожидаемый вывод
+
+Запустите `code/imbalanced.py` — последние строки должны быть такими:
+
+```
+  No treatment        0.975  1.000  0.643  0.783  0.791
+  Oversampling        0.960  0.636  1.000  0.778  0.780
+  Undersampling       0.965  0.667  1.000  0.800  0.801
+  SMOTE               0.965  0.667  1.000  0.800  0.801
+  Class weights       0.960  0.636  1.000  0.778  0.780
+  CW + threshold      0.990  0.929  0.929  0.929  0.923
+
+Done.
+```
+
 ## Используйте это
 
 В scikit-learn и imbalanced-learn эти техники — one-liners:

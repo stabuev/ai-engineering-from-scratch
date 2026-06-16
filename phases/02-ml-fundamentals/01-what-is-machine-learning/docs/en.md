@@ -357,6 +357,21 @@ The nearest centroid classifier assumes each class forms a single blob. It draws
 
 These limitations motivate every other algorithm you will learn. K-nearest neighbors handles multiple clusters. Decision trees handle nonlinear boundaries. Feature scaling fixes the scale problem. Each lesson builds on the limitations of the previous one.
 
+### Expected output
+
+Run `code/ml_intro.py` — the final lines should read:
+
+```
+  Class 0: [1.928, 0.031]
+  Class 1: [-0.825, 1.684]
+  Class 2: [-1.009, -1.826]
+
+Test accuracy: 0.989
+Random baseline (1/3): 0.344
+
+All ML intro demos complete.
+```
+
 ## Use It
 
 sklearn provides `NearestCentroid` and synthetic data generators:

@@ -459,6 +459,21 @@ def _build_tree_importance(X, y, feature_subset, max_depth, depth=0):
 
 The code file runs all five methods on the same synthetic dataset and prints a comparison table showing which features each method selects.
 
+### Expected output
+
+Run `code/feature_selection.py` — the final lines should read:
+
+```
+  All 20 features              20     0.9400
+  Info only (5)                 5     0.9600
+  MI top-5                      5     0.9000
+  RFE top-5                     5     0.9600
+  L1 selected                   8     0.9800
+  Tree top-5                    5     0.9000
+
+Done.
+```
+
 ## Use It
 
 With scikit-learn, feature selection is built into the pipeline:

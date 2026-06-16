@@ -368,6 +368,21 @@ def convolve_fft(x, h):
     return [y[n].real for n in range(N)]
 ```
 
+### Expected output
+
+Run `code/fourier.py` — the final lines should read:
+
+```
+  3. The FFT computes the DFT in O(N log N) instead of O(N^2).
+  4. DFT and IDFT are perfect inverses -- no information is lost.
+  5. The convolution theorem: convolution in time = multiplication
+     in frequency. This is why FFT-based convolution is fast.
+  6. Windowing reduces spectral leakage for non-periodic signals.
+  7. Parseval's theorem: energy is conserved through the transform.
+  8. Transformer positional encodings use the same frequency
+     decomposition idea -- each position gets a unique spectrum.
+```
+
 ## Use It
 
 For real work, use numpy's FFT which is backed by highly optimized C libraries.

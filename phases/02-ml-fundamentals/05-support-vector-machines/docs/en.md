@@ -302,6 +302,21 @@ def find_support_vectors(X, y, w, b, tol=1e-3):
 
 See `code/svm.py` for the complete implementation with all demos.
 
+### Expected output
+
+Run `code/svm.py` — the final lines should read:
+
+```
+  1. SVMs find the maximum margin hyperplane between classes.
+  2. Only support vectors determine the boundary.
+  3. Hinge loss produces sparse models (zero loss outside margin).
+  4. The C parameter trades off margin width vs classification errors.
+  5. The kernel trick enables nonlinear boundaries via dot products.
+  6. RBF kernel maps to infinite dimensions using local similarity.
+  7. Linear SVMs train in O(n*d) per epoch using gradient descent.
+  8. SVMs still win on small datasets and high-dimensional sparse data.
+```
+
 ## Use It
 
 With scikit-learn:

@@ -268,6 +268,21 @@ print(f"Output: {output.data}")
 
 This is a single dense layer: `output = relu(W @ x + b)`. Every dense layer in every neural network does exactly this.
 
+### Expected output
+
+Run `code/matrices.py` — the final lines should read:
+
+```
+Output z2: (2, 1)
+Matrix 2x1:
+  / -0.1037 \
+  \  0.0308 /
+
+This is a complete 2-layer neural network forward pass.
+Layer 1: (4x3) @ (3x1) + (4x1) -> (4x1) -> ReLU -> (4x1)
+Layer 2: (2x4) @ (4x1) + (2x1) -> (2x1)
+```
+
 ## Use It
 
 NumPy does everything above in fewer lines and orders of magnitude faster.

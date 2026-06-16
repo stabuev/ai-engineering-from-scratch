@@ -437,6 +437,20 @@ The demo in `distances.py` creates a dataset, picks a query point, and shows how
 
 The code includes a mock embedding similarity search that finds the most similar "documents" to a query using cosine similarity vs L2 distance, showing that the rankings can differ.
 
+### Expected output
+
+Run `code/distances.py` — the final lines should read:
+
+```
+  After L2 regularization (50 steps):
+    Weights: [-0.0, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0]
+    Zeros:   0/10
+    L2 norm: 0.0000
+
+  L1 drives 'small' weights to exactly zero (sparsity).
+  L2 shrinks all weights but none reach exactly zero.
+```
+
 ## Use It
 
 The most common practical use: finding similar items in a vector database.

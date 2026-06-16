@@ -366,6 +366,21 @@ print(f"det(singular)     = {det_2x2(singular):.1f}")
 print("Singular: columns are proportional, space collapses to a line.")
 ```
 
+### Expected output
+
+Run `code/transformations.py` — the final lines should read:
+
+```
+3D rotate (1,0,0) 90 deg around z: [0. 1. 0.]
+
+Covariance matrix: [[2.0, 1.0], [1.0, 3.0]]
+Principal components (eigenvectors): columns of
+[[-0.85065081 -0.52573111]
+ [ 0.52573111 -0.85065081]]
+Variance along each (eigenvalues): [1.38196601 3.61803399]
+PCA picks the eigenvectors with the largest eigenvalues.
+```
+
 ## Use It
 
 NumPy handles all of this with optimized routines.

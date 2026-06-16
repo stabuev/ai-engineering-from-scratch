@@ -488,6 +488,20 @@ print(f"np.linalg.lstsq solution:   {x_lstsq}")
 print(f"np.linalg.pinv solution:    {x_pinv}")
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/svd.py` — последние строки должны быть такими:
+
+```
+Square matrix B:
+[[3. 1.]
+ [1. 3.]]
+Singular values: [4. 2.]
+det(B) = 8.0000
+Product of singular values: 8.0000
+  (|det| = product of singular values for square matrices)
+```
+
 ## Используйте
 
 Полные рабочие демо находятся в `code/svd.py`. Запустите его, чтобы увидеть применение SVD к сжатию изображений, рекомендательным системам, latent semantic analysis и удалению шума.

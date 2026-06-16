@@ -311,6 +311,20 @@ for name, history in [("GD", gd_history), ("SGD+M", sgd_history), ("Adam", adam_
 
 Ожидаемый вывод: Adam сходится быстрее всего. SGD with momentum идет по более гладкой траектории. Vanilla GD медленно продвигается вдоль узкой долины.
 
+### Ожидаемый вывод
+
+Запустите `code/optimizers.py` — последние строки должны быть такими:
+
+```
+  Start: x=0.01, y=0.01 (near saddle at origin)
+
+  Method                           x           y        f(x,y)  Escaped?
+  --------------------------------------------------------------
+  Gradient Descent          0.000176    0.524849     -0.275466  no
+  SGD + Momentum           -0.000000  4729020.438514  -22363634307887.484375  yes
+  Adam                     -0.000000    3.033698     -9.203325  yes
+```
+
 ## Используйте это
 
 На практике используйте оптимизаторы PyTorch или JAX. Они обрабатывают parameter groups, weight decay, gradient clipping и GPU acceleration.

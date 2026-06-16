@@ -355,6 +355,21 @@ print(f"u1 · u3 = {basis[0].dot(basis[2]):.6f}")
 print(f"u2 · u3 = {basis[1].dot(basis[2]):.6f}")
 ```
 
+### Expected output
+
+Run `code/vectors.py` — the final lines should read:
+
+```
+Identity 2x2 rank: 2
+[[1,2],[2,4]] rank: 1
+[[1,0,0],[0,1,0]] rank: 2
+
+=== Neural Network Layer (Matrix x Vector) ===
+Input (3D):  Vector([1.0, 0.5, -0.3])
+Output (2D): Vector([-0.019714737127338927, 0.10873956075097067])
+^ This is literally what a neural network layer does.
+```
+
 ## Use It
 
 Now the same thing with NumPy -- what you'll actually use in practice:

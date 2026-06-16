@@ -450,6 +450,21 @@ if __name__ == "__main__":
         print(f"    Point {[round(v, 2) for v in a]}")
 ```
 
+### Expected output
+
+Run `code/clustering.py` — the final lines should read:
+
+```
+  Silhouette score: 0.4895
+  K-Means splits moons poorly because they are not spherical
+
+=== Anomaly detection with DBSCAN ===
+  Detected 3 anomalies
+    Point [20.0, 20.0]
+    Point [-5.0, -5.0]
+    Point [15.0, 0.0]
+```
+
 ## Use It
 
 With scikit-learn, the same algorithms are one-liners:

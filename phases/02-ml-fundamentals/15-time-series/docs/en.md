@@ -326,6 +326,21 @@ def autocorrelation(series, max_lag=20):
     return acf
 ```
 
+### Expected output
+
+Run `code/time_series.py` — the final lines should read:
+
+```
+    17      59.13      67.09      -7.95
+    18      54.61      65.35     -10.74
+    19      58.45      60.57      -2.12
+    20      61.63      56.74      +4.89
+
+Forecast MSE:  116.3491
+Forecast MAE:  9.5334
+Forecast MAPE: 16.82%
+```
+
 ## Use It
 
 With sklearn, you use lag features directly with any regressor:

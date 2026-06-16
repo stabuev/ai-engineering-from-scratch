@@ -625,6 +625,21 @@ if __name__ == "__main__":
     print(f"  (|t| > 2.78 for significance at p<0.05 with df=4)")
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/evaluation.py` — последние строки должны быть такими:
+
+```
+     240   0.8792   0.8500
+
+=== Statistical Model Comparison ===
+  Model A (100 epochs) mean: 0.8733
+  Model B (500 epochs) mean: 0.8733
+  Mean difference: 0.0000
+  Paired t-statistic: 0.0000
+  (|t| > 2.78 for significance at p<0.05 with df=4)
+```
+
 ## Используйте это
 
 В scikit-learn оценка встроена в workflow:

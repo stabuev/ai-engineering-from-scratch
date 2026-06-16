@@ -454,6 +454,21 @@ for t in thresholds:
     print(f"{t:>10.1f} {m.accuracy():>10.4f} {m.precision():>10.4f} {m.recall():>10.4f} {m.f1():>10.4f}")
 ```
 
+### Expected output
+
+Run `code/logistic_regression.py` — the final lines should read:
+
+```
+              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        21
+           1       1.00      1.00      1.00        19
+
+    accuracy                           1.00        40
+   macro avg       1.00      1.00      1.00        40
+weighted avg       1.00      1.00      1.00        40
+```
+
 ## Use It
 
 Now the same thing with scikit-learn.

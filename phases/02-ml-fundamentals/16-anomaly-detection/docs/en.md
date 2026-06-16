@@ -325,6 +325,21 @@ The code generates multiple test scenarios:
 
 Each demo compares all methods using precision, recall, F1, and Precision@k.
 
+### Expected output
+
+Run `code/anomaly_detection.py` — the final lines should read:
+
+```
+--------------------------------------------------------------
+Z-score (t=3.0)          1.0000     0.1000     0.1818     0.5000
+IQR (f=1.5)              0.0000     0.0000     0.0000     0.0500
+IsoForest (t=0.6)        0.7778     0.7000     0.7368     0.7500
+
+Z-score struggles with multimodal data (points between clusters
+look normal per feature but are anomalous in the joint space).
+Isolation Forest handles multiple clusters naturally.
+```
+
 ## Use It
 
 With sklearn (using library implementations, not from-scratch):

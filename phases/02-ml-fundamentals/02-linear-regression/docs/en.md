@@ -460,6 +460,21 @@ print(f"Plain weights: {[round(w, 4) for w in multi_model.weights]}")
 print("Ridge weights are smaller (shrunk toward zero) due to the L2 penalty.")
 ```
 
+### Expected output
+
+Run `code/linear_regression.py` — the final lines should read:
+
+```
+=== Scikit-learn Comparison ===
+Coefficient (w): 2.9197
+Intercept (b): 7.2858
+R-squared (test): 0.9686
+MSE (test): 2.6148
+
+Polynomial degree 2 R-squared: 0.9695
+Ridge R-squared: 0.9689
+```
+
 ## Use It
 
 Now the same thing with scikit-learn, which is what you will actually use in production.

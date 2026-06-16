@@ -355,6 +355,20 @@ def demo_regularization_sweep():
 
 Это та же U-кривая, что и при изменении степени полинома, но управляемая непрерывной ручкой вместо дискретной. На практике регуляризация — предпочтительный способ управлять tradeoff, потому что дает тонкую настройку без изменения набора признаков.
 
+### Ожидаемый вывод
+
+Запустите `code/bias_variance.py` — последние строки должны быть такими:
+
+```
+Optimal alpha: 10.0
+  Total error at optimal: 32.1952
+
+Small alpha: variance dominates (model is unconstrained, fits noise)
+Large alpha: bias dominates (model is over-constrained, misses signal)
+Optimal alpha balances both, sitting at the bottom of the U-curve.
+All bias-variance demos complete.
+```
+
 ## Используйте это
 
 sklearn предоставляет `learning_curve` и `validation_curve`, чтобы автоматизировать эту диагностику без написания bootstrap loops.

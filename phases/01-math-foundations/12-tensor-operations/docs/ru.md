@@ -254,6 +254,21 @@ output = np.einsum("bte,ek->btk", concat, W_o)
 
 Каждый шаг — tensor operation: проекция (matmul через einsum), разбиение на heads (reshape + transpose), attention scores (batch matmul через einsum), взвешенная сумма (batch matmul через einsum), объединение heads (transpose + reshape), выходная проекция (matmul через einsum).
 
+### Ожидаемый вывод
+
+Запустите `code/tensors.py` — последние строки должны быть такими:
+
+```
+--- Global Average Pooling (vision) ---
+  Feature map: (2, 64, 7, 7)
+  After GAP:   (2, 64)
+
+--- Sequence mean pooling (NLP) ---
+  Hidden states: (4, 128, 768)
+  Mask:          (4, 128, 1)
+  Pooled:        (4, 768)
+```
+
 ## Используйте
 
 ### Реализация с нуля и NumPy

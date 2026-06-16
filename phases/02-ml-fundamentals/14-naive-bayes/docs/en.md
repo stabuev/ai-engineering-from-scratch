@@ -314,6 +314,21 @@ Naive Bayes prediction is a matrix multiplication. For n samples with d features
 
 Both are linear in every dimension. Compare this to KNN (which requires distance computation to all training points) or SVM with RBF kernel (which requires kernel evaluation against all support vectors). NB is faster by orders of magnitude at prediction time.
 
+### Expected output
+
+Run `code/naive_bayes.py` — the final lines should read:
+
+```
+Confusion Matrix:
+                Pred tech  Pred sports
+   True tech          83           0
+ True sports           0          77
+
+Per-class metrics:
+      tech: precision=1.0000, recall=1.0000, f1=1.0000
+    sports: precision=1.0000, recall=1.0000, f1=1.0000
+```
+
 ## Use It
 
 With sklearn, both variants are one-liners:

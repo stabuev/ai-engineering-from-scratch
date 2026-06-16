@@ -474,6 +474,21 @@ def quadratic_hessian(x):
 
 Newton's method will converge in 1 step (it is exact for quadratics). Gradient descent will take hundreds of steps because the eigenvalues of the Hessian differ by a factor of 5, creating an elongated valley.
 
+### Expected output
+
+Run `code/convex.py` — the final lines should read:
+
+```
+  3. Newton's method uses curvature for faster convergence.
+  4. Lagrange multipliers handle equality constraints.
+  5. KKT conditions handle inequality constraints.
+  6. L1 regularization = diamond constraint = sparsity.
+  7. L2 regularization = circle constraint = weight shrinkage.
+  8. Duality converts hard primal problems into sometimes-easier duals.
+  9. Neural networks are non-convex, but overparameterization and
+     stochastic noise make gradient descent work anyway.
+```
+
 ## Use It
 
 Convexity analysis applies directly when choosing ML models and solvers.

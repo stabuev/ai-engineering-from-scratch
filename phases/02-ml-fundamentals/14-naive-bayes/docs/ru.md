@@ -314,6 +314,21 @@ Naive Bayes prediction — matrix multiplication. Для n samples с d features
 
 Оба линейны по каждой размерности. Сравните это с KNN (требует distance computation до всех training points) или SVM с RBF kernel (требует kernel evaluation против всех support vectors). NB на порядки быстрее во время prediction.
 
+### Ожидаемый вывод
+
+Запустите `code/naive_bayes.py` — последние строки должны быть такими:
+
+```
+Confusion Matrix:
+                Pred tech  Pred sports
+   True tech          83           0
+ True sports           0          77
+
+Per-class metrics:
+      tech: precision=1.0000, recall=1.0000, f1=1.0000
+    sports: precision=1.0000, recall=1.0000, f1=1.0000
+```
+
 ## Используйте это
 
 Со sklearn оба варианта — one-liners:

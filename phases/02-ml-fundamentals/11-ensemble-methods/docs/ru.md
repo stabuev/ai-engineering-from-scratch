@@ -288,6 +288,21 @@ class GradientBoostingScratch:
 
 Код проверяет, что реализации с нуля дают accuracy, похожую на sklearn `AdaBoostClassifier` и `GradientBoostingClassifier`, и сравнивает все методы бок о бок.
 
+### Ожидаемый вывод
+
+Запустите `code/ensembles.py` — последние строки должны быть такими:
+
+```
+SKLEARN COMPARISON
+============================================================
+  Our AdaBoost:      0.870
+  sklearn AdaBoost:  0.880
+  sklearn RF:        0.890
+  sklearn GBM:       0.910
+
+All ensemble demos complete.
+```
+
 ## Используйте это
 
 ### Когда использовать каждый метод

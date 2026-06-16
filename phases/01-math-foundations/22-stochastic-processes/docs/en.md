@@ -329,6 +329,21 @@ def metropolis_hastings(target_log_prob, proposal_std, x0, n_samples, seed=None)
 
 The algorithm proposes a new point, checks if it has higher probability (or accepts with probability proportional to the ratio), and repeats. The acceptance rate should be around 23-50% for good mixing.
 
+### Expected output
+
+Run `code/stochastic.py` — the final lines should read:
+
+```
+    25 |  -0.0049 |   0.8198 |       5.34 |       0.8602
+    50 |  -0.0273 |   0.8481 |       0.29 |       0.5688
+    75 |   0.0379 |   1.0001 |      -1.60 |       0.4595
+   100 |   0.0913 |   0.9782 |      -2.64 |       0.2891
+
+At step 0: perfect signal (correlation = 1.0)
+At step 100: nearly pure noise (correlation near 0)
+This is the forward process of a diffusion model.
+```
+
 ## Use It
 
 In practice, you use established libraries for these algorithms. But understanding the mechanics matters for debugging and tuning.
