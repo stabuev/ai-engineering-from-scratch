@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 14 (Information Retrieval), Phase 5 · 22 (Embedding Models)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement fixed, recursive, semantic, parent-document, and contextual chunking.
+- Explain why chunking influences retrieval quality as much as the embedding model.
+- Apply the Anthropic contextual-retrieval pattern.
+
 ## The Problem
 
 You put a 50-page contract into a RAG system. User asks: "What is the termination clause?" The retriever returns the cover page. Why? Because the model was trained on 512-token chunks and the termination clause sits 20 pages in, split across a page break, with no local keywords tying it to the query.

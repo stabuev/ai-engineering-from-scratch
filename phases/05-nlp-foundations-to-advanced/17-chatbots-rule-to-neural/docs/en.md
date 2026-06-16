@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 14 (Information Retrieval)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a chatbot at each era: rule-based patterns, retrieval FAQ, neural generation, an LLM agent loop, and hybrid routing.
+- Trace what each era solved and left open.
+- Recognize prompt injection in a tool-using chatbot.
+
 ## The Problem
 
 A user says "I want to change my flight." The system has to figure out what they want, what information is missing, how to get it, and how to complete the action. Then the user says "wait, what if I cancel instead?" and the system has to remember the context, switch tasks, and preserve state.

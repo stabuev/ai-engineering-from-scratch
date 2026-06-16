@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 19 (RSP), Phase 15 · 20 (PF + FSF)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Name the CAIS four-risk framework (malicious use, AI races, organizational risks, rogue AIs).
+- Distinguish societal-scale risks from model-level failures.
+- Place CAIS and CAISI in the safety ecosystem.
+
 ## The Problem
 
 Lessons 19 and 20 covered lab-internal scaling policies. Lesson 21 covered independent capability evaluation. This lesson covers the third perspective: civil society and government organizations who shape public discussion and regulatory baseline for catastrophic AI risk.

@@ -404,6 +404,20 @@ print(f"MI (independent): {mutual_information(independent):.4f} bits")
 print(f"MI (dependent):   {mutual_information(dependent):.4f} bits")
 ```
 
+### Expected output
+
+Run `code/information_theory.py` — the final lines should read:
+
+```
+  Feature MI ranking:
+       strong_signal  MI = 0.5860 bits  #####################################################################################################################
+         weak_signal  MI = 0.0693 bits  #############
+               noise  MI = 0.0110 bits  ##
+            constant  MI = 0.0000 bits  
+
+  Strong signal has highest MI. Noise and constant have ~0.
+```
+
 ## Use It
 
 The same concepts using NumPy, the way you will use them in practice:

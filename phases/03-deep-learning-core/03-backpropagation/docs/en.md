@@ -390,6 +390,21 @@ We use online SGD here -- update weights after each sample instead of accumulati
 
 No hand-tuning. The network discovers the circular decision boundary on its own. That's the power of backpropagation: you define the architecture, the loss function, and the data. The algorithm figures out the weights.
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+Epoch 1800 | Loss: 0.0132 | Accuracy: 100.0%
+
+Sample Circle Results:
+  [0.0, 0.0] -> 1.0000 (inside, expected inside) OK
+  [0.5, 0.5] -> 0.9901 (inside, expected inside) OK
+  [1.2, 1.2] -> 0.0000 (outside, expected outside) OK
+  [0.0, 1.2] -> 0.0004 (outside, expected outside) OK
+  [-0.3, 0.3] -> 1.0000 (inside, expected inside) OK
+```
+
 ## Use It
 
 PyTorch does everything above in a few lines. The core idea is identical -- autograd builds a computational graph during the forward pass and traces it backward to compute gradients.
@@ -444,6 +459,25 @@ This lesson produces:
 4. Add gradient clipping to the training loop: after calling `backward()`, clip all gradients to [-1, 1]. Train a deeper network (4+ layers with sigmoid) and compare loss curves with and without clipping. This is your first defense against exploding gradients.
 
 5. Build a visualization: after training on XOR, print the gradient of every parameter in the network. Identify which layer has the smallest gradients. This demonstrates the vanishing gradient problem you read about in the Concept section.
+
+<details>
+<summary>Solution — exercise 3 (`__pow__`)</summary>
+
+```python
+def __pow__(self, k):
+    assert isinstance(k, int)
+    out = Value(self.data ** k, (self,), f'**{k}')
+
+    def _backward():
+        self.grad += k * (self.data ** (k - 1)) * out.grad
+
+    out._backward = _backward
+    return out
+```
+
+Then `mse = (predicted + Value(-target)) ** 2`. The power rule `d(x**n)/dx = n*x**(n-1)` reproduces the gradient that `diff * diff` gives — verified identical loss and gradients on several inputs.
+
+</details>
 
 ## Key Terms
 

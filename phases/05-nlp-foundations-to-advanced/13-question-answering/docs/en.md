@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 11 (Machine Translation), Phase 5 · 10 (Attention Mechanism)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build extractive QA, a retrieval-augmented pipeline, and generative RAG answers.
+- Evaluate QA with RAGAS-style metrics that reflect real-world use.
+- Reason about refusal calibration and hallucination.
+
 ## The Problem
 
 A user types "When did the first iPhone launch?" and expects "June 29, 2007." Not "Apple's history is long and varied." Not "2007" sitting in isolation with no sentence. A direct, grounded, correct answer.

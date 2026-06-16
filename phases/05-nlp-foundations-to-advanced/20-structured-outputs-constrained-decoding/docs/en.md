@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 17 (Chatbots), Phase 5 · 19 (Subword Tokenization)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement regex-constrained generation from scratch with a logit processor.
+- Use Outlines for JSON Schema and Instructor for provider-agnostic Pydantic.
+- Explain why constrained decoding turns "most of the time" into "always" — and its schema-order pitfall.
+
 ## The Problem
 
 A classifier prompts an LLM: "Return one of {positive, negative, neutral}." The model returns "The sentiment is positive — this review is overwhelmingly favorable because the customer explicitly states that they ...". Your parser crashes. Your classifier's F1 is 0.0.

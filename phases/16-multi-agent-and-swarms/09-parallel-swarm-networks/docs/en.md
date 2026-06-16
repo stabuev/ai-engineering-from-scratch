@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 05 (Supervisor Pattern), Phase 16 · 04 (Primitive Model)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a swarm with no central decider: agents read a shared event bus and pick up work asynchronously.
+- Identify when a swarm fits and when it fails.
+- Contrast swarm topology with the supervisor pattern.
+
 ## Problem
 
 Supervisor scales to a few workers. What about hundreds? The supervisor itself becomes the bottleneck: every decision about who does what funnels through one agent. One slow plan step stalls the whole system.

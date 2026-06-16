@@ -31,6 +31,14 @@ Workflow сайта бронирования: "find me a flight to Tokyo for Apr
 
 ## Концепция
 
+```mermaid
+graph LR
+  SS["screenshot"] --> GR["GUI grounding (locate elements)"]
+  GR --> ACT["action: click / type (action schema)"]
+  ACT --> ENV["app / UI"]
+  ENV -. "new screenshot" .-> SS
+```
+
 ### GUI grounding — примитив
 
 GUI grounding: по screenshot и инструкции на естественном языке выдать координату (x, y), куда кликнуть (или другое action).

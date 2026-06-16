@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 16 (LangGraph)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Compare LangGraph, CrewAI, AutoGen, and Agno by state model, branching, and observability.
+- Pick a framework from the problem shape in one defensible sentence.
+- Recognize when no framework — plain Python plus the provider SDK — is the right call.
+
 ## The Problem
 
 You have a task that needs more than one LLM call. Maybe it is a research workflow (plan, search, summarize, cite). Maybe it is a code-review pipeline (parse diff, critique, patch, validate). Maybe it is a multi-turn assistant that books flights, writes emails, and files expense reports. You pick a framework.
@@ -88,6 +94,8 @@ Pre-build checklist:
 5. **Budget the framework overhead.** Every framework is another dependency. If the task is two LLM calls and a tool, write 30 lines of plain Python; no framework is cheaper than no framework.
 
 Refuse to reach for a framework before you can draw the graph, the org chart, the chat, or the agent box. Refuse to pick one that forces you to fight its state model for the thing you actually need.
+
+Saved as `outputs/skill-agent-framework-selector.md`.
 
 ## The Decision Matrix
 

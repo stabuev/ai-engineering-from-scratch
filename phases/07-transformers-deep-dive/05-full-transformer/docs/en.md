@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 03 (Multi-Head Attention), Phase 7 · 04 (Positional Encoding)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Assemble the pieces of a transformer block (attention, residual, normalization, feed-forward) into encoder and decoder blocks.
+- Explain pre-norm vs post-norm and why modern blocks use RMSNorm and SwiGLU.
+- Wire a small encoder and decoder and count their parameters.
+
 ## The Problem
 
 A single attention layer is a feature extractor, not a model. One matmul per layer is not enough capacity for language. You need depth — and depth breaks without the right plumbing.

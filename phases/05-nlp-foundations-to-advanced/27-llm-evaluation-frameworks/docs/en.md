@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 14 (Information Retrieval)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Measure faithfulness with NLI (RAGAS-style), answer relevance, and a custom G-Eval metric.
+- Wire an eval into a CI gate.
+- Calibrate LLM-as-judge against its biases.
+
 ## The Problem
 
 Your RAG system answers: "June 29th, 2007."

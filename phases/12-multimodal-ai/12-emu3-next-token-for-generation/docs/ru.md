@@ -24,6 +24,13 @@ Emu3 атаковал этот аргумент напрямую. Утвержд
 
 ## Концепция
 
+```mermaid
+graph LR
+  M["image / text / video"] --> TOK["discrete tokens (one vocabulary)"]
+  TOK --> AR["Llama-style decoder, next-token"]
+  AR --> OUT["generate any modality"]
+```
+
 ### Токенизатор Emu3
 
 Ключевой компонент — визуальный токенизатор. Emu3 обучает кастомный IBQ-class tokenizer (Inverse Bottleneck Quantizer, семейство SBER-MoVQGAN) с 8x8 уменьшением разрешения на токен. Изображение 512x512 становится 64x64 = 4096 токенами при размере codebook 32768.

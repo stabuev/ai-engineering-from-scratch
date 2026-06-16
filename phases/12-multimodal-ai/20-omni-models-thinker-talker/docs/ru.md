@@ -29,6 +29,13 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  IN["voice + video"] --> TH["Thinker: reason over multimodal"]
+  TH --> TK["Talker: streaming speech synthesis"]
+  TK --> OUT["audio out"]
+```
+
 ### Thinker and Talker
 
 Декомпозиция Qwen2.5-Omni:

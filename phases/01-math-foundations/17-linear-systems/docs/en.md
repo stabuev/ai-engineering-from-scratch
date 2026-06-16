@@ -503,6 +503,20 @@ def condition_number(A):
     return S[0] / S[-1]
 ```
 
+### Expected output
+
+Run `code/linear_systems.py` — the final lines should read:
+
+```
+Normal equations:     [ 6.8785  3.0128 -1.9979]
+Cholesky:             [ 6.8785  3.0128 -1.9979]
+NumPy lstsq:          [ 6.8785  3.0128 -1.9979]
+sklearn:              [ 6.8785  3.0128 -1.9979]
+
+MSE:  0.2405
+R^2:  0.9972
+```
+
 ## Use It
 
 Putting the pieces together for linear regression and ridge regression on real data:

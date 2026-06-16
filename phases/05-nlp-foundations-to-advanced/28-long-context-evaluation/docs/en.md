@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 13 (Question Answering), Phase 5 · 23 (Chunking Strategies)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Build a domain-specific Needle-in-a-Haystack and a multi-needle variant.
+- Run multi-hop variable tracing (RULER-style) and LongBench on your stack.
+- Distinguish advertised from effective context (lost-in-the-middle, MRCR).
+
 ## The Problem
 
 You have a 200-page contract. The model claims a 1M-token context. You paste the contract in and ask: "What is the termination clause?" The model answers — but answers from the cover page because the termination clause sits at 120k tokens deep, past where the model actually attends.

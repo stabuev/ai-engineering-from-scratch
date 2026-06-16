@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement the Du et al. multi-agent debate algorithm.
+- Tune its two independent knobs (agents, rounds) and explain why debate works.
+- Set up heterogeneous debate across different models.
+
 ## Problem
 
 Self-consistency — sample one model many times and take the majority answer — is the cheapest reasoning improvement you can bolt on. It works, but it saturates fast. You can double your samples and not see another meaningful jump.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 02 (Spectrograms), Phase 6 · 04 (ASR), Phase 6 · 07 (TTS)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a real-time audio pipeline with a ring buffer, VAD gate, streaming ASR, and interruption handling.
+- Explain why real-time means processing the next 20 ms before the following 20 arrive.
+- Name the latency gotchas (jitter buffer, acoustic echo cancellation, barge-in, full duplex).
+
 ## The Problem
 
 You want a voice assistant that feels alive. Human conversational turn-taking latency is ~230 ms (silence-to-response). Anything above 500 ms feels robotic; above 1500 ms feels broken. The budget for a full **hear → understand → respond → speak** loop in 2026 is:
@@ -141,7 +147,7 @@ The 2026 stack:
 
 ## Ship It
 
-Save as `outputs/skill-realtime-designer.md`. Design a real-time audio pipeline with concrete latency budgets per stage.
+Save as `outputs/skill-realtime-pipeline.md`. Design a real-time audio pipeline with concrete latency budgets per stage.
 
 ## Exercises
 

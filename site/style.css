@@ -323,6 +323,48 @@ p.dropcap::first-letter {
   transition: border-color 0.15s, color 0.15s;
 }
 
+.lang-toggle {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.lesson-article img.lesson-figure {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+}
+
+.lesson-article details {
+  border: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--blueprint);
+  padding: 0 16px;
+  margin: 1.2rem 0;
+  background: transparent;
+}
+
+.lesson-article details summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--blueprint);
+}
+
+.lesson-article details[open] summary {
+  margin-bottom: 4px;
+}
+
+.lang-toggle:hover {
+  color: var(--blueprint);
+  border-color: var(--blueprint);
+}
+
 .theme-toggle:hover {
   border-color: var(--blueprint);
   color: var(--blueprint);

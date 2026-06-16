@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 06 (REINFORCE), Phase 9 · 07 (Actor-Critic)
 **Time:** ~75 minutes
 
+## Цели обучения
+
+- Реализовывать clipped surrogate-цель PPO, чтобы один rollout выдерживал много эпох обновления без коллапса политики.
+- Считать GAE-advantage и объединять потери политики, ценности и энтропии.
+- Читать диагностики PPO (clip fraction, KL), отличая здоровый прогон от расходящегося.
+
 ## Проблема
 
 A2C (Lesson 07) является on-policy: gradient `E_{π_θ}[A · ∇ log π_θ]` требует данные, sampled from текущей `π_θ`. Сделайте один update, и `π_θ` изменится; данные, которые вы использовали, теперь off-policy. Повторное использование даст biased gradient.

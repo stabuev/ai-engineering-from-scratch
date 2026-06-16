@@ -8,6 +8,12 @@
 **Задействованные фазы:** P0 · P5 · P7 · P10 · P11 · P13 · P14 · P15 · P17 · P18
 **Время:** 35 часов
 
+## Цели обучения
+
+- Построить терминального кодинг-агента: TUI-оболочку, состояние плана, песочницу инструментов и цикл план-действие-наблюдение-восстановление.
+- Реализовать цикл агента с файловыми и shell-инструментами и восстановлением после ошибок.
+- Добавить ограждения и верификацию, чтобы агент безопасно правил реальный репозиторий.
+
 ## Проблема
 
 Coding agents стали доминирующей категорией AI-приложений в 2026 году. Claude Code (Anthropic), Cursor 3 with Composer 2 and Agent Tabs (Cursor), Amp (Sourcegraph), OpenCode (112k stars), Factory Droids и Google Jules поставляют вариации одной архитектуры: terminal harness, permissioned tool surface, sandbox и plan-act-observe loop вокруг frontier model. Передний край узкий — Live-SWE-agent достиг 79.2% на SWE-bench Verified с Opus 4.5 — но инженерная область широкая. Большинство отказов — не ошибки модели. Это нестабильность tool loop, context poisoning, runaway token cost и разрушительные операции с filesystem.

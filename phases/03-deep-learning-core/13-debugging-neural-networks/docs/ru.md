@@ -589,6 +589,21 @@ def demo_broken_networks():
     gradient_check(model_grad, x[:4], y[:4], criterion)
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/debug_neural_nets.py` — последние строки должны быть такими:
+
+```
+=== GRADIENT CHECK ===
+  0.weight: max_rel_diff=1.03e-08 [OK]
+  0.bias: max_rel_diff=5.05e-09 [OK]
+  2.weight: max_rel_diff=3.93e-12 [OK]
+  2.bias: max_rel_diff=1.94e-13 [OK]
+
+  Checked 14 parameters
+  PASS: Gradients match (rel_diff < 1e-5)
+```
+
 ## Используйте это
 
 ### Встроенные инструменты PyTorch
@@ -683,6 +698,25 @@ for epoch in range(100):
 4. **Создайте валидатор конвейера данных.** Напишите функцию, которая проверяет: дубликаты примеров между train/test разбиениями, дисбаланс распределения меток (соотношение >10:1), нормализацию входов (среднее около 0, std около 1) и значения NaN/Inf в данных. Запустите ее на намеренно испорченном датасете.
 
 5. **Отладьте реальный сбой.** Возьмите мини-фреймворк из Урока 10, внесите тонкую ошибку (например, транспонируйте матрицу весов в backward) и используйте проверку градиентов, чтобы точно найти параметр с неверными градиентами. Задокументируйте процесс отладки.
+
+<details>
+<summary>Решение — упражнение 4</summary>
+
+```python
+import numpy as np
+def validate(X, y, X_test):
+    dup = len(set(map(tuple, X)) & set(map(tuple, X_test)))
+    if dup: print(f"  {dup} samples leak across train/test")
+    counts = np.bincount(y)
+    if counts.max() / max(counts.min(), 1) > 10: print("  label imbalance > 10:1")
+    if abs(X.mean()) > 0.1 or abs(X.std() - 1) > 0.3:
+        print(f"  not normalized: mean={X.mean():.2f} std={X.std():.2f}")
+    if not np.isfinite(X).all(): print("  NaN/Inf in inputs")
+```
+
+Запускайте до обучения. Утечка train/test завышает accuracy, дисбаланс >10:1 смещает модель к мажоритарному классу, ненормализованные входы замедляют или ломают оптимизацию, а один NaN/Inf тихо отравляет все градиенты ниже по графу. Дёшево прогнать — экономит часы погони за «багом модели», который на деле баг данных.
+
+</details>
 
 ## Ключевые термины
 

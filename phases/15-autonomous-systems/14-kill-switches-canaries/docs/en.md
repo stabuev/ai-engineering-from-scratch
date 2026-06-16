@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 13 (Cost governors), Phase 15 · 10 (Permission modes)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Distinguish a kill switch, a circuit breaker, and a canary.
+- Place the kill switch outside the agent's edit surface and explain why.
+- Design a canary rollout for an autonomous agent.
+
 ## The Problem
 
 Cost governors (Lesson 13) bound what the agent can spend. They do not bound what the agent can do inside the budget. An agent with a $50 velocity limit can still exfiltrate a secret, publish the wrong post, or delete a resource — the expensive action is often the cheap one in tokens.

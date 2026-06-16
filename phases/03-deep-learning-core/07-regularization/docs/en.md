@@ -433,6 +433,21 @@ class RegularizedNetwork:
         return history
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+  No regularization                   99.3%      97.3%     2.0%
+  Dropout p=0.3                       96.0%      98.0%    -2.0%
+  Weight decay 0.01                   96.7%      94.0%     2.7%
+  Dropout + weight decay              87.3%      90.7%    -3.3%
+
+  Key insight: regularization reduces the train-test gap.
+  The model with dropout + weight decay generalizes best,
+  even if its training accuracy is lower.
+```
+
 ## Use It
 
 PyTorch provides all normalization and regularization as modules:
@@ -504,6 +519,26 @@ This lesson produces:
 4. Implement early stopping: track test loss each epoch, save the best weights, and stop if test loss hasn't improved for 20 epochs. Run the regularized network for 1000 epochs. Report which epoch had the best test accuracy and how many epochs of computation you saved.
 
 5. Compare LayerNorm vs RMSNorm on a 4-layer network (not just 2). Initialize both with the same weights. Train for 200 epochs and compare final accuracy, training speed (time per epoch), and gradient magnitudes at the first layer. Verify that RMSNorm is faster with the same accuracy.
+
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+best_loss, best_weights, patience, wait = float("inf"), None, 20, 0
+for epoch in range(1000):
+    train_one_epoch()
+    test_loss = evaluate()
+    if test_loss < best_loss:
+        best_loss, best_weights, wait = test_loss, snapshot(net), 0
+    else:
+        wait += 1
+        if wait >= patience:
+            restore(net, best_weights); break
+```
+
+Stop when test loss has not improved for `patience` epochs and restore the best snapshot. Every epoch after the best point is pure overfitting (train accuracy keeps rising while test stalls), so you save exactly that tail of compute — typically hundreds of epochs on a 1000-epoch budget.
+
+</details>
 
 ## Key Terms
 

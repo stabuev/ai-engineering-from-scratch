@@ -441,6 +441,21 @@ print(f"dy/dx2 = {x2.grad}")   # 2.0 (= x1)
 Manual check: `y = relu(x1*x2 + 1)`. Since `x1*x2 + 1 = 7 > 0`, relu is identity.
 `dy/dx1 = x2 = 3`. `dy/dx2 = x1 = 2`. The engine matches.
 
+### Expected output
+
+Run `code/autodiff.py` — the final lines should read:
+
+```
+  DONE
+
+=== Verify against PyTorch ===
+  Our engine: dy/dx1=3.0, dy/dx2=2.0
+  PyTorch:    dy/dx1=3.0, dy/dx2=2.0
+  MATCH
+
+All demos passed.
+```
+
 ## Use It
 
 ### Verify against PyTorch

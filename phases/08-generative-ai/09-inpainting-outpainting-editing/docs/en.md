@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 8 · 07 (Latent Diffusion), Phase 8 · 08 (ControlNet & LoRA)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build a mask-aware diffusion model and explain why naive masking is wrong.
+- Apply SDEdit and InstructPix2Pix for training-free and instruction-based editing.
+- Explain why editing — not fresh generation — is the bulk of production image work.
+
 ## The Problem
 
 A client sends a perfect product photo with a distracting sign in the background. You want to erase the sign and leave everything else pixel-identical. You cannot run text-to-image from scratch — the result will have a different color, different lighting, different product angle. You want to regenerate *only* the masked region, and you want the regeneration to respect the surrounding context.

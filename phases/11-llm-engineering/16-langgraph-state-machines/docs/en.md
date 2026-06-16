@@ -6,6 +6,13 @@
 **Languages:** Python
 **Prerequisites:** Phase 11 · 09 (Function Calling), Phase 11 · 14 (Model Context Protocol)
 **Time:** ~75 minutes
+**Requires:** Paid API (Anthropic/OpenAI)
+
+## Learning Objectives
+
+- Build a ReAct agent as a checkpointed LangGraph state machine.
+- Declare typed state with reducers and add a human-in-the-loop interrupt.
+- Swap the checkpointer for production and use time-travel for debugging.
 
 ## The Problem
 
@@ -173,6 +180,8 @@ Before you reach for LangGraph, do a 60-second design:
 6. **Stream by default.** `mode="updates"` for the UI, `mode="messages"` for token-level streaming inside model nodes, `mode="values"` for full snapshots during eval.
 
 Refuse to ship a LangGraph agent that has no checkpointer. Refuse to ship one that interrupts *after* the side effect. Refuse to ship a `messages` field without `add_messages` as its reducer.
+
+Saved as `outputs/skill-langgraph-graph-designer.md`.
 
 ## Exercises
 

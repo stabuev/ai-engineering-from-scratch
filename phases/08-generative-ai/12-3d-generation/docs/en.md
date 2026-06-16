@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 4 (Vision), Phase 8 · 07 (Latent Diffusion)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Implement a 2D Gaussian splat, render by summing splats, and fit it by gradient descent.
+- Explain how multi-view diffusion plus 3D reconstruction turns a prompt into an object.
+- Compare 3D Gaussian Splatting, NeRF, and triplane representations.
+
 ## The Problem
 
 3D content is painful:

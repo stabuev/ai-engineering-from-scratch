@@ -22,6 +22,13 @@ Two-loss training в Transfusion работает, но имеет более с
 
 ## Концепция
 
+```mermaid
+graph LR
+  T["text: causal next-token"] --> TF["one transformer, hybrid mask"]
+  I["image: masked discrete diffusion"] --> TF
+  TF --> P["parallel image decode"]
+```
+
 ### Masked discrete diffusion (MaskGIT)
 
 Оригинальный прием Chang et al. (2022) MaskGIT элегантен. Начните с полностью замаскированного изображения (каждый токен — специальный `<MASK>` id). На каждом шаге предскажите все masked tokens параллельно, затем сохраните top-K самых confident predictions и снова замаскируйте остальные. После ~8-16 iterations все токены заполнены. Schedule того, сколько токенов unmask на каждом шаге, настраивается — cosine schedules работают хорошо.

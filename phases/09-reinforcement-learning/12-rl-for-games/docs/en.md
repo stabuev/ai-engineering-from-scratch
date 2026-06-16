@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 05 (DQN), Phase 9 · 08 (PPO), Phase 9 · 09 (RLHF), Phase 9 · 10 (MARL)
 **Time:** ~120 minutes
 
+## Learning Objectives
+
+- Trace the self-play lineage from TD-Gammon to AlphaGo, AlphaZero, and DeepSeek-R1.
+- Implement group-relative advantage (GRPO) on a verifier environment and contrast it with a value-based baseline.
+- Explain how the game-playing recipe transfers to LLM reasoning with verifier rewards.
+
 ## The Problem
 
 Games have everything RL wants. Clean reward (win/loss). Infinite episodes (self-play resets). Perfect simulation (the game *is* the simulator). Discrete or small continuous action spaces. Multi-agent structure that forces adversarial robustness.

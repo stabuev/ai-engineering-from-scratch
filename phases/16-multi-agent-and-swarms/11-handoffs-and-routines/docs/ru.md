@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 16 · 04 (Primitive Model)
 **Время:** ~60 minutes
 
+## Цели обучения
+
+- Реализовывать два примитива OpenAI Swarm — routines и handoffs.
+- Объяснять stateless-компромисс, делающий handoffs популярными.
+- Определять, когда handoffs подходят, а когда буксуют.
+
 ## Проблема
 
 Каждый multi-agent framework хочет, чтобы вы выучили его DSL: nodes и edges в LangGraph, crews и tasks в CrewAI, GroupChat и managers в AutoGen. Эти DSL — реальные абстракции, но из-за них вещь ощущается тяжелее, чем должна.

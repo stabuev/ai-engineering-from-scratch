@@ -32,6 +32,16 @@ Post-hoc VLM training — это default. LLaVA, BLIP-2, Qwen-VL, Idefics — в
 
 ## Концепция
 
+```mermaid
+graph TB
+  subgraph Old["bolt-on (alignment debt)"]
+    T1["text pretrain"] --> A1["then align vision"]
+  end
+  subgraph New["InternVL3: native"]
+    J["joint text + vision pretrain from the start"]
+  end
+```
+
 ### Native multimodal pretraining
 
 InternVL3 обучается с нуля на corpus, который является native multimodal с первого шага. Mix:

@@ -24,6 +24,13 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  IMG["image"] --> VE["frozen image encoder"]
+  VE --> QF["Q-Former: learnable queries cross-attend"]
+  QF --> LLM["frozen LLM"]
+```
+
 ### Learnable queries
 
 Ключевой прием Q-Former: вместо того чтобы позволять text tokens LLM attend to image patches, вводится новый набор из 32 learnable query vectors `Q`, и *они* attend to image patches. Queries являются параметрами модели — они обучаются во время training, и одни и те же 32 queries используются для каждого image.

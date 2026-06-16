@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 03 (Multi-Head), Phase 7 · 12 (KV Cache / Flash Attention)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Implement sliding-window, block-sparse, and differential attention masks against a full-attention baseline.
+- Explain how each variant recovers memory and what it costs in effective receptive field.
+- Compare SWA, Longformer/BigBird, native sparse attention, and the DIFF Transformer.
+
 ## The Problem
 
 Full attention costs `O(N²)` memory and `O(N²)` compute in sequence length. For a 128K-context Llama 3 70B that is 16 billion attention entries per layer, times 80 layers. Flash Attention (Lesson 12) hides the `O(N²)` activation memory but does not change the arithmetic cost — every token still attends to every other token.
@@ -20,6 +26,13 @@ Three classes of variants change the topology of the attention matrix itself:
 These coexist. A 2026 frontier model often mixes them: most layers are SWA-1024, every fifth is global full attention, and a handful are differential heads that clean up retrieval. Gemma 3's 5:1 SWA-to-global ratio is the current textbook default.
 
 ## The Concept
+
+```mermaid
+graph TB
+  F["full attention: O(n²), every token sees all"] --> SWA["Sliding Window: each token sees ±w"]
+  F --> SP["Sparse / Block: fixed block pattern"]
+  F --> DIFF["Differential: subtract two softmaxes (denoise)"]
+```
 
 ### Sliding Window Attention (SWA)
 

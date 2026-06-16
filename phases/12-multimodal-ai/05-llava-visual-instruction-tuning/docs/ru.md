@@ -30,6 +30,14 @@ Q-Former из BLIP-2 (Lesson 12.03) сжимает image до 32 tokens. Чис�
 
 ## Концепция
 
+```mermaid
+graph LR
+  IMG["image"] --> VE["CLIP encoder"]
+  VE --> MLP["2-layer MLP projector"]
+  MLP --> SEQ["image tokens + text tokens"]
+  SEQ --> LLM["LLM"]
+```
+
 ### The architecture
 
 LLaVA-1.5 at 13B:

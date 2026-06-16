@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 03 (Word2Vec from Scratch)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Factorize a co-occurrence matrix (GloVe), embed subwords (FastText), and learn a BPE vocabulary.
+- Explain how subword embeddings solve the OOV problem.
+- Choose between GloVe, FastText, and BPE for a task.
+
 ## The Problem
 
 Word2Vec left two open questions.

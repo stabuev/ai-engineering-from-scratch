@@ -32,6 +32,16 @@ These symptoms are well-documented. MM1.5 Section 4 quantifies them. LLaVA-OneVi
 
 ## The Concept
 
+```mermaid
+graph TB
+  subgraph Old["bolt-on (alignment debt)"]
+    T1["text pretrain"] --> A1["then align vision"]
+  end
+  subgraph New["InternVL3: native"]
+    J["joint text + vision pretrain from the start"]
+  end
+```
+
 ### Native multimodal pretraining
 
 InternVL3 trains from scratch on a corpus that is native multimodal from step one. The mix is:

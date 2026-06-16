@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 05 (Full Transformer), Phase 7 · 07 (GPT)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Replace a dense FFN with a routed mixture of experts and run tokens through the router.
+- Explain the load-balancing problem and the shared-expert and fine-grained-expert designs.
+- Reason about the compute-versus-memory tradeoff that sparsity makes.
+
 ## The Problem
 
 A dense transformer's FLOPs at inference equal its parameter count (times 2 for forward pass). Scale up a dense model and every token pays the full bill. By 2024 the frontier was hitting a compute wall: to be meaningfully smarter, you needed exponentially more FLOPs per token.

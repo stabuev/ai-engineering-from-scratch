@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 05 (DQN), Phase 9 · 08 (PPO), Phase 9 · 09 (RLHF), Phase 9 · 10 (MARL)
 **Time:** ~120 minutes
 
+## Цели обучения
+
+- Прослеживать линию self-play от TD-Gammon к AlphaGo, AlphaZero и DeepSeek-R1.
+- Реализовывать group-relative advantage (GRPO) на verifier-среде и сравнивать с value-based бейзлайном.
+- Объяснять, как рецепт игры переносится на рассуждения LLM с verifier-наградами.
+
 ## Проблема
 
 В играх есть все, что нужно RL. Чистая reward (win/loss). Бесконечные episodes (self-play resets). Идеальная simulation (сама игра *и есть* simulator). Дискретные или небольшие continuous action spaces. Multi-agent структура, которая заставляет учиться adversarial robustness.

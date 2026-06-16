@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention from Scratch)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Split single-head attention into multiple heads and recombine them through the output projection W_o.
+- Run scaled-dot-product attention per head and implement the GQA and MQA variants.
+- Probe what individual attention heads learn.
+
 ## The Problem
 
 A single self-attention head computes one attention matrix. That matrix captures one kind of relationship — usually the one that minimizes loss on whatever the training signal is. If your data has subject-verb agreement, co-reference, long-range discourse, and syntactic chunking all tangled together, a single head smears them into a single soft-max distribution and loses half the signal.

@@ -498,6 +498,21 @@ numerical = numerical_gradient(f, point)
 check_gradient(analytical, numerical)
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/numerical.py` — последние строки должны быть такими:
+
+```
+  Range test (large values):
+         100  float16=  ok  bfloat16=  ok
+        1000  float16=  ok  bfloat16=  ok
+       10000  float16=  ok  bfloat16=  ok
+       65504  float16=  ok  bfloat16=  ok
+      100000  float16= INF  bfloat16=  ok
+
+All demos complete.
+```
+
 ## Используйте
 
 ### Симуляция mixed precision

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 06 (NER), Phase 5 · 24 (Coreference Resolution)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Build an alias index from Wikipedia redirects and disambiguate with context.
+- Add embedding-based (BLINK-style) and generative entity linking.
+- Handle NIL (no entity) and measure candidate generation versus disambiguation.
+
 ## The Problem
 
 A sentence reads: "Jordan beat the press." Your NER tags "Jordan" as PERSON. Good. But *which* Jordan?

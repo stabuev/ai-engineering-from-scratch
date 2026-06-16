@@ -24,6 +24,15 @@ The second question Flamingo answered: how do you handle a variable number of im
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image / video"] --> VE["vision encoder"]
+  VE --> PR["Perceiver resampler"]
+  PR --> X["gated cross-attention"]
+  LLM["frozen LLM layers"] --> X
+  X --> OUT["text out"]
+```
+
 ### The frozen LLM
 
 Flamingo starts with a frozen Chinchilla 70B LLM. All 70B weights untouched. The existing text self-attention and FFN operate normally.

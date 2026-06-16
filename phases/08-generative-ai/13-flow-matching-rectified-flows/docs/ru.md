@@ -7,6 +7,12 @@
 **Предварительные требования:** Фаза 8 · 06 (DDPM), Фаза 1 · Calculus
 **Время:** ~45 минут
 
+## Цели обучения
+
+- Объяснять, почему flow matching с прямыми путями требует меньше шагов сэмплирования, чем кривой diffusion.
+- Реализовывать обучающую потерю flow matching и многошаговое сэмплирование методом Эйлера.
+- Связывать rectified flow и consistency distillation с сокращением числа шагов.
+
 ## Проблема
 
 Reverse process DDPM — это 1000-step stochastic walk от `N(0, I)` обратно к data distribution. DDIM сжал его до 20-50 deterministic steps. Вам нужно меньше шагов — ideally one. Блокер в том, что ODE, решающая reverse process, stiff; path curved.

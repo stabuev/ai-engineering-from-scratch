@@ -28,6 +28,12 @@ const GLOSSARY_PATH = path.join(REPO_ROOT, 'glossary', 'terms.md');
 const DATA_PATH = path.join(__dirname, 'data.js');
 const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html', 'lesson.html']
   .map(f => path.join(__dirname, f));
+const SKILL_COUNT_PAGES = [
+  path.join(REPO_ROOT, '.claude', 'skills', 'find-your-level', 'SKILL.md'),
+  path.join(REPO_ROOT, '.agents', 'skills', 'find-your-level', 'SKILL.md'),
+];
+
+const OUTPUTS_INDEX_PATH = path.join(REPO_ROOT, 'outputs', 'index.json');
 
 const GITHUB_BASE = 'https://github.com/stabuev/ai-engineering-from-scratch/tree/main/';
 const STATUS_EMOJI = { 'complete': '✅', 'in-progress': '🚧', 'planned': '⬚' };
@@ -115,6 +121,24 @@ function loadManifest() {
           errors.push(`missing docs/${doc}: phases/${phase.dir}/${lesson.dir}`);
         }
       }
+      // `requires` (default cpu-only) must match the doc header: a Requires
+      // line appears only when the lesson needs more than a laptop (paid API).
+      const requires = lesson.requires || 'cpu-only';
+      if (!['cpu-only', 'gpu', 'paid-api'].includes(requires)) {
+        errors.push(`invalid requires "${requires}": phases/${phase.dir}/${lesson.dir}`);
+      }
+      const enHead = fs.existsSync(path.join(abs, 'docs', 'en.md'))
+        ? fs.readFileSync(path.join(abs, 'docs', 'en.md'), 'utf8') : '';
+      const ruHead = fs.existsSync(path.join(abs, 'docs', 'ru.md'))
+        ? fs.readFileSync(path.join(abs, 'docs', 'ru.md'), 'utf8') : '';
+      const enHasReq = /^\*\*Requires:\*\*/m.test(enHead);
+      const ruHasReq = /^\*\*Требуется:\*\*/m.test(ruHead);
+      if (requires === 'cpu-only' && (enHasReq || ruHasReq)) {
+        errors.push(`requires=cpu-only but a Requires line is present: phases/${phase.dir}/${lesson.dir}`);
+      }
+      if (requires !== 'cpu-only' && !(enHasReq && ruHasReq)) {
+        errors.push(`requires=${requires} but the Requires line is missing in en.md and/or ru.md: phases/${phase.dir}/${lesson.dir}`);
+      }
       // Two accepted shapes, matching site/lesson.html (`data.questions || data`):
       // a bare array of questions, or an object with a `questions` array.
       for (const quizFile of ['quiz.json', 'quiz_en.json']) {
@@ -187,6 +211,94 @@ function computeStats(manifest) {
   };
 }
 
+// ─── Lesson readiness (non-blocking backlog report) ──────────────────
+// Criteria from LESSON_TEMPLATE. Never fails the build — this is a visible
+// backlog so the polish tracks have a moving target and regressions show up.
+// REQUIRED criteria define "fully ready". `visual` is ADVISORY: a diagram
+// earns its place only when a lesson carries structural information
+// (architecture, pipeline, process). Conceptual / policy / comparison lessons
+// are complete without one, so a missing visual is a triage candidate, not a
+// defect — it does not count against readiness.
+const REQUIRED_CRITERIA = [
+  'objectives', 'problem', 'concept', 'code', 'artifact', 'exercises', 'sources',
+];
+const ADVISORY_CRITERIA = ['visual'];
+const READINESS_CRITERIA = [...REQUIRED_CRITERIA, ...ADVISORY_CRITERIA];
+
+function lessonReadiness(manifest) {
+  const missingByCriterion = Object.fromEntries(READINESS_CRITERIA.map(c => [c, 0]));
+  const missingByPhase = {};
+  let fullyReady = 0;
+
+  for (const phase of manifest.phases) {
+    missingByPhase[phase.number] = 0;
+    for (const lesson of phase.lessons) {
+      const dir = path.join(REPO_ROOT, lessonRel(phase, lesson));
+      const enPath = path.join(dir, 'docs', 'en.md');
+      const en = fs.existsSync(enPath) ? fs.readFileSync(enPath, 'utf8') : '';
+
+      const codeDir = path.join(dir, 'code');
+      const hasCodeFile = fs.existsSync(codeDir)
+        && fs.readdirSync(codeDir).some(f => /\.(py|ts|rs|jl)$/.test(f));
+      const outDir = path.join(dir, 'outputs');
+      const hasArtifact = fs.existsSync(outDir)
+        && fs.readdirSync(outDir).some(f => f !== '.gitkeep');
+
+      const exMatch = en.match(/##\s+Exercises[\s\S]*?(?=\n##\s|$)/i);
+      const exCount = exMatch ? (exMatch[0].match(/^\s*\d+\./gm) || []).length : 0;
+      const frMatch = en.match(/##\s+Further Reading[\s\S]*?(?=\n##\s|$)/i);
+      const frLinks = frMatch ? (frMatch[0].match(/\]\(https?:/g) || []).length : 0;
+      const hasVisual = /```mermaid/.test(en)
+        || /[┌│└├─┐┘►▼▲]|--->|═══/.test(en)
+        || /!\[[^\]]*\]\([^)]*\.(svg|png|jpg)\)/.test(en); // figures render on the site too
+
+      const checks = {
+        objectives: /##\s+Learning Objectives/i.test(en),
+        problem: /^##\s+.*Problem/im.test(en),   // any "… Problem" heading
+        concept: /^##\s+.*Concept/im.test(en),   // any "… Concept" heading
+        code: lesson.type !== 'Практика' || hasCodeFile, // Learn lessons may be codeless
+        artifact: hasArtifact,
+        exercises: exCount >= 3,
+        visual: hasVisual,
+        sources: frLinks >= 1,
+      };
+
+      for (const c of READINESS_CRITERIA) {
+        if (!checks[c]) missingByCriterion[c] += 1;
+      }
+      const missingRequired = REQUIRED_CRITERIA.filter(c => !checks[c]).length;
+      if (missingRequired === 0) fullyReady += 1;
+      else missingByPhase[phase.number] += 1;
+    }
+  }
+
+  return { missingByCriterion, missingByPhase, fullyReady };
+}
+
+function printReadiness(manifest, stats) {
+  const r = lessonReadiness(manifest);
+  console.log(`\n📋 Readiness backlog (non-blocking — see CONTENT_REVIEW.md):`);
+  console.log(`   Fully ready: ${r.fullyReady}/${stats.total} (required criteria)`);
+  const order = [...REQUIRED_CRITERIA].sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
+  for (const c of order) {
+    if (r.missingByCriterion[c] > 0) {
+      console.log(`   missing ${c.padEnd(11)} ${r.missingByCriterion[c]}`);
+    }
+  }
+  const worst = Object.entries(r.missingByPhase)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([p, n]) => `P${p}:${n}`)
+    .join('  ');
+  if (worst) console.log(`   phases with most incomplete lessons: ${worst}`);
+  for (const c of ADVISORY_CRITERIA) {
+    if (r.missingByCriterion[c] > 0) {
+      console.log(`   advisory: ${r.missingByCriterion[c]} lessons have no ${c} (triage candidates, not a defect)`);
+    }
+  }
+}
+
 // ─── Glossary ────────────────────────────────────────────────────────
 function parseGlossary(content) {
   const terms = [];
@@ -244,6 +356,53 @@ const GLOSSARY = ${JSON.stringify(glossaryTerms, null, 2)};
 `;
 }
 
+// ─── outputs/index.json ──────────────────────────────────────────────
+// Index of every artifact the lessons ship. One entry per file in a lesson's
+// outputs/, or per directory for multi-file packs. Bucketed by name prefix.
+function renderOutputsIndex(manifest) {
+  const buckets = { prompts: [], skills: [], agents: [], mcp_servers: [] };
+  const bucketByPrefix = name => {
+    if (name.startsWith('prompt')) return 'prompts';
+    if (name.startsWith('skill')) return 'skills';
+    if (name.startsWith('agent')) return 'agents';
+    if (name.startsWith('mcp')) return 'mcp_servers';
+    return null;
+  };
+
+  for (const phase of manifest.phases) {
+    for (const lesson of phase.lessons) {
+      const outDir = path.join(REPO_ROOT, lessonRel(phase, lesson), 'outputs');
+      if (!fs.existsSync(outDir)) continue;
+      for (const entry of fs.readdirSync(outDir)) {
+        if (entry === '.gitkeep') continue;
+        const name = entry.replace(/\.[^.]+$/, '');
+        const bucket = bucketByPrefix(name);
+        if (!bucket) {
+          console.warn(`⚠️  unclassified artifact (no prompt/skill/agent/mcp prefix): ${lessonRel(phase, lesson)}/outputs/${entry}`);
+          continue;
+        }
+        buckets[bucket].push({
+          name,
+          path: `${lessonRel(phase, lesson)}/outputs/${entry}`,
+          phase: phase.number,
+          lesson: lesson.dir,
+        });
+      }
+    }
+  }
+
+  for (const list of Object.values(buckets)) {
+    list.sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  return JSON.stringify({
+    version: '1.0.0',
+    note: 'Auto-generated by site/build.js from phases/*/*/outputs — do not edit manually.',
+    counts: Object.fromEntries(Object.entries(buckets).map(([k, v]) => [k, v.length])),
+    ...buckets,
+  }, null, 2) + '\n';
+}
+
 // ─── README.md ───────────────────────────────────────────────────────
 function readmeTable(phase) {
   const isCapstone = phase.number === 19;
@@ -269,7 +428,7 @@ function renderReadme(content, manifest, stats) {
     `${stats.total} уроков. 20 фаз. ~${Math.round(stats.lessonHours)} часов уроков + ~${Math.round(stats.capstoneHours)} часов capstone-проектов.`
   );
   out = out.replace(/20 фаз, \d+ уроков/, `20 фаз, ${stats.total} уроков`);
-  out = out.replace(/портфолио из \d+ артефактов/, `портфолио из ${stats.total} артефактов`);
+  out = out.replace(/портфолио из \d+ артефактов/, `портфолио из ${stats.artifacts} артефактов`);
 
   // "С чего начать" — cumulative lesson hours from the entry phase (no capstones)
   out = out.replace(
@@ -371,19 +530,30 @@ function renderHtmlCounts(content, stats) {
   return content.replace(/\b\d+(?=( AI engineering)? (lessons|уроков)(?![A-Za-zа-яё]))/g, String(stats.total));
 }
 
+// ─── agent skill lesson counters ─────────────────────────────────────
+function renderSkillCounts(content, stats) {
+  return content
+    .replace(/\d+-lesson, 20-phase/g, `${stats.total}-lesson, 20-phase`)
+    .replace(/20 phases, \d+\+? lessons/g, `20 phases, ${stats.total} lessons`);
+}
+
 // ─── Main ────────────────────────────────────────────────────────────
 function main() {
   const checkMode = process.argv.includes('--check');
 
   const manifest = loadManifest();
   const stats = computeStats(manifest);
+  const outputsIndex = renderOutputsIndex(manifest);
+  stats.artifacts = Object.values(JSON.parse(outputsIndex).counts).reduce((a, b) => a + b, 0);
   const glossaryTerms = parseGlossary(fs.readFileSync(GLOSSARY_PATH, 'utf8'));
 
   const targets = [
     { path: DATA_PATH, render: () => renderDataJs(manifest, glossaryTerms) },
+    { path: OUTPUTS_INDEX_PATH, render: () => outputsIndex },
     { path: README_PATH, render: old => renderReadme(old, manifest, stats) },
     { path: ROADMAP_PATH, render: old => renderRoadmap(old, manifest, stats) },
     ...HTML_COUNT_PAGES.map(p => ({ path: p, render: old => renderHtmlCounts(old, stats) })),
+    ...SKILL_COUNT_PAGES.map(p => ({ path: p, render: old => renderSkillCounts(old, stats) })),
   ];
 
   const stale = [];
@@ -404,7 +574,10 @@ function main() {
   console.log(`   Phases: ${manifest.phases.length}`);
   console.log(`   Lessons: ${stats.total} (${stats.complete} complete, ${stats.quizzes} with quizzes)`);
   console.log(`   Hours: ~${Math.round(stats.lessonHours)} lessons + ~${Math.round(stats.capstoneHours)} capstones`);
+  console.log(`   Artifacts: ${stats.artifacts}`);
   console.log(`   Glossary terms: ${glossaryTerms.length}`);
+
+  printReadiness(manifest, stats);
 
   if (checkMode) {
     if (stale.length) {

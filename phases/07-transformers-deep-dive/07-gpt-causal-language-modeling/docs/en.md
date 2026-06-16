@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 7 · 02 (Self-Attention), Phase 7 · 05 (Full Transformer), Phase 7 · 06 (BERT)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement the causal (triangle) mask and a small autoregressive GPT-style model.
+- Explain parallel training versus serial inference and the shift-by-one next-token loss.
+- Compare decoding strategies — temperature, top-p, and min-p.
+
 ## The Problem
 
 A language model answers one question: given the first `t-1` tokens, what is the probability distribution over token `t`? Train on that signal — next-token prediction — and you get a model that can generate arbitrary text one token at a time.

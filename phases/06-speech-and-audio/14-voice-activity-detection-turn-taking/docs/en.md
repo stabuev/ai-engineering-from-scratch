@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 11 (Real-Time Audio), Phase 6 · 12 (Voice Assistant)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Implement a three-tier VAD cascade from an energy gate up to Silero VAD.
+- Tune turn detection with silence hangover and a semantic endpoint.
+- Explain the flush trick and read VAD metrics (TPR at FPR 5%).
+
 ## The Problem
 
 Three distinct decisions a voice agent makes on every 20 ms chunk:

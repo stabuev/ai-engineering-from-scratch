@@ -306,6 +306,21 @@ except ImportError:
     print("Install umap-learn: pip install umap-learn")
 ```
 
+### Expected output
+
+Run `code/dim_reduction.py` — the final lines should read:
+
+```
+PCA as preprocessing for logistic regression
+============================================================
+k= 10  accuracy=0.8190  variance=0.4939
+k= 30  accuracy=0.8930  variance=0.7361
+k= 50  accuracy=0.8990  variance=0.8291
+k=100  accuracy=0.8520  variance=0.9182
+k=200  accuracy=0.8680  variance=0.9689
+k=784  accuracy=0.8770  variance=1.0000
+```
+
 ## Use It
 
 PCA as preprocessing before a classifier:

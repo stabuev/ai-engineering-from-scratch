@@ -31,6 +31,14 @@ Each step is a multimodal VLM call. The VLM output must be parseable JSON. Error
 
 ## The Concept
 
+```mermaid
+graph LR
+  SS["screenshot"] --> GR["GUI grounding (locate elements)"]
+  GR --> ACT["action: click / type (action schema)"]
+  ACT --> ENV["app / UI"]
+  ENV -. "new screenshot" .-> SS
+```
+
 ### GUI grounding — the primitive
 
 GUI grounding is: given a screenshot and a natural language instruction, output the (x, y) coordinate to click (or other action).

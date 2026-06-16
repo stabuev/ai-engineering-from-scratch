@@ -24,6 +24,15 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  D["VLM design space"] --> E["encoder choice — matters most"]
+  D --> C["connector — largely a wash"]
+  D --> L["LLM size — sets the ceiling"]
+  D --> DA["data — detailed human captions"]
+  D --> R["resolution"]
+```
+
 ### The five-axis design space
 
 Idefics2 (Laurençon et al., 2024) назвал оси:

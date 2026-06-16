@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 03 (Word2Vec), Phase 5 · 14 (Information Retrieval)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Generate dense, sparse, and multi-vector embeddings (Sentence-BERT, BGE-M3).
+- Apply Matryoshka truncation to trade dimension for cost.
+- Read the MTEB leaderboard critically.
+
 ## The Problem
 
 Your RAG system retrieves the wrong passage 40% of the time. The culprit is rarely the vector database or the prompt. It is the embedding model.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 8 · 06 (DDPM), Phase 1 · Calculus
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain why straight-path flow matching needs fewer sampling steps than curved diffusion.
+- Implement the flow-matching training loss and multi-step Euler sampling.
+- Relate rectified flow and consistency distillation to cutting step counts.
+
 ## The Problem
 
 DDPM's reverse process is a 1000-step stochastic walk from `N(0, I)` back to the data distribution. DDIM collapsed it to 20-50 deterministic steps. You want fewer steps — ideally one. The blocker is that the ODE solving the reverse process is stiff; the path is curved.

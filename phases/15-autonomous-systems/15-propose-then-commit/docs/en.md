@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 12 (Durable execution), Phase 15 · 14 (Tripwires)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain the propose-then-commit HITL pattern and why it beats ask-then-click.
+- Persist a proposed action to durable state before commit.
+- Reason about auditability of proposed-versus-committed actions.
+
 ## The Problem
 
 An agent takes an action. The user has to decide: approve or not. If the decision is instant, it is probably not a review. If the decision is structured, it is slow but trustworthy. The engineering question is how to make a structured review the path of least resistance.

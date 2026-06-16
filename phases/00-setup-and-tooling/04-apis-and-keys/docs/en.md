@@ -6,6 +6,7 @@
 **Languages:** Python, TypeScript
 **Prerequisites:** Phase 0, Lesson 01
 **Time:** ~30 minutes
+**Requires:** Paid API (Anthropic/OpenAI)
 
 ## Learning Objectives
 

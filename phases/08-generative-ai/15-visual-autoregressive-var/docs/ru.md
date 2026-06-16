@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 7 Lesson 03 (Multi-Head Attention), Phase 8 Lesson 06 (DDPM)
 **Время:** ~90 минут
 
+## Цели обучения
+
+- Объяснять next-scale prediction: генерацию изображения как пирамиды токен-сеток от 1×1 до полного разрешения.
+- Строить многомасштабный residual-VQ токенизатор и scale-ordered маску внимания — каузальную между масштабами и параллельную внутри масштаба.
+- Объяснять, почему next-scale побеждает next-token (от грубого к точному, параллельность внутри масштаба, отсутствие смещения порядка) и как VAR воспроизводит законы масштабирования в стиле GPT.
+
 ## Проблема
 
 Autoregressive generation доминировала в language modeling, потому что масштабируется предсказуемо: больше compute, больше parameters, ниже perplexity, лучше outputs. До 2024 года у image generation было две основные AR-попытки: PixelRNN/PixelCNN (pixel-by-pixel) и DALL-E 1 / Parti / MuseGAN (token-by-token on VQ-VAE codes).

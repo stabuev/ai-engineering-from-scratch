@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model), Phase 16 · 05 (Supervisor)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Decompose a task into planner, executor, critic, and verifier roles.
+- Implement MetaGPT's SOP pattern and ChatDev's communicative dehallucination.
+- Explain why the verifier role matters most and how critic differs from verifier.
+
 ## Problem
 
 Generic multi-agent systems produce generic output. Three coders in a group chat write three flavors of the same mediocre code. You can add more agents, add more rounds, and still not cross the quality threshold.

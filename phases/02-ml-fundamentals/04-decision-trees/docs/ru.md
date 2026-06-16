@@ -316,6 +316,20 @@ class RandomForest:
 
 Полную реализацию со всеми вспомогательными методами смотрите в `code/trees.py`.
 
+### Ожидаемый вывод
+
+Запустите `code/trees.py` — последние строки должны быть такими:
+
+```
+  1. Decision trees split data by maximizing information gain.
+  2. Gini impurity and entropy produce nearly identical splits.
+  3. Single trees are unstable. Small data changes = different tree.
+  4. Random forests average many trees for stable, strong predictions.
+  5. Bagging + feature randomization decorrelate the trees.
+  6. Feature importance falls out naturally from impurity reduction.
+  7. Trees dominate neural networks on tabular data.
+```
+
 ## Используйте это
 
 Со scikit-learn обучение случайного леса занимает три строки:

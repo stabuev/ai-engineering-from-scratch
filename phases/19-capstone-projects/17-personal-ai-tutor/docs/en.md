@@ -8,6 +8,12 @@
 **Phases exercised:** P5 · P6 · P11 · P12 · P14 · P17 · P18
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build an adaptive, multimodal AI tutor that tracks learner state.
+- Personalize explanations and generate practice with feedback.
+- Add a mastery model that adapts difficulty over a session.
+
 ## Problem
 
 Adaptive tutoring used to be an ed-tech research niche. By 2026 it is a consumer product. Khanmigo is deployed across most US school districts. Duolingo Max hit tens of millions of MAUs. Google's LearnLM / Gemini for Education powers tutoring in Google Classroom. Quizlet Q-Chat sits alongside flashcards. Synthesis Tutor hit virality with tutor-for-curious-kids. The common elements: multimodal input (type, speak, photograph equations), Socratic pedagogy (ask first, explain later), a learner model that updates after each interaction, and strict age-appropriate safety.

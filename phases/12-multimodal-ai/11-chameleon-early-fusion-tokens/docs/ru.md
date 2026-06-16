@@ -28,6 +28,14 @@ Chameleon отвергает исходную предпосылку: изобр
 
 ## Концепция
 
+```mermaid
+graph LR
+  IMG["image"] --> VQ["VQ-VAE → discrete image tokens"]
+  VQ --> V["shared vocabulary"]
+  TXT["text tokens"] --> V
+  V --> TF["single transformer, one next-token loss"]
+```
+
 ### VQ-VAE как токенизатор изображений
 
 Токенизатор — это vector-quantized variational autoencoder. Архитектура:

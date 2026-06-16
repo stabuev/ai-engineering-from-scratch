@@ -27,6 +27,13 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  OBS["camera + instruction"] --> VLM["VLA backbone"]
+  VLM --> ACT["action tokens / flow-matching head"]
+  ACT --> ROB["robot actuators"]
+```
+
 ### Токенизация действий (RT-2)
 
 Трюк RT-2: представлять каждую целевую координату сустава как квантованный текстовый токен. Дискретизировать нормализованный диапазон [-1, 1] на 256 bins, сопоставить каждый bin с vocabulary ID. Действие с 10-DOF становится 10 токенами на каждом шаге управления.

@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 01 (long-horizon framing), Phase 15 · 02 (self-taught reasoning)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain how pairing a coding model with an evolutionary loop and a machine-checkable evaluator discovers new algorithms.
+- Identify the role of the verifiable evaluator in the loop.
+- Name what evolutionary search adds over single-shot generation.
+
 ## The Problem
 
 Large language models can write code. Evolutionary algorithms can search over code. Both have been tried separately for decades; both hit ceilings. The LLM ceiling is confabulation: the model writes plausible code that does not do what it claims. The evolutionary ceiling is search cost: random mutations over syntax rarely produce compilable programs, let alone better ones.

@@ -26,6 +26,15 @@ By 2026 the ViT primitive is the unquestioned foundation. Every open-weights VLM
 
 ## The Concept
 
+```mermaid
+graph LR
+  IMG["image"] --> P["patchify 16×16"]
+  P --> E["linear patch embedding"]
+  E --> CLS["prepend [CLS] + position emb"]
+  CLS --> ENC["transformer encoder"]
+  ENC --> O["patch tokens + pooled output"]
+```
+
 ### Patches as tokens
 
 Given an image `x` of shape `(H, W, 3)` and a patch size `P`, you carve the image into a grid of `(H/P) x (W/P)` non-overlapping patches. Each patch is a `P x P x 3` cube of pixels. Flatten each cube to a `3 P^2` vector. Apply a shared linear projection `W_E` of shape `(3 P^2, D)` to map each patch into the model's hidden dimension `D`.

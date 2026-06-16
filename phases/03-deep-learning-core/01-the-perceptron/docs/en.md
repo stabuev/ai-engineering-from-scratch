@@ -320,6 +320,21 @@ Two key differences from Step 4. First, sigmoid replaces the step function -- it
 
 This is the bridge to Lesson 03. The math behind `d_output` and `hidden_deltas` is the chain rule applied to the network graph. We'll derive it properly there.
 
+### Expected output
+
+Run `code/perceptron.py` — the final lines should read:
+
+```
+  Epoch 4000, error: 0.0007
+  Epoch 6000, error: 0.0005
+  Epoch 8000, error: 0.0003
+
+  [0, 0] -> 0.0074 (rounded: 0, expected 0)
+  [0, 1] -> 0.9923 (rounded: 1, expected 1)
+  [1, 0] -> 0.9923 (rounded: 1, expected 1)
+  [1, 1] -> 0.0094 (rounded: 0, expected 0)
+```
+
 ## Use It
 
 Everything you just built from scratch exists in one import:
@@ -357,6 +372,19 @@ This lesson produces:
 1. Train a perceptron on a NAND gate (the universal gate - any logic circuit can be built from NAND). Verify its weights and bias form a valid decision boundary.
 2. Modify the Perceptron class to track the decision boundary (w1*x1 + w2*x2 + b = 0) at each epoch. Print how the line shifts during training on the AND gate.
 3. Build a 3-input perceptron that outputs 1 only when at least 2 of the 3 inputs are 1 (a majority vote function). Is this linearly separable? Why?
+
+<details>
+<summary>Solution — exercise 3</summary>
+
+```python
+w = [1.0, 1.0, 1.0]
+b = -1.5            # fires when x1 + x2 + x3 >= 2
+def majority(x): return 1 if (w[0]*x[0] + w[1]*x[1] + w[2]*x[2] + b) > 0 else 0
+```
+
+A perceptron is a threshold on a weighted sum, and "at least 2 of 3" is exactly the half-space `x1 + x2 + x3 >= 2`. So yes — linearly separable. Verified: it matches the majority function on all 8 inputs. (XOR, by contrast, is *not* linearly separable — that is why Lesson 02 needs a hidden layer.)
+
+</details>
 
 ## Key Terms
 

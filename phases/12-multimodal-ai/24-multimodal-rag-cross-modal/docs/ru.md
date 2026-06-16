@@ -27,6 +27,13 @@ Single-modality RAG — решенный паттерн: embed query, embed chun
 
 ## Концепция
 
+```mermaid
+graph LR
+  Q["query"] --> RET["retrieve across text / image / audio / video"]
+  RET --> FU["score / MoE fusion"]
+  FU --> GEN["grounded generation"]
+```
+
 ### Cross-modal retrieval
 
 Извлечь документы модальности B по query модальности A. Три паттерна:

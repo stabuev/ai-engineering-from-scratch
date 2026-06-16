@@ -8,6 +8,12 @@
 **Задействованные фазы:** P4 · P5 · P7 · P11 · P12 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить vision-first систему QA по документам на late-interaction поиске по страницам (в стиле ColPali).
+- Трактовать каждую страницу PDF как изображение и искать без OCR.
+- Отвечать на вопросы, опираясь на найденные страницы, с помощью vision-language модели.
+
 ## Проблема
 
 Enterprises хранят PDFs, которые OCR pipelines искажают: scanned 10-Ks with rotated tables, scientific papers dense with equations, charts that only make sense as images, handwritten annotations. Treating these as text-first means losing half the signal. Ответ 2026 года — late-interaction multi-vector retrieval on raw page images. ColPali (Illuin Tech) introduced it; ColQwen2.5-v0.2 and ColQwen3-omni pushed accuracy. On ViDoRe v3, vision-first retrieval scores выше OCR-then-text by meaningful margins — and the gap widens on charts, tables, and handwriting.

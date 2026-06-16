@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 05 (Supervisor Pattern)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain hierarchical architecture as nested supervisors and where decomposition drift creeps in.
+- Identify where hierarchy shines and where it breaks.
+- Use the deciding question to choose hierarchy versus a flat team.
+
 ## Problem
 
 Once the supervisor pattern clicks, the natural next step is "what if the workers are themselves supervisors?" Teams have sub-teams; companies have departments of departments. Hierarchical architectures mirror that.

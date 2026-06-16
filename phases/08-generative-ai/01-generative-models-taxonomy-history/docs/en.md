@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 2 (ML Fundamentals), Phase 3 (Deep Learning Core), Phase 7 · 14 (Transformers)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Sort any generative model into one of five families (autoregressive, VAE, GAN, diffusion/score, flow) and name the density assumption each makes.
+- Explain the explicit-vs-implicit density split and what the manifold hypothesis buys a generative model.
+- Pick the right family for a new modality before fighting its math for weeks.
+
 ## The Problem
 
 A generative model does one job: given training samples drawn from some unknown distribution `p_data(x)`, output new samples that look like they came from the same distribution. Faces, sentences, MIDI files, protein structures — all the same problem if you squint.

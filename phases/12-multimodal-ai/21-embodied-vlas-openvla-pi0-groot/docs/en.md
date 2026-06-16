@@ -27,6 +27,13 @@ Challenges specific to VLAs:
 
 ## The Concept
 
+```mermaid
+graph LR
+  OBS["camera + instruction"] --> VLM["VLA backbone"]
+  VLM --> ACT["action tokens / flow-matching head"]
+  ACT --> ROB["robot actuators"]
+```
+
 ### Action tokenization (RT-2)
 
 RT-2's trick: represent each joint target as a quantized text token. Discretize the normalized [-1, 1] range into 256 bins, map each bin to a vocabulary ID. A 10-DOF action becomes 10 tokens at each control step.

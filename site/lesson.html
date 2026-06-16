@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260526a">
+  <link rel="stylesheet" href="style.css?v=20260616a">
 
 <!-- Счетчик Yandex.Metrika -->
 <script type="text/javascript">
@@ -1588,7 +1588,8 @@
         <a href="prereqs.html">Дорожная карта</a>
         <a href="glossary.html">Глоссарий</a>
       </nav>
-      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему" type="button">
+      <button class="theme-toggle lang-toggle" id="langToggle" aria-label="Lesson language: Russian / English" type="button" title="Язык урока / Lesson language">RU</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
     </div>
@@ -1621,9 +1622,9 @@
     <aside class="toc-sidebar" id="tocSidebar" aria-hidden="true"></aside>
   </div>
 
-  <script src="data.js?v=20260526a"></script>
-  <script src="progress.js?v=20260526a"></script>
-  <script src="header.js?v=20260526a" defer></script>
+  <script src="data.js?v=20260616a"></script>
+  <script src="progress.js?v=20260616a"></script>
+  <script src="header.js?v=20260616a" defer></script>
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
     mermaid.initialize({
@@ -1678,6 +1679,14 @@
       var params = new URLSearchParams(window.location.search);
       var lessonPath = params.get('path');
 
+      var docLang = (function () {
+        var stored = null;
+        try { stored = localStorage.getItem('aifs-lesson-lang'); } catch (e) {}
+        var lang = params.get('lang') || stored || 'ru';
+        return lang === 'en' ? 'en' : 'ru';
+      })();
+      try { localStorage.setItem('aifs-lesson-lang', docLang); } catch (e) {}
+
       if (!lessonPath) {
         showError('Не указан путь к уроку', 'Добавьте ?path=phases/01-math-foundations/01-linear-algebra-intuition к URL.');
         return;
@@ -1729,6 +1738,7 @@
       buildSidebar();
       initSidebarToggle();
       initScrollProgress();
+      initLangToggle();
       fetchLesson(lessonPath);
 
       function extractPhaseSlug(phase, index) {
@@ -1829,9 +1839,56 @@
         }, { passive: true });
       }
 
+      function initLangToggle() {
+        var btn = document.getElementById('langToggle');
+        if (!btn) return;
+        btn.textContent = docLang.toUpperCase();
+        btn.addEventListener('click', function () {
+          var next = docLang === 'ru' ? 'en' : 'ru';
+          try { localStorage.setItem('aifs-lesson-lang', next); } catch (e) {}
+          var url = new URL(window.location.href);
+          url.searchParams.set('lang', next);
+          window.location.href = url.toString();
+        });
+      }
+
+      function resolvePrereqPath(phaseNum, lessonNum) {
+        for (var i = 0; i < flatLessons.length; i++) {
+          var fl = flatLessons[i];
+          if (fl.phaseId !== phaseNum) continue;
+          if (lessonNum == null) return fl.path;           // phase-level ref → that phase's first lesson
+          if (fl.lessonSlug.slice(0, 2) === lessonNum) return fl.path;
+        }
+        return null;
+      }
+
+      // Turn the prose "Phase N · MM" / "Phase N" references on the
+      // Prerequisites line into in-site lesson links. Scoped to that one line
+      // so we never linkify inside code or body prose, and only emits a link
+      // when the target actually resolves (no dead links).
+      function linkifyPrereqs(root) {
+        var blocks = root.querySelectorAll('p, li');
+        for (var i = 0; i < blocks.length; i++) {
+          var el = blocks[i];
+          if (!/Prerequisites:/.test(el.textContent)) continue;
+          el.innerHTML = el.innerHTML
+            .replace(/Phase\s+(\d+)\s+·\s+(\d+)/g, function (m, p, l) {
+              var path = resolvePrereqPath(parseInt(p, 10), l.length === 1 ? '0' + l : l);
+              if (!path) return m;
+              return '<a href="lesson.html?path=' + encodeURIComponent(path) + '&lang=' + docLang + '">' + m + '</a>';
+            })
+            .replace(/Phase\s+(\d+)(?!\s*[·\d])/g, function (m, p) {
+              var path = resolvePrereqPath(parseInt(p, 10), null);
+              if (!path) return m;
+              return '<a href="lesson.html?path=' + encodeURIComponent(path) + '&lang=' + docLang + '">' + m + '</a>';
+            });
+          break;
+        }
+      }
+
       function fetchLesson(path) {
-        var rawUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/docs/ru.md';
-        var quizUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/quiz.json';
+        var rawUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + '/docs/' + docLang + '.md';
+        var quizUrl = 'https://raw.githubusercontent.com/stabuev/ai-engineering-from-scratch/main/' + path + (docLang === 'en' ? '/quiz_en.json' : '/quiz.json');
 
         fetch(rawUrl)
           .then(function (res) {
@@ -1874,6 +1931,7 @@
 
         document.title = extractTitle(md) + ' - AI Engineering from Scratch';
 
+        linkifyPrereqs(el);
         initCodeCopy();
         renderMermaidBlocks();
         renderAIPanels();
@@ -2211,6 +2269,23 @@
             continue;
           }
 
+          // Collapsible solution blocks: pass <details>/<summary>/</details>
+          // lines through as raw HTML (the parser otherwise escapes them).
+          var detailLine = line.match(/^\s*(<details>|<\/details>|<summary>[\s\S]*?<\/summary>)\s*$/);
+          if (detailLine) {
+            out += flushList();
+            out += flushTable();
+            out += flushBlockquote();
+            var rawTag = line.trim();
+            if (rawTag.indexOf('<summary>') === 0) {
+              var inner = rawTag.replace(/^<summary>/, '').replace(/<\/summary>$/, '');
+              out += '<summary>' + inlineFormat(inner) + '</summary>';
+            } else {
+              out += rawTag;
+            }
+            continue;
+          }
+
           if (line.match(/^\|.+\|/)) {
             out += flushList();
             out += flushBlockquote();
@@ -2356,12 +2431,28 @@
         return out;
       }
 
+      function resolveAssetUrl(src) {
+        if (!lessonPath) return src;
+        var parts = (lessonPath + '/docs/' + src).split('/');
+        var stack = [];
+        for (var i = 0; i < parts.length; i++) {
+          if (parts[i] === '..') stack.pop();
+          else if (parts[i] !== '.' && parts[i] !== '') stack.push(parts[i]);
+        }
+        return 'https://cdn.jsdelivr.net/gh/stabuev/ai-engineering-from-scratch@main/' + stack.join('/');
+      }
+
       function inlineFormat(text) {
         text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
         text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (m, alt, src) {
+          var url = /^https?:\/\//i.test(src) ? src : resolveAssetUrl(src);
+          if (!url) return '';
+          return '<img src="' + url + '" alt="' + alt + '" loading="lazy" class="lesson-figure">';
+        });
         text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, label, href) {
           if (/^https?:\/\/|^mailto:/i.test(href)) {
             return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';

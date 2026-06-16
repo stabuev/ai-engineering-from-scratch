@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 · 03 (Backpropagation), Phase 9 · 04 (Q-learning, SARSA)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build DQN from Q-learning plus experience replay and a target network, and explain why each one stabilises function approximation.
+- Name the deadly triad (bootstrapping + off-policy + function approximation) and how DQN's tricks defuse it.
+- Place Double, Dueling, and Rainbow as incremental improvements on the base agent.
+
 ## The Problem
 
 Tabular Q-learning needs a separate Q-value for every (state, action) pair. A chess board has ~10⁴³ states. An Atari frame is 210×160×3 = 100,800 features. Tabular RL dies at thousands of states, let alone billions.

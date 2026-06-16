@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 03 (Word Embeddings)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Tag entities with the BIO scheme and build a rule-plus-dictionary baseline.
+- Sketch a CRF and explain what a BiLSTM-CRF adds.
+- Evaluate with entity-level F1 and handle nested entities.
+
 ## The Problem
 
 "Apple sued Google over its iPhone search deal in the US." Five entities: Apple (ORG), Google (ORG), iPhone (PRODUCT), search deal (maybe), US (GPE). A good NER system extracts all of them with correct types. A bad one misses iPhone, confuses Apple the fruit with Apple the company, and labels "US" as a PERSON.

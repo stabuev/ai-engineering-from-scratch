@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 10 (Permission modes), Phase 15 · 12 (Durable execution)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain how enabling a single skill can blow up an agent's monthly cost.
+- Design a cost governor with budgets, per-skill caps, and attribution.
+- Tie cost governance to the long-horizon failure mode.
+
 ## The Problem
 
 Autonomous agents spend real money on every turn. A chatbot's bad output is a bad reply; an agent's bad loop is a bill. The industry-documented term for the failure mode is "Denial of Wallet" — the agent keeps reasoning, keeps tool-calling, keeps billing, and nothing stops it because nothing was designed to.

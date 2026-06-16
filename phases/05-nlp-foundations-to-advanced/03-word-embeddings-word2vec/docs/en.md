@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 3 · 03 (Backpropagation from Scratch)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Train a skip-gram word2vec with negative sampling on a toy corpus.
+- Reproduce the analogy arithmetic in the learned embedding space.
+- Distinguish static from contextual embeddings and handle OOV words.
+
 ## The Problem
 
 TF-IDF knows `dog` and `puppy` are different words. It does not know they mean nearly the same thing. A classifier trained on `dog` cannot generalize to a review about `puppy`. You can paper over this by listing synonyms, but that fails on rare terms, domain jargon, and every language you did not anticipate.

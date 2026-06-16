@@ -27,6 +27,13 @@ The 2025 surveys all arrive at the same taxonomy.
 
 ## The Concept
 
+```mermaid
+graph LR
+  Q["query"] --> RET["retrieve across text / image / audio / video"]
+  RET --> FU["score / MoE fusion"]
+  FU --> GEN["grounded generation"]
+```
+
 ### Cross-modal retrieval
 
 Retrieve documents of modality B given a query of modality A. Three patterns:

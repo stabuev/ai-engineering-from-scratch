@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 01 (Audio Fundamentals)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Turn a waveform into a log-mel spectrogram via framing, Hann windowing, the STFT, and a mel filterbank.
+- Explain why neural nets consume mel spectrograms better than raw waveforms.
+- Derive MFCCs from log-mels.
+
 ## The Problem
 
 Take a 10-second 16 kHz clip. That is 160,000 floats, all in `[-1, 1]`, almost perfectly uncorrelated with the label "dog barking" or "the word cat". The raw waveform has the information but in a form the model cannot easily extract. Two identical phonemes spoken 100 ms apart have completely different raw samples.

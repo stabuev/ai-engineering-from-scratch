@@ -32,6 +32,15 @@ Pipeline text-RAG:
 
 ## Концепция
 
+```mermaid
+graph LR
+  PG["page image"] --> PE["patch embeddings (multi-vector)"]
+  Q["query"] --> QE["query embeddings"]
+  PE --> LI["late interaction: MaxSim"]
+  QE --> LI
+  LI --> R["ranked pages"]
+```
+
 ### ColBERT (2020)
 
 ColBERT (Khattab & Zaharia, arXiv:2004.12832) — метод text retrieval. Вместо одного vector на document он создает один vector на token. Во время query:

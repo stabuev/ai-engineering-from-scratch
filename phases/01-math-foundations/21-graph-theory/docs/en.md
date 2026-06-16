@@ -383,6 +383,21 @@ def message_passing(graph, features, weight_matrix):
 
 This is one round of GNN message passing. Each node's new features are the weighted average of its neighbors' features, transformed by the weight matrix. Stack multiple rounds to propagate information further.
 
+### Expected output
+
+Run `code/graph_theory.py` — the final lines should read:
+
+```
+  Node 6: 0.0959
+  Node 7: 0.1163
+  Node 8: 0.0959
+  Node 9: 0.0959
+
+Bridge nodes [2, 7] PageRank: 0.1163
+Non-bridge nodes avg PageRank: 0.0959
+Bridge nodes have higher PageRank -- they connect communities.
+```
+
 ## Use It
 
 With networkx and numpy, the same operations are one-liners:

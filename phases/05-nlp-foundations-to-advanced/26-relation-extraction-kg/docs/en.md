@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 06 (NER), Phase 5 · 25 (Entity Linking)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Extract relations with patterns, supervised classification, and LLM prompting with anchoring.
+- Canonicalize triples onto a closed ontology.
+- Build a small knowledge graph and query it.
+
 ## The Problem
 
 An analyst reads: "Tim Cook became CEO of Apple in 2011." Four facts:

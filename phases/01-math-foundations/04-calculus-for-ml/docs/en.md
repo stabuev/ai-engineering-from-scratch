@@ -567,6 +567,21 @@ print(f"Actual:  y = 2x + 1")
 
 Every gradient-based training loop follows this pattern: predict, compute loss, compute gradients, update weights.
 
+### Expected output
+
+Run `code/derivatives.py` — the final lines should read:
+
+```
+  epoch  40  w=2.1296  b=0.5319  loss=0.040145
+  epoch  80  w=2.1132  b=0.5912  loss=0.030618
+  epoch 120  w=2.0989  b=0.6430  loss=0.023351
+  epoch 160  w=2.0863  b=0.6883  loss=0.017809
+  epoch 199  w=2.0757  b=0.7268  loss=0.013675
+
+Learned: y = 2.08x + 0.73
+Actual:  y = 2.00x + 1.00
+```
+
 ## Use It
 
 With NumPy, the same operations are faster and more concise:

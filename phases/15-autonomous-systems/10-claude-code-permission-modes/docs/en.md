@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 09 (Coding-agent landscape)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Name Claude Code's permission modes and what each one auto-approves.
+- Choose a permission mode for a given autonomy/risk tradeoff.
+- Explain why permission modes are the practical human-in-the-loop surface.
+
 ## The Problem
 
 An autonomous coding agent on your machine is a distinct security category. The attack surface is everything the agent can reach — file system, network, credentials, clipboard, any browser tab, any open terminal. Bruce Schneier and others have flagged this publicly: computer-use agents are not a "feature update" of chatbots, they are a new kind of tool with a new kind of risk profile.

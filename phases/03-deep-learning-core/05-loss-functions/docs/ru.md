@@ -388,6 +388,21 @@ class LossComparisonNetwork:
         return losses
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/main.py` — последние строки должны быть такими:
+
+```
+    Epoch 150: loss=0.0256, accuracy=99.0%
+    Epoch 199: loss=0.0219, accuracy=99.0%
+  Final: loss=0.0219, accuracy=99.0%
+
+=== Key Takeaway ===
+  Cross-entropy converges faster on classification because its
+  gradient is strong when predictions are wrong and weak when correct.
+  MSE gradient flattens near 0 and 1 due to sigmoid saturation.
+```
+
 ## Используем
 
 PyTorch предоставляет все стандартные функции потерь со встроенной численной стабильностью:
@@ -430,6 +445,21 @@ ce_smooth = F.cross_entropy(logits, labels, label_smoothing=0.1)
 4. Запустите сравнение MSE и кросс-энтропии, но отслеживайте величины градиентов на каждом слое во время обучения. Постройте график средней нормы градиента по epochs. Проверьте, что кросс-энтропия дает большие градиенты на ранних epochs, когда модель наиболее неуверенна.
 
 5. Реализуйте KL divergence loss и проверьте, что минимизация KL(true || predicted) дает те же градиенты, что и кросс-энтропия, когда истинное распределение one-hot. Затем попробуйте soft targets (например, knowledge distillation), где "true" распределение берется из softmax выхода teacher model.
+
+<details>
+<summary>Решение — упражнение 5</summary>
+
+```python
+import numpy as np
+def softmax(z): e = np.exp(z - z.max()); return e / e.sum()
+z = np.array([1.0, 2.0, 0.5, -1.0, 0.3]); y = 2
+p = softmax(z)
+grad = p.copy(); grad[y] -= 1      # KL(one-hot || p) gradient == cross-entropy's p - onehot
+```
+
+Когда цель one-hot, `KL(true || pred)` отличается от кросс-энтропии только на энтропию цели — а она равна 0 — поэтому градиенты идентичны (проверено: максимальная разница 0.0). Для *мягких* целей (knowledge distillation) KL сохраняет всё распределение учителя, которое жёсткая кросс-энтропия по one-hot выбрасывает.
+
+</details>
 
 ## Ключевые термины
 

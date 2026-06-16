@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 04, 06, 07, 09, 10; Phase 2 · 09 (Model Evaluation)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Name the right 2026 metric for each audio task (ASR, TTS, speaker, diarization, classification).
+- Compute WER/CER, MOS/UTMOS, SECS, EER, and DER.
+- Explain the round-trip WER-on-ASR check for evaluating TTS.
+
 ## The Problem
 
 Every audio task has multiple metrics, each measuring a different axis. Using the wrong metric is how you ship a model that looks great on your dashboard and terribly in production. The 2026 canonical list:

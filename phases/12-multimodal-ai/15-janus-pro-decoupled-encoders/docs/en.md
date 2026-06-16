@@ -25,6 +25,13 @@ Show-o and Transfusion pay for this with a visible quality tax on one direction.
 
 ## The Concept
 
+```mermaid
+graph LR
+  U["SigLIP encoder — understanding"] --> B["shared transformer body"]
+  G["VQ encoder — generation"] --> B
+  B --> O["understand or generate"]
+```
+
 ### Decoupled visual encoding
 
 Janus-Pro's architecture separates the two encoders:

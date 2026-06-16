@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 01 (Long-horizon agents), Phase 15 · 19 (RSP)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Explain METR's role as an independent evaluator and its Time Horizon benchmark.
+- Read a logistic time-horizon fit and what its doubling time implies.
+- Reason about why external evaluation matters for frontier claims.
+
 ## The Problem
 
 Scaling policies (Lessons 19, 20) are only as useful as the measurements they reference. "AI R&D-4 threshold" and "Long-range Autonomy" are defined in policy prose; they become actionable only when specific evaluations produce specific numbers.

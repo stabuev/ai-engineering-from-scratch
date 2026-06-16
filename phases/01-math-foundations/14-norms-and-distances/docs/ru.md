@@ -437,6 +437,20 @@ HNSW (Hierarchical Navigable Small World) — доминирующий алго�
 
 Код включает mock embedding similarity search, который находит наиболее похожие "документы" на query с помощью cosine similarity vs L2 distance, показывая, что ранжирования могут различаться.
 
+### Ожидаемый вывод
+
+Запустите `code/distances.py` — последние строки должны быть такими:
+
+```
+  After L2 regularization (50 steps):
+    Weights: [-0.0, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0]
+    Zeros:   0/10
+    L2 norm: 0.0000
+
+  L1 drives 'small' weights to exactly zero (sparsity).
+  L2 shrinks all weights but none reach exactly zero.
+```
+
 ## Используйте
 
 Самое распространенное практическое применение: поиск похожих элементов в vector database.

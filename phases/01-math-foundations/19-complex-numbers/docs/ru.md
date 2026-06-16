@@ -380,6 +380,21 @@ def roots_of_unity(N):
 
 Именно эти свойства делают DFT обратимым. Корни из единицы образуют ортогональный базис для частотной области.
 
+### Ожидаемый вывод
+
+Запустите `code/complex_numbers.py` — последние строки должны быть такими:
+
+```
+  2. Multiplication rotates and scales. Division reverses it.
+  3. Euler's formula: e^(i*theta) = cos(theta) + i*sin(theta).
+  4. Multiplying by e^(i*theta) rotates by theta radians.
+  5. Complex multiplication IS 2D rotation (same as rotation matrix).
+  6. DFT decomposes signals into rotating phasors (roots of unity).
+  7. Transformer positional encodings are complex exponentials
+     at different frequencies.
+  8. RoPE uses explicit complex multiplication for position.
+```
+
 ## Применение
 
 В Python есть встроенная поддержка комплексных чисел. Литерал `j` представляет мнимую единицу.

@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P3 · P7 · P10 · P17
 **Время:** 30 часов
 
+## Цели обучения
+
+- Построить inference-сервер со speculative decoding в стиле EAGLE-3.
+- Связать черновик и проверку с управлением KV-кэшем и continuous batching.
+- Измерить прирост пропускной способности на реальном трафике.
+
 ## Задача
 
 Speculative decoding стал массовой возможностью в 2026 году. EAGLE-3 draft heads обучаются на hidden states target model и предсказывают N tokens вперед; target model проверяет их за один проход. Acceptance rates 60-80% превращаются в 2-3x end-to-end throughput. vLLM 0.7 интегрирует это нативно. SGLang + SpecForge дает training pipeline. Red Hat Speculators публикует aligned drafts для Llama 3.3 70B, Qwen3-Coder-30B MoE, GPT-OSS-120B.

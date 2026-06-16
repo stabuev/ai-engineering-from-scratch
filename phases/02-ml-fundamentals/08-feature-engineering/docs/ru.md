@@ -519,6 +519,21 @@ if __name__ == "__main__":
         print(f"    {feature_names[j]}: r={corr:.4f}")
 ```
 
+### Ожидаемый вывод
+
+Запустите `code/features.py` — последние строки должны быть такими:
+
+```
+  Correlation with price:
+    sqft: r=0.8196
+    age: r=-0.2578
+    sqft_missing: r=0.0609
+    age_missing: r=-0.0761
+    neigh_downtown: r=0.2639
+    neigh_rural: r=-0.1145
+    neigh_suburbs: r=-0.1482
+```
+
 ## Используйте это
 
 Со scikit-learn эти преобразования собираются в composable pipelines:

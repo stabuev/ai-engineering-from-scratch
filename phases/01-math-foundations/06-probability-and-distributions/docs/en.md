@@ -393,6 +393,21 @@ plt.plot(xs, ys)
 
 Full implementations with all visualizations are in `code/probability.py`.
 
+### Expected output
+
+Run `code/probability.py` — the final lines should read:
+
+```
+  As n grows, std shrinks and distribution approaches normal.
+
+--- Visualization ---
+  Saved: probability_distributions.png
+
+============================================================
+All probability computations complete.
+============================================================
+```
+
 ## Use It
 
 With NumPy and SciPy, everything above is one-liners:

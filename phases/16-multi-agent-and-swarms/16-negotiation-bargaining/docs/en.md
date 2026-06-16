@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 02 (FIPA-ACL Heritage), Phase 16 · 09 (Parallel Swarm Networks)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement Contract Net and an OG-Narrator-style negotiation.
+- Read NegotiationArena findings on LLM bargaining.
+- Identify chain-of-thought concealment in negotiation.
+
 ## Problem
 
 Two agents need to agree on a price. Left to themselves with pure language prompts, 2024-2026 LLMs close deals at surprisingly low rates (~27% on tightly-parameterized bargains in arXiv:2402.15813). Scale does not fix it: GPT-4 is not structurally better at bargaining than GPT-3.5; it is better at the *language* of bargaining.

@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P11 · P13 · P17 · P18
 **Время:** 25 часов
 
+## Цели обучения
+
+- Построить дашборд observability и оценки LLM с трассировкой по семантическим конвенциям GenAI.
+- Атрибутировать стоимость по пользователю и по запросу.
+- Подключить онлайн-оценки и алертинг на регрессии качества.
+
 ## Проблема
 
 Каждая AI-команда, обслуживающая production traffic в 2026 году, держит observability plane рядом с model. Атрибуция затрат. Обнаружение галлюцинаций. Мониторинг drift. Сигнал jailbreak. SLO dashboards. Alerts об утечках PII. Open-source references - Langfuse, Phoenix, OpenLLMetry - сошлись на OpenTelemetry GenAI semantic conventions как ingest schema. Теперь можно инструментировать OpenAI, Anthropic, Google, LangChain, LlamaIndex и vLLM одним SDK и отправлять совместимые spans.

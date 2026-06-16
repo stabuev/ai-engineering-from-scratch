@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 3 (Deep Learning Core), Phase 5 · 09 (Sequence-to-Sequence), Phase 5 · 10 (Attention Mechanism)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain why transformers process all tokens in parallel while RNNs are serial, and what that bought every scaling curve after 2017.
+- Measure a model's serial depth and the quadratic cost of attention on long sequences.
+- Name the inductive biases transformers drop and what replaces them (attention, context window).
+
 ## The Problem
 
 Before 2017, every state-of-the-art sequence model on the planet — language, translation, speech — was a recurrent neural network. LSTMs and GRUs won ImageNet-equivalent translation benchmarks for half a decade. They were the only tool anyone had.

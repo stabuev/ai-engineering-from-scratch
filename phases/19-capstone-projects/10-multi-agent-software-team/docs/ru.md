@@ -8,6 +8,12 @@
 **Отрабатываемые фазы:** P11 · P13 · P14 · P15 · P16 · P17
 **Время:** 40 часов
 
+## Цели обучения
+
+- Построить многоагентную команду разработки с ролевой специализацией и типизированным графом акторов/сообщений.
+- Координировать планирование, кодинг и ревью между агентами.
+- Добавить общее состояние и гейт верификации перед слиянием.
+
 ## Проблема
 
 Single-agent coding harnesses упираются в потолок на больших задачах. Не потому, что отдельный agent слаб, а потому что 200k-token context не может вместить architecture plan плюс четыре параллельных среза codebase плюс reviewer commentary плюс test output. Multi-agent factories делят проблему: architect владеет plan, coders владеют implementation в parallel worktrees, reviewer ставит gate, tester проверяет. "Factory" architecture SWE-AF, roles MetaGPT, typed actor graph AutoGen - все три описания задают одну и ту же форму.

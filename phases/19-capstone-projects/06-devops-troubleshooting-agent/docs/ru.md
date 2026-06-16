@@ -8,6 +8,12 @@
 **Задействованные фазы:** P11 · P13 · P14 · P15 · P17 · P18
 **Время:** 30 hours
 
+## Цели обучения
+
+- Построить агента для troubleshooting Kubernetes, рассуждающего по телеметрии и runbook'ам.
+- Связывать диагнозы с SLO по сервисам и предлагать исправления.
+- Ставить любое изменяющее кластер действие за апрув.
+
 ## Проблема
 
 SRE-нарратив 2025-2026 стал таким: "AI agents triage incidents, humans approve remediations." AWS DevOps Agent, Resolve AI, NeuBird, Metoro, PagerDuty AIOps — все поставляют эту форму в production. Агент читает Prometheus metrics, Loki logs, Tempo traces, kube-state-metrics и knowledge graph of K8s objects. Он выдает ranked root-cause hypothesis с telemetry citations менее чем за пять минут. Он никогда не выполняет destructive commands без явного human approval через Slack.

@@ -6,6 +6,7 @@
 **Languages:** Python
 **Prerequisites:** Lesson 11.01 (Prompt Engineering)
 **Time:** ~45 minutes
+**Requires:** Paid API (Anthropic/OpenAI)
 
 ## Learning Objectives
 

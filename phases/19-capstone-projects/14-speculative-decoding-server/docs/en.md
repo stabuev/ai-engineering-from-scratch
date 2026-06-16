@@ -8,6 +8,12 @@
 **Phases exercised:** P3 · P7 · P10 · P17
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build an inference server with EAGLE-3-style speculative decoding.
+- Wire draft and verify with KV-cache management and continuous batching.
+- Measure the throughput speedup on real traffic.
+
 ## Problem
 
 Speculative decoding became a commodity in 2026. EAGLE-3 draft heads train on the target model's hidden states and predict N tokens ahead; the target model verifies in a single pass. Acceptance rates of 60-80% translate to 2-3x end-to-end throughput. vLLM 0.7 integrates this natively. SGLang + SpecForge gives you the training pipeline. Red Hat's Speculators publishes aligned drafts for Llama 3.3 70B, Qwen3-Coder-30B MoE, GPT-OSS-120B.

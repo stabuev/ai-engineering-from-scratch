@@ -589,6 +589,21 @@ def demo_broken_networks():
     gradient_check(model_grad, x[:4], y[:4], criterion)
 ```
 
+### Expected output
+
+Run `code/debug_neural_nets.py` — the final lines should read:
+
+```
+=== GRADIENT CHECK ===
+  0.weight: max_rel_diff=1.03e-08 [OK]
+  0.bias: max_rel_diff=5.05e-09 [OK]
+  2.weight: max_rel_diff=3.93e-12 [OK]
+  2.bias: max_rel_diff=1.94e-13 [OK]
+
+  Checked 14 parameters
+  PASS: Gradients match (rel_diff < 1e-5)
+```
+
 ## Use It
 
 ### PyTorch Built-in Tools
@@ -683,6 +698,25 @@ Key deployment patterns for debugging:
 4. **Create a data pipeline validator.** Write a function that checks for: duplicate samples across train/test splits, label distribution imbalance (>10:1 ratio), input normalization (mean near 0, std near 1), and NaN/Inf values in the data. Run it on a deliberately corrupted dataset.
 
 5. **Debug a real failure.** Take the mini-framework from Lesson 10, introduce a subtle bug (e.g., transpose the weight matrix in backward), and use gradient checking to locate exactly which parameter has incorrect gradients. Document the debugging process.
+
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+import numpy as np
+def validate(X, y, X_test):
+    dup = len(set(map(tuple, X)) & set(map(tuple, X_test)))
+    if dup: print(f"  {dup} samples leak across train/test")
+    counts = np.bincount(y)
+    if counts.max() / max(counts.min(), 1) > 10: print("  label imbalance > 10:1")
+    if abs(X.mean()) > 0.1 or abs(X.std() - 1) > 0.3:
+        print(f"  not normalized: mean={X.mean():.2f} std={X.std():.2f}")
+    if not np.isfinite(X).all(): print("  NaN/Inf in inputs")
+```
+
+Run it before training. A train/test leak inflates accuracy, a >10:1 imbalance biases the model toward the majority class, un-normalized inputs slow or break optimization, and a single NaN/Inf silently poisons every gradient downstream. Cheap to run, saves hours of chasing a "model" bug that is really a data bug.
+
+</details>
 
 ## Key Terms
 

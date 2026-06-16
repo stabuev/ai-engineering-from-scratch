@@ -7,6 +7,12 @@
 **Предварительные требования:** all of Phase 16 (Lessons 01-24)
 **Время:** ~90 минут
 
+## Цели обучения
+
+- Изучать три продакшен мультиагентные системы end-to-end (Anthropic Research, MetaGPT/ChatDev, OpenClaw).
+- Извлекать паттерны, общие для всех трёх.
+- Картировать ландшафт мультиагентных фреймворков на апрель 2026.
+
 ## Проблема
 
 Multi-agent engineering — молодая дисциплина. Production references немного, и каждый покрывает разные части пространства. Читать их по одному полезно; сравнивать их как набор полезнее. Этот урок рассматривает три канонических case studies 2026 года как end-to-end reading list, фиксирует common patterns и mapping framework landscape, чтобы вы принимали framework choices на основе знания, а не marketing.

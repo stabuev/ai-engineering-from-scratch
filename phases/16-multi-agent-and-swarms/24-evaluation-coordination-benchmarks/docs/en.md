@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 15 (Voting and Debate Topology), Phase 16 · 23 (Failure Modes)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Map the 2025-2026 multi-agent benchmarks (MultiAgentBench/MARBLE, COMMA, and the rest) to what each measures.
+- Read coordination scores across topologies.
+- Choose a benchmark for a given multi-agent claim.
+
 ## Problem
 
 When a paper claims "our multi-agent system is better," the question is: better than what, on what, measured how? The 2023-2024 era of multi-agent evaluation was chaos — everyone picked their own metrics, their own baselines, and their own task sets. The 2025-2026 benchmarks imposed structure.

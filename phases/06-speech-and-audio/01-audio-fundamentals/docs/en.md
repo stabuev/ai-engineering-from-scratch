@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 1 · 06 (Vectors & Matrices), Phase 1 · 14 (Probability Distributions)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain the ladder from waveform → spectrogram → mel features that every ASR and TTS pipeline climbs.
+- Compute a DFT by hand, find the dominant frequency, and demonstrate aliasing.
+- Explain sample rate, the Nyquist limit, and bit depth.
+
 ## The Problem
 
 A microphone produces a pressure-vs-time signal. Your neural net consumes tensors. Between them sits a stack of conventions that, when violated, produce silent bugs: the model trains fine but the WER doubles, or TTS ships a hiss, or a voice cloning system memorizes the microphone instead of the speaker.

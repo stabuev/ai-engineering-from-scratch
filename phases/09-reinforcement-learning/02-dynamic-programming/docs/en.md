@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 01 (MDPs)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Implement policy evaluation, policy improvement, and value iteration on a GridWorld MDP straight from the Bellman equation.
+- Explain why dynamic programming needs the transition and reward model, and why it is the benchmark every sampling method chases.
+- Recognise the Bellman operator as a contraction and explain why iterating it converges.
+
 ## The Problem
 
 You have an MDP with a known model: you can query `P(s' | s, a)` and `R(s, a, s')` for any state-action pair. An inventory manager knows the demand distribution. A board game has deterministic transitions. A gridworld is four lines of Python. You have a *model*.

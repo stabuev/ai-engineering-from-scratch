@@ -24,6 +24,14 @@
 
 ## Концепция
 
+```mermaid
+graph TB
+  V["hour-long video → millions of tokens"] --> B["brute context"]
+  V --> R["ring attention"]
+  V --> C["token compression"]
+  V --> AG["agentic retrieval"]
+```
+
 ### Path 1: Brute context (Gemini 1.5, Claude Opus)
 
 Бросить hardware на проблему. Масштабировать context до миллионов токенов, обработать все за один forward pass.

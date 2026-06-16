@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 8 · 03 (GANs), Phase 4 · 08 (Normalization), Phase 3 · 07 (CNNs)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Explain how mapping z to an intermediate w and injecting it via AdaIN at every resolution disentangles the latent space.
+- Implement per-layer noise and the truncation trick.
+- Say what each StyleGAN component (mapping network, AdaIN, weight demodulation) contributes to photorealism.
+
 ## The Problem
 
 A DCGAN maps `z` to an image through a stack of transposed convolutions. The problem: `z` controls everything — pose, lighting, identity, background — entangled together. Move along one axis of `z`, all four change. You cannot ask the model "same person, different pose" because the representation does not factor that way.

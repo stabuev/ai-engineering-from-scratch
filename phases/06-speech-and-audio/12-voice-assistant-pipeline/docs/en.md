@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 6 · 04, 05, 06, 07, 11; Phase 11 · 09 (Function Calling); Phase 14 · 01 (Agent Loop)
 **Time:** ~120 minutes
 
+## Learning Objectives
+
+- Stitch lessons 01–11 into a voice assistant that listens, reasons, and talks back.
+- Wire VAD-gated turn capture into a streaming STT → LLM → TTS loop.
+- Diagnose the three failure modes (barge-in, end-pointing, wake word).
+
 ## The Problem
 
 Build an end-to-end assistant:

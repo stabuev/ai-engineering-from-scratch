@@ -24,6 +24,15 @@ BLIP-2 подает 32 visual tokens во входной layer frozen LLM. Эт�
 
 ## Концепция
 
+```mermaid
+graph LR
+  IMG["image / video"] --> VE["vision encoder"]
+  VE --> PR["Perceiver resampler"]
+  PR --> X["gated cross-attention"]
+  LLM["frozen LLM layers"] --> X
+  X --> OUT["text out"]
+```
+
 ### The frozen LLM
 
 Flamingo начинается с frozen Chinchilla 70B LLM. Все 70B weights untouched. Existing text self-attention and FFN operate normally.

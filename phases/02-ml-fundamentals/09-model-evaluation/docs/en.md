@@ -625,6 +625,21 @@ if __name__ == "__main__":
     print(f"  (|t| > 2.78 for significance at p<0.05 with df=4)")
 ```
 
+### Expected output
+
+Run `code/evaluation.py` — the final lines should read:
+
+```
+     240   0.8792   0.8500
+
+=== Statistical Model Comparison ===
+  Model A (100 epochs) mean: 0.8733
+  Model B (500 epochs) mean: 0.8733
+  Mean difference: 0.0000
+  Paired t-statistic: 0.0000
+  (|t| > 2.78 for significance at p<0.05 with df=4)
+```
+
 ## Use It
 
 With scikit-learn, evaluation is built into the workflow:

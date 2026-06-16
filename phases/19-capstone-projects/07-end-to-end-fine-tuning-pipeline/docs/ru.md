@@ -8,6 +8,12 @@
 **Задействованные фазы:** P2 · P3 · P7 · P10 · P11 · P17 · P18
 **Время:** 35 hours
 
+## Цели обучения
+
+- Построить сквозной пайплайн: дообучить 8B-модель на своих данных, выровнять DPO, квантовать и обслуживать.
+- Измерять стоимость в $/1M токенов и латентность.
+- Добавить speculative decoding в путь обслуживания.
+
 ## Проблема
 
 В 2026 году у каждой серьезной AI-команды под рукой есть fine-tuning pipeline. Не потому, что они выпускают frontier base model, а потому что downstream adaptation — domain SFT, DPO against labeled preferences, distilled drafts for speculative decoding, serving with EAGLE-3 — дает измеримые выигрыши. Axolotl v0.8 ведет multi-GPU SFT configs. TRL 0.15 ведет DPO and GRPO. Unsloth дает быстрые single-GPU iteration. vLLM 0.7 with EAGLE-3 поднимает decode throughput в 2-3x без потери качества. Инструменты работают; мастерство — в YAMLs, data hygiene и eval discipline.

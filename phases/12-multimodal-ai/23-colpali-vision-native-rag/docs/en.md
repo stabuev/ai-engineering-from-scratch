@@ -32,6 +32,15 @@ ColPali's fix: skip OCR, embed the page image directly. Use ColBERT-style late i
 
 ## The Concept
 
+```mermaid
+graph LR
+  PG["page image"] --> PE["patch embeddings (multi-vector)"]
+  Q["query"] --> QE["query embeddings"]
+  PE --> LI["late interaction: MaxSim"]
+  QE --> LI
+  LI --> R["ranked pages"]
+```
+
 ### ColBERT (2020)
 
 ColBERT (Khattab & Zaharia, arXiv:2004.12832) is a text retrieval method. Instead of one vector per document, it produces one vector per token. At query time:

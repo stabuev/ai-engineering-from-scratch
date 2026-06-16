@@ -7,6 +7,12 @@
 **Предварительные требования:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 03 (Word Embeddings)
 **Время:** ~75 минут
 
+## Цели обучения
+
+- Размечать сущности схемой BIO и строить baseline на правилах и словаре.
+- Набрасывать CRF и объяснять, что добавляет BiLSTM-CRF.
+- Оценивать entity-level F1 и обрабатывать вложенные сущности.
+
 ## Проблема
 
 "Apple sued Google over its iPhone search deal in the US." Пять сущностей: Apple (ORG), Google (ORG), iPhone (PRODUCT), search deal (возможно), US (GPE). Хорошая NER-система извлекает их все с корректными типами. Плохая пропускает iPhone, путает Apple-фрукт с Apple-компанией и размечает "US" как PERSON.

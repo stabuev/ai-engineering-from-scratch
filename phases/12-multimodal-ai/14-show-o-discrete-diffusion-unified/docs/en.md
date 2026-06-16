@@ -22,6 +22,13 @@ Show-o's answer: keep both modalities discrete (like Chameleon), but generate im
 
 ## The Concept
 
+```mermaid
+graph LR
+  T["text: causal next-token"] --> TF["one transformer, hybrid mask"]
+  I["image: masked discrete diffusion"] --> TF
+  TF --> P["parallel image decode"]
+```
+
 ### Masked discrete diffusion (MaskGIT)
 
 The original Chang et al. (2022) MaskGIT trick is elegant. Start from a fully-masked image (every token is the special `<MASK>` id). At each step, predict all masked tokens in parallel, then keep the top-K most confident predictions and re-mask the rest. After ~8-16 iterations, all tokens are filled in. The schedule of how many tokens to unmask per step is tuned — cosine schedules work well.

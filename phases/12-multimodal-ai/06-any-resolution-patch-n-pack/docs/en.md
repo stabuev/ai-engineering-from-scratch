@@ -30,6 +30,14 @@ The 2024-2025 answer: let the transformer eat patches at the image's native reso
 
 ## The Concept
 
+```mermaid
+graph LR
+  A["image A patches"] --> PK["pack into one sequence"]
+  B["image B patches"] --> PK
+  PK --> M["block-diagonal mask: each image attends only to itself"]
+  M --> ENC["encoder"]
+```
+
 ### NaViT and patch-n'-pack
 
 NaViT (Dehghani et al., 2023) was the paper that showed this works at scale. The idea is mechanical:

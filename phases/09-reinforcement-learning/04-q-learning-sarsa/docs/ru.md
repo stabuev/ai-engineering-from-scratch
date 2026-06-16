@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 9 · 01 (MDPs), Phase 9 · 02 (Dynamic Programming), Phase 9 · 03 (Monte Carlo)
 **Time:** ~75 minutes
 
+## Цели обучения
+
+- Реализовывать Q-learning (off-policy) и SARSA (on-policy) как однострочные TD-обновления.
+- Объяснять TD-ошибку и бутстрэппинг и почему Q-learning оптимистичен, а SARSA осторожен.
+- Диагностировать смещение максимизации и называть лекарство (Double Q-learning).
+
 ## Проблема
 
 Monte Carlo работает, но требует двух дорогих вещей. Episodes должны завершаться, и обновление возможно только после получения final return. Если episode длится 1,000 steps, MC ждет 1,000 steps, прежде чем что-либо обновить. Это high-variance, low-bias и на практике медленно.

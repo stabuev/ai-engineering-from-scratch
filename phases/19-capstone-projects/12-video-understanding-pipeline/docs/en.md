@@ -8,6 +8,12 @@
 **Phases exercised:** P4 · P6 · P7 · P11 · P12 · P17
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build a video-understanding pipeline from scene segmentation to question answering.
+- Combine a video VLM with long-context retrieval over frames.
+- Answer temporal questions grounded in specific scenes.
+
 ## Problem
 
 Long-form video QA is the most bandwidth-hungry multimodal problem at 2026 scale. Gemini 2.5 Pro can read a 2-hour video natively, but ingesting 100 hours of video into a queryable corpus still requires a scene-level index. The production shape combines scene segmentation (TransNetV2 or PySceneDetect), per-scene captioning with a VLM (Gemini 2.5, Qwen3-VL-Max, or Molmo 2), transcript alignment (Whisper-v3-turbo with word timestamps), and a multi-vector index that stores caption, frame embedding, and transcript side by side. The query pipeline answers with (start, end) timestamps plus frame previews.

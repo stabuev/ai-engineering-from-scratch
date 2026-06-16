@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 01 (Text Processing), Phase 2 · 14 (Naive Bayes)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Build a most-frequent-tag baseline and a bigram HMM tagger decoded with Viterbi.
+- Sketch dependency parsing and the Universal Dependencies scheme.
+- Say where POS tagging and parsing still matter in 2026.
+
 ## The Problem
 
 Lesson 01 promised that lemmatization needs a part-of-speech tag. Without knowing `running` is a verb, a lemmatizer cannot reduce it to `run`. Without knowing `better` is an adjective, it cannot reduce to `good`.

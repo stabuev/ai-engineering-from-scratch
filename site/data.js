@@ -1256,7 +1256,7 @@ const PHASES = [
       },
       {
         "name": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
-        "status": "in-progress",
+        "status": "complete",
         "type": "Практика",
         "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/15-visual-autoregressive-var/"
@@ -1517,7 +1517,7 @@ const PHASES = [
       },
       {
         "name": "Gradient Checkpointing и Activation Recomputation",
-        "status": "in-progress",
+        "status": "complete",
         "type": "Практика",
         "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/23-gradient-checkpointing/"
@@ -1637,14 +1637,14 @@ const PHASES = [
       },
       {
         "name": "LangGraph — конечные автоматы для агентов",
-        "status": "in-progress",
+        "status": "complete",
         "type": "Практика",
         "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/16-langgraph-state-machines/"
       },
       {
         "name": "Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno",
-        "status": "in-progress",
+        "status": "complete",
         "type": "Теория",
         "lang": "Python",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/17-agent-framework-tradeoffs/"

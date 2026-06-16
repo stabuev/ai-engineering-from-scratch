@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 15 · 04 (DGM), Phase 15 · 06 (AAR)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Define recursive self-improvement (RSI) as an engineering problem rather than speculation.
+- Name the concrete tooling and failure modes the 2026 framing identifies.
+- Distinguish RSI from ordinary model iteration.
+
 ## The Problem
 
 A system that improves itself generates a curve. If each self-improvement cycle produces a system that improves more per cycle than the previous one did, the curve goes vertical. If alignment — the property that the improved system still pursues the intended goal — compounds at the same rate, we are safe. If alignment compounds slower, we are not.

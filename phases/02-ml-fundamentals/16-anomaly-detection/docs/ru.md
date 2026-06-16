@@ -325,6 +325,21 @@ Normalization factor `c(n)` — expected path length unsuccessful search в bina
 
 Каждое demo сравнивает методы через precision, recall, F1 и Precision@k.
 
+### Ожидаемый вывод
+
+Запустите `code/anomaly_detection.py` — последние строки должны быть такими:
+
+```
+--------------------------------------------------------------
+Z-score (t=3.0)          1.0000     0.1000     0.1818     0.5000
+IQR (f=1.5)              0.0000     0.0000     0.0000     0.0500
+IsoForest (t=0.6)        0.7778     0.7000     0.7368     0.7500
+
+Z-score struggles with multimodal data (points between clusters
+look normal per feature but are anomalous in the joint space).
+Isolation Forest handles multiple clusters naturally.
+```
+
 ## Используйте это
 
 Со sklearn (library implementations, не from-scratch):

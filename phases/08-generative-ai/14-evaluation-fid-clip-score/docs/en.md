@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 8 · 01 (Taxonomy), Phase 2 · 04 (Evaluation Metrics)
 **Time:** ~45 minutes
 
+## Learning Objectives
+
+- Compute FID, a CLIP score, and an Elo from pairwise human preferences.
+- Name the failure mode each metric can be gamed through.
+- Choose the right metric for sample quality, prompt adherence, or overall preference.
+
 ## The Problem
 
 A generative model is judged on *sample quality* and *conditioning adherence*. Neither has a closed-form measure. Your model has to render 10,000 images; something has to assign them numbers; you have to trust the numbers across model families, across resolutions, across architectures. Three metrics survived the 2014-2026 gauntlet:

@@ -290,6 +290,20 @@ print(f"Accuracy with random weights: {correct}/{len(data)} ({100*correct/len(da
 
 Random weights give poor accuracy -- often worse than guessing the majority class. After training (Lesson 03), this same architecture with 8 hidden neurons will draw a curved boundary that separates inside from outside.
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+============================================================
+DEMO 4: Parameter count for classic architectures
+============================================================
+  2-3-1 (this lesson): 13 parameters
+  2-8-1 (circle): 33 parameters
+  784-256-128-10 (MNIST): 235,146 parameters
+  784-512-256-128-10 (deep MNIST): 567,434 parameters
+```
+
 ## Use It
 
 PyTorch does everything above in four lines:
@@ -333,6 +347,18 @@ Use it when you need to decide how many layers, how many neurons per layer, and 
 4. Build a forward pass for a 3-4-4-2 network. Feed it RGB color values (normalized to 0-1) and observe the two outputs. This is the architecture for a simple color classifier with two classes.
 
 5. Replace sigmoid with a "leaky step" function: return 0.01 * z if z < 0, else 1.0. Run the forward pass on XOR with the same hand-tuned weights from Step 4. Does it still work? Why is the smooth sigmoid preferred over hard cutoffs?
+
+<details>
+<summary>Solution — exercise 5</summary>
+
+```python
+def leaky_step(z):
+    return 0.01 * z if z < 0 else 1.0   # forward only: derivative ~ 0, no learning
+```
+
+The hard "leaky step" still computes XOR in the forward pass — thresholding is all the hand-tuned network needs. But it is useless for *learning*: its derivative is 0 almost everywhere (undefined at 0), so backprop gets no gradient. Sigmoid is preferred because it is smooth with a non-zero derivative everywhere, so gradient descent can actually nudge the weights. Hard cutoffs forward-propagate but never train.
+
+</details>
 
 ## Key Terms
 

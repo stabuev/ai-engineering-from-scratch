@@ -254,6 +254,21 @@ output = np.einsum("bte,ek->btk", concat, W_o)
 
 Every step is a tensor operation: projection (matmul via einsum), head splitting (reshape + transpose), attention scores (batch matmul via einsum), weighted sum (batch matmul via einsum), head merging (transpose + reshape), output projection (matmul via einsum).
 
+### Expected output
+
+Run `code/tensors.py` — the final lines should read:
+
+```
+--- Global Average Pooling (vision) ---
+  Feature map: (2, 64, 7, 7)
+  After GAP:   (2, 64)
+
+--- Sequence mean pooling (NLP) ---
+  Hidden states: (4, 128, 768)
+  Mask:          (4, 128, 1)
+  Pooled:        (4, 768)
+```
+
 ## Use It
 
 ### Scratch vs NumPy

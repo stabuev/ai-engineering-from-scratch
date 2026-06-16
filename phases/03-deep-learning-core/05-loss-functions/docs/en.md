@@ -388,6 +388,21 @@ class LossComparisonNetwork:
         return losses
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+    Epoch 150: loss=0.0256, accuracy=99.0%
+    Epoch 199: loss=0.0219, accuracy=99.0%
+  Final: loss=0.0219, accuracy=99.0%
+
+=== Key Takeaway ===
+  Cross-entropy converges faster on classification because its
+  gradient is strong when predictions are wrong and weak when correct.
+  MSE gradient flattens near 0 and 1 due to sigmoid saturation.
+```
+
 ## Use It
 
 PyTorch provides all standard loss functions with numerical stability built in:
@@ -430,6 +445,21 @@ This lesson produces:
 4. Run the MSE vs cross-entropy comparison but track gradient magnitudes at each layer during training. Plot the average gradient norm per epoch. Verify that cross-entropy produces larger gradients in early epochs when the model is most uncertain.
 
 5. Implement KL divergence loss and verify that minimizing KL(true || predicted) gives the same gradients as cross-entropy when the true distribution is one-hot. Then try soft targets (like knowledge distillation) where the "true" distribution comes from a teacher model's softmax output.
+
+<details>
+<summary>Solution — exercise 5</summary>
+
+```python
+import numpy as np
+def softmax(z): e = np.exp(z - z.max()); return e / e.sum()
+z = np.array([1.0, 2.0, 0.5, -1.0, 0.3]); y = 2
+p = softmax(z)
+grad = p.copy(); grad[y] -= 1      # KL(one-hot || p) gradient == cross-entropy's p - onehot
+```
+
+When the target is one-hot, `KL(true || pred)` differs from cross-entropy only by the entropy of the target — which is 0 — so the gradients are identical (verified: max difference 0.0). For *soft* targets (knowledge distillation) KL keeps the teacher's full distribution, which a hard cross-entropy label throws away.
+
+</details>
 
 ## Key Terms
 

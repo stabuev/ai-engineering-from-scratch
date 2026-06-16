@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 16 · 04 (Primitive Model)
 **Time:** ~60 minutes
 
+## Learning Objectives
+
+- Build an N-agent group chat with a speaker-selection function (LLM, round-robin, or custom).
+- Use the ConversableAgent API and set termination conditions.
+- Trace the AutoGen → AG2 → Microsoft Agent Framework lineage.
+
 ## Problem
 
 Static graphs (LangGraph) are great when the workflow is known. Real conversations are not static: sometimes the coder asks the reviewer, sometimes the researcher, sometimes the writer. Hardcoding every possible handoff produces an edge explosion. You want *agents reacting to a shared pool*, with some function deciding who talks next.

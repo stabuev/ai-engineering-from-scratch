@@ -381,6 +381,21 @@ class OptimizerTestNetwork:
         return losses
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+============================================================
+STEP 4: Weight Decay Effect
+============================================================
+  Initial weight L2 norm: 10.0550
+  After 100 steps:
+    Adam  weight L2 norm: 10.0433
+    AdamW weight L2 norm: 9.9434
+    AdamW shrinks weights 1.0x more
+```
+
 ## Use It
 
 PyTorch optimizers handle parameter groups, gradient clipping, and learning rate scheduling:
@@ -429,6 +444,21 @@ This lesson produces:
 4. Implement gradient clipping (clip by global norm). Set the max gradient norm to 1.0. Train with and without clipping using a high learning rate (lr=0.01 for Adam). Count how many runs diverge (loss goes to NaN) with and without clipping over 10 random seeds.
 
 5. Compare Adam vs AdamW on a network with large weights. Initialize all weights to random values in [-5, 5] (much larger than normal). Train for 200 epochs with weight_decay=0.1. Plot the L2 norm of weights over training for both optimizers. AdamW should show faster weight shrinkage.
+
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+def clip_global_norm(params, max_norm=1.0):
+    total = sum(p.grad ** 2 for p in params) ** 0.5
+    if total > max_norm:
+        scale = max_norm / (total + 1e-6)
+        for p in params: p.grad *= scale
+```
+
+Scale *all* gradients by one factor so the update *direction* is preserved and only the step *length* is capped. At a high learning rate this is what keeps a run finite: without it a single large-gradient step blows the weights up and every later loss is NaN. Over 10 seeds the un-clipped runs diverge far more often.
+
+</details>
 
 ## Key Terms
 

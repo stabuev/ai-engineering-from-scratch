@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 09 (Reinforcement Learning), Phase 16 · 09 (Parallel Swarm Networks)
 **Time:** ~90 minutes
 
+## Learning Objectives
+
+- Explain the MARL heritage (MADDPG, QMIX, MAPPO) behind multi-agent coordination.
+- Distinguish CTDE, value decomposition, and the MAPPO default.
+- Say why LLM-agent engineers should care about classical MARL.
+
 ## Problem
 
 LLM-agent systems increasingly train policies for inter-agent coordination: when to defer, when to act, which peer to call. The literature that tells you how to train such policies is Multi-Agent Reinforcement Learning (MARL), which predates the LLM wave and has a small set of dominant algorithms.

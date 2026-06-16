@@ -316,6 +316,21 @@ def magnitude_report(name, magnitudes):
             print(f"  Layer {i+1:3d}: {bar} ({mag:.6f})")
 ```
 
+### Expected output
+
+Run `code/main.py` — the final lines should read:
+
+```
+  Config                           Start Loss     End Loss  Improvement
+  ------------------------------------------------------------------
+  Random(0.01) + Sigmoid             0.213427     0.205097         3.9%
+  Random(1.0) + Sigmoid              0.257682     0.018135        93.0%
+  Xavier + Sigmoid                   0.220716     0.022327        89.9%
+  Random(0.01) + ReLU                0.222634     0.007044        96.8%
+  Random(1.0) + ReLU                 0.395736     0.004482        98.9%
+  Kaiming + ReLU                     0.261864     0.004715        98.2%
+```
+
 ## Use It
 
 PyTorch provides these as built-in functions:
@@ -355,6 +370,20 @@ This lesson produces:
 4. Run the experiment with fan_in = 16 vs fan_in = 1024. Xavier and Kaiming adapt to fan_in, but random init doesn't. Show how the gap between "works" and "breaks" widens with larger layers.
 
 5. Implement orthogonal initialization (generate a random matrix, compute its SVD, use the orthogonal matrix U). Compare to Kaiming for ReLU networks at 50 layers.
+
+<details>
+<summary>Solution — exercise 5</summary>
+
+```python
+import numpy as np
+def orthogonal(n):
+    U, _, _ = np.linalg.svd(np.random.randn(n, n))
+    return U            # U is orthogonal: U @ U.T == I
+```
+
+Verified `max|U @ U.T - I| ~ 8e-16`. An orthogonal matrix preserves vector norms through a linear layer (no shrink, no blow-up), so it holds the signal at depths where even Kaiming starts to drift — which is why it helps very deep (50-layer) ReLU networks.
+
+</details>
 
 ## Key Terms
 

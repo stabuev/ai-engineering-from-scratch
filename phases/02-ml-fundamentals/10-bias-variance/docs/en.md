@@ -355,6 +355,20 @@ At low alpha, the degree-15 polynomial is nearly unconstrained. Variance dominat
 
 This is the same U-curve from varying polynomial degree, but controlled by a continuous knob instead of a discrete one. In practice, regularization is the preferred way to control the tradeoff because it allows fine-grained control without changing the feature set.
 
+### Expected output
+
+Run `code/bias_variance.py` — the final lines should read:
+
+```
+Optimal alpha: 10.0
+  Total error at optimal: 32.1952
+
+Small alpha: variance dominates (model is unconstrained, fits noise)
+Large alpha: bias dominates (model is over-constrained, misses signal)
+Optimal alpha balances both, sitting at the bottom of the U-curve.
+All bias-variance demos complete.
+```
+
 ## Use It
 
 sklearn provides `learning_curve` and `validation_curve` to automate these diagnostics without writing bootstrap loops.

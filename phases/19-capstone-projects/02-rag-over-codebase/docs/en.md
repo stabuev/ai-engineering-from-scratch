@@ -8,6 +8,12 @@
 **Phases exercised:** P5 · P7 · P11 · P13 · P17
 **Time:** 30 hours
 
+## Learning Objectives
+
+- Build cross-repo semantic code search that understands meaning, not just strings.
+- Chunk code by structure, embed it, and serve hybrid (semantic + lexical) retrieval.
+- Answer codebase questions from retrieved context with citations.
+
 ## Problem
 
 By 2026 every frontier coding agent ships with a codebase retrieval layer because context windows alone do not solve cross-repo questions. Claude's 1M-token context helps; it does not eliminate the need for ranked retrieval. Naive cosine search over raw chunks poisons results on generated code, on monorepo duplication, and on the long tail of rarely-imported symbols. The production answer is a hybrid (dense + BM25) search over AST-aware chunks with a re-ranker, backed by a graph of symbol references.

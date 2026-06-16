@@ -26,6 +26,13 @@
 
 ## Концепция
 
+```mermaid
+graph LR
+  I["image"] --> IE["image encoder"] --> S["shared vector space"]
+  T["text"] --> TE["text encoder"] --> S
+  S --> C["contrastive align (InfoNCE / sigmoid)"]
+```
+
 ### The dual encoder
 
 У CLIP две башни:

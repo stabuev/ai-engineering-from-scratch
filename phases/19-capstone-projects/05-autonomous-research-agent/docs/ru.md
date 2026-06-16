@@ -8,6 +8,12 @@
 **Задействованные фазы:** P0 · P2 · P3 · P7 · P10 · P14 · P15 · P16 · P18
 **Время:** 40 hours
 
+## Цели обучения
+
+- Построить агента в духе AI Scientist, который планирует, ставит эксперименты и проверяет результаты через древовидный поиск.
+- Связать цикл выполнения и верификации над пространством экспериментов.
+- Получать оформленный результат из трасс агента.
+
 ## Проблема
 
 Autonomous research agents перешагнули важный порог в 2026 году. Sakana AI's AI-Scientist-v2 был опубликован в Nature с generated papers, прошедшими workshop peer review. ShinkaEvolve (ICLR 2026) расширил эту линию до evolving hypotheses. AMD's Agent Laboratory выпустил воспроизводимые трассы. Эти агенты не магия — это цикл plan-execute-verify, работающий по дереву candidate experiments, с cost caps, seed-bound sandboxes и automated review. Мастерство находится в цикле, бюджете и истории безопасности.

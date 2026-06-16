@@ -7,6 +7,12 @@
 **Prerequisites:** Phase 5 · 02 (BoW + TF-IDF), Phase 5 · 11 (Machine Translation)
 **Time:** ~75 minutes
 
+## Learning Objectives
+
+- Build extractive summarization with TextRank and abstractive summarization with BART.
+- Evaluate with ROUGE and explain its blind spots.
+- Diagnose the factuality / hallucination problem in abstractive summaries.
+
 ## The Problem
 
 A 2,000-word news article lands in your feed. You need 120 words that capture it. You can either pick the three most important sentences from the article (extractive) or rewrite the content in your own words (abstractive). Both are called summarization. They are completely different problems.

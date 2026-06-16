@@ -474,6 +474,21 @@ def quadratic_hessian(x):
 
 Newton's method сойдется за 1 шаг (для квадратичных функций он точен). Gradient descent потребует сотни шагов, потому что собственные значения Hessian отличаются в 5 раз, создавая вытянутую долину.
 
+### Ожидаемый вывод
+
+Запустите `code/convex.py` — последние строки должны быть такими:
+
+```
+  3. Newton's method uses curvature for faster convergence.
+  4. Lagrange multipliers handle equality constraints.
+  5. KKT conditions handle inequality constraints.
+  6. L1 regularization = diamond constraint = sparsity.
+  7. L2 regularization = circle constraint = weight shrinkage.
+  8. Duality converts hard primal problems into sometimes-easier duals.
+  9. Neural networks are non-convex, but overparameterization and
+     stochastic noise make gradient descent work anyway.
+```
+
 ## Использование
 
 Анализ выпуклости напрямую применяется при выборе ML-моделей и решателей.
