@@ -371,6 +371,20 @@ This lesson produces:
 
 5. Implement orthogonal initialization (generate a random matrix, compute its SVD, use the orthogonal matrix U). Compare to Kaiming for ReLU networks at 50 layers.
 
+<details>
+<summary>Solution — exercise 5</summary>
+
+```python
+import numpy as np
+def orthogonal(n):
+    U, _, _ = np.linalg.svd(np.random.randn(n, n))
+    return U            # U is orthogonal: U @ U.T == I
+```
+
+Verified `max|U @ U.T - I| ~ 8e-16`. An orthogonal matrix preserves vector norms through a linear layer (no shrink, no blow-up), so it holds the signal at depths where even Kaiming starts to drift — which is why it helps very deep (50-layer) ReLU networks.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

@@ -373,6 +373,19 @@ This lesson produces:
 2. Modify the Perceptron class to track the decision boundary (w1*x1 + w2*x2 + b = 0) at each epoch. Print how the line shifts during training on the AND gate.
 3. Build a 3-input perceptron that outputs 1 only when at least 2 of the 3 inputs are 1 (a majority vote function). Is this linearly separable? Why?
 
+<details>
+<summary>Solution — exercise 3</summary>
+
+```python
+w = [1.0, 1.0, 1.0]
+b = -1.5            # fires when x1 + x2 + x3 >= 2
+def majority(x): return 1 if (w[0]*x[0] + w[1]*x[1] + w[2]*x[2] + b) > 0 else 0
+```
+
+A perceptron is a threshold on a weighted sum, and "at least 2 of 3" is exactly the half-space `x1 + x2 + x3 >= 2`. So yes — linearly separable. Verified: it matches the majority function on all 8 inputs. (XOR, by contrast, is *not* linearly separable — that is why Lesson 02 needs a hidden layer.)
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

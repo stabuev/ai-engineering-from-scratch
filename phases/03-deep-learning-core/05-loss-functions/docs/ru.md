@@ -446,6 +446,21 @@ ce_smooth = F.cross_entropy(logits, labels, label_smoothing=0.1)
 
 5. Реализуйте KL divergence loss и проверьте, что минимизация KL(true || predicted) дает те же градиенты, что и кросс-энтропия, когда истинное распределение one-hot. Затем попробуйте soft targets (например, knowledge distillation), где "true" распределение берется из softmax выхода teacher model.
 
+<details>
+<summary>Решение — упражнение 5</summary>
+
+```python
+import numpy as np
+def softmax(z): e = np.exp(z - z.max()); return e / e.sum()
+z = np.array([1.0, 2.0, 0.5, -1.0, 0.3]); y = 2
+p = softmax(z)
+grad = p.copy(); grad[y] -= 1      # KL(one-hot || p) gradient == cross-entropy's p - onehot
+```
+
+Когда цель one-hot, `KL(true || pred)` отличается от кросс-энтропии только на энтропию цели — а она равна 0 — поэтому градиенты идентичны (проверено: максимальная разница 0.0). Для *мягких* целей (knowledge distillation) KL сохраняет всё распределение учителя, которое жёсткая кросс-энтропия по one-hot выбрасывает.
+
+</details>
+
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |

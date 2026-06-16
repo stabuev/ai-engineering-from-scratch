@@ -348,6 +348,18 @@ Use it when you need to decide how many layers, how many neurons per layer, and 
 
 5. Replace sigmoid with a "leaky step" function: return 0.01 * z if z < 0, else 1.0. Run the forward pass on XOR with the same hand-tuned weights from Step 4. Does it still work? Why is the smooth sigmoid preferred over hard cutoffs?
 
+<details>
+<summary>Solution — exercise 5</summary>
+
+```python
+def leaky_step(z):
+    return 0.01 * z if z < 0 else 1.0   # forward only: derivative ~ 0, no learning
+```
+
+The hard "leaky step" still computes XOR in the forward pass — thresholding is all the hand-tuned network needs. But it is useless for *learning*: its derivative is 0 almost everywhere (undefined at 0), so backprop gets no gradient. Sigmoid is preferred because it is smooth with a non-zero derivative everywhere, so gradient descent can actually nudge the weights. Hard cutoffs forward-propagate but never train.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

@@ -520,6 +520,26 @@ This lesson produces:
 
 5. Compare LayerNorm vs RMSNorm on a 4-layer network (not just 2). Initialize both with the same weights. Train for 200 epochs and compare final accuracy, training speed (time per epoch), and gradient magnitudes at the first layer. Verify that RMSNorm is faster with the same accuracy.
 
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+best_loss, best_weights, patience, wait = float("inf"), None, 20, 0
+for epoch in range(1000):
+    train_one_epoch()
+    test_loss = evaluate()
+    if test_loss < best_loss:
+        best_loss, best_weights, wait = test_loss, snapshot(net), 0
+    else:
+        wait += 1
+        if wait >= patience:
+            restore(net, best_weights); break
+```
+
+Stop when test loss has not improved for `patience` epochs and restore the best snapshot. Every epoch after the best point is pure overfitting (train accuracy keeps rising while test stalls), so you save exactly that tail of compute — typically hundreds of epochs on a 1000-epoch budget.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

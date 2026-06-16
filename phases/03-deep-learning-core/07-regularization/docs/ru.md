@@ -520,6 +520,26 @@ LayerNorm, а не BatchNorm. Dropout p=0.1, а не p=0.5. Это значен�
 
 5. Сравните LayerNorm vs RMSNorm на 4-слойной сети (не только 2). Инициализируйте обе одинаковыми весами. Обучайте 200 эпох и сравните итоговую точность, скорость обучения (время на эпоху) и величины градиентов на первом слое. Проверьте, что RMSNorm быстрее при той же точности.
 
+<details>
+<summary>Решение — упражнение 4</summary>
+
+```python
+best_loss, best_weights, patience, wait = float("inf"), None, 20, 0
+for epoch in range(1000):
+    train_one_epoch()
+    test_loss = evaluate()
+    if test_loss < best_loss:
+        best_loss, best_weights, wait = test_loss, snapshot(net), 0
+    else:
+        wait += 1
+        if wait >= patience:
+            restore(net, best_weights); break
+```
+
+Останавливайтесь, когда test loss не улучшался `patience` эпох, и восстанавливайте лучший снимок. Каждая эпоха после лучшей точки — чистое переобучение (train accuracy растёт, а test стоит), поэтому вы экономите ровно этот хвост вычислений — обычно сотни эпох из бюджета в 1000.
+
+</details>
+
 ## Ключевые термины
 
 | Термин | Как говорят | Что это на самом деле означает |

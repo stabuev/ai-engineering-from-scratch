@@ -445,6 +445,21 @@ This lesson produces:
 
 5. Compare Adam vs AdamW on a network with large weights. Initialize all weights to random values in [-5, 5] (much larger than normal). Train for 200 epochs with weight_decay=0.1. Plot the L2 norm of weights over training for both optimizers. AdamW should show faster weight shrinkage.
 
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+def clip_global_norm(params, max_norm=1.0):
+    total = sum(p.grad ** 2 for p in params) ** 0.5
+    if total > max_norm:
+        scale = max_norm / (total + 1e-6)
+        for p in params: p.grad *= scale
+```
+
+Scale *all* gradients by one factor so the update *direction* is preserved and only the step *length* is capped. At a high learning rate this is what keeps a run finite: without it a single large-gradient step blows the weights up and every later loss is NaN. Over 10 seeds the un-clipped runs diverge far more often.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

@@ -418,6 +418,20 @@ This lesson produces:
 
 5. Build a "schedule surgeon" that monitors training loss and automatically switches from warmup to cosine when the loss stabilizes, and reduces lr if the loss plateaus for too long.
 
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+import math
+def sgdr(t, T, lr_min=0.0, lr_max=0.1):
+    t_cur = t % T
+    return lr_min + 0.5 * (lr_max - lr_min) * (1 + math.cos(math.pi * t_cur / T))
+```
+
+Every `T` steps the schedule jumps back to `lr_max` and decays again (verified: lr at t = 0, T, 2T all equal `lr_max`). The periodic restarts kick the optimizer out of sharp minima; the long final cosine lets it settle into a flat one.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

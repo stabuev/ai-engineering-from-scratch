@@ -20,8 +20,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
   with CSS styling — verified live (cursor, colour, left border, native toggle).
   First verified solution added to `03-backpropagation` exercise 3 (`__pow__`):
   the code was run and produces loss and gradients identical to the original
-  `mse_loss`. Remaining Phase 3 hard-exercise solutions are the next chunk (each
-  authored and verified by running before paste).
+  `mse_loss`.
+- **Wave 3 (chunk 3b) — Phase 3 hard-exercise solutions.** Collapsible
+  `<details>` solutions for 10 more Phase 3 lessons (perceptron, multi-layer,
+  activations, losses, optimizers, regularization, init, LR schedules,
+  mini-framework, debugging) — 11/13 lessons now carry a verified solution
+  (the two framework-intro lessons, pytorch/jax, are left out, as with their
+  expected-output). Every code snippet is syntax-checked, and each numeric claim
+  was verified by running: majority-of-3 is linearly separable; one-hot KL has
+  the same gradient as cross-entropy (max diff 0.0); SVD orthogonal init gives
+  `U·Uᵀ = I` (≈8e-16); SGDR restarts to `lr_max` each period; AdamW decoupled
+  decay shrinks a 5.0 weight to ≈4.09 over 200 steps.
 
 ### Fixed
 - **The website never rendered lesson figures.** `site/lesson.html`'s markdown

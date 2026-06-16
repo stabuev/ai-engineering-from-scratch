@@ -700,6 +700,20 @@ This lesson produces:
 
 5. Replace the per-sample training loop with proper mini-batch gradient accumulation: accumulate gradients across all samples in a batch, then divide by batch size and take one optimizer step. Measure whether this changes convergence speed.
 
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+m = b1 * m + (1 - b1) * g
+v = b2 * v + (1 - b2) * g * g
+m_hat = m / (1 - b1 ** t); v_hat = v / (1 - b2 ** t)
+p.data -= lr * (m_hat / (v_hat ** 0.5 + eps) + weight_decay * p.data)
+```
+
+Decaying the *weight* directly (not adding `weight_decay * w` to the gradient) is the AdamW fix — it decouples regularization from the adaptive step. Verified: a weight of 5.0 with `weight_decay=0.1` shrinks to ~4.09 over 200 steps with zero data gradient; with `weight_decay=0` it stays 5.0.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |

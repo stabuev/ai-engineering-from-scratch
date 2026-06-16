@@ -521,6 +521,22 @@ This lesson produces:
 
 5. Modify the training comparison to use the XOR dataset from Lesson 01 instead of circles. Which activation converges fastest on XOR? Why does this differ from the circle results?
 
+<details>
+<summary>Solution — exercise 4</summary>
+
+```python
+def gradient_health(layers):
+    for i, layer in enumerate(layers):
+        params = layer.parameters()
+        g = sum(abs(p.grad) for p in params) / max(len(params), 1)
+        if g < 1e-3:   print(f"  layer {i}: vanishing grad {g:.2e}")
+        elif g > 100:  print(f"  layer {i}: exploding grad {g:.2e}")
+```
+
+Call it after `backward()`, before the optimizer step. In a deep sigmoid net the vanishing warnings cluster in the *early* layers (the Lesson 03 effect — derivatives capped at 0.25 multiply toward zero); exploding warnings show up with a too-high learning rate or bad init.
+
+</details>
+
 ## Key Terms
 
 | Term | What people say | What it actually means |
