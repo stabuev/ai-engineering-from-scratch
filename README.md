@@ -7,7 +7,7 @@
   <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-434-3553ff?style=flat-square&labelColor=fafaf5" alt="434 уроков"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 фаз"></a>
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="Звезды GitHub"></a>
-  <a href="https://aiengineeringfromscratch.com"><img src="https://img.shields.io/badge/web-aiengineeringfromscratch.com-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
+  <a href="https://datascience.xyz/courses/aicourse/"><img src="https://img.shields.io/badge/web-datascience.xyz%2Fcourses%2Faicourse-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
 </p>
 
 ```
@@ -111,7 +111,7 @@ flowchart LR
 Три способа войти в курс. Выберите один.
 
 **Вариант A — читать.** Откройте любой завершенный урок на
-[aiengineeringfromscratch.com](https://aiengineeringfromscratch.com) или раскройте фазу в
+[datascience.xyz/courses/aicourse](https://datascience.xyz/courses/aicourse/) или раскройте фазу в
 [содержании](#contents). Без настройки, без клонирования.
 
 **Вариант B — клонировать и запустить.**
@@ -994,6 +994,6 @@ MIT. Используйте как хотите: делайте fork, учите
 
 <sub>
   <a href="https://x.com/ghumare64">@ghumare64</a> &nbsp;·&nbsp;
-  <a href="https://aiengineeringfromscratch.com">aiengineeringfromscratch.com</a> &nbsp;·&nbsp;
+  <a href="https://datascience.xyz/courses/aicourse/">datascience.xyz/courses/aicourse</a> &nbsp;·&nbsp;
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose">Сообщить / Предложить</a>
 </sub>
