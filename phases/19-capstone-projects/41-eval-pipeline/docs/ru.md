@@ -1,32 +1,29 @@
 # Capstone Lesson 41: Full Evaluation Pipeline
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучение — это та часть, за которой можно следить по кривым лосса. Оценку приходится проектировать. Этот урок строит единый eval-пайплайн, который берёт любую обученную языковую модель, гоняет по ней четыре разнородных eval'а, агрегирует результаты в пер-задачный отчёт и поставляет локальный mock-судью (LLM-as-judge), чтобы цикл работал без сети. Четыре eval'а покрывают измерения, нужные каждой отгружаемой модели: языковое моделирование (перплексия), краткая корректность (exact-match), открытая похожесть (токенный F1) и качественная оценка (судья).
 
+**Тип:** Практика
+**Языки:** Python (torch, numpy)
+**Пререквизиты:** Фаза 19, уроки 30–37 (трек NLP LLM: токенизатор, таблица эмбеддингов, attention-блок, тело трансформера, цикл предобучения, чекпоинты, генерация, перплексия)
+**Время:** ~90 минут
 
-> Training is the part you can monitor with loss curves. Evaluation is the part you have to design. This lesson builds a unified eval pipeline that takes any trained language model, runs four heterogeneous evals on it, aggregates the results into a per-task report, and ships a local mock LLM-as-judge so the loop runs without a network. The four evals cover the dimensions every shipping model needs: language modelling (perplexity), short-form correctness (exact-match), open-form similarity (token F1), and qualitative scoring (judge).
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (torch, numpy)
-**Prerequisites:** Phase 19 lessons 30-37 (NLP LLM track: tokenizer, embedding table, attention block, transformer body, pre-training loop, checkpointing, generation, perplexity)
-**Time:** ~90 minutes
+- Посчитать перплексию на отложенных данных с корректным учётом маскированных токенов на крошечном трансформере.
+- Прогнать exact-match-eval на кратких фактологических промптах.
+- Посчитать токенный F1 между предсказанной и референсной строками с нормализацией.
+- Построить локального mock-судью, оценивающего выходы модели по шкале 1–5.
+- Агрегировать четыре eval'а в единый взвешенный отчёт с пер-задачной разбивкой.
 
-## Learning Objectives
+## Проблема
 
-- Compute held-out perplexity with masked-token accounting on a tiny transformer.
-- Run an exact-match eval on short-form factual prompts.
-- Compute token-level F1 between predicted and reference strings with normalisation.
-- Build a local mock LLM-as-judge that scores model outputs on a 1-5 scale.
-- Aggregate the four evals into a single weighted report with per-task breakdown.
+Одна метрика никогда не описывает языковую модель. Перплексия говорит, насколько хорошо модель подогнана к распределению языка, но молчит о том, отвечает ли она на вопросы. Exact-match говорит, выдаёт ли модель эталонную строку, но наказывает корректные парафразы. Токенный F1 прощает парафраз, но обманывается лексическим пересечением при неверном содержании. LLM-as-judge ловит качественные измерения, но дорог и стохастичен.
 
-## The Problem
+Пайплайн, который вам действительно нужен, содержит все четыре. Каждый eval покрывает измерение, которое остальные упускают. Каждый работает на своём подмножестве отложенных данных, подготовленном под эту метрику. Финальный отчёт показывает пер-задачные числа бок о бок и агрегат — ревьюер с одного взгляда видит, какие компромиссы делает модель.
 
-A single metric never describes a language model. Perplexity says how well the model fits the language distribution but says nothing about whether it answers questions. Exact-match says whether the model produces the gold string but punishes correct paraphrases. Token F1 forgives paraphrase but is fooled by lexical overlap with wrong content. LLM-as-judge captures qualitative dimensions but is expensive and stochastic.
+Этот урок строит такой пайплайн end to end в одном файле.
 
-The pipeline you actually want has all four. Each eval covers a dimension the others miss. Each runs on a different subset of held-out data shaped for that metric. The final report shows the per-task numbers side by side and an aggregate, so a reviewer can see at a glance which trade-offs the model is making.
-
-This lesson builds that pipeline, end to end, in one file.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -41,50 +38,50 @@ flowchart LR
   R --> A[(aggregate score)]
 ```
 
-Each eval is a function from `(model, dataset) -> EvalResult`. The result carries the metric value, per-example details for inspection, and a name for the aggregate. The pipeline composes them with a config that says which evals to run and how to weight them.
+Каждый eval — функция `(model, dataset) -> EvalResult`. Результат несёт значение метрики, пер-примерные детали для инспекции и имя для агрегата. Пайплайн компонует их конфигом, говорящим, какие eval'ы гонять и как взвешивать.
 
-## Perplexity, properly counted
+## Перплексия, посчитанная правильно
 
-Perplexity is `exp(mean negative log-likelihood per token)`. The implementation has two traps:
+Перплексия — это `exp(средний отрицательный log-likelihood на токен)`. В реализации две ловушки:
 
-- The mean must be over actual token positions, not over batch * sequence. Padding tokens have to be excluded from the denominator or perplexity will look better than it is.
-- The model predicts the next token, so logits at position `i` predict the token at position `i+1`. Off-by-one mistakes here are silent: the loss still trains, but the metric becomes meaningless.
+- Среднее должно быть по фактическим токенным позициям, а не по batch * sequence. Pad-токены надо исключить из знаменателя, иначе перплексия будет выглядеть лучше, чем есть.
+- Модель предсказывает следующий токен, поэтому логиты в позиции `i` предсказывают токен в позиции `i+1`. Ошибки off-by-one здесь молчаливы: лосс всё равно обучает, но метрика теряет смысл.
 
-The eval computes per-batch sums of `-log p(token)` over non-pad positions and a per-batch token count, then divides at the end. This is numerically safer than averaging per-batch perplexities (which under-weights short sequences) and matches the textbook definition.
+Eval считает пер-батчевые суммы `-log p(token)` по не-pad-позициям и пер-батчевый счётчик токенов, а делит в самом конце. Это численно безопаснее усреднения пер-батчевых перплексий (которое недовзвешивает короткие последовательности) и совпадает с учебниковым определением.
 
-## Exact-match, with normalisation
+## Exact-match с нормализацией
 
-The harness normalises both the prediction and the reference before comparing:
+Харнес нормализует и предсказание, и референс перед сравнением:
 
-- Lowercase.
-- Strip surrounding whitespace.
-- Collapse internal whitespace runs to a single space.
-- Drop trailing terminal punctuation (`.`, `!`, `?`) if both sides differ only by punctuation.
+- Нижний регистр.
+- Обрезка окружающих пробелов.
+- Схлопывание внутренних последовательностей пробелов в один.
+- Отбрасывание финальной терминальной пунктуации (`.`, `!`, `?`), если стороны различаются только пунктуацией.
 
-Normalisation makes exact-match useful in practice. A model that says `"Paris"` is right; one that says `"Paris."` is also right; one that says `"  paris  "` is also right. The metric still requires the answer to be the same string after normalisation.
+Нормализация делает exact-match практически полезным. Модель, сказавшая `"Paris"`, права; сказавшая `"Paris."` — тоже права; сказавшая `"  paris  "` — тоже. Метрика по-прежнему требует, чтобы ответ был той же строкой после нормализации.
 
-## Token F1, the right way
+## Токенный F1, правильным способом
 
-Token F1 is the harmonic mean of precision and recall computed over the bag-of-tokens. Steps:
+Токенный F1 — гармоническое среднее precision и recall, посчитанных по мешку токенов. Шаги:
 
-1. Normalise prediction and reference (same rules as exact-match).
-2. Split each into a list of tokens (whitespace tokenisation).
-3. Count the multiset intersection.
-4. Precision = `intersection_count / len(pred_tokens)`. Recall = `intersection_count / len(ref_tokens)`. F1 = harmonic mean.
+1. Нормализовать предсказание и референс (те же правила, что у exact-match).
+2. Разбить каждое на список токенов (токенизация по пробелам).
+3. Посчитать пересечение мультимножеств.
+4. Precision = `intersection_count / len(pred_tokens)`. Recall = `intersection_count / len(ref_tokens)`. F1 — гармоническое среднее.
 
-If both prediction and reference are empty, F1 is 1 (vacuous match). If only one is empty, F1 is 0. This pattern matches the SQuAD evaluation reference and produces stable numbers across paraphrases.
+Если и предсказание, и референс пустые, F1 равен 1 (вакуумное совпадение). Если пусто только одно — F1 равен 0. Этот паттерн совпадает с референсной оценкой SQuAD и даёт стабильные числа на парафразах.
 
-## Local Mock LLM-as-Judge
+## Локальный mock LLM-as-Judge
 
-A real judge is a frontier model behind an API. For this lesson the judge has to run offline. The mock judge is a deterministic scorer that takes an instruction, the model's prediction, and the reference, and returns a score in `{1, 2, 3, 4, 5}` plus a one-line rationale. The scoring rules are explicit:
+Настоящий судья — фронтирная модель за API. Для этого урока судья обязан работать офлайн. Mock-судья — детерминированный оценщик, берущий инструкцию, предсказание модели и референс и возвращающий оценку из `{1, 2, 3, 4, 5}` плюс однострочное обоснование. Правила оценки явные:
 
-- 5 if normalised prediction equals normalised reference.
-- 4 if token F1 between prediction and reference is at least 0.8.
-- 3 if token F1 is in `[0.5, 0.8)`.
-- 2 if token F1 is in `[0.2, 0.5)`.
-- 1 otherwise.
+- 5, если нормализованное предсказание равно нормализованному референсу.
+- 4, если токенный F1 между предсказанием и референсом не меньше 0.8.
+- 3, если токенный F1 в `[0.5, 0.8)`.
+- 2, если токенный F1 в `[0.2, 0.5)`.
+- 1 иначе.
 
-This is not a real judge, but it has the right interface. Swap in a real model later by changing one function. The pipeline does not care.
+Это не настоящий судья, но у него правильный интерфейс. Позже подставьте настоящую модель, изменив одну функцию. Пайплайну всё равно.
 
 ```mermaid
 flowchart LR
@@ -95,18 +92,18 @@ flowchart LR
   Judge --> Why[rationale]
 ```
 
-## Aggregation
+## Агрегация
 
-The aggregate is a weighted mean of normalised eval scores. Each eval reports its own number in `[0, 1]`:
+Агрегат — взвешенное среднее нормализованных eval-оценок. Каждый eval репортит своё число в `[0, 1]`:
 
-- Perplexity: normalise as `1 / (1 + log(perplexity))`. A perplexity of 1 maps to 1, infinity maps to 0.
-- Exact-match: already in `[0, 1]`.
-- Token F1: already in `[0, 1]`.
-- Judge: divide by 5.
+- Перплексия: нормализуется как `1 / (1 + log(perplexity))`. Перплексия 1 маппится в 1, бесконечность — в 0.
+- Exact-match: уже в `[0, 1]`.
+- Токенный F1: уже в `[0, 1]`.
+- Судья: делится на 5.
 
-Weights are configurable. The default mix is 0.2 perplexity, 0.3 exact-match, 0.3 token F1, 0.2 judge. The choice of weights is a product decision; the lesson exposes the knob so you can experiment.
+Веса настраиваемые. Дефолтный микс — 0.2 перплексия, 0.3 exact-match, 0.3 токенный F1, 0.2 судья. Выбор весов — продуктовое решение; урок открывает ручку, чтобы вы могли экспериментировать.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -125,34 +122,34 @@ flowchart TD
   R --> Pretty[stdout table]
 ```
 
-The `EvalSuite` is a thin orchestrator. Each individual eval is a free function that takes `(model, tokenizer, dataset, config)` and returns an `EvalResult`. The `Aggregator` collects results and produces the final report. The demo prints the table and writes a JSON copy that downstream CI can ingest.
+`EvalSuite` — тонкий оркестратор. Каждый отдельный eval — свободная функция, берущая `(model, tokenizer, dataset, config)` и возвращающая `EvalResult`. `Aggregator` собирает результаты и порождает финальный отчёт. Демо печатает таблицу и пишет JSON-копию, которую может поглотить CI ниже по течению.
 
-## What you will build
+## Что вы соберёте
 
-The implementation is one `main.py` plus tests.
+Реализация — один `main.py` плюс тесты.
 
-1. `TinyGPT`: the same decoder-only architecture used in lessons 38-40, included so the lesson stands alone.
-2. `InstructionTokenizer`: byte tokeniser with INST / RESP / PAD specials.
-3. Four fixtures: an LM corpus, an EM set, an F1 set, and a judge set. Twenty examples each, deterministic.
-4. `perplexity_eval`: returns `EvalResult` with the perplexity value and per-token loss histogram.
-5. `exact_match_eval`: returns mean EM and per-example records.
-6. `token_f1_eval`: returns mean token F1 and per-example records.
-7. `mock_judge` and `judge_eval`: per-example score and rationale, mean score across the set.
-8. `Aggregator.normalise`: per-eval normalisation rule.
-9. `Aggregator.aggregate`: weighted mean and the assembled report.
-10. `run_demo`: trains a tiny model briefly, runs all four evals, prints the report table and writes the JSON, exits zero on success.
+1. `TinyGPT`: та же decoder-only архитектура из уроков 38–40, включена, чтобы урок был самостоятельным.
+2. `InstructionTokenizer`: байтовый токенизатор со спецтокенами INST / RESP / PAD.
+3. Четыре фикстуры: LM-корпус, EM-набор, F1-набор и набор судьи. По двадцать примеров, детерминированные.
+4. `perplexity_eval`: возвращает `EvalResult` со значением перплексии и гистограммой потокенного лосса.
+5. `exact_match_eval`: возвращает средний EM и пер-примерные записи.
+6. `token_f1_eval`: возвращает средний токенный F1 и пер-примерные записи.
+7. `mock_judge` и `judge_eval`: пер-примерная оценка и обоснование, средняя оценка по набору.
+8. `Aggregator.normalise`: правило нормализации на каждый eval.
+9. `Aggregator.aggregate`: взвешенное среднее и собранный отчёт.
+10. `run_demo`: коротко обучает крошечную модель, гоняет все четыре eval'а, печатает таблицу отчёта и пишет JSON, выходит с нулём при успехе.
 
-## Reading the report
+## Чтение отчёта
 
-The report has three layers. The top is the aggregate score. Below it are the four per-eval numbers. Below those are the per-example breakdowns for diagnostics. A failing CI run typically wants the aggregate, but a reviewer chasing a regression wants the per-example breakdown to see which inputs the model got wrong.
+У отчёта три слоя. Наверху — агрегированная оценка. Под ней — четыре пер-eval-числа. Под ними — пер-примерные разбивки для диагностики. Падающему CI-прогону обычно нужен агрегат, а ревьюеру, гоняющемуся за регрессией, — пер-примерная разбивка, чтобы увидеть, на каких входах модель ошиблась.
 
-The JSON dump uses stable keys so a CI dashboard can plot trend lines across versions. The pretty-printed table is for humans staring at the terminal after a training run.
+JSON-дамп использует стабильные ключи, чтобы CI-дашборд мог строить трендовые линии по версиям. Красиво напечатанная таблица — для людей, глядящих в терминал после обучающего прогона.
 
-## Stretch goals
+## Дополнительные цели
 
-- Add a calibration eval: do the model's softmax probabilities match its accuracy? Bucket predictions by confidence and report the empirical accuracy per bucket.
-- Add a robustness eval: tag each example with a perturbation (typo, paraphrase, distractor) and report metric drop per perturbation.
-- Replace the mock judge with a real model behind an HTTP call. The function signature does not change.
-- Add per-task weight learning: instead of fixed weights, fit weights to a target preference order over models.
+- Добавьте eval калибровки: совпадают ли softmax-вероятности модели с её точностью? Разложите предсказания по бакетам уверенности и репортите эмпирическую точность на бакет.
+- Добавьте eval робастности: пометьте каждый пример пертурбацией (опечатка, парафраз, дистрактор) и репортите падение метрики на пертурбацию.
+- Замените mock-судью настоящей моделью за HTTP-вызовом. Сигнатура функции не меняется.
+- Добавьте обучение пер-задачных весов: вместо фиксированных весов подгоните веса под целевой порядок предпочтений между моделями.
 
-The implementation gives you the four evals, the aggregator, and the report. Real evaluation pipelines layer many more dimensions on top; the pattern stays the same: one function per eval, one aggregator, one report.
+Реализация даёт вам четыре eval'а, агрегатор и отчёт. Настоящие пайплайны оценки наслаивают сверху много других измерений; паттерн не меняется: одна функция на eval, один агрегатор, один отчёт.

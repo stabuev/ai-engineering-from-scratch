@@ -1,38 +1,35 @@
 # Capstone Lesson 39: Instruction Tuning by Supervised Fine-Tuning
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Предобученная базовая модель умеет продолжать последовательность, но не умеет следовать инструкции. Supervised fine-tuning — наименьшее изменение, которое это чинит: скормите модели парные примеры инструкции и желаемого ответа и обучите тело предсказывать токены ответа. Хитрость в том, что лосс должен считать только ответ, а не инструкцию. Этот урок строит SFT-цикл в стиле Alpaca с кастомной collate-функцией, маскирующей токены инструкции через `ignore_index=-100`, обучает на 200 парах инструкция-ответ и оценивает на отложенном сплите через exact-match.
 
+**Тип:** Практика
+**Языки:** Python (torch, numpy)
+**Пререквизиты:** Фаза 19, уроки 30–37 (трек NLP LLM: токенизатор, таблица эмбеддингов, attention-блок, тело трансформера, цикл предобучения, чекпоинты, генерация, перплексия)
+**Время:** ~90 минут
 
-> A pretrained base model can extend a sequence but cannot follow an instruction. Supervised fine-tuning is the smallest change that fixes this: feed the model paired examples of an instruction and a desired response, and train the body to predict the response tokens. The trick is that you only want the loss to count the response, not the instruction. This lesson builds an Alpaca-style SFT loop with a custom collate function that masks instruction tokens with `ignore_index=-100`, trains on 200 instruction-response pairs, and evaluates on a held-out split using exact-match.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (torch, numpy)
-**Prerequisites:** Phase 19 lessons 30-37 (NLP LLM track: tokenizer, embedding table, attention block, transformer body, pre-training loop, checkpointing, generation, perplexity)
-**Time:** ~90 minutes
+- Отформатировать парные данные инструкция-ответ в одну каузальную последовательность с явными граничными токенами.
+- Построить collate-функцию, маскирующую токены инструкции, чтобы кросс-энтропия считала только токены ответа.
+- Обучить крошечное тело трансформера под SFT-целью и увидеть, как двигается eval-метрика.
+- Реализовать greedy- и температурную генерацию, уважающую границу начала ответа.
+- Посчитать exact-match на сгенерированных завершениях отложенного набора.
 
-## Learning Objectives
+## Проблема
 
-- Format paired instruction-response data into a single causal sequence with explicit boundary tokens.
-- Build a collate function that masks instruction tokens so cross-entropy only counts response tokens.
-- Train a tiny transformer body under the SFT objective and watch the eval metric move.
-- Implement greedy and temperature-sampled generation that respects the response-start boundary.
-- Compute held-out exact-match on generated completions.
+Базовая модель, обученная предсказывать следующий токен, понятия не имеет, что такое инструкция. Покажите ей строку `"What is the capital of France?"` — и она продолжит вопрос или выдумает новое предложение. У модели есть язык, но нет контракта формата.
 
-## The Problem
-
-A base model trained on next-token prediction has no idea what an instruction is. Show it the string `"What is the capital of France?"` and it will continue the question or invent a new sentence. The model has the language but not the format contract.
-
-The SFT contract is a string template. Every training example becomes a single sequence with three regions:
+SFT-контракт — строковый шаблон. Каждый обучающий пример становится одной последовательностью с тремя областями:
 
 ```text
 <INST> What is the capital of France? <RESP> The capital of France is Paris.
 ```
 
-The boundary tokens are special tokens reserved at training time. The model learns that everything after `<RESP>` is the response and the response is what gets graded. The base model's next-token objective still applies; it is just trained on a corpus where every example has this shape.
+Граничные токены — специальные токены, зарезервированные на этапе обучения. Модель выучивает, что всё после `<RESP>` — ответ, и именно ответ оценивается. Цель базовой модели — следующий токен — никуда не девается; она просто обучается на корпусе, где каждый пример имеет эту форму.
 
-But there is a catch. If you feed the entire sequence to a vanilla cross-entropy loss, you are training the model to also predict the instruction tokens. The instruction is given. You want zero gradient on those positions. The fix is the mask.
+Но есть подвох. Если скормить всю последовательность обычной кросс-энтропии, вы обучаете модель предсказывать ещё и токены инструкции. Инструкция дана. На этих позициях нужен нулевой градиент. Лечение — маска.
 
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -44,41 +41,41 @@ flowchart LR
   CE --> Step[backward + optimiser step]
 ```
 
-`ignore_index` is a feature of `torch.nn.functional.cross_entropy`. Any target position equal to `ignore_index` contributes zero loss and zero gradient. The convention in PyTorch is `-100`. The collate function builds two tensors per example: `input_ids` (the full sequence) and `labels` (a copy of `input_ids` with the instruction positions overwritten by `-100`).
+`ignore_index` — фича `torch.nn.functional.cross_entropy`. Любая целевая позиция, равная `ignore_index`, вносит нулевой лосс и нулевой градиент. Конвенция PyTorch — `-100`. Collate-функция строит два тензора на пример: `input_ids` (полная последовательность) и `labels` (копия `input_ids`, где позиции инструкции перезаписаны `-100`).
 
-The model sees the whole sequence during the forward pass; attention can attend to the instruction. The loss only counts response tokens. This is exactly what you want: condition on the instruction, predict the response.
+Модель видит всю последовательность на forward-проходе; внимание может смотреть на инструкцию. Лосс считает только токены ответа. Это ровно то, что нужно: обусловиться на инструкции, предсказать ответ.
 
-## The Data
+## Данные
 
-Two hundred instruction-response pairs are generated deterministically in `main.py`. They cover six task types:
+Двести пар инструкция-ответ генерируются детерминированно в `main.py`. Они покрывают шесть типов задач:
 
-- factual single-shot (capital of X)
-- arithmetic
-- list extraction
-- one-sentence summary
-- code (print, sort)
-- definition
+- фактологическая одношаговая (столица X)
+- арифметика
+- извлечение списка
+- саммари одним предложением
+- код (print, sort)
+- определение
 
-Each task has a templated instruction and a deterministic response. This is intentionally simple. Exact-match is brittle, and the lesson uses a fixture where the right answer is one specific string. Real SFT datasets need fuzzy metrics; the principle is identical.
+У каждой задачи шаблонная инструкция и детерминированный ответ. Это намеренно просто. Exact-match хрупок, и урок использует фикстуру, где правильный ответ — одна конкретная строка. Настоящим SFT-датасетам нужны нечёткие метрики; принцип идентичен.
 
-Splits are 160 train, 40 test. The test set covers all six task types so per-category exact-match can be reported.
+Сплиты: 160 трейн, 40 тест. Тестовый набор покрывает все шесть типов задач, поэтому exact-match можно репортить по категориям.
 
-## Tokenisation and Padding
+## Токенизация и паддинг
 
-The tokeniser is byte-level with three reserved specials:
+Токенизатор байтовый, с тремя зарезервированными спецтокенами:
 
-- `INST_ID = 256`: marks the start of the instruction region.
-- `RESP_ID = 257`: marks the boundary between instruction and response.
-- `PAD_ID = 258`: padding for variable-length batches.
+- `INST_ID = 256`: помечает начало области инструкции.
+- `RESP_ID = 257`: помечает границу между инструкцией и ответом.
+- `PAD_ID = 258`: паддинг для батчей переменной длины.
 
-The sequence is `[INST] inst_bytes [RESP] resp_bytes [PAD]*`. The collate function:
+Последовательность — `[INST] inst_bytes [RESP] resp_bytes [PAD]*`. Collate-функция:
 
-1. Tokenises each example.
-2. Pads every example in the batch to the longest sequence in the batch.
-3. Builds `labels` = `input_ids` shifted by one (causal LM target), with:
-   - The instruction region replaced by `-100`.
-   - The padding region replaced by `-100`.
-   - The `RESP_ID` boundary position itself replaced by `-100` (you do not train the model to predict the boundary token; it predicts what follows).
+1. Токенизирует каждый пример.
+2. Паддит каждый пример батча до длиннейшей последовательности батча.
+3. Строит `labels` = `input_ids`, сдвинутые на один (каузальная LM-цель), где:
+   - область инструкции заменена на `-100`;
+   - область паддинга заменена на `-100`;
+   - сама граничная позиция `RESP_ID` заменена на `-100` (модель не обучают предсказывать граничный токен; она предсказывает то, что за ним).
 
 ```mermaid
 flowchart TD
@@ -89,9 +86,9 @@ flowchart TD
   Mask --> Out[(input_ids, labels)]
 ```
 
-The shift is the standard causal trick: position `i` of `input_ids` predicts position `i+1`, so `labels[i] = input_ids[i+1]` (with the final position dropped from the input and the first dropped from the target). The mask is applied after the shift to land on the right positions.
+Сдвиг — стандартный каузальный трюк: позиция `i` в `input_ids` предсказывает позицию `i+1`, поэтому `labels[i] = input_ids[i+1]` (финальная позиция выбрасывается из входа, первая — из цели). Маска применяется после сдвига, чтобы попасть на правильные позиции.
 
-## Training
+## Обучение
 
 ```mermaid
 flowchart LR
@@ -103,48 +100,48 @@ flowchart LR
   Opt --> Body[(updated body)]
 ```
 
-The loop is the standard PyTorch SFT loop. Adam, learning rate around 3e-4 to 1e-3, ten to twenty epochs on this fixture, no scheduler. The model is small enough (hidden 96, 2 blocks, max length 64) to train to convergence on CPU inside two minutes.
+Цикл — стандартный PyTorch SFT-цикл. Adam, learning rate около 3e-4–1e-3, десять-двадцать эпох на этой фикстуре, без планировщика. Модель достаточно мала (hidden 96, 2 блока, максимальная длина 64), чтобы дообучиться до сходимости на CPU за две минуты.
 
-Every fifth epoch the loop runs a tiny eval pass on the held-out set and prints exact-match. Watching exact-match go from 0.0 at epoch one to something like 0.85 at epoch fifteen is the lesson's payoff: you can see the model learning the format and the answers at the same time.
+Каждую пятую эпоху цикл гоняет маленький eval-проход по отложенному набору и печатает exact-match. Наблюдать, как exact-match идёт с 0.0 на первой эпохе до примерно 0.85 на пятнадцатой, — награда урока: видно, как модель одновременно выучивает формат и ответы.
 
-## Generation
+## Генерация
 
-At eval time the model gets the instruction prefix `[INST] inst_bytes [RESP]` and generates tokens until either:
+На eval модель получает префикс инструкции `[INST] inst_bytes [RESP]` и генерирует токены, пока:
 
-- the sequence reaches `max_len`, or
-- the model emits a special stop heuristic: two consecutive sentence-ending bytes (`.`, `!`, `?`).
+- последовательность не достигнет `max_len`, или
+- модель не выдаст стоп-эвристику: два подряд байта конца предложения (`.`, `!`, `?`).
 
-The lesson ships greedy decoding plus an optional temperature sampler. Exact-match uses greedy because temperature would make the metric stochastic. Real systems often sample, then judge fuzzily; that pipeline is lesson 41.
+Урок поставляет greedy-декодирование плюс опциональный температурный сэмплер. Exact-match использует greedy, потому что температура сделала бы метрику стохастичной. Настоящие системы часто сэмплируют, а затем судят нечётко; этот пайплайн — урок 41.
 
-## Exact-Match Evaluation
+## Оценка exact-match
 
-Exact-match is the strictest text metric. The predicted response string is normalised (lowercase, strip whitespace, collapse double spaces) and compared to the reference response, normalised the same way. The metric is either 1 or 0 per example. The aggregate is the mean.
+Exact-match — строжайшая текстовая метрика. Предсказанная строка ответа нормализуется (нижний регистр, обрезка пробелов, схлопывание двойных пробелов) и сравнивается с референсным ответом, нормализованным так же. Метрика — 1 или 0 на пример. Агрегат — среднее.
 
-Real SFT pipelines complement exact-match with token-level F1 (lesson 41) and a judge model. Exact-match remains useful because it is unambiguous; if it says 0.7, exactly 70 percent of test instructions produced the gold response character for character.
+Настоящие SFT-пайплайны дополняют exact-match токенным F1 (урок 41) и моделью-судьёй. Exact-match остаётся полезным своей однозначностью: если он говорит 0.7, ровно 70 процентов тестовых инструкций породили эталонный ответ символ в символ.
 
-## What you will build
+## Что вы соберёте
 
-The implementation is one `main.py` plus tests.
+Реализация — один `main.py` плюс тесты.
 
-1. `InstructionTokenizer`: byte-level encoder with reserved specials. Encodes either an instruction prefix or a full pair.
-2. `make_dataset`: generates 200 pairs across six task types with a fixed seed.
-3. `SFTDataset`: returns `(input_ids, labels)` per example, already mask-prepared.
-4. `sft_collate`: dynamic padding, builds the batch tensor, sets `-100` on instruction and pad positions.
-5. `TinyGPT`: transformer body plus tied or untied LM head.
-6. `train_sft`: the SFT loop, with per-epoch eval hooks.
-7. `generate`: causal decode from a prefix, greedy or sampled, with the stop heuristic.
-8. `exact_match`: normalised string comparison, returns float in `[0, 1]`.
-9. `run_demo`: builds the data, trains for twenty epochs, evaluates, prints a per-category breakdown, exits zero on success.
+1. `InstructionTokenizer`: байтовый кодировщик с зарезервированными спецтокенами. Кодирует либо префикс инструкции, либо полную пару.
+2. `make_dataset`: генерирует 200 пар по шести типам задач с фиксированным сидом.
+3. `SFTDataset`: возвращает `(input_ids, labels)` на пример, уже с подготовленной маской.
+4. `sft_collate`: динамический паддинг, сборка батчевого тензора, `-100` на позициях инструкции и паддинга.
+5. `TinyGPT`: тело трансформера плюс связанная или несвязанная LM-голова.
+6. `train_sft`: SFT-цикл с eval-хуками на эпоху.
+7. `generate`: каузальное декодирование из префикса, greedy или сэмплированное, со стоп-эвристикой.
+8. `exact_match`: нормализованное сравнение строк, возвращает float в `[0, 1]`.
+9. `run_demo`: строит данные, обучает двадцать эпох, оценивает, печатает разбивку по категориям, выходит с нулём при успехе.
 
-## Why the mask matters
+## Почему маска важна
 
-Without the mask, the loss treats instruction tokens as targets. The model learns to predict the instruction. This is a different objective and produces a worse model in two ways. First, model capacity is wasted reconstructing inputs the user always provides. Second, the response loss is smaller in the gradient sum because instruction tokens outnumber response tokens in most batches; the optimiser's effective learning rate on the part you care about is lower than you intended. The mask is not a polish; it is the objective.
+Без маски лосс трактует токены инструкции как цели. Модель учится предсказывать инструкцию. Это другая цель, и она даёт худшую модель двумя способами. Первый: ёмкость модели тратится на реконструкцию входов, которые пользователь всегда предоставляет сам. Второй: лосс ответа меньше в градиентной сумме, потому что в большинстве батчей токенов инструкции больше, чем токенов ответа; эффективный learning rate оптимизатора на той части, которая вам важна, ниже задуманного. Маска — не полировка; маска и есть цель обучения.
 
-## Stretch goals
+## Дополнительные цели
 
-- Add a learning-rate warmup followed by cosine decay. SFT is more sensitive to LR than pretraining.
-- Add per-token loss logging and plot the loss curve over training. Notice that early epochs are dominated by template tokens (`<RESP>`, common prefixes) and later epochs are dominated by the actual answer tokens.
-- Extend the eval to BLEU-1 or chrF. Exact-match underestimates models that produce a paraphrase with the same answer.
-- Add a chat template with multi-turn formatting and train on a fixture that includes follow-ups.
+- Добавьте warmup learning rate с последующим косинусным затуханием. SFT чувствительнее к LR, чем предобучение.
+- Добавьте потокенное логирование лосса и постройте кривую лосса по обучению. Заметьте: ранние эпохи доминируются шаблонными токенами (`<RESP>`, частые префиксы), поздние — токенами собственно ответа.
+- Расширьте eval до BLEU-1 или chrF. Exact-match недооценивает модели, выдающие парафраз с тем же ответом.
+- Добавьте чат-шаблон с многоходовым форматированием и обучите на фикстуре с follow-up'ами.
 
-The implementation gives you the format contract, the mask, and the loop. The objective change from base model to instruction follower is one collate function.
+Реализация даёт вам контракт формата, маску и цикл. Смена цели с базовой модели на следование инструкциям — одна collate-функция.

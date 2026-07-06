@@ -1,33 +1,30 @@
 # Token and Positional Embeddings
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Id — это целые числа. Модель хочет векторы. Между ними сидят две таблицы поиска, и выбор позиционной определяет, что модель сможет выучить.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки Фазы 04, уроки Фазы 07 о трансформерах, уроки 30 и 31 этой фазы
+**Время:** ~90 минут
 
-> Ids are integers. The model wants vectors. Two lookup tables sit between them, and the choice of the positional one shapes what the model can learn.
+## Цели обучения
+- Построить таблицу поиска токенных эмбеддингов, маппящую словарные id в плотные векторы.
+- Построить обучаемую таблицу позиционных эмбеддингов, индексируемую позицией.
+- Построить фиксированный синусоидальный позиционный эмбеддинг, индексируемый позицией и не имеющий параметров.
+- Скомпоновать токенный и позиционный эмбеддинги в единый вход для блока трансформера.
+- Сопоставить обучаемые и синусоидальные эмбеддинги по обобщению на длину и числу параметров.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 04 lessons, Phase 07 transformer lessons, Lessons 30 and 31 of this phase
-**Time:** ~90 minutes
+## Рамка
 
-## Learning Objectives
-- Build a token-embedding lookup table that maps vocabulary ids to dense vectors.
-- Build a learned positional-embedding lookup table indexed by position.
-- Build a fixed sinusoidal positional embedding indexed by position with no parameters.
-- Compose token and positional embeddings into a single input for a transformer block.
-- Contrast learned and sinusoidal embeddings on length generalization and parameter count.
+Первый контакт модели с токенным id — поиск строки в матрице токенных эмбеддингов. В матрице по строке на каждый словарный id и по столбцу на каждое измерение модели. Поиск возвращает вектор, который остальная модель трактует как смысл id. Backprop обновляет строки, использованные в forward-проходе. За время обучения геометрия этих строк выучивается кодировать сходство направлениями.
 
-## The frame
+У токенных id самих по себе нет порядка. Модели нужен второй сигнал, говорящий, что позиция один отличается от позиции семнадцать. Два доминирующих выбора для этого сигнала — обучаемый позиционный эмбеддинг (вторая таблица, по строке на позицию) и фиксированный синусоидальный (математическая формула без параметров). У выбора есть последствия. Обучаемая таблица — параметр, ограниченный максимальной длиной контекста, на которой модель обучалась. Синусоидальная таблица в теории беспараметрична, а формула продолжается на любую позицию, но `SinusoidalPositionalEmbedding` этого урока предвычисляет фиксированную таблицу на `max_context_length`, и его `forward` кидает исключение за этой границей; поэтому здесь оба модуля насаждают максимальную длину контекста. Модель всё равно может спотыкаться за пределами обученной длины, даже когда таблицы хватает для индексации.
 
-The model's first contact with a token id is a row lookup in the token-embedding matrix. The matrix has one row per vocabulary id and one column per model dimension. The lookup returns a vector that the rest of the model treats as the meaning of the id. Backprop updates the rows that were used in the forward pass. Over training the geometry of those rows learns to encode similarity in directions.
+Этот урок строит оба варианта и компонует их с токенным эмбеддингом в единый вход для attention-блока следующего урока.
 
-Token ids alone have no order. The model needs a second signal that tells it position one is different from position seventeen. The two dominant choices for that signal are a learned positional embedding (a second lookup table, one row per position) and a fixed sinusoidal positional embedding (a math formula with no parameters). The choice has consequences. A learned table is a parameter and is bounded by the maximum context length the model was trained on. A sinusoidal table is parameter-free in theory and the formula extends to any position, but this lesson's `SinusoidalPositionalEmbedding` precomputes a fixed table at `max_context_length` and its `forward` raises past that bound; both modules therefore enforce a maximum context length here. The model may still struggle past its training length even when the table is large enough to index.
+## Контракт формы
 
-This lesson builds both and composes them with the token embedding into a single input for the next lesson's attention block.
-
-## The shape contract
-
-The input to the embedding stage is a batch of token ids of shape `(B, T)`. The output is a tensor of shape `(B, T, D)` where `D` is the model dimension. Every batch element has the same context length `T`. Every position has the same vector dimension `D`.
+Вход стадии эмбеддингов — батч токенных id формы `(B, T)`. Выход — тензор формы `(B, T, D)`, где `D` — размерность модели. У каждого элемента батча одна и та же длина контекста `T`. У каждой позиции одна и та же размерность вектора `D`.
 
 ```mermaid
 flowchart LR
@@ -41,25 +38,25 @@ flowchart LR
     G --> H["(B, T, D) input to attention"]
 ```
 
-The composition is a sum, not a concatenation. Summing keeps `D` constant through the network and lets the model decide on a per-feature basis whether the token meaning or the position dominates at each layer.
+Композиция — сумма, а не конкатенация. Суммирование держит `D` постоянным по всей сети и позволяет модели пофичево решать, что доминирует на каждом слое — смысл токена или позиция.
 
-## The token embedding matrix
+## Матрица токенных эмбеддингов
 
-The token embedding is a parameter tensor of shape `(V, D)` where `V` is the vocabulary size. PyTorch exposes it as `nn.Embedding(V, D)`. At init the entries are drawn from a small Gaussian, traditionally with mean zero and standard deviation around `0.02` for transformer-scale models. The exact init matters less than that it stays consistent across runs.
+Токенный эмбеддинг — тензор-параметр формы `(V, D)`, где `V` — размер словаря. PyTorch открывает его как `nn.Embedding(V, D)`. При инициализации элементы берутся из маленького гауссиана — традиционно с нулевым средним и стандартным отклонением около `0.02` для моделей трансформерного масштаба. Точная инициализация важна меньше, чем её согласованность между прогонами.
 
-The forward pass is a single indexing operation. PyTorch maps `(B, T)` int64 ids to `(B, T, D)` floats by gathering rows. The backward pass accumulates gradients only into the rows that were touched in the forward pass. Two rows that never appeared in the batch receive zero gradient on that step.
+Forward-проход — одна операция индексации. PyTorch маппит int64-id формы `(B, T)` в float-тензор `(B, T, D)`, собирая строки. Backward-проход аккумулирует градиенты только в строки, тронутые в forward-проходе. Две строки, не встретившиеся в батче, получают на этом шаге нулевой градиент.
 
-A subtle detail. The token embedding and the output projection at the end of the model often share weights (weight tying). When that happens, every backward pass touches every row of the embedding through the output side. The lesson here exposes both as separate modules but the same matrix could play both roles in a full model.
+Тонкая деталь. Токенный эмбеддинг и выходная проекция в конце модели часто делят веса (weight tying). Тогда каждый backward-проход трогает каждую строку эмбеддинга через выходную сторону. Урок открывает их как отдельные модули, но в полной модели одна матрица могла бы играть обе роли.
 
-## The learned positional embedding
+## Обучаемый позиционный эмбеддинг
 
-The learned positional embedding is a second `nn.Embedding` of shape `(max_context_length, D)`. The lookup is keyed by position id `0, 1, 2, ..., T-1`. The forward pass broadcasts that position vector across the batch dimension.
+Обучаемый позиционный эмбеддинг — второй `nn.Embedding` формы `(max_context_length, D)`. Поиск идёт по id позиции `0, 1, 2, ..., T-1`. Forward-проход бродкастит этот позиционный вектор по батчевому измерению.
 
-The downside of the learned table is that it cannot be queried at position `T` if the model was only trained up to position `T-1`. The row does not exist. Production decoder-only models that use this scheme bake the maximum context length into the architecture and refuse to process longer inputs.
+Минус обучаемой таблицы: её нельзя спросить о позиции `T`, если модель обучалась только до позиции `T-1`. Строки не существует. Продакшен-модели decoder-only с этой схемой вшивают максимальную длину контекста в архитектуру и отказываются обрабатывать более длинные входы.
 
-## The sinusoidal positional embedding
+## Синусоидальный позиционный эмбеддинг
 
-The sinusoidal positional embedding is a function from position to vector. Position `p` and feature `i` produce
+Синусоидальный позиционный эмбеддинг — функция из позиции в вектор. Позиция `p` и фича `i` дают
 
 ```python
 angle = p / (10000 ** (2 * (i // 2) / D))
@@ -67,15 +64,15 @@ emb[p, 2k]     = sin(angle)
 emb[p, 2k + 1] = cos(angle)
 ```
 
-The function has no parameters. Every position has a unique vector. The wavelength varies geometrically across feature dimensions, so the lower dimensions encode coarse position and the higher dimensions encode fine position.
+У функции нет параметров. У каждой позиции уникальный вектор. Длина волны меняется геометрически по измерениям фич, поэтому нижние измерения кодируют грубую позицию, а верхние — тонкую.
 
-The property that follows from the choice of `sin` and `cos` together is that the vector at position `p + k` is a linear function of the vector at position `p`. That gives the attention layer an easy path to learning relative-position offsets. The model does not need a separate parameter to express "look five tokens back."
+Свойство, следующее из выбора `sin` и `cos` вместе: вектор в позиции `p + k` — линейная функция вектора в позиции `p`. Это даёт слою внимания лёгкий путь к выучиванию относительных сдвигов позиций. Модели не нужен отдельный параметр, чтобы выразить «посмотри на пять токенов назад».
 
-The lesson computes the full sinusoidal table once at construction and indexes into it at forward time.
+Урок вычисляет полную синусоидальную таблицу один раз при конструировании и индексирует её в момент forward.
 
-## The composition
+## Композиция
 
-The input pipeline does three things in order. Read the token ids. Look up the token vectors. Add the positional vectors. Return the sum.
+Входной пайплайн делает три вещи по порядку. Читает токенные id. Ищет токенные векторы. Прибавляет позиционные векторы. Возвращает сумму.
 
 ```mermaid
 sequenceDiagram
@@ -90,24 +87,24 @@ sequenceDiagram
     Layer->>Caller: (B, T, D)
 ```
 
-The broadcasting in the sum step replicates the `(T, D)` positional tensor along the batch dimension. PyTorch handles that automatically because the positional tensor has shape `(1, T, D)` after unsqueeze.
+Бродкастинг на шаге суммы реплицирует позиционный тензор `(T, D)` вдоль батчевого измерения. PyTorch делает это автоматически, потому что после unsqueeze позиционный тензор имеет форму `(1, T, D)`.
 
-## Contrastive analysis
+## Сравнительный анализ
 
-The lesson runs both variants on the same inputs and prints two diagnostics.
+Урок гоняет оба варианта на одних входах и печатает две диагностики.
 
-The first is parameter count. The learned variant adds `max_context_length * D` parameters on top of the token embedding. The sinusoidal variant adds zero.
+Первая — число параметров. Обучаемый вариант добавляет `max_context_length * D` параметров поверх токенного эмбеддинга. Синусоидальный — ноль.
 
-The second is the cosine similarity between embeddings at neighbouring positions. The sinusoidal variant has a smooth and predictable decay because the function is continuous. The learned variant at initialization has near-random similarity because the rows are drawn independently. After training, the learned variant typically develops a similar smooth structure, but it has to discover that structure from data.
+Вторая — косинусное сходство эмбеддингов соседних позиций. У синусоидального варианта — гладкое и предсказуемое затухание, потому что функция непрерывна. У обучаемого при инициализации сходство почти случайное, потому что строки взяты независимо. После обучения обучаемый вариант обычно развивает похожую гладкую структуру, но ему приходится открывать её из данных.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not build rotary positional encoding (RoPE) or AliBi. Those are the modern choices in production transformers. They both follow the same shape contract as the embeddings here (apply a position-dependent transformation to vectors of shape `(B, T, D)`) but they apply at the attention-projection step rather than at the input. The next lesson builds the attention block, and one of the optional extensions is to fold rotary into the query-key projections there.
+Он не строит rotary-позиционное кодирование (RoPE) или AliBi. Это современный выбор продакшен-трансформеров. Оба следуют тому же контракту формы, что эмбеддинги здесь (применить позиционно-зависимое преобразование к векторам формы `(B, T, D)`), но применяются на шаге attention-проекций, а не на входе. Следующий урок строит attention-блок, и одно из опциональных расширений — вплести rotary в query-key-проекции там.
 
-It does not train the embedding. Training requires a loss, which requires a model output, which requires attention and an LM head. That is the next lesson and the one after.
+Он не обучает эмбеддинг. Обучение требует лосса, лосс требует выхода модели, а выход требует внимания и LM-головы. Это следующий урок и урок за ним.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines three modules. `TokenEmbedding` wraps `nn.Embedding(V, D)`. `LearnedPositionalEmbedding` wraps `nn.Embedding(L, D)`. `SinusoidalPositionalEmbedding` precomputes the table and exposes it as a buffer. `EmbeddingComposer` ties a token embedding and a positional embedding together. The demo at the bottom prints the shapes, the parameter counts, and the neighbour-position similarity diagnostic. The tests in `code/tests/test_embeddings.py` pin shape, broadcast behaviour, parameter count, and the sinusoidal formula.
+`main.py` определяет три модуля. `TokenEmbedding` оборачивает `nn.Embedding(V, D)`. `LearnedPositionalEmbedding` оборачивает `nn.Embedding(L, D)`. `SinusoidalPositionalEmbedding` предвычисляет таблицу и открывает её как буфер. `EmbeddingComposer` связывает токенный и позиционный эмбеддинги вместе. Демо внизу печатает формы, счётчики параметров и диагностику сходства соседних позиций. Тесты в `code/tests/test_embeddings.py` фиксируют форму, поведение бродкаста, число параметров и синусоидальную формулу.
 
-Run the demo. Then change the model dimension `D` from 64 to 32 and watch how the sinusoidal wavelength bands change.
+Запустите демо. Затем измените размерность модели `D` с 64 на 32 и посмотрите, как меняются полосы длин волн синусоиды.

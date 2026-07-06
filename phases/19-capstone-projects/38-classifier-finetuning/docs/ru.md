@@ -1,34 +1,31 @@
 # Capstone Lesson 38: Classifier Fine-Tuning by Head Swap
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Первый capstone трека B. Предобученная языковая модель — стек self-attention-блоков, заканчивающийся головой предсказания токенов. Когда вам нужно spam против ham, голова не подходит, но тело в основном годится. Этот урок срывает голову, приклеивает двухклассовый линейный слой к спуленному представлению и обучает классификатор двумя способами: только финальный слой и полный fine-tuning. Eval — precision, recall и F1 на отложенном сплите. Вы узнаёте, что покупает каждая стратегия и во что она обходится.
 
+**Тип:** Практика
+**Языки:** Python (torch, numpy)
+**Пререквизиты:** Фаза 19, уроки 30–37 (трек NLP LLM: токенизатор, таблица эмбеддингов, attention-блок, тело трансформера, цикл предобучения, чекпоинты, генерация, перплексия)
+**Время:** ~90 минут
 
-> Track B's first capstone. A pretrained language model is a stack of self-attention blocks ending in a token-prediction head. When you want spam vs ham, the head is wrong but the body is mostly right. This lesson rips the head off, glues a two-class linear layer onto the pooled representation, and trains the classifier two different ways: final-layer only, and full fine-tuning. The eval is precision, recall, and F1 on a held-out split. You learn what each strategy buys you and what it costs.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (torch, numpy)
-**Prerequisites:** Phase 19 lessons 30-37 (NLP LLM track: tokenizer, embedding table, attention block, transformer body, pre-training loop, checkpointing, generation, perplexity)
-**Time:** ~90 minutes
+- Заменить голову языковой модели классификационной, не реинициализируя тело.
+- Реализовать два режима обучения: замороженное тело (только голова) и полный fine-tuning — с одним общим циклом обучения.
+- Построить токенизатор-осведомлённый дата-пайплайн, который паддит, маскирует паддинг и пулит выход внимания.
+- Вычислить precision, recall, F1 и матрицу ошибок из сырых логитов.
+- Понять компромисс между числом параметров, временем обучения и запасом качества.
 
-## Learning Objectives
+## Проблема
 
-- Replace a language-model head with a classification head without re-initialising the body.
-- Implement two training regimes: frozen body (head-only) and full fine-tuning, sharing one training loop.
-- Build a tokeniser-aware data pipeline that pads, masks padding, and pools attention output.
-- Compute precision, recall, F1, and a confusion matrix from raw logits.
-- Reason about the trade-off between parameter count, training time, and head-room.
+Вы предобучили маленький трансформер на универсальном корпусе. Выходная голова проецирует последнее скрытое состояние в словарь из 1000 токенов. Теперь у вас 800 SMS с метками spam или ham, и вам нужен бинарный классификатор. Есть три варианта.
 
-## The Problem
+Неправильный вариант — обучить свежий классификатор с нуля на 800 примерах. Тело предобученной модели уже кодирует полезную структуру: идентичность слов, позицию, простую совстречаемость. Выбросить его — потратить впустую compute, который его построил.
 
-You pre-trained a small transformer on a generic corpus. The output head projects the last hidden state to a 1000-token vocabulary. You now have 800 SMS messages labelled spam or ham and you want a binary classifier. Three options exist.
+Два правильных варианта — замена головы с замороженным телом и замена головы с обучаемым телом. Обучение только головы быстрое, почти бесплатное по памяти и редко переобучается на таком объёме данных. Полный fine-tuning медленнее, может переобучиться на малых данных, но достигает большей точности, когда downstream-домен дрейфует от корпуса предобучения.
 
-The wrong option is to train a fresh classifier from scratch on 800 examples. The body of the pretrained model already encodes useful structure: word identity, position, simple co-occurrence. Throwing it away wastes the compute that built it.
+Этот урок строит оба, чтобы вы могли сравнить их на одной фикстуре.
 
-The two right options are head swap with the body frozen, and head swap with the body trainable. Head-only training is fast, almost free in memory, and rarely overfits with this little data. Full fine-tuning is slower, can overfit on small data, but reaches higher accuracy when the downstream domain drifts from the pretraining corpus.
-
-This lesson builds both, so you can compare them on the same fixture.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -39,26 +36,26 @@ flowchart LR
   H2 --> L[Cross-entropy loss<br/>vs label]
 ```
 
-The model is a function `f_theta(tokens) -> hidden_states`. The head is a function `g_phi(hidden) -> logits`. Swapping heads means keeping `theta` and replacing `g_phi`. The body's parameters are the expensive part. The head is a single linear layer.
+Модель — функция `f_theta(tokens) -> hidden_states`. Голова — функция `g_phi(hidden) -> logits`. Замена головы — это сохранение `theta` и замена `g_phi`. Параметры тела — дорогая часть. Голова — один линейный слой.
 
-Two trainable parameter sets matter:
+Важны два набора обучаемых параметров:
 
-- `theta` (the body): tens of thousands of weights per attention block.
-- `phi` (the head): `hidden_dim * num_classes` weights plus a bias.
+- `theta` (тело): десятки тысяч весов на attention-блок.
+- `phi` (голова): `hidden_dim * num_classes` весов плюс bias.
 
-In head-only training you compute gradients against `phi` and zero them against `theta`. PyTorch lets you do this by setting `requires_grad=False` on body parameters. The optimiser then sees only the head and the body stays frozen.
+При обучении только головы вы считаете градиенты по `phi` и зануляете их по `theta`. PyTorch позволяет это через `requires_grad=False` на параметрах тела. Оптимизатор тогда видит только голову, а тело остаётся замороженным.
 
-In full fine-tuning you let gradients flow back through the whole stack. The body's weights drift to fit the classification objective. The risk is catastrophic forgetting on small data: the body's pretraining gets washed out by overfitting noise.
+При полном fine-tuning градиенты текут назад через весь стек. Веса тела дрейфуют под классификационную цель. Риск — катастрофическое забывание на малых данных: предобучение тела вымывается шумом переобучения.
 
-## The Pooling Question
+## Вопрос пулинга
 
-A classifier needs one vector per sequence, not one vector per token. Three common choices:
+Классификатору нужен один вектор на последовательность, а не один вектор на токен. Три частых выбора:
 
-- **Mean pool**: average the hidden states across the sequence, weighted by the attention mask.
-- **CLS pool**: prepend a special token and use only its output. This is what BERT does.
-- **Last-token pool**: use the last non-padding token. This is what GPT-class classifiers do.
+- **Mean pool**: усреднить скрытые состояния по последовательности, взвесив на маску внимания.
+- **CLS pool**: приклеить специальный токен спереди и использовать только его выход. Так делает BERT.
+- **Last-token pool**: использовать последний не-паддинговый токен. Так делают классификаторы GPT-класса.
 
-This lesson uses mean pooling with explicit attention-mask weighting. It is the simplest, gives a stable signal across sequence lengths, and does not require pretraining a CLS token.
+Этот урок использует mean pooling с явным взвешиванием по маске внимания. Это простейший вариант, он даёт стабильный сигнал на любых длинах последовательностей и не требует предобучать CLS-токен.
 
 ```mermaid
 flowchart LR
@@ -69,30 +66,30 @@ flowchart LR
   P --> C[Classifier head<br/>D x 2]
 ```
 
-## The Data
+## Данные
 
-Eight hundred SMS messages, balanced 400 spam and 400 ham, are generated deterministically in `code/main.py`. The generator uses a fixed seed, picks templates and substitutes slot fillers, and emits messages between 5 and 25 tokens long. Real datasets have noise this fixture does not. The point of the fixture is reproducibility.
+Восемьсот SMS, сбалансированных 400 spam и 400 ham, генерируются детерминированно в `code/main.py`. Генератор использует фиксированный сид, выбирает шаблоны и подставляет заполнители слотов, порождая сообщения от 5 до 25 токенов. В настоящих датасетах есть шум, которого в этой фикстуре нет. Смысл фикстуры — воспроизводимость.
 
-The data splits 80/20: 640 train, 160 test. Splits are stratified so the test set keeps the 50/50 balance. A held-out set with a known balance lets precision and recall be read as honest numbers.
+Данные делятся 80/20: 640 трейн, 160 тест. Сплиты стратифицированы, чтобы тестовый набор сохранял баланс 50/50. Отложенный набор с известным балансом позволяет читать precision и recall как честные числа.
 
-## The Metrics
+## Метрики
 
-Binary classification with class 1 as the positive class (spam). Counts are:
+Бинарная классификация с классом 1 как положительным (spam). Счётчики:
 
-- `TP`: predicted spam, was spam.
-- `FP`: predicted spam, was ham.
-- `FN`: predicted ham, was spam.
-- `TN`: predicted ham, was ham.
+- `TP`: предсказан spam, был spam.
+- `FP`: предсказан spam, был ham.
+- `FN`: предсказан ham, был spam.
+- `TN`: предсказан ham, был ham.
 
-The three headline metrics:
+Три главные метрики:
 
-- `precision = TP / (TP + FP)`. Of the messages flagged spam, what fraction actually are?
-- `recall = TP / (TP + FN)`. Of the actual spam, what fraction did the model flag?
-- `F1 = 2 * P * R / (P + R)`. The harmonic mean of the two.
+- `precision = TP / (TP + FP)`. Из помеченного как spam — какая доля им действительно является?
+- `recall = TP / (TP + FN)`. Из настоящего spam — какую долю модель поймала?
+- `F1 = 2 * P * R / (P + R)`. Гармоническое среднее двух.
 
-A confusion matrix prints the four counts as a 2x2 grid. The demo writes this to stdout for both training regimes.
+Матрица ошибок печатает четыре счётчика сеткой 2x2. Демо пишет её в stdout для обоих режимов обучения.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -107,32 +104,32 @@ flowchart TD
   M --> E[Evaluator<br/>P / R / F1]
 ```
 
-The body is a deliberately tiny transformer: vocab 260, hidden 64, 4 heads, 2 blocks, max sequence 32. It is small enough to train both regimes to convergence inside ninety seconds on CPU. It is not pretrained in the lesson; instead, the `pretrain_quick` helper does five epochs of LM training on the same fixture's text to give the body a non-trivial starting point. This keeps the lesson self-contained.
+Тело — намеренно крошечный трансформер: словарь 260, hidden 64, 4 головы, 2 блока, максимальная последовательность 32. Он достаточно мал, чтобы обучить оба режима до сходимости за девяносто секунд на CPU. В уроке он не предобучен; вместо этого хелпер `pretrain_quick` делает пять эпох LM-обучения на тексте той же фикстуры, чтобы дать телу нетривиальную стартовую точку. Так урок остаётся самодостаточным.
 
-## What you will build
+## Что вы соберёте
 
-The implementation is one `main.py` plus one test module (`code/tests/test_main.py`).
+Реализация — один `main.py` плюс один тестовый модуль (`code/tests/test_main.py`).
 
-1. `ByteTokenizer`: maps bytes to ids, reserves a pad id.
-2. `Block`: a transformer block with multi-head attention and a feed-forward layer. Pre-norm.
-3. `LMBody`: token + position embeddings plus a stack of blocks. Returns hidden states.
-4. `MeanPool`: mask-weighted average over the sequence axis.
-5. `Classifier`: body, pool, linear head. The body is the same instance across regimes.
-6. `freeze_body` and `unfreeze_body`: toggle `requires_grad` on body parameters.
-7. `train_classifier`: one shared loop. Accepts the model and an optimiser configured for whichever parameter group is trainable.
-8. `evaluate`: runs the test set and returns `Metrics(precision, recall, f1, confusion)`.
-9. `run_demo`: pretrains the body briefly, then trains and evaluates head-only, then full, prints both reports, and exits zero.
+1. `ByteTokenizer`: маппит байты в id, резервирует pad-id.
+2. `Block`: блок трансформера с multi-head attention и feed-forward-слоем. Pre-norm.
+3. `LMBody`: токенные + позиционные эмбеддинги плюс стек блоков. Возвращает скрытые состояния.
+4. `MeanPool`: взвешенное маской среднее по оси последовательности.
+5. `Classifier`: тело, пул, линейная голова. Тело — один и тот же экземпляр в обоих режимах.
+6. `freeze_body` и `unfreeze_body`: переключают `requires_grad` на параметрах тела.
+7. `train_classifier`: один общий цикл. Принимает модель и оптимизатор, сконфигурированный под ту группу параметров, которая обучается.
+8. `evaluate`: прогоняет тестовый набор и возвращает `Metrics(precision, recall, f1, confusion)`.
+9. `run_demo`: коротко предобучает тело, затем обучает и оценивает head-only, затем полный режим, печатает оба отчёта и выходит с нулём.
 
-## Why the comparison matters
+## Почему сравнение важно
 
-The head-only regime usually trains faster and underfits more gracefully. On this fixture you typically see precision near 0.9 and recall near 0.85 after twenty epochs of head-only training. Full fine-tuning takes about three times longer and lands within a couple of points either way, depending on the random seed.
+Режим только головы обычно обучается быстрее и недообучается изящнее. На этой фикстуре после двадцати эпох head-only-обучения вы обычно видите precision около 0.9 и recall около 0.85. Полный fine-tuning занимает примерно втрое дольше и приземляется в паре пунктов в любую сторону — в зависимости от сида.
 
-The lesson does not pick a winner. It teaches you to read the numbers and the cost. On 800 examples and a tiny body, head-only is the right call. On 80,000 examples and a bigger body, full fine-tuning starts to pay off. The contract you take from this lesson is the API: the same `train_classifier` function handles both, and the toggle is one call.
+Урок не выбирает победителя. Он учит читать числа и цену. На 800 примерах и крошечном теле head-only — правильный выбор. На 80 000 примеров и теле побольше полный fine-tuning начинает окупаться. Контракт, который вы забираете из урока, — это API: одна и та же функция `train_classifier` обслуживает оба режима, а переключатель — один вызов.
 
-## Stretch goals
+## Дополнительные цели
 
-- Add a third regime that unfreezes only the last block. This is sometimes called partial fine-tuning. It costs less than full FT and learns more than head-only.
-- Add a learning-rate scheduler. A cosine schedule on the head plus a smaller constant rate on the body is a common production setup.
-- Replace mean pooling with a learned attention pool: a small attention layer with one learned query. This often beats mean pool on longer sequences.
+- Добавьте третий режим, размораживающий только последний блок. Это иногда называют частичным fine-tuning. Он стоит меньше полного FT и выучивает больше, чем head-only.
+- Добавьте планировщик learning rate. Косинусное расписание на голове плюс меньшая константа на теле — частая продакшен-конфигурация.
+- Замените mean pooling обучаемым attention-пулом: маленький слой внимания с одним обучаемым query. На длинных последовательностях он часто бьёт mean pool.
 
-The implementation gives you the hooks. The tests pin the contract. The numbers are yours to push.
+Реализация даёт вам хуки. Тесты фиксируют контракт. Числа — вам двигать.

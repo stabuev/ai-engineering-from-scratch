@@ -1,33 +1,30 @@
 # Multi-Head Self-Attention
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Одна линейная проекция, три представления, H параллельных голов, одна маска. Attention-блок таким, каким модель реально его использует.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки Фазы 04, уроки Фазы 07 о трансформерах, уроки 30–32 этой фазы
+**Время:** ~90 минут
 
-> One linear projection, three views, H parallel heads, one mask. The attention block as the model actually uses it.
+## Цели обучения
+- Реализовать батчевую проекцию Query/Key/Value одним линейным слоем, разрезаемым на H голов.
+- Вычислить scaled dot-product attention с корректной нормализацией и обращением с dtype.
+- Применить каузальную маску, запрещающую позиции смотреть на будущие позиции.
+- Рассмотреть пер-головные веса внимания на фиксированном входе и порассуждать, куда смотрит каждая голова.
+- Обучить маленький attention-блок на игрушечной задаче и увидеть, как лосс падает по мере специализации голов.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 04 lessons, Phase 07 transformer lessons, Lessons 30 through 32 of this phase
-**Time:** ~90 minutes
+## Рамка
 
-## Learning Objectives
-- Implement a batched Query/Key/Value projection as a single linear layer split into H heads.
-- Compute scaled dot-product attention with the correct normalization and dtype handling.
-- Apply a causal mask that prevents a position from attending to future positions.
-- Inspect per-head attention weights for a fixed input and reason about what each head looks at.
-- Train a small attention block on a toy task and watch the loss fall as the heads specialize.
+Внимание — функция, позволяющая представлению токена подтягивать информацию из других токенов той же последовательности. Self-attention означает, что queries, keys и values выведены из одного и того же входа. Multi-head означает, что проекция разрезана на H параллельных задач внимания, чьи выходы конкатенируются и проецируются обратно.
 
-## The frame
+Эффективный паттерн реализации — один линейный слой, проецирующий из `D` в `3 * D` и нарезаемый на три представления, затем перестраиваемый в H голов размера `D // H` каждая. Matmul, softmax и взвешенная сумма выполняются как батчевые тензорные операции, поэтому головы работают на ускорителе параллельно.
 
-Attention is the function that lets a token's representation pull information from other tokens in the same sequence. Self-attention means queries, keys, and values are all derived from the same input. Multi-head means the projection is split into H parallel attention problems whose outputs are concatenated and projected back.
+Этот урок строит такой блок. Он также добавляет каузальную маску, чтобы тот же код работал слоем внимания в decoder-only языковой модели. Следующий урок складывает блок в полный трансформер, а урок за ним его обучает.
 
-The efficient implementation pattern is one linear layer that projects from `D` to `3 * D` and gets sliced into three views, then reshaped into H heads of size `D // H` each. The matmul, softmax, and weighted sum happen as batched tensor operations so the heads run in parallel on the accelerator.
+## Контракт формы
 
-This lesson builds that block. It also adds the causal mask so the same code works as the attention layer in a decoder-only language model. The next lesson stacks the block into a full transformer and the lesson after trains it.
-
-## The shape contract
-
-The input is `(B, T, D)`. The output is `(B, T, D)`. The mask is `(T, T)` or broadcastable to it. Inside the block the intermediate tensors have shape `(B, H, T, d_head)` where `d_head = D // H`. The constraint is `D % H == 0`.
+Вход — `(B, T, D)`. Выход — `(B, T, D)`. Маска — `(T, T)` или бродкастится к ней. Внутри блока промежуточные тензоры имеют форму `(B, H, T, d_head)`, где `d_head = D // H`. Ограничение — `D % H == 0`.
 
 ```mermaid
 flowchart LR
@@ -43,27 +40,27 @@ flowchart LR
     J --> K["(B, T, D) output"]
 ```
 
-The two linear layers (the QKV projection and the output projection) are the only parameters in the block. The mask, the softmax, the matmuls, and the reshapes are all parameter-free.
+Два линейных слоя (QKV-проекция и выходная проекция) — единственные параметры блока. Маска, softmax, matmul'ы и reshape'ы — все беспараметрические.
 
-## The QKV split
+## Разрез QKV
 
-The naive implementation has three separate linear layers, one each for Q, K, and V. The efficient one has a single layer that outputs `3 * D` features and splits the result. The two are mathematically equivalent because three separate matrix multiplications by `(D, D)` weights are exactly one matrix multiplication by a `(3D, D)` weight stacked from them.
+Наивная реализация держит три отдельных линейных слоя — по одному на Q, K и V. Эффективная — один слой, выдающий `3 * D` фич, и разрез результата. Они математически эквивалентны, потому что три отдельных умножения на матрицы `(D, D)` — это в точности одно умножение на матрицу `(3D, D)`, составленную из них.
 
-The efficient version is faster because the accelerator launches one matmul instead of three. It is also easier to initialize because the three sub-matrices live in the same parameter tensor and can be initialized together.
+Эффективная версия быстрее: ускоритель запускает один matmul вместо трёх. Её также легче инициализировать, потому что три подматрицы живут в одном тензоре-параметре и инициализируются вместе.
 
-## The head reshape
+## Reshape в головы
 
-After the split, each of Q, K, V is `(B, T, D)`. To turn that into H parallel attention problems, we reshape to `(B, T, H, d_head)` and transpose to `(B, H, T, d_head)`. The head dimension now sits next to the batch dimension so PyTorch treats the per-head attention as a batched operation across `B * H` independent instances.
+После разреза каждый из Q, K, V имеет форму `(B, T, D)`. Чтобы превратить это в H параллельных задач внимания, мы делаем reshape в `(B, T, H, d_head)` и транспонируем в `(B, H, T, d_head)`. Измерение голов теперь стоит рядом с батчевым, и PyTorch трактует пер-головное внимание как батчевую операцию над `B * H` независимыми экземплярами.
 
-The d_head dimension stays last so the score matmul `Q @ K.transpose(-2, -1)` contracts it. The result is `(B, H, T, T)` per-head attention scores.
+Измерение d_head остаётся последним, чтобы матмул скоров `Q @ K.transpose(-2, -1)` его свернул. Результат — пер-головные скоры внимания `(B, H, T, T)`.
 
-## Scaling
+## Масштабирование
 
-The scores get divided by `sqrt(d_head)` before softmax. Without that scaling, dot products grow as `d_head` grows and push the softmax into a regime where one entry has almost all the mass and the others are vanishingly small. The gradients in that regime are tiny and learning stalls. Dividing by `sqrt(d_head)` keeps the variance of the scores roughly constant across head sizes.
+Скоры делятся на `sqrt(d_head)` до softmax. Без этого масштабирования скалярные произведения растут с ростом `d_head` и загоняют softmax в режим, где почти вся масса у одного элемента, а остальные исчезающе малы. Градиенты в этом режиме крошечные, и обучение стопорится. Деление на `sqrt(d_head)` держит дисперсию скоров примерно постоянной при любых размерах голов.
 
-## The causal mask
+## Каузальная маска
 
-A decoder-only language model can only condition on the past when predicting the next token. The mask enforces that. Concretely, before the softmax, every entry above the diagonal of the `(T, T)` score matrix gets replaced by negative infinity. After softmax those positions get weight zero.
+Decoder-only языковая модель при предсказании следующего токена может опираться только на прошлое. Маска это насаждает. Конкретно: перед softmax каждый элемент выше диагонали матрицы скоров `(T, T)` заменяется на минус бесконечность. После softmax эти позиции получают нулевой вес.
 
 ```mermaid
 sequenceDiagram
@@ -80,34 +77,34 @@ sequenceDiagram
     Softmax->>V: weights @ V -> (B, H, T, d_head)
 ```
 
-We register the mask as a buffer at construction so it lives on the same device as the model and is not part of the gradient graph. The mask covers the maximum context length the block will ever see. At forward time we slice the top-left `(T, T)` corner.
+Мы регистрируем маску буфером при конструировании, чтобы она жила на том же устройстве, что модель, и не входила в градиентный граф. Маска покрывает максимальную длину контекста, которую блок вообще увидит. В момент forward мы срезаем верхний левый угол `(T, T)`.
 
-## The output projection
+## Выходная проекция
 
-After per-head context vectors `(B, H, T, d_head)`, we transpose back to `(B, T, H, d_head)`, reshape to `(B, T, D)`, and apply a final `(D, D)` linear projection. The output projection lets the model mix the heads. Without it, the H heads would only ever recombine through later layers and the block would be artificially constrained.
+После пер-головных контекстных векторов `(B, H, T, d_head)` мы транспонируем обратно в `(B, T, H, d_head)`, делаем reshape в `(B, T, D)` и применяем финальную линейную проекцию `(D, D)`. Выходная проекция позволяет модели смешивать головы. Без неё H голов рекомбинировались бы только через последующие слои, и блок был бы искусственно ограничен.
 
-## Attention weight inspection
+## Инспекция весов внимания
 
-The lesson exposes a `return_weights=True` flag on the forward pass. When set, the block returns the per-head attention weights of shape `(B, H, T, T)` alongside the output. The demo prints a heatmap of one head's weights on a short input so you can see the causal-triangle structure and the per-position focus.
+Урок открывает флаг `return_weights=True` на forward-проходе. С ним блок возвращает пер-головные веса внимания формы `(B, H, T, T)` вместе с выходом. Демо печатает теплокарту весов одной головы на коротком входе, чтобы была видна структура каузального треугольника и фокус по позициям.
 
-In a trained model, different heads learn different patterns. Some heads attend to the immediately previous token. Some heads attend to the start of the sequence. Some heads spread attention almost uniformly. The inspection hook is the entry point for that interpretability work.
+В обученной модели разные головы выучивают разные паттерны. Одни смотрят на непосредственно предыдущий токен. Другие — на начало последовательности. Третьи размазывают внимание почти равномерно. Хук инспекции — точка входа в эту интерпретируемость.
 
-## The training demo
+## Обучающее демо
 
-The demo at the bottom of `main.py` wires the attention block to a tiny LM head and trains the whole thing on a repeat task. Each row of the input is a single random id replicated across the context. The target is the input shifted by one, so the model must learn that the next token is the same as the previous token. The loss is cross-entropy. With H=4, D=32, T=12, and a vocabulary of 64, the loss falls from random (around `log(64) ~ 4.16`) down to well under `1.0` over three epochs on CPU.
+Демо внизу `main.py` подключает attention-блок к крошечной LM-голове и обучает всё это на задаче повторения. Каждая строка входа — один случайный id, реплицированный по контексту. Цель — вход, сдвинутый на один, поэтому модель должна выучить, что следующий токен равен предыдущему. Лосс — кросс-энтропия. При H=4, D=32, T=12 и словаре 64 лосс падает со случайного (около `log(64) ~ 4.16`) до значительно ниже `1.0` за три эпохи на CPU.
 
-The point of the demo is not to train a useful model. The point is to confirm the gradients flow through every piece of the block and the heads learn something on a problem where the answer is obvious.
+Смысл демо не в обучении полезной модели. Смысл — убедиться, что градиенты текут через каждую часть блока и головы выучивают что-то на задаче с очевидным ответом.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not add a feed-forward block. The transformer layer in a real model is attention followed by a two-layer MLP with a residual connection and layer norm around each. The next lesson adds those.
+Он не добавляет feed-forward-блок. Слой трансформера в настоящей модели — это внимание, за которым идёт двухслойный MLP с residual-связью и layer norm вокруг каждого. Их добавляет следующий урок.
 
-It does not implement rotary or AliBi positional encoding. Both apply at the QKV projection step in the same block, but they are a separate teaching unit. The block as built here is compatible with either by transforming Q and K before the matmul.
+Он не реализует rotary- или AliBi-позиционное кодирование. Оба применяются на шаге QKV-проекции в том же блоке, но это отдельная учебная единица. Построенный здесь блок совместим с любым из них через преобразование Q и K до матмула.
 
-It does not implement KV cache for inference. Caching keys and values across forward passes is the optimization that makes autoregressive decoding fast. It changes the shape contract on the K and V tensors but not on Q. It belongs in the inference lesson.
+Он не реализует KV cache для инференса. Кэширование ключей и значений между forward-проходами — оптимизация, делающая авторегрессивное декодирование быстрым. Она меняет контракт формы на тензорах K и V, но не на Q. Ей место в уроке об инференсе.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines `MultiHeadSelfAttention`. The class holds two linear layers and a registered mask buffer. The forward pass projects, reshapes, scores, masks, softmaxes, weights, reshapes, and projects again. The demo at the bottom builds a small model that wraps the attention with token and positional embeddings and an LM head, trains it on a copy task for three epochs, and prints the loss curve and a per-head attention heatmap. The tests in `code/tests/test_attention.py` pin the shape contract, the causality property, the softmax property, the head-split property, and the gradient flow.
+`main.py` определяет `MultiHeadSelfAttention`. Класс держит два линейных слоя и зарегистрированный буфер маски. Forward-проход проецирует, перестраивает, считает скоры, маскирует, делает softmax, взвешивает, перестраивает и проецирует снова. Демо внизу собирает маленькую модель, оборачивающую внимание токенными и позиционными эмбеддингами и LM-головой, обучает её на задаче копирования три эпохи и печатает кривую лосса и пер-головную теплокарту внимания. Тесты в `code/tests/test_attention.py` фиксируют контракт формы, свойство каузальности, свойство softmax, свойство разреза на головы и течение градиентов.
 
-Run the demo. Then increase `n_heads` from 4 to 8 (keeping `d_model=32`, so `d_head=4`) and watch the heatmap change.
+Запустите демо. Затем увеличьте `n_heads` с 4 до 8 (оставив `d_model=32`, то есть `d_head=4`) и посмотрите, как меняется теплокарта.

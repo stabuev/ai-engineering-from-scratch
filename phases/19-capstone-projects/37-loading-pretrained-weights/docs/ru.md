@@ -1,30 +1,27 @@
 # Loading Pretrained Weights
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучить модель на 124 миллиона параметров с нуля — это бюджетное решение; загрузить опубликованный чекпоинт — рядовой вторник. Этот урок загружает предобученные веса в стиле GPT-2 из safetensors-файла ровно в архитектуру урока 35, разбирает маппинг имён параметров кусочек за кусочком и sanity-генерирует продолжение, доказывая, что загрузка сработала. Без сети, без сторонних загрузчиков, без непрозрачной магии.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–36
+**Время:** ~90 минут
 
-> Training a 124 million parameter model from scratch is a budget decision; loading a published checkpoint is a Tuesday. This lesson loads pretrained GPT-2 style weights from a safetensors file into the exact architecture from lesson 35, walks the parameter name mapping piece by piece, and sanity generates a continuation to prove the load worked. No network, no third party loaders, no opaque magic.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30 to 36
-**Time:** ~90 minutes
+- Прочитать safetensors-файл Python-библиотекой `safetensors` и рассмотреть имена и формы тензоров.
+- Смаппить каждое имя предобученного параметра на параметр внутри GPT-модели урока 35.
+- Обработать две конвенции имён, различающиеся между опубликованными весами GPT-2 и моделью этого трека: `wte/wpe/h.N.attn.c_attn/c_proj` и `mlp.c_fc/c_proj` против локальных `tok_embed/pos_embed/blocks.N.attn.qkv/out_proj` и `mlp.fc1/fc2`.
+- Обнаружить несовпадение форм и отказать с ясной ошибкой до какого-либо присваивания весов.
+- Сгенерировать короткое продолжение загруженными весами и подтвердить, что токены идут из загруженного распределения, а не из случайно инициализированного.
 
-## Learning Objectives
+## Проблема
 
-- Read a safetensors file with the `safetensors` Python library and inspect the tensor names and shapes.
-- Map each pretrained parameter name onto a parameter inside the lesson 35 GPT model.
-- Handle the two name conventions that differ between published GPT-2 weights and the model in this track: `wte/wpe/h.N.attn.c_attn/c_proj` and `mlp.c_fc/c_proj` versus the locally named `tok_embed/pos_embed/blocks.N.attn.qkv/out_proj` and `mlp.fc1/fc2`.
-- Detect and refuse a shape mismatch with a clear error before any weight assignment happens.
-- Generate a short continuation with the loaded weights and confirm the tokens come from the loaded distribution, not the randomly initialized one.
+Опубликованные веса не упакованы под вашу архитектуру. Они несут имена оригинальной реализации. В предобученном файле лежит `transformer.h.0.attn.c_attn.weight` формы `(2304, 768)`; ваша модель ждёт `blocks.0.attn.qkv.weight` формы `(2304, 768)` (это та же матрица в другой конвенции раскладки), или ваша модель использует `nn.Linear`, который хранит матрицу транспонированной. Один и тот же параметр появляется с тремя тонко различающимися идентичностями (имя, форма, байтовая раскладка), и загрузчик обязан согласовать все три.
 
-## The Problem
+Загрузчик, копирующий вслепую, кладёт правильный тензор не туда — и вы получаете модель, генерирующую бессмыслицу. Загрузчик, отказывающийся копировать при несовпадении форм, но ничего не логирующий, оставляет вас гадать, какой тензор не приземлился. Загрузчик этого урока явный: каждое присваивание логируется, каждая форма проверяется, а `LoadReport` суммирует попадания, промахи и несовпадения форм, чтобы можно было прочитать, что случилось.
 
-Published weights are not packaged for your architecture. They carry the names the original implementation used. The pretrained file has `transformer.h.0.attn.c_attn.weight` of shape `(2304, 768)`; your model expects `blocks.0.attn.qkv.weight` of shape `(2304, 768)` (which is the same matrix in a different layout convention) or your model uses `nn.Linear` which stores the matrix transposed. The same parameter shows up with three subtly different identities (name, shape, byte layout) and the loader has to reconcile all three.
-
-A loader that copies blindly puts the right tensor in the wrong place and you get a model that generates nonsense. A loader that refuses to copy when the shape differs but logs nothing leaves you guessing which tensor failed to land. The loader in this lesson is explicit: every assignment is logged, every shape is checked, and a `LoadReport` summarizes hits, misses, and shape mismatches so you can read what happened.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -39,123 +36,123 @@ flowchart LR
   RP --> G[generate<br/>sanity sample]
 ```
 
-The name mapper is just a function from string to string. The shape check is one if. The assignment happens inside `torch.no_grad()` so autograd does not track the load. The report holds the outcome of every name.
+Маппер имён — просто функция из строки в строку. Проверка формы — один if. Присваивание происходит внутри `torch.no_grad()`, чтобы autograd не трекал загрузку. Отчёт хранит исход каждого имени.
 
-### The GPT-2 naming convention
+### Конвенция имён GPT-2
 
-Published GPT-2 weights live under names like:
+Опубликованные веса GPT-2 живут под именами вроде:
 
-| Pretrained name | Shape | Meaning |
+| Имя в предобученном файле | Форма | Смысл |
 |-----------------|-------|---------|
-| `wte.weight` | (50257, 768) | Token embedding |
-| `wpe.weight` | (1024, 768) | Position embedding |
-| `h.N.ln_1.weight` | (768,) | LayerNorm 1 scale at block N |
-| `h.N.ln_1.bias` | (768,) | LayerNorm 1 shift at block N |
-| `h.N.attn.c_attn.weight` | (768, 2304) | Fused QKV linear weight |
-| `h.N.attn.c_attn.bias` | (2304,) | Fused QKV linear bias |
-| `h.N.attn.c_proj.weight` | (768, 768) | Attention output projection |
-| `h.N.attn.c_proj.bias` | (768,) | Attention output projection bias |
-| `h.N.ln_2.weight` | (768,) | LayerNorm 2 scale |
-| `h.N.ln_2.bias` | (768,) | LayerNorm 2 shift |
-| `h.N.mlp.c_fc.weight` | (768, 3072) | MLP fc1 weight |
-| `h.N.mlp.c_fc.bias` | (3072,) | MLP fc1 bias |
-| `h.N.mlp.c_proj.weight` | (3072, 768) | MLP fc2 weight |
-| `h.N.mlp.c_proj.bias` | (768,) | MLP fc2 bias |
-| `ln_f.weight` | (768,) | Final LayerNorm scale |
-| `ln_f.bias` | (768,) | Final LayerNorm shift |
+| `wte.weight` | (50257, 768) | Токенный эмбеддинг |
+| `wpe.weight` | (1024, 768) | Позиционный эмбеддинг |
+| `h.N.ln_1.weight` | (768,) | Scale LayerNorm 1 блока N |
+| `h.N.ln_1.bias` | (768,) | Shift LayerNorm 1 блока N |
+| `h.N.attn.c_attn.weight` | (768, 2304) | Вес слитого QKV-линейного слоя |
+| `h.N.attn.c_attn.bias` | (2304,) | Bias слитого QKV |
+| `h.N.attn.c_proj.weight` | (768, 768) | Выходная проекция внимания |
+| `h.N.attn.c_proj.bias` | (768,) | Bias выходной проекции |
+| `h.N.ln_2.weight` | (768,) | Scale LayerNorm 2 |
+| `h.N.ln_2.bias` | (768,) | Shift LayerNorm 2 |
+| `h.N.mlp.c_fc.weight` | (768, 3072) | Вес fc1 MLP |
+| `h.N.mlp.c_fc.bias` | (3072,) | Bias fc1 MLP |
+| `h.N.mlp.c_proj.weight` | (3072, 768) | Вес fc2 MLP |
+| `h.N.mlp.c_proj.bias` | (768,) | Bias fc2 MLP |
+| `ln_f.weight` | (768,) | Scale финального LayerNorm |
+| `ln_f.bias` | (768,) | Shift финального LayerNorm |
 
-Two surprises to plan for. The `c_attn`, `c_proj`, `c_fc` linears are stored with the matrix transposed relative to what `nn.Linear.weight` expects. The loader transposes during assignment. The LM head is not in the file at all; the model relies on weight tying with `wte`, so the head is set by aliasing once `wte` lands.
+Два сюрприза, к которым нужно готовиться. Линейные слои `c_attn`, `c_proj`, `c_fc` хранятся с матрицей, транспонированной относительно ожиданий `nn.Linear.weight`. Загрузчик транспонирует при присваивании. LM-головы в файле нет вовсе; модель опирается на weight tying с `wte`, поэтому голова выставляется алиасом, как только `wte` приземлился.
 
-### The local naming convention
+### Локальная конвенция имён
 
-The model in this track uses descriptive names:
+Модель этого трека использует описательные имена:
 
-| Local name | Meaning |
+| Локальное имя | Смысл |
 |------------|---------|
-| `tok_embed.weight` | Token embedding |
-| `pos_embed.weight` | Position embedding |
-| `blocks.N.ln1.scale` | LayerNorm 1 scale at block N |
-| `blocks.N.ln1.shift` | LayerNorm 1 shift |
-| `blocks.N.attn.qkv.weight` | Fused QKV |
-| `blocks.N.attn.qkv.bias` | Fused QKV bias |
-| `blocks.N.attn.out_proj.weight` | Attention output projection |
-| `blocks.N.attn.out_proj.bias` | Output projection bias |
-| `blocks.N.ln2.scale` | LayerNorm 2 scale |
-| `blocks.N.ln2.shift` | LayerNorm 2 shift |
-| `blocks.N.mlp.fc1.weight` | MLP fc1 |
-| `blocks.N.mlp.fc1.bias` | MLP fc1 bias |
-| `blocks.N.mlp.fc2.weight` | MLP fc2 |
-| `blocks.N.mlp.fc2.bias` | MLP fc2 bias |
-| `final_ln.scale` | Final LayerNorm scale |
-| `final_ln.shift` | Final LayerNorm shift |
+| `tok_embed.weight` | Токенный эмбеддинг |
+| `pos_embed.weight` | Позиционный эмбеддинг |
+| `blocks.N.ln1.scale` | Scale LayerNorm 1 блока N |
+| `blocks.N.ln1.shift` | Shift LayerNorm 1 |
+| `blocks.N.attn.qkv.weight` | Слитый QKV |
+| `blocks.N.attn.qkv.bias` | Bias слитого QKV |
+| `blocks.N.attn.out_proj.weight` | Выходная проекция внимания |
+| `blocks.N.attn.out_proj.bias` | Bias выходной проекции |
+| `blocks.N.ln2.scale` | Scale LayerNorm 2 |
+| `blocks.N.ln2.shift` | Shift LayerNorm 2 |
+| `blocks.N.mlp.fc1.weight` | fc1 MLP |
+| `blocks.N.mlp.fc1.bias` | Bias fc1 MLP |
+| `blocks.N.mlp.fc2.weight` | fc2 MLP |
+| `blocks.N.mlp.fc2.bias` | Bias fc2 MLP |
+| `final_ln.scale` | Scale финального LayerNorm |
+| `final_ln.shift` | Shift финального LayerNorm |
 
-The mapping is a fixed function. The lesson ships it as a dict that the loader iterates.
+Маппинг — фиксированная функция. Урок поставляет его словарём, который итерирует загрузчик.
 
-### The stub fixture
+### Стуб-фикстура
 
-Real GPT-2 weights are 0.5 GB. The demo does not download them; it generates a small safetensors fixture at first run, with the exact GPT-2 naming convention and shapes appropriate to a 12-block model at d_model 192 instead of 768. The fixture has the right structure to exercise every code path in the loader. Swap the fixture for the real file and the loader works without modification.
+Настоящие веса GPT-2 весят 0.5 ГБ. Демо их не скачивает; при первом запуске оно генерирует маленькую safetensors-фикстуру с точной конвенцией имён GPT-2 и формами 12-блочной модели при d_model 192 вместо 768. У фикстуры правильная структура, чтобы прогнать каждый код-путь загрузчика. Замените фикстуру настоящим файлом — загрузчик работает без модификаций.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- A small replica of the lesson 35 `GPTModel` so this lesson is self contained.
-- `make_pretrained_to_local(num_layers)` which expands the per-layer entries.
-- `load_safetensors(model, path)` which iterates names, maps them, checks shape, transposes the conv1d-style weights, and assigns under `torch.no_grad()`. Returns a `LoadReport`.
-- `make_stub_safetensors(path, cfg)` which generates a fixture file with the exact pretrained naming convention.
-- A demo that creates `outputs/gpt2-stub.safetensors` on first run, builds a fresh model, captures one generated continuation from random init, loads the stub, captures another continuation, prints both, and verifies the two are different (the load actually changed the model).
+- Маленькую реплику `GPTModel` урока 35, чтобы урок был самодостаточным.
+- `make_pretrained_to_local(num_layers)` — разворачивает пер-слойные записи.
+- `load_safetensors(model, path)` — итерирует имена, маппит их, проверяет форму, транспонирует веса conv1d-стиля и присваивает под `torch.no_grad()`. Возвращает `LoadReport`.
+- `make_stub_safetensors(path, cfg)` — генерирует файл-фикстуру с точной конвенцией имён предобученного файла.
+- Демо: создаёт `outputs/gpt2-stub.safetensors` при первом запуске, собирает свежую модель, захватывает одно сгенерированное продолжение со случайной инициализации, загружает стуб, захватывает второе продолжение, печатает оба и проверяет, что они различны (загрузка действительно изменила модель).
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: the fixture path, a per-name load log, a `LoadReport` summary, a continuation before the load, a continuation after the load, and a shape mismatch on a single intentionally bad tensor injected into the fixture so the failure path is exercised.
+Вывод: путь фикстуры, лог загрузки по каждому имени, сводка `LoadReport`, продолжение до загрузки, продолжение после загрузки и несовпадение формы на одном намеренно испорченном тензоре, вставленном в фикстуру, — чтобы путь отказа тоже был прогнан.
 
-## Stack
+## Стек
 
-- `safetensors` for the on disk format and a streaming reader.
-- `torch` for the model and the assignment math.
-- No `transformers`, no `huggingface_hub`, no network calls.
+- `safetensors` для дискового формата и стримингового ридера.
+- `torch` для модели и математики присваивания.
+- Никакого `transformers`, никакого `huggingface_hub`, никаких сетевых вызовов.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns make the loader survive contact with weights you did not create.
+Три паттерна позволяют загрузчику пережить контакт с весами, которые создали не вы.
 
-**Always validate the file before any assignment.** Open the file, list every tensor name with its dtype and shape, run the full mapping with shape checks, and only on success start assigning. Half-loaded models are silent failure machines.
+**Всегда валидируйте файл до какого-либо присваивания.** Откройте файл, выпишите каждое имя тензора с dtype и формой, прогоните весь маппинг с проверками форм и только при успехе начинайте присваивать. Полузагруженные модели — машины молчаливых отказов.
 
-**Log every assignment with the source name and the destination name.** When something looks wrong, the log tells you which tensor landed where; the alternative is reading hexdumps. The `LoadReport` dataclass in this lesson tracks `loaded`, `missing`, `unexpected`, and `shape_mismatch` lists and prints a summary at the end.
+**Логируйте каждое присваивание с именем источника и именем назначения.** Когда что-то выглядит неправильно, лог говорит, какой тензор куда приземлился; альтернатива — чтение хексдампов. Датакласс `LoadReport` в этом уроке отслеживает списки `loaded`, `missing`, `unexpected` и `shape_mismatch` и печатает сводку в конце.
 
-**The LM head is a weight tying alias, not a separate copy.** Setting `model.lm_head.weight = model.tok_embed.weight` after loading `tok_embed` is the canonical pattern. Copying the embedding matrix into a fresh `lm_head.weight` parameter breaks tying and quietly doubles your parameter count.
+**LM-голова — алиас weight tying, а не отдельная копия.** `model.lm_head.weight = model.tok_embed.weight` после загрузки `tok_embed` — канонический паттерн. Копирование матрицы эмбеддинга в свежий параметр `lm_head.weight` ломает связывание и тихо удваивает число параметров.
 
-## Use It
+## Используйте это
 
-- The loader works for any safetensors file that uses the pretrained naming convention. Real GPT-2 files (small / medium / large / xl) work without code changes; only the model config differs.
-- The same pattern extends to LLaMA, Mistral, Qwen weights once you update the name map. The shape checks and the report stay identical.
-- Sanity generation after a load is a quick gate: if the post-load samples look like the pre-load samples, the load did not change the model, which means the mapping silently missed every tensor.
+- Загрузчик работает с любым safetensors-файлом, использующим конвенцию имён предобученного файла. Настоящие файлы GPT-2 (small / medium / large / xl) работают без изменений кода; отличается только конфигурация модели.
+- Тот же паттерн растягивается на веса LLaMA, Mistral, Qwen после обновления карты имён. Проверки форм и отчёт остаются идентичными.
+- Sanity-генерация после загрузки — быстрый gate: если сэмплы после загрузки выглядят как до, загрузка не изменила модель — значит, маппинг молча промахнулся по каждому тензору.
 
-## Exercises
+## Упражнения
 
-1. Add a `dtype` argument to the loader that casts each tensor to a target dtype (`bfloat16`, `float16`, `float32`) during assignment. Confirm a `float32` model can be downcast to `bfloat16` and still generate.
-2. Add an `expected_layers` argument that refuses to load a checkpoint whose `h.N` indices do not match the model's `num_layers`.
-3. Plug the loader into the lesson 35 generation function and produce two side by side samples: one from random init, one from the loaded fixture.
-4. Add an export path: write the current model state into a fresh safetensors file using the pretrained naming convention. Round trip the loader and confirm the report has zero shape mismatches.
-5. Extend `NAME_MAP` to handle the LLaMA naming convention (no biases, RMSNorm, fused qkv layout) and re-run the loader on a stub LLaMA fixture you generate.
+1. Добавьте загрузчику аргумент `dtype`, приводящий каждый тензор к целевому dtype (`bfloat16`, `float16`, `float32`) при присваивании. Подтвердите, что `float32`-модель можно понизить до `bfloat16`, и она всё ещё генерирует.
+2. Добавьте аргумент `expected_layers`, отказывающий чекпоинту, чьи индексы `h.N` не совпадают с `num_layers` модели.
+3. Подключите загрузчик к функции генерации урока 35 и получите два сэмпла бок о бок: один со случайной инициализации, второй — из загруженной фикстуры.
+4. Добавьте путь экспорта: запишите текущее состояние модели в свежий safetensors-файл в конвенции имён предобученного файла. Прогоните загрузчик round trip и подтвердите ноль несовпадений форм в отчёте.
+5. Расширьте `NAME_MAP` под конвенцию имён LLaMA (без bias, RMSNorm, слитая qkv-раскладка) и перезапустите загрузчик на сгенерированной вами стуб-фикстуре LLaMA.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Name map | "Key remapping" | The function from pretrained tensor names to local parameter names; usually a literal dict with one entry per layer index expanded over a loop |
-| Shape mismatch | "Bad shape" | The pretrained tensor exists under the mapped name but its dimensions disagree with the local parameter; the loader refuses to assign and logs the pair |
-| Transpose-on-load | "Conv1d layout" | Published GPT-2 stores attention and MLP projections in the transpose of what nn.Linear expects; the loader transposes during assignment |
-| Weight tying alias | "Shared LM head" | Setting model.lm_head.weight = model.tok_embed.weight so the head and embedding share storage; the head is not in the file because of this |
-| Load report | "Coverage summary" | A small dataclass that tracks loaded, missing, unexpected, and shape_mismatch lists; printing it is how you tell whether the load succeeded |
+| Карта имён | «Key remapping» | Функция из имён предобученных тензоров в локальные имена параметров; обычно буквальный dict с одной записью на индекс слоя, развёрнутый циклом |
+| Несовпадение форм | «Bad shape» | Предобученный тензор существует под смаппленным именем, но его размерности не согласуются с локальным параметром; загрузчик отказывается присваивать и логирует пару |
+| Транспонирование при загрузке | «Conv1d layout» | Опубликованный GPT-2 хранит проекции внимания и MLP транспонированными относительно ожиданий nn.Linear; загрузчик транспонирует при присваивании |
+| Алиас weight tying | «Общая LM-голова» | model.lm_head.weight = model.tok_embed.weight, чтобы голова и эмбеддинг делили хранилище; головы нет в файле именно поэтому |
+| Отчёт загрузки | «Сводка покрытия» | Маленький датакласс со списками loaded, missing, unexpected и shape_mismatch; его печать — способ понять, удалась ли загрузка |
 
-## Further Reading
+## Дополнительное чтение
 
-- Phase 19 lesson 35 for the architecture that receives the weights.
-- Phase 19 lesson 36 for the training loop that produces a checkpoint of the same shape.
-- Phase 10 lesson 11 (quantization) for what to do with the loaded weights when memory is tight.
-- Phase 10 lesson 13 (building a complete LLM pipeline) for the full lifecycle around load and inference.
+- Фаза 19, урок 35 — архитектура, принимающая веса.
+- Фаза 19, урок 36 — цикл обучения, порождающий чекпоинт той же формы.
+- Фаза 10, урок 11 (квантизация) — что делать с загруженными весами, когда память поджимает.
+- Фаза 10, урок 13 (полный LLM-пайплайн) — полный жизненный цикл вокруг загрузки и инференса.

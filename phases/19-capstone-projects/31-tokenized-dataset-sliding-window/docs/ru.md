@@ -1,31 +1,28 @@
 # Tokenized Dataset with Sliding Window
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Прогон предобучения — это функция из токенных id в градиенты. Этот урок строит конвейер, подающий эти id.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки Фазы 04, уроки Фазы 07 о трансформерах, урок 30 этой фазы
+**Время:** ~90 минут
 
-> A pretraining run is a function from token ids to gradients. This lesson builds the conveyor that feeds the ids in.
+## Цели обучения
+- Превратить сырой корпус в поток токенных id одним вызовом токенизатора.
+- Нарезать поток id на окна фиксированной длины с настраиваемым stride перекрытия.
+- Построить PyTorch Dataset, возвращающий тензоры входа и цели для предсказания следующего токена.
+- Обернуть датасет в DataLoader с детерминированным шаффлом, сидируемым на каждую эпоху.
+- Понять компромисс между stride, избыточностью и эффективным размером датасета.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 04 lessons, Phase 07 transformer lessons, Lesson 30 of this phase
-**Time:** ~90 minutes
+## Рамка
 
-## Learning Objectives
-- Convert a raw corpus into a stream of token ids by calling the tokenizer once.
-- Slice the id stream into fixed-length windows with a configurable overlap stride.
-- Build a PyTorch Dataset that returns input and target tensors for next-token prediction.
-- Wrap the dataset in a DataLoader with a deterministic shuffle seeded per epoch.
-- Reason about the trade-off between stride, redundancy, and effective dataset size.
+Прогон предобучения читает по одному батчу токенных id за раз и обновляет модель. Форма каждого батча зафиксирована контрактом обучения. Для каузальной языковой модели батч держит входные id формы `(B, T)` и целевые id формы `(B, T)`, где цель — вход, сдвинутый влево на один. Работа дата-пайплайна — выдавать этот контракт по требованию, детерминированно и воспроизводимо, из корпуса, который может весить несколько гигабайт сырого текста.
 
-## The frame
+Этот урок строит пайплайн. Токенизатор из предыдущего урока превращает текст в длинный плоский список id. Скользящее окно нарезает этот список на обучающие примеры. Кастомный Dataset открывает примеры как тензоры. DataLoader батчит их и шаффлит с известным сидом.
 
-A pretraining run reads one batch of token ids at a time and updates the model. The shape of each batch is fixed by the training contract. For a causal language model, the batch holds `(B, T)` input ids and `(B, T)` target ids where the target is the input shifted left by one. The job of the data pipeline is to produce that contract on demand, in a deterministic and reproducible way, from a corpus that may be several gigabytes of raw text.
+## Контракт формы
 
-This lesson builds the pipeline. The tokenizer from the previous lesson turns text into a long flat list of ids. A sliding window slices that list into training examples. A custom Dataset exposes the examples as tensors. A DataLoader batches them and shuffles them with a known seed.
-
-## The shape contract
-
-A causal LM consumes ids of shape `(B, T)` where `B` is the batch size and `T` is the context length. The target at position `t` is the input at position `t+1`. That means every training example covers `T+1` raw ids. The window stride controls how much overlap exists between consecutive examples.
+Каузальная LM потребляет id формы `(B, T)`, где `B` — размер батча, `T` — длина контекста. Цель в позиции `t` — вход в позиции `t+1`. Значит, каждый обучающий пример покрывает `T+1` сырых id. Stride окна управляет тем, сколько перекрытия между соседними примерами.
 
 ```mermaid
 flowchart LR
@@ -43,17 +40,17 @@ flowchart LR
     J --> K[split into input and target]
 ```
 
-The slicer never overlaps with the boundary of the corpus. If the last window does not have enough ids to fill `T+1` positions, the slicer drops it. Padding the tail with `<|pad|>` is also a valid choice but it complicates the loss mask. For this lesson we drop.
+Нарезчик никогда не пересекает границу корпуса. Если последнему окну не хватает id, чтобы заполнить `T+1` позиций, нарезчик его отбрасывает. Добивать хвост `<|pad|>` — тоже легальный выбор, но он усложняет маску лосса. В этом уроке мы отбрасываем.
 
-## Why a sliding window
+## Почему скользящее окно
 
-A pretraining corpus is one long stream of ids. If the model only saw non-overlapping windows, every training example would teach it the same `T` boundaries. Adjusting the stride moves those boundaries around so the model sees more diverse predict-next-token tasks.
+Корпус предобучения — один длинный поток id. Если бы модель видела только неперекрывающиеся окна, каждый обучающий пример учил бы её одним и тем же `T` границам. Настройка stride двигает эти границы, и модель видит более разнообразные задачи «предскажи следующий токен».
 
-A stride of `T` produces non-overlapping windows. A stride of `T // 2` produces fifty-percent overlap and doubles the effective dataset. A stride of `1` produces maximum overlap and increases the dataset by a factor of `T`. The cost is more compute per epoch. The benefit is more boundary diversity. Most pretraining runs use a stride equal to the context length because the corpus is already much larger than the model can finish in one epoch, so the boundary diversity argument is weaker.
+Stride, равный `T`, даёт неперекрывающиеся окна. Stride `T // 2` даёт пятидесятипроцентное перекрытие и удваивает эффективный датасет. Stride `1` даёт максимальное перекрытие и увеличивает датасет в `T` раз. Цена — больше compute на эпоху. Выгода — больше разнообразия границ. Большинство прогонов предобучения используют stride, равный длине контекста, потому что корпус и так намного больше, чем модель успеет пройти за одну эпоху, и аргумент о разнообразии границ слабее.
 
-## The Dataset class
+## Класс Dataset
 
-A PyTorch Dataset has two required methods. `__len__` returns the number of examples. `__getitem__` returns one example as a pair of tensors. Our Dataset stores the encoded id stream and the stride. Indexing into it computes the start of the window on the fly so the memory cost is one copy of the id stream regardless of how many examples the stride produces.
+У PyTorch Dataset два обязательных метода. `__len__` возвращает число примеров. `__getitem__` возвращает один пример как пару тензоров. Наш Dataset хранит закодированный поток id и stride. Индексация вычисляет старт окна на лету, поэтому стоимость по памяти — одна копия потока id независимо от того, сколько примеров порождает stride.
 
 ```mermaid
 sequenceDiagram
@@ -70,32 +67,32 @@ sequenceDiagram
     Note over Tokenizer,Dataset: tokenizer.encode runs once at build time
 ```
 
-The shift-by-one happens inside `__getitem__`. The Dataset returns `(input, target)` where `input = window[:-1]` and `target = window[1:]`. Both are PyTorch long tensors. The training loop treats them as ground truth.
+Сдвиг-на-один происходит внутри `__getitem__`. Dataset возвращает `(input, target)`, где `input = window[:-1]` и `target = window[1:]`. Оба — long-тензоры PyTorch. Цикл обучения трактует их как ground truth.
 
-## Deterministic shuffle
+## Детерминированный шаффл
 
-A DataLoader with `shuffle=True` reads from a PyTorch random generator. By passing an explicit `torch.Generator` seeded per epoch, we get the same shuffle every time the run is restarted. That property matters when you want to compare two runs that differ only in a single hyperparameter. Without a seed, two runs see the data in different orders and the loss curves diverge for reasons unrelated to the change.
+DataLoader с `shuffle=True` читает из генератора случайных чисел PyTorch. Передав явный `torch.Generator`, сидируемый на каждую эпоху, мы получаем один и тот же шаффл при каждом перезапуске прогона. Это свойство важно, когда вы хотите сравнить два прогона, различающихся единственным гиперпараметром. Без сида два прогона видят данные в разном порядке, и кривые лосса расходятся по причинам, не связанным с изменением.
 
-The seed contract in this lesson is simple. `epoch_seed = base_seed + epoch_index`. The base seed is passed at construction. The epoch index is incremented by the trainer at the top of each epoch. A re-run with the same base seed always sees the same order in every epoch.
+Контракт сида в уроке прост. `epoch_seed = base_seed + epoch_index`. Базовый сид передаётся при конструировании. Индекс эпохи инкрементит тренер в начале каждой эпохи. Перезапуск с тем же базовым сидом всегда видит один и тот же порядок в каждой эпохе.
 
 ## Batch sampler
 
-The default sampler in PyTorch picks indices uniformly at random with replacement disabled. That is what we want for pretraining. For finetuning on a small dataset the contract is the same. The DataLoader assembles a batch by calling `__getitem__` `B` times and stacking the results. Because every example is the same length by construction, no padding logic is needed.
+Дефолтный сэмплер PyTorch выбирает индексы равномерно случайно без возвращения. Именно это нам нужно для предобучения. Для файнтюнинга на маленьком датасете контракт тот же. DataLoader собирает батч, вызывая `__getitem__` `B` раз и стекуя результаты. Поскольку каждый пример по построению одной длины, логика паддинга не нужна.
 
-The lesson keeps `num_workers=0` for simplicity. In a production run the workers parallelize the `__getitem__` calls. With our pipeline that is mostly a no-op because the work is just a slice of an in-memory tensor, but the same Dataset API supports workers cleanly.
+Урок держит `num_workers=0` ради простоты. В продакшен-прогоне воркеры параллелят вызовы `__getitem__`. С нашим пайплайном это почти no-op, потому что вся работа — срез in-memory-тензора, но тот же Dataset API чисто поддерживает воркеров.
 
-## Counting examples
+## Подсчёт примеров
 
-For an id stream of length `N`, a context length `T`, and a stride `S`, the number of examples is `max(0, 1 + (N - (T + 1)) // S)`. The lesson exposes that calculation as a static method on the Dataset so the trainer can compute total steps per epoch without iterating.
+Для потока id длины `N`, длины контекста `T` и stride `S` число примеров — `max(0, 1 + (N - (T + 1)) // S)`. Урок открывает этот расчёт статическим методом на Dataset, чтобы тренер мог посчитать общее число шагов на эпоху без итерации.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not stream from disk. The corpus is encoded fully in memory and held as a single tensor. For a corpus of a few million ids that is well under a hundred megabytes and is the right shape for the lesson. Disk streaming is a separate concern that plugs in by replacing the storage but keeps the Dataset contract.
+Он не стримит с диска. Корпус кодируется целиком в память и держится одним тензором. Для корпуса в несколько миллионов id это значительно меньше ста мегабайт — правильная форма для урока. Стриминг с диска — отдельная забота, которая подключается заменой хранилища при сохранении контракта Dataset.
 
-It does not handle multiple documents. The corpus is treated as one continuous id stream. The next-document boundary is encoded by inserting `<|endoftext|>` ids when the corpus is built from multiple documents. The model learns to predict around the boundary.
+Он не обрабатывает несколько документов. Корпус трактуется как один непрерывный поток id. Граница следующего документа кодируется вставкой id `<|endoftext|>`, когда корпус собирается из нескольких документов. Модель учится предсказывать вокруг границы.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines two classes and one helper. `SlidingWindowDataset` is the PyTorch Dataset. `make_dataloader` returns a configured DataLoader with a seeded generator. `_encode_corpus_to_ids` is the one-shot tokenizer call. The demo at the bottom builds a small tokenizer in-process, encodes a built-in corpus, constructs the dataset and dataloader, prints one batch, and asserts the shape contract. The tests in `code/tests/test_dataset.py` pin the window count formula, the shift-by-one property, the deterministic shuffle, and the stride trade-off.
+`main.py` определяет два класса и один хелпер. `SlidingWindowDataset` — PyTorch Dataset. `make_dataloader` возвращает сконфигурированный DataLoader с сидированным генератором. `_encode_corpus_to_ids` — одноразовый вызов токенизатора. Демо внизу строит маленький токенизатор in-process, кодирует встроенный корпус, конструирует датасет и dataloader, печатает один батч и утверждает контракт формы. Тесты в `code/tests/test_dataset.py` фиксируют формулу числа окон, свойство сдвига-на-один, детерминированный шаффл и компромисс stride.
 
-Run the demo. Then change the context length from 16 to 32 and watch how the number of examples per epoch falls. That number is your steps-per-epoch budget.
+Запустите демо. Затем измените длину контекста с 16 на 32 и посмотрите, как падает число примеров на эпоху. Это число — ваш бюджет шагов на эпоху.

@@ -1,31 +1,28 @@
 # Training Loop and Evaluation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Цикл, который не измеряет, — цикл, который лжёт. Этот урок строит цикл обучения, гоняющий GPT-модель: AdamW с разделением weight decay, расписание learning rate с warmup и косинусным затуханием, хелпер `calc_loss_batch`, прогон `evaluate_model` на отложенных данных, качественный зонд `generate_and_print_sample` каждые K шагов и JSONL-лог лоссов, который потом можно построить. Тот же скелет обучает любой decoder-LLM, который вы когда-либо соберёте.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–35
+**Время:** ~90 минут
 
-> A loop that does not measure is a loop that lies. This lesson builds the training loop that drives the GPT model: AdamW with weight decay split, a warmup plus cosine learning rate schedule, a `calc_loss_batch` helper, an `evaluate_model` pass on held out data, a `generate_and_print_sample` qualitative probe every K steps, and a JSONL log of losses you can plot after. The same skeleton trains every decoder LLM you will ever build.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30 to 35
-**Time:** ~90 minutes
+- Построить цикл обучения, считающий кросс-энтропийный лосс с правильным выравниванием входа и цели для предсказания следующего токена.
+- Сконфигурировать AdamW так, чтобы weight decay применялся к весовым тензорам, но не к LayerNorm- и bias-тензорам.
+- Реализовать расписание learning rate с линейным warmup и косинусным затуханием и прочитать получающийся LR во времени.
+- Оценивать на отложенном сплите через `evaluate_model`, чтобы eval-лосс был сравним между прогонами.
+- Генерировать качественный сэмпл каждые K шагов через `generate_and_print_sample`, чтобы поймать расхождение раньше, чем кривая лосса.
+- Персистить пошаговый лосс в JSONL, чтобы лог обучения можно было перезагрузить, построить и отгрузить как артефакт.
 
-## Learning Objectives
+## Проблема
 
-- Build a training loop that computes cross entropy loss with the correct input and target alignment for next token prediction.
-- Configure AdamW with weight decay applied to weight tensors and not to LayerNorm or bias tensors.
-- Implement a learning rate schedule with linear warmup and cosine decay, and read the resulting LR over time.
-- Evaluate on a held out split with `evaluate_model` so the eval loss is comparable across runs.
-- Generate a qualitative sample every K steps with `generate_and_print_sample` to catch divergence before the loss curve does.
-- Persist per step loss to JSONL so you can reload, plot, and ship the training log as a deliverable.
+Обучающий скрипт, который печатает лосс и больше ничего, отказывает тремя способами. Он не может сказать, падает ли лосс по правильной причине (модель может переобучиться на трейне и ничему не научиться). Не может сказать, начинается ли расхождение (лосс может подскочить на один шаг и восстановиться — или на один шаг и рухнуть). Не может сказать, что модель выучила (лосс — скаляр; сгенерированный сэмпл — абзац). Все три отказа прячутся, пока цикл не измеряет.
 
-## The Problem
+Цикл этого урока измеряет тремя способами. Лосс на обучающем батче каждый шаг. Лосс на отложенном батче каждые K шагов. Сгенерированное продолжение фиксированного промпта каждые K шагов. Лог обучения ложится в JSONL — артефакт и есть показания цикла.
 
-A training script that prints the loss but does nothing else fails three ways. It cannot tell you if the loss is decreasing for the right reason (the model could overfit the training set and never learn). It cannot tell you if a divergence is starting (the loss can spike for one step and recover, or one step and crash). It cannot tell you what the model has learned (loss is a scalar; a generated sample is a paragraph). All three failures hide unless the loop measures.
-
-The loop in this lesson measures three ways. Loss on the training batch every step. Loss on a held out batch every K steps. A generated continuation from a fixed prompt every K steps. The training log lands in JSONL so the artifact is the loop's testimony.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -45,91 +42,91 @@ flowchart TB
   Sample --> Next
 ```
 
-The two non-obvious pieces are the loss alignment and the AdamW decay split.
+Две неочевидные детали — выравнивание лосса и разделение decay в AdamW.
 
-### Loss alignment
+### Выравнивание лосса
 
-The model predicts the next token at every position. If the input batch is tokens `[t0, t1, t2, t3]`, the target batch must be `[t1, t2, t3, t4]`. Cross entropy is computed on the flat shape `(batch * seq, vocab)` against the flat target `(batch * seq,)`. Forget the shift and you train the model to predict itself, which converges to zero loss while learning nothing useful.
+Модель предсказывает следующий токен в каждой позиции. Если входной батч — токены `[t0, t1, t2, t3]`, целевой батч обязан быть `[t1, t2, t3, t4]`. Кросс-энтропия считается на плоской форме `(batch * seq, vocab)` против плоской цели `(batch * seq,)`. Забудьте сдвиг — и обучите модель предсказывать саму себя: лосс сойдётся к нулю, а полезного не выучится ничего.
 
-### AdamW decay split
+### Разделение decay в AdamW
 
-Weight decay regularizes weight tensors but not normalization scales or biases. Putting decay on the LayerNorm scale slowly drives the scale to zero and breaks normalization. Putting decay on a bias is mathematically harmless but a waste of cycles. The standard split is: matrix shaped tensors (linear weights, embedding tables) get decay, anything that looks like a scale or shift does not.
+Weight decay регуляризует весовые тензоры, но не масштабы нормализации и не bias'ы. Decay на scale LayerNorm медленно гонит масштаб к нулю и ломает нормализацию. Decay на bias математически безвреден, но тратит циклы впустую. Стандартное разделение: тензоры матричной формы (веса линейных слоёв, таблицы эмбеддингов) получают decay, всё, что похоже на scale или shift, — нет.
 
-### Warmup plus cosine schedule
+### Warmup плюс косинусное расписание
 
-Warmup ramps the learning rate from zero to the target over a few hundred steps so the optimizer state has time to populate. Cosine decay drops the learning rate back toward zero over the remaining steps so the final phase fine tunes the weights at a small step size. The combination is the most common schedule in open weights LLM training because it removes most of the brittle moments in the first thousand steps and the last thousand steps.
+Warmup поднимает learning rate от нуля до цели за несколько сотен шагов, чтобы состояние оптимизатора успело населиться. Косинусное затухание опускает learning rate обратно к нулю на оставшихся шагах, чтобы финальная фаза дотачивала веса маленьким шагом. Комбинация — самое частое расписание в обучении open-weights LLM, потому что она убирает большинство хрупких моментов первой тысячи и последней тысячи шагов.
 
-### Held out evaluation
+### Оценка на отложенных данных
 
-`evaluate_model` runs a fixed number of batches from the validation split, accumulates loss, divides by the batch count, and returns. No gradient. No dropout. The number is reproducible across runs given the same seed and the same split. Reporting the held out loss next to the training loss is how you spot overfitting.
+`evaluate_model` прогоняет фиксированное число батчей валидационного сплита, аккумулирует лосс, делит на число батчей и возвращает. Без градиента. Без dropout. Число воспроизводимо между прогонами при одном сиде и одном сплите. Отчёт отложенного лосса рядом с обучающим — способ заметить переобучение.
 
-### Qualitative sampling as an early signal
+### Качественное сэмплирование как ранний сигнал
 
-A model whose training loss drops nicely but whose generated samples are all the same token is broken. A model whose loss curve looks flat but whose generated samples sharpen into coherent words is learning. The qualitative probe runs faster than reading the full curve and catches modes the scalar misses.
+Модель, у которой обучающий лосс красиво падает, а сгенерированные сэмплы — один и тот же токен, сломана. Модель, у которой кривая лосса выглядит плоской, но сэмплы заостряются в связные слова, учится. Качественный зонд работает быстрее, чем чтение полной кривой, и ловит режимы, которые скаляр упускает.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `make_batches(token_ids, batch_size, context_length)` which slices a long token tensor into input and target pairs.
-- `calc_loss_batch(model, inputs, targets)` which forwards, flattens, and returns the scalar cross entropy.
-- `evaluate_model(model, val_loader, max_batches)` which iterates a fixed number of validation batches with no grad and returns the mean loss.
-- `generate_and_print_sample(model, prompt, max_new_tokens)` which runs the lesson 35 generation function on a fixed prompt and prints the result.
-- `build_param_groups(model, weight_decay)` which produces the two-group AdamW parameter list.
-- `cosine_with_warmup(step, warmup_steps, total_steps, max_lr, min_lr)` which returns the LR at a given step.
-- `train(...)` which runs the loop, persists `outputs/losses.jsonl`, and prints the eval loss and a sample every `eval_every` steps.
-- A demo that trains a tiny model on synthetic data for a small number of steps, writes a JSONL log, and prints the eval loss and a sample at the probe points. The demo runs in well under a minute on CPU.
+- `make_batches(token_ids, batch_size, context_length)` — режет длинный токенный тензор на пары входа и цели.
+- `calc_loss_batch(model, inputs, targets)` — форвардит, уплощает и возвращает скаляр кросс-энтропии.
+- `evaluate_model(model, val_loader, max_batches)` — итерирует фиксированное число валидационных батчей без градиента и возвращает средний лосс.
+- `generate_and_print_sample(model, prompt, max_new_tokens)` — запускает функцию генерации из урока 35 на фиксированном промпте и печатает результат.
+- `build_param_groups(model, weight_decay)` — порождает двухгрупповой список параметров для AdamW.
+- `cosine_with_warmup(step, warmup_steps, total_steps, max_lr, min_lr)` — возвращает LR на данном шаге.
+- `train(...)` — гоняет цикл, персистит `outputs/losses.jsonl` и печатает eval-лосс и сэмпл каждые `eval_every` шагов.
+- Демо: обучает крошечную модель на синтетических данных небольшое число шагов, пишет JSONL-лог и печатает eval-лосс и сэмпл в точках зондирования. Демо укладывается значительно меньше чем в минуту на CPU.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: per step loss line, eval loss every probe step, a generated sample every probe step, and a final `outputs/losses.jsonl` you can load with `json.loads` per line.
+Вывод: строка лосса на каждый шаг, eval-лосс на каждом шаге зондирования, сгенерированный сэмпл на каждом шаге зондирования и финальный `outputs/losses.jsonl`, загружаемый через `json.loads` построчно.
 
-## Stack
+## Стек
 
-- `torch` for autograd, optimizer, and modules.
-- `main.py` reimplements the lesson 35 `GPTModel` and supporting modules locally.
+- `torch` для autograd, оптимизатора и модулей.
+- `main.py` локально реимплементирует `GPTModel` урока 35 и вспомогательные модули.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns turn the textbook loop into something you can leave running overnight.
+Три паттерна превращают учебный цикл в то, что можно оставить крутиться на ночь.
 
-**Gradient norm clipping is non negotiable.** A bad batch (anomalous data, an LR spike, a numerical edge case) produces a huge gradient that wipes out hours of training. `torch.nn.utils.clip_grad_norm_(params, max_norm=1.0)` after `backward` and before `step` keeps the optimizer in a safe range. The clipping value is a free parameter; one is the default that survives most setups.
+**Клиппинг нормы градиента не обсуждается.** Плохой батч (аномальные данные, скачок LR, численный краевой случай) порождает огромный градиент, стирающий часы обучения. `torch.nn.utils.clip_grad_norm_(params, max_norm=1.0)` после `backward` и до `step` держит оптимизатор в безопасном диапазоне. Порог клиппинга — свободный параметр; единица — дефолт, переживающий большинство конфигураций.
 
-**Resumable JSONL logging, not pickled state.** Per step loss records as `{"step": int, "train_loss": float, "lr": float}` lines in JSONL are durable: any crash leaves a readable artifact, you can grep, you can plot with thirty lines of Python, and you can resume training by reading the last step. Pickled state ties you to the exact module layout that produced the file, which is brittle across refactors.
+**Возобновляемый JSONL-лог, а не запиклённое состояние.** Пошаговые записи лосса строками `{"step": int, "train_loss": float, "lr": float}` в JSONL долговечны: любой краш оставляет читаемый артефакт, его можно грепать, строить тридцатью строками Python, а обучение — возобновлять чтением последнего шага. Запиклённое состояние привязывает вас к точной раскладке модулей, породившей файл, — это хрупко при рефакторингах.
 
-**Eval batches drawn from a fixed slice.** The validation tokens get sliced into batches at script start, not on the fly. Reproducibility depends on the eval batches being identical from run to run; otherwise comparing eval loss between two runs measures the batch shuffle as much as the model.
+**Eval-батчи из фиксированного среза.** Валидационные токены режутся на батчи при старте скрипта, а не на лету. Воспроизводимость зависит от идентичности eval-батчей от прогона к прогону; иначе сравнение eval-лосса двух прогонов меряет шаффл батчей не меньше, чем модель.
 
-## Use It
+## Используйте это
 
-- The loop in this lesson is the same skeleton that trains a 124M model on real data. Swap the synthetic token tensor for a `datasets`-style loader and the loop runs unchanged.
-- The JSONL log is the deliverable that turns a training run into evidence. The next lesson uses one to compare a freshly trained checkpoint with a pretrained one.
-- The qualitative sample probe is the catch-all that scalar loss cannot replace.
+- Цикл этого урока — тот же скелет, что обучает модель 124M на настоящих данных. Замените синтетический токенный тензор загрузчиком в стиле `datasets` — и цикл работает без изменений.
+- JSONL-лог — артефакт, превращающий обучающий прогон в доказательство. Следующий урок использует его для сравнения свежеобученного чекпоинта с предобученным.
+- Качественный зонд сэмплами — та страховка, которую скалярный лосс заменить не может.
 
-## Exercises
+## Упражнения
 
-1. Add `weight_decay_groups()` unit tests that confirm scale and bias parameters land in the no decay group and linear and embedding weights land in the decay group.
-2. Replace synthetic random tokens with bytes from a small text file so the demo trains on something legible. Verify the generated sample uses characters present in the file.
-3. Add a `min_lr` floor of 10 percent of `max_lr` to the cosine schedule and re-plot.
-4. Save a checkpoint every `eval_every` steps in addition to the JSONL log. Add a `resume_from` flag that reloads model state and optimizer state.
-5. Log per step throughput (tokens per second) next to the loss and confirm it stays in a steady band.
+1. Добавьте юнит-тесты `weight_decay_groups()`, подтверждающие, что scale- и bias-параметры попадают в группу без decay, а веса линейных слоёв и эмбеддингов — в группу с decay.
+2. Замените синтетические случайные токены байтами из маленького текстового файла, чтобы демо обучалось на чём-то читаемом. Убедитесь, что сгенерированный сэмпл использует символы из файла.
+3. Добавьте косинусному расписанию пол `min_lr` в 10 процентов от `max_lr` и перестройте график.
+4. Сохраняйте чекпоинт каждые `eval_every` шагов вдобавок к JSONL-логу. Добавьте флаг `resume_from`, перезагружающий состояние модели и оптимизатора.
+5. Логируйте пошаговый throughput (токены в секунду) рядом с лоссом и подтвердите, что он остаётся в устойчивой полосе.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Loss alignment | "Shift by one" | Input tokens at positions 0..T-1, target tokens at positions 1..T; cross entropy is computed on flattened shapes |
-| Decay split | "Two groups" | AdamW receives matrix shaped tensors with weight decay and scale or bias tensors with none |
-| Warmup | "Ramp" | The learning rate climbs from zero to its target over a fixed number of steps so the optimizer state can populate |
-| Eval batches | "Held out batches" | A fixed slice of the validation token tensor, sliced once at script start, used identically every probe |
-| Qualitative probe | "Sample print" | A short generation from a fixed prompt printed every K steps to catch failure modes loss alone hides |
+| Выравнивание лосса | «Сдвиг на один» | Входные токены в позициях 0..T-1, целевые — в позициях 1..T; кросс-энтропия считается на уплощённых формах |
+| Разделение decay | «Две группы» | AdamW получает тензоры матричной формы с weight decay и scale/bias-тензоры без него |
+| Warmup | «Разгон» | Learning rate поднимается от нуля до цели за фиксированное число шагов, чтобы состояние оптимизатора населилось |
+| Eval-батчи | «Отложенные батчи» | Фиксированный срез валидационного токенного тензора, нарезанный один раз при старте скрипта и используемый идентично на каждом зондировании |
+| Качественный зонд | «Печать сэмпла» | Короткая генерация из фиксированного промпта, печатаемая каждые K шагов, чтобы ловить режимы отказа, которые лосс в одиночку прячет |
 
-## Further Reading
+## Дополнительное чтение
 
-- Phase 19 lesson 35 for the model the loop drives.
-- Phase 19 lesson 37 for loading pretrained weights into the same model.
-- Phase 10 lesson 04 (pre training mini GPT) for the procedure on real data.
-- Phase 10 lesson 10 (evaluation) for the broader eval surface beyond cross entropy loss.
+- Фаза 19, урок 35 — модель, которую гоняет цикл.
+- Фаза 19, урок 37 — загрузка предобученных весов в ту же модель.
+- Фаза 10, урок 04 (предобучение mini-GPT) — процедура на настоящих данных.
+- Фаза 10, урок 10 (оценка) — более широкая поверхность eval за пределами кросс-энтропийного лосса.

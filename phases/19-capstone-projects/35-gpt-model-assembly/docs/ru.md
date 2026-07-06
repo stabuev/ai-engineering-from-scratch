@@ -1,30 +1,27 @@
 # GPT Model Assembly
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Стек из двенадцати блоков, токенный эмбеддинг, обучаемый позиционный эмбеддинг, финальный LayerNorm и связанная (tied) LM-голова. Это вся GPT-модель на 124 миллиона параметров. Этот урок собирает эти части в работающий класс, пересчитывает параметры, подтверждая совпадение с референсной формой 124M, и генерирует текст с multinomial-сэмплированием, температурой и top-k.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–34
+**Время:** ~90 минут
 
-> Twelve blocks stacked, a token embedding, a learned position embedding, a final LayerNorm, and a tied language model head. That is the entire 124 million parameter GPT model. This lesson assembles those pieces into a working class, counts the parameters to confirm the model matches the reference 124M shape, and generates text with multinomial sampling, temperature, and top-k.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30 to 34
-**Time:** ~90 minutes
+- Собрать блок трансформера из урока 34 в полную GPT-модель: токенный эмбеддинг, позиционный эмбеддинг, N блоков, финальный LayerNorm, LM-голова.
+- Воспроизвести конфигурацию на 124 миллиона параметров: словарь 50257, контекст 1024, эмбеддинг 768, двенадцать голов, двенадцать слоёв.
+- Связать веса LM-головы с токенным эмбеддингом и объяснить, почему это экономит ~38 миллионов параметров на этом масштабе.
+- Генерировать текст из промпта с multinomial-сэмплированием, температурным масштабированием и top-k-усечением, удерживая длину контекста скользящим окном.
+- Замерить число параметров и стоимость forward-прохода против цели 124M.
 
-## Learning Objectives
+## Проблема
 
-- Assemble the transformer block from lesson 34 into a full GPT model: token embedding, position embedding, N blocks, final LayerNorm, language model head.
-- Reproduce the 124 million parameter configuration: vocab 50257, context 1024, embedding 768, twelve heads, twelve layers.
-- Tie the language model head weights to the token embedding and explain why that saves ~38 million parameters at this scale.
-- Generate text from a prompt with multinomial sampling, temperature scaling, and top-k truncation, holding context length with a sliding window.
-- Measure parameter count and forward pass cost against the 124M target.
+Блок трансформера сам по себе ничего не делает. Нужно превратить токенные id в векторы, подмешать позиционную информацию, прогнать через стек и спроецировать обратно в логиты словаря. Забудьте любой из этих четырёх шагов — и модель либо не пройдёт forward, либо потеряет позиционную информацию, либо не сможет говорить.
 
-## The Problem
+Форма модели тоже важна. Референсная GPT-2 small — это 124 миллиона параметров ровно при конфигурации выше. Числа не магические. Словарь 50257 на эмбеддинг 768 — токенная таблица. Позиции 1024 на 768 — позиционная таблица. Двенадцать блоков примерно по 7 миллионов параметров — 84 миллиона. Финальная голова переиспользует токенную таблицу через weight tying. Сложите части — получите 124 миллиона. Модель, чей счётчик параметров не совпадает с референсом, — признак, что вы что-то соединили неправильно.
 
-A transformer block does nothing on its own. You need to turn token ids into vectors, mix in positional information, run them through the stack, and project back to vocabulary logits. Forget any one of those four steps and the model either fails to forward, drifts in position information, or cannot speak.
-
-The shape of the model also matters. The reference GPT-2 small is 124 million parameters at exactly the configuration above. The numbers are not magic. Vocab 50257 times embedding 768 is the token table. Position 1024 times 768 is the position table. Twelve blocks at roughly 7 million parameters each is 84 million. The final head reuses the token table by weight tying. Sum the pieces and you land on 124 million. Building a model whose parameter count does not match the reference is a sign you wired something wrong.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -43,19 +40,19 @@ flowchart TB
   H --> O[Logits<br/>shape B, T, 50257]
 ```
 
-Token ids become token vectors. Position ids become position vectors. The two are added and sent through the stack. The final LayerNorm is the one piece outside the blocks that survives every modern variant. The LM head reuses the token embedding matrix, which is what weight tying means.
+Токенные id становятся токенными векторами. Позиционные id — позиционными векторами. Они складываются и отправляются через стек. Финальный LayerNorm — та единственная деталь вне блоков, которая выживает в каждом современном варианте. LM-голова переиспользует матрицу токенного эмбеддинга — именно это и означает weight tying.
 
 ### Weight tying
 
-The token embedding has shape `(vocab, d_model)`. The language model head needs to project from `d_model` back to `vocab`. Those are transposes of each other. Tying the two means literally the same parameter tensor, used twice. At vocab 50257 and d_model 768, the matrix is 38 million parameters. Untied, you pay for it twice. Tied, you pay for it once and you also get a slightly cleaner gradient signal because the embedding and head update together.
+Токенный эмбеддинг имеет форму `(vocab, d_model)`. LM-голове нужно проецировать из `d_model` обратно в `vocab`. Это транспозиции друг друга. Связать их — значит буквально один и тот же тензор-параметр, используемый дважды. При словаре 50257 и d_model 768 матрица — 38 миллионов параметров. Без связывания вы платите за неё дважды. Со связыванием — один раз, и вдобавок получаете чуть более чистый градиентный сигнал, потому что эмбеддинг и голова обновляются вместе.
 
-### Position embedding is learned, not sinusoidal
+### Позиционный эмбеддинг — обучаемый, не синусоидальный
 
-GPT-2 ships a learned position embedding. The position table is one parameter tensor of shape `(1024, 768)`. The model looks up position 0 through T-1 at every forward and adds the lookup to the token embedding. This is the simplest of the position schemes (RoPE, ALiBi, T5 relative bias are the alternatives) and it is what the 124M reference uses.
+GPT-2 отгружается с обучаемым позиционным эмбеддингом. Позиционная таблица — один тензор-параметр формы `(1024, 768)`. Модель на каждом forward ищет позиции от 0 до T-1 и прибавляет результат к токенному эмбеддингу. Это простейшая из позиционных схем (альтернативы — RoPE, ALiBi, относительный bias T5), и именно её использует референс 124M.
 
-### Generation: temperature, top-k, multinomial
+### Генерация: температура, top-k, multinomial
 
-Generation is autoregressive. At every step, the model returns logits over the full vocabulary at every position. You take the last position only, divide by temperature, optionally mask all but the top k logits to negative infinity, softmax to get probabilities, and sample one token from the resulting distribution.
+Генерация авторегрессивна. На каждом шаге модель возвращает логиты по всему словарю в каждой позиции. Вы берёте только последнюю позицию, делите на температуру, опционально маскируете всё, кроме top-k логитов, минус бесконечностью, делаете softmax для вероятностей и сэмплируете один токен из полученного распределения.
 
 ```mermaid
 flowchart LR
@@ -70,72 +67,72 @@ flowchart LR
   Slide --> M
 ```
 
-Three knobs, three different behaviors. Temperature near zero collapses to greedy. Temperature one matches the model's natural distribution. Top-k one is greedy. Top-k forty filters the long tail. The combinations matter; the next lesson on training uses generation as a qualitative eval signal.
+Три ручки — три разных поведения. Температура около нуля схлопывается в greedy. Температура один соответствует естественному распределению модели. Top-k, равный одному, — greedy. Top-k сорок отфильтровывает длинный хвост. Комбинации важны; следующий урок об обучении использует генерацию как качественный eval-сигнал.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `class GPTConfig` dataclass with the 124M defaults: `vocab_size=50257`, `context_length=1024`, `d_model=768`, `num_heads=12`, `num_layers=12`, `mlp_expansion=4`, `dropout=0.1`, `use_bias=True`, `weight_tying=True`.
-- `class GPTModel` with token embedding, position embedding, embedding dropout, twelve `TransformerBlock`s, final LayerNorm, and an `lm_head` that ties to the token embedding when the flag is set.
-- A `count_parameters` helper that returns the unique parameter count (so weight tying is honored in the count).
-- A `generate` function that does temperature, top-k, multinomial, and sliding window context.
-- A demo that builds the model, prints the parameter count next to the reference 124M, and generates a short sequence from a fixed prompt to show the pipeline ends to end.
+- Датакласс `class GPTConfig` с дефолтами 124M: `vocab_size=50257`, `context_length=1024`, `d_model=768`, `num_heads=12`, `num_layers=12`, `mlp_expansion=4`, `dropout=0.1`, `use_bias=True`, `weight_tying=True`.
+- `class GPTModel` с токенным эмбеддингом, позиционным эмбеддингом, dropout эмбеддингов, двенадцатью `TransformerBlock`, финальным LayerNorm и `lm_head`, связывающейся с токенным эмбеддингом при установленном флаге.
+- Хелпер `count_parameters`, возвращающий число уникальных параметров (weight tying учитывается в счётчике).
+- Функцию `generate` с температурой, top-k, multinomial и скользящим окном контекста.
+- Демо: собирает модель, печатает число параметров рядом с референсными 124M и генерирует короткую последовательность из фиксированного промпта, показывая пайплайн end to end.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: parameter count alongside the 124M reference, generated token ids from a random prompt, and a confirmation that the LM head and token embedding share storage when tying is on.
+Вывод: число параметров рядом с референсом 124M, сгенерированные токенные id из случайного промпта и подтверждение, что LM-голова и токенный эмбеддинг делят хранилище при включённом связывании.
 
-To keep the demo fast, the script also runs a tiny config (`d_model=64`, `num_layers=2`) end to end and prints the generated token sequence inline. The 124M config is built but only its parameter count and one forward pass are exercised.
+Чтобы демо оставалось быстрым, скрипт также прогоняет крошечную конфигурацию (`d_model=64`, `num_layers=2`) end to end и печатает сгенерированную последовательность токенов инлайн. Конфигурация 124M собирается, но у неё замеряются только число параметров и один forward-проход.
 
-## Stack
+## Стек
 
-- `torch` for the tensor math, autograd, and module plumbing.
-- `code/main.py` reimplements the same block pattern from lesson 34 locally.
+- `torch` для тензорной математики, autograd и модульной обвязки.
+- `code/main.py` локально реимплементирует тот же паттерн блока из урока 34.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns make the difference between a model that runs and a model that ships.
+Три паттерна отличают модель, которая запускается, от модели, которая отгружается.
 
-**Initialize the residual projections small.** The output projection of attention and the second linear of the MLP both feed directly into a residual add. Initializing those with the same standard deviation as every other linear gives a residual stream that grows with depth and pushes the final LayerNorm into a hot regime. Scale the std by `1 / sqrt(2 * num_layers)` for those two projections; the residual stream stays in a sane range through twelve layers.
+**Инициализируйте residual-проекции маленькими.** Выходная проекция внимания и второй линейный слой MLP оба напрямую впадают в residual-сложение. Их инициализация с тем же стандартным отклонением, что у остальных линейных слоёв, даёт residual stream, растущий с глубиной и загоняющий финальный LayerNorm в горячий режим. Масштабируйте std на `1 / sqrt(2 * num_layers)` для этих двух проекций — residual stream останется во вменяемом диапазоне через двенадцать слоёв.
 
-**Cache the position id tensor, do not recompute.** `torch.arange(T)` allocates fresh memory at every forward. Allocate once in `__init__` for the maximum context, slice the first T entries per call, and skip the allocator round trip.
+**Кэшируйте тензор позиционных id, не пересчитывайте.** `torch.arange(T)` аллоцирует свежую память на каждом forward. Выделите один раз в `__init__` под максимальный контекст, срезайте первые T элементов на вызов и пропустите round trip аллокатора.
 
-**Tie weights at parameter level, not just by copying.** Setting `lm_head.weight = token_embedding.weight` shares the tensor; copying does not. The optimizer needs to update one parameter and the autograd graph needs one accumulation. If you copy, the head drifts away from the embedding and weight tying buys you nothing.
+**Связывайте веса на уровне параметра, а не копированием.** `lm_head.weight = token_embedding.weight` делит тензор; копирование — нет. Оптимизатору нужно обновлять один параметр, а графу autograd — одну аккумуляцию. Если копируете, голова уплывает от эмбеддинга, и weight tying не даёт ничего.
 
-## Use It
+## Используйте это
 
-- The model class in this lesson is the same shape as the one the next lesson trains.
-- Replacing the learned position embedding with RoPE gets you the LLaMA family without touching the block or the head.
-- Replacing the GELU with SiLU and the LayerNorm with RMSNorm gets you the rest of the LLaMA family changes.
-- The generation function works with any logits source, not only this model. You can pull logits from a pretrained GPT-2 file in lesson 37 and reuse the same generation loop.
+- Класс модели этого урока — той же формы, что и тот, который обучает следующий урок.
+- Замена обучаемого позиционного эмбеддинга на RoPE даёт семейство LLaMA, не трогая блок и голову.
+- Замена GELU на SiLU и LayerNorm на RMSNorm — остальные изменения семейства LLaMA.
+- Функция генерации работает с любым источником логитов, не только этой моделью. В уроке 37 можно тянуть логиты из предобученного файла GPT-2 и переиспользовать тот же цикл генерации.
 
-## Exercises
+## Упражнения
 
-1. Untie the LM head from the token embedding and recount parameters. Verify the delta is 50257 times 768 = 38 million.
-2. Replace the learned position embedding with a sinusoidal table computed at construction time. Confirm the model still forwards and the parameter count drops by 786,432.
-3. Add a `greedy=True` flag to generation that skips sampling and picks argmax. Confirm the sequence is deterministic across runs.
-4. Add a `repetition_penalty` knob that divides the logit of any token in the prompt or generated history by a constant before softmax. Show on a fixed prompt that values above one reduce repeat counts in the output.
-5. Add `top_p` (nucleus) sampling next to `top_k`. Two-line check that the sum of probabilities of the kept tokens exceeds `top_p`.
+1. Развяжите LM-голову и токенный эмбеддинг и пересчитайте параметры. Убедитесь, что дельта — 50257 на 768 = 38 миллионов.
+2. Замените обучаемый позиционный эмбеддинг синусоидальной таблицей, вычисляемой при конструировании. Подтвердите, что модель по-прежнему проходит forward, а число параметров падает на 786 432.
+3. Добавьте генерации флаг `greedy=True`, пропускающий сэмплирование и берущий argmax. Подтвердите, что последовательность детерминирована между прогонами.
+4. Добавьте ручку `repetition_penalty`, делящую логит любого токена из промпта или сгенерированной истории на константу до softmax. Покажите на фиксированном промпте, что значения выше единицы уменьшают число повторов в выводе.
+5. Добавьте `top_p` (nucleus) сэмплирование рядом с `top_k`. Двухстрочная проверка: сумма вероятностей оставленных токенов превышает `top_p`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Weight tying | "Tied embeddings" | The LM head and the token embedding share the same parameter tensor; saves vocab times d_model parameters and matches the GPT-2 reference |
-| Position embedding | "Learned positions" | A separate table of shape (context length, d_model) added to token vectors; learned end to end |
-| Sliding window context | "Context cap" | When the prompt plus generated tokens exceed the context length, drop the oldest tokens so the active window fits |
-| Top-k sampling | "K truncation" | Keep the K logits with the highest values, mask the rest to negative infinity, softmax over the remainder |
-| Temperature | "Sampling temperature" | Divide logits by T before softmax; T less than 1 sharpens, T equal to 1 keeps the natural distribution, T greater than 1 flattens |
+| Weight tying | «Связанные эмбеддинги» | LM-голова и токенный эмбеддинг делят один тензор-параметр; экономит vocab на d_model параметров и совпадает с референсом GPT-2 |
+| Позиционный эмбеддинг | «Обучаемые позиции» | Отдельная таблица формы (длина контекста, d_model), прибавляемая к токенным векторам; обучается end to end |
+| Скользящее окно контекста | «Потолок контекста» | Когда промпт плюс сгенерированные токены превышают длину контекста, старейшие токены отбрасываются, чтобы активное окно поместилось |
+| Top-k-сэмплирование | «K-усечение» | Оставить K логитов с наибольшими значениями, замаскировать остальные минус бесконечностью, softmax по выжившим |
+| Температура | «Температура сэмплирования» | Деление логитов на T до softmax; T меньше 1 заостряет, T равное 1 сохраняет естественное распределение, T больше 1 сглаживает |
 
-## Further Reading
+## Дополнительное чтение
 
-- Phase 19 lesson 34 for the block this model stacks.
-- Phase 19 lesson 36 for the training loop that drives this model with cross entropy loss.
-- Phase 19 lesson 37 for loading pretrained GPT-2 weights into this exact architecture.
-- Phase 7 lesson 07 (GPT causal language modeling) for the math of next token prediction.
-- Phase 10 lesson 04 (pre training mini GPT) for the original training procedure on the same architecture.
+- Фаза 19, урок 34 — блок, который эта модель стекует.
+- Фаза 19, урок 36 — цикл обучения, гоняющий эту модель кросс-энтропийным лоссом.
+- Фаза 19, урок 37 — загрузка предобученных весов GPT-2 ровно в эту архитектуру.
+- Фаза 7, урок 07 (каузальное языковое моделирование GPT) — математика предсказания следующего токена.
+- Фаза 10, урок 04 (предобучение mini-GPT) — оригинальная процедура обучения на той же архитектуре.

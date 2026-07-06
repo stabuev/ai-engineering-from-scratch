@@ -1,31 +1,28 @@
 # BPE Tokenizer From Scratch
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Байты на входе, id на выходе, id обратно в те же байты. Соберите токенизатор, с которого до сих пор начинается каждая современная текстовая модель.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки Фазы 04, уроки Фазы 07 о трансформерах
+**Время:** ~90 минут
 
-> Bytes in, ids out, ids back to the same bytes. Build the tokenizer that every modern text model still starts from.
+## Цели обучения
+- Обучить словарь Byte-Pair Encoding на сыром текстовом корпусе, раз за разом сливая самую частую пару соседних символов.
+- Реализовать детерминированную таблицу слияний и применить её к свежему тексту, получив поток subword-id.
+- Совершать round trip произвольного UTF-8-входа в id и обратно без потери информации.
+- Зарезервировать и защитить специальные токены (`<|endoftext|>`, `<|pad|>`), чтобы они переживали обучение и декодирование.
+- Понять, почему байтовый алфавит — правильный фундамент для универсального токенизатора.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 04 lessons, Phase 07 transformer lessons
-**Time:** ~90 minutes
+## Рамка
 
-## Learning Objectives
-- Train a Byte-Pair Encoding vocabulary from a raw text corpus by repeatedly merging the most frequent adjacent symbol pair.
-- Implement a deterministic merge table and apply it to fresh text to produce a stream of subword ids.
-- Round-trip arbitrary UTF-8 input to ids and back without information loss.
-- Reserve and protect special tokens (`<|endoftext|>`, `<|pad|>`) so they survive training and decoding.
-- Reason about why a byte-level alphabet is the right floor for a general-purpose tokenizer.
+Языковая модель никогда не видит текст. Она видит целые числа. Отображение строки в список чисел и обратно — это токенизатор. Ошибитесь в этом слое — и каждая кривая лосса в обучении меряет не то.
 
-## The frame
+Доминирующее семейство subword-токенизаторов для универсальных текстовых моделей — Byte-Pair Encoding. Идея маленькая. Начать с известного алфавита. Найти пару соседних символов, которая чаще всего встречается в обучающем корпусе. Слить её в новый символ. Повторять, пока словарь не достигнет целевого размера. Кодирование нового текста переиспользует тот же список слияний в том же порядке.
 
-A language model never sees text. It sees integers. The map from a string to a list of integers and back is the tokenizer. Get this layer wrong and every loss curve in the training run is measuring the wrong thing.
+Мы соберём байтовый вариант. Алфавит — 256 сырых байтов, а не код-пойнты Unicode. Именно этот выбор позволяет токенизатору принять любой UTF-8-вход без отката к unknown-токену.
 
-The dominant family of subword tokenizers for general text models is Byte-Pair Encoding. The idea is small. Start from a known alphabet. Find the adjacent symbol pair that appears most often in the training corpus. Merge it into a new symbol. Repeat until the vocabulary reaches the target size. Encoding new text reuses the same merge list in the same order.
-
-We will build the byte-level variant. The alphabet is the 256 raw bytes, not Unicode code points. That choice is what lets the tokenizer handle any UTF-8 input without falling back to an unknown token.
-
-## The pipeline
+## Пайплайн
 
 ```mermaid
 flowchart LR
@@ -41,17 +38,17 @@ flowchart LR
     H --> J[decode ids back to bytes]
 ```
 
-The training side and the inference side share the merge table. That sharing is the contract. If you change the merge order at inference, you decode a different stream of ids.
+Обучающая и инференс-сторона делят одну таблицу слияний. Это разделение и есть контракт. Измените порядок слияний на инференсе — и декодируете другой поток id.
 
-## The byte alphabet
+## Байтовый алфавит
 
-The first 256 ids are reserved for the raw bytes 0x00 through 0xFF. That guarantees every input string can be expressed in the vocabulary before any merge happens. After the byte block we reserve a small range for special tokens. The training loop never proposes those ids as merge targets because we keep them out of the pretokenized stream entirely.
+Первые 256 id зарезервированы под сырые байты от 0x00 до 0xFF. Это гарантирует, что любая входная строка выразима в словаре до того, как случилось хоть одно слияние. За байтовым блоком мы резервируем небольшой диапазон под специальные токены. Обучающий цикл никогда не предлагает эти id как цели слияния, потому что мы полностью держим их вне претокенизированного потока.
 
-The pretokenizer splits the corpus on whitespace and punctuation boundaries before training sees it. Without that split the BPE merge step would happily learn merges that cross word boundaries and the vocabulary fills up with whole common phrases. With the split, merges stay inside a word and the result generalizes.
+Претокенизатор режет корпус по границам пробелов и пунктуации до того, как его увидит обучение. Без этого разреза шаг слияния BPE с удовольствием выучил бы слияния через границы слов, и словарь забился бы целыми частыми фразами. С разрезом слияния остаются внутри слова, и результат обобщается.
 
-## The training loop
+## Обучающий цикл
 
-For each training step the loop does three things. It walks every word in the corpus and counts how often each adjacent pair of current symbols appears, weighted by how often the word itself appears. It picks the pair with the highest count. It rewrites every occurrence of that pair into a single new symbol whose id is the next free slot in the vocabulary. Then it records the merge.
+На каждом шаге обучения цикл делает три вещи. Проходит по каждому слову корпуса и считает, как часто встречается каждая пара соседних текущих символов, взвешивая на частоту самого слова. Выбирает пару с наибольшим счётом. Переписывает каждое вхождение этой пары в один новый символ, чей id — следующий свободный слот словаря. Затем записывает слияние.
 
 ```mermaid
 sequenceDiagram
@@ -66,37 +63,37 @@ sequenceDiagram
     Corpus->>PairCount: recount for next step
 ```
 
-The cost of each step is linear in the size of the corpus expressed as a list of symbol sequences. For a million words and a target vocabulary of ten thousand ids the loop runs to completion in seconds because the symbol sequences shrink as merges land.
+Стоимость каждого шага линейна по размеру корпуса, выраженного как список последовательностей символов. Для миллиона слов и целевого словаря в десять тысяч id цикл добегает до конца за секунды, потому что последовательности символов сжимаются по мере слияний.
 
-## Encoding fresh text
+## Кодирование свежего текста
 
-Inference does not call the merge counter. It applies the merge table in the same order it was learned. For a fresh word the encoder starts from the byte split. It scans the current sequence for the lowest-ranked merge (the earliest one that applies). It performs that merge. It scans again. The loop ends when no merge in the table applies to the current sequence.
+Инференс не вызывает счётчик пар. Он применяет таблицу слияний в том порядке, в котором она была выучена. Для свежего слова кодировщик стартует с байтового разреза. Он сканирует текущую последовательность в поисках слияния с наименьшим рангом (самого раннего из применимых). Выполняет это слияние. Сканирует снова. Цикл заканчивается, когда ни одно слияние из таблицы к текущей последовательности не применимо.
 
-The ordering by rank is the property that makes encoding deterministic and matches the training behavior on the same input. A merge that was learned first sits at the top of the table and gets applied first. If two merges could apply at the same position, the lower-rank one wins.
+Упорядочивание по рангу — то свойство, которое делает кодирование детерминированным и совпадающим с поведением обучения на том же входе. Слияние, выученное первым, стоит наверху таблицы и применяется первым. Если два слияния применимы в одной позиции, побеждает то, у которого ранг ниже.
 
-## Special tokens
+## Специальные токены
 
-Special tokens are ids that the byte stream can never produce. We reserve them by hand. Two are enough for this lesson.
+Специальные токены — id, которые байтовый поток породить не может. Мы резервируем их вручную. Для этого урока хватит двух.
 
-- `<|endoftext|>` separates documents during pretraining. It tells the model "a new document starts here, do not let the previous one's context leak in."
-- `<|pad|>` fills out short sequences so a batch can be a rectangular tensor. The loss mask hides it during training.
+- `<|endoftext|>` разделяет документы при предобучении. Он говорит модели: «здесь начинается новый документ, не дай контексту предыдущего протечь».
+- `<|pad|>` добивает короткие последовательности, чтобы батч был прямоугольным тензором. Маска лосса прячет его при обучении.
 
-The encoder accepts a flag to allow special tokens in the input. With the flag off, the strings `<|endoftext|>` and `<|pad|>` get tokenized as the bytes that spell them out. With the flag on, the literal strings get mapped to their reserved ids and are not subject to any merge.
+Кодировщик принимает флаг, разрешающий специальные токены во входе. С выключенным флагом строки `<|endoftext|>` и `<|pad|>` токенизируются как байты, которыми они записаны. С включённым — буквальные строки маппятся на зарезервированные id и не подлежат никакому слиянию.
 
-## Round-trip guarantee
+## Гарантия round trip
 
-Encoding then decoding must return the input bytes exactly. The decoder concatenates the byte expansion of every id in order. Since every id is either a raw byte or the concatenation of two previously known ids, the recursive expansion always terminates in raw bytes. Decoding then returns the UTF-8 string that those bytes spell.
+Кодирование и затем декодирование обязано вернуть входные байты в точности. Декодер конкатенирует байтовое разворачивание каждого id по порядку. Поскольку каждый id — либо сырой байт, либо конкатенация двух ранее известных id, рекурсивное разворачивание всегда завершается сырыми байтами. Декодирование возвращает UTF-8-строку, которую эти байты записывают.
 
-The test suite in this lesson checks that property on an unseen sentence, on a sentence with a Unicode emoji, and on a sentence that contains a literal `<|endoftext|>` token.
+Тестовый набор урока проверяет это свойство на невиданном предложении, на предложении с Unicode-эмодзи и на предложении, содержащем буквальный токен `<|endoftext|>`.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not build a regex-driven pretokenizer in the style of the largest production tokenizers. The pretokenizer here is a small whitespace and punctuation split. It is enough to produce sensible merges on a small training corpus and the contract with the rest of the lesson chain stays the same. The next lesson treats the tokenizer as a black box and builds the sliding-window dataset on top of it.
+Он не строит regex-претокенизатор в стиле крупнейших продакшен-токенизаторов. Претокенизатор здесь — маленький разрез по пробелам и пунктуации. Его достаточно, чтобы получить осмысленные слияния на маленьком корпусе, а контракт с остальной цепочкой уроков не меняется. Следующий урок трактует токенизатор как чёрный ящик и строит поверх него датасет со скользящим окном.
 
-It does not parallelize the pair counter. A loop in Python over a corpus of a few thousand words finishes in well under a second. For larger corpora the obvious move is to count pairs per word in parallel and reduce.
+Он не параллелит счётчик пар. Цикл на Python по корпусу из нескольких тысяч слов заканчивается значительно быстрее секунды. Для больших корпусов очевидный ход — считать пары по словам параллельно и редьюсить.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines four objects. `BPETokenizer` holds the vocabulary, the merge table, and the special-token table. `train` is the training loop. `encode` is the inference path. `decode` is the byte concatenation. The demo at the bottom trains a small tokenizer on a built-in corpus, encodes a held-out sentence, decodes the ids back, and prints both. The tests in `code/tests/test_bpe.py` pin the round-trip property, the special-token reservation, and the merge ordering.
+`main.py` определяет четыре объекта. `BPETokenizer` держит словарь, таблицу слияний и таблицу специальных токенов. `train` — обучающий цикл. `encode` — путь инференса. `decode` — конкатенация байтов. Демо внизу обучает маленький токенизатор на встроенном корпусе, кодирует отложенное предложение, декодирует id обратно и печатает оба. Тесты в `code/tests/test_bpe.py` фиксируют свойство round trip, резервирование специальных токенов и порядок слияний.
 
-Run the demo. Then change the target vocabulary size in the demo from 300 to 600 and watch how the encoded length of the held-out sentence drops. That curve is the BPE compression curve.
+Запустите демо. Затем измените целевой размер словаря в демо с 300 на 600 и посмотрите, как падает закодированная длина отложенного предложения. Эта кривая — кривая сжатия BPE.

@@ -1,32 +1,29 @@
 # Transformer Block from Scratch
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Один блок — единица любого современного decoder-LLM. Layer norm, multi-head attention, residual, MLP, residual. Pre-LN-вариант обучается стабильно без warmup. Post-LN — то, что отгрузила оригинальная статья. Этот урок строит оба бок о бок и показывает, какой выживает в стеке из 12 слоёв на обычных learning rate.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–33 (токенизатор, эмбеддинги, математика внимания, батчевый загрузчик данных)
+**Время:** ~90 минут
 
-> One block is the unit of every modern decoder LLM. Layer norm, multi head attention, residual, MLP, residual. The pre-LN variant trains stably without warmup. The post-LN variant is what the original paper shipped. This lesson builds both, side by side, and shows which one survives a 12 layer stack at common learning rates.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30 to 33 (tokenizer, embeddings, attention math, batched data loader)
-**Time:** ~90 minutes
+- Собрать блок трансформера в PyTorch из четырёх движущихся частей: LayerNorm, multi-head каузальное внимание, residual-связи, позиционно-независимый MLP.
+- Разместить LayerNorm'ы в двух конфигурациях (pre-LN и post-LN) и объяснить, почему одна обучается стабильно без warmup.
+- Реализовать каузальное маскирование внутри multi-head attention, чтобы токен `i` не видел токены `j > i`.
+- Проследить течение градиентов через оба варианта в стеке из 12 слоёв и прочитать результат без размахивания руками.
+- Переиспользовать блок как drop-in-единицу, когда следующий урок собирает GPT на 124 миллиона параметров.
 
-## Learning Objectives
+## Проблема
 
-- Build a transformer block in PyTorch from the four moving pieces: LayerNorm, multi head causal attention, residual connections, position wise MLP.
-- Place the LayerNorms in two configurations (pre-LN and post-LN) and explain why one trains stably without warmup.
-- Implement causal masking inside the multi head attention so token `i` cannot see tokens `j > i`.
-- Track gradient flow through both variants on a 12 layer stack and read the result without hand waving.
-- Reuse the block as a drop-in unit when the next lesson assembles a 124 million parameter GPT.
+Трансформер — это один повторяемый блок. Ошибитесь в блоке один раз, повторите его двенадцать раз — и вы отгрузите модель, расходящуюся на первой эпохе, или модель, которой до конца жизни нужны warmup-костыли. Два режима отказа, которые вы увидите в этом уроке, не экзотика. Они всплывают в первый же раз, когда учащийся наивно стекует блоки. Первый — слой внимания, смотрящий в будущее. Второй — LayerNorm, поставленный туда, где он не может укротить residual-сигнал на глубине.
 
-## The Problem
+Лечение механическое, как только вы его увидели. В блоке ровно два residual-пути и ровно две позиции нормализации. Выберите позиции правильно — и остальной стек превращается в бухгалтерию.
 
-A transformer is one block repeated. Get the block wrong once, repeat it twelve times, and you ship a model that diverges in the first epoch or that needs warmup hacks the rest of the way. The two failure modes you will see in this lesson are not exotic. They show up the first time a learner stacks blocks naively. One is the attention layer attending to the future. The other is the LayerNorm placed where it cannot tame the residual signal at depth.
+## Концепция
 
-The fix is mechanical once you see it. The block has exactly two residual paths and exactly two normalization positions. Choose the positions correctly and the rest of the stack is just bookkeeping.
-
-## The Concept
-
-Every decoder only transformer block is a function that takes a tensor of shape `(batch, sequence, embedding)` and returns a tensor of the same shape. Inside, two sublayers do the work.
+Каждый decoder-only блок трансформера — функция, принимающая тензор формы `(batch, sequence, embedding)` и возвращающая тензор той же формы. Внутри работают два подслоя.
 
 ```mermaid
 flowchart TB
@@ -41,9 +38,9 @@ flowchart TB
   R2 --> Y[Output, same shape]
 ```
 
-This is the pre-LN variant. The LayerNorm sits inside the residual branch, before the sublayer. The residual connection carries the unnormalized signal forward.
+Это pre-LN-вариант. LayerNorm сидит внутри residual-ветки, перед подслоем. Residual-связь несёт ненормализованный сигнал вперёд.
 
-The post-LN variant moves the LayerNorm to after the residual add.
+Post-LN-вариант переносит LayerNorm после residual-сложения.
 
 ```mermaid
 flowchart TB
@@ -58,79 +55,79 @@ flowchart TB
   N2 --> Y[Output]
 ```
 
-Shape is identical. Training behavior is not. With post-LN, the gradient that flows back through the residual path must pass through the LayerNorm. At depth twelve and learning rate `3e-4`, that gradient shrinks fast enough to need a warmup schedule. Pre-LN leaves the residual path unnormalized, so gradients propagate cleanly to the embedding layer. Pre-LN is the configuration GPT-2 onward ships with for that reason.
+Форма идентична. Поведение обучения — нет. При post-LN градиент, текущий назад по residual-пути, обязан пройти через LayerNorm. На глубине двенадцать и learning rate `3e-4` этот градиент сжимается достаточно быстро, чтобы понадобилось warmup-расписание. Pre-LN оставляет residual-путь ненормализованным, и градиенты чисто доходят до слоя эмбеддингов. Именно поэтому pre-LN — конфигурация, с которой отгружаются GPT-2 и всё после него.
 
-### Causal multi head attention
+### Каузальное multi-head attention
 
-The attention sublayer projects the input three ways into query, key, value tensors. Each is reshaped from `(B, T, D)` to `(B, H, T, D/H)` where `H` is the head count. Scaled dot product attention computes `softmax(Q K^T / sqrt(d_k))` per head, masks the upper triangle to negative infinity, applies the mask via softmax, then multiplies by `V`. Heads are concatenated back into a single `(B, T, D)` tensor and projected once more. The mask is the only piece that makes the model causal. Forget the mask and you train a model that cheats.
+Подслой внимания проецирует вход тремя способами в тензоры query, key, value. Каждый перестраивается из `(B, T, D)` в `(B, H, T, D/H)`, где `H` — число голов. Scaled dot-product attention вычисляет `softmax(Q K^T / sqrt(d_k))` на голову, маскирует верхний треугольник минус бесконечностью, применяет маску через softmax, затем умножает на `V`. Головы конкатенируются обратно в единый тензор `(B, T, D)` и проецируются ещё раз. Маска — единственная деталь, делающая модель каузальной. Забудьте маску — и обучите модель, которая жульничает.
 
-### The MLP
+### MLP
 
-The position wise MLP applies the same two layer network to every token independently. The hidden width is four times the embedding width, the activation is GELU, and a dropout follows the second linear. No tokens talk to each other inside the MLP. All token mixing happens in attention.
+Позиционно-независимый MLP применяет одну и ту же двухслойную сеть к каждому токену независимо. Скрытая ширина — четырёхкратная ширина эмбеддинга, активация — GELU, за вторым линейным слоем следует dropout. Внутри MLP токены друг с другом не разговаривают. Всё смешение токенов происходит во внимании.
 
-### Residual connections do two things
+### Residual-связи делают две вещи
 
-They make the gradient path additive across depth, which keeps the gradient norm in scale through twelve layers. They also let each block learn an additive update to the running representation rather than a full replacement. Both effects are why the block scales.
+Они делают градиентный путь аддитивным по глубине, что держит норму градиента в масштабе через двенадцать слоёв. И они позволяют каждому блоку выучивать аддитивное обновление текущего представления, а не полную замену. Оба эффекта — причина, по которой блок масштабируется.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `class LayerNorm` with learnable scale and shift, biased eps, applied per token vector.
-- `class MultiHeadAttention` with `num_heads`, `head_dim = d_model // num_heads`, fused QKV projection, registered causal mask, attention and residual dropout.
-- `class FeedForward` with two linear layers, GELU activation, dropout.
-- `class TransformerBlock` with a `pre_ln` flag that toggles between the two variants.
-- A demo that builds a 6 layer pre-LN stack and a 6 layer post-LN stack with identical inputs and prints (a) output shape, (b) gradient norm at the embedding after one backward pass.
+- `class LayerNorm` с обучаемыми scale и shift, eps в знаменателе, применяется к каждому токенному вектору.
+- `class MultiHeadAttention` с `num_heads`, `head_dim = d_model // num_heads`, слитой QKV-проекцией, зарегистрированной каузальной маской, attention- и residual-dropout.
+- `class FeedForward` с двумя линейными слоями, активацией GELU, dropout.
+- `class TransformerBlock` с флагом `pre_ln`, переключающим между двумя вариантами.
+- Демо, которое строит 6-слойный pre-LN-стек и 6-слойный post-LN-стек на идентичных входах и печатает (а) форму выхода, (б) норму градиента на эмбеддинге после одного backward-прохода.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: shape check on both stacks, gradient norms side by side. The pre-LN stack's embedding gradient is order of magnitude larger than the post-LN stack at the same learning rate, which is the empirical signal pre-LN trains without warmup.
+Вывод: проверка формы на обоих стеках, нормы градиентов бок о бок. Градиент эмбеддинга у pre-LN-стека на порядок больше, чем у post-LN при том же learning rate, — это и есть эмпирический сигнал того, что pre-LN обучается без warmup.
 
-## Stack
+## Стек
 
-- `torch` for the tensor math, autograd, and `nn.Module` plumbing.
-- No `transformers`, no pretrained weights. The block is implemented from primitives.
+- `torch` для тензорной математики, autograd и обвязки `nn.Module`.
+- Никакого `transformers`, никаких предобученных весов. Блок реализован из примитивов.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns turn the textbook block into something you can ship.
+Три паттерна превращают учебный блок в то, что можно отгрузить.
 
-**Fused QKV projection.** Three separate linear layers cost three kernel launches and three matmuls. One linear layer of width `3 * d_model` does the same work in one launch, then splits the output along the last axis. The fused path is faster on every accelerator and matches what reference implementations of GPT-2, LLaMA, and Mistral all ship.
+**Слитая QKV-проекция.** Три отдельных линейных слоя стоят трёх запусков ядер и трёх матмулов. Один линейный слой ширины `3 * d_model` делает ту же работу одним запуском, а затем режет выход по последней оси. Слитый путь быстрее на любом ускорителе и совпадает с тем, что отгружают референсные реализации GPT-2, LLaMA и Mistral.
 
-**Registered causal mask buffer.** The mask depends only on the maximum context length. Allocate it once at construction with `register_buffer`, slice the active window per forward pass, and skip the per-call allocation. Forgetting this turns the mask into an allocator hot spot at long context.
+**Зарегистрированный буфер каузальной маски.** Маска зависит только от максимальной длины контекста. Выделите её один раз при конструировании через `register_buffer`, срезайте активное окно на каждый forward и пропустите аллокацию на вызов. Забыв это, вы превращаете маску в горячую точку аллокатора на длинном контексте.
 
-**Dropout in two places, not three.** Dropout belongs after the attention softmax (attention dropout) and after the second linear of the MLP (residual dropout). A dropout on the residual itself breaks the additive identity that lets the gradient flow at depth. Some early implementations got this wrong and paid for it with brittle training.
+**Dropout в двух местах, а не в трёх.** Dropout уместен после attention-softmax (attention dropout) и после второго линейного слоя MLP (residual dropout). Dropout на самом residual ломает аддитивную идентичность, позволяющую градиенту течь на глубине. Некоторые ранние реализации ошиблись здесь и заплатили хрупким обучением.
 
-## Use It
+## Используйте это
 
-- The block in this lesson plugs straight into the GPT assembly in lesson 35 without modification.
-- The pre-LN variant is what every modern open weights LLM uses. The post-LN variant is what the original 2017 attention paper used. Knowing both is enough to read any decoder architecture you will encounter.
-- Swap the GELU for SiLU and you have the LLaMA family activation. Swap the LayerNorm for RMSNorm and you have the LLaMA family normalization. Same skeleton.
+- Блок из этого урока без модификаций втыкается в сборку GPT урока 35.
+- Pre-LN-вариант — то, что использует каждый современный open-weights LLM. Post-LN — то, что использовала оригинальная статья 2017 года о внимании. Знания обоих достаточно, чтобы читать любую decoder-архитектуру, которая вам встретится.
+- Замените GELU на SiLU — получите активацию семейства LLaMA. Замените LayerNorm на RMSNorm — получите нормализацию семейства LLaMA. Скелет тот же.
 
-## Exercises
+## Упражнения
 
-1. Add a `bias=False` flag to every linear in the block. Modern open weights LLMs ship without biases on the linear layers. Measure how many parameters you save in a 12 layer 768 dim model.
-2. Replace `nn.LayerNorm` with a hand rolled RMSNorm and verify the output shape is unchanged.
-3. Add a flag that returns the attention weights for the first head as a `(B, T, T)` tensor. Plot the upper triangle to confirm it is zero after softmax.
-4. Build a sanity check that feeds a `(2, 16, 384)` tensor with `H=6` through both variants and asserts the forward outputs are different (for example, `not torch.allclose`) when weights are initialized identically and dropout is set to zero.
+1. Добавьте флаг `bias=False` каждому линейному слою блока. Современные open-weights LLM отгружаются без bias на линейных слоях. Посчитайте, сколько параметров вы экономите в 12-слойной модели с размерностью 768.
+2. Замените `nn.LayerNorm` на собственноручный RMSNorm и убедитесь, что форма выхода не изменилась.
+3. Добавьте флаг, возвращающий веса внимания первой головы тензором `(B, T, T)`. Постройте верхний треугольник и подтвердите, что после softmax он нулевой.
+4. Соберите sanity-проверку, прогоняющую тензор `(2, 16, 384)` с `H=6` через оба варианта и утверждающую, что forward-выходы различаются (например, `not torch.allclose`) при идентичной инициализации весов и нулевом dropout.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Pre-LN | "Pre norm" | LayerNorm inside the residual branch, before each sublayer; the residual carries the unnormalized signal |
-| Post-LN | "Post norm" | LayerNorm after the residual add; what the 2017 paper shipped and what needs warmup |
-| Causal mask | "Triangle mask" | The upper triangle of the attention logits set to negative infinity so token i cannot read token j when j is greater than i |
-| Fused QKV | "Combined projection" | One linear of width 3D instead of three linears of width D; one kernel, one matmul |
-| Residual stream | "Skip connection" | The unnormalized tensor that flows top to bottom through every block; what each block adds to |
+| Pre-LN | «Pre norm» | LayerNorm внутри residual-ветки, перед каждым подслоем; residual несёт ненормализованный сигнал |
+| Post-LN | «Post norm» | LayerNorm после residual-сложения; то, что отгрузила статья 2017 года и что требует warmup |
+| Каузальная маска | «Треугольная маска» | Верхний треугольник attention-логитов, установленный в минус бесконечность, чтобы токен i не читал токен j при j больше i |
+| Слитый QKV | «Комбинированная проекция» | Один линейный слой ширины 3D вместо трёх ширины D; одно ядро, один matmul |
+| Residual stream | «Skip connection» | Ненормализованный тензор, текущий сверху вниз через каждый блок; то, к чему каждый блок прибавляет |
 
-## Further Reading
+## Дополнительное чтение
 
-- Phase 7 lesson 02 (self attention from scratch) for the attention math underneath this block.
-- Phase 7 lesson 05 (full transformer) for the encoder decoder version of the same skeleton.
-- Phase 10 lesson 04 (pre training mini GPT) for the training procedure that this block plugs into.
-- Phase 19 lesson 35 (this track) which stacks twelve of these blocks into a GPT model.
+- Фаза 7, урок 02 (self-attention с нуля) — математика внимания под этим блоком.
+- Фаза 7, урок 05 (полный трансформер) — encoder-decoder-версия того же скелета.
+- Фаза 10, урок 04 (предобучение mini-GPT) — процедура обучения, в которую этот блок втыкается.
+- Фаза 19, урок 35 (этот трек) — стекует двенадцать таких блоков в GPT-модель.
