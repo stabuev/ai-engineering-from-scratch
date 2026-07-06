@@ -3213,6 +3213,550 @@ const PHASES = [
         "lang": "Python, TypeScript",
         "combines": "P5 P6 P11 P12 P14 P17 P18",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/17-personal-ai-tutor/"
+      },
+      {
+        "name": "Контракт цикла агентского харнеса",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/20-agent-harness-loop-contract/"
+      },
+      {
+        "name": "Реестр инструментов с валидацией схем",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/21-tool-registry-schema-validation/"
+      },
+      {
+        "name": "JSON-RPC 2.0 поверх newline-delimited stdio",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/22-jsonrpc-stdio-transport/"
+      },
+      {
+        "name": "Диспетчер function calls",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/23-function-call-dispatcher/"
+      },
+      {
+        "name": "Управляющий поток plan-execute",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/24-plan-execute-control-flow/"
+      },
+      {
+        "name": "Verification gates и бюджет наблюдений",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/25-verification-gates-observation-budget/"
+      },
+      {
+        "name": "Sandbox-раннер с denylist и path jail",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/26-sandbox-runner-denylist/"
+      },
+      {
+        "name": "Eval-харнес с fixture-задачами",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/27-eval-harness-fixture-tasks/"
+      },
+      {
+        "name": "Observability: OTel GenAI spans и метрики Prometheus",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/28-observability-otel-traces/"
+      },
+      {
+        "name": "Coding-агент на харнесе end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "A. Agent harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/29-end-to-end-coding-task-demo/"
+      },
+      {
+        "name": "BPE-токенизатор с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/30-bpe-tokenizer-from-scratch/"
+      },
+      {
+        "name": "Токенизированный датасет со скользящим окном",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/31-tokenized-dataset-sliding-window/"
+      },
+      {
+        "name": "Токенные и позиционные эмбеддинги",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/32-token-positional-embeddings/"
+      },
+      {
+        "name": "Multi-head self-attention",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/33-multihead-self-attention/"
+      },
+      {
+        "name": "Блок трансформера с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/34-transformer-block/"
+      },
+      {
+        "name": "Сборка GPT-модели",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/35-gpt-model-assembly/"
+      },
+      {
+        "name": "Цикл обучения и оценка",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/36-training-loop-eval/"
+      },
+      {
+        "name": "Загрузка предобученных весов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/37-loading-pretrained-weights/"
+      },
+      {
+        "name": "Fine-tuning классификатора заменой головы",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/38-classifier-finetuning/"
+      },
+      {
+        "name": "Instruction tuning через SFT",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/39-instruction-tuning-sft/"
+      },
+      {
+        "name": "DPO с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/40-dpo-from-scratch/"
+      },
+      {
+        "name": "Полный eval-пайплайн",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "B. NLP LLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/41-eval-pipeline/"
+      },
+      {
+        "name": "Загрузчик большого корпуса",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/42-large-corpus-downloader/"
+      },
+      {
+        "name": "Токенизированный корпус в HDF5",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/43-hdf5-tokenized-corpus/"
+      },
+      {
+        "name": "Cosine LR с линейным warmup",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/44-cosine-lr-warmup/"
+      },
+      {
+        "name": "Gradient clipping и mixed precision",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/45-gradient-clipping-amp/"
+      },
+      {
+        "name": "Аккумуляция градиентов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/46-gradient-accumulation/"
+      },
+      {
+        "name": "Сохранение и возобновление чекпоинтов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/47-checkpoint-save-resume/"
+      },
+      {
+        "name": "DDP и FSDP с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/48-distributed-fsdp-ddp/"
+      },
+      {
+        "name": "Харнес оценки языковой модели",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "C. Train end-to-end",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/49-lm-eval-harness/"
+      },
+      {
+        "name": "Генератор гипотез",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/50-hypothesis-generator/"
+      },
+      {
+        "name": "Поиск литературы",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/51-literature-retrieval/"
+      },
+      {
+        "name": "Раннер экспериментов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/52-experiment-runner/"
+      },
+      {
+        "name": "Оценщик результатов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/53-result-evaluator/"
+      },
+      {
+        "name": "Генерация научной статьи",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/54-paper-writer/"
+      },
+      {
+        "name": "Цикл критика",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/55-critic-loop/"
+      },
+      {
+        "name": "Планировщик итераций",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/56-iteration-scheduler/"
+      },
+      {
+        "name": "Research-агент end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "D. Auto research",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/57-end-to-end-research-demo/"
+      },
+      {
+        "name": "Vision-энкодер: патчи изображения",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/58-vision-encoder-patches/"
+      },
+      {
+        "name": "ViT-энкодер",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/59-vit-transformer/"
+      },
+      {
+        "name": "Projection-слой для выравнивания модальностей",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/60-projection-layer-modality-align/"
+      },
+      {
+        "name": "Cross-attention fusion",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/61-cross-attention-fusion/"
+      },
+      {
+        "name": "Vision-language предобучение",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/62-vision-language-pretraining/"
+      },
+      {
+        "name": "Мультимодальная оценка",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "E. Multimodal VLM",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/63-multimodal-eval/"
+      },
+      {
+        "name": "Сравнение стратегий chunking",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/64-chunking-strategies-advanced/"
+      },
+      {
+        "name": "Гибридный retrieval: BM25 + dense",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense/"
+      },
+      {
+        "name": "Reranker на cross-encoder",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/66-reranker-cross-encoder/"
+      },
+      {
+        "name": "Переписывание запросов: HyDE, multi-query, декомпозиция",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/67-query-rewriting-hyde/"
+      },
+      {
+        "name": "Оценка RAG: precision, recall, MRR, nDCG, faithfulness",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/68-rag-eval-precision-recall/"
+      },
+      {
+        "name": "RAG-система end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "F. Advanced RAG",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/69-end-to-end-rag-system/"
+      },
+      {
+        "name": "Формат спецификации задач",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/70-task-spec-format/"
+      },
+      {
+        "name": "Классические метрики",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/71-classical-metrics/"
+      },
+      {
+        "name": "Метрика исполнения кода",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/72-code-exec-metric/"
+      },
+      {
+        "name": "Перплексия и калибровка",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/73-perplexity-calibration/"
+      },
+      {
+        "name": "Агрегация лидерборда",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/74-leaderboard-aggregation/"
+      },
+      {
+        "name": "Eval-раннер end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "G. Eval framework",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/75-end-to-end-eval-runner/"
+      },
+      {
+        "name": "Коллективные операции с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/76-collective-ops-from-scratch/"
+      },
+      {
+        "name": "Data parallel DDP с нуля",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/77-data-parallel-ddp/"
+      },
+      {
+        "name": "ZeRO: шардирование состояния оптимизатора",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/78-zero-parameter-sharding/"
+      },
+      {
+        "name": "Pipeline parallelism и анализ bubble",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/79-pipeline-parallel/"
+      },
+      {
+        "name": "Шардированные чекпоинты и атомарный resume",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/80-checkpoint-sharded-resume/"
+      },
+      {
+        "name": "Распределённое обучение end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "H. Distributed train",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/81-end-to-end-distributed-train/"
+      },
+      {
+        "name": "Таксономия джейлбрейков",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/82-jailbreak-taxonomy/"
+      },
+      {
+        "name": "Детектор prompt injection",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/83-prompt-injection-detector/"
+      },
+      {
+        "name": "Оценка отказов",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/84-refusal-evaluation/"
+      },
+      {
+        "name": "Интеграция контент-классификатора",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/85-content-classifier-integration/"
+      },
+      {
+        "name": "Движок constitutional-правил",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python, YAML",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/86-constitutional-rules-engine/"
+      },
+      {
+        "name": "Safety gate end-to-end",
+        "status": "complete",
+        "type": "Практика",
+        "lang": "Python",
+        "combines": "I. Safety harness",
+        "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/87-end-to-end-safety-gate/"
       }
     ]
   }

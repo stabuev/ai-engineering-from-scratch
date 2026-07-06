@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1a1a1a?style=flat-square&labelColor=fafaf5" alt="Лицензия MIT"></a>
-  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-434-3553ff?style=flat-square&labelColor=fafaf5" alt="434 уроков"></a>
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-502-3553ff?style=flat-square&labelColor=fafaf5" alt="502 уроков"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 фаз"></a>
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="Звезды GitHub"></a>
   <a href="https://datascience.xyz/courses/aicourse/"><img src="https://img.shields.io/badge/web-datascience.xyz%2Fcourses%2Faicourse-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
@@ -17,7 +17,7 @@
 > **84% студентов уже используют AI-инструменты. Только 18% чувствуют себя готовыми
 > применять их профессионально.** Этот курс закрывает этот разрыв.
 >
-> 434 уроков. 20 фаз. ~486 часов уроков + ~525 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
+> 502 уроков. 20 фаз. ~486 часов уроков + ~627 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
 > переиспользуемый артефакт: промпт, навык, агента, MCP-сервер. Бесплатно, с открытым исходным кодом, MIT.
 >
 > Вы не просто изучаете AI. Вы его строите. От начала до конца. Вручную.
@@ -30,7 +30,7 @@ fine-tuning, где-то еще эффектная демонстрация аг
 подключаете функцию к агенту, но не можете сказать, что делает attention внутри модели,
 которая ее вызывает.
 
-Этот курс - каркас. 20 фаз, 434 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
+Этот курс - каркас. 20 фаз, 502 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
 На одном конце линейная алгебра, на другом - автономные swarms. Каждый алгоритм сначала
 строится из чистой математики. Backprop. Tokenizer. Attention. Agent loop. К моменту,
 когда появляется PyTorch, вы уже знаете, что он делает под капотом.
@@ -188,7 +188,7 @@ ls phases/03-deep-learning-core/05-loss-functions/outputs/
 </table>
 
 > Установите весь набор через [SkillKit](https://github.com/stabuev/skillkit). Настоящие
-> инструменты, не домашние задания. К концу курса у вас будет портфолио из 477 артефактов,
+> инструменты, не домашние задания. К концу курса у вас будет портфолио из 487 артефактов,
 > которые вы действительно понимаете, потому что сами их построили.
 
 ### FIG_002 · Рабочий пример
@@ -840,7 +840,7 @@ the agent went wrong and explain why...
 </details>
 
 <details id="phase-19">
-<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>17 проектов</code>&nbsp; <em>Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.</em></summary>
+<summary><b>Фаза 19 — Capstone-проекты</b> &nbsp;<code>85 проектов</code>&nbsp; <em>Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.</em></summary>
 <br/>
 
 | # | Проект | Объединяет | Язык |
@@ -862,6 +862,74 @@ the agent went wrong and explain why...
 | 15 | [Constitutional safety harness + red-team range](phases/19-capstone-projects/15-constitutional-safety-harness/) | P10 P11 P13 P14 P18 | Python |
 | 16 | [Автономный агент GitHub issue-to-PR](phases/19-capstone-projects/16-github-issue-to-pr-agent/) | P11 P13 P14 P15 P17 | Python, TypeScript |
 | 17 | [Персональный AI tutor (adaptive, multimodal)](phases/19-capstone-projects/17-personal-ai-tutor/) | P5 P6 P11 P12 P14 P17 P18 | Python, TypeScript |
+| 20 | [Контракт цикла агентского харнеса](phases/19-capstone-projects/20-agent-harness-loop-contract/) | A. Agent harness | Python |
+| 21 | [Реестр инструментов с валидацией схем](phases/19-capstone-projects/21-tool-registry-schema-validation/) | A. Agent harness | Python |
+| 22 | [JSON-RPC 2.0 поверх newline-delimited stdio](phases/19-capstone-projects/22-jsonrpc-stdio-transport/) | A. Agent harness | Python |
+| 23 | [Диспетчер function calls](phases/19-capstone-projects/23-function-call-dispatcher/) | A. Agent harness | Python |
+| 24 | [Управляющий поток plan-execute](phases/19-capstone-projects/24-plan-execute-control-flow/) | A. Agent harness | Python |
+| 25 | [Verification gates и бюджет наблюдений](phases/19-capstone-projects/25-verification-gates-observation-budget/) | A. Agent harness | Python |
+| 26 | [Sandbox-раннер с denylist и path jail](phases/19-capstone-projects/26-sandbox-runner-denylist/) | A. Agent harness | Python |
+| 27 | [Eval-харнес с fixture-задачами](phases/19-capstone-projects/27-eval-harness-fixture-tasks/) | A. Agent harness | Python |
+| 28 | [Observability: OTel GenAI spans и метрики Prometheus](phases/19-capstone-projects/28-observability-otel-traces/) | A. Agent harness | Python |
+| 29 | [Coding-агент на харнесе end-to-end](phases/19-capstone-projects/29-end-to-end-coding-task-demo/) | A. Agent harness | Python |
+| 30 | [BPE-токенизатор с нуля](phases/19-capstone-projects/30-bpe-tokenizer-from-scratch/) | B. NLP LLM | Python |
+| 31 | [Токенизированный датасет со скользящим окном](phases/19-capstone-projects/31-tokenized-dataset-sliding-window/) | B. NLP LLM | Python |
+| 32 | [Токенные и позиционные эмбеддинги](phases/19-capstone-projects/32-token-positional-embeddings/) | B. NLP LLM | Python |
+| 33 | [Multi-head self-attention](phases/19-capstone-projects/33-multihead-self-attention/) | B. NLP LLM | Python |
+| 34 | [Блок трансформера с нуля](phases/19-capstone-projects/34-transformer-block/) | B. NLP LLM | Python |
+| 35 | [Сборка GPT-модели](phases/19-capstone-projects/35-gpt-model-assembly/) | B. NLP LLM | Python |
+| 36 | [Цикл обучения и оценка](phases/19-capstone-projects/36-training-loop-eval/) | B. NLP LLM | Python |
+| 37 | [Загрузка предобученных весов](phases/19-capstone-projects/37-loading-pretrained-weights/) | B. NLP LLM | Python |
+| 38 | [Fine-tuning классификатора заменой головы](phases/19-capstone-projects/38-classifier-finetuning/) | B. NLP LLM | Python |
+| 39 | [Instruction tuning через SFT](phases/19-capstone-projects/39-instruction-tuning-sft/) | B. NLP LLM | Python |
+| 40 | [DPO с нуля](phases/19-capstone-projects/40-dpo-from-scratch/) | B. NLP LLM | Python |
+| 41 | [Полный eval-пайплайн](phases/19-capstone-projects/41-eval-pipeline/) | B. NLP LLM | Python |
+| 42 | [Загрузчик большого корпуса](phases/19-capstone-projects/42-large-corpus-downloader/) | C. Train end-to-end | Python |
+| 43 | [Токенизированный корпус в HDF5](phases/19-capstone-projects/43-hdf5-tokenized-corpus/) | C. Train end-to-end | Python |
+| 44 | [Cosine LR с линейным warmup](phases/19-capstone-projects/44-cosine-lr-warmup/) | C. Train end-to-end | Python |
+| 45 | [Gradient clipping и mixed precision](phases/19-capstone-projects/45-gradient-clipping-amp/) | C. Train end-to-end | Python |
+| 46 | [Аккумуляция градиентов](phases/19-capstone-projects/46-gradient-accumulation/) | C. Train end-to-end | Python |
+| 47 | [Сохранение и возобновление чекпоинтов](phases/19-capstone-projects/47-checkpoint-save-resume/) | C. Train end-to-end | Python |
+| 48 | [DDP и FSDP с нуля](phases/19-capstone-projects/48-distributed-fsdp-ddp/) | C. Train end-to-end | Python |
+| 49 | [Харнес оценки языковой модели](phases/19-capstone-projects/49-lm-eval-harness/) | C. Train end-to-end | Python |
+| 50 | [Генератор гипотез](phases/19-capstone-projects/50-hypothesis-generator/) | D. Auto research | Python |
+| 51 | [Поиск литературы](phases/19-capstone-projects/51-literature-retrieval/) | D. Auto research | Python |
+| 52 | [Раннер экспериментов](phases/19-capstone-projects/52-experiment-runner/) | D. Auto research | Python |
+| 53 | [Оценщик результатов](phases/19-capstone-projects/53-result-evaluator/) | D. Auto research | Python |
+| 54 | [Генерация научной статьи](phases/19-capstone-projects/54-paper-writer/) | D. Auto research | Python |
+| 55 | [Цикл критика](phases/19-capstone-projects/55-critic-loop/) | D. Auto research | Python |
+| 56 | [Планировщик итераций](phases/19-capstone-projects/56-iteration-scheduler/) | D. Auto research | Python |
+| 57 | [Research-агент end-to-end](phases/19-capstone-projects/57-end-to-end-research-demo/) | D. Auto research | Python |
+| 58 | [Vision-энкодер: патчи изображения](phases/19-capstone-projects/58-vision-encoder-patches/) | E. Multimodal VLM | Python |
+| 59 | [ViT-энкодер](phases/19-capstone-projects/59-vit-transformer/) | E. Multimodal VLM | Python |
+| 60 | [Projection-слой для выравнивания модальностей](phases/19-capstone-projects/60-projection-layer-modality-align/) | E. Multimodal VLM | Python |
+| 61 | [Cross-attention fusion](phases/19-capstone-projects/61-cross-attention-fusion/) | E. Multimodal VLM | Python |
+| 62 | [Vision-language предобучение](phases/19-capstone-projects/62-vision-language-pretraining/) | E. Multimodal VLM | Python |
+| 63 | [Мультимодальная оценка](phases/19-capstone-projects/63-multimodal-eval/) | E. Multimodal VLM | Python |
+| 64 | [Сравнение стратегий chunking](phases/19-capstone-projects/64-chunking-strategies-advanced/) | F. Advanced RAG | Python |
+| 65 | [Гибридный retrieval: BM25 + dense](phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense/) | F. Advanced RAG | Python |
+| 66 | [Reranker на cross-encoder](phases/19-capstone-projects/66-reranker-cross-encoder/) | F. Advanced RAG | Python |
+| 67 | [Переписывание запросов: HyDE, multi-query, декомпозиция](phases/19-capstone-projects/67-query-rewriting-hyde/) | F. Advanced RAG | Python |
+| 68 | [Оценка RAG: precision, recall, MRR, nDCG, faithfulness](phases/19-capstone-projects/68-rag-eval-precision-recall/) | F. Advanced RAG | Python |
+| 69 | [RAG-система end-to-end](phases/19-capstone-projects/69-end-to-end-rag-system/) | F. Advanced RAG | Python |
+| 70 | [Формат спецификации задач](phases/19-capstone-projects/70-task-spec-format/) | G. Eval framework | Python |
+| 71 | [Классические метрики](phases/19-capstone-projects/71-classical-metrics/) | G. Eval framework | Python |
+| 72 | [Метрика исполнения кода](phases/19-capstone-projects/72-code-exec-metric/) | G. Eval framework | Python |
+| 73 | [Перплексия и калибровка](phases/19-capstone-projects/73-perplexity-calibration/) | G. Eval framework | Python |
+| 74 | [Агрегация лидерборда](phases/19-capstone-projects/74-leaderboard-aggregation/) | G. Eval framework | Python |
+| 75 | [Eval-раннер end-to-end](phases/19-capstone-projects/75-end-to-end-eval-runner/) | G. Eval framework | Python |
+| 76 | [Коллективные операции с нуля](phases/19-capstone-projects/76-collective-ops-from-scratch/) | H. Distributed train | Python |
+| 77 | [Data parallel DDP с нуля](phases/19-capstone-projects/77-data-parallel-ddp/) | H. Distributed train | Python |
+| 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding/) | H. Distributed train | Python |
+| 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel/) | H. Distributed train | Python |
+| 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume/) | H. Distributed train | Python |
+| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train/) | H. Distributed train | Python |
+| 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy/) | I. Safety harness | Python |
+| 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector/) | I. Safety harness | Python |
+| 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation/) | I. Safety harness | Python |
+| 85 | [Интеграция контент-классификатора](phases/19-capstone-projects/85-content-classifier-integration/) | I. Safety harness | Python |
+| 86 | [Движок constitutional-правил](phases/19-capstone-projects/86-constitutional-rules-engine/) | I. Safety harness | Python, YAML |
+| 87 | [Safety gate end-to-end](phases/19-capstone-projects/87-end-to-end-safety-gate/) | I. Safety harness | Python |
 
 </details>
 

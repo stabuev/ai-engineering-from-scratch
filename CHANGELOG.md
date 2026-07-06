@@ -7,6 +7,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- **Синхронизация с оригинальным курсом: 68 новых capstone-уроков (Фаза 19,
+  уроки 20–87).** Апстрим расширил фазу 19 девятью мини-проектами по ~90 минут
+  на урок: A. Agent harness (20–29), B. NLP LLM (30–41), C. Train end-to-end
+  (42–49), D. Auto research (50–57), E. Multimodal VLM (58–63), F. Advanced RAG
+  (64–69), G. Eval framework (70–75), H. Distributed train (76–81), I. Safety
+  harness (82–87). Уроки перенесены как есть и адаптированы под формат форка:
+  английские квизы переименованы в `quiz_en.json` (место `quiz.json`
+  зарезервировано под русские), в `docs/ru.md` — временный стуб с баннером
+  «перевод в работе» и английским оригиналом; манифест `lessons.json` пополнен
+  русскими названиями и метками мини-треков. Перевод — следующим этапом. Курс:
+  434 → 502 урока.
 - **Content-review wave 5 — reproducible environment (`requirements.lock`).**
   `requirements.txt` was all `>=` with no lock, so a future learner would get
   bleeding-edge versions and silent breakage. Added a pinned, internally
