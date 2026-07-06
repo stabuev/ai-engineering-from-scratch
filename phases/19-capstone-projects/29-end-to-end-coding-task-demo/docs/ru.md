@@ -1,32 +1,29 @@
 # Capstone Lesson 29: End-to-End Coding Agent on the Harness
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Кульминация трека A. Этот урок сшивает цепочку gates, sandbox, eval-харнес и OTel-span'ы в одного работающего coding-агента, чинящего настоящий (маленький, fixture-масштаба) баг в многофайловом Python-проекте. Агент — детерминированная политика, а не LLM; подстановка делает урок воспроизводимым и показывает, что самым интересным всё это время был харнес. Контракт идентичен: настоящая модель подключается в шов политики.
 
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Пререквизиты:** Фаза 19 · 25 (verification gates), Фаза 19 · 26 (sandbox), Фаза 19 · 27 (eval-харнес), Фаза 19 · 28 (observability), Фаза 14 · 38 (verification gates), Фаза 14 · 41 (workbench для настоящих репозиториев), Фаза 14 · 42 (capstone agent workbench)
+**Время:** ~90 минут
 
-> Track A's payoff. This lesson stitches the gate chain, the sandbox, the eval harness, and the OTel spans into one working coding agent that fixes a real (small, fixture-scale) bug in a multi-file Python project. The agent is a deterministic policy, not an LLM; the substitution makes the lesson reproducible and shows that the harness was the interesting part all along. The contract is identical: a real model plugs in at the policy seam.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 19 · 25 (verification gates), Phase 19 · 26 (sandbox), Phase 19 · 27 (eval harness), Phase 19 · 28 (observability), Phase 14 · 38 (verification gates), Phase 14 · 41 (workbench for real repos), Phase 14 · 42 (agent workbench capstone)
-**Time:** ~90 minutes
+- Скомпоновать цепочку gates, sandbox, eval-харнес и построитель span'ов в единый цикл агента.
+- Реализовать детерминированную политику, использующую read_file, run_tests и write_file для починки fixture-бага.
+- Обеспечить глобальный бюджет шагов плюс токеновый бюджет наблюдений на всём end-to-end-прогоне.
+- Излучить полные OTel GenAI-трейсы и Prometheus-метрики за весь прогон.
+- Убедиться, что агент решает фикстуру менее чем за 12 шагов с нулём срабатываний gates на легальных инструментах.
 
-## Learning Objectives
+## Проблема
 
-- Compose the gate chain, sandbox, eval harness, and span builder into a single agent loop.
-- Implement a deterministic policy that uses read_file, run_tests, and write_file to fix a fixture bug.
-- Enforce a global step budget plus an observation token budget across an end-to-end run.
-- Emit complete OTel GenAI traces and Prometheus metrics for the full run.
-- Verify the agent solves the fixture in fewer than 12 steps with zero gate trips on legal tools.
+Большинство агентских демо работают в изоляции: sandbox сам по себе, eval-харнес сам по себе, эмиттер span'ов сам по себе. Выглядят они хорошо. Скомпонуйте их — и швы вылезут.
 
-## The Problem
+Цепочка gates говорит ALLOW, но sandbox отказывает по причине, которую цепочка не предвидела. Eval-харнес записывает pass, но OTel-span'ы говорят, что gate отклонил инструмент, которым агент якобы пользовался. Счётчик Prometheus инкрементится дважды там, где должен один раз. Бюджет наблюдений превышен, но агент продолжил, потому что бюджет считался в цепочке, а sandbox о нём не знал.
 
-Most agent demos work in isolation: a sandbox by itself, an eval harness by itself, a span emitter by itself. They look fine. Compose them and the seams show.
+Этот урок — интеграционный тест всего трека. Агент должен сделать четыре вещи по порядку: прочитать проект, запустить тесты, опознать баг по провалу теста, написать фикс, перезапустить тесты и остановиться. Каждая операция идёт через цепочку gates. Каждое исполнение инструмента — через sandbox. Каждый шаг обёрнут в span. В конце eval-харнес оценивает всё целиком.
 
-The gate chain says ALLOW but the sandbox refuses for a reason the chain did not anticipate. The eval harness records a pass but the OTel spans say the gate refused a tool the agent claims it used. The Prometheus counter is incremented twice when it should be incremented once. The observation budget is exceeded but the agent kept going because the budget was tracked in the chain and the sandbox didn't know.
-
-This lesson is the integration test for the whole track. The agent has to do four things in order: read the project, run the tests, identify the bug from the test failure, write the fix, rerun the tests, and stop. Every operation goes through the gate chain. Every tool execution goes through the sandbox. Every step is wrapped in a span. The eval harness scores the whole thing at the end.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -36,23 +33,23 @@ flowchart TD
   Harness --> Out[EvalReport + JSONL<br/>+ Prometheus exposition]
 ```
 
-The agent's policy is a state machine. Five states.
+Политика агента — машина состояний. Пять состояний.
 
-`SURVEY`: the agent reads the project listing. The next state is RUN_TESTS.
+`SURVEY`: агент читает листинг проекта. Следующее состояние — RUN_TESTS.
 
-`RUN_TESTS`: the agent runs the test command. If the tests pass, the state machine halts with success. Otherwise the next state is INSPECT.
+`RUN_TESTS`: агент запускает тестовую команду. Если тесты проходят, машина останавливается с успехом. Иначе следующее состояние — INSPECT.
 
-`INSPECT`: the agent reads the failing source file. The next state is FIX.
+`INSPECT`: агент читает падающий исходный файл. Следующее состояние — FIX.
 
-`FIX`: the agent writes the corrected file. The next state is VERIFY.
+`FIX`: агент пишет исправленный файл. Следующее состояние — VERIFY.
 
-`VERIFY`: the agent runs the test command again. If the tests pass, halt success. Otherwise halt with failure.
+`VERIFY`: агент снова запускает тестовую команду. Тесты прошли — стоп с успехом. Иначе — стоп с провалом.
 
-Each state corresponds to a tool call. Each tool call passes through the gate chain. If a tool call is denied, the agent reports the refusal in the trace and halts.
+Каждое состояние соответствует одному tool call. Каждый tool call проходит через цепочку gates. Если вызов отклонён, агент фиксирует отказ в трейсе и останавливается.
 
-The fixture bug is an off-by-one in `fizz.py`. The deterministic policy detects the bug from the test failure message via a regex and emits the corrected file. Replacing the policy with an LLM does not change the harness contract.
+Баг фикстуры — off-by-one в `fizz.py`. Детерминированная политика распознаёт баг по сообщению о провале теста через regex и излучает исправленный файл. Замена политики на LLM контракт харнеса не меняет.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -68,46 +65,46 @@ flowchart TD
   Back --> Policy
 ```
 
-The lesson is self-contained. Each prior-lesson primitive is reimplemented at minimal scale in `main.py` (gate, sandbox, ledger, span) so the lesson runs without importing siblings. The names match lessons 25-28 exactly so the conceptual mapping is unambiguous.
+Урок самодостаточен. Каждый примитив предыдущих уроков реимплементирован в минимальном масштабе в `main.py` (gate, sandbox, журнал, span), чтобы урок работал без импорта соседей. Имена совпадают с уроками 25–28 в точности, поэтому концептуальный маппинг однозначен.
 
-## What you will build
+## Что вы соберёте
 
-`main.py` ships:
+`main.py` поставляет:
 
-1. The minimal harness primitives, copied with the same names as lessons 25-28: `GateChain`, `Sandbox`, `ObservationLedger`, `SpanBuilder`, `MetricsRegistry`.
-2. `CodingAgentPolicy` class: state machine with five states.
-3. `Repo` helper: prepares a scratch dir with the bundled buggy fixture.
-4. `AgentRun` class: drives the policy, dispatches through the harness, returns an `AgentRunReport`.
-5. A bundled fixture (`fixture_repo/`) with src/fizz.py, tests/test_fizz.py, and an expected/ tree for the eval harness.
-6. Demo: runs the policy end-to-end, prints the step-by-step trace, asserts pass, prints metrics.
+1. Минимальные примитивы харнеса, скопированные с теми же именами, что в уроках 25–28: `GateChain`, `Sandbox`, `ObservationLedger`, `SpanBuilder`, `MetricsRegistry`.
+2. Класс `CodingAgentPolicy`: машина состояний с пятью состояниями.
+3. Хелпер `Repo`: готовит scratch-директорию с комплектной багованной фикстурой.
+4. Класс `AgentRun`: гоняет политику, диспетчеризует через харнес, возвращает `AgentRunReport`.
+5. Комплектную фикстуру (`fixture_repo/`) с src/fizz.py, tests/test_fizz.py и деревом expected/ для eval-харнеса.
+6. Демо: прогоняет политику end-to-end, печатает пошаговый трейс, утверждает pass, печатает метрики.
 
-The bundled fixture is the same shape as lesson 27's task structure: a buggy file and a tests file. The test failure message contains enough information for the deterministic policy to identify the fix. A real LLM would do the same job, slower and with broader recall, but it would not change the harness's expectations.
+Комплектная фикстура — той же формы, что структура задач урока 27: багованный файл и файл тестов. Сообщение о провале теста содержит достаточно информации, чтобы детерминированная политика опознала фикс. Настоящая LLM сделала бы ту же работу — медленнее и с более широким охватом, — но ожиданий харнеса это бы не изменило.
 
-## Why the policy is not an LLM
+## Почему политика — не LLM
 
-A real LLM requires an API key, a network call, and unverifiable stochasticity. The harness is the part the lesson cares about. Subbing in a deterministic policy lets the lesson run on any developer laptop with zero external dependencies and lets the test suite assert exact-step counts.
+Настоящая LLM требует API-ключа, сетевого вызова и неверифицируемой стохастичности. Урок заботится о харнесе. Подстановка детерминированной политики позволяет уроку работать на любом ноутбуке разработчика с нулём внешних зависимостей и даёт тестовому набору утверждать точные счётчики шагов.
 
-The lesson's policy is a strict subset of what an LLM agent does. The policy reads the repo, sees the failing test, identifies the line, and emits a fix. An LLM goes through the same loop with the same harness contract; the bookkeeping is identical.
+Урочная политика — строгое подмножество того, что делает LLM-агент. Политика читает репозиторий, видит падающий тест, находит строку и излучает фикс. LLM проходит через тот же цикл с тем же контрактом харнеса; бухгалтерия идентична.
 
-## What the demo asserts
+## Что утверждает демо
 
-The end-to-end demo asserts five things at exit time, and the test suite reasserts them programmatically.
+End-to-end-демо утверждает пять вещей на выходе, а тестовый набор переутверждает их программно.
 
-The policy solved the fixture in fewer than 12 steps.
+Политика решила фикстуру менее чем за 12 шагов.
 
-The observation budget was never exceeded.
+Бюджет наблюдений ни разу не был превышен.
 
-Zero gate denials fired on legal tools. (The agent never invented a denied tool name.)
+Ноль отказов gates на легальных инструментах. (Агент ни разу не выдумал запрещённое имя инструмента.)
 
-Every step has a corresponding span in the traces.jsonl.
+У каждого шага есть соответствующий span в traces.jsonl.
 
-The Prometheus exposition contains a `tools_called_total{tool="read_file"}` entry and a `tool_latency_ms` histogram.
+Prometheus-экспозиция содержит запись `tools_called_total{tool="read_file"}` и гистограмму `tool_latency_ms`.
 
-## How this composes with the rest of Track A
+## Как это стыкуется с остальным треком A
 
-This lesson is the integration. Lesson 25 wrote the gate chain. Lesson 26 wrote the sandbox. Lesson 27 wrote the eval harness. Lesson 28 wrote the observability. Lesson 29 proves they work as a system. A real agent harness extends from here: swap the deterministic policy for a model, swap the bundled fixture for a real-repo task, swap the JSONL exporter for OTLP.
+Этот урок — интеграция. Урок 25 написал цепочку gates. Урок 26 — sandbox. Урок 27 — eval-харнес. Урок 28 — observability. Урок 29 доказывает, что они работают как система. Настоящий агентский харнес растёт отсюда: замените детерминированную политику моделью, комплектную фикстуру — задачей на настоящем репозитории, JSONL-экспортер — OTLP.
 
-## Running it
+## Запуск
 
 ```bash
 cd phases/19-capstone-projects/29-end-to-end-coding-task-demo
@@ -115,4 +112,4 @@ python3 code/main.py
 python3 -m pytest code/tests/ -v
 ```
 
-The demo prints a per-step trace, the final eval report, and the Prometheus exposition. Exit code is zero. The tests cover the policy state transitions, the gate refusals on synthetic tool calls, the end-to-end run on the bundled fixture, and the step-budget invariants.
+Демо печатает пошаговый трейс, финальный eval-отчёт и Prometheus-экспозицию. Код выхода — ноль. Тесты покрывают переходы состояний политики, отказы gates на синтетических tool calls, end-to-end-прогон на комплектной фикстуре и инварианты бюджета шагов.

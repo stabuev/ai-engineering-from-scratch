@@ -1,36 +1,33 @@
 # Capstone Lesson 28: Observability with OTel GenAI Spans and Prometheus Metrics
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Агентский харнес без observability — это чёрный ящик, который стоит денег. Этот урок вручную собирает построитель span'ов, излучающий записи по семантическим конвенциям OpenTelemetry GenAI, пишет их в JSON-Lines-файл по одному span'у на строку и открывает счётчики и гистограммы в текстовом формате Prometheus. Всё на stdlib Python и работает офлайн.
 
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Пререквизиты:** Фаза 19 · 25 (verification gates), Фаза 19 · 26 (sandbox), Фаза 19 · 27 (eval-харнес), Фаза 13 · 20 (OpenTelemetry GenAI), Фаза 14 · 23 (конвенции OTel GenAI)
+**Время:** ~90 минут
 
-> An agent harness without observability is a black box that costs money. This lesson hand-rolls a span builder that emits records compliant with the OpenTelemetry GenAI semantic conventions, writes them to a JSON-Lines file one span per line, and exposes counters and histograms in Prometheus text format. The whole thing is stdlib Python and runs offline.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 19 · 25 (verification gates), Phase 19 · 26 (sandbox), Phase 19 · 27 (eval harness), Phase 13 · 20 (OpenTelemetry GenAI), Phase 14 · 23 (OTel GenAI conventions)
-**Time:** ~90 minutes
+- Построить датакласс span'а по форме семантических конвенций OpenTelemetry GenAI.
+- Реализовать JSONL-экспортер, пишущий один самодостаточный span на строку.
+- Построить счётчики и гистограммы с метками и экспозицией в текстовом формате Prometheus.
+- Обернуть любой callable в контекст-менеджер span'а, записывающий длительность, статус и исключения.
+- Убедиться, что излучённые span'ы совершают round trip через `json.loads` и совпадают с формой спецификации.
 
-## Learning Objectives
+## Проблема
 
-- Build a span data class shaped to the OpenTelemetry GenAI semantic conventions.
-- Implement a JSONL exporter that writes one self-contained span per line.
-- Build counters and histograms with labels and Prometheus text-format exposition.
-- Wrap any callable in a span context manager that records duration, status, and exceptions.
-- Verify that the emitted spans roundtrip through `json.loads` and match the spec shape.
+Coding-агент в продакшене каждый ход порождает три класса артефактов: вызов модели, исполнение инструмента и решение verification gate. Ничто из этого не полезно без структурной телеметрии.
 
-## The Problem
+Первый режим отказа — отсутствующий трейс. Во вторник что-то пошло не так, но единственная запись — чат-лог на 500 строк. Нет записи о том, какой инструмент запускался, сколько занял, сколько токенов ушло в промпт, отказал ли gate чему-нибудь. Автору агента остаётся гадать.
 
-A coding agent in production produces three classes of artifact every turn: a model call, a tool execution, and a verification gate decision. None of these are useful without structured telemetry.
+Второй режим — непарсибельный трейс. Харнес писал span'ы, но со своими ad-hoc-именами полей. Ни Grafana, ни Honeycomb, ни Jaeger, ни локальный CLI прочитать их не могут. Весь инструментарий стека команды пропадает зря, потому что span'ы нестандартные.
 
-The first failure mode is the missing trace. Something went wrong on Tuesday but the only record is a 500-line chat log. There is no record of which tool ran, how long it took, how many tokens went into the prompt, or whether the gate refused anything. The agent author has to guess.
+Третий режим — неагрегированная метрика. Один медленный tool call в трейсе виден, но ответить на «какова p95-задержка вызовов read_file за последний час?» нельзя, потому что метрик нет — только трейсы.
 
-The second failure mode is the unparseable trace. The harness wrote spans but used its own ad-hoc field names. Nothing in Grafana, Honeycomb, Jaeger, or the local CLI can read them. Whatever tooling exists in the team's stack is wasted because the spans are non-standard.
+Семантические конвенции OpenTelemetry GenAI существуют ровно для этого. Они задают небольшой набор стандартных атрибутов, общий для эмиттеров span'ов во всех LLM-фреймворках. Если харнес пишет эти атрибуты, их прочитает любой OTel-совместимый бэкенд.
 
-The third failure mode is the unaggregated metric. You can see one slow tool call in the trace, but you cannot answer "what is the p95 latency of read_file calls over the last hour?" because there are no metrics, only traces.
-
-The OpenTelemetry GenAI semantic conventions exist exactly for this. They define a small set of standard attributes that span emitters across LLM frameworks share. If your harness writes those attributes, every OTel-compatible backend can read them.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -42,19 +39,19 @@ flowchart TD
   Metrics --> Prom[/metrics text/]
 ```
 
-Every operation in the harness produces a span. A span has a trace id (the whole agent invocation), a span id (this one operation), a name (e.g. `gen_ai.chat`, `gen_ai.tool.execution`), attributes that follow the GenAI conventions, a start and end time, and a status.
+Каждая операция харнеса порождает span. У span'а есть trace id (вся инвокация агента), span id (эта одна операция), имя (например, `gen_ai.chat`, `gen_ai.tool.execution`), атрибуты по конвенциям GenAI, время старта и конца и статус.
 
-The GenAI conventions standardise these attribute keys: `gen_ai.system` (which provider, e.g. `anthropic`, `openai`), `gen_ai.request.model` (the model id), `gen_ai.request.max_tokens`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.model`, `gen_ai.response.id`, `gen_ai.operation.name`, plus tool-specific keys `gen_ai.tool.name` and `gen_ai.tool.call.id`.
+Конвенции GenAI стандартизируют такие ключи атрибутов: `gen_ai.system` (провайдер, например `anthropic`, `openai`), `gen_ai.request.model` (id модели), `gen_ai.request.max_tokens`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.model`, `gen_ai.response.id`, `gen_ai.operation.name`, плюс инструментные ключи `gen_ai.tool.name` и `gen_ai.tool.call.id`.
 
-The exporter writes JSONL. One JSON object per line. This is the simplest possible format that downstream tooling can stream, grep, and import. A real OTel exporter would speak OTLP gRPC; the lesson's JSONL exporter is the offline equivalent and exits zero on every workstation.
+Экспортер пишет JSONL. Один JSON-объект на строку. Это простейший формат, который последующий инструментарий может стримить, грепать и импортировать. Настоящий OTel-экспортер говорил бы на OTLP gRPC; урочный JSONL-экспортер — его офлайн-эквивалент, выходящий с нулём на любой рабочей станции.
 
-Metrics live next to traces. A counter increments on each tool call: `tools_called_total{tool="read_file"}`. A histogram records the observed latency: `tool_latency_ms{tool="read_file"}`. Both serialise into Prometheus text exposition format, which is the de-facto standard for pull-based metrics.
+Метрики живут рядом с трейсами. Счётчик инкрементится на каждый tool call: `tools_called_total{tool="read_file"}`. Гистограмма записывает наблюдаемую задержку: `tool_latency_ms{tool="read_file"}`. Оба сериализуются в текстовый формат экспозиции Prometheus — де-факто стандарт pull-метрик.
 
 ```figure
 trace-spans
 ```
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart LR
@@ -64,37 +61,37 @@ flowchart LR
   Metrics --> Prom[Prometheus text<br/>exposition]
 ```
 
-The span builder is a small class with a `span(name, attrs)` method that returns a context manager. The context manager records start time on enter, records end time on exit, attaches an exception if one was raised, and pushes the finalised span to the exporter.
+Построитель span'ов — маленький класс с методом `span(name, attrs)`, возвращающим контекст-менеджер. Контекст-менеджер записывает время старта на входе, время конца на выходе, прикрепляет исключение, если оно было брошено, и толкает финализированный span в экспортер.
 
-The metrics registry is two dicts. Counters are `{(name, frozen_labels): int}`. Histograms keep raw samples in a list and serialise to Prometheus histogram buckets at exposition time.
+Реестр метрик — два dict'а. Счётчики — `{(name, frozen_labels): int}`. Гистограммы хранят сырые сэмплы в списке и сериализуются в Prometheus-бакеты в момент экспозиции.
 
-## What you will build
+## Что вы соберёте
 
-`main.py` ships:
+`main.py` поставляет:
 
-1. `GenAISpan` dataclass: trace_id, span_id, parent_span_id, name, attributes, start_unix_nano, end_unix_nano, status, status_message, events.
-2. `SpanBuilder` class with `span(name, attrs, parent=None)` context manager.
-3. `JSONLExporter` class with `export(span)` that appends one line.
-4. `Counter` and `Histogram` classes plus `MetricsRegistry`.
-5. `prometheus_exposition(registry)` that produces text-format output.
-6. `wrap_tool_call(name)` decorator that emits a span and updates metrics.
-7. Demo: synthesises a complete agent invocation (gen_ai.chat span around tool spans), writes traces.jsonl, prints the Prometheus exposition, exits zero.
+1. Датакласс `GenAISpan`: trace_id, span_id, parent_span_id, name, attributes, start_unix_nano, end_unix_nano, status, status_message, events.
+2. Класс `SpanBuilder` с контекст-менеджером `span(name, attrs, parent=None)`.
+3. Класс `JSONLExporter` с `export(span)`, дописывающим одну строку.
+4. Классы `Counter` и `Histogram` плюс `MetricsRegistry`.
+5. `prometheus_exposition(registry)`, порождающий вывод в текстовом формате.
+6. Декоратор `wrap_tool_call(name)`, излучающий span и обновляющий метрики.
+7. Демо: синтезирует полную инвокацию агента (span gen_ai.chat вокруг span'ов инструментов), пишет traces.jsonl, печатает Prometheus-экспозицию, выходит с нулём.
 
-The span id and trace id are 16-byte hex strings, generated from `os.urandom`. That matches OTel's W3C trace context. The exporter never throws; IO errors are surfaced but the harness keeps running.
+Span id и trace id — 16-байтные hex-строки, порождённые из `os.urandom`. Это соответствует W3C trace context из OTel. Экспортер никогда не кидает исключений; IO-ошибки поднимаются наружу, но харнес продолжает работать.
 
-The histogram has a fixed bucket set (the OTel default for latency in milliseconds: 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, +Inf). Samples are stored as a list; exposition computes per-bucket counts on demand.
+У гистограммы фиксированный набор бакетов (дефолт OTel для задержки в миллисекундах: 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, +Inf). Сэмплы хранятся списком; экспозиция считает счётчики по бакетам по требованию.
 
-## Why hand-rolled instead of opentelemetry-sdk
+## Почему вручную, а не opentelemetry-sdk
 
-The OTel Python SDK is a real dependency. It is also several thousand lines of code, multiple processes for the OTLP exporter, and a runtime cost that swamps a lesson budget. The hand-rolled version teaches the wire format. In production you wire the same attributes into the real SDK and get the OTLP exporter, batching, and resource detection for free.
+OTel Python SDK — настоящая зависимость. А ещё это несколько тысяч строк кода, несколько процессов для OTLP-экспортера и рантайм-стоимость, топящая бюджет урока. Ручная версия учит формату провода. В продакшене вы подключаете те же атрибуты к настоящему SDK и бесплатно получаете OTLP-экспортер, батчинг и детекцию ресурсов.
 
-The conventions are stable. The wire format the lesson emits will keep parsing in 2030 because OTel never breaks GenAI attribute names; they only add new ones.
+Конвенции стабильны. Формат провода, который излучает урок, будет парситься и в 2030-м, потому что OTel никогда не ломает имена GenAI-атрибутов — только добавляет новые.
 
-## How this composes with the rest of Track A
+## Как это стыкуется с остальным треком A
 
-Lesson 25 produced the gate chain. Lesson 26 produced the sandbox. Lesson 27 produced the eval harness. Lesson 28 makes all three observable. Lesson 29 wraps every step of the end-to-end demo in spans and prints the Prometheus text at the end.
+Урок 25 дал цепочку gates. Урок 26 дал sandbox. Урок 27 дал eval-харнес. Урок 28 делает все три наблюдаемыми. Урок 29 оборачивает каждый шаг end-to-end-демо в span'ы и печатает Prometheus-текст в конце.
 
-## Running it
+## Запуск
 
 ```bash
 cd phases/19-capstone-projects/28-observability-otel-traces
@@ -102,4 +99,4 @@ python3 code/main.py
 python3 -m pytest code/tests/ -v
 ```
 
-The demo emits a `traces.jsonl` in the lesson's working dir (cleaned up at the end), then prints a sample of three spans, then prints the Prometheus exposition for the counters and histograms. The tests verify that spans serialise round-trip, that the canonical GenAI attributes are present, that counters increment correctly, and that the histogram exposition contains the expected bucket counts.
+Демо излучает `traces.jsonl` в рабочей директории урока (подчищается в конце), затем печатает выборку из трёх span'ов, затем — Prometheus-экспозицию счётчиков и гистограмм. Тесты проверяют, что span'ы сериализуются round-trip, что канонические GenAI-атрибуты на месте, что счётчики инкрементятся корректно и что экспозиция гистограммы содержит ожидаемые счётчики бакетов.

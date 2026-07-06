@@ -1,31 +1,28 @@
 # JSON-RPC 2.0 Over Newline-Delimited Stdio
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Транспорт между модельным клиентом и tool-сервером — это JSON-RPC поверх stdio. Собрав его руками один раз, вы поймёте, за что платит любой слой фрейминга.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 13, уроки 01–07; Фаза 14, урок 01
+**Время:** ~90 минут
 
-> The transport between a model client and a tool server is JSON-RPC over stdio. Hand-rolling it once teaches you what every framing layer is paying for.
+## Цели обучения
+- Говорить на JSON-RPC 2.0, обрамлённом как newline-delimited JSON поверх stdin и stdout.
+- Сопоставить пять стандартных кодов ошибок (-32700, -32600, -32601, -32602, -32603) и поднимать их с правильной семантикой.
+- Различать requests, responses, notifications и batches, не изобретая новых ключей конверта.
+- Обрабатывать одну ошибку парсинга на строку, не отравляя остальной поток.
+- Собрать самозавершающееся демо на io.BytesIO, чтобы урок работал без порождения дочернего процесса.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 13 lessons 01-07, Phase 14 lesson 01
-**Time:** ~90 minutes
+## Почему JSON-RPC остаётся lingua franca
 
-## Learning Objectives
-- Speak JSON-RPC 2.0 framed as newline-delimited JSON over stdin and stdout.
-- Map the five standard error codes (-32700, -32600, -32601, -32602, -32603) and surface them with the right semantics.
-- Distinguish requests, responses, notifications, and batches without inventing new envelope keys.
-- Handle one parse error per line without poisoning the rest of the stream.
-- Build a self-terminating demo using io.BytesIO so the lesson runs without spawning a child process.
+Coding-агент в 2026 году за одну сессию разговаривает с дюжиной tool-серверов. Каждый сервер — отдельный процесс или удалённый endpoint. Формат провода не менялся с 2013 года. JSON-RPC 2.0 — спецификация на две страницы. Он выживает потому, что альтернативы (gRPC, HTTP на каждый вызов, кастомный бинарный протокол) навязывают компромисс, которого у JSON-RPC нет: они выбирают либо стриминг, либо батчинг, либо привязку к транспорту. JSON-RPC симметричен поверх stdio, сокетов, вебсокетов и HTTP, и клиент может управлять сервером, который видит впервые, если оба чтут спецификацию.
 
-## Why JSON-RPC stays the lingua franca
+Этот урок строит stdio-вариант. Newline-delimited JSON. Каждый request — одна строка. Каждый response — одна строка. Граница транспорта — `\n`.
 
-A coding agent in 2026 talks to maybe twelve tool servers in a single session. Each server is a separate process or a remote endpoint. The wire format has been the same since 2013. JSON-RPC 2.0 is two-page spec. It survives because the alternatives (gRPC, HTTP per call, custom binary) all impose a tradeoff JSON-RPC does not: they pick either streaming or batching or transport-coupling. JSON-RPC is symmetric across stdio, sockets, websockets, and HTTP, and a client can drive a server it has never seen if both honor the spec.
+## Форма провода
 
-This lesson builds the stdio variant. Newline-delimited JSON. Each request is one line. Each response is one line. The transport boundary is `\n`.
-
-## The wire shape
-
-Four envelope shapes exist. Two are spoken by the client. Two are spoken by the server.
+Существует четыре формы конверта. Две произносит клиент. Две — сервер.
 
 ```mermaid
 sequenceDiagram
@@ -39,11 +36,11 @@ sequenceDiagram
     Server-->>Client: error {jsonrpc:"2.0", id:7 or null, error:{code, message, data?}}
 ```
 
-A notification has no `id`. The server must not respond to it. If a server returns a response to a notification, the client has no way to attach it to a call site. That single rule keeps the framing math simple.
+У notification нет `id`. Сервер не должен на него отвечать. Если сервер вернёт ответ на notification, клиенту не к чему его привязать. Это единственное правило, которое сохраняет арифметику фрейминга простой.
 
-A batch is a JSON array of requests or notifications. The server replies with an array of responses, in any order, one per non-notification entry. If every entry in the batch is a notification, the server sends nothing back.
+Batch — это JSON-массив requests или notifications. Сервер отвечает массивом responses в произвольном порядке, по одному на каждую не-notification-запись. Если каждая запись в батче — notification, сервер не отвечает ничем.
 
-## The five error codes
+## Пять кодов ошибок
 
 ```text
 -32700  Parse error      JSON could not be parsed
@@ -53,19 +50,19 @@ A batch is a JSON array of requests or notifications. The server replies with an
 -32603  Internal error
 ```
 
-The codes between -32000 and -32099 are reserved for server-defined errors. Everything else is application-defined. The lesson sticks to the five. If your handler raises, the transport wraps it as -32603 with the exception class name in `data.exception`.
+Коды от -32000 до -32099 зарезервированы под серверные ошибки. Всё остальное определяется приложением. Урок держится пяти кодов. Если обработчик кидает исключение, транспорт заворачивает его в -32603 с именем класса исключения в `data.exception`.
 
-A parse error has a special rule. The `id` in the response is `null`, because the request never parsed enough to extract an id.
+У parse error особое правило. `id` в ответе — `null`, потому что запрос не распарсился даже настолько, чтобы извлечь id.
 
-## Newline framing and the BytesIO demo
+## Newline-фрейминг и демо на BytesIO
 
-The transport reads one line at a time. A line is bytes up to and including `\n`. If a line cannot be parsed, the transport writes a -32700 response with `id: null` and continues. The stream is not poisoned. The next line gets parsed fresh.
+Транспорт читает по одной строке. Строка — это байты до `\n` включительно. Если строка не парсится, транспорт пишет ответ -32700 с `id: null` и продолжает. Поток не отравлен. Следующая строка парсится заново.
 
-For the lesson we wrap an `io.BytesIO` pair as stdin and stdout. The server reads requests until EOF, writes responses for each, and returns. The client reads the responses back. No process spawn. No timeouts. The transport behavior is identical to a real subprocess pipe because Python's `io` interface presents the same `.readline()` and `.write()` contract.
+Для урока мы оборачиваем пару `io.BytesIO` как stdin и stdout. Сервер читает запросы до EOF, пишет ответ на каждый и возвращается. Клиент вычитывает ответы обратно. Никакого порождения процессов. Никаких таймаутов. Поведение транспорта идентично настоящему subprocess-пайпу, потому что интерфейс `io` в Python даёт тот же контракт `.readline()` и `.write()`.
 
-## Method dispatch
+## Диспетчеризация методов
 
-The transport does not know which methods exist. It hands off to a callable `handler(method, params)` that the harness supplies. The handler returns a result or raises. Three exception classes surface specific codes.
+Транспорт не знает, какие методы существуют. Он передаёт управление callable `handler(method, params)`, который поставляет харнес. Обработчик возвращает результат или кидает исключение. Три класса исключений маппятся на конкретные коды.
 
 ```text
 MethodNotFound -> -32601
@@ -73,9 +70,9 @@ InvalidParams  -> -32602
 Anything else  -> -32603 with exception name in data
 ```
 
-The transport never sees a tool registry. The registry sits behind the handler. This is the layering we want. The transport speaks JSON-RPC. The registry speaks tool shapes. The dispatcher (lesson twenty-three) stitches them together.
+Транспорт никогда не видит реестр инструментов. Реестр сидит за обработчиком. Это то расслоение, которое нам нужно. Транспорт говорит на JSON-RPC. Реестр — на формах инструментов. Диспетчер (урок двадцать три) сшивает их вместе.
 
-## Stream behavior on errors
+## Поведение потока при ошибках
 
 ```text
 client writes              server reads             server writes
@@ -86,20 +83,20 @@ client writes              server reads             server writes
 {...missing method...}     invalid envelope         {id:X, error: -32600}
 ```
 
-A broken JSON line does not stop the loop. A missing `method` field does not stop the loop. A handler exception does not stop the loop. The transport keeps reading until EOF.
+Строка с битым JSON не останавливает цикл. Отсутствующее поле `method` не останавливает цикл. Исключение в обработчике не останавливает цикл. Транспорт читает до EOF.
 
-## Notifications and asymmetric flows
+## Notifications и асимметричные потоки
 
-A notification is fire-and-forget. The harness uses notifications for progress events, cancellation signals, and log lines. Notifications are how a long-running tool can stream status updates without round-tripping for each one.
+Notification — это fire-and-forget. Харнес использует notifications для событий прогресса, сигналов отмены и строк логов. Notifications — это способ, которым долгий инструмент стримит статусы, не делая round trip на каждый.
 
-The lesson implements one outbound notification helper, `write_notification`. The server uses it to emit progress while a request is in flight. The demo shows the pattern: a request comes in, the handler emits two progress notifications, then writes the final response.
+Урок реализует один исходящий хелпер, `write_notification`. Сервер использует его, чтобы излучать прогресс, пока запрос в полёте. Демо показывает паттерн: приходит запрос, обработчик излучает две notification о прогрессе, затем пишет финальный ответ.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `StdioTransport`, the parse helper (`parse_request`), the three write helpers (`write_response`, `write_error`, `write_notification`), and the dispatch loop `serve`. The error code constants live at module scope.
+`code/main.py` определяет `StdioTransport`, хелпер парсинга (`parse_request`), три хелпера записи (`write_response`, `write_error`, `write_notification`) и цикл диспетчеризации `serve`. Константы кодов ошибок живут на уровне модуля.
 
-`code/tests/test_transport.py` covers the five error codes, notifications (no response written), batches (array in, array out, notifications skipped), broken JSON (parse error then continue), and the asymmetric flow where a handler writes a notification mid-call.
+`code/tests/test_transport.py` покрывает пять кодов ошибок, notifications (ответ не пишется), batches (массив на входе, массив на выходе, notifications пропущены), битый JSON (parse error, затем продолжение) и асимметричный поток, где обработчик пишет notification посреди вызова.
 
-## Going further
+## Куда двигаться дальше
 
-This transport is enough for the lessons that follow. Production transports add three things. A correlation id field that survives forwarding (your `id` is already this, but in a mesh you need an outer trace id too). A cancellation channel (a notification like `$/cancelRequest` with the id of the in-flight call). And a content-type negotiation handshake so the same socket can speak JSON-RPC and Streamable HTTP. None of those change the wire. They add metadata.
+Этого транспорта достаточно для следующих уроков. Продакшен-транспорты добавляют три вещи. Поле correlation id, переживающее форвардинг (ваш `id` уже играет эту роль, но в mesh нужен ещё внешний trace id). Канал отмены (notification вида `$/cancelRequest` с id вызова в полёте). И handshake согласования content-type, чтобы один сокет мог говорить и на JSON-RPC, и на Streamable HTTP. Ничто из этого не меняет провод. Это добавление метаданных.

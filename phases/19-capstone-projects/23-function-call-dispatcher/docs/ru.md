@@ -1,25 +1,22 @@
 # Function Call Dispatcher
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Диспетчер — то место, где харнес платит по каждому обещанию, которое дала схема. Таймауты, ретраи, дедупликация, маппинг ошибок. Всё на одном шве.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 13, уроки 01–07; Фаза 14, урок 01
+**Время:** ~90 минут
 
-> The dispatcher is where the harness pays for every promise the schema made. Timeouts, retries, dedupe, error mapping. All on one seam.
+## Цели обучения
+- Обернуть обработчик инструмента в таймаут на вызов, который возвращает типизированную ошибку вместо зависшего цикла.
+- Применить ретраи с экспоненциальным backoff, джиттером и максимальным числом попыток.
+- Дедуплицировать ретраи по ключу идемпотентности, чтобы ретрай, гоняющийся с медленным оригиналом, не выполнился дважды.
+- Смаппить исключения обработчиков и сбои транспорта на единый конверт ошибки, который цикл харнеса уже понимает.
+- Ограничить параллельную диспетчеризацию лимитом конкурентности, чтобы fan-out на сорок tool calls не исчерпал event loop.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 13 lessons 01-07, Phase 14 lesson 01
-**Time:** ~90 minutes
+## Где сидит диспетчер
 
-## Learning Objectives
-- Wrap a tool handler in a per-call timeout that returns a typed error instead of hanging the loop.
-- Apply exponential backoff retry with jitter and a maximum attempt count.
-- Deduplicate retries on an idempotency key so a retry that races with a slow original does not run twice.
-- Map handler exceptions and transport faults onto a single error envelope the harness loop already understands.
-- Bound parallel dispatch with a concurrency limit so a fan-out of forty tool calls does not exhaust the event loop.
-
-## Where the dispatcher sits
-
-Between the harness loop (lesson twenty) and the tool registry (lesson twenty-one). The transport (lesson twenty-two) feeds the loop. The loop hands a tool call to the dispatcher. The dispatcher calls the registry, runs the handler, and returns either a result or a JSON-RPC-shaped error envelope.
+Между циклом харнеса (урок двадцать) и реестром инструментов (урок двадцать один). Транспорт (урок двадцать два) кормит цикл. Цикл передаёт tool call диспетчеру. Диспетчер обращается к реестру, запускает обработчик и возвращает либо результат, либо конверт ошибки в форме JSON-RPC.
 
 ```mermaid
 flowchart TD
@@ -37,17 +34,17 @@ flowchart TD
     disp -->|Ok result or DispatchError| loop
 ```
 
-The dispatcher is the only layer that knows about timers, retries, and idempotency. The loop does not. The registry does not. The handler does not. That isolation is the point.
+Диспетчер — единственный слой, который знает про таймеры, ретраи и идемпотентность. Цикл не знает. Реестр не знает. Обработчик не знает. Эта изоляция и есть суть.
 
-## Timeouts
+## Таймауты
 
-Each tool has a default timeout. The registry record carries `timeout_ms`. The dispatcher overrides it from a per-call override when the harness passes one. We use `asyncio.wait_for`. On timeout, the handler task is cancelled and the dispatcher returns `DispatchError(kind="timeout")`.
+У каждого инструмента есть таймаут по умолчанию. Запись реестра несёт `timeout_ms`. Диспетчер перекрывает его пер-вызовным override, если харнес его передал. Мы используем `asyncio.wait_for`. По таймауту задача обработчика отменяется, и диспетчер возвращает `DispatchError(kind="timeout")`.
 
-A timeout is not a retryable error by default for non-idempotent tools. A `db.write` that timed out may or may not have committed. Retrying duplicates the write. The dispatcher honors the `idempotent` flag from the registry record. Idempotent tools retry. Non-idempotent tools do not.
+Для неидемпотентных инструментов таймаут по умолчанию не является ретраебельной ошибкой. `db.write`, отвалившийся по таймауту, мог закоммититься, а мог и нет. Ретрай дублирует запись. Диспетчер чтит флаг `idempotent` из записи реестра. Идемпотентные инструменты ретраятся. Неидемпотентные — нет.
 
-## Retries with exponential backoff
+## Ретраи с экспоненциальным backoff
 
-The retry policy is three attempts maximum. Backoff is exponential with jitter.
+Политика ретраев — максимум три попытки. Backoff экспоненциальный с джиттером.
 
 ```text
 attempt 1  -> delay 0
@@ -55,21 +52,21 @@ attempt 2  -> delay 0.1s * (1 + random[0..0.5])
 attempt 3  -> delay 0.4s * (1 + random[0..0.5])
 ```
 
-Only `timeout` and `transient` errors retry. A `schema` error, a `not_found`, or an `internal` error does not retry. Schema errors are deterministic. Retrying does not change the outcome and burns the budget.
+Ретраятся только ошибки `timeout` и `transient`. Ошибка `schema`, `not_found` или `internal` не ретраится. Схемные ошибки детерминированы. Ретрай не меняет исход и сжигает бюджет.
 
-The retry loop respects the budget from the harness. If the caller's budget has zero remaining tool calls, the dispatcher fails fast on the first attempt and returns `kind="budget_exceeded"`.
+Цикл ретраев уважает бюджет харнеса. Если у вызывающей стороны в бюджете ноль оставшихся tool calls, диспетчер падает быстро на первой попытке и возвращает `kind="budget_exceeded"`.
 
-## Idempotency key dedupe
+## Дедупликация по ключу идемпотентности
 
-A retry that fires while the original is still in flight is a real production bug. The first call hangs at four point nine seconds (just under the timeout). The retry fires at five seconds. Now two requests race against the same backend. If the tool is `payments.charge`, you charged twice.
+Ретрай, стартующий, пока оригинал ещё в полёте, — реальный продакшен-баг. Первый вызов висит на четырёх и девяти десятых секунды (чуть меньше таймаута). Ретрай стартует на пятой секунде. Теперь два запроса гоняются к одному бэкенду. Если инструмент — `payments.charge`, вы списали деньги дважды.
 
-The dispatcher accepts an optional `idempotency_key`. If the same key is in flight when a call arrives, the dispatcher waits on the in-flight future and returns its result. The cache holds keys for sixty seconds after completion to absorb late retries.
+Диспетчер принимает опциональный `idempotency_key`. Если такой же ключ уже в полёте, когда приходит вызов, диспетчер ждёт на in-flight future и возвращает его результат. Кэш держит ключи шестьдесят секунд после завершения, чтобы поглотить поздние ретраи.
 
-The key is the caller's responsibility. The harness derives it from the planner: `f"{step_id}:{tool_name}:{hash(args)}"`. The dispatcher does not invent keys, because deriving a key from arguments alone makes two semantically-different calls look the same.
+Ключ — ответственность вызывающей стороны. Харнес выводит его из планировщика: `f"{step_id}:{tool_name}:{hash(args)}"`. Диспетчер не изобретает ключи сам, потому что ключ, выведенный только из аргументов, делает два семантически разных вызова неотличимыми.
 
-## Error envelope
+## Конверт ошибки
 
-A failed dispatch returns a single shape.
+Провалившаяся диспетчеризация возвращает единую форму.
 
 ```text
 DispatchError
@@ -79,15 +76,15 @@ DispatchError
   jsonrpc_code: int   (one of -32601, -32602, -32603)
 ```
 
-The harness loop maps `kind` to the next state. `schema` and `not_found` go to `on_error` and trigger a replan. `timeout` and `transient` go to `on_error` and may or may not replan depending on attempts. `budget_exceeded` triggers `on_budget_exceeded`.
+Цикл харнеса маппит `kind` на следующее состояние. `schema` и `not_found` уходят в `on_error` и триггерят replan. `timeout` и `transient` уходят в `on_error` и могут вести к replan в зависимости от числа попыток. `budget_exceeded` триггерит `on_budget_exceeded`.
 
-## Concurrency limit on fan-out
+## Лимит конкурентности на fan-out
 
-`gather(*calls)` runs all coroutines simultaneously. With forty tool calls, that is forty open sockets or forty subprocess pipes. Most backends do not like forty parallel connections from one client.
+`gather(*calls)` запускает все корутины одновременно. При сорока tool calls это сорок открытых сокетов или сорок subprocess-пайпов. Большинству бэкендов не нравятся сорок параллельных подключений от одного клиента.
 
-The dispatcher wraps `gather` in a semaphore. Default concurrency limit is eight. Each call acquires the semaphore before dispatching and releases on completion. The caller sees `gather`-shaped output but the actual scheduling is bounded.
+Диспетчер оборачивает `gather` в семафор. Лимит конкурентности по умолчанию — восемь. Каждый вызов забирает семафор перед диспетчеризацией и отпускает по завершении. Вызывающая сторона видит выход в форме `gather`, но фактическое расписание ограничено.
 
-## Flow for one call
+## Поток одного вызова
 
 ```mermaid
 flowchart TD
@@ -123,16 +120,16 @@ flowchart TD
     retry --> attempt
 ```
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `Dispatcher`, `DispatchError`, and `TransientError`. The dispatcher takes a registry on construction. The async `dispatch(name, args, ...)` is the only entry point. Per-attempt timeouts are applied inline inside `_run_with_retries` using `asyncio.wait_for`. `gather_bounded(calls)` runs many dispatches with the concurrency limit.
+`code/main.py` определяет `Dispatcher`, `DispatchError` и `TransientError`. Диспетчер получает реестр при конструировании. Асинхронный `dispatch(name, args, ...)` — единственная точка входа. Таймауты на попытку применяются инлайн внутри `_run_with_retries` через `asyncio.wait_for`. `gather_bounded(calls)` запускает много диспетчеризаций с лимитом конкурентности.
 
-`code/tests/test_dispatcher.py` covers timeout firing, retry on transient, no-retry on schema error, idempotency dedupe (two concurrent calls with the same key collapse to one handler invocation), and concurrency limiting (the semaphore in action).
+`code/tests/test_dispatcher.py` покрывает срабатывание таймаута, ретрай на transient, отсутствие ретрая на схемной ошибке, дедупликацию по идемпотентности (два конкурентных вызова с одним ключом схлопываются в один запуск обработчика) и ограничение конкурентности (семафор в действии).
 
-The tests use `asyncio.sleep(0)` and deterministic `Counter`-based handlers, so they finish in milliseconds and do not depend on wall-clock timing.
+Тесты используют `asyncio.sleep(0)` и детерминированные обработчики на `Counter`, поэтому завершаются за миллисекунды и не зависят от wall-clock.
 
-## Going further
+## Куда двигаться дальше
 
-Two extensions production dispatchers add. First, structured logging at every transition (which the loop's event stream already gives you, but the dispatcher should also emit `dispatch.attempt` and `dispatch.retry` events). Second, circuit breakers: after N failures in a window, a tool gets a cool-down period where dispatches return immediately with `kind="circuit_open"` instead of attempting the handler. Both fit on top of this dispatcher without changing the contract.
+Два расширения, которые добавляют продакшен-диспетчеры. Первое — структурное логирование на каждом переходе (поток событий цикла это уже даёт, но диспетчер должен излучать и свои события `dispatch.attempt` и `dispatch.retry`). Второе — circuit breakers: после N сбоев в окне инструмент получает период охлаждения, когда диспетчеризации немедленно возвращают `kind="circuit_open"` вместо попытки вызвать обработчик. Оба ложатся поверх этого диспетчера без изменения контракта.
 
-Lesson twenty-four glues the dispatcher to a plan-and-execute agent so you see all four pieces in motion.
+Урок двадцать четыре приклеивает диспетчер к plan-and-execute-агенту, и вы увидите все четыре части в движении.

@@ -1,36 +1,33 @@
 # Capstone Lesson 27: Eval Harness with Fixture Tasks
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Coding-агент хорош ровно настолько, насколько хорош набор задач, которым вы его измеряете. Этот урок строит eval-харнес, который берёт папку fixture-задач, прогоняет каждую через агента-кандидата, оценивает pass/fail детерминированным верификатором и агрегирует результаты в pass@1, pass@k, среднюю задержку и среднюю стоимость. Харнес — источник правды, позволяющий отличить регрессию от рефакторинга.
 
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Пререквизиты:** Фаза 19 · 25 (verification gates), Фаза 19 · 26 (sandbox-раннер), Фаза 14 · 30 (eval-driven разработка агентов), Фаза 14 · 19 (бенчмарки SWE-bench и GAIA)
+**Время:** ~90 минут
 
-> A coding agent is only as good as the suite of tasks you measure it against. This lesson builds an evaluation harness that takes a folder of fixture tasks, runs each through a candidate agent, scores pass or fail through a deterministic verifier, and aggregates the results into pass@1, pass@k, mean latency, and mean cost. The harness is the source of truth that lets you tell a regression from a refactor.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 19 · 25 (verification gates), Phase 19 · 26 (sandbox runner), Phase 14 · 30 (eval-driven agent development), Phase 14 · 19 (SWE-bench and GAIA benchmarks)
-**Time:** ~90 minutes
+- Определить fixture-задачу как тройку из цели, setup и верификатора.
+- Оценивать несколько прогонов-сэмплов на задачу и вычислять pass@1 и pass@k.
+- Агрегировать задержку и стоимость в среднее и 95-й перцентиль.
+- Собрать детерминированные верификаторы (diff файла, код выхода, regex-совпадение) в переиспользуемые функции.
+- Излучать структурный JSON-отчёт, который может поглотить скрипт трекинга регрессий.
 
-## Learning Objectives
+## Проблема
 
-- Define a fixture task as a triple of goal, setup, and verifier.
-- Score multiple sample runs per task and compute pass@1 and pass@k.
-- Aggregate latency and cost into mean and 95th-percentile metrics.
-- Wire deterministic verifiers (file diff, exit code, regex match) into reusable functions.
-- Emit a structured JSON report a regression-tracking script can ingest.
+Агентские бенчмарки, собранные без eval-харнеса, страдают от трёх режимов отказа.
 
-## The Problem
+Первый — неверифицированный pass. Агент говорит, что починил баг, человек мельком смотрит на diff, набор помечается зелёным, а через три недели регрессионный тест поднимает тот же баг. Агент правдоподобно порассуждал, ничего на самом деле не починив.
 
-Three failure modes plague agent benchmarks built without an eval harness.
+Второй — незамеченная регрессия. Изменение шаблона промпта делает агента на 4% лучше на громкой задаче и на 14% хуже на тихой. Без goldset и пер-задачного скора регрессия въезжает в main и всплывает, только когда пожалуется клиент.
 
-The first is unverified pass. The agent says it fixed the bug, the human glances at the diff, the suite is marked green, and three weeks later the regression test surfaces the same bug. The agent had reasoned plausibly without actually fixing anything.
+Третий — дрейф задач. В понедельник eval гоняли на 100 задачах, а в пятницу — на 95 из них, потому что кто-то переименовал пять фикстур. Pass rate выглядит как улучшение на 5%. Это не так.
 
-The second is undetected regression. A change to the prompt template makes the agent 4% better on the loud task and 14% worse on the quiet one. Without a goldset and a per-task score, the regression rides into main and surfaces only when a customer complains.
+Харнес — программа, превращающая эти сбои в факты. Он прогоняет каждую фикстуру, каждый раз, в воспроизводимом порядке, против верификатора, возвращающего true или false по детерминированной проверке.
 
-The third is per-task drift. The eval was run on Monday with 100 tasks and on Friday with 95 of them, because somebody renamed five fixtures. The pass rate looks like a 5% improvement. It isn't.
-
-The harness is the program that turns these failures into facts. It runs every fixture, every time, in a reproducible order, against a verifier that returns true or false on a deterministic check.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -40,23 +37,23 @@ flowchart LR
   Harness --> Report[EvalReport<br/>pass@1 / pass@k<br/>mean ms / p95 ms<br/>mean cost]
 ```
 
-A `FixtureTask` is a small JSON file plus an optional `expected/` directory. The JSON declares an `id`, a `goal` (the prompt fed to the agent), a `setup` block (files to drop into the scratch dir), and a `verifier` block. The verifier block names a function in the harness's verifier registry and supplies its arguments.
+`FixtureTask` — маленький JSON-файл плюс опциональная директория `expected/`. JSON объявляет `id`, `goal` (промпт, скармливаемый агенту), блок `setup` (файлы, раскладываемые в scratch-директорию) и блок `verifier`. Блок верификатора называет функцию в реестре верификаторов харнеса и передаёт ей аргументы.
 
-Three verifier shapes cover the majority of useful tasks.
+Три формы верификаторов покрывают большинство полезных задач.
 
-The first is `file_equals`. After the agent runs, compare a named file against an expected content. This catches "fix this bug in this exact way" tasks.
+Первая — `file_equals`. После прогона агента именованный файл сравнивается с ожидаемым содержимым. Ловит задачи «почини этот баг ровно вот так».
 
-The second is `regex_match`. The named file's contents are matched against a regex. This catches "the function must exist and return X" tasks where there are many acceptable solutions.
+Вторая — `regex_match`. Содержимое именованного файла матчится против regex. Ловит задачи «функция должна существовать и возвращать X», где приемлемых решений много.
 
-The third is `shell_exit_zero`. The harness runs a shell command (through the sandbox from lesson 26) and passes the task only if the command exits zero. This catches "the tests must pass" tasks.
+Третья — `shell_exit_zero`. Харнес запускает shell-команду (через sandbox из урока 26) и засчитывает задачу, только если команда вышла с нулём. Ловит задачи «тесты должны проходить».
 
-The harness runs each task `k` times. Pass@k is `1 - (1 - p)^k` where p is the empirical pass rate; the harness also reports raw counts so you can spot variance. Latency is wall-clock per sample. Cost is whatever the agent self-reports (token count, USD, or both); the harness sums it across samples and presents the per-task and aggregate numbers.
+Харнес прогоняет каждую задачу `k` раз. Pass@k — это `1 - (1 - p)^k`, где p — эмпирический pass rate; харнес также сообщает сырые счётчики, чтобы была видна дисперсия. Задержка — wall-clock на сэмпл. Стоимость — то, что агент сам о себе сообщает (число токенов, USD или оба); харнес суммирует её по сэмплам и показывает пер-задачные и агрегированные числа.
 
 ```figure
 pass-at-k
 ```
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -66,39 +63,39 @@ flowchart TD
   TaskReport -->|aggregate| EvalReport[EvalReport<br/>total tasks / pass@1 / pass@k / p95 latency]
 ```
 
-The candidate is a callable: `Callable[[FixtureTask, str], SampleResult]`. The harness creates the scratch directory via `tempfile.mkdtemp()` and passes its path as a plain string. The harness does not care how the candidate works. The candidate could be a deterministic patch applier (useful for harness self-tests), a real LLM agent, a fuzzer. The contract is the SampleResult.
+Кандидат — это callable: `Callable[[FixtureTask, str], SampleResult]`. Харнес создаёт scratch-директорию через `tempfile.mkdtemp()` и передаёт её путь обычной строкой. Харнесу всё равно, как устроен кандидат. Кандидатом может быть детерминированный применитель патчей (полезно для самотестов харнеса), настоящий LLM-агент, фаззер. Контракт — это SampleResult.
 
-## What you will build
+## Что вы соберёте
 
-`main.py` ships:
+`main.py` поставляет:
 
-1. `FixtureTask` dataclass.
-2. `SampleResult` dataclass: success_self_reported, latency_ms, cost_units, edits.
-3. `TaskReport`, `EvalReport` dataclasses with `to_dict()`.
-4. `VerifierRegistry` mapping verifier name to function. Built-in verifiers: file_equals, regex_match, shell_exit_zero.
-5. `EvalHarness` class. Runs a directory of tasks against a candidate. Returns EvalReport.
-6. Five fixture tasks bundled in `tasks/`:
-   - off-by-one in `fizzbuzz`
-   - missing return in `factorial`
-   - typo in error message
-   - empty function body
-   - off-by-one in linked-list traversal
-7. A deterministic reference candidate (`apply_known_fixes`) the harness uses to demonstrate a clean pass@1 of 1.0.
-8. Demo prints the EvalReport JSON and exits zero.
+1. Датакласс `FixtureTask`.
+2. Датакласс `SampleResult`: success_self_reported, latency_ms, cost_units, edits.
+3. Датаклассы `TaskReport`, `EvalReport` с `to_dict()`.
+4. `VerifierRegistry`, маппящий имя верификатора на функцию. Встроенные верификаторы: file_equals, regex_match, shell_exit_zero.
+5. Класс `EvalHarness`. Прогоняет директорию задач против кандидата. Возвращает EvalReport.
+6. Пять fixture-задач в комплекте в `tasks/`:
+   - off-by-one в `fizzbuzz`
+   - пропущенный return в `factorial`
+   - опечатка в сообщении об ошибке
+   - пустое тело функции
+   - off-by-one в обходе связного списка
+7. Детерминированный референсный кандидат (`apply_known_fixes`), на котором харнес демонстрирует чистый pass@1 = 1.0.
+8. Демо печатает JSON EvalReport и выходит с нулём.
 
-The fixture tasks are bundled as JSON files in `tasks/` plus paired source files in `tasks/<id>/buggy/` and `tasks/<id>/expected/`. The harness copies buggy into a scratch dir, hands it to the candidate, and verifies against expected.
+Fixture-задачи лежат JSON-файлами в `tasks/` плюс парные исходники в `tasks/<id>/buggy/` и `tasks/<id>/expected/`. Харнес копирует buggy в scratch-директорию, отдаёт её кандидату и верифицирует против expected.
 
-## Why pass@k and not just pass@1
+## Почему pass@k, а не только pass@1
 
-Real LLM agents are stochastic. A pass@1 of 0.6 looks like a failure. A pass@5 of 0.95 says the agent gets the right answer most of the time but is choosing wrong on early samples. The fix is sampling and ranking, not always more training. Pass@k makes that visible.
+Настоящие LLM-агенты стохастичны. Pass@1 в 0.6 выглядит провалом. Pass@5 в 0.95 говорит, что агент в большинстве случаев доходит до правильного ответа, но ошибается на ранних сэмплах. Лечение — сэмплирование и ранжирование, а не обязательно дообучение. Pass@k делает это видимым.
 
-Pass@k is reported alongside pass@1 because pass@k papers over a real failure: if the model gets the right answer once in twenty tries you do not have a useful agent. The harness shows both.
+Pass@k публикуется рядом с pass@1, потому что pass@k замазывает реальный провал: если модель отвечает правильно один раз из двадцати, полезного агента у вас нет. Харнес показывает оба числа.
 
-## How this composes with the rest of Track A
+## Как это стыкуется с остальным треком A
 
-Lesson 25 produced the gate chain. Lesson 26 produced the sandbox. The harness uses the sandbox for any `shell_exit_zero` verifier. Lesson 28 wraps each harness run in an OTel trace. Lesson 29 runs the end-to-end demo against one of the bundled fixtures and asserts pass@1 = 1.0 for the reference candidate.
+Урок 25 дал цепочку gates. Урок 26 дал sandbox. Харнес использует sandbox для любого верификатора `shell_exit_zero`. Урок 28 оборачивает каждый прогон харнеса в OTel-трейс. Урок 29 гоняет end-to-end-демо против одной из комплектных фикстур и утверждает pass@1 = 1.0 для референсного кандидата.
 
-## Running it
+## Запуск
 
 ```bash
 cd phases/19-capstone-projects/27-eval-harness-fixture-tasks
@@ -106,4 +103,4 @@ python3 code/main.py
 python3 -m pytest code/tests/ -v
 ```
 
-The demo prints the EvalReport in JSON, including pass@1, pass@5, mean latency, and per-task breakdown. The exit code is zero. The tests cover the verifier functions, the pass@k math, fixture loading, and the harness end-to-end against the bundled reference candidate.
+Демо печатает EvalReport в JSON, включая pass@1, pass@5, среднюю задержку и пер-задачную разбивку. Код выхода — ноль. Тесты покрывают функции-верификаторы, математику pass@k, загрузку фикстур и харнес end-to-end против комплектного референсного кандидата.

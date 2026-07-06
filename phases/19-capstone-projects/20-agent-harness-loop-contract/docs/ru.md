@@ -1,31 +1,28 @@
 # Agent Harness Loop Contract
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Харнес — это и есть агент. Модель — сопроцессор. Этот урок фиксирует контракт цикла, к которому можно подключить любую модель.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 13, уроки 01–07; Фаза 14, урок 01
+**Время:** ~90 минут
 
-> The harness is the agent. The model is a coprocessor. This lesson freezes the loop contract you can wire any model into.
+## Цели обучения
+- Специфицировать цикл агентского харнеса как детерминированную машину состояний с явными переходами.
+- Реализовать десять hook-топиков жизненного цикла, к которым операторы подключают политики, телеметрию и guardrails.
+- Определить две pull-точки, в которых цикл возвращает управление вызывающей стороне и возобновляется на свежем входе.
+- Обеспечить соблюдение бюджетов на сессию (ходы, tool calls, wall-clock) без утечки частичного состояния при превышении.
+- Излучать типизированный поток из одиннадцати типов событий, чтобы UI и трейсеры могли подписаться, не заглядывая внутрь цикла.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 13 lessons 01-07, Phase 14 lesson 01
-**Time:** ~90 minutes
+## Рамка
 
-## Learning Objectives
-- Specify an agent harness loop as a deterministic state machine with explicit transitions.
-- Implement ten lifecycle hook topics that operators wire policy, telemetry, and guardrails into.
-- Define two pull points where the loop yields control back to the caller and resumes on a fresh input.
-- Enforce per-session budgets (turns, tool calls, wall-clock) without leaking partial state on exceeding.
-- Emit a typed stream of eleven event types so downstream UIs and tracers can subscribe without inspecting the loop directly.
+Coding-агент, работающий без присмотра сорок ходов подряд, — это не чат-цикл. Это машина состояний, узлы которой оператор может перехватывать, а рёбра — аудировать. Как только контракт записан, замена модели, инструментов или политик перестаёт быть рефакторингом. Она становится вызовом регистрации.
 
-## The frame
+Этот урок строит такой контракт. Мы называем шесть состояний, десять hook-топиков, две pull-точки, одиннадцать типов событий и бюджетный конверт. Всё остальное в харнесе (реестр инструментов, JSON-RPC-транспорт, диспетчер, планировщик) подключается к этой форме.
 
-A coding agent that runs unattended for forty turns is not a chat loop. It is a state machine whose nodes the operator can intercept and whose edges the operator can audit. Once you write the contract down, swapping models, tools, or policies stops being a refactor. It becomes a registration call.
+## Состояния
 
-This lesson builds that contract. We name six states, ten hook topics, two pull points, eleven event types, and a budget envelope. Everything else in the harness (tool registry, JSON-RPC transport, dispatcher, planner) plugs into this shape.
-
-## The states
-
-The loop has six states. Five are active. One is terminal.
+В цикле шесть состояний. Пять активных. Одно терминальное.
 
 ```mermaid
 stateDiagram-v2
@@ -42,13 +39,13 @@ stateDiagram-v2
     DONE --> [*]
 ```
 
-`IDLE` is the only legal entry point. `DONE` is the only legal exit. `AWAITING_TOOL` is the only state that yields a pull point. Every other transition is internal.
+`IDLE` — единственная легальная точка входа. `DONE` — единственный легальный выход. `AWAITING_TOOL` — единственное состояние, дающее pull-точку. Все остальные переходы внутренние.
 
-The state machine is deterministic. Given the same event log, the harness re-enters the same state. That property is what lets you replay sessions for debugging without re-calling the model.
+Машина состояний детерминирована. По одному и тому же журналу событий харнес приходит в то же состояние. Именно это свойство позволяет реиграть сессии при отладке без повторных вызовов модели.
 
-## The hook topics
+## Hook-топики
 
-Hooks are the operator's seam into the loop. The harness fires ten topics. Each topic accepts any number of subscribers. Subscribers fire in registration order. A subscriber may mutate the payload, raise to abort the turn, or return a sentinel to skip the next step.
+Хуки — это шов, через который оператор входит в цикл. Харнес запускает десять топиков. Каждый топик принимает любое число подписчиков. Подписчики срабатывают в порядке регистрации. Подписчик может мутировать payload, кинуть исключение и прервать ход или вернуть сентинел, чтобы пропустить следующий шаг.
 
 ```text
 before_plan         after_plan
@@ -60,52 +57,52 @@ on_budget_exceeded
 on_complete
 ```
 
-The shape mirrors what Claude Code, Cursor, and OpenCode all converged on by mid-2025. The names are functional, not branded. A hook that blocks `rm -rf` lives in `before_tool_call`. A hook that ships an OpenTelemetry span lives in `after_step`. A hook that resumes on a paused session lives in `on_pause`.
+Форма повторяет то, к чему к середине 2025 года сошлись Claude Code, Cursor и OpenCode. Имена функциональные, не брендовые. Хук, блокирующий `rm -rf`, живёт в `before_tool_call`. Хук, отправляющий span в OpenTelemetry, — в `after_step`. Хук, возобновляющий приостановленную сессию, — в `on_pause`.
 
-## The pull points
+## Pull-точки
 
-The loop yields control twice. First on `AWAITING_TOOL` when it cannot make progress without a tool result. Second on `on_pause` when the budget is exhausted or a hook explicitly requests human review.
+Цикл отдаёт управление дважды. Первый раз — на `AWAITING_TOOL`, когда без результата инструмента прогресс невозможен. Второй — на `on_pause`, когда бюджет исчерпан или хук явно запросил human review.
 
-A pull point is not an exception. It is a return. The caller inspects the harness state, fetches whatever the harness asked for, and calls `resume(payload)`. The harness picks up where it stopped. This is the same shape as a Python generator. The transport over the pull point is your choice. In a TUI it is keypress. Over MCP it is `tools/call`. Over a queue it is a job poll.
+Pull-точка — это не исключение. Это return. Вызывающая сторона смотрит на состояние харнеса, достаёт то, что харнес запросил, и вызывает `resume(payload)`. Харнес продолжает с места остановки. Это та же форма, что у генератора в Python. Транспорт поверх pull-точки — на ваш выбор. В TUI это нажатие клавиши. Через MCP — `tools/call`. Через очередь — поллинг джобы.
 
-## The event stream
+## Поток событий
 
-The loop appends events to a typed stream at specific points in the contract. The stream is append-only and subscribers can replay from any offset. The eleven implemented event types are:
+Цикл дописывает события в типизированный поток в конкретных точках контракта. Поток append-only, и подписчики могут реиграть его с любого смещения. Одиннадцать реализованных типов событий:
 
-- `session.start` — emitted once when `run(goal)` is called
-- `plan.draft` — emitted when the planner returns a draft plan
-- `plan.commit` — emitted after the draft is committed as the active plan
-- `step.start` — emitted at the start of each executing step
-- `step.end` — emitted at the end of each executing step
-- `tool.call` — emitted when a tool-requiring step yields control to the caller
-- `tool.result` — emitted on resume with a tool result
-- `tool.error` — emitted on resume with an error or when a hook aborts the call
-- `budget.warn` — emitted when a budget limit is reached
-- `session.pause` — emitted when the loop yields on a pause (budget or hook)
-- `session.complete` — emitted once when the loop reaches `DONE`
+- `session.start` — излучается один раз при вызове `run(goal)`
+- `plan.draft` — когда планировщик вернул черновик плана
+- `plan.commit` — после того как черновик закоммичен как активный план
+- `step.start` — в начале каждого исполняемого шага
+- `step.end` — в конце каждого исполняемого шага
+- `tool.call` — когда шаг, требующий инструмента, отдаёт управление вызывающей стороне
+- `tool.result` — при возобновлении с результатом инструмента
+- `tool.error` — при возобновлении с ошибкой или когда хук прервал вызов
+- `budget.warn` — при достижении лимита бюджета
+- `session.pause` — когда цикл уступает на паузе (бюджет или хук)
+- `session.complete` — один раз, когда цикл достигает `DONE`
 
-The events do not duplicate hook payloads. Hooks are imperative (mutate, abort). Events are observational (record, ship). Treat them as orthogonal.
+События не дублируют payload'ы хуков. Хуки императивны (мутировать, прервать). События наблюдательны (записать, отправить). Считайте их ортогональными.
 
-## The budget envelope
+## Бюджетный конверт
 
-A session carries three limits. Turn count, tool call count, wall-clock seconds. Each turn increments turns by one. Each tool call increments tool calls by one. Wall-clock is checked on every state transition. When any limit is reached, the loop fires `on_budget_exceeded`, emits `budget.warn`, then transitions to `IDLE` with a budget-exceeded reason on the next pull point.
+Сессия несёт три лимита. Число ходов, число tool calls, wall-clock в секундах. Каждый ход увеличивает счётчик ходов на один. Каждый tool call — счётчик вызовов на один. Wall-clock проверяется на каждом переходе состояния. Когда любой лимит достигнут, цикл запускает `on_budget_exceeded`, излучает `budget.warn`, а затем на следующей pull-точке переходит в `IDLE` с причиной budget-exceeded.
 
-The budget is not a kill switch. It is a yield. The caller decides whether to extend the budget and resume, or to close the session.
+Бюджет — это не kill switch. Это yield. Вызывающая сторона решает: расширить бюджет и продолжить или закрыть сессию.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not call a model. It does not register real tools. It does not implement a transport. Those are the next four lessons. This lesson nails the contract so the next four can plug into it without rewriting.
+Он не вызывает модель. Не регистрирует настоящие инструменты. Не реализует транспорт. Это следующие четыре урока. Этот урок прибивает контракт, чтобы следующие четыре подключались к нему без переписывания.
 
-The deterministic planner in `main.py` is a stand-in. It returns a hardcoded plan of three steps, two of which require a tool result. The point is the loop, not the plan.
+Детерминированный планировщик в `main.py` — заглушка. Он возвращает захардкоженный план из трёх шагов, два из которых требуют результата инструмента. Суть в цикле, а не в плане.
 
-## How to read the code
+## Как читать код
 
-`HarnessLoop` is the main class. It holds state, fires hooks, emits events. `Budget` tracks limits. `Event` is the typed envelope on the stream. `HookRegistry` is the dispatch table. `_transition` is the only function that changes state, so the state machine invariants live in one place.
+`HarnessLoop` — главный класс. Он держит состояние, запускает хуки, излучает события. `Budget` отслеживает лимиты. `Event` — типизированный конверт в потоке. `HookRegistry` — таблица диспетчеризации. `_transition` — единственная функция, меняющая состояние, поэтому инварианты машины состояний живут в одном месте.
 
-Read `main.py` top to bottom. Then read `code/tests/test_loop.py`. The tests pin every transition and every hook firing order.
+Прочитайте `main.py` сверху вниз. Затем — `code/tests/test_loop.py`. Тесты фиксируют каждый переход и порядок срабатывания каждого хука.
 
-## Going further
+## Куда двигаться дальше
 
-The hardest part of building a harness in production is not the state machine. It is making the contract enforceable. The contract has to survive a hot reload of the planner. It has to survive a tool that returns malformed JSON. It has to survive a hook that raises in `before_tool_call` two-thirds of the way through a forty-turn session. The tests in this lesson exercise those failure modes. Run them. Break them. Add cases.
+Самое сложное в продакшен-харнесе — не машина состояний. Это принудительное исполнение контракта. Контракт должен пережить горячую перезагрузку планировщика. Пережить инструмент, вернувший битый JSON. Пережить хук, кинувший исключение в `before_tool_call` на двух третях сорокаходовой сессии. Тесты этого урока прогоняют эти режимы отказа. Запустите их. Сломайте их. Добавьте кейсы.
 
-The next lesson adds the tool registry. After that, the JSON-RPC transport. After that, the dispatcher. By lesson twenty-four, the loop in this file will be running a real plan against real tools with real budgets enforced.
+Следующий урок добавляет реестр инструментов. Потом — JSON-RPC-транспорт. Потом — диспетчер. К двадцать четвёртому уроку цикл из этого файла будет гонять настоящий план по настоящим инструментам с настоящими бюджетами.

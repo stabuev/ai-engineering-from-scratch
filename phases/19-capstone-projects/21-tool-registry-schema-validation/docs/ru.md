@@ -1,29 +1,26 @@
 # Tool Registry with Schema Validation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Инструмент, который агент не может провалидировать, — это инструмент, который агент не может вызвать. Постройте реестр и проверку схем раньше, чем сами инструменты.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 13, уроки 01–07; Фаза 14, урок 01
+**Время:** ~90 минут
 
-> A tool the agent cannot validate is a tool the agent cannot call. Build the registry and the schema checker before you build the tools.
+## Цели обучения
+- Держать типизированный реестр «имя инструмента → схема → обработчик», у которого диспетчер спрашивает один раз, а дальше доверяет.
+- Реализовать подмножество JSON Schema 2020-12, покрывающее ключевые слова, которые реально использует девяносто процентов tool calls.
+- Возвращать точные пути ошибок в форме json-pointer, чтобы модель могла самоисправиться за один round trip.
+- Отклонять повторную регистрацию без явного override — молчаливые перезаписи и есть причина дрейфа продакшен-каталогов инструментов.
+- Держать валидатор чистым (без I/O, времени и глобалов), чтобы его можно было перезапустить на replay-логе.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 13 lessons 01-07, Phase 14 lesson 01
-**Time:** ~90 minutes
+## Почему реестр идёт раньше инструмента
 
-## Learning Objectives
-- Hold a typed registry of tool name → schema → handler that the dispatcher can ask once and trust afterwards.
-- Implement a JSON Schema 2020-12 subset that covers the keywords ninety percent of tool calls actually use.
-- Return precise, json-pointer-shaped error paths so the model can self-correct in one round trip.
-- Reject re-registration without explicit override, since silent overwrites are how production tool catalogs drift.
-- Keep the validator pure (no I/O, no time, no globals) so it can be re-run on a replay log.
+У coding-агента в 2026 году зарегистрировано больше инструментов, чем модель может вместить в одно контекстное окно. Нетривиальный харнес регистрирует две сотни инструментов и показывает от десяти до сорока на каждый ход. Реестр — источник правды для трёх вопросов: «какие инструменты существуют», «какой формы их аргументы» и «какой обработчик вызвать». Как только эти три ответа прибиты, остальному харнесу можно перестать гадать.
 
-## Why the registry comes before the tool
+Ошибка, которой мы избегаем, — поставлять обработчики без схем или схемы без валидации. И то и другое встречается сплошь и рядом. И то и другое превращает следующий слой (диспетчер из урока двадцать три) в угадайку, где единственный режим отказа — stack trace из обработчика.
 
-A coding agent in 2026 has more registered tools than the model can fit in a single context window. A non-trivial harness will register two hundred tools and surface ten to forty at any given turn. The registry is the source of truth for "what tools exist," "what shape do their arguments take," and "what handler do I call." Once those three answers are pinned, the rest of the harness can stop guessing.
-
-The mistake we are avoiding is shipping handlers without schemas, or shipping schemas without validation. Both are common. Both turn the next layer (the dispatcher in lesson twenty-three) into a guessing game where the only failure mode is a stack trace from the handler.
-
-## What a tool record looks like
+## Как выглядит запись об инструменте
 
 ```text
 ToolRecord
@@ -35,11 +32,11 @@ ToolRecord
   timeout_ms  : int          (override per-tool dispatcher default)
 ```
 
-The schema is the only field the validator touches. The handler is opaque to it. We separate them on purpose. The schema is data. The handler is code. Mixing them tempts you to put validation logic inside the handler, which is the bug we are stopping.
+Схема — единственное поле, которое трогает валидатор. Обработчик для него непрозрачен. Мы разделяем их намеренно. Схема — это данные. Обработчик — это код. Их смешение соблазняет положить логику валидации внутрь обработчика, а это ровно тот баг, который мы останавливаем.
 
-## The JSON Schema 2020-12 subset
+## Подмножество JSON Schema 2020-12
 
-The full 2020-12 spec is a paper. We need eight keywords.
+Полная спецификация 2020-12 — это целый талмуд. Нам нужно восемь ключевых слов.
 
 ```text
 type           string / number / integer / boolean / object / array / null
@@ -52,11 +49,11 @@ pattern        ECMA-262-compatible regex, applies to strings
 items          schema applied to every array element
 ```
 
-That is enough to cover what a tool API actually needs. The keywords we are not adding (oneOf, anyOf, allOf, $ref, conditionals) are valid in production schemas but turn the validator into a tree walker with cycles. We are building a registry, not a JSON Schema engine.
+Этого достаточно, чтобы покрыть то, что реально нужно API инструмента. Ключевые слова, которые мы не добавляем (oneOf, anyOf, allOf, $ref, условные конструкции), легальны в продакшен-схемах, но превращают валидатор в обходчик дерева с циклами. Мы строим реестр, а не движок JSON Schema.
 
-## Json pointer error paths
+## Пути ошибок в формате json pointer
 
-When validation fails, the validator returns a list of errors. Each error carries a json-pointer path into the input. A pointer is a slash-prefixed sequence of property names and array indices.
+Когда валидация проваливается, валидатор возвращает список ошибок. Каждая ошибка несёт json-pointer-путь во входные данные. Pointer — это последовательность имён свойств и индексов массива, разделённая слэшами.
 
 ```text
 {"a": {"b": [1, 2, "x"]}}
@@ -64,21 +61,21 @@ When validation fails, the validator returns a list of errors. Each error carrie
                     /a/b/2
 ```
 
-The model reads error paths better than it reads sentences. If a schema requires `args.user.email` and the model passed an integer, the error should be `/user/email` with `expected_type: string`. The model fixes that in the next call without a round of natural language.
+Модель читает пути ошибок лучше, чем предложения. Если схема требует `args.user.email`, а модель передала целое число, ошибка должна быть `/user/email` с `expected_type: string`. Модель чинит это в следующем вызове без раунда естественного языка.
 
-## Registration and override
+## Регистрация и override
 
-`register(name, schema, handler, **opts)` rejects re-registration by default. The caller has to pass `override=True` to replace. This is operational hygiene. Two parts of the codebase silently registering the same tool name is the kind of bug that takes a week to find in production.
+`register(name, schema, handler, **opts)` по умолчанию отклоняет повторную регистрацию. Чтобы заменить, вызывающий обязан передать `override=True`. Это операционная гигиена. Две части кодовой базы, молча регистрирующие одно имя инструмента, — тот сорт бага, который в продакшене ищут неделю.
 
-The registry exposes three read methods. `get(name)` returns the record or raises. `validate(name, args)` returns an `Ok` or a list of errors. `names()` returns the tool names in registration order.
+Реестр даёт три метода чтения. `get(name)` возвращает запись или кидает исключение. `validate(name, args)` возвращает `Ok` или список ошибок. `names()` возвращает имена инструментов в порядке регистрации.
 
-## What the validator is and is not
+## Чем валидатор является и чем не является
 
-It is a single pass over the schema tree, recursive. It is pure. It does not call handlers. It does not coerce types (a string `"42"` does not pass a number schema). It does not silently truncate.
+Это один проход по дереву схемы, рекурсивный. Он чистый. Он не вызывает обработчики. Он не приводит типы (строка `"42"` не проходит числовую схему). Он не обрезает данные молча.
 
-It is not a security boundary. A malicious handler can still misbehave after validation passes. The dispatcher in lesson twenty-three adds timeout and sandbox layers. The registry adds shape.
+Он не является границей безопасности. Злонамеренный обработчик всё ещё может навредить после успешной валидации. Диспетчер из урока двадцать три добавляет слои таймаутов и sandbox. Реестр добавляет форму.
 
-## Shape
+## Форма
 
 ```mermaid
 flowchart TD
@@ -89,14 +86,14 @@ flowchart TD
     reg -->|validate args| out
 ```
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `ToolRegistry`, `ToolRecord`, `ValidationError`, and the eight validator functions. The validator dispatches on `schema["type"]` (or treats a schema with `enum` as untyped enum check). Each type validator returns either an empty list or a list of `ValidationError`. The top-level walker concatenates errors and prepends path segments as it descends.
+`code/main.py` определяет `ToolRegistry`, `ToolRecord`, `ValidationError` и восемь функций-валидаторов. Валидатор диспетчеризуется по `schema["type"]` (схему с `enum` трактует как бестиповую проверку enum). Каждый типовой валидатор возвращает либо пустой список, либо список `ValidationError`. Верхнеуровневый обходчик конкатенирует ошибки и добавляет сегменты пути по мере спуска.
 
-`code/tests/test_registry.py` covers registration, override, validation success, validation failure with paths, and every keyword in the subset.
+`code/tests/test_registry.py` покрывает регистрацию, override, успешную валидацию, провал валидации с путями и каждое ключевое слово подмножества.
 
-## Going further
+## Куда двигаться дальше
 
-The two extensions you will want once this lesson lands are `$ref` resolution against a local definitions block, and `additionalProperties: false` for strict shape. Both are small. Both are common to add as the tool catalog grows past fifty tools. We left them out of the lesson to keep the file under one read.
+Два расширения, которые захочется сразу после этого урока, — резолв `$ref` по локальному блоку definitions и `additionalProperties: false` для строгой формы. Оба небольшие. Оба обычно добавляют, когда каталог инструментов переваливает за полсотни. Мы вынесли их за рамки урока, чтобы файл читался за один присест.
 
-The next lesson (twenty-two) builds the JSON-RPC stdio transport that surfaces this registry to a model client. The lesson after (twenty-three) wraps both behind a dispatcher with timeouts and retries.
+Следующий урок (двадцать два) строит JSON-RPC-транспорт по stdio, который открывает этот реестр модельному клиенту. Урок после него (двадцать три) оборачивает оба в диспетчер с таймаутами и ретраями.

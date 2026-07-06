@@ -1,27 +1,24 @@
 # Plan-Execute Control Flow
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> План, не переживающий сбой, — это скрипт. Скрипт, умеющий перепланироваться, — это агент. Сначала постройте репланер.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 13, уроки 01–07; Фаза 14, урок 01
+**Время:** ~90 минут
 
-> A plan that cannot survive a failure is a script. A script that can replan is an agent. Build the replanner first.
+## Цели обучения
+- Представить план как упорядоченный список типизированных шагов, чтобы исполнитель мог рассуждать о прогрессе и исходе.
+- Исполнять шаги последовательно с контролируемой передачей сбоя обратно планировщику.
+- Перепланировать с текущего курсора, передавая предыдущую ошибку в контекст, чтобы следующий план был информированным.
+- Излучать diff плана при каждой ревизии, чтобы трейсер или UI ниже по течению могли показать, почему план изменился.
+- Обеспечить два бюджета: жёсткий потолок шагов и жёсткий потолок перепланирований.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 13 lessons 01-07, Phase 14 lesson 01
-**Time:** ~90 minutes
+## Plan and execute, а не chain-of-thought
 
-## Learning Objectives
-- Represent a plan as an ordered list of typed steps so the executor can reason about progress and outcome.
-- Execute steps sequentially with a controlled failure handoff back to the planner.
-- Replan from the current cursor with the prior error in the context so the next plan is informed.
-- Emit a plan diff on each revision so a downstream tracer or UI can show why the plan changed.
-- Enforce two budgets: a hard step ceiling and a hard replan ceiling.
+Chain-of-thought-агент излучает токены и оставляет циклу гадать, где заканчивается tool call. Plan-and-execute-агент сначала излучает структурированный план, а затем детерминированно исполняет каждый шаг. План — это данные, которые харнес может интроспектировать. Исполнение — это харнес, прогоняющий эти данные через диспетчер.
 
-## Plan and execute, not chain-of-thought
-
-A chain-of-thought agent emits tokens and lets the loop guess where the tool call ends. A plan-and-execute agent emits a structured plan first, then executes each step deterministically. The plan is data the harness can introspect. The execution is the harness running that data through a dispatcher.
-
-Two pieces. A planner that produces a plan. An executor that runs the plan. The interesting work is what happens when the executor hits a failure. Three options:
+Две части. Планировщик, порождающий план. Исполнитель, прогоняющий план. Самое интересное — что происходит, когда исполнитель натыкается на сбой. Три варианта:
 
 ```text
 1. Abort         (return failed, surface the error)
@@ -29,9 +26,9 @@ Two pieces. A planner that produces a plan. An executor that runs the plan. The 
 3. Replan        (hand the error to the planner, get a new plan from the cursor)
 ```
 
-Replan is the one that turns a script into an agent.
+Replan — тот вариант, который превращает скрипт в агента.
 
-## The Step shape
+## Форма Step
 
 ```text
 Step
@@ -43,22 +40,22 @@ Step
   error           : str | None
 ```
 
-`expected_outcome` is a short sentence the planner emits alongside the step. It is not enforced by the executor. It is for two things: the replanner reads it when revising the plan; the event stream emits it so a tracer can show "this step was supposed to do X."
+`expected_outcome` — короткое предложение, которое планировщик излучает вместе с шагом. Исполнитель его не проверяет. Оно нужно для двух вещей: репланер читает его при ревизии плана; поток событий излучает его, чтобы трейсер мог показать «этот шаг должен был сделать X».
 
-## The planner shape
+## Форма планировщика
 
 ```python
 def planner(goal: str, history: list[Step], last_error: str | None) -> list[Step]:
     ...
 ```
 
-A pure function. `goal` is the user goal. `history` is the steps already executed (with results and errors filled in). `last_error` is None on the first call and the most recent failure message on every subsequent call. The planner returns the next plan starting from the cursor.
+Чистая функция. `goal` — цель пользователя. `history` — уже исполненные шаги (с заполненными результатами и ошибками). `last_error` — None на первом вызове и сообщение о последнем сбое на каждом последующем. Планировщик возвращает следующий план, начиная с курсора.
 
-The planner does not know about the executor. It does not know about retries. It does not know about timeouts. It produces a plan. That is all.
+Планировщик не знает про исполнителя. Не знает про ретраи. Не знает про таймауты. Он порождает план. Точка.
 
-## The executor
+## Исполнитель
 
-The executor is a small state machine. Each step runs through the dispatcher. The outcome is one of three things: success, failure-replannable, failure-fatal. Replannable failures hand back to the planner. Fatal failures (budget exceeded, replan ceiling hit) return a `FAILED` session result.
+Исполнитель — маленькая машина состояний. Каждый шаг проходит через диспетчер. Исход — одно из трёх: успех, сбой-с-перепланированием, сбой-фатальный. Перепланируемые сбои возвращаются планировщику. Фатальные (превышен бюджет, достигнут потолок перепланирований) возвращают результат сессии `FAILED`.
 
 ```mermaid
 stateDiagram-v2
@@ -73,9 +70,9 @@ stateDiagram-v2
     DONE --> [*]
 ```
 
-## Plan diffs on revision
+## Diff плана при ревизии
 
-When the planner returns a new plan after a failure, the executor emits a `plan.diff` event with three fields.
+Когда планировщик возвращает новый план после сбоя, исполнитель излучает событие `plan.diff` с тремя полями.
 
 ```text
 removed: list of step ids that were in the old plan and are not in the new
@@ -83,17 +80,17 @@ added  : list of step ids in the new plan that were not in the old
 revised: list of step ids whose tool_name or args changed
 ```
 
-A tracer or UI can render this as a strikethrough on the removed steps and a highlight on the added ones. The point is not the diff format. The point is that revision is a visible event, not a silent rewrite.
+Трейсер или UI могут отрисовать это как зачёркивание удалённых шагов и подсветку добавленных. Суть не в формате diff. Суть в том, что ревизия — видимое событие, а не молчаливое переписывание.
 
-## Two budgets, both hard
+## Два бюджета, оба жёсткие
 
-`max_steps` caps total step executions across the whole session, including replans. Default is twelve. A linear five-step plan that replans twice and adds three steps each time hits sixteen executions and would exceed the budget. The executor will refuse the replan and return FAILED.
+`max_steps` ограничивает общее число исполнений шагов за всю сессию, включая перепланирования. По умолчанию — двенадцать. Линейный план из пяти шагов, который дважды перепланируется и каждый раз добавляет по три шага, доходит до шестнадцати исполнений и превысил бы бюджет. Исполнитель откажет в перепланировании и вернёт FAILED.
 
-`max_replans` caps the number of times the planner is called after the first plan. Default is five. This is the more important limit. A planner that returns the same broken plan five times in a row would otherwise loop until the step budget catches it. Capping replans makes the failure faster and the reason clearer.
+`max_replans` ограничивает число вызовов планировщика после первого плана. По умолчанию — пять. Это более важный лимит. Планировщик, пять раз подряд возвращающий один и тот же сломанный план, иначе крутился бы, пока его не поймает бюджет шагов. Потолок перепланирований делает сбой быстрее, а причину — яснее.
 
-## The deterministic planner in this lesson
+## Детерминированный планировщик этого урока
 
-We do not call a model in this lesson. The lesson ships a deterministic planner that picks a plan based on `last_error`.
+В этом уроке мы не вызываем модель. Урок поставляется с детерминированным планировщиком, который выбирает план по `last_error`.
 
 ```text
 last_error is None    -> emit a four-step plan
@@ -102,9 +99,9 @@ last_error matches Y  -> emit a two-step plan that gives up gracefully
 otherwise             -> return [] (signals nothing to replan)
 ```
 
-This is enough to test the executor's behavior on every transition path: success, replan-once, replan-twice, replan-exhaustion, and step-budget exhaustion.
+Этого достаточно, чтобы протестировать поведение исполнителя на каждом пути переходов: успех, одно перепланирование, два перепланирования, исчерпание перепланирований и исчерпание бюджета шагов.
 
-## Result shape
+## Форма результата
 
 ```text
 SessionResult
@@ -115,16 +112,16 @@ SessionResult
   events      : list[Event]
 ```
 
-The harness loop from lesson twenty can read this directly. The dispatcher from lesson twenty-three is what executes each step. The registry from lesson twenty-one validates each step's args. The transport from lesson twenty-two would surface this whole flow over JSON-RPC to a model client.
+Цикл харнеса из урока двадцать может читать это напрямую. Диспетчер из урока двадцать три исполняет каждый шаг. Реестр из урока двадцать один валидирует аргументы каждого шага. Транспорт из урока двадцать два поднял бы весь этот поток по JSON-RPC модельному клиенту.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `PlanExecuteAgent`, `Step`, `PlanDiff`, `SessionResult`, and the deterministic planner. The executor is a single `run(goal)` method that returns a `SessionResult`. The plan diff is computed by comparing step ids and `(tool_name, args)` tuples.
+`code/main.py` определяет `PlanExecuteAgent`, `Step`, `PlanDiff`, `SessionResult` и детерминированный планировщик. Исполнитель — единственный метод `run(goal)`, возвращающий `SessionResult`. Diff плана вычисляется сравнением id шагов и кортежей `(tool_name, args)`.
 
-`code/tests/test_agent.py` covers a linear success, a mid-plan failure that replans once, replan exhaustion that returns `failed:replan_budget`, step-budget exhaustion, and the plan-diff event format.
+`code/tests/test_agent.py` покрывает линейный успех, сбой посреди плана с одним перепланированием, исчерпание перепланирований с `failed:replan_budget`, исчерпание бюджета шагов и формат события plan-diff.
 
-## Going further
+## Куда двигаться дальше
 
-Two extensions you will want once you wire this to a real model. First, partial-plan caching: when a plan succeeds for the first three of six steps and then fails, you do not want to re-run the first three. The executor already keeps history; the planner just needs to read it. Second, parallel branches: the current executor is strictly sequential. A planner that emits an independent branch (`gather_step` instead of `next_step`) can run two tool calls concurrently through the dispatcher.
+Два расширения, которые понадобятся при подключении настоящей модели. Первое — кэширование частичного плана: когда план успешен на первых трёх шагах из шести и потом падает, вы не хотите перегонять первые три. Исполнитель уже хранит историю; планировщику остаётся её прочитать. Второе — параллельные ветки: текущий исполнитель строго последователен. Планировщик, излучающий независимую ветку (`gather_step` вместо `next_step`), может прогнать два tool call конкурентно через диспетчер.
 
-Both add real complexity. Both are easier to add once the linear executor is pinned. That is what this lesson does.
+Оба добавляют реальную сложность. Оба легче добавить, когда линейный исполнитель прибит. Именно это делает этот урок.

@@ -1,36 +1,33 @@
 # Capstone Lesson 25: Verification Gates and the Observation Budget
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Агентский харнес без слоя верификации — это желание в плаще. Этот урок строит детерминированную цепочку gates, которая решает, разрешено ли tool call выстрелить, сколько его вывода агенту позволено увидеть и когда цикл обязан остановиться, потому что агент прочитал слишком много. Цепочка — это композиция маленьких именованных gates плюс журнал наблюдений, отслеживающий каждый токен, показанный модели.
 
+**Тип:** Практика
+**Языки:** Python (stdlib)
+**Пререквизиты:** Фаза 19 · 20–24 (трек A1: цикл агента, реестр инструментов, message store, prompt builder, model router), Фаза 14 · 33 (инструкции как ограничения), Фаза 14 · 36 (scope-контракты), Фаза 14 · 38 (verification gates)
+**Время:** ~90 минут
 
-> An agent harness without a verification layer is a wish in a trenchcoat. This lesson builds the deterministic gate chain that decides whether a tool call is allowed to fire, how much of its output the agent is allowed to see, and when the loop has to stop because the agent has read too much. The chain is a function of small, named gates plus an observation ledger that tracks every token the model has been shown.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python (stdlib)
-**Prerequisites:** Phase 19 · 20-24 (Track A1: agent loop, tool registry, message store, prompt builder, model router), Phase 14 · 33 (instructions as constraints), Phase 14 · 36 (scope contracts), Phase 14 · 38 (verification gates)
-**Time:** ~90 minutes
+- Построить протокол `VerificationGate` с детерминированным методом `evaluate(call)`.
+- Скомпоновать budget-, recency-, whitelist- и regex-gates в цепочку с short-circuit-семантикой.
+- Отслеживать каждое наблюдение через `ObservationLedger` с ключами по инструменту и ходу.
+- Отклонять tool call, когда суммарный бюджет наблюдений был бы превышен.
+- Выдавать структурную запись `GateDecision`, которую может поглотить observability ниже по течению.
 
-## Learning Objectives
+## Проблема
 
-- Build a `VerificationGate` protocol with a deterministic `evaluate(call)` method.
-- Compose budget, recency, whitelist, and regex gates into a chain with short-circuit semantics.
-- Track every observation through an `ObservationLedger` keyed by tool and turn.
-- Refuse a tool call when the cumulative observation budget would be exceeded.
-- Surface a structured `GateDecision` record that downstream observability can ingest.
+Когда агентский харнес позволяет модели свободно вызывать инструменты, в первый же час реального использования проявляются три класса багов.
 
-## The Problem
+Первый — неограниченное наблюдение. Grep по репозиторию в 200 тысяч строк вываливает полмиллиона токенов вывода в следующий ход. Модель видит одно совпадение на килобайт, а остальной контекст потрачен впустую. Счёт за токены большой, а агент теперь справляется с задачей хуже, а не лучше.
 
-When an agent harness lets the model call tools freely, three classes of bug appear within the first hour of real use.
+Второй — протухшая свежесть. Долгая задача накапливает пятьдесят tool calls. Модель перечитывает первый read_file с третьего хода так, будто это живое состояние. Правки, сделанные на сорок седьмом ходу, не видны, потому что prompt builder сериализовал самые ранние наблюдения первыми.
 
-The first is unbounded observation. A grep across a 200K-line repo dumps half a million tokens of output into the next turn. The model sees one match per kilobyte and the rest of the context is wasted. The token bill is large and the agent is now worse, not better, at the task.
+Третий — ползучее расширение привилегий. Исследовательская задача начинается с вызова `web_search`, а потом каким-то образом заканчивается запуском `shell`, потому что модель выдумала имя инструмента, а харнес по умолчанию оказался пермиссивным. К моменту, когда кто-то читает трейс, в /tmp лежит мусорный файл, а curl сходил в приватный API.
 
-The second is stale recency. A long-running task accumulates fifty tool calls. The model rereads the first read_file from turn three as if it were live state. Edits made on turn forty-seven never show up because the prompt builder serialized the earliest observations first.
+Verification gate — это компонент харнеса, который говорит «нет». Это не модель. Это не судья. Это детерминированная функция от `(call, history, ledger)`, возвращающая ALLOW или DENY с причиной. Причина логируется. Модели сообщается. Цикл продолжается или прерывается.
 
-The third is privilege creep. A research task starts by calling `web_search`, then somehow ends up running `shell` because the model invented a tool name and the harness defaulted to permissive. By the time anyone reads the trace, a junk file is sitting in /tmp and a curl ran against a private API.
-
-A verification gate is the harness component that says no. It is not a model. It is not a judge. It is a deterministic function of `(call, history, ledger)` that returns either ALLOW or DENY with a reason. The reason is logged. The model is told. The loop continues or aborts.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -42,18 +39,18 @@ flowchart LR
   Reason --> Loop[loop continues<br/>or aborts at threshold]
 ```
 
-A gate is anything with an `evaluate(call, ctx) -> GateDecision` method. The chain is an ordered list. Evaluation short-circuits on the first deny. Order matters: cheap structural gates run before expensive token-counting gates.
+Gate — это что угодно с методом `evaluate(call, ctx) -> GateDecision`. Цепочка — упорядоченный список. Вычисление обрывается на первом deny. Порядок важен: дешёвые структурные gates идут раньше дорогих, считающих токены.
 
-This lesson ships four gates:
+Урок поставляет четыре gate:
 
-- `WhitelistGate`. Allowed tool names are an explicit set. Anything outside is denied. This is the cheapest gate and runs first.
-- `RegexGate`. Tool arguments are matched against a regex. Useful for refusing shell calls with `rm -rf` in them, or HTTP calls to internal IPs. Pure on the call payload.
-- `RecencyGate`. The model only sees observations from the last N turns. Older observations are masked. The gate refuses a tool call whose result would extend an observation window that has already aged out.
-- `BudgetGate`. The cumulative tokens the model has read across the session has a ceiling. When the ledger says the ceiling is reached, every further tool call is denied.
+- `WhitelistGate`. Разрешённые имена инструментов — явное множество. Всё вне его отклоняется. Это самый дешёвый gate, он идёт первым.
+- `RegexGate`. Аргументы инструмента матчатся против regex. Полезен, чтобы отклонять shell-вызовы с `rm -rf` внутри или HTTP-вызовы к внутренним IP. Чистая функция от payload вызова.
+- `RecencyGate`. Модель видит наблюдения только за последние N ходов. Более старые маскируются. Gate отклоняет tool call, чей результат продлил бы окно наблюдения, которое уже устарело.
+- `BudgetGate`. У суммарного числа токенов, прочитанных моделью за сессию, есть потолок. Когда журнал говорит, что потолок достигнут, каждый следующий tool call отклоняется.
 
-The observation ledger is the bookkeeping. Every successful tool call writes one row: tool name, turn, tokens emitted, cumulative. The ledger answers two questions: how much has the model seen total, and how much has it seen of tool X. The budget gate reads the first. A per-tool budget gate, which you will write as an exercise, reads the second.
+Журнал наблюдений — это бухгалтерия. Каждый успешный tool call пишет одну строку: имя инструмента, ход, излучённые токены, накопленный итог. Журнал отвечает на два вопроса: сколько модель увидела всего и сколько — от инструмента X. Budget gate читает первое. Пер-инструментный budget gate, который вы напишете в упражнении, читает второе.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -64,32 +61,32 @@ flowchart TD
   Ledger -->|record| Store[MessageStore]
 ```
 
-The harness asks the chain. The chain either nods or refuses. If it nods, the tool runs, the ledger ticks, and the result is appended to the message store. If it refuses, the model is handed the refusal as a system message and the loop decides whether to retry or abort.
+Харнес спрашивает цепочку. Цепочка либо кивает, либо отказывает. Если кивает — инструмент запускается, журнал тикает, результат дописывается в message store. Если отказывает — модель получает отказ как системное сообщение, и цикл решает: повторить или прервать.
 
-## What you will build
+## Что вы соберёте
 
-The implementation is a single `main.py` plus tests.
+Реализация — один `main.py` плюс тесты.
 
-1. `Observation` and `ToolCall` dataclasses define the wire shapes.
-2. `ObservationLedger` records `(turn, tool, tokens)` rows and answers `cumulative()` and `per_tool(name)`.
-3. `GateDecision` carries `(allow, reason, gate_name)`.
-4. `VerificationGate` is the protocol. Each gate implements `evaluate(call, ctx)`.
-5. `GateChain` wraps an ordered list. It calls each gate, returns the first deny, or returns allow if every gate passes.
-6. The demo runs a tiny synthetic agent loop. Three turns. The third turn trips the budget gate and the loop reports a clean refusal with a non-zero refusal count.
+1. Датаклассы `Observation` и `ToolCall` задают форматы на проводе.
+2. `ObservationLedger` записывает строки `(turn, tool, tokens)` и отвечает на `cumulative()` и `per_tool(name)`.
+3. `GateDecision` несёт `(allow, reason, gate_name)`.
+4. `VerificationGate` — протокол. Каждый gate реализует `evaluate(call, ctx)`.
+5. `GateChain` оборачивает упорядоченный список. Он вызывает каждый gate, возвращает первый deny или allow, если каждый gate прошёл.
+6. Демо гоняет крошечный синтетический цикл агента. Три хода. Третий ход спотыкается о budget gate, и цикл сообщает о чистом отказе с ненулевым счётчиком отказов.
 
-The token counter is intentionally a stupid `len(text) // 4` heuristic. The point of this lesson is the gate plumbing, not the tokenizer. Drop in a real tokenizer in production.
+Счётчик токенов — намеренно глупая эвристика `len(text) // 4`. Суть урока — обвязка gates, а не токенизатор. В продакшене подставьте настоящий токенизатор.
 
-## Why the chain order matters
+## Почему важен порядок в цепочке
 
-A deny is cheaper than an allow. `WhitelistGate` runs in O(1) hash lookup. `RegexGate` runs in O(pattern * argv). `RecencyGate` reads a small slice of the message store. `BudgetGate` reads the entire ledger. You order them by ascending cost so a denied call short-circuits before doing the expensive work.
+Deny дешевле, чем allow. `WhitelistGate` работает за O(1)-поиск в хэше. `RegexGate` — за O(pattern * argv). `RecencyGate` читает маленький срез message store. `BudgetGate` читает весь журнал. Вы упорядочиваете их по возрастанию стоимости, чтобы отклонённый вызов оборвался до дорогой работы.
 
-You also order them by blast radius. Whitelist is the strongest claim: this tool is not in the contract. The regex gate is next: this argument is not in the contract. Recency comes after: the harness still cares but the call is structurally legal. Budget is last because, by definition, it only fires when everything else passed.
+Ещё вы упорядочиваете их по радиусу поражения. Whitelist — самое сильное утверждение: этого инструмента нет в контракте. Regex gate следующий: этого аргумента нет в контракте. Recency идёт после: харнесу всё ещё не всё равно, но вызов структурно легален. Budget — последний, потому что по определению он срабатывает, только когда всё остальное прошло.
 
-## How this composes with the rest of Track A
+## Как это стыкуется с остальным треком A
 
-The previous lessons gave you the loop, the tool registry, the message store, the prompt builder, and the model router. This lesson adds the layer between the model and the tools. Lesson 26 ships the sandbox that the dispatcher hands the tool call to once the gate chain says ALLOW. Lesson 27 ships the eval harness that records refusal counts as a quality signal. Lesson 28 wires the gate decisions into OpenTelemetry spans. Lesson 29 stitches the lot into a working coding agent.
+Предыдущие уроки дали вам цикл, реестр инструментов, message store, prompt builder и model router. Этот урок добавляет слой между моделью и инструментами. Урок 26 поставляет sandbox, которому диспетчер передаёт tool call после того, как цепочка gates сказала ALLOW. Урок 27 поставляет eval-харнес, записывающий счётчики отказов как сигнал качества. Урок 28 подключает решения gates к span'ам OpenTelemetry. Урок 29 сшивает всё в работающего coding-агента.
 
-## Running it
+## Запуск
 
 ```bash
 cd phases/19-capstone-projects/25-verification-gates-observation-budget
@@ -97,4 +94,4 @@ python3 code/main.py
 python3 -m pytest code/tests/ -v
 ```
 
-The demo prints a turn-by-turn trace including every gate decision and exits zero. The tests cover the ledger, each gate in isolation, the chain short-circuit, and the synthetic loop end-to-end.
+Демо печатает трейс ход за ходом, включая каждое решение gate, и выходит с нулём. Тесты покрывают журнал, каждый gate в изоляции, short-circuit цепочки и синтетический цикл end-to-end.
