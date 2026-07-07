@@ -1,0 +1,78 @@
+{
+  "lesson": "86-constitutional-rules-engine",
+  "title": "Capstone 86 — Constitutional Rules Engine",
+  "questions": [
+    {
+      "stage": "pre",
+      "question": "Зачем декларативная YAML-конституция, а не ad-hoc код-проверки?",
+      "options": [
+        "Потому что YAML парсится быстрее Python",
+        "Потому что правила в YAML ревьюабельны не-инженерами, живут в version control и заменяемы без изменения кода",
+        "Потому что стандартная библиотека предпочитает YAML",
+        "Потому что YAML поддерживает якоря"
+      ],
+      "correct": 1,
+      "explanation": ""
+    },
+    {
+      "stage": "pre",
+      "question": "Какие поля обязаны быть у каждого правила как минимум?",
+      "options": [
+        "name, regex, fix",
+        "id, owner, timestamp",
+        "name, severity, must, explanation",
+        "predicate, severity, owner"
+      ],
+      "correct": 2,
+      "explanation": ""
+    },
+    {
+      "stage": "check",
+      "question": "Как движок компонует предикаты?",
+      "options": [
+        "Только через один contains_regex на правило",
+        "Через all_of, any_of и not_, рекурсивно оборачивающие атомарные предикаты",
+        "Умножением скоров уверенности",
+        "Через нейросетевой классификатор"
+      ],
+      "correct": 1,
+      "explanation": ""
+    },
+    {
+      "stage": "check",
+      "question": "Какова роль applies_when?",
+      "options": [
+        "Он всегда вычисляется в true",
+        "Он гейтит предикат must, чтобы неприменимые правила записывались как not_applicable, а не violation",
+        "Он перекрывает severity",
+        "Он выбирает операцию фиксера"
+      ],
+      "correct": 1,
+      "explanation": ""
+    },
+    {
+      "stage": "check",
+      "question": "Что делает Fixer?",
+      "options": [
+        "Переписывает файл правил",
+        "Применяет пер-правильный декларативный fix (append, prepend, replace_regex) для получения отредактированного текста",
+        "Вычисляет severity из fix",
+        "Вызывает удалённую модель для починки текста"
+      ],
+      "correct": 1,
+      "explanation": ""
+    },
+    {
+      "stage": "post",
+      "question": "Зачем демо гоняет движок второй раз после фиксера?",
+      "options": [
+        "Чтобы раздуть размер отчёта",
+        "Чтобы проверить, что отредактированный текст удовлетворяет правилам, и поднять любое правило, которое фиксер не может починить локально",
+        "Чтобы перезагрузить конституцию",
+        "Потому что первый проход — только dry run"
+      ],
+      "correct": 1,
+      "explanation": ""
+    }
+  ]
+}
