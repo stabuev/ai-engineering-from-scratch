@@ -1,29 +1,26 @@
 # Experiment Runner
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Цикл честен ровно настолько, насколько честны его измерения. Постройте раннер, который берёт спецификацию, исполняет её в изолированном subprocess и излучает json-блоб метрик, которому оценщик может доверять.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек A, уроки 20–29
+**Время:** ~90 минут
 
-> The loop is only as honest as its measurements. Build the runner that takes a spec, executes it in a sandboxed subprocess, and emits a json metrics blob the evaluator can trust.
+## Цели обучения
+- Закодировать эксперимент типизированной спецификацией, которую раннер может сериализовать в subprocess.
+- Запускать subprocess с жёстким wall-clock-таймаутом и мягким потолком памяти, поднимая оба как терминальные условия.
+- Захватывать stdout, stderr и структурный блоб метрик в одну запись результата.
+- Построить таблицу абляций, свипающую по одной конфигурационной ручке за раз над фиксированной базовой спецификацией.
+- Держать каждый результат детерминированным при заданном сиде, чтобы оценщик видел одни числа между прогонами.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track A lessons 20-29
-**Time:** ~90 minutes
+## Почему subprocess
 
-## Learning Objectives
-- Encode an experiment as a typed spec the runner can serialise to a subprocess.
-- Launch a subprocess with a hard wall clock timeout and a soft memory cap, and surface both as terminal conditions.
-- Capture stdout, stderr, and the structured metrics blob into a single result record.
-- Build an ablation table that sweeps one configuration knob at a time over a fixed base spec.
-- Keep every result deterministic given a seed so the evaluator sees the same numbers across runs.
+Research-цикл гоняет недоверенный код. Гипотеза пришла из сэмплера, скрипт эксперимента — тем же путём; считать любой из них безопасным in-process — напрашиваться на краш, роняющий оркестратор. Subprocess — простейшая изоляция, поставляемая языком: отдельный процесс, независимое адресное пространство, ручка сигналов на стороне родителя.
 
-## Why a subprocess
+Раннер здесь не реализует полный sandboxing. Ни cgroup, ни seccomp-фильтра, ни ремаппинга namespace. Что у него есть — wall-clock-таймаут, поллинг роста памяти и kill-путь, завершающий процесс на любом из лимитов. Это тот рантайм-контракт, который расширяет любой более изощрённый sandbox. Урок держит контракт достаточно маленьким, чтобы прочитать за один присест.
 
-A research loop runs untrusted code. The hypothesis came from a sampler, the experiment script came from the same path; treating either as safe in-process is asking for a crash that takes the orchestrator down. Subprocesses are the simplest isolation the language ships: a separate process, an independent address space, a signal handle on the parent side.
-
-The runner here does not implement full sandboxing. There is no cgroup, no seccomp filter, no namespace remapping. What it does have is a wall clock timeout, a polling loop for memory growth, and a kill path that terminates the process on either limit. That is the runtime contract every more elaborate sandbox extends. The lesson keeps the contract small enough to read in one sitting.
-
-## The ExperimentSpec shape
+## Форма ExperimentSpec
 
 ```text
 ExperimentSpec
@@ -37,9 +34,9 @@ ExperimentSpec
   metric_keys    : list[str]      (which fields the evaluator will read)
 ```
 
-The script lives on disk; the runner writes the config to a temp file path that the script reads. The script is expected to print a single json line on stdout whose keys are a superset of `metric_keys`. Anything else on stdout is captured but ignored by the metrics parser.
+Скрипт живёт на диске; раннер пишет конфиг во временный файл, путь к которому читает скрипт. От скрипта ожидается печать одной json-строки в stdout, чьи ключи — надмножество `metric_keys`. Всё остальное в stdout захватывается, но игнорируется парсером метрик.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -56,42 +53,42 @@ flowchart TD
     R --> O[ExperimentResult]
 ```
 
-The runner is one class with one main method. The poller is a small thread that wakes once every poll interval and reads the subprocess `psutil` equivalent from the proc filesystem when available, falling back to no op when the platform does not expose it.
+Раннер — один класс с одним главным методом. Поллер — маленький тред, просыпающийся раз в интервал поллинга и читающий `psutil`-эквивалент subprocess из proc-файловой системы, где она доступна, с откатом в no-op, когда платформа её не открывает.
 
-## Why a soft memory cap
+## Почему потолок памяти мягкий
 
-Hard memory caps need `resource.setrlimit` and only work on POSIX. The lesson ships a portable approach: poll the resident set size from the platform and kill the subprocess if it exceeds the cap. The cap is soft because the poller has a non zero interval; a process can spike above the cap between polls and then drop back. The runner records the maximum observed RSS so the evaluator can see how close the run came to the limit.
+Жёсткие потолки памяти требуют `resource.setrlimit` и работают только на POSIX. Урок поставляет портируемый подход: поллить resident set size с платформы и убивать subprocess при превышении. Потолок мягкий, потому что у поллера ненулевой интервал; процесс может подскочить над потолком между поллами и опуститься обратно. Раннер записывает максимальный наблюдённый RSS, чтобы оценщик видел, насколько близко прогон подошёл к лимиту.
 
-On systems without process inspection support, the poller logs a one time warning and disables itself. The wall clock timeout still applies. The lesson tests cover both paths.
+На системах без поддержки инспекции процессов поллер логирует одноразовое предупреждение и выключает себя. Wall-clock-таймаут продолжает действовать. Тесты урока покрывают оба пути.
 
-## Capturing stdout and stderr
+## Захват stdout и stderr
 
-The runner reads both pipes drained on completion. Stdout is scanned line by line; the last line that parses as json with all required `metric_keys` is taken as the metrics blob. Earlier json lines are kept in the result as `intermediate_metrics`; the evaluator can use these for learning curves.
+Раннер вычитывает оба пайпа при завершении. Stdout сканируется построчно; последняя строка, парсящаяся как json со всеми обязательными `metric_keys`, берётся как блоб метрик. Более ранние json-строки сохраняются в результате как `intermediate_metrics`; оценщик может использовать их для кривых обучения.
 
-Stderr is captured verbatim into the result. The runner never raises on a non zero exit code; instead it records the code in the result. Any non zero exit is labelled `"crash"` even when the script printed metrics, so the evaluator treats partial runs as failures by default.
+Stderr захватывается дословно в результат. Раннер никогда не кидает исключений на ненулевом коде выхода; вместо этого он записывает код в результат. Любой ненулевой выход помечается `"crash"`, даже когда скрипт напечатал метрики, — оценщик по умолчанию трактует частичные прогоны как провалы.
 
-## Ablation table
+## Таблица абляций
 
 ```python
 def ablate(base: ExperimentSpec, knob: str, values: list[Any]) -> list[ExperimentSpec]:
     ...
 ```
 
-Given a base spec and a knob name, the helper returns one spec per value with `config[knob]` overridden. Each spec gets a derived `spec_id` (`f"{base.spec_id}_{knob}_{value}"`). The runner ships an `AblationRunner` that runs them in order and returns an `AblationTable` keyed by knob value.
+По базовой спецификации и имени ручки хелпер возвращает по спецификации на значение с перекрытым `config[knob]`. Каждая спецификация получает производный `spec_id` (`f"{base.spec_id}_{knob}_{value}"`). Раннер поставляет `AblationRunner`, гоняющий их по порядку и возвращающий `AblationTable` с ключами по значениям ручки.
 
-Why one knob at a time. Full factorial sweeps blow up exponentially and produce results the evaluator cannot interpret. One knob at a time produces a clean axis the evaluator can plot. The lesson supports multi knob sweeps only as repeated single knob ablations, composed by the caller.
+Почему по одной ручке за раз. Полнофакторные свипы взрываются экспоненциально и дают результаты, которые оценщик не может интерпретировать. Одна ручка за раз даёт чистую ось, которую оценщик может построить на графике. Мульти-ручечные свипы урок поддерживает только как повторные одноручечные абляции, компонуемые вызывающей стороной.
 
-## Determinism
+## Детерминизм
 
-Every spec carries a seed. The runner forwards the seed to the script via the config dict (`config["__seed"] = spec.seed`). The mock experiment scripts in `code/experiments/` honour the seed and produce identical metrics across runs. The evaluator in lesson fifty-three depends on this; without determinism a "regression" might be a different random initialisation.
+Каждая спецификация несёт сид. Раннер пробрасывает его в скрипт через конфиг (`config["__seed"] = spec.seed`). Mock-скрипты экспериментов в `code/experiments/` чтят сид и выдают идентичные метрики между прогонами. Оценщик из урока пятьдесят три на это опирается; без детерминизма «регрессия» могла бы оказаться другой случайной инициализацией.
 
-## The mock experiment script
+## Mock-скрипт эксперимента
 
-The lesson ships one experiment script: `code/experiments/sparsity_experiment.py`. It is a real script that reads its config file, simulates a small training run with a numpy random pass, and prints a json metrics blob. The script honours a `sleep_s` knob for testing timeouts and an `allocate_mb` knob for testing the memory poller.
+Урок поставляет один скрипт эксперимента: `code/experiments/sparsity_experiment.py`. Это настоящий скрипт, читающий свой конфиг-файл, симулирующий маленький обучающий прогон numpy-проходом и печатающий json-блоб метрик. Скрипт чтит ручку `sleep_s` для тестирования таймаутов и ручку `allocate_mb` для тестирования поллера памяти.
 
-The simulation is not training anything real. It is a numerical computation that mimics the shape of a training loop: a loss curve, a final perplexity, a wall time. The point of the lesson is the runner, not the simulation. A real experiment script would import a model.
+Симуляция ничего реального не обучает. Это численное вычисление, имитирующее форму обучающего цикла: кривая лосса, финальная перплексия, wall time. Суть урока — раннер, а не симуляция. Настоящий скрипт эксперимента импортировал бы модель.
 
-## Result shape
+## Форма результата
 
 ```text
 ExperimentResult
@@ -107,16 +104,16 @@ ExperimentResult
   stderr_tail          : str
 ```
 
-The evaluator reads `metrics` and `terminal` first. If terminal is anything other than `"ok"` the experiment counts as a failed run and the evaluator's verdict is automatic. Otherwise the metrics are passed through the significance test.
+Оценщик читает сначала `metrics` и `terminal`. Если terminal — что угодно, кроме `"ok"`, эксперимент считается провалившимся, и вердикт оценщика автоматичен. Иначе метрики проходят через тест значимости.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `ExperimentSpec`, `ExperimentResult`, `ExperimentRunner`, `AblationRunner`, and a deterministic demo. The subprocess management is one class. The memory poller is a small thread. The ablation helper is a single function.
+`code/main.py` определяет `ExperimentSpec`, `ExperimentResult`, `ExperimentRunner`, `AblationRunner` и детерминированное демо. Управление subprocess — один класс. Поллер памяти — маленький тред. Хелпер абляций — одна функция.
 
-`code/experiments/sparsity_experiment.py` is the mock experiment used in tests. It reads its config file path from argv and writes a single json metrics line on completion.
+`code/experiments/sparsity_experiment.py` — mock-эксперимент, используемый в тестах. Он читает путь к конфиг-файлу из argv и пишет одну json-строку метрик при завершении.
 
-`code/tests/test_runner.py` covers the success path, the timeout path, the crash path, the ablation table, and the determinism check across two runs.
+`code/tests/test_runner.py` покрывает путь успеха, путь таймаута, путь краша, таблицу абляций и проверку детерминизма на двух прогонах.
 
-## Where this slots in
+## Куда это встраивается
 
-Lesson fifty generates the hypothesis. Lesson fifty-one filters out anything the literature already settled. Lesson fifty-two runs the experiment for what is left. Lesson fifty-three reads the result, runs the significance test, and writes the verdict the orchestrator stores against the hypothesis id.
+Урок пятьдесят генерирует гипотезу. Урок пятьдесят один отфильтровывает то, что литература уже решила. Урок пятьдесят два гоняет эксперимент для оставшегося. Урок пятьдесят три читает результат, гоняет тест значимости и пишет вердикт, который оркестратор сохраняет под id гипотезы.

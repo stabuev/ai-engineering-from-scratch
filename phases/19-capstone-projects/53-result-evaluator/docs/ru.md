@@ -1,27 +1,24 @@
 # Result Evaluator
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Раннер породил числа. Оценщик решает, что это — улучшение, регрессия или шум. Постройте путь вердикта, превращающий метрики в однострочный вывод.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек A, уроки 20–29
+**Время:** ~90 минут
 
-> The runner produced numbers. The evaluator decides whether those numbers are an improvement, a regression, or noise. Build the verdict path that turns metrics into a one line conclusion.
+## Цели обучения
+- Сравнить прогон-кандидат с бейзлайном через направленное улучшение и фиксированный порог.
+- Прогнать парный t-тест с нуля по пер-сидовым метрикам и прочитать получившийся p-value.
+- Нормализовать метрики в лог-шкале, чтобы отчёт ниже по течению мог смешивать их с линейными.
+- Излучить пер-гипотезный вердикт, который оркестратор прикрепит к очереди из урока пятьдесят.
+- Держать каждый шаг чистым, чтобы одни входы всегда давали один вердикт.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track A lessons 20-29
-**Time:** ~90 minutes
+## Почему парный тест
 
-## Learning Objectives
-- Compare a candidate run against a baseline using direction aware improvement and a fixed threshold.
-- Run a paired t test from scratch over per seed metrics and read the resulting p value.
-- Normalise log scaled metrics so a downstream report can blend them with linear metrics.
-- Emit a per hypothesis verdict that the orchestrator can attach to the queue from lesson fifty.
-- Keep every step pure so the same inputs always produce the same verdict.
+Одно число от раннера не говорит, реально ли изменение. Та же конфигурация с другим сидом даёт другую перплексию. Изменение может быть шумом. Правильное сравнение — парное: одни сиды на одних данных, прогнанные один раз с кандидатом и один раз с бейзлайном. Каждый сид вносит разность. Среднее разностей — эффект. Стандартная ошибка разностей — уровень шума.
 
-## Why a paired test
-
-A single number from the runner does not say whether the change is real. The same configuration with a different seed gives a different perplexity. The change might be noise. The right comparison is paired: the same seeds with the same data, ran once with the candidate and once with the baseline. Each seed contributes a difference. The mean of those differences is the effect. The standard error of those differences is the noise floor.
-
-The lesson implements the test from scratch. There is no `scipy.stats`. The math is small enough to read in one screen.
+Урок реализует тест с нуля. Никакого `scipy.stats`. Математика умещается на один экран.
 
 ```text
 diffs    = [a_i - b_i for i in seeds]
@@ -32,11 +29,11 @@ df       = n - 1
 p_value  = two_sided_p(t_stat, df)
 ```
 
-The two sided p value uses a regularised incomplete beta function. The lesson ships a small implementation that uses the Lentz continued fraction. The whole thing is sixty lines of stdlib math.
+Двусторонний p-value использует регуляризованную неполную бета-функцию. Урок поставляет маленькую реализацию на непрерывной дроби Ленца. Всё вместе — шестьдесят строк stdlib-математики.
 
-## Direction aware improvement
+## Направленное улучшение
 
-Some metrics improve when they go up (accuracy, throughput). Others improve when they go down (loss, perplexity, wall time). The evaluator carries a `direction` field on each metric.
+Одни метрики улучшаются ростом (accuracy, throughput). Другие — падением (лосс, перплексия, wall time). Оценщик несёт поле `direction` на каждой метрике.
 
 ```text
 if direction == "higher_is_better":
@@ -45,11 +42,11 @@ elif direction == "lower_is_better":
     improvement = (baseline - candidate) / abs(baseline)
 ```
 
-Improvement is signed. A negative improvement on a higher is better metric means the candidate is worse. The verdict path reads the sign and the magnitude together.
+Улучшение знаковое. Отрицательное улучшение на метрике higher-is-better означает, что кандидат хуже. Путь вердикта читает знак и величину вместе.
 
-A flat threshold (`improvement_threshold=0.02`, two percent) decides whether the change is large enough to call. Below that the verdict is "noise" regardless of the p value; the loop is not interested in changes the user could not measure.
+Плоский порог (`improvement_threshold=0.02`, два процента) решает, достаточно ли изменение велико, чтобы его засчитать. Ниже порога вердикт — «noise» независимо от p-value; цикл не интересуется изменениями, которые пользователь не смог бы измерить.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -63,13 +60,13 @@ flowchart TD
     O --> Q[attach to hypothesis queue]
 ```
 
-The evaluator runs three independent computations and joins them in the verdict path. Each computation is a pure function with no shared state.
+Оценщик гоняет три независимых вычисления и соединяет их в пути вердикта. Каждое вычисление — чистая функция без общего состояния.
 
-## Log normalisation
+## Лог-нормализация
 
-Perplexity is exponential in loss. A 0.1 drop in loss is a much larger drop in perplexity. Comparing perplexity directly across two configurations is fine, but blending it with linear metrics in a single report requires normalisation.
+Перплексия экспоненциальна по лоссу. Падение лосса на 0.1 — куда большее падение перплексии. Сравнивать перплексию напрямую между двумя конфигурациями можно, но смешивание её с линейными метриками в одном отчёте требует нормализации.
 
-The lesson normalises any metric whose `scale` field is `"log"` by taking the natural log before computing the improvement. The threshold is then applied in log space. A perplexity drop from 32 to 28 is `log(28) - log(32) = -0.133` on a lower is better metric, which is well above the two percent threshold.
+Урок нормализует любую метрику с полем `scale`, равным `"log"`, беря натуральный логарифм до вычисления улучшения. Порог тогда применяется в лог-пространстве. Падение перплексии с 32 до 28 — это `log(28) - log(32) = -0.133` на метрике lower-is-better, что заметно выше двухпроцентного порога.
 
 ```text
 if scale == "log":
@@ -80,15 +77,15 @@ else:
     b = baseline
 ```
 
-Metrics with `scale="linear"` (default) skip the transform. The same code path handles both.
+Метрики со `scale="linear"` (по умолчанию) пропускают преобразование. Один код-путь обслуживает оба случая.
 
-## Per seed paired test
+## Пер-сидовый парный тест
 
-The runner from lesson fifty-two emits one final metrics blob per run. For the paired test the evaluator needs one blob per seed for the candidate and one per seed for the baseline. The orchestrator runs the same experiment under both configurations across a list of seeds and hands the evaluator two lists of `ExperimentResult` records.
+Раннер из урока пятьдесят два излучает один финальный блоб метрик на прогон. Для парного теста оценщику нужен блоб на сид для кандидата и блоб на сид для бейзлайна. Оркестратор гоняет один эксперимент под обеими конфигурациями по списку сидов и отдаёт оценщику два списка записей `ExperimentResult`.
 
-The evaluator pairs them by seed (the seed lives in `result.metrics["seed"]`) and walks the requested metric. If the seeds do not match across the two lists, the evaluator raises a `PairingError`. The orchestrator should re run.
+Оценщик спаривает их по сиду (сид живёт в `result.metrics["seed"]`) и обходит запрошенную метрику. Если сиды двух списков не совпадают, оценщик кидает `PairingError`. Оркестратор должен перегнать.
 
-## The Verdict shape
+## Форма Verdict
 
 ```text
 Verdict
@@ -106,7 +103,7 @@ Verdict
   rationale              : str
 ```
 
-The verdict path is a small decision table:
+Путь вердикта — маленькая таблица решений:
 
 ```text
 1. If any candidate result has terminal != "ok": verdict = "failed"
@@ -116,17 +113,17 @@ The verdict path is a small decision table:
 5. else:                                             verdict = "regressed"
 ```
 
-Rationale is a one line human readable sentence the orchestrator can log against the hypothesis id.
+Rationale — однострочное человекочитаемое предложение, которое оркестратор может залогировать под id гипотезы.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `MetricSpec`, `Verdict`, `Evaluator`, the t statistic and incomplete beta helpers, and a deterministic demo. The t test is implemented in pure stdlib math; numpy is used only to read the metrics list and compute means and variances.
+`code/main.py` определяет `MetricSpec`, `Verdict`, `Evaluator`, хелперы t-статистики и неполной беты и детерминированное демо. T-тест реализован чистой stdlib-математикой; numpy используется только для чтения списка метрик и подсчёта средних и дисперсий.
 
-`code/tests/test_evaluator.py` covers the improved path, the regressed path, the noise path (small improvement), the noise path (low n), the failed terminal path, the log normalised path, the t test against a known reference value, and the pairing error.
+`code/tests/test_evaluator.py` покрывает путь improved, путь regressed, путь noise (маленькое улучшение), путь noise (малое n), путь failed terminal, лог-нормализованный путь, t-тест против известного референсного значения и ошибку спаривания.
 
-## Where this slots in
+## Куда это встраивается
 
-Lesson fifty produced the hypothesis queue. Lesson fifty-one filtered out anything the literature settled. Lesson fifty-two ran the experiment under candidate and baseline configurations across seeds. Lesson fifty-three reads those runs and writes the verdict. The orchestrator stitches the four together:
+Урок пятьдесят породил очередь гипотез. Урок пятьдесят один отфильтровал то, что решила литература. Урок пятьдесят два прогнал эксперимент под конфигурациями кандидата и бейзлайна по сидам. Урок пятьдесят три читает эти прогоны и пишет вердикт. Оркестратор сшивает четвёрку:
 
 ```text
 for hypothesis in queue:
@@ -141,4 +138,4 @@ for hypothesis in queue:
     attach(hypothesis, verdict)
 ```
 
-That orchestrator is not in this lesson; the four lessons compose into it without any glue beyond the dataclasses each one defines.
+Этого оркестратора в уроке нет; четыре урока складываются в него без всякого клея, кроме датаклассов, которые каждый из них определяет.

@@ -1,32 +1,29 @@
 # Paper Writer
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> LaTeX-скелет — контракт между исследователем и вёрсткой. Если контракт нарушен, документ не компилируется, и отказ громкий. Сначала постройте скелет, потом заполняйте.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 50–53
+**Время:** ~90 минут
 
-> A LaTeX skeleton is a contract between the researcher and the typesetter. If the contract is broken the document does not compile, and the failure is loud. Build the skeleton first, then fill it.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 50-53
-**Time:** ~90 minutes
+- Трактовать научную статью как структурный артефакт с известным графом секций, а не как документ вольной формы.
+- Генерировать LaTeX-скелет, объявляющий абстракт, секции, слоты фигур и ключи библиографии до того, как написана хоть строчка прозы.
+- Инъектировать фигуры из выходов экспериментов (пути и подписи) в скелет через детерминированный механизм слотов.
+- Подключить mock-генератор прозы, заполняющий каждую секцию из структурного плана, чтобы харнес был тестируем без модели.
+- Излучить единый `paper.tex` плюс `references.bib` плюс манифест, перечисляющий каждую упомянутую фигуру и каждую использованную цитату.
 
-## Learning Objectives
+## Почему сначала скелет
 
-- Treat a research paper as a structured artifact with a known section graph, not a freeform document.
-- Generate a LaTeX skeleton that declares its abstract, sections, figure slots, and bibliography keys before any prose is written.
-- Inject figures from experiment outputs (paths and captions) into the skeleton through a deterministic slot mechanism.
-- Wire a mocked prose generator that fills each section from a structured outline so the harness is testable without a model.
-- Emit a single `paper.tex` plus a `references.bib` plus a manifest that lists every figure referenced and every citation used.
+Черновик, начинающийся с прозы, накапливает структурный долг. Введение обрастает тремя абзацами, которым место в related work. Фигура упоминается раньше, чем определена. Библиография оказывается с тремя ключами на одну статью. К моменту, когда автор это замечает, стоимость переписывания выше стоимости написания.
 
-## Why a skeleton first
+Скелет переворачивает это. Структура объявляется заранее как данные. Секции — слоты с именами и порядком. Фигуры — слоты с id и подписями. Ключи библиографии объявлены наверху вместе с записями, на которые они указывают. Проза генерируется в эти слоты по одному. Харнес может провалидировать — до того как написана проза, — что у каждой фигуры есть слот, у каждой цитаты есть запись и каждая секция появляется в оглавлении.
 
-A draft that starts as prose accumulates structural debt. The introduction grows three paragraphs that should be in related work. A figure gets referenced before it is defined. The bibliography ends up with three keys for the same paper. By the time the author notices, the rewriting cost is higher than the writing cost.
+Это та же дисциплина, которую более ранние уроки применяли к планам, tool calls и трейсам. Структура и есть контракт.
 
-A skeleton inverts that. The structure is declared up front as data. Sections are slots with names and order. Figures are slots with ids and captions. Bibliography keys are declared at the top with the entries they point at. Prose is generated into those slots one at a time. The harness can validate, before any prose is written, that every figure has a slot, every citation has an entry, and every section appears in the table of contents.
-
-This is the same discipline that earlier lessons applied to plans, tool calls, and traces. The structure is the contract.
-
-## The Paper shape
+## Форма Paper
 
 ```mermaid
 flowchart TB
@@ -42,17 +39,17 @@ flowchart TB
     Bib --> Entry1[BibEntry: key, fields]
 ```
 
-Every field is plain Python data. The renderer is a pure function from `Paper` to a LaTeX string. The harness can introspect the paper before rendering: count sections, list missing figure files, check that every `\cite{key}` has a matching `BibEntry`.
+Каждое поле — обычные Python-данные. Рендерер — чистая функция из `Paper` в LaTeX-строку. Харнес может интроспектировать статью до рендера: посчитать секции, выписать отсутствующие файлы фигур, проверить, что у каждого `\cite{key}` есть соответствующий `BibEntry`.
 
-## The render contract
+## Контракт рендера
 
-The renderer guarantees three properties. First, every figure slot in the skeleton emits a `\begin{figure}` block with a stable label of the form `fig:<id>`. Second, every section emits a `\section{}` with a stable label of the form `sec:<id>` so cross-references work. Third, the bibliography emits a `\bibliography` block whose `references.bib` contains exactly the entries declared on the paper, no more and no fewer.
+Рендерер гарантирует три свойства. Первое: каждый слот фигуры в скелете излучает блок `\begin{figure}` со стабильной меткой вида `fig:<id>`. Второе: каждая секция излучает `\section{}` со стабильной меткой вида `sec:<id>`, чтобы работали перекрёстные ссылки. Третье: библиография излучает блок `\bibliography`, чей `references.bib` содержит ровно записи, объявленные на статье, — не больше и не меньше.
 
-Violating any of these is a render error, not a warning. The skeleton is the contract; a render that silently drops a figure is a contract break.
+Нарушение любого из них — ошибка рендера, а не предупреждение. Скелет — контракт; рендер, молча выбросивший фигуру, — разрыв контракта.
 
-## Figure injection from experiments
+## Инъекция фигур из экспериментов
 
-The earlier lessons in this track produced experiment outputs as JSON manifests. Each manifest carries a list of artifacts with paths and short captions. The paper writer reads that manifest and produces `Figure` records.
+Более ранние уроки трека порождали выходы экспериментов JSON-манифестами. Каждый манифест несёт список артефактов с путями и короткими подписями. Paper writer читает этот манифест и порождает записи `Figure`.
 
 ```mermaid
 flowchart LR
@@ -63,17 +60,17 @@ flowchart LR
     Render --> Out[paper.tex]
 ```
 
-The injection is deterministic. Figure ids are derived from the experiment name plus a monotonic counter. Captions come from the manifest. Paths are normalised relative to the paper's output directory so the LaTeX compiles even when the experiment outputs sit elsewhere on disk.
+Инъекция детерминирована. Id фигур выводятся из имени эксперимента плюс монотонного счётчика. Подписи приходят из манифеста. Пути нормализуются относительно выходной директории статьи, чтобы LaTeX компилировался, даже когда выходы эксперимента лежат в другом месте диска.
 
-## The mocked prose generator
+## Mock-генератор прозы
 
-The lesson does not call a model. A `MockProseGenerator` reads an outline shape and emits prose deterministically. The outline shape is one short string per section. The generator expands that string into two short paragraphs with the section title woven in. The generated prose name-drops figures and citations exactly when the outline declares them.
+Урок не вызывает модель. `MockProseGenerator` читает форму плана и излучает прозу детерминированно. Форма плана — одна короткая строка на секцию. Генератор разворачивает её в два коротких абзаца с вплетённым заголовком секции. Сгенерированная проза упоминает фигуры и цитаты ровно там, где их объявляет план.
 
-This is enough to test every behaviour of the writer. A real implementation would swap the generator for a model call. The harness around it does not change. That is the value of declaring the prose generator as a callable: the test substitutes a deterministic one, production substitutes a model one, the rest of the pipeline is identical.
+Этого достаточно, чтобы протестировать каждое поведение writer'а. Настоящая реализация заменила бы генератор вызовом модели. Харнес вокруг него не меняется. В этом ценность объявления генератора прозы callable'ом: тест подставляет детерминированный, продакшен — модельный, остальной пайплайн идентичен.
 
-## The manifest output
+## Выходной манифест
 
-The writer emits three files into the output directory.
+Writer излучает три файла в выходную директорию.
 
 ```mermaid
 flowchart TB
@@ -85,27 +82,27 @@ flowchart TB
     Man --> S[sections rendered]
 ```
 
-The manifest is what a downstream evaluator or critic loop reads. It does not parse LaTeX; it reads the manifest. The next lesson, the critic loop, takes this manifest as input and produces a feedback list. That is why the manifest is part of the contract and the LaTeX is not.
+Манифест — то, что читает оценщик или critic-цикл ниже по течению. Он не парсит LaTeX; он читает манифест. Следующий урок — critic-цикл — берёт этот манифест на вход и порождает список замечаний. Поэтому манифест — часть контракта, а LaTeX — нет.
 
-## Validation gates
+## Валидационные gates
 
-The writer runs four gates before writing any file.
+Writer гоняет четыре gate до записи какого-либо файла.
 
-1. Every figure id is unique within the paper.
-2. Every section's `cites` field references a bibliography key that is declared on the paper.
-3. The abstract is non-empty.
-4. The title is non-empty.
+1. Каждый id фигуры уникален внутри статьи.
+2. Поле `cites` каждой секции ссылается на ключ библиографии, объявленный на статье.
+3. Абстракт непуст.
+4. Заголовок непуст.
 
-A failed gate raises `PaperValidationError` with a precise reason. The harness surfaces the reason as the failure mode. There is no partial write: either all three files are emitted, or none.
+Провалившийся gate кидает `PaperValidationError` с точной причиной. Харнес поднимает причину как режим отказа. Частичной записи нет: либо излучаются все три файла, либо ни одного.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `Paper`, `Section`, `Figure`, `BibEntry`, `PaperValidationError`, `MockProseGenerator`, `PaperWriter`, and a `render_latex` function. The `write` method takes an output directory and emits `paper.tex`, `references.bib`, and `manifest.json`. The `read_experiment_manifest` helper converts a list of experiment manifests into `Figure` records.
+`code/main.py` определяет `Paper`, `Section`, `Figure`, `BibEntry`, `PaperValidationError`, `MockProseGenerator`, `PaperWriter` и функцию `render_latex`. Метод `write` принимает выходную директорию и излучает `paper.tex`, `references.bib` и `manifest.json`. Хелпер `read_experiment_manifest` конвертирует список манифестов экспериментов в записи `Figure`.
 
-`code/tests/test_paper_writer.py` covers: skeleton render with no sections, full render with two sections and two figures, missing-citation gate, duplicate-figure-id gate, manifest content, and the LaTeX-string contract (every section emits a `\section{}`, every figure emits a `\begin{figure}`).
+`code/tests/test_paper_writer.py` покрывает: рендер скелета без секций, полный рендер с двумя секциями и двумя фигурами, gate отсутствующей цитаты, gate дублирующегося id фигуры, содержимое манифеста и контракт LaTeX-строки (каждая секция излучает `\section{}`, каждая фигура — `\begin{figure}`).
 
-## Going further
+## Куда двигаться дальше
 
-Two extensions a real implementation will want. First, multi-format render: the same `Paper` shape compiles to Markdown for blog posts and HTML for previews. The renderer becomes a strategy on `Paper`. Second, citation enrichment: the writer fetches BibTeX entries from a citation key, given a local cache of DOIs. Both add value, both can be added without touching the skeleton contract.
+Два расширения, которые захочет настоящая реализация. Первое — мультиформатный рендер: та же форма `Paper` компилируется в Markdown для блог-постов и HTML для превью. Рендерер становится стратегией на `Paper`. Второе — обогащение цитат: writer подтягивает BibTeX-записи по ключу цитаты из локального кэша DOI. Оба добавляют ценность, оба добавляются, не трогая контракт скелета.
 
-The skeleton is the bet. Sections, figures, and citations declared as data, prose generated into slots, manifest emitted alongside the LaTeX. Every other improvement composes on top.
+Скелет — это ставка. Секции, фигуры и цитаты, объявленные данными, проза, генерируемая в слоты, манифест, излучаемый рядом с LaTeX. Любое другое улучшение компонуется сверху.

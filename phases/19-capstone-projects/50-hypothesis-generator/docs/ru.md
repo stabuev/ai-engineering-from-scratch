@@ -1,31 +1,28 @@
 # Hypothesis Generator
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Research-агент, задающий один и тот же вопрос дважды, тратит токены впустую. Трюк — заставить каждый черновик приземляться в новом месте.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек A, уроки 20–29
+**Время:** ~90 минут
 
-> A research agent that asks the same question twice is wasting tokens. The trick is forcing each draft to land somewhere new.
+## Цели обучения
+- Гонять сэмплер от seed-промпта и превращать его выходы в типизированные записи гипотез.
+- Наращивать температуру сэмплера на каждом проходе, чтобы следующий черновик уплывал дальше предыдущего.
+- Фильтровать почти-дубликаты маленькой эмбеддинг-моделью и порогом косинусного расстояния.
+- Ранжировать выживших скоринг-функцией, смешивающей новизну, конкретность и проверяемость.
+- Держать каждый шаг детерминированным, чтобы один сид всегда давал одну очередь.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track A lessons 20-29
-**Time:** ~90 minutes
+## Почему сгенерировать, а потом отфильтровать
 
-## Learning Objectives
-- Drive a sampler from a seed prompt and turn its outputs into typed hypothesis records.
-- Ramp the sampler temperature on each pass so the next draft drifts further from the last.
-- Filter near duplicates with a small embedding model and a cosine distance threshold.
-- Rank the survivors with a scoring function that blends novelty, specificity, and testability.
-- Hold every step deterministic so the same seed always produces the same queue.
+Планировщик, спрашивающий одну модель один раз, получает одну гипотезу. Для разобранного примера это нормально. Для research-цикла это неправильная форма. Циклу нужна ранжированная очередь с глубиной, чтобы, когда первая гипотеза провалится, у раннера была готова следующая — без оплаты ещё одного полного прохода сэмплирования.
 
-## Why generate, then filter
+Такую очередь дают две идеи вместе. Первая — температурная рампа: каждый проход через сэмплер поднимает температуру на ступеньку, и поздние черновики поощряются блуждать. Вторая — фильтр новизны: после каждого черновика генератор меряет эмбеддинг-расстояние до каждого предыдущего выжившего и отклоняет всё внутри кластера.
 
-A planner that asks one model one time gets one hypothesis. That is fine for a worked example. For a research loop it is the wrong shape. The loop wants a ranked queue with depth, so when the first hypothesis fails the runner has the next one ready without paying for another full sampling pass.
+Урок поставляет mock-языковую модель, возвращающую заскриптованные последовательности токенов на фиксированные промпты. Mock'а достаточно, чтобы прогнать весь путь: seed-промпт на входе, применённая температурная рампа, распарсенные кандидаты, прогнанный фильтр новизны, ранжированная очередь на выходе.
 
-Two ideas combine to produce that queue. The first is temperature ramping: each pass through the sampler raises the temperature a notch, so later drafts are encouraged to wander. The second is novelty filtering: after each draft, the generator measures the embedding distance from every prior survivor and rejects anything inside the cluster.
-
-The lesson ships a mock language model that returns scripted token sequences for fixed prompts. The mock is enough to exercise the full path: seed prompt in, temperature ramp applied, candidates parsed, novelty filter run, ranked queue out.
-
-## The Hypothesis shape
+## Форма Hypothesis
 
 ```text
 Hypothesis
@@ -40,11 +37,11 @@ Hypothesis
   rank_score     : float         (weighted sum used for ordering)
 ```
 
-`variables` and `metric` are not free text. The parser pulls them from a tagged response. The runner in lesson fifty-two reads these fields directly when it builds the experiment config.
+`variables` и `metric` — не свободный текст. Парсер вытягивает их из тегированного ответа. Раннер из урока пятьдесят два читает эти поля напрямую, когда строит конфиг эксперимента.
 
-`baseline_ref` is optional but recommended. The evaluator in lesson fifty-three needs a baseline to compare against. If the hypothesis omits one, the evaluator falls back to the previous run on the same metric.
+`baseline_ref` опционален, но рекомендуем. Оценщику из урока пятьдесят три нужен бейзлайн для сравнения. Если гипотеза его опускает, оценщик откатывается к предыдущему прогону на той же метрике.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -60,21 +57,21 @@ flowchart TD
     I --> J[hypothesis queue]
 ```
 
-The loop is straight forward. The interesting part is each box has a hard contract.
+Цикл прямолинеен. Интересно то, что у каждой коробки жёсткий контракт.
 
-## Temperature ramp
+## Температурная рампа
 
-Start at `t_min`, end at `t_max`, step `(t_max - t_min) / (n_passes - 1)`. Each pass calls the sampler at the current temperature, producing `n_passes` evenly spaced values from `GeneratorConfig.schedule()`. The mock model honors temperature by switching between a small set of scripted responses keyed on `(prompt, temp_bucket)`. The buckets are open intervals so a small change in temperature picks a different bucket and produces a different draft. In production the sampler would be a real model with `temperature=t` passed through.
+Старт с `t_min`, конец на `t_max`, шаг `(t_max - t_min) / (n_passes - 1)`. Каждый проход вызывает сэмплер на текущей температуре, порождая `n_passes` равномерно расставленных значений из `GeneratorConfig.schedule()`. Mock-модель чтит температуру, переключаясь между небольшим набором заскриптованных ответов с ключом `(prompt, temp_bucket)`. Бакеты — открытые интервалы, поэтому маленькое изменение температуры выбирает другой бакет и даёт другой черновик. В продакшене сэмплером была бы настоящая модель с проброшенным `temperature=t`.
 
-The default schedule is six passes from `0.2` to `1.2`. Six is enough to fill the queue without paying for samples that the novelty filter will reject anyway. Below `0.2` the model parrots the seed back. Above `1.2` the responses tend to drift off topic and fail the parser.
+Дефолтное расписание — шесть проходов от `0.2` до `1.2`. Шести достаточно, чтобы заполнить очередь, не платя за сэмплы, которые фильтр новизны всё равно отклонит. Ниже `0.2` модель попугайничает seed обратно. Выше `1.2` ответы уплывают от темы и валят парсер.
 
-## Novelty filter
+## Фильтр новизны
 
-After each draft is parsed, the generator embeds the text and compares against every accepted hypothesis. The embedding is a small hashed bag of word tokens, normalised to unit length. Cosine distance between two unit vectors is `1 - dot(a, b)`. A draft passes if its minimum distance to any prior survivor is above `novelty_threshold`. Default is `0.25`.
+После парсинга каждого черновика генератор эмбеддит текст и сравнивает с каждой принятой гипотезой. Эмбеддинг — маленький хешированный мешок словных токенов, нормализованный к единичной длине. Косинусное расстояние между двумя единичными векторами — `1 - dot(a, b)`. Черновик проходит, если его минимальное расстояние до любого предыдущего выжившего выше `novelty_threshold`. Дефолт — `0.25`.
 
-The hashed embedding is not fancy. It is deterministic, has zero dependencies, and is enough to catch the obvious case: two drafts that share most of their nouns. A production deployment would swap in a small sentence model. The interface stays the same.
+Хешированный эмбеддинг не изыскан. Он детерминирован, имеет ноль зависимостей и достаточен, чтобы ловить очевидный случай: два черновика, делящие большинство существительных. Продакшен-деплой подставил бы маленькую sentence-модель. Интерфейс не меняется.
 
-## Rank score
+## Ранговый скор
 
 ```text
 rank_score = w_novelty * novelty_score
@@ -82,11 +79,11 @@ rank_score = w_novelty * novelty_score
            + w_testability * testability_score
 ```
 
-Three sub scores. `novelty_score` is the minimum embedding distance from prior survivors. `specificity_score` is the count of concrete variables in the hypothesis divided by a target count. `testability_score` is one if the hypothesis specifies both a metric and a baseline, half if it only has a metric, zero otherwise.
+Три подскора. `novelty_score` — минимальное эмбеддинг-расстояние до предыдущих выживших. `specificity_score` — число конкретных переменных гипотезы, делённое на целевой счётчик. `testability_score` — единица, если гипотеза задаёт и метрику, и бейзлайн; половина, если только метрику; ноль иначе.
 
-Default weights are `0.4`, `0.3`, `0.3`. The weights live in the generator config so a downstream lesson can shift them without forking the code.
+Дефолтные веса — `0.4`, `0.3`, `0.3`. Веса живут в конфиге генератора, поэтому последующий урок может их сдвинуть, не форкая код.
 
-## Mock language model
+## Mock-языковая модель
 
 ```python
 class MockLLM:
@@ -94,22 +91,22 @@ class MockLLM:
         ...
 ```
 
-The sampler is deterministic given a `(prompt, temperature, seed)` triple. The mock keeps a scripted response table keyed on `(prompt_signature, temperature_bucket)`. If the table has no entry for a key, the sampler returns a fallback that fails the parser. The fallback path is exercised by one of the tests.
+Сэмплер детерминирован при заданной тройке `(prompt, temperature, seed)`. Mock держит таблицу заскриптованных ответов с ключом `(prompt_signature, temperature_bucket)`. Если в таблице нет записи для ключа, сэмплер возвращает fallback, валящий парсер. Fallback-путь прогоняется одним из тестов.
 
-The seed is mixed into the response so the same `(prompt, temperature)` pair with different seeds produces different drafts. In tests we pin the seed to keep results reproducible. In a real deployment the seed would come from a system clock or a counter.
+Сид подмешивается в ответ, поэтому одна пара `(prompt, temperature)` с разными сидами даёт разные черновики. В тестах мы пиним сид ради воспроизводимости. В настоящем деплое сид пришёл бы из системных часов или счётчика.
 
-## Output queue
+## Выходная очередь
 
-The output is a list of `Hypothesis` records sorted by `rank_score` descending. The runner in lesson fifty-two pops the head, runs the experiment, and the evaluator in lesson fifty-three writes a verdict back. If the verdict says the hypothesis was wrong, the runner pops the next one.
+Выход — список записей `Hypothesis`, отсортированный по убыванию `rank_score`. Раннер из урока пятьдесят два снимает голову, гоняет эксперимент, а оценщик из урока пятьдесят три пишет вердикт обратно. Если вердикт говорит, что гипотеза неверна, раннер снимает следующую.
 
-The queue is finite. When it is empty the orchestrator can either widen the seed prompt and run the generator again or stop and report the budget exhausted.
+Очередь конечна. Когда она пуста, оркестратор может либо расширить seed-промпт и запустить генератор снова, либо остановиться и отчитаться об исчерпании бюджета.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `Hypothesis`, `MockLLM`, `HypothesisGenerator`, and a deterministic demo. The generator exposes a single `run(seed_prompt)` method that returns a sorted queue; the pass count is read from `GeneratorConfig.n_passes` rather than passed as an argument. The embedding is a hashed bag of tokens. The novelty filter is a single function. The rank score is a single function. Nothing depends on `numpy`; the embedding math is pure stdlib so the lesson stays portable.
+`code/main.py` определяет `Hypothesis`, `MockLLM`, `HypothesisGenerator` и детерминированное демо. Генератор открывает единственный метод `run(seed_prompt)`, возвращающий отсортированную очередь; число проходов читается из `GeneratorConfig.n_passes`, а не передаётся аргументом. Эмбеддинг — хешированный мешок токенов. Фильтр новизны — одна функция. Ранговый скор — одна функция. Ничто не зависит от `numpy`; математика эмбеддингов — чистый stdlib, и урок остаётся портируемым.
 
-`code/tests/test_generator.py` covers the linear path, the duplicate rejection path, the parser failure path, the temperature ramp boundaries, and the rank ordering.
+`code/tests/test_generator.py` покрывает линейный путь, путь отклонения дубликатов, путь провала парсера, границы температурной рампы и порядок ранжирования.
 
-## Where this slots in
+## Куда это встраивается
 
-Lesson fifty produces the queue. Lesson fifty-one takes the head of the queue and runs a literature search to confirm or refute it. Lesson fifty-two takes the same head and runs an actual experiment. Lesson fifty-three reads both outputs and writes a verdict. The four lessons compose into a research loop with no human in it; a human can step in at any boundary.
+Урок пятьдесят порождает очередь. Урок пятьдесят один берёт голову очереди и гоняет поиск литературы, чтобы подтвердить или опровергнуть её. Урок пятьдесят два берёт ту же голову и гоняет настоящий эксперимент. Урок пятьдесят три читает оба выхода и пишет вердикт. Четыре урока складываются в research-цикл без человека внутри; человек может вмешаться на любой границе.

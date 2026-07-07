@@ -1,24 +1,21 @@
 # End-to-End Research Demo
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Демо — то место, где каждый написанный ранее контракт обязан скомпоноваться. Если любой из них протекает, демо — тот урок, который это ловит.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 50–53
+**Время:** ~90 минут
 
-> A demo is the place where every contract you wrote earlier has to compose. If any one of them leaks, the demo is the lesson that catches it.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 50-53
-**Time:** ~90 minutes
+- Свить auto-research-цикл end to end: seed гипотез, раннер экспериментов, планировщик, critic-цикл, paper writer.
+- Скомпоновать примитивы четырёх предыдущих уроков трека D обычными Python-импортами, а не фреймворком.
+- Прогнать цикл до самозавершения и излучить единый демо-отчёт, перечисляющий выход каждой стадии.
+- Держать демо детерминированным, чтобы тестовый набор мог утверждать финальную форму.
+- Поднимать ясный режим отказа при разрыве контракта любой стадии, чтобы следующая стадия не работала со сломанным входом.
 
-## Learning Objectives
-
-- Wire the auto-research loop end to end: hypothesis seed, experiment runner, scheduler, critic loop, paper writer.
-- Compose the primitives from the four earlier Track D lessons through plain Python imports, not a framework.
-- Run the loop to a self-terminating end and emit a single demo report that lists every stage's output.
-- Keep the demo deterministic so the test suite can assert the final shape.
-- Surface a clear failure mode when any stage's contract breaks, so the next stage does not run with a broken input.
-
-## What composes here
+## Что здесь компонуется
 
 ```mermaid
 flowchart LR
@@ -33,11 +30,11 @@ flowchart LR
     Writer --> Report[Demo report]
 ```
 
-Five stages. The seed is a list of three hypotheses. The scheduler runs six experiments across them with three parallel slots. The bus reports one or more paper triggers. The picker selects the single best result. The critic loop iterates on a draft built from that result. The paper writer emits the final LaTeX, BibTeX, and manifest.
+Пять стадий. Seed — список из трёх гипотез. Планировщик гоняет по ним шесть экспериментов в трёх параллельных слотах. Шина репортит один или больше триггеров статей. Выбиратель отбирает единственный лучший результат. Critic-цикл итерирует черновик, построенный из этого результата. Paper writer излучает финальные LaTeX, BibTeX и манифест.
 
-## Why import, not copy
+## Почему импорт, а не копирование
 
-Each earlier lesson ships a `main.py` with public dataclasses and functions. The demo imports them by adjusting `sys.path` to the parent directory of each lesson. This is not framework wiring; it is the same import the test files in the earlier lessons already use.
+Каждый предыдущий урок поставляет `main.py` с публичными датаклассами и функциями. Демо импортирует их, подправив `sys.path` на родительскую директорию каждого урока. Это не фреймворочная проводка; это тот же импорт, который уже используют тестовые файлы предыдущих уроков.
 
 ```mermaid
 flowchart TB
@@ -47,15 +44,15 @@ flowchart TB
     Demo --> Inline[Inline stub: seed and runner]
 ```
 
-The inline stub stands in for lessons fifty through fifty-three: a small generator of seed hypotheses and a synchronous reward function. The user can swap the inline stub for the real primitives from those lessons by adjusting two imports.
+Инлайн-стуб замещает уроки с пятидесятого по пятьдесят третий: маленький генератор seed-гипотез и синхронная функция награды. Пользователь может заменить инлайн-стуб настоящими примитивами тех уроков, подправив два импорта.
 
-## Determinism guarantees
+## Гарантии детерминизма
 
-The demo is deterministic by construction. The experiment runner is seeded numpy. The critic loop's reviser walks fixed dimensions in fixed order. The paper writer's prose generator is the mocked one from lesson fifty-four. The scheduler's UCB picker breaks ties on iteration order, not random choice.
+Демо детерминировано по построению. Раннер экспериментов — сидированный numpy. Ревизор critic-цикла обходит фиксированные измерения в фиксированном порядке. Генератор прозы paper writer'а — mock из урока пятьдесят четыре. UCB-выбиратель планировщика разрешает ничьи порядком итерации, а не случайным выбором.
 
-Given the same seed, the demo emits the same report. The test asserts this property by running the demo twice and comparing the manifest.
+При одном сиде демо излучает один отчёт. Тест утверждает это свойство, прогоняя демо дважды и сравнивая манифест.
 
-## The demo report shape
+## Форма демо-отчёта
 
 ```mermaid
 flowchart TB
@@ -66,11 +63,11 @@ flowchart TB
     Rep --> Term[stop_reason]
 ```
 
-Each field comes verbatim from the upstream stage. The demo does not transform any output; it composes them. That is the test the demo is.
+Каждое поле приходит дословно из вышестоящей стадии. Демо не трансформирует никакой выход; оно их компонует. В этом и состоит тест, которым демо является.
 
-## Failure mode handling
+## Обработка режимов отказа
 
-Each stage either succeeds or raises a typed error.
+Каждая стадия либо успешна, либо кидает типизированную ошибку.
 
 ```text
 Scheduler ........ returns SchedulerReport with stop_reason
@@ -80,30 +77,30 @@ Critic loop ...... returns LoopResult with status converged or stopped
 Paper writer ..... raises PaperValidationError on contract break
 ```
 
-A failure in any stage short-circuits the demo with a typed exception. The tests pin this contract: `test_no_triggers_raises_typed_error` and `test_best_picker_raises_when_no_triggers` assert the picker raises `NoTriggerError` / `BestResultError` when no branch fired a trigger, and the writer is never invoked.
+Отказ любой стадии обрывает демо типизированным исключением. Тесты фиксируют этот контракт: `test_no_triggers_raises_typed_error` и `test_best_picker_raises_when_no_triggers` утверждают, что выбиратель кидает `NoTriggerError` / `BestResultError`, когда ни одна ветка не выстрелила триггером, и writer никогда не вызывается.
 
-## The best-result picker
+## Выбиратель лучшего результата
 
-The scheduler emits paper triggers per branch. The picker selects the branch with the highest mean reward across all triggers. Ties break alphabetically by branch id so the demo is deterministic. The picker is a small pure function; the test pins it on a fixed scheduler report.
+Планировщик излучает триггеры статей по веткам. Выбиратель отбирает ветку с наивысшей средней наградой среди всех триггеров. Ничьи разрешаются алфавитно по id ветки, чтобы демо было детерминированным. Выбиратель — маленькая чистая функция; тест фиксирует её на фиксированном отчёте планировщика.
 
-## Wiring the critic loop
+## Проводка critic-цикла
 
-The critic loop in lesson fifty-five operates on a `MiniPaper`. The demo builds a `MiniPaper` from the picked branch by populating the abstract with the branch id, seeding two sections (Introduction and Results), and setting `originality_tag` from the branch's mean reward (high if `>= 0.8`, medium if `>= 0.6`, low otherwise).
+Critic-цикл урока пятьдесят пять работает над `MiniPaper`. Демо строит `MiniPaper` из выбранной ветки, заполняя абстракт id ветки, засевая две секции (Introduction и Results) и выставляя `originality_tag` из средней награды ветки (high при `>= 0.8`, medium при `>= 0.6`, low иначе).
 
-The reviser then iterates the draft to convergence. The output goes into the paper writer.
+Ревизор затем итерирует черновик до сходимости. Выход уходит в paper writer.
 
-## Wiring the paper writer
+## Проводка paper writer
 
-The paper writer in lesson fifty-four operates on the full `Paper` shape with figures and bibliography. The demo upgrades the converged `MiniPaper` via `mini_to_full_paper`, which attaches one figure for the selected branch and a small synthetic bibliography built from the union of cite keys the critic suggested. Every cite the demo adds is also added to the bibliography list, so validation passes.
+Paper writer урока пятьдесят четыре работает над полной формой `Paper` с фигурами и библиографией. Демо апгрейдит сошедшийся `MiniPaper` через `mini_to_full_paper`, прикрепляя одну фигуру выбранной ветки и маленькую синтетическую библиографию, собранную из объединения cite-ключей, предложенных критиком. Каждый cite, который демо добавляет, добавляется и в список библиографии — валидация проходит.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `BestResultError`, `NoTriggerError`, `DemoReport`, `pick_best_branch`, `build_mini_paper`, `mini_to_full_paper`, and `run_demo`. The imports at the top adjust `sys.path` once and pull `PaperWriter`, `CriticLoop`, and `IterationScheduler` from their lessons.
+`code/main.py` определяет `BestResultError`, `NoTriggerError`, `DemoReport`, `pick_best_branch`, `build_mini_paper`, `mini_to_full_paper` и `run_demo`. Импорты наверху один раз подправляют `sys.path` и тянут `PaperWriter`, `CriticLoop` и `IterationScheduler` из их уроков.
 
-`code/tests/test_e2e.py` covers: demo runs end to end and emits a report with all five fields populated, determinism across two runs, NoTriggerError when no branch crosses the threshold, PaperValidationError when the writer's contract breaks, paper manifest contains the picked branch's figure, and the scheduler stop reason is one of the expected values.
+`code/tests/test_e2e.py` покрывает: демо проходит end to end и излучает отчёт со всеми пятью заполненными полями, детерминизм на двух прогонах, NoTriggerError, когда ни одна ветка не пересекла порог, PaperValidationError при разрыве контракта writer'а, манифест статьи содержит фигуру выбранной ветки, и причина остановки планировщика — одна из ожидаемых.
 
-## Going further
+## Куда двигаться дальше
 
-Three extensions worth wiring once the demo is green. First, persistent state: each stage's result writes to a small JSON store so a restart can resume without re-running the cheap stages. Second, a dashboard: the trace events from the scheduler and critic loop render as a single timeline. Third, real model calls: swap the mocked prose generator and the deterministic critic for model-driven ones; the wiring does not change.
+Три расширения, которые стоит подключить, когда демо зелёное. Первое — персистентное состояние: результат каждой стадии пишется в маленький JSON-store, чтобы рестарт мог возобновиться, не перегоняя дешёвые стадии. Второе — дашборд: события трейсов планировщика и critic-цикла рисуются единым таймлайном. Третье — настоящие вызовы моделей: замените mock-генератор прозы и детерминированного критика модельными; проводка не меняется.
 
-The demo's job is to prove that composition is the architecture. Five lessons, four imports, one report. The next time you add a stage, the wiring grows by exactly one line.
+Работа демо — доказать, что композиция и есть архитектура. Пять уроков, четыре импорта, один отчёт. В следующий раз, когда вы добавите стадию, проводка вырастет ровно на одну строку.

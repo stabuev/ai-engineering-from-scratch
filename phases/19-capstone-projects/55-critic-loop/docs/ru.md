@@ -1,28 +1,25 @@
 # Critic Loop
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Критик, возвращающий «выглядит хорошо» с первого раза, сломан. Критик, всегда возвращающий «нужно доработать», сломан. Интересный критик — тот, что сходится, и сходимость приходится инженерить.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 50–53
+**Время:** ~90 минут
 
-> A critic that returns "looks good" the first time is broken. A critic that always returns "needs work" is broken. The interesting critic is the one that converges, and you have to engineer convergence.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 50-53
-**Time:** ~90 minutes
+- Оценивать черновик статьи по пяти фиксированным измерениям: ясность, новизна, доказательность, методология, related work.
+- Применять критику каждого раунда как структурный revision-diff, а не как переписывание вольной формы.
+- Детектить сходимость сравнением скоров между раундами; останавливаться на плато, достижении цели или исчерпании бюджета.
+- Ограничивать раунды бюджетом максимума итераций, чтобы несходящийся критик не крутился вечно.
+- Излучать по-раундовый трейс, чтобы дашборд или следующая стадия могли отрисовать траекторию скоров.
 
-## Learning Objectives
+## Почему пять фиксированных измерений
 
-- Score a paper draft across five fixed dimensions: clarity, novelty, evidence, methodology, related-work.
-- Apply each round's critique as a structured revision diff rather than a freeform rewrite.
-- Detect convergence by comparing scores across rounds; stop on plateau, target met, or budget exhausted.
-- Cap rounds with a max-iteration budget so a non-converging critic does not run forever.
-- Emit a per-round trace so the dashboard or the next stage can render the score trajectory.
+Критик вольной формы — это модель, возвращающая абзац предложений. Ревизия следующего раунда трактует абзац как фоновый контекст. Адресует ли переписывание критику — непроверяемо, потому что у критики никогда не было структуры.
 
-## Why five fixed dimensions
-
-A freeform critic is a model that returns a paragraph of suggestions. The next round's revision treats the paragraph as ambient context. Whether the rewrite addresses the criticism is unverifiable because the criticism never had structure.
-
-Five dimensions give the harness a contract.
+Пять измерений дают харнесу контракт.
 
 ```mermaid
 flowchart LR
@@ -36,9 +33,9 @@ flowchart LR
     Scores --> Revs[revision suggestions]
 ```
 
-The score is a vector. The harness watches each dimension across rounds. A revision that raises clarity but tanks evidence is a regression on evidence, and the convergence check sees it. A model-only critic cannot offer that guarantee.
+Скор — вектор. Харнес следит за каждым измерением между раундами. Ревизия, поднявшая ясность, но обрушившая доказательность, — регрессия по доказательности, и проверка сходимости её видит. Критик-только-модель такой гарантии предложить не может.
 
-## The Critique shape
+## Форма Critique
 
 ```mermaid
 flowchart TB
@@ -49,11 +46,11 @@ flowchart TB
     Critique --> Reason[overall reason str]
 ```
 
-Every suggestion carries the dimension it improves, the section it targets, and an `edit` instruction the reviser can apply. The reviser is also a callable. The lesson ships a deterministic reviser that interprets the edit instruction as an append-to-section operation. A model-driven reviser would interpret the same field as a prompt. The contract does not change.
+Каждое предложение несёт измерение, которое оно улучшает, целевую секцию и инструкцию `edit`, которую ревизор может применить. Ревизор тоже callable. Урок поставляет детерминированный ревизор, интерпретирующий edit-инструкцию как операцию дописывания в секцию. Модельный ревизор интерпретировал бы то же поле как промпт. Контракт не меняется.
 
-## Convergence rules, in order
+## Правила сходимости, по порядку
 
-The critic loop terminates when any one of three conditions fires.
+Цикл критика завершается, когда срабатывает любое из трёх условий.
 
 ```mermaid
 flowchart TB
@@ -66,17 +63,17 @@ flowchart TB
     C -- no --> Next[Run round n plus 1]
 ```
 
-The target is the strictest case: every one of the five dimensions (clarity, novelty, evidence, methodology, related_work) must hit `>= target_score` (default `8.0`) before the loop returns success. A high mean with one weak dimension is not enough. Plateau detection compares the current round's mean to the previous round's mean. If the improvement is below `plateau_epsilon` (default `0.1`) for two consecutive rounds, the loop exits with `plateau`. The budget is a hard cap on rounds (default `5`) and exits with `budget`.
+Цель — строжайший случай: каждое из пяти измерений (clarity, novelty, evidence, methodology, related_work) обязано достичь `>= target_score` (по умолчанию `8.0`), прежде чем цикл вернёт успех. Высокое среднее с одним слабым измерением не считается. Детекция плато сравнивает среднее текущего раунда со средним предыдущего. Если улучшение ниже `plateau_epsilon` (по умолчанию `0.1`) два раунда подряд, цикл выходит с `plateau`. Бюджет — жёсткий потолок раундов (по умолчанию `5`), выход с `budget`.
 
-The order matters. Target wins over plateau wins over budget. If round three hits the target on the same iteration that would also trigger a plateau, the result is `target`, not `plateau`.
+Порядок важен. Цель побеждает плато, плато побеждает бюджет. Если раунд три достигает цели на той же итерации, которая триггернула бы и плато, результат — `target`, а не `plateau`.
 
-## Why plateau detection runs over two rounds
+## Почему детекция плато работает на двух раундах
 
-A one-round plateau is noise. A real critic returns a slightly different score each iteration even on a fixed draft, because deterministic scoring still depends on which suggestions were applied and in what order. Requiring two consecutive plateau rounds filters that noise out. If the harness reports a plateau, the draft has genuinely stopped improving.
+Одно-раундовое плато — шум. Настоящий критик возвращает чуть разный скор на каждой итерации даже на фиксированном черновике, потому что детерминированный скоринг всё равно зависит от того, какие предложения были применены и в каком порядке. Требование двух плато-раундов подряд отфильтровывает этот шум. Если харнес репортит плато, черновик действительно перестал улучшаться.
 
-## The deterministic critic in this lesson
+## Детерминированный критик этого урока
 
-The lesson does not call a model. The shipped critic is a callable that scores a draft based on three signals: average section body length (clarity), figure count and citation count (evidence), and an `originality_tag` field on the paper metadata (novelty). The reviser knows how to push each score upward.
+Урок не вызывает модель. Поставляемый критик — callable, оценивающий черновик по трём сигналам: средняя длина тела секции (ясность), число фигур и цитат (доказательность) и поле `originality_tag` в метаданных статьи (новизна). Ревизор знает, как толкнуть каждый скор вверх.
 
 ```text
 clarity      grows when the average section body length increases
@@ -86,9 +83,9 @@ methodology  grows when a section titled "Method" exists with body
 related-work grows when a section titled "Related Work" exists with body
 ```
 
-The reviser interprets each suggestion as a targeted append. After round one, the harness can observe the score going up. The tests use this property to assert the loop reduces the gap.
+Ревизор интерпретирует каждое предложение как целевое дописывание. После первого раунда харнес может наблюдать рост скора. Тесты используют это свойство, чтобы утверждать, что цикл сокращает разрыв.
 
-## The full loop contract
+## Полный контракт цикла
 
 ```mermaid
 sequenceDiagram
@@ -108,24 +105,24 @@ sequenceDiagram
     end
 ```
 
-The harness owns the round counter, the trace, and the convergence check. The critic owns the score. The reviser owns the diff. None of the three touches the others' state.
+Харнес владеет счётчиком раундов, трейсом и проверкой сходимости. Критик владеет скором. Ревизор владеет diff'ом. Никто из троих не трогает состояние остальных.
 
-## The Trace output
+## Выход Trace
 
-Every round emits one trace event with the round number, the score vector, the suggestion count, and the convergence verdict. The full trace is returned alongside the final draft. A downstream dashboard can render the score-per-round chart. The next lesson, the iteration scheduler, reads the trace to decide whether the branch is worth keeping.
+Каждый раунд излучает одно событие трейса с номером раунда, вектором скоров, числом предложений и вердиктом сходимости. Полный трейс возвращается вместе с финальным черновиком. Дашборд ниже по течению может отрисовать график скор-по-раундам. Следующий урок — планировщик итераций — читает трейс, решая, стоит ли ветку сохранять.
 
-## Budgets that protect against bad critics
+## Бюджеты, защищающие от плохих критиков
 
-A critic that produces suggestions that never improve the score will lock the loop into the max-iteration ceiling. The trace makes that visible: five rounds, scores flat, verdict `budget`. The user reads that as a critic bug, not a draft bug. The alternative, surfacing only the final draft, hides the diagnosis. Trace-first design surfaces it.
+Критик, порождающий предложения, никогда не улучшающие скор, запрёт цикл в потолок максимума итераций. Трейс делает это видимым: пять раундов, скоры плоские, вердикт `budget`. Пользователь читает это как баг критика, а не черновика. Альтернатива — показывать только финальный черновик — прячет диагноз. Trace-first-дизайн его поднимает.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `Critique`, `Suggestion`, `Critic` protocol, `Reviser` protocol, `CriticLoop`, and a `make_deterministic_critic_pair` factory that returns the deterministic critic and a matching reviser. A minimal `Paper` shape is included so the lesson stands alone.
+`code/main.py` определяет `Critique`, `Suggestion`, протокол `Critic`, протокол `Reviser`, `CriticLoop` и фабрику `make_deterministic_critic_pair`, возвращающую детерминированного критика и парный ревизор. Минимальная форма `Paper` включена, чтобы урок был самостоятельным.
 
-`code/tests/test_critic_loop.py` covers: monotone improvement after round one, target convergence on a tuned draft, plateau detection after two flat rounds, budget exhaustion when no suggestion improves, suggestion application by the reviser, and trace shape.
+`code/tests/test_critic_loop.py` покрывает: монотонное улучшение после первого раунда, сходимость к цели на подстроенном черновике, детекцию плато после двух плоских раундов, исчерпание бюджета, когда ни одно предложение не улучшает, применение предложений ревизором и форму трейса.
 
-## Going further
+## Куда двигаться дальше
 
-Two extensions a real implementation will want. First, dimension weights: a paper for a workshop weights novelty higher than methodology; a journal weights the inverse. The convergence check becomes a weighted mean. Second, paired critics: one critic scores, a second critic adjudicates the suggestions before the reviser sees them. Both add value, both compose on the same `Critique` shape.
+Два расширения, которые захочет настоящая реализация. Первое — веса измерений: статья для воркшопа взвешивает новизну выше методологии; журнал — наоборот. Проверка сходимости становится взвешенным средним. Второе — парные критики: один критик оценивает, второй арбитрирует предложения до того, как их увидит ревизор. Оба добавляют ценность, оба компонуются на той же форме `Critique`.
 
-The bet is the score vector. Once the critique is structured, every other improvement, convergence rule, dashboard, paired critic, drops in without changing the loop.
+Ставка — вектор скоров. Как только критика структурирована, любое другое улучшение — правило сходимости, дашборд, парный критик — встаёт на место, не меняя цикл.

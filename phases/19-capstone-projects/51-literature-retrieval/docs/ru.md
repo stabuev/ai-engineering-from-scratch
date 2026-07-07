@@ -1,29 +1,26 @@
 # Literature Retrieval
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Гипотеза дёшева. Дорогое — знать, не доказал ли её уже кто-то. Постройте слой retrieval, отвечающий на этот вопрос до того, как раннер поднимет sandbox.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек A, уроки 20–29
+**Время:** ~90 минут
 
-> A hypothesis is cheap. Knowing whether someone already proved it is the expensive part. Build the retrieval layer that answers that question before the runner spins up a sandbox.
+## Цели обучения
+- Смоделировать маленькую запись статьи с полями, которые цикл прочитает ниже по течению.
+- Построить BM25-индекс по абстрактам на одних stdlib-структурах данных.
+- Обойти граф цитирований, чтобы поднять статьи, пропущенные лексическим поиском.
+- Дедуплицировать попадания двух проходов по стабильному id статьи.
+- Обернуть два mock-внешних API одним клиентом, чтобы точка вызова сверху не изменилась, когда приедут настоящие endpoint'ы.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track A lessons 20-29
-**Time:** ~90 minutes
+## Почему два прохода retrieval
 
-## Learning Objectives
-- Model a small paper record with the fields the loop will read downstream.
-- Build a BM25 index over abstracts with stdlib data structures only.
-- Walk a citation graph to surface papers the lexical search missed.
-- Deduplicate hits across the lexical and graph passes by stable paper id.
-- Wrap two mock external APIs behind a single client so the upstream call site stays the same when real endpoints land.
+Поиск по ключевым словам в абстрактах возвращает статьи, делящие словарь с запросом. Это покрывает большую часть поверхности. Он упускает два случая. Первый — когда основополагающая статья использует другой словарь; например, запрос «sparse attention» пропускает статью с названием «block selection in transformer routing». Второй — когда релевантная статья — это follow-up, цитирующий известный якорь; эффективнее найти якорь и пойти вперёд по графу, чем брутфорсить пул абстрактов.
 
-## Why two retrieval passes
+Урок строит оба прохода. BM25 по абстрактам ловит лексические попадания. Обход графа цитирований расширяет seed-множество вперёд и назад на один-два прыжка. Объединение дедуплицируется по id статьи и ранжируется небольшим комбинированным скором.
 
-A keyword search over abstracts returns papers that share vocabulary with the query. That covers most of the surface. It misses two cases. The first is when the foundational paper uses different vocabulary; for example a query for "sparse attention" misses a paper titled "block selection in transformer routing." The second is when the relevant paper is a follow up that cites a known anchor; it is more efficient to find the anchor and walk forward than to brute force the abstract pool.
-
-The lesson builds both passes. BM25 over abstracts catches the lexical hits. A citation graph traversal expands a seed set forward and backward by one or two hops. The union is deduplicated by paper id and ranked by a small combined score.
-
-## The Paper shape
+## Форма Paper
 
 ```text
 Paper
@@ -37,9 +34,9 @@ Paper
   source      : str           (which mock api supplied it, "arxiv" or "s2")
 ```
 
-The references and citations fields form the directed citation graph. The two mock APIs return overlapping but not identical fields, so the corpus loader unions them on `id`.
+Поля references и citations образуют направленный граф цитирований. Два mock-API возвращают пересекающиеся, но не идентичные поля, поэтому загрузчик корпуса объединяет их по `id`.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart TD
@@ -59,13 +56,13 @@ flowchart TD
     M --> O[ranked paper list]
 ```
 
-The retrieval client owns both passes and the merge. The caller hands it a query and gets back a ranked list where each entry carries per paper score fields (`bm25_score`, `graph_distance`, `recency_score`, `final_score`) that explain the ranking.
+Retrieval-клиент владеет обоими проходами и слиянием. Вызывающий отдаёт ему запрос и получает ранжированный список, где каждая запись несёт пер-статейные поля скоров (`bm25_score`, `graph_distance`, `recency_score`, `final_score`), объясняющие ранжирование.
 
-## BM25 from scratch
+## BM25 с нуля
 
-The implementation is the standard Okapi BM25 with default parameters `k1=1.5`, `b=0.75`. The index is two dictionaries: `term -> doc_frequency` and `term -> list of (doc_id, term_count)`. The document length is the token count of the abstract. The average document length is computed once at index build time. Scoring a query is a sum over query terms of `idf * tf_norm` where `tf_norm` is the standard BM25 length normalised term frequency.
+Реализация — стандартный Okapi BM25 с дефолтными параметрами `k1=1.5`, `b=0.75`. Индекс — два словаря: `term -> doc_frequency` и `term -> список (doc_id, term_count)`. Длина документа — число токенов абстракта. Средняя длина документа считается один раз при сборке индекса. Скоринг запроса — сумма по термам запроса от `idf * tf_norm`, где `tf_norm` — стандартная BM25-нормализованная по длине частота терма.
 
-The tokeniser is `lower` then split on non alphanumeric. It is not stemmed. A production system would swap in a small stemmer. The interface stays the same.
+Токенизатор — `lower`, затем разрез по неалфавитно-цифровым символам. Без стемминга. Продакшен-система подставила бы маленький стеммер. Интерфейс не меняется.
 
 ```text
 idf(t)      = log((N - df + 0.5) / (df + 0.5) + 1.0)
@@ -73,15 +70,15 @@ tf_norm(t)  = (f * (k1 + 1)) / (f + k1 * (1 - b + b * dl / avgdl))
 score(d, q) = sum over t in q of idf(t) * tf_norm(t)
 ```
 
-## Citation graph traversal
+## Обход графа цитирований
 
-The graph is built once from the corpus. Forward edges go from a paper to its references. Backward edges go from a paper to its citations. The traversal is a breadth first search seeded by the top BM25 hits, capped at two hops.
+Граф строится один раз из корпуса. Прямые рёбра идут от статьи к её ссылкам. Обратные — от статьи к её цитированиям. Обход — поиск в ширину, засеянный топ-попаданиями BM25, с потолком в два прыжка.
 
-Two hops is a deliberate ceiling. One hop is too shallow; the agent often wants the immediate ancestor or descendant. Three hops blows up the result size on a connected graph and tends to drift off topic. The lesson exposes the hop limit as a config knob so a downstream loop can tighten it.
+Два прыжка — намеренный потолок. Один прыжок мелковат; агенту часто нужен непосредственный предок или потомок. Три прыжка взрывают размер результата на связном графе и обычно уводят от темы. Урок открывает лимит прыжков конфиг-ручкой, чтобы последующий цикл мог его поджать.
 
-## Dedup and ranking
+## Дедупликация и ранжирование
 
-The two passes return overlapping sets. The merge keys on paper id. For each paper the final score is a weighted blend.
+Два прохода возвращают пересекающиеся множества. Слияние ключуется по id статьи. Финальный скор каждой статьи — взвешенная смесь.
 
 ```text
 final_score = w_bm25 * bm25_score_norm
@@ -89,28 +86,28 @@ final_score = w_bm25 * bm25_score_norm
             + w_recency * recency_score
 ```
 
-`bm25_score_norm` is the BM25 score divided by the maximum BM25 score in the merged set (so the field lives in zero to one). `graph_score` is one for direct lexical hits, then `0.6` for one hop, `0.3` for two hops, zero otherwise. `recency_score` is a linear ramp from zero at the corpus minimum year to one at the maximum.
+`bm25_score_norm` — BM25-скор, делённый на максимальный BM25-скор в слитом множестве (поле живёт от нуля до единицы). `graph_score` — единица для прямых лексических попаданий, затем `0.6` за один прыжок, `0.3` за два, ноль иначе. `recency_score` — линейная рампа от нуля на минимальном годе корпуса до единицы на максимальном.
 
-Default weights are `0.5`, `0.3`, `0.2`. The weights are config; a stale topic might tune recency down while a fast moving topic raises it.
+Дефолтные веса — `0.5`, `0.3`, `0.2`. Веса — конфиг; для застоявшейся темы recency прикручивают, для быстро движущейся — поднимают.
 
-## Mock corpus
+## Mock-корпус
 
-The corpus is one hundred papers, generated by `build_corpus()`. Each paper has a hand written title and abstract on one of five topics: attention sparsity, retrieval augmentation, low rank adapters, dataset distillation, and evaluation harnesses. References and citations are wired so each topic forms a connected sub graph with a few cross topic edges.
+Корпус — сто статей, порождённых `build_corpus()`. У каждой рукописный заголовок и абстракт по одной из пяти тем: разреженность внимания, retrieval augmentation, low-rank-адаптеры, дистилляция датасетов и eval-харнесы. Ссылки и цитирования свиты так, что каждая тема образует связный подграф с несколькими межтемными рёбрами.
 
-The two mock API clients (`ArxivMockClient`, `SemanticScholarMockClient`) read from the same corpus but expose different fields. Arxiv returns title, abstract, year, authors. Semantic Scholar adds references and citations. The retrieval client unions on id; cross client field disagreement handling is deferred to a follow up lesson.
+Два mock-API-клиента (`ArxivMockClient`, `SemanticScholarMockClient`) читают из одного корпуса, но открывают разные поля. Arxiv возвращает title, abstract, year, authors. Semantic Scholar добавляет references и citations. Retrieval-клиент объединяет по id; обработка расхождений полей между клиентами отложена до последующего урока.
 
-## What lessons 52 and 53 read
+## Что читают уроки 52 и 53
 
-The runner in lesson fifty-two reads `paper.id`, `paper.title`, and the top three sentences of the abstract as context for the experiment. The evaluator in lesson fifty-three reads `paper.year` and `paper.references` to attribute a baseline to a specific paper.
+Раннер из урока пятьдесят два читает `paper.id`, `paper.title` и первые три предложения абстракта как контекст эксперимента. Оценщик из урока пятьдесят три читает `paper.year` и `paper.references`, чтобы атрибутировать бейзлайн конкретной статье.
 
-The retrieval client returns a `RetrievalResult` with both the ranked list and the per query metrics: hit count, average score, top score, total wall time. The runner logs these so a downstream observability pass can plot quality over time.
+Retrieval-клиент возвращает `RetrievalResult` с ранжированным списком и пер-запросными метриками: число попаданий, средний скор, топ-скор, общее wall time. Раннер их логирует, чтобы последующий observability-проход мог строить качество во времени.
 
-## How to read the code
+## Как читать код
 
-`code/main.py` defines `Paper`, `ArxivMockClient`, `SemanticScholarMockClient`, `BM25Index`, `CitationGraph`, `RetrievalClient`, and a deterministic demo. The mock clients and the corpus are in the same file so the lesson stays portable. The BM25 implementation is one class, sixty lines. The graph traversal is one method.
+`code/main.py` определяет `Paper`, `ArxivMockClient`, `SemanticScholarMockClient`, `BM25Index`, `CitationGraph`, `RetrievalClient` и детерминированное демо. Mock-клиенты и корпус — в том же файле, чтобы урок оставался портируемым. Реализация BM25 — один класс, шестьдесят строк. Обход графа — один метод.
 
-`code/tests/test_retrieval.py` covers the lexical path, the graph path, the merge, the dedup, and the empty query.
+`code/tests/test_retrieval.py` покрывает лексический путь, графовый путь, слияние, дедупликацию и пустой запрос.
 
-## Where this slots in
+## Куда это встраивается
 
-Lesson fifty produces a hypothesis. Lesson fifty-one searches the literature to see whether that hypothesis is already settled. Lesson fifty-two runs the experiment if it is not. Lesson fifty-three reads both the retrieval result and the experiment metrics to write the verdict. The retrieval client is the cheapest of the four stages and runs first in the orchestrator.
+Урок пятьдесят порождает гипотезу. Урок пятьдесят один ищет в литературе, не решена ли эта гипотеза уже. Урок пятьдесят два гоняет эксперимент, если нет. Урок пятьдесят три читает и результат retrieval, и метрики эксперимента, чтобы написать вердикт. Retrieval-клиент — самая дешёвая из четырёх стадий и в оркестраторе работает первой.
