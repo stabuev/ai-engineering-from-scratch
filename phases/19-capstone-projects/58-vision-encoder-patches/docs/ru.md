@@ -1,29 +1,26 @@
 # Vision Encoder Patches
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Vision-модели, читающей пиксели, нужен токенизатор для пикселей. Patch embedding — этот токенизатор. Разрежьте изображение на сетку квадратов, уплощите каждый квадрат, спроецируйте одним линейным слоем и добавьте 2D-позиционный сигнал, чтобы трансформер знал, где каждый квадрат сидел в исходном изображении.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37 (фундамент трека B)
+**Время:** ~90 минут
 
-> A vision model that reads pixels needs a tokenizer for pixels. Patch embedding is that tokenizer. Cut the image into a grid of squares, flatten each square, project it through one linear layer, then add a 2D position signal so the transformer knows where each square sat in the original image.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37 (Track B foundations)
-**Time:** ~90 minutes
+- Токенизировать изображение в последовательность patch-эмбеддингов фиксированной длины.
+- Реализовать проекцию патчей на `Conv2d`, совпадающую с математикой unfold-затем-linear.
+- Построить детерминированный 2D-синусоидальный позиционный эмбеддинг, чтобы порядок токенов кодировал пространственную позицию.
+- Проверить число патчей, форму эмбеддинга и эквивалентность `Conv2d`/unfold на синтетической фикстуре.
 
-## Learning Objectives
+## Проблема
 
-- Tokenize an image into a fixed-length sequence of patch embeddings.
-- Implement a `Conv2d`-based patch projection that matches the math of unfold-then-linear.
-- Build a deterministic 2D sinusoidal position embedding so token order encodes spatial position.
-- Verify patch count, embedding shape, and `Conv2d`/unfold equivalence on a synthetic fixture.
+Трансформер ест последовательность векторов. Изображение — трёхканальная сетка. Чтение каждого пикселя токеном взрывает длину последовательности: RGB-изображение 224x224 — это 150 528 токенов, чего 12-слойный трансформер во внимании не потянет. Чтение изображения одним гигантским плоским вектором выбрасывает локальность, которую слой внимания восстановить не может. Работа фронтенда энкодера — сжать пиксельную сетку в несколько сотен токенов, каждый из которых суммирует квадратную область.
 
-## The Problem
+Patch embedding решает это одной линейной проекцией. Изображение 224x224, разрезанное на патчи 16x16, даёт сетку 14x14 из 196 патчей. Каждый патч уплощается из `(3, 16, 16) = 768` пиксельных значений в один вектор, затем линейный слой маппит его в скрытую размерность модели. Трансформер видит 196 токенов размерности `hidden` (обычно 768) плюс CLS-токен. Такую последовательность остальная сеть уже может прожевать.
 
-A transformer eats a sequence of vectors. An image is a 3-channel grid. Reading every pixel as a token explodes the sequence length: a 224x224 RGB image is 150,528 tokens, which a 12-layer transformer cannot afford in attention. Reading the image as one giant flat vector throws away locality, which the attention layer cannot recover from. The job of the encoder front end is to compress the pixel grid into a few hundred tokens that each summarize a square region.
-
-Patch embedding solves this with one linear projection. A 224x224 image cut into 16x16 patches produces a 14x14 grid of 196 patches. Each patch is flattened from `(3, 16, 16) = 768` pixel values into one vector, then a linear layer maps it to the model's hidden dimension. The transformer sees 196 tokens of dimension `hidden` (commonly 768) plus a CLS token. That is a sequence the rest of the network can chew on.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -36,96 +33,96 @@ flowchart LR
   Pos --> Out[final token sequence]
 ```
 
-### Why patches, not pixels
+### Почему патчи, а не пиксели
 
-Attention is quadratic in sequence length. A 196-token sequence costs `196 * 196 = 38,416` attention scores per head per layer; a 150,528-token sequence costs `150,528 * 150,528 = 22.6 billion`. Patches buy a 590,000x reduction in attention compute, and a single 16x16 region carries enough signal for high-level vision tasks. The cost is a loss of fine-grained spatial detail inside one patch, which is why downstream multimodal stacks often run a second high-resolution branch when fine localization matters.
+Внимание квадратично по длине последовательности. Последовательность из 196 токенов стоит `196 * 196 = 38 416` скоров внимания на голову на слой; последовательность из 150 528 токенов — `150 528 * 150 528 = 22.6 миллиарда`. Патчи покупают сокращение compute внимания в 590 000 раз, а одна область 16x16 несёт достаточно сигнала для высокоуровневых vision-задач. Цена — потеря мелкозернистой пространственной детали внутри патча, поэтому мультимодальные стеки ниже по течению часто гоняют вторую ветку высокого разрешения, когда важна тонкая локализация.
 
-### Why a linear projection is enough
+### Почему линейной проекции достаточно
 
-Each patch is treated as an independent vector. The projection learns a basis: edge detectors, color filters, simple textures. A single linear layer is small (`768 * 768 = 589,824` parameters for ViT-Base) and trains fast. Deeper convolutional stems exist (the "hybrid" ViT), but a flat linear projection is the standard, and most modern open-weight encoders ship with this exact shape.
+Каждый патч трактуется как независимый вектор. Проекция выучивает базис: детекторы границ, цветовые фильтры, простые текстуры. Один линейный слой мал (`768 * 768 = 589 824` параметра для ViT-Base) и обучается быстро. Существуют более глубокие свёрточные стемы («гибридный» ViT), но плоская линейная проекция — стандарт, и большинство современных open-weights энкодеров отгружаются ровно с этой формой.
 
-### The `Conv2d` trick
+### Трюк с `Conv2d`
 
-A `Conv2d(in_channels=3, out_channels=hidden, kernel_size=patch_size, stride=patch_size)` with no padding gives the same numerical result as unfold-then-linear, because each output position dot-products the patch pixels against one filter. The convolution is the patch projection, and most production codebases ship it that way because it is faster on GPU and uses one fewer reshape.
+`Conv2d(in_channels=3, out_channels=hidden, kernel_size=patch_size, stride=patch_size)` без паддинга даёт тот же численный результат, что unfold-затем-linear, потому что каждая выходная позиция скалярно перемножает пиксели патча с одним фильтром. Свёртка и есть проекция патча, и большинство продакшен-кодовых баз отгружают её именно так — быстрее на GPU и на один reshape меньше.
 
-### Position embeddings
+### Позиционные эмбеддинги
 
-Tokens carry no order out of the projection. The 2D sinusoidal embedding gives each token a fixed signal that encodes its `(row, col)` position. Half the embedding dimension encodes row position with sin/cos at multiple frequencies; the other half encodes column position. The encoding is deterministic so you can swap resolutions without retraining, and it interpolates cleanly to grids the model never saw at training time.
+Из проекции токены выходят без порядка. 2D-синусоидальный эмбеддинг даёт каждому токену фиксированный сигнал, кодирующий его позицию `(row, col)`. Половина размерности эмбеддинга кодирует позицию строки через sin/cos на нескольких частотах; вторая половина — позицию столбца. Кодирование детерминировано, поэтому можно менять разрешения без переобучения, и оно чисто интерполируется на сетки, которых модель не видела при обучении.
 
-| Component | Shape | Parameters |
+| Компонент | Форма | Параметры |
 |-----------|-------|------------|
-| Patch projection (`Conv2d`) | `(hidden, 3, patch, patch)` | `3 * P * P * hidden + hidden` |
-| Position embedding (fixed) | `(num_patches, hidden)` | 0 (computed, not learned) |
-| CLS token (learned) | `(1, hidden)` | `hidden` |
+| Проекция патчей (`Conv2d`) | `(hidden, 3, patch, patch)` | `3 * P * P * hidden + hidden` |
+| Позиционный эмбеддинг (фиксированный) | `(num_patches, hidden)` | 0 (вычисляется, не обучается) |
+| CLS-токен (обучаемый) | `(1, hidden)` | `hidden` |
 
-For ViT-Base/16 at 224 resolution: 590,592 parameters in the projection, 768 in the CLS token, and zero for sinusoidal position. The next lesson (59) stacks a 12-layer transformer on top of this front end.
+Для ViT-Base/16 на разрешении 224: 590 592 параметра в проекции, 768 в CLS-токене и ноль на синусоидальную позицию. Следующий урок (59) стекует поверх этого фронтенда 12-слойный трансформер.
 
-### Equivalence as a sanity check
+### Эквивалентность как sanity-проверка
 
-The patch step has two spellings: a `Conv2d` projection and an explicit unfold-then-linear. They must produce the same output for the same weights. If they do not, the unfold math is wrong, and the rest of the encoder is built on sand. The tests in this lesson exercise that equivalence.
+У шага патчей два написания: `Conv2d`-проекция и явный unfold-затем-linear. При одних весах они обязаны давать один выход. Если нет — unfold-математика неверна, и остальной энкодер построен на песке. Тесты этого урока прогоняют эту эквивалентность.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `PatchEmbed`, an `nn.Module` wrapping `Conv2d` for patch projection.
-- `sinusoidal_2d(grid_h, grid_w, dim)`, a stateless function that builds the 2D position table.
-- `VisionFrontEnd`, which composes patch embedding, CLS prepend, and position addition into one forward pass.
-- A `synthesize_image(seed)` helper that builds a deterministic 224x224x3 fixture from `numpy.random`.
-- A demo that runs one fixture image through the front end and prints the output shape, the CLS token norm, and one row of the position embedding.
+- `PatchEmbed` — `nn.Module`, оборачивающий `Conv2d` для проекции патчей.
+- `sinusoidal_2d(grid_h, grid_w, dim)` — stateless-функцию, строящую 2D-таблицу позиций.
+- `VisionFrontEnd` — компонует patch embedding, приклеивание CLS и добавление позиций в один forward-проход.
+- Хелпер `synthesize_image(seed)` — строит детерминированную фикстуру 224x224x3 из `numpy.random`.
+- Демо: прогоняет одно фикстурное изображение через фронтенд и печатает форму выхода, норму CLS-токена и одну строку позиционного эмбеддинга.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: the 224x224 fixture is tokenized to a sequence of shape `(1, 197, 768)`. The first token is the CLS; the next 196 are patch tokens. The position embedding norms are uniform within a row, which is the sinusoidal signature.
+Вывод: фикстура 224x224 токенизируется в последовательность формы `(1, 197, 768)`. Первый токен — CLS; следующие 196 — patch-токены. Нормы позиционных эмбеддингов равномерны внутри строки — это синусоидальная сигнатура.
 
-## Use It
+## Используйте это
 
-The same patch front end shows up in every modern vision-language model: CLIP ViT-L/14, SigLIP, DINOv2, the Qwen-VL family, and the InternVL stack all start from a `Conv2d` patch projection plus a position signal. Differences across families live downstream (CLS vs no-CLS pooling, register tokens, varying patch sizes 14 vs 16, dynamic resolution via interpolated positions). The frontend in this lesson is the substrate every one of those models stands on.
+Тот же patch-фронтенд встречается в каждой современной vision-language-модели: CLIP ViT-L/14, SigLIP, DINOv2, семейство Qwen-VL и стек InternVL — все начинаются с `Conv2d`-проекции патчей плюс позиционного сигнала. Различия семейств живут ниже по течению (пулинг CLS против no-CLS, register-токены, размеры патчей 14 против 16, динамическое разрешение через интерполированные позиции). Фронтенд этого урока — субстрат, на котором стоит каждая из этих моделей.
 
-## Tests
+## Тесты
 
-`code/test_main.py` covers:
+`code/test_main.py` покрывает:
 
-- patch count matches `(image_size / patch_size) ** 2`
-- output shape matches `(batch, num_patches + 1, hidden)`
-- the `Conv2d` projection equals manual unfold-then-linear on a small fixture
-- sinusoidal position table is deterministic across calls
-- CLS token broadcasts across batch dim without leakage
+- число патчей совпадает с `(image_size / patch_size) ** 2`
+- форма выхода совпадает с `(batch, num_patches + 1, hidden)`
+- `Conv2d`-проекция равна ручному unfold-затем-linear на маленькой фикстуре
+- синусоидальная таблица позиций детерминирована между вызовами
+- CLS-токен бродкастится по батчевому измерению без утечки
 
-Run them:
+Запустите их:
 
 ```bash
 python3 -m unittest code/test_main.py
 ```
 
-## Exercises
+## Упражнения
 
-1. Replace the sinusoidal position with a learned `nn.Parameter` and compare the first-epoch loss on a tiny synthetic classification task. Learned positions win at fixed resolution; sinusoidal wins when you change resolution after training.
+1. Замените синусоидальную позицию обучаемым `nn.Parameter` и сравните лосс первой эпохи на крошечной синтетической задаче классификации. Обучаемые позиции побеждают на фиксированном разрешении; синусоидальные — при смене разрешения после обучения.
 
-2. Swap the `Conv2d` for an explicit `nn.Unfold` plus `nn.Linear` and assert the outputs match to within float tolerance. Same math, two ways to spell it.
+2. Замените `Conv2d` явным `nn.Unfold` плюс `nn.Linear` и утвердите совпадение выходов в пределах float-допуска. Одна математика, два написания.
 
-3. Add support for non-square patch sizes (e.g. 32x16 for wide-aspect inputs) and verify the position table handles non-square grids.
+3. Добавьте поддержку неквадратных патчей (например, 32x16 для широкоформатных входов) и убедитесь, что таблица позиций справляется с неквадратными сетками.
 
-4. Profile the patch step at batch sizes 1, 8, 64. The patch projection is rarely the bottleneck; the attention layers downstream dominate.
+4. Отпрофилируйте шаг патчей при размерах батча 1, 8, 64. Проекция патчей редко бывает узким местом; доминируют слои внимания ниже по течению.
 
-5. Train the front end as a frozen feature extractor on a 4-class synthetic shape dataset (circles, squares, triangles, stars). The CLS token output should linearly separate.
+5. Обучите фронтенд как замороженный экстрактор фич на синтетическом датасете из 4 классов форм (круги, квадраты, треугольники, звёзды). Выход CLS-токена должен линейно разделяться.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| Patch | A square sub-region of the image, typically 14x14 or 16x16 |
-| Patch embedding | Linear projection of one flattened patch to the hidden dim |
-| Sequence length | Number of tokens after patch tokenization, usually plus CLS |
-| Sinusoidal position | Fixed sin/cos signal that encodes 2D grid coordinates |
-| CLS token | Learned vector prepended to the sequence as the pooling head |
+| Патч | Квадратная подобласть изображения, обычно 14x14 или 16x16 |
+| Patch embedding | Линейная проекция одного уплощённого патча в скрытую размерность |
+| Длина последовательности | Число токенов после patch-токенизации, обычно плюс CLS |
+| Синусоидальная позиция | Фиксированный sin/cos-сигнал, кодирующий 2D-координаты сетки |
+| CLS-токен | Обучаемый вектор, приклеиваемый к последовательности как пулинговая голова |
 
-## Further Reading
+## Дополнительное чтение
 
-- An Image is Worth 16x16 Words (ViT, 2021) for the original patch-embed framing.
-- Attention Is All You Need (2017) for the sinusoidal position formula adapted here to 2D.
-- DINOv2 paper for register tokens, an extension you can add as exercise 6.
+- An Image is Worth 16x16 Words (ViT, 2021) — оригинальная постановка patch embedding.
+- Attention Is All You Need (2017) — формула синусоидальной позиции, адаптированная здесь к 2D.
+- Статья DINOv2 — register-токены, расширение, которое можно добавить упражнением 6.

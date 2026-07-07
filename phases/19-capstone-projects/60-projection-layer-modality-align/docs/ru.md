@@ -1,29 +1,26 @@
 # Projection Layer for Modality Alignment
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Vision-энкодер порождает токены изображения. Текстовый декодер потребляет текстовые токены. Эти двое живут в разных векторных пространствах. Маленький двухслойный MLP проецирует токены изображения в текстовое пространство эмбеддингов, а косинусный лосс выравнивания против парной подписи стягивает два пространства к согласию. Эта проекция — наименьшая часть vision-language-модели и та, что важнее всего для переноса.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37 (фундамент трека B)
+**Время:** ~90 минут
 
-> A vision encoder produces image tokens. A text decoder consumes text tokens. The two live in different vector spaces. A small two-layer MLP projects image tokens into the text embedding space, and a cosine alignment loss against a paired caption pulls the two spaces into agreement. That projection is the smallest piece of a vision-language model and the one that matters most for transfer.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37 (Track B foundations)
-**Time:** ~90 minutes
+- Построить двухслойную MLP-проекцию, маппящую фичи изображения в текстовое пространство эмбеддингов.
+- Сконструировать mock-таблицу текстовых эмбеддингов (без предобученного токенизатора, без настоящего корпуса).
+- Вычислить косинусный лосс выравнивания между спроецированными токенами изображения и эмбеддингом парной подписи.
+- Обучить одну проекцию при замороженном vision-энкодере и замороженной текстовой таблице.
 
-## Learning Objectives
+## Проблема
 
-- Build a two-layer MLP projection that maps image features into the text embedding space.
-- Construct a mock text embedding table (no pretrained tokenizer, no real corpus).
-- Compute a cosine alignment loss between projected image tokens and a paired caption embedding.
-- Train the projection alone with a frozen vision encoder and a frozen text table.
+У вас есть vision-энкодер (уроки 58–59), порождающий токены размерности `vision_hidden = 768`. Есть текстовый декодер, который вы хотите прикрутить сверху, с размерностью эмбеддингов `text_hidden = 512` (любое другое число столь же правдоподобно). Декодер ждёт токены текстовой формы. Токены изображения — не текстовой формы: они живут в базисе, который энкодер выучил при vision-only-предобучении, без всякой связи со словными векторами декодера.
 
-## The Problem
+Двухслойная MLP-проекция (linear, GELU, linear) наводит мост. Она достаточно мала (около `768 * 1024 + 1024 * 512 = 1.3M` параметров), чтобы обучиться за минуты на одной GPU, и это единственная часть, которой нужно учиться на фазе выравнивания. Vision-энкодер остаётся замороженным. Таблица текстовых эмбеддингов остаётся замороженной. Двигается только проекция. Это рецепт, который LLaVA отгрузила в 2023-м, который BLIP-2 переосмыслил как Q-Former и который с тех пор в той или иной форме принял каждый open-weights VLM.
 
-You have a vision encoder (lessons 58-59) producing tokens of dimension `vision_hidden = 768`. You have a text decoder you want to bolt on top with embedding dimension `text_hidden = 512` (any other number is just as plausible). The decoder expects text-shaped tokens. The image tokens are not text-shaped: they live in a basis the encoder learned during vision-only pretraining, with no relationship to the decoder's word vectors.
-
-Two-layer MLP projection (linear, GELU, linear) bridges the gap. It is small enough (about `768 * 1024 + 1024 * 512 = 1.3M` parameters) to train in minutes on a single GPU, and it is the only piece that has to learn during the alignment phase. The vision encoder stays frozen. The text embedding table stays frozen. Only the projection moves. This is the recipe LLaVA shipped in 2023, that BLIP-2 reframed as a Q-Former, and that every open-weight VLM since has adopted in some form.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -38,99 +35,99 @@ flowchart LR
   Txt --> Loss
 ```
 
-### Pooling before projection
+### Пулинг до проекции
 
-The vision encoder emits 197 tokens. The text side has a single caption-level embedding. To align them you need one image-level vector per sample. CLS pooling is the simplest: take the first token from the encoder and project it. Mean pooling over all 197 tokens is another option and is what SigLIP uses. Either pools 197 vectors down to one.
+Vision-энкодер излучает 197 токенов. У текстовой стороны — один эмбеддинг уровня подписи. Чтобы их выровнять, нужен один вектор уровня изображения на сэмпл. CLS-пулинг проще всего: взять первый токен энкодера и спроецировать его. Средний пулинг по всем 197 токенам — другой вариант, его использует SigLIP. Любой из двух сворачивает 197 векторов в один.
 
-### Why two layers and not one
+### Почему два слоя, а не один
 
-A single linear projection can rotate and rescale but cannot fix the basis if the two spaces have curvature mismatches. GELU between two linear layers gives the projection one non-linear bend, which is empirically enough to align CLIP-style features to language model embeddings. Deeper projections (LLaVA-NeXT used GLU; Qwen-VL used a stack of attention layers) are extensions; two-layer MLP is the canonical baseline and is what BLIP-2's Q-Former projection head ships with under the hood.
+Одиночная линейная проекция может повернуть и перемасштабировать, но не может починить базис, если у двух пространств не совпадает кривизна. GELU между двумя линейными слоями даёт проекции один нелинейный изгиб, чего эмпирически достаточно, чтобы выровнять CLIP-подобные фичи с эмбеддингами языковой модели. Более глубокие проекции (LLaVA-NeXT использовал GLU; Qwen-VL — стек attention-слоёв) — расширения; двухслойный MLP — канонический бейзлайн, и именно он под капотом у проекционной головы Q-Former в BLIP-2.
 
-| Layer | Shape | Parameters |
+| Слой | Форма | Параметры |
 |-------|-------|------------|
 | fc1 | `(vision_hidden, projection_hidden)` | `768 * 1024 + 1024` |
-| activation | GELU | 0 |
+| активация | GELU | 0 |
 | fc2 | `(projection_hidden, text_hidden)` | `1024 * 512 + 512` |
 
-About 1.3M parameters for a `768 -> 1024 -> 512` head.
+Около 1.3M параметров на голову `768 -> 1024 -> 512`.
 
-### Cosine alignment loss
+### Косинусный лосс выравнивания
 
-Align does not mean `image_emb == text_emb`. Align means `image_emb` points in the same direction as `text_emb` in the joint space. The cosine loss is `1 - cos_sim(image, text)`, ranging from 0 (perfectly aligned) to 2 (opposite). Training drives this toward zero per pair. Lesson 62 generalizes to a contrastive batch (InfoNCE) where every image must be closer to its own caption than to any other caption in the batch; this lesson uses the per-pair version so the dynamics are visible.
+Выравнивание не означает `image_emb == text_emb`. Оно означает, что `image_emb` указывает в ту же сторону, что `text_emb`, в совместном пространстве. Косинусный лосс — `1 - cos_sim(image, text)`, от 0 (идеально выровнены) до 2 (противоположны). Обучение гонит его к нулю на пару. Урок 62 обобщает до контрастивного батча (InfoNCE), где каждое изображение обязано быть ближе к своей подписи, чем к любой другой в батче; этот урок использует пер-парную версию, чтобы динамика была видна.
 
-### Frozen encoder is the trick
+### Замороженный энкодер — и есть трюк
 
-The vision encoder has 86M parameters. The text table has another few million. Training all of them from a mock corpus is a non-starter. Freezing both means the projection's 1.3M parameters are the only thing changing, and a few hundred steps on synthetic pairs is enough to drive the loss down. This is exactly the operational shape of every adapter-based VLM: the heavy parts stay frozen, the light bridge trains.
+У vision-энкодера 86M параметров. У текстовой таблицы — ещё несколько миллионов. Обучать их все на mock-корпусе — не вариант. Заморозка обоих означает, что 1.3M параметров проекции — единственное, что меняется, и нескольких сотен шагов на синтетических парах хватает, чтобы прогнать лосс вниз. Это в точности операционная форма каждого адаптерного VLM: тяжёлые части остаются замороженными, лёгкий мост обучается.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `MLPProjector(in_dim, hidden_dim, out_dim)`, two-layer linear MLP with GELU activation.
-- `MockTextEmbedding(vocab_size, dim)`, a frozen embedding table with deterministic init from a seed.
-- `make_pair(seed, vocab_size)`, which synthesizes one paired (image, caption) sample. Captions are short id sequences; the caption embedding is mean-pooled over token embeddings.
-- `cosine_alignment_loss(image_emb, text_emb)`, the per-pair `1 - cos_sim` objective.
-- A training loop that runs the projection for 200 steps over 32 synthetic pairs (cycled), with the vision encoder and text table frozen, and prints the loss every 25 steps.
+- `MLPProjector(in_dim, hidden_dim, out_dim)` — двухслойный линейный MLP с активацией GELU.
+- `MockTextEmbedding(vocab_size, dim)` — замороженную таблицу эмбеддингов с детерминированной инициализацией от сида.
+- `make_pair(seed, vocab_size)` — синтезирует один парный сэмпл (изображение, подпись). Подписи — короткие последовательности id; эмбеддинг подписи — средний пулинг по токенным эмбеддингам.
+- `cosine_alignment_loss(image_emb, text_emb)` — пер-парную цель `1 - cos_sim`.
+- Обучающий цикл: гоняет проекцию 200 шагов по 32 синтетическим парам (по кругу) при замороженных vision-энкодере и текстовой таблице, печатая лосс каждые 25 шагов.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: training reports drop from initial loss around 1.07 down to about 0.80 within 200 steps, demonstrating that the projection alone can pull image tokens toward the text space. The final cosine similarity per pair is also printed.
+Вывод: обучение показывает падение с начального лосса около 1.07 до примерно 0.80 за 200 шагов, демонстрируя, что одна проекция способна подтянуть токены изображения к текстовому пространству. Финальное косинусное сходство на пару тоже печатается.
 
-## Use It
+## Используйте это
 
-The same pattern shows up in every open-weight VLM:
+Тот же паттерн встречается в каждом open-weights VLM:
 
-- **LLaVA 1.5.** Two-layer GELU MLP projection from CLIP-ViT-L hidden to LLaMA embedding dim. Frozen vision encoder, frozen LLM, train only the projection (then unfreeze the LLM in stage two).
-- **BLIP-2.** Q-Former takes 32 learned query tokens through cross-attention against image tokens, then projects to the LLM embedding dim. The projection head at the very end of Q-Former is the analog of this lesson's MLP.
-- **MiniGPT-4.** Single linear projection from BLIP-2 Q-Former output to Vicuna embedding dim.
-- **Qwen-VL.** Cross-attention adapter with several layers, but the final piece is again a projection to the LM embedding dim.
+- **LLaVA 1.5.** Двухслойная GELU-MLP-проекция из hidden CLIP-ViT-L в размерность эмбеддингов LLaMA. Замороженный vision-энкодер, замороженный LLM, обучается только проекция (затем LLM размораживается на второй стадии).
+- **BLIP-2.** Q-Former проводит 32 обучаемых query-токена через cross-attention против токенов изображения, затем проецирует в размерность эмбеддингов LLM. Проекционная голова в самом конце Q-Former — аналог MLP этого урока.
+- **MiniGPT-4.** Одиночная линейная проекция из выхода Q-Former BLIP-2 в размерность эмбеддингов Vicuna.
+- **Qwen-VL.** Cross-attention-адаптер из нескольких слоёв, но финальная часть — снова проекция в размерность эмбеддингов LM.
 
-The shape varies but the role is identical: pool image tokens, project to text embedding dim, train alone.
+Форма варьируется, роль идентична: спулить токены изображения, спроецировать в текстовую размерность, обучить отдельно.
 
-## Tests
+## Тесты
 
-`code/test_main.py` covers:
+`code/test_main.py` покрывает:
 
-- projector output shape matches the configured `out_dim`
-- frozen text embedding table has zero `requires_grad` parameters
-- cosine loss is zero on identical vectors and is 2 on anti-parallel vectors
-- projector gradient flows after one backward pass
-- the training loop reduces loss between step 0 and step 200
+- форма выхода проектора совпадает со сконфигурированным `out_dim`
+- у замороженной таблицы текстовых эмбеддингов ноль параметров с `requires_grad`
+- косинусный лосс равен нулю на идентичных векторах и 2 на антипараллельных
+- градиент проектора течёт после одного backward-прохода
+- обучающий цикл уменьшает лосс между шагом 0 и шагом 200
 
-Run them:
+Запустите их:
 
 ```bash
 python3 -m unittest code/test_main.py
 ```
 
-## Exercises
+## Упражнения
 
-1. Replace CLS pooling with mean pooling over the 196 patch tokens and compare final loss after 200 steps. Mean pooling usually trains faster on synthetic data; CLS is more sample-efficient on natural images.
+1. Замените CLS-пулинг средним пулингом по 196 patch-токенам и сравните финальный лосс после 200 шагов. Средний пулинг обычно обучается быстрее на синтетике; CLS более sample-эффективен на естественных изображениях.
 
-2. Add a learned scalar temperature to the cosine loss (`cos / tau`) and observe what happens when `tau` is too small (gradient noise) or too large (loss plateaus high).
+2. Добавьте косинусному лоссу обучаемую скалярную температуру (`cos / tau`) и понаблюдайте, что происходит при слишком маленькой `tau` (шум градиента) и слишком большой (лосс застревает высоко).
 
-3. Swap the two-layer MLP for a single linear layer and quantify the loss gap. The non-linearity matters more on natural image features and less on synthetic ones.
+3. Замените двухслойный MLP одиночным линейным слоем и оцените разрыв в лоссе. Нелинейность важнее на естественных фичах и меньше — на синтетических.
 
-4. Add a small L2 penalty on the projector weights and watch how it interacts with cosine alignment (cosine is scale-invariant, so the penalty mostly shrinks unused directions).
+4. Добавьте маленький L2-штраф на веса проектора и посмотрите, как он взаимодействует с косинусным выравниванием (косинус масштабо-инвариантен, поэтому штраф в основном сжимает неиспользуемые направления).
 
-5. Persist projector weights, then reload and run inference without the vision encoder backward pass to verify that only the projector is needed at deploy time.
+5. Сохраните веса проектора, затем перезагрузите и прогоните инференс без backward-прохода vision-энкодера, убедившись, что на деплое нужен только проектор.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| Modality alignment | The act of making image and text embeddings comparable in one shared space |
-| Projection head | The small module that maps one space to another, usually a 2-layer MLP |
-| Cosine similarity | Dot product divided by the product of L2 norms |
-| Frozen encoder | The vision (or text) model has all parameters with `requires_grad=False` |
-| Mock corpus | Synthetic pairs used so training has no dataset download dependency |
+| Выравнивание модальностей | Действие, делающее эмбеддинги изображения и текста сравнимыми в одном общем пространстве |
+| Проекционная голова | Маленький модуль, маппящий одно пространство в другое, обычно двухслойный MLP |
+| Косинусное сходство | Скалярное произведение, делённое на произведение L2-норм |
+| Замороженный энкодер | У vision- (или текстовой) модели все параметры с `requires_grad=False` |
+| Mock-корпус | Синтетические пары, чтобы обучение не зависело от скачивания датасета |
 
-## Further Reading
+## Дополнительное чтение
 
-- LLaVA paper for the two-stage train (project, then unfreeze LM).
-- BLIP-2 paper for Q-Former as a learnable projection alternative.
-- Qwen-VL technical report for cross-attention adapters as deeper projection heads.
+- Статья LLaVA — двухстадийное обучение (проекция, затем разморозка LM).
+- Статья BLIP-2 — Q-Former как обучаемая альтернатива проекции.
+- Технический отчёт Qwen-VL — cross-attention-адаптеры как более глубокие проекционные головы.

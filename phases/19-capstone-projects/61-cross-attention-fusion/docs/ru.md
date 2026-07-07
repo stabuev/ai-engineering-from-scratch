@@ -1,29 +1,26 @@
 # Cross-Attention Fusion
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Слой проекции выравнивает один вектор изображения с одним вектором подписи. Настоящему vision-language-декодеру нужно, чтобы каждый текстовый токен смотрел на каждый patch-токен, — тогда модель может заземлить каждое слово в области изображения. Cross-attention — то, как это заземление происходит. Текст спрашивает; vision-ключи и значения отвечают. Этот урок строит блок cross-attention, каузальное текстовое self-attention и формы масок, держащие обоих в законе.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37 (фундамент трека B)
+**Время:** ~90 минут
 
-> The projection layer aligns one image vector with one caption vector. A real vision-language decoder needs every text token to attend to every patch token, so the model can ground each word in a region. Cross-attention is how that grounding happens. The text queries; the vision keys and values answer. This lesson builds the cross-attention block, the causal text self-attention, and the mask shapes that keep both legal.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37 (Track B foundations)
-**Time:** ~90 minutes
+- Реализовать multi-head cross-attention, где query-поток — текст, а key/value-поток — vision.
+- Скомпоновать decoder-блок: каузальное self-attention + cross-attention + feed-forward.
+- Правильно выставить формы масок: каузальная для self-attention, никакой для cross-attention.
+- Прогнать forward-проход с батчированными текстовыми токенами и фиксированным пулом токенов изображения.
 
-## Learning Objectives
+## Проблема
 
-- Implement multi-head cross-attention where the query stream is text and the key/value stream is vision.
-- Compose a decoder block: causal self-attention + cross-attention + feed-forward.
-- Get the mask shapes right: causal mask for self-attention, no mask for cross-attention.
-- Run a forward pass with batched text tokens and a fixed pool of image tokens.
+Конкатенация токенов изображения и текста в одну последовательность — один вариант слияния (раннее слияние, путь Chameleon и Emu3). Cross-attention — другой (позднее слияние, путь, введённый Flamingo и скопированный каждым Flamingo-образным декодером с тех пор). При позднем слиянии текстовый декодер работает на чисто текстовых токенах и тянется в поток изображения через cross-attention на каждом слое.
 
-## The Problem
+У позднего слияния два преимущества. Первое: текстовый поток остаётся чистым, и модель сохраняет text-only-способности. Второе: поток изображения вычисляется один раз на изображение и переиспользуется на каждом шаге декодирования, поэтому генерация дешева даже для длинных подписей. Цена — один дополнительный attention-подслой на блок.
 
-Concatenating image tokens and text tokens into one sequence is one fusion option (early fusion, the path Chameleon and Emu3 take). Cross-attention is the other (late fusion, the path Flamingo introduced and that every Flamingo-shaped decoder since has copied). In late fusion, the text decoder runs on text-only tokens and reaches over into the image stream through cross-attention at every layer.
-
-Late fusion has two advantages. First, the text stream stays clean and the model preserves text-only capabilities. Second, the image stream is computed once per image and reused for every decode step, so generation is cheap even for long captions. The cost is one extra attention sub-layer per block.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -46,28 +43,28 @@ flowchart LR
   Soft --> Out[output B x H x Nt x d]
 ```
 
-### Mask shapes
+### Формы масок
 
-The two attentions inside a decoder block need different masks:
+Двум вниманиям внутри decoder-блока нужны разные маски:
 
-| Attention | Query length | Key length | Mask | Why |
+| Внимание | Длина query | Длина key | Маска | Почему |
 |-----------|--------------|------------|------|-----|
-| Self-attention | `Nt` (text) | `Nt` (text) | Causal: lower-triangular `(Nt, Nt)` | Text tokens may not look ahead during autoregression |
-| Cross-attention | `Nt` (text) | `Nv` (vision) | No mask | The whole image is visible to every text position |
+| Self-attention | `Nt` (текст) | `Nt` (текст) | Каузальная: нижнетреугольная `(Nt, Nt)` | Текстовые токены не могут заглядывать вперёд при авторегрессии |
+| Cross-attention | `Nt` (текст) | `Nv` (vision) | Без маски | Всё изображение видно каждой текстовой позиции |
 
-The lesson includes one shape-validation function so the mistake of mixing them up surfaces as a `ValueError` instead of a silently broken loss curve.
+Урок включает одну функцию валидации форм, чтобы ошибка их перепутывания всплывала как `ValueError`, а не как молча сломанная кривая лосса.
 
-### Why no mask on cross-attention
+### Почему на cross-attention нет маски
 
-The image is fully observed before any text is generated. Token `t` of the caption may attend to any patch of the image; there is no temporal order on image patches. Some Flamingo variants add a per-sample masking pattern when interleaving multiple images and text segments, but for a single image plus a caption, cross-attention sees everything.
+Изображение полностью наблюдаемо до генерации какого-либо текста. Токен `t` подписи может смотреть на любой патч изображения; на патчах нет временного порядка. Некоторые варианты Flamingo добавляют пер-сэмпловый паттерн маскирования при чередовании нескольких изображений и текстовых сегментов, но для одного изображения плюс подписи cross-attention видит всё.
 
-### Key/value caching
+### Кэширование key/value
 
-The image keys and values are computed once at the start of the decode and held in a cache. Each new text token uses the cache without recomputation. This is what makes captioning fast at inference: the heavy ViT runs once; the cross-attention reuses its keys and values for every step. The lesson exposes the cache and tests the cache-hit path.
+Ключи и значения изображения вычисляются один раз в начале декодирования и держатся в кэше. Каждый новый текстовый токен использует кэш без перевычисления. Именно это делает captioning быстрым на инференсе: тяжёлый ViT работает один раз; cross-attention переиспользует его ключи и значения на каждом шаге. Урок открывает кэш и тестирует путь cache-hit.
 
-### Block composition
+### Композиция блока
 
-A decoder block runs: pre-LN -> self-attention -> residual -> pre-LN -> cross-attention -> residual -> pre-LN -> feed-forward -> residual. Three sub-layers, each with its own LayerNorm. The Flamingo paper added a learned gate on cross-attention so the model could opt out of the image path at training-time stability cost; the canonical baseline (used here) has no gate.
+Decoder-блок выполняет: pre-LN -> self-attention -> residual -> pre-LN -> cross-attention -> residual -> pre-LN -> feed-forward -> residual. Три подслоя, у каждого свой LayerNorm. Статья Flamingo добавила обучаемый gate на cross-attention, чтобы модель могла отказываться от пути изображения ради стабильности обучения; канонический бейзлайн (используемый здесь) без gate.
 
 ```python
 class DecoderBlock:
@@ -81,74 +78,74 @@ class DecoderBlock:
       return text_tokens
 ```
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `CrossAttention(hidden, heads)`, multi-head cross-attention with separate `q` and `kv` projections.
-- `CausalSelfAttention(hidden, heads)`, the masked self-attention from a standard decoder.
-- `DecoderBlock`, composing the three sub-layers with pre-LN residuals.
-- `VisionLanguageDecoder`, four-layer decoder fed by a mock vision encoder output and a small text embedding table.
-- `causal_mask(length)` returning a `(length, length)` lower-triangular boolean tensor.
-- A demo that feeds a batch of two text sequences of length 10 with image memory of length 197 and prints output shape, the self-attention mask shape, and the cross-attention output norm per position.
+- `CrossAttention(hidden, heads)` — multi-head cross-attention с раздельными проекциями `q` и `kv`.
+- `CausalSelfAttention(hidden, heads)` — маскированное self-attention стандартного декодера.
+- `DecoderBlock` — компонует три подслоя с pre-LN-residual'ами.
+- `VisionLanguageDecoder` — четырёхслойный декодер, питаемый выходом mock-vision-энкодера и маленькой таблицей текстовых эмбеддингов.
+- `causal_mask(length)` — возвращает нижнетреугольный булев тензор `(length, length)`.
+- Демо: подаёт батч из двух текстовых последовательностей длины 10 с image memory длины 197 и печатает форму выхода, форму маски self-attention и норму выхода cross-attention по позициям.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: decoder produces a `(2, 10, text_vocab)` logits tensor. Mask shape is `(10, 10)`. The KV-cache reuse check confirms identical logits between the cached and uncached paths.
+Вывод: декодер порождает тензор логитов `(2, 10, text_vocab)`. Форма маски — `(10, 10)`. Проверка переиспользования KV-кэша подтверждает идентичные логиты кэшированного и некэшированного путей.
 
-## Use It
+## Используйте это
 
-Cross-attention shows up in two production families:
+Cross-attention встречается в двух продакшен-семействах:
 
-- **Flamingo and IDEFICS.** Insert a cross-attention sub-layer every K language model blocks, with a frozen LM. The vision-language adapter is the cross-attention block plus its gate.
-- **BLIP-2.** The Q-Former uses cross-attention from a fixed set of 32 query tokens into the image features, then projects the queries into the LM embedding space.
+- **Flamingo и IDEFICS.** Вставляют cross-attention-подслой каждые K блоков языковой модели, LM заморожена. Vision-language-адаптер — cross-attention-блок плюс его gate.
+- **BLIP-2.** Q-Former использует cross-attention из фиксированного набора 32 query-токенов в фичи изображения, затем проецирует queries в пространство эмбеддингов LM.
 
-The shape of the block in this lesson maps directly onto both. The mask discipline (causal on self, none on cross) is the same.
+Форма блока этого урока маппится прямо на оба. Дисциплина масок (каузальная на self, никакой на cross) та же.
 
-## Tests
+## Тесты
 
-`code/test_main.py` covers:
+`code/test_main.py` покрывает:
 
-- causal mask is lower-triangular and matches expected boolean shape
-- cross-attention output shape is `(B, Nt, hidden)` regardless of key length
-- KV-cache path matches uncached path to float tolerance
-- shape mismatch between text and image streams raises a clear `ValueError`
-- a full decoder forward pass produces the right batch and sequence shape
+- каузальная маска нижнетреугольна и совпадает с ожидаемой булевой формой
+- форма выхода cross-attention — `(B, Nt, hidden)` независимо от длины ключей
+- путь KV-кэша совпадает с некэшированным в пределах float-допуска
+- несовпадение форм текстового и image-потоков кидает ясный `ValueError`
+- полный forward-проход декодера даёт правильные формы батча и последовательности
 
-Run them:
+Запустите их:
 
 ```bash
 python3 -m unittest code/test_main.py
 ```
 
-## Exercises
+## Упражнения
 
-1. Add a learned tanh gate to the cross-attention residual (the Flamingo trick) and verify training converges from a near-zero initial gate. The gate starts at 0; the model recovers text-only behavior before mixing the image stream in.
+1. Добавьте обучаемый tanh-gate на residual cross-attention (трюк Flamingo) и убедитесь, что обучение сходится с почти нулевого начального gate. Gate стартует с 0; модель восстанавливает text-only-поведение до подмешивания потока изображения.
 
-2. Implement interleaved attention where the same decoder consumes multiple images plus multiple text segments. Build the per-sample cross-attention mask that prevents text segment 2 from attending to image 1.
+2. Реализуйте чередующееся внимание, где один декодер потребляет несколько изображений плюс несколько текстовых сегментов. Постройте пер-сэмпловую cross-attention-маску, не дающую текстовому сегменту 2 смотреть на изображение 1.
 
-3. Profile the cross-attention vs the self-attention layer at `Nt=64, Nv=576` (a 24x24 grid at higher resolution). The cross-attention cost is `Nt * Nv` and dominates at high image resolution.
+3. Отпрофилируйте cross-attention против self-attention при `Nt=64, Nv=576` (сетка 24x24 на большем разрешении). Стоимость cross-attention — `Nt * Nv`, и она доминирует на высоком разрешении изображения.
 
-4. Add a query-side dropout on the cross-attention map and measure caption diversity on the demo (caption sample variance increases with dropout in the cross map).
+4. Добавьте dropout на query-стороне карты cross-attention и измерьте разнообразие подписей на демо (дисперсия сэмплов подписей растёт с dropout в cross-карте).
 
-5. Swap the cross-attention layer for a Q-Former-style attention block where a fixed 32-token query pool attends to image features once per layer.
+5. Замените слой cross-attention на блок в стиле Q-Former, где фиксированный пул из 32 query-токенов смотрит на фичи изображения один раз на слой.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| Late fusion | Text and vision stay in separate streams; cross-attention bridges them at every block |
-| Cross-attention | Q comes from one stream, K and V from another |
-| Causal mask | Lower-triangular boolean mask that prevents looking ahead during autoregression |
-| KV cache | Image keys and values stored once and reused for every decode step |
-| Memory tokens | The frozen image tokens that the decoder reaches into |
+| Позднее слияние | Текст и vision остаются в раздельных потоках; cross-attention мостит их на каждом блоке |
+| Cross-attention | Q приходит из одного потока, K и V — из другого |
+| Каузальная маска | Нижнетреугольная булева маска, запрещающая заглядывать вперёд при авторегрессии |
+| KV-кэш | Ключи и значения изображения, сохранённые один раз и переиспользуемые на каждом шаге декодирования |
+| Memory-токены | Замороженные токены изображения, в которые тянется декодер |
 
-## Further Reading
+## Дополнительное чтение
 
-- Flamingo (2022) for the canonical late-fusion design with gated cross-attention.
-- BLIP-2 (2023) for the Q-Former, which is a cross-attention block dressed as a learned query pool.
-- IDEFICS (2023) for an open-weight reproduction of the Flamingo recipe.
+- Flamingo (2022) — канонический дизайн позднего слияния с gated cross-attention.
+- BLIP-2 (2023) — Q-Former, то есть cross-attention-блок, переодетый в обучаемый пул запросов.
+- IDEFICS (2023) — open-weights-воспроизведение рецепта Flamingo.

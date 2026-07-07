@@ -1,29 +1,26 @@
 # Vision-Language Pretraining
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Энкодер, проекция и декодер соединены. Теперь обучите их вместе. Обучение ведут две цели: контрастивный image-text-лосс (InfoNCE), стягивающий совпадающие пары в совместном пространстве эмбеддингов, и лосс языкового моделирования, просящий декодер подписать каждое изображение. Вместе они учат сеть и находить правильное изображение для подписи, и писать подпись к изображению.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37 (фундамент трека B)
+**Время:** ~90 минут
 
-> The encoder, projection, and decoder are wired. Now train them together. Two objectives drive learning: a contrastive image-text loss (InfoNCE) that pulls matching pairs together in the joint embedding space, and a language modeling loss that asks the decoder to caption each image. Combined, they teach the network both to find the right image for a caption and to write a caption for the image.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37 (Track B foundations)
-**Time:** ~90 minutes
+- Реализовать контрастивный лосс InfoNCE по батчу пар изображение-подпись.
+- Скомпоновать контрастивный лосс с авторегрессивным лоссом языкового моделирования.
+- Синтезировать mock-корпус из 200 пар изображение-подпись без скачивания настоящего датасета.
+- Прогнать демо-цикл обучения на 50 шагов и увидеть падение обоих лоссов.
 
-## Learning Objectives
+## Проблема
 
-- Implement InfoNCE contrastive loss across a batch of image-caption pairs.
-- Compose contrastive loss with autoregressive language modeling loss.
-- Synthesize a 200-pair mock image-caption corpus with no real dataset download.
-- Run a 50-step demo training loop and observe both losses decreasing.
+Vision-language-модели нужны два навыка. Она должна ранжировать: по подписи найти правильное изображение среди многих. И должна генерировать: по изображению написать подпись. Предобучение только на одном навыке даёт полсистемы. CLIP отточил ранжирование, но не умеет подписывать. GPT-4V умеет подписывать, но использует отдельную retrieval-голову для ранжирования. Многоцелевое предобучение получает оба за один проход.
 
-## The Problem
+InfoNCE обслуживает ранжирующую половину. Для батча из N пар модель трактует N совпадающих пар как положительные, а `N^2 - N` несовпадающих — как отрицательные, и гоняет кросс-энтропийный лосс по получившейся матрице сходств `(N, N)`. LM-лосс обслуживает генеративную половину: стандартное предсказание следующего токена, обусловленное изображением. Оба лосса дифференцируемы и могут делить веса энкодера, проектора и декодера.
 
-A vision-language model needs two skills. It must rank: given a caption, find the right image among many. It must generate: given an image, write a caption. Pretraining the model on one skill alone gives you half a system. CLIP nailed ranking but cannot caption. GPT-4V can caption but uses a separate retrieval head for ranking. Multi-objective pretraining gets both in one pass.
-
-InfoNCE handles the ranking half. For a batch of N pairs, the model treats the N matching pairs as positives and the `N^2 - N` mismatched pairs as negatives, then runs a cross-entropy loss on the resulting `(N, N)` similarity matrix. The LM loss handles the generation half: standard next-token prediction conditioned on the image. Both losses are differentiable and can share the encoder, projector, and decoder weights.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -43,100 +40,100 @@ flowchart TB
   LM --> Total
 ```
 
-### InfoNCE in one paragraph
+### InfoNCE одним абзацем
 
-Stack the N image embeddings as rows and the N text embeddings as rows. L2-normalize both. Compute the `N x N` matrix `S = I T^T / tau` where `tau` is a learned temperature. The diagonal entries are the matching pairs; off-diagonal entries are negatives. Apply cross-entropy with the target `argmax` running down the diagonal: row `i` should have its highest entry in column `i`. Do the same symmetrically along columns. The total is the average of the two. This is the CLIP loss in eight lines.
+Сложите N эмбеддингов изображений строками и N текстовых эмбеддингов строками. L2-нормализуйте оба. Вычислите матрицу `N x N` `S = I T^T / tau`, где `tau` — обучаемая температура. Диагональные элементы — совпадающие пары; внедиагональные — отрицательные. Примените кросс-энтропию с целью по диагонали: у строки `i` наибольший элемент должен стоять в столбце `i`. Сделайте то же симметрично по столбцам. Итог — среднее двух. Это CLIP-лосс в восемь строк.
 
-### Temperature matters
+### Температура важна
 
-The temperature `tau` controls how peaked the softmax is. Too small (e.g. `tau = 0.01`) and the gradient comes only from the very hardest negative, training is noisy. Too large and the softmax flattens and gradient vanishes. CLIP learns `tau` as a parameter; the demo here does the same.
+Температура `tau` управляет остротой softmax. Слишком маленькая (например, `tau = 0.01`) — градиент приходит только от самого трудного негатива, обучение шумное. Слишком большая — softmax уплощается и градиент исчезает. CLIP обучает `tau` как параметр; демо здесь делает то же.
 
-### Language modeling loss
+### Лосс языкового моделирования
 
-The decoder consumes image memory tokens via cross-attention and predicts the next text token at every position. Loss is standard cross-entropy with the next-position target. Padding positions are masked out of the loss.
+Декодер потребляет memory-токены изображения через cross-attention и предсказывает следующий текстовый токен в каждой позиции. Лосс — стандартная кросс-энтропия с целью следующей позиции. Позиции паддинга замаскированы из лосса.
 
-### Combining the losses
+### Сочетание лоссов
 
-`total = contrastive + lm_weight * lm` where `lm_weight` is a scalar (often 1.0). The two losses share gradients into the encoder and projection; only the decoder receives LM-loss gradient. This is the multi-task recipe that CoCa, BLIP, and SigLIP-style models all use, with various weightings.
+`total = contrastive + lm_weight * lm`, где `lm_weight` — скаляр (часто 1.0). Оба лосса делят градиенты в энкодер и проекцию; только декодер получает градиент LM-лосса. Это многозадачный рецепт, который используют CoCa, BLIP и SigLIP-подобные модели с разными весами.
 
-| Component | Loss surface | Affects |
+| Компонент | Поверхность лосса | Затрагивает |
 |-----------|--------------|---------|
-| InfoNCE | Pair ranking in the joint space | Encoder + projection + text head |
-| LM | Token prediction conditioned on image | Encoder + projection + decoder |
-| Combined | Multi-task | Whole stack |
+| InfoNCE | Ранжирование пар в совместном пространстве | Энкодер + проекция + текстовая голова |
+| LM | Предсказание токенов, обусловленное изображением | Энкодер + проекция + декодер |
+| Вместе | Multi-task | Весь стек |
 
-### Why 50 steps is enough for a demo
+### Почему 50 шагов достаточно для демо
 
-The mock corpus is a synthetic 200-pair set with random images and random caption ids. After 50 SGD steps with batch size 16, both losses drop visibly even if the absolute values stay above what a real-data model would achieve. The point of the demo is to confirm the gradient plumbing works end to end and that adding the LM loss does not destabilize the contrastive objective.
+Mock-корпус — синтетический набор из 200 пар со случайными изображениями и случайными id подписей. После 50 SGD-шагов с батчем 16 оба лосса видимо падают, даже если абсолютные значения остаются выше, чем достигла бы модель на настоящих данных. Смысл демо — подтвердить, что градиентная обвязка работает end to end и что добавление LM-лосса не дестабилизирует контрастивную цель.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `MultimodalModel`, combining a small ViT encoder, the MLP projector, a tiny text-side encoder (mean-pool over embedded ids), and the cross-attention decoder from lesson 61.
-- `info_nce_loss(image_emb, text_emb, temperature)`, the bidirectional CLIP-style contrastive loss.
-- `lm_loss(logits, target_ids, padding_id)`, masked next-token cross-entropy.
-- `make_mock_corpus(seed, n_pairs)`, returning 200 deterministic (image, caption_ids) pairs.
-- A training loop running 50 steps with batch size 16, Adam optimizer, and a learned log-temperature parameter. Both losses are printed every 5 steps.
+- `MultimodalModel` — сочетает маленький ViT-энкодер, MLP-проектор, крошечный текстовый энкодер (средний пулинг по эмбеддированным id) и cross-attention-декодер из урока 61.
+- `info_nce_loss(image_emb, text_emb, temperature)` — двунаправленный контрастивный лосс в стиле CLIP.
+- `lm_loss(logits, target_ids, padding_id)` — маскированную кросс-энтропию следующего токена.
+- `make_mock_corpus(seed, n_pairs)` — возвращает 200 детерминированных пар (изображение, caption_ids).
+- Обучающий цикл: 50 шагов с батчем 16, оптимизатор Adam и обучаемый параметр log-температуры. Оба лосса печатаются каждые 5 шагов.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: contrastive loss drops from about `ln(16) = 2.77` toward 2.4; LM loss drops from a random-uniform baseline of `ln(512) ≈ 6.24` toward about 4.7. Both decreases prove the gradient is wired correctly. Real models train for millions of steps; the dynamics are the same.
+Вывод: контрастивный лосс падает с примерно `ln(16) = 2.77` к 2.4; LM-лосс — с равномерно-случайного бейзлайна `ln(512) ≈ 6.24` к примерно 4.7. Оба падения доказывают, что градиент подключён правильно. Настоящие модели обучаются миллионы шагов; динамика та же.
 
-## Use It
+## Используйте это
 
-This is the same loss recipe shipped in:
+Тот же рецепт лоссов отгружен в:
 
-- **CLIP (2021).** Image-text contrastive only, with a separate frozen-encoder caption probe.
-- **CoCa (2022).** Image-text contrastive plus image-captioning LM loss in one model. The exact pattern this lesson builds.
-- **BLIP (2022) and BLIP-2.** Contrastive plus LM plus image-text matching head. Three losses combined.
-- **SigLIP (2023).** Switches InfoNCE for a sigmoid pair loss; same contrastive role, different functional form.
-- **LLaVA family.** Two-stage training where stage one is alignment (cosine on a frozen LM) and stage two adds LM loss with an unfrozen LM. Lesson 60 maps to stage one; this lesson maps to stage two.
+- **CLIP (2021).** Только image-text-контрастив, с отдельным caption-зондом на замороженном энкодере.
+- **CoCa (2022).** Image-text-контрастив плюс LM-лосс подписывания в одной модели. Ровно тот паттерн, что строит этот урок.
+- **BLIP (2022) и BLIP-2.** Контрастив плюс LM плюс голова image-text-matching. Три лосса вместе.
+- **SigLIP (2023).** Меняет InfoNCE на сигмоидный парный лосс; та же контрастивная роль, другая функциональная форма.
+- **Семейство LLaVA.** Двухстадийное обучение: первая стадия — выравнивание (косинус на замороженной LM), вторая добавляет LM-лосс с размороженной LM. Урок 60 соответствует первой стадии; этот — второй.
 
-## Tests
+## Тесты
 
-`code/test_main.py` covers:
+`code/test_main.py` покрывает:
 
-- InfoNCE loss is symmetric across image/text rows
-- InfoNCE loss returns 0 when the similarity matrix is a perfect diagonal of large positive numbers
-- LM loss correctly masks padding positions
-- model forward pass produces both losses without errors
-- 5-step training loop reduces the combined loss
+- InfoNCE-лосс симметричен по строкам изображение/текст
+- InfoNCE-лосс возвращает 0, когда матрица сходств — идеальная диагональ больших положительных чисел
+- LM-лосс корректно маскирует позиции паддинга
+- forward-проход модели порождает оба лосса без ошибок
+- 5-шаговый обучающий цикл уменьшает объединённый лосс
 
-Run them:
+Запустите их:
 
 ```bash
 python3 -m unittest code/test_main.py
 ```
 
-## Exercises
+## Упражнения
 
-1. Replace InfoNCE with SigLIP-style sigmoid pair loss and compare convergence on the mock corpus.
+1. Замените InfoNCE сигмоидным парным лоссом в стиле SigLIP и сравните сходимость на mock-корпусе.
 
-2. Add a hard-negative mining step: every other batch, select the hardest off-diagonal pair from the previous batch and append it. Train and inspect whether contrastive loss drops faster.
+2. Добавьте шаг hard-negative mining: каждый второй батч выбирайте самую трудную внедиагональную пару предыдущего батча и добавляйте её. Обучите и посмотрите, падает ли контрастивный лосс быстрее.
 
-3. Add an image-text matching binary head on top of the joint embedding (true/false: do these match?) for a third loss, replicating BLIP's three-head setup.
+3. Добавьте бинарную голову image-text-matching поверх совместного эмбеддинга (true/false: совпадают ли эти двое?) третьим лоссом, воспроизведя трёхголовую схему BLIP.
 
-4. Replace the mock corpus with caption-id sequences drawn from a Markov chain whose transition matrix is conditioned on image hash. The captioning loss should drop further because there is actual learnable signal.
+4. Замените mock-корпус последовательностями caption-id из марковской цепи, чья матрица переходов обусловлена хешем изображения. Лосс подписывания должен упасть сильнее, потому что появился реально выучиваемый сигнал.
 
-5. Train the same model with `lm_weight = 0` and again with `lm_weight = 1`. Compare contrastive loss; the LM loss should not regress the ranking objective.
+5. Обучите ту же модель с `lm_weight = 0` и ещё раз с `lm_weight = 1`. Сравните контрастивный лосс; LM-лосс не должен регрессировать ранжирующую цель.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| InfoNCE | Noise contrastive estimation: cross-entropy on a similarity matrix |
-| Temperature | Scalar that controls how peaked the contrastive softmax is |
-| Hard negative | An off-diagonal pair the model finds confusing, useful for sampling |
-| LM loss | Standard next-token cross-entropy on the captioning side |
-| Joint embedding space | The shared space where image and text vectors live after projection |
+| InfoNCE | Noise contrastive estimation: кросс-энтропия по матрице сходств |
+| Температура | Скаляр, управляющий остротой контрастивного softmax |
+| Hard negative | Внедиагональная пара, которую модель путает; полезна для сэмплирования |
+| LM-лосс | Стандартная кросс-энтропия следующего токена на стороне подписывания |
+| Совместное пространство эмбеддингов | Общее пространство, где векторы изображения и текста живут после проекции |
 
-## Further Reading
+## Дополнительное чтение
 
-- CLIP paper for the original contrastive recipe.
-- CoCa paper for contrastive plus captioning in one model.
-- SigLIP paper for the sigmoid pair-loss variant and why it scales better.
+- Статья CLIP — оригинальный контрастивный рецепт.
+- Статья CoCa — контрастив плюс подписывание в одной модели.
+- Статья SigLIP — вариант с сигмоидным парным лоссом и почему он лучше масштабируется.

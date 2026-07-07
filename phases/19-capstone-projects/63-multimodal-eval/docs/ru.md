@@ -1,33 +1,30 @@
 # Multimodal Evaluation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучение — половина цикла. Вторая половина — измерение. Этот урок строит из примитивов три поверхности оценки: image-caption retrieval с отчётом R@1, R@5, R@10; visual question answering с точностью exact match; и подписывание изображений с BLEU-4. Каждая метрика — функция над выходами модели и синтетическим eval-набором, работающим за секунды.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 58–62 (фундамент трека E: энкодер, трансформер, проекция, cross-attention-слияние, предобучение)
+**Время:** ~90 минут
 
-> Training is half the loop. The other half is measurement. This lesson builds three evaluation surfaces from primitives: image-caption retrieval reported as R@1, R@5, R@10; visual question answering reported as exact match accuracy; and image captioning reported as BLEU-4. Each metric is a function over the model's outputs and a synthetic eval suite that runs in seconds.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 58-62 (Track E foundations: encoder, transformer, projection, cross-attention fusion, pretraining)
-**Time:** ~90 minutes
+- Вычислить Recall@K из матрицы сходств между эмбеддингами изображений и подписей.
+- Вычислить exact-match-точность VQA у модели, маппящей пары (изображение, вопрос) в фиксированный словарь ответов.
+- Вычислить BLEU-4 из сгенерированных и референсных последовательностей токенов без внешних библиотек.
+- Прогнать все три eval'а на синтетическом наборе поверх обученной модели из урока 62.
 
-## Learning Objectives
+## Проблема
 
-- Compute Recall@K from a similarity matrix between image and caption embeddings.
-- Compute exact-match VQA accuracy from a model that maps (image, question) pairs to a fixed answer vocabulary.
-- Compute BLEU-4 from generated and reference token sequences without any external library.
-- Run all three evals against a synthetic suite built on top of the trained model from lesson 62.
+Соблазн — объявить мультимодальную модель готовой, когда обучающий лосс выходит на плато. Обучающий лосс меряет подгонку к обучающему распределению; он не меряет, умеет ли модель ранжировать пары в отложенном батче, отвечать на вопрос или писать подпись, которую примет человек. Стандартны три поверхности оценки:
 
-## The Problem
+- **Retrieval (R@1, R@5, R@10).** Построить совместный эмбеддинг для подписи-запроса; отранжировать каждое изображение eval-пула по косинусу; отчитаться, попало ли совпадающее изображение в топ-1, топ-5, топ-10. Симметричная форма (изображение-к-тексту) работает так же.
+- **Visual question answering (exact match).** По (изображение, вопрос) модель выдаёт токен ответа. Exact match — один бит на сэмпл: равен ли предсказанный ответ референсному? Среднее по eval-набору.
+- **Подписывание (BLEU-4).** Сгенерировать подпись. Посчитать геометрическое среднее точностей от 1-грамм до 4-грамм против референсных подписей с штрафом за краткость. Стандартная форма — мультиреференсная (одно изображение, несколько референсных подписей).
 
-The temptation is to declare a multimodal model finished when the training loss plateaus. Training loss measures fit on the training distribution; it does not measure whether the model can rank pairs in a held-out batch, answer a question, or write a caption a human would accept. Three eval surfaces are standard:
+Каждая метрика — тонкая функция. Урок строит их все в коде, чтобы математика была осязаемой, а поверхность оставалась под вашим контролем. Настоящие бенчмарк-наборы (MS-COCO, VQA v2, GQA, OK-VQA) втыкаются в те же формы функций.
 
-- **Retrieval (R@1, R@5, R@10).** Build the joint embedding for a query caption; rank every image in the eval pool by cosine; report whether the matching image lands in the top 1, top 5, top 10. Symmetric (image-to-text) form runs the same way.
-- **Visual question answering (exact match).** Given (image, question), the model outputs an answer token. Exact match is one-bit per sample: did the predicted answer equal the reference answer? Average over the eval set.
-- **Captioning (BLEU-4).** Generate a caption. Compute the geometric mean of 1-gram through 4-gram precisions against reference captions, with a brevity penalty. Multi-reference is the standard form (one image, several reference captions).
-
-Each metric is a thin function. The lesson builds them all in code so the math is concrete and the surface stays under your control. Real benchmark suites (MS-COCO, VQA v2, GQA, OK-VQA) plug into the same function shapes.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -42,13 +39,13 @@ flowchart TB
   Caps --> BLEU[BLEU-4 vs references]
 ```
 
-### Recall@K from a similarity matrix
+### Recall@K из матрицы сходств
 
-Build the `(N, N)` cosine similarity matrix between image and caption embeddings. For each row, sort the columns by descending similarity. Recall@K is the fraction of rows where the diagonal column index lies within the top K positions. Symmetric Recall@K (caption-to-image) is computed on the transposed matrix. Both numbers are reported. For an N=100 eval, R@1 = 0.6 means 60 of the 100 captions retrieved their correct image as the top match.
+Постройте косинусную матрицу сходств `(N, N)` между эмбеддингами изображений и подписей. Для каждой строки отсортируйте столбцы по убыванию сходства. Recall@K — доля строк, где индекс диагонального столбца лежит в топ-K позициях. Симметричный Recall@K (подпись-к-изображению) считается на транспонированной матрице. Отчитываются оба числа. Для eval с N=100 R@1 = 0.6 означает: 60 из 100 подписей вытащили своё правильное изображение первым совпадением.
 
 ### VQA exact match
 
-For each (image, question, answer), encode the image, embed the question, fuse via the decoder, and read out the next token. The predicted token id is compared to the reference id; correct if equal. Average over the eval set. Real VQA datasets ship with multiple human-annotated answers per question and use a soft-accuracy formula (1.0 if at least 3 of 10 annotators agree, scaled below); the lesson uses single-answer exact match for clarity.
+Для каждой тройки (изображение, вопрос, ответ) закодируйте изображение, эмбеддите вопрос, слейте через декодер и считайте следующий токен. Предсказанный id токена сравнивается с референсным; верно при равенстве. Среднее по eval-набору. Настоящие VQA-датасеты поставляются с несколькими человеческими ответами на вопрос и используют формулу мягкой точности (1.0, если согласны хотя бы 3 из 10 аннотаторов, с масштабированием ниже); урок ради ясности использует одноответный exact match.
 
 ### BLEU-4
 
@@ -56,106 +53,106 @@ For each (image, question, answer), encode the image, embed the question, fuse v
 BLEU-4 = BP * exp(mean(log p1, log p2, log p3, log p4))
 ```
 
-Where `p_n` is the modified n-gram precision (clipped count of generated n-grams that appear in any reference, divided by total generated n-grams), and `BP` is the brevity penalty:
+Где `p_n` — модифицированная точность n-грамм (клипнутый счётчик сгенерированных n-грамм, встречающихся в любом референсе, делённый на общее число сгенерированных n-грамм), а `BP` — штраф за краткость:
 
 ```text
 BP = 1                if generated length > reference length
    = exp(1 - r/g)     otherwise, where r is reference length and g is generated
 ```
 
-Smoothing is needed for small samples where some `p_n` is zero. The implementation uses Chen and Cherry "method 1" (add 1 to numerator and denominator for any zero count), which is the safest default for low-count regimes.
+На маленьких сэмплах, где какой-то `p_n` равен нулю, нужно сглаживание. Реализация использует «метод 1» Чена и Черри (добавить 1 к числителю и знаменателю при любом нулевом счётчике) — самый безопасный дефолт в режиме малых счётчиков.
 
-### Synthetic eval suite
+### Синтетический eval-набор
 
-A 50-sample eval suite is built in memory from the same mock corpus pattern used in lesson 62, with a held-out seed. Three lists make up the suite:
+50-сэмпловый eval-набор строится в памяти по тому же паттерну mock-корпуса, что в уроке 62, с отложенным сидом. Набор составляют три списка:
 
-- `pairs`: 50 (image, caption_ids) pairs for retrieval.
-- `vqa`: 50 (image, question_ids, answer_id) triples.
-- `caps`: 50 (image, [reference_caption_ids, ...]) entries with up to 3 references per image.
+- `pairs`: 50 пар (изображение, caption_ids) для retrieval.
+- `vqa`: 50 троек (изображение, question_ids, answer_id).
+- `caps`: 50 записей (изображение, [референсные caption_ids, ...]) — до 3 референсов на изображение.
 
-The suite is deterministic from the seed and held out from the training corpus, so the metrics are computed on data the model never saw. Persisting the suite to JSON is left as an exercise (see below).
+Набор детерминирован от сида и отложен от обучающего корпуса, поэтому метрики считаются на данных, которых модель не видела. Персист набора в JSON оставлен упражнением (см. ниже).
 
-| Metric | Range | Random baseline (N=50) |
+| Метрика | Диапазон | Случайный бейзлайн (N=50) |
 |--------|-------|------------------------|
-| R@1 | 0 to 1 | 0.02 (1 / N) |
-| R@5 | 0 to 1 | 0.10 |
-| R@10 | 0 to 1 | 0.20 |
-| VQA EM | 0 to 1 | 1 / vocab |
-| BLEU-4 | 0 to 1 | small but nonzero |
+| R@1 | от 0 до 1 | 0.02 (1 / N) |
+| R@5 | от 0 до 1 | 0.10 |
+| R@10 | от 0 до 1 | 0.20 |
+| VQA EM | от 0 до 1 | 1 / словарь |
+| BLEU-4 | от 0 до 1 | маленький, но ненулевой |
 
-For a 50-step training run on synthetic data, the metrics are not expected to be high; they are expected to be above the random baseline, which is what the demo checks.
+Для 50-шагового обучения на синтетике метрики не обязаны быть высокими; они обязаны быть выше случайного бейзлайна — именно это проверяет демо.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `recall_at_k(sim_matrix, k)`, returning a float in `[0, 1]` for both directions.
-- `vqa_exact_match(predictions, references)`, returning the mean over `int` equality.
-- `bleu4(generated, references, smoothing=True)`, with multi-reference support.
-- `build_eval_suite(seed, n_samples, vocab_size, max_len)`, returning three deterministic eval lists.
-- `evaluate(model, suite)`, which runs all three metrics and returns a `dict` of numbers.
-- A demo that loads a freshly-initialized multimodal model from lesson 62, evaluates it, then trains it for 50 steps and evaluates again, printing the before/after metrics.
+- `recall_at_k(sim_matrix, k)` — возвращает float в `[0, 1]` для обоих направлений.
+- `vqa_exact_match(predictions, references)` — возвращает среднее по `int`-равенству.
+- `bleu4(generated, references, smoothing=True)` — с поддержкой мультиреференсов.
+- `build_eval_suite(seed, n_samples, vocab_size, max_len)` — возвращает три детерминированных eval-списка.
+- `evaluate(model, suite)` — гоняет все три метрики и возвращает `dict` чисел.
+- Демо: загружает свежеинициализированную мультимодальную модель из урока 62, оценивает её, затем обучает 50 шагов и оценивает снова, печатая метрики до/после.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: the before/after metric table shows retrieval improving from near-random toward the model's learned signal, VQA improving above random, and BLEU-4 improving (the synthetic structure is enough for a 4-gram precision lift).
+Вывод: таблица метрик до/после показывает улучшение retrieval от почти случайного к выученному сигналу модели, рост VQA выше случайного и рост BLEU-4 (синтетической структуры достаточно для подъёма 4-граммной точности).
 
-## Use It
+## Используйте это
 
-Each metric maps directly onto a production benchmark:
+Каждая метрика маппится прямо на продакшен-бенчмарк:
 
-- **Retrieval.** MS-COCO 5K val, Flickr30K, ImageNet zero-shot are all R@K problems on the same similarity matrix. Replace the synthetic eval with the real files and the function signature is unchanged.
-- **VQA.** VQA v2, GQA, OK-VQA use the same exact-match shape (with soft-acc instead of single-answer EM for VQA v2).
-- **BLEU-4.** MS-COCO captioning, NoCaps, Flickr30K captioning all use BLEU-4 plus CIDEr and METEOR. Adding CIDEr is one more function.
+- **Retrieval.** MS-COCO 5K val, Flickr30K, zero-shot ImageNet — всё это R@K-задачи на той же матрице сходств. Замените синтетический eval настоящими файлами — сигнатура функции не меняется.
+- **VQA.** VQA v2, GQA, OK-VQA используют ту же exact-match-форму (с soft-acc вместо одноответного EM для VQA v2).
+- **BLEU-4.** Подписывание MS-COCO, NoCaps, Flickr30K используют BLEU-4 плюс CIDEr и METEOR. Добавить CIDEr — ещё одна функция.
 
-For real benchmarks, swap `build_eval_suite` for a real loader and keep the function bodies. The math is benchmark-agnostic.
+Для настоящих бенчмарков замените `build_eval_suite` настоящим загрузчиком и оставьте тела функций. Математика бенчмарк-агностична.
 
-## Tests
+## Тесты
 
-`code/test_main.py` covers:
+`code/test_main.py` покрывает:
 
-- recall@k returns 1.0 on a perfect identity similarity matrix and 0.0 on a flipped one for k < N
-- recall@k respects `k <= N` upper bound
-- bleu4 returns 1.0 when generated equals one of the references exactly
-- bleu4 returns 0.0 on disjoint vocabulary
-- vqa exact match equals the fraction of equal pairs
-- build_eval_suite returns the expected number of pairs, vqa items, and caption entries
+- recall@k возвращает 1.0 на идеальной единичной матрице сходств и 0.0 на перевёрнутой при k < N
+- recall@k чтит верхнюю границу `k <= N`
+- bleu4 возвращает 1.0, когда сгенерированное в точности равно одному из референсов
+- bleu4 возвращает 0.0 на непересекающемся словаре
+- vqa exact match равен доле равных пар
+- build_eval_suite возвращает ожидаемое число пар, vqa-элементов и caption-записей
 
-Run them:
+Запустите их:
 
 ```bash
 python3 -m unittest code/test_main.py
 ```
 
-## Exercises
+## Упражнения
 
-1. Add CIDEr to the captioning metrics. CIDEr uses TF-IDF weighting on n-grams, which rewards informative tokens.
+1. Добавьте CIDEr в метрики подписывания. CIDEr использует TF-IDF-взвешивание n-грамм, вознаграждая информативные токены.
 
-2. Implement soft-accuracy VQA: multiple human answers per question, accuracy is `min(human_count / 3, 1)` if any matches. Replicates VQA v2.
+2. Реализуйте VQA с мягкой точностью: несколько человеческих ответов на вопрос, точность — `min(human_count / 3, 1)` при совпадении с любым. Воспроизводит VQA v2.
 
-3. Add a NaN-safe variant of `bleu4` that handles empty generated sequences without crashing.
+3. Добавьте NaN-безопасный вариант `bleu4`, обрабатывающий пустые сгенерированные последовательности без краша.
 
-4. Compute mean reciprocal rank (MRR) alongside R@K. MRR is sensitive to where the correct item lands beyond the top K; R@K is sensitive to whether it lands in the top K.
+4. Посчитайте mean reciprocal rank (MRR) рядом с R@K. MRR чувствителен к тому, где правильный элемент оказался за пределами топ-K; R@K — к тому, попал ли он в топ-K.
 
-5. Run the eval on the model at five checkpoints during training (step 0, 10, 20, 30, 40, 50) and plot the learning curve. Confirm the metric trajectories track the loss trajectory.
+5. Прогоните eval на модели в пяти чекпоинтах обучения (шаги 0, 10, 20, 30, 40, 50) и постройте кривую обучения. Подтвердите, что траектории метрик следуют траектории лосса.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What it means |
+| Термин | Что означает |
 |------|---------------|
-| R@K | Fraction of queries where the correct match lands in the top K results |
-| Exact match | The simplest VQA scoring: predicted answer equals reference |
-| BLEU-4 | Geometric mean of 1- to 4-gram precisions, with brevity penalty |
-| Multi-reference | A captioning metric accepts several reference captions per image |
-| Held-out | The eval set is sampled from a seed disjoint from the training corpus |
+| R@K | Доля запросов, где правильное совпадение попадает в топ-K результатов |
+| Exact match | Простейший VQA-скоринг: предсказанный ответ равен референсному |
+| BLEU-4 | Геометрическое среднее точностей 1–4-грамм со штрафом за краткость |
+| Мультиреференс | Метрика подписывания принимает несколько референсных подписей на изображение |
+| Held-out | Eval-набор сэмплируется от сида, не пересекающегося с обучающим корпусом |
 
-## Further Reading
+## Дополнительное чтение
 
-- VQA v2 paper for the soft-accuracy formula and dataset statistics.
-- CIDEr paper for TF-IDF-weighted n-gram captioning.
-- BLEU original (Papineni et al., 2002) for the smoothing variants.
-- MS-COCO captioning eval scripts for the canonical reference implementation.
+- Статья VQA v2 — формула мягкой точности и статистика датасета.
+- Статья CIDEr — TF-IDF-взвешенное n-граммное подписывание.
+- Оригинальный BLEU (Papineni et al., 2002) — варианты сглаживания.
+- Скрипты оценки подписывания MS-COCO — каноническая референсная реализация.
