@@ -1,31 +1,28 @@
 # Gradient Clipping and Mixed Precision
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Оптимизатор и расписание из предыдущего урока предполагают, что градиенты вменяемы. Обычно это не так. Один плохой батч может подбросить норму градиента на три порядка. Обучение в смешанной точности усиливает это, добавляя FP16-переполнение со стороны лосса. Этот урок строит два ремня безопасности, без которых продакшен-обучение не отгружается: клиппинг градиентов до сконфигурированной глобальной L2-нормы и mixed-precision-цикл с autocast и GradScaler, который детектит NaN и Inf, чисто пропускает шаг и логирует масштабный фактор для форензики.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37
+**Время:** ~90 минут
 
-> The optimizer and schedule from the previous lesson assume gradients are sane. They usually are not. A single bad batch can spike the gradient norm by three orders of magnitude. Mixed-precision training amplifies this by introducing FP16 overflow on the loss side. This lesson builds the two safety belts that production training cannot ship without: gradient clipping to a configured global L2 norm, and a mixed-precision loop with autocast and GradScaler that detects NaN and Inf, skips the step cleanly, and logs the scaling factor for forensics.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37
-**Time:** ~90 minutes
+- Вычислить глобальную L2-норму по всем градиентам параметров и клиппить на месте, когда она превышает сконфигурированный порог.
+- Обернуть обучающий шаг в autocast плюс GradScaler, чтобы FP16 forward- и backward-проходы переживали переполнение.
+- Детектить NaN и Inf в лоссе или градиенте, пропускать шаг оптимизатора и логировать пропуск.
+- Репортить масштабный фактор GradScaler каждый шаг, чтобы длинная серия пропусков была видна немедленно.
 
-## Learning Objectives
+## Проблема
 
-- Compute the global L2 norm over all parameter gradients and clip in place when it exceeds a configured threshold.
-- Wrap a training step in autocast plus a GradScaler so FP16 forward and backward passes survive overflow.
-- Detect NaN and Inf in the loss or gradient, skip the optimizer step, and log the skip.
-- Report the GradScaler's scaling factor every step so a long sequence of skips is visible immediately.
+Обучающий прогон, вчера шедший чисто, выдаёт кривую лосса, уходящую вертикально на шаге 8 217. Виновник — один батч, чья норма градиента равна 4 200, в двадцать раз выше предыдущего пика. Без клиппинга оптимизатор применяет шаг, сбрасывающий всё, что модель выучила за предыдущий час. С глобальным L2-клипом на норме 1.0 тот же батч вносит обновление единичной нормы; лосс остаётся на своей трендовой линии; прогон выживает.
 
-## The Problem
+Обучение в смешанной точности поднимает throughput в 2–3 раза, считая forward-проход и большую часть backward-прохода в FP16. Цена — у FP16 узкий диапазон экспоненты. Типичный градиент, переполнившийся в FP16, вычисляется в Inf, который распространяется через последующие слои как NaN, который на следующем шаге оптимизатора выставляет каждый вес в NaN. GradScaler в PyTorch решает это, умножая лосс на большой масштабный фактор до backward-прохода и деля градиенты на тот же фактор до шага оптимизатора. Если какой-либо градиент — Inf или NaN в момент unscale, скейлер пропускает шаг и половинит фактор; если предыдущие N шагов были чистыми, скейлер удваивает фактор. За время обучения фактор находит наибольшее значение, которое допускает диапазон FP16.
 
-A training run that ran clean yesterday produces a loss curve that goes vertical at step 8,217. The culprit is a single batch whose gradient norm is 4,200, twenty times the previous peak. Without clipping the optimizer applies a step that resets every learning the model had done in the previous hour. With a global L2 clip at norm 1.0, the same batch contributes a unit-norm update; the loss stays on its trend line; the run survives.
+Строительная проблема — правильно свить эти два механизма. Клип до unscale — и порог применяется к масштабированным градиентам; клип после unscale — и важен порядок операций на GradScaler. Правильный порядок: `scaler.scale(loss).backward()`, затем `scaler.unscale_(optimizer)`, затем `clip_grad_norm_`, затем `scaler.step(optimizer)`, затем `scaler.update()`. Любой другой порядок даёт молчаливо сломанный цикл.
 
-Mixed-precision training pushes throughput by 2-3x by computing the forward pass and most of the backward pass in FP16. The cost is that FP16 has a narrow exponent range. A typical gradient that overflows in FP16 evaluates to Inf, which propagates through subsequent layers as NaN, which sets every weight to NaN at the next optimizer step. PyTorch's GradScaler solves this by multiplying the loss by a large scaling factor before the backward pass and dividing the gradients by the same factor before the optimizer step. If any gradient is Inf or NaN at unscale time, the scaler skips the step and halves the scaling factor; if the previous N steps were clean, the scaler doubles the factor. Over the course of training the factor finds the highest value the FP16 range allows.
-
-The build problem is wiring the two correctly. Clip before unscale and the threshold is on scaled gradients; clip after unscale and the order of operations on the GradScaler matters. The right order is: `scaler.scale(loss).backward()`, then `scaler.unscale_(optimizer)`, then `clip_grad_norm_`, then `scaler.step(optimizer)`, then `scaler.update()`. Any other order produces a silently broken loop.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -43,90 +40,90 @@ flowchart TD
   Skip --> NextStep
 ```
 
-### Global L2 norm
+### Глобальная L2-норма
 
-The global L2 norm is the Euclidean norm of the concatenated gradient vector, not the per-parameter norm. PyTorch implements this as `torch.nn.utils.clip_grad_norm_(parameters, max_norm)`. The function returns the pre-clip norm so the lesson can log both the natural and the clipped value, which is necessary for the "we are clipping at every step" diagnosis.
+Глобальная L2-норма — евклидова норма конкатенированного вектора градиентов, а не пер-параметровая норма. PyTorch реализует это как `torch.nn.utils.clip_grad_norm_(parameters, max_norm)`. Функция возвращает норму до клипа, поэтому урок может логировать и естественное, и клипнутое значение — это необходимо для диагноза «мы клиппим на каждом шаге».
 
-### autocast and GradScaler
+### autocast и GradScaler
 
-`torch.amp.autocast(device_type)` is the context manager that selectively runs eligible operations (most matmul-class operations) in FP16. `torch.amp.GradScaler(device_type)` is the helper that scales the loss before backward and inverse-scales the gradients before the optimizer step. The two are designed together; using one without the other is a configuration error the test should catch.
+`torch.amp.autocast(device_type)` — контекст-менеджер, выборочно запускающий подходящие операции (большинство операций класса matmul) в FP16. `torch.amp.GradScaler(device_type)` — хелпер, масштабирующий лосс до backward и обратно масштабирующий градиенты до шага оптимизатора. Они спроектированы вместе; использование одного без другого — конфигурационная ошибка, которую должен ловить тест.
 
-The lesson uses CPU autocast because that is what runs in CI; the same pattern transfers verbatim to CUDA by changing `device_type="cpu"` to `device_type="cuda"`. The GradScaler on CPU is a stub (CPU autocast already operates in BF16 by default and does not need loss scaling), but the lesson includes the call sites so the wiring is identical to the GPU loop.
+Урок использует CPU-autocast, потому что именно он работает в CI; тот же паттерн дословно переносится на CUDA заменой `device_type="cpu"` на `device_type="cuda"`. GradScaler на CPU — заглушка (CPU-autocast и так по умолчанию работает в BF16 и не нуждается в масштабировании лосса), но урок включает места вызовов, чтобы проводка была идентична GPU-циклу.
 
-### NaN and Inf detection
+### Детекция NaN и Inf
 
-The detection happens in two places. First, the loss itself is checked with `torch.isfinite` before backward; an Inf or NaN loss does not produce useful gradients and is skipped without entering the optimizer. Second, after `scaler.unscale_(optimizer)` the lesson scans the unscaled gradients with `has_non_finite_grad(...)` and treats any Inf or NaN as a skip. The two checks together cover both the forward-pass and the backward-pass failure modes.
+Детекция происходит в двух местах. Первое: сам лосс проверяется `torch.isfinite` до backward; Inf- или NaN-лосс не даёт полезных градиентов и пропускается, не входя в оптимизатор. Второе: после `scaler.unscale_(optimizer)` урок сканирует немасштабированные градиенты через `has_non_finite_grad(...)` и трактует любой Inf или NaN как пропуск. Две проверки вместе покрывают режимы отказа и forward-, и backward-прохода.
 
-### Scaling factor diagnostics
+### Диагностика масштабного фактора
 
-The scaling factor is the GradScaler's internal state. Every step the lesson reads `scaler.get_scale()` and logs it next to the learning rate and gradient norm. A healthy run shows the scaling factor climbing in powers of two until it saturates near `2^17` or `2^18`. A misbehaving run shows the factor oscillating between high and low values, which is the signal that the model's gradients are sometimes in range and sometimes not. The diagnostic is invisible without logging.
+Масштабный фактор — внутреннее состояние GradScaler. Каждый шаг урок читает `scaler.get_scale()` и логирует его рядом с learning rate и нормой градиента. Здоровый прогон показывает фактор, растущий степенями двойки до насыщения около `2^17` или `2^18`. Неблагополучный прогон показывает фактор, осциллирующий между высокими и низкими значениями, — сигнал, что градиенты модели то в диапазоне, то нет. Без логирования эта диагностика невидима.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `clip_global_l2_norm` - a wrapper around `torch.nn.utils.clip_grad_norm_` that returns both the pre-clip and post-clip norm.
-- `has_non_finite_grad` - a helper that scans gradients for NaN and Inf.
-- `AmpTrainState` - wraps a model, an `AdamW` optimizer, a GradScaler, and an autocast device. Exposes a `step(inputs, targets)` that runs the full clipping, scaling, and skip-on-NaN pipeline.
-- `StepLog` and `SkipLog` - structured per-step records.
-- A demo that trains a small `nn.Linear` model for 20 steps, injects an Inf into the gradient on step 5 to exercise the skip path, and prints the resulting log.
+- `clip_global_l2_norm` — обёртка над `torch.nn.utils.clip_grad_norm_`, возвращающая норму и до, и после клипа.
+- `has_non_finite_grad` — хелпер, сканирующий градиенты на NaN и Inf.
+- `AmpTrainState` — оборачивает модель, оптимизатор `AdamW`, GradScaler и autocast-устройство. Открывает `step(inputs, targets)`, гоняющий полный пайплайн клиппинга, масштабирования и пропуска-на-NaN.
+- `StepLog` и `SkipLog` — структурные пошаговые записи.
+- Демо: обучает маленькую `nn.Linear`-модель 20 шагов, инъектирует Inf в градиент на шаге 5, чтобы прогнать путь пропуска, и печатает получившийся лог.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script exits zero and prints a per-step log with each row tagged `STEP` or `SKIP`; at least one row is a `SKIP`.
+Скрипт выходит с нулём и печатает пошаговый лог, где каждая строка помечена `STEP` или `SKIP`; хотя бы одна строка — `SKIP`.
 
-## Production Patterns
+## Production-паттерны
 
-Four patterns elevate the loop to a production training step.
+Четыре паттерна поднимают цикл до продакшен-шага обучения.
 
-**Skip counter as an alert, not a log line.** A handful of skipped steps per training run is healthy. Hundreds of skips per epoch are a hard alert: the model is in a regime FP16 cannot hold and the loop is silently failing. The lesson tracks a 1,000-step rolling skip rate and would, in production, page on a rate above 5 percent.
+**Счётчик пропусков — алерт, а не строка лога.** Горстка пропущенных шагов на прогон — здоровье. Сотни пропусков на эпоху — жёсткий алерт: модель в режиме, который FP16 не держит, и цикл молча отказывает. Урок отслеживает скользящий rate пропусков по 1 000 шагам и в продакшене поднимал бы страницу при rate выше 5 процентов.
 
-**Clip threshold lives in the config.** `max_norm = 1.0` is the modern default for language-model training. Sweep it on a small model first; larger thresholds let the model recover from genuinely difficult batches; smaller thresholds bound the worst case at the cost of a noisier loss curve. The threshold belongs in the same YAML or JSON config as the schedule from lesson 44.
+**Порог клипа живёт в конфиге.** `max_norm = 1.0` — современный дефолт обучения языковых моделей. Сначала свипните его на маленькой модели; большие пороги позволяют модели восстанавливаться после действительно трудных батчей; меньшие ограничивают худший случай ценой более шумной кривой лосса. Порогу место в том же YAML- или JSON-конфиге, что и расписанию из урока 44.
 
-**Norm log goes to a CSV with the schedule.** The CSV columns are `step, lr, grad_l2_pre_clip, grad_l2_post_clip, loss, skipped, skip_reason, scaler_scale`. A reviewer who opens the file sees the schedule, the gradient story, the scaling factor, and the skip outcome (with its reason) in one row. Splitting the columns across files is a recipe for misaligned analyses.
+**Лог нормы идёт в CSV вместе с расписанием.** Колонки CSV: `step, lr, grad_l2_pre_clip, grad_l2_post_clip, loss, skipped, skip_reason, scaler_scale`. Ревьюер, открывший файл, видит расписание, историю градиентов, масштабный фактор и исход пропуска (с причиной) в одной строке. Разнос колонок по файлам — рецепт рассинхронизированных анализов.
 
-**`scaler.update()` runs every step, even on skip.** On a clean step the scaler reads its no-inf counter, increments it, and possibly doubles the factor. On a skipped step the scaler halves the factor and resets the counter. Forgetting `update()` on the skip path is the bug that produces "the scaling factor never changed."
+**`scaler.update()` выполняется каждый шаг, даже на пропуске.** На чистом шаге скейлер читает свой счётчик без-inf, инкрементит его и, возможно, удваивает фактор. На пропущенном — половинит фактор и сбрасывает счётчик. Забытый `update()` на пути пропуска — тот баг, который порождает «масштабный фактор никогда не менялся».
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **Autocast device matches optimizer device.** `torch.amp.autocast(device_type="cuda")` for GPU training; `torch.amp.autocast(device_type="cpu")` for CPU. Mixing devices produces a silent type error that surfaces as a loss curve that looks fine but a model that is not learning.
-- **Loss check before backward.** `torch.isfinite(loss).all()` is one tensor reduction; the cost is negligible and the savings on a NaN loss are an entire training step. Always run it.
-- **`set_to_none=True` in `zero_grad`.** Sets gradients to `None` instead of zero, which lets the optimizer skip computation for unaffected parameter groups. The setting is a free throughput improvement and a slight bug-surface reduction.
+- **Устройство autocast совпадает с устройством оптимизатора.** `torch.amp.autocast(device_type="cuda")` для GPU-обучения; `torch.amp.autocast(device_type="cpu")` для CPU. Смешение устройств даёт молчаливую типовую ошибку, всплывающую как нормально выглядящая кривая лосса при модели, которая не учится.
+- **Проверка лосса до backward.** `torch.isfinite(loss).all()` — одна тензорная редукция; стоимость пренебрежима, а экономия на NaN-лоссе — целый обучающий шаг. Запускайте всегда.
+- **`set_to_none=True` в `zero_grad`.** Выставляет градиенты в `None` вместо нуля, что позволяет оптимизатору пропустить вычисления для незатронутых групп параметров. Настройка — бесплатное улучшение throughput и лёгкое сокращение поверхности багов.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-clip-amp.md` would, on a real project, describe which clip threshold and autocast device the training step uses, where the per-step CSV lives in version control, and what the production skip-rate alert threshold is. This lesson ships the engine.
+`outputs/skill-clip-amp.md` в настоящем проекте описал бы, какой порог клипа и autocast-устройство использует обучающий шаг, где пошаговый CSV живёт в version control и каков продакшен-порог алерта по skip rate. Этот урок отгружает движок.
 
-## Exercises
+## Упражнения
 
-1. Replace the synthetic Inf injection with a real loss spike (multiply one batch's target by 1e8) and verify the skip path triggers.
-2. Add a `--bf16` mode that switches autocast to BF16 instead of FP16. BF16 has a wider exponent range than FP16 and rarely needs loss scaling; verify the skip rate drops to zero on the same demo.
-3. Add a unit test that the gradient-clip wrapper returns the pre-clip and post-clip norm correctly when no clipping occurs.
-4. Add a rolling-window skip-rate computation and a CLI flag that fails the run if the rate exceeds a configured threshold for 100 consecutive steps.
-5. Wire the loop to write the canonical CSV (`step, lr, grad_l2_pre_clip, grad_l2_post_clip, loss, skipped, skip_reason, scaler_scale`) and confirm the file survives a Ctrl-C by flushing after every row.
+1. Замените синтетическую инъекцию Inf настоящим всплеском лосса (умножьте цель одного батча на 1e8) и убедитесь, что путь пропуска срабатывает.
+2. Добавьте режим `--bf16`, переключающий autocast на BF16 вместо FP16. У BF16 диапазон экспоненты шире, чем у FP16, и масштабирование лосса ему редко нужно; убедитесь, что на том же демо skip rate падает до нуля.
+3. Добавьте юнит-тест: обёртка клипа градиентов корректно возвращает норму до и после клипа, когда клиппинга не было.
+4. Добавьте вычисление скользящего skip rate и CLI-флаг, роняющий прогон, если rate превышает сконфигурированный порог 100 шагов подряд.
+5. Подключите цикл к записи канонического CSV (`step, lr, grad_l2_pre_clip, grad_l2_post_clip, loss, skipped, skip_reason, scaler_scale`) и подтвердите, что файл переживает Ctrl-C благодаря flush после каждой строки.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Global L2 norm | "Clip target" | Euclidean norm of the concatenated gradient vector across all trainable parameters |
-| autocast | "Mixed precision" | Selective FP16 (or BF16) execution of eligible operations inside a `with` block |
-| GradScaler | "Loss scaler" | Helper that multiplies the loss before backward and inverse-scales gradients before the optimizer step |
-| Skip | "Bad step" | An optimizer step refused because the gradient or loss was non-finite; the scaler halves the factor |
-| Scaling factor | "Scaler state" | The GradScaler's current multiplier; doubles after clean stretches and halves on every skip |
+| Глобальная L2-норма | «Цель клипа» | Евклидова норма конкатенированного вектора градиентов по всем обучаемым параметрам |
+| autocast | «Смешанная точность» | Выборочное FP16- (или BF16-) исполнение подходящих операций внутри `with`-блока |
+| GradScaler | «Loss scaler» | Хелпер, умножающий лосс до backward и обратно масштабирующий градиенты до шага оптимизатора |
+| Пропуск | «Плохой шаг» | Шаг оптимизатора, отклонённый из-за неконечного градиента или лосса; скейлер половинит фактор |
+| Масштабный фактор | «Состояние скейлера» | Текущий множитель GradScaler; удваивается после чистых отрезков и половинится на каждом пропуске |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Micikevicius et al., Mixed Precision Training (arXiv 1710.03740)](https://arxiv.org/abs/1710.03740) - the original loss-scaling proposal
-- [Pascanu, Mikolov, Bengio, On the difficulty of training recurrent neural networks (arXiv 1211.5063)](https://arxiv.org/abs/1211.5063) - the gradient-clipping reference paper
-- [PyTorch torch.amp.GradScaler](https://docs.pytorch.org/docs/stable/amp.html) - the scaler API this lesson wraps
-- [PyTorch torch.nn.utils.clip_grad_norm_](https://docs.pytorch.org/docs/stable/generated/torch.nn.utils.clip_grad_norm_.html) - the clipping primitive this lesson uses
-- Phase 19 · 42 - the downloader whose corpus feeds the loop
-- Phase 19 · 43 - the dataloader the loop consumes
-- Phase 19 · 44 - the schedule this loop composes with
+- [Micikevicius et al., Mixed Precision Training (arXiv 1710.03740)](https://arxiv.org/abs/1710.03740) — оригинальное предложение масштабирования лосса
+- [Pascanu, Mikolov, Bengio, On the difficulty of training recurrent neural networks (arXiv 1211.5063)](https://arxiv.org/abs/1211.5063) — референсная статья клиппинга градиентов
+- [PyTorch torch.amp.GradScaler](https://docs.pytorch.org/docs/stable/amp.html) — API скейлера, который оборачивает этот урок
+- [PyTorch torch.nn.utils.clip_grad_norm_](https://docs.pytorch.org/docs/stable/generated/torch.nn.utils.clip_grad_norm_.html) — примитив клиппинга этого урока
+- Фаза 19 · 42 — загрузчик, чей корпус кормит цикл
+- Фаза 19 · 43 — dataloader, который цикл потребляет
+- Фаза 19 · 44 — расписание, с которым этот цикл компонуется

@@ -1,31 +1,28 @@
 # Distributed Data Parallel and FSDP from Scratch
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Мульти-ранговое обучение — это два коллектива и одно правило. Забродкасти параметры на старте, усредни градиенты после backward и никогда не позволяй рангам разойтись во мнении, на каком они шаге.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 42–45
+**Время:** ~90 минут
 
-> Multi-rank training is two collectives and one rule. Broadcast the parameters at startup, average the gradients after backward, never let the ranks disagree about what step they are on.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 42 to 45
-**Time:** ~90 minutes
+- Поднять process group на N рангов с бэкендом `gloo`, без специального железа.
+- Реализовать минимальную DDP-обёртку, бродкастящую параметры при конструировании и делающую all-reduce градиентов после backward.
+- Доказать, что all-reduce пер-ранговых градиентов совпадает с однопроцессным градиентом на конкатенированном входе.
+- Набросать FSDP-шардирование параметров: каждый ранг держит срез, полный тензор собирается для forward-прохода и сбрасывается после.
 
-## Learning Objectives
+## Проблема
 
-- Bring up a process group across N ranks with the `gloo` backend, no special hardware.
-- Implement a minimal DDP wrapper that broadcasts parameters at construction and all-reduces gradients after backward.
-- Prove that the all-reduce of per-rank gradients matches a single-process gradient on the concatenated input.
-- Sketch FSDP parameter sharding: each rank holds a slice, the full tensor is gathered for the forward pass and dropped after.
+Модель помещается на одно устройство. Датасет — нет. Бюджет оптимизации говорит, что вы хотите видеть в N раз больше примеров на wallclock-секунду. Первый рычаг — data parallel: каждый ранг гоняет ту же модель на своём срезе батча, затем градиенты усредняются перед шагом оптимизатора. Второй рычаг — FSDP: модель тоже не помещается на одно устройство, поэтому каждый ранг держит долю каждого параметра и восстанавливает полные тензоры слой за слоем во время forward-прохода.
 
-## The Problem
+Боль — в бухгалтерии. Если параметры дрейфуют между рангами, прогон молча повреждён. Если усреднять градиенты, но не лосс, дашборд лжёт. Если коллективный бэкенд не может согласовать топологию, прогон висит вечно. Лечение — написать коллективы руками один раз и никогда не доверять обёртке, которую вы не можете воспроизвести.
 
-The model fits on one device. The dataset does not. The optimization budget says you want to see N times the examples per wallclock second. The first lever is data parallel: each rank runs the same model on a different slice of the batch, then averages gradients before the optimizer step. The second lever is FSDP: the model does not fit on one device either, so each rank holds a fraction of every parameter and reconstructs the full tensors layer by layer during the forward pass.
+Этот урок работает на CPU. CUDA не предполагается. Бэкенд `gloo` поставляется с каждой сборкой PyTorch и принимает воркеров `torch.multiprocessing`; тот же код переключается на `nccl` на multi-GPU-ноде без изменения структуры.
 
-The pain is the bookkeeping. If parameters drift across ranks the run is silently corrupt. If you average gradients but not the loss the dashboard lies. If the collective backend cannot agree on a topology the run hangs forever. The fix is to write the collectives by hand once and never trust a wrapper you cannot reproduce.
-
-This lesson runs on CPU. CUDA is not assumed. The `gloo` backend ships with every PyTorch build and accepts `torch.multiprocessing` workers; the same code switches to `nccl` on a multi-GPU node without changing structure.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TB
@@ -41,21 +38,21 @@ flowchart TB
   step --> loop
 ```
 
-### The two collectives that matter
+### Два коллектива, которые важны
 
-| Collective | What it does | When |
+| Коллектив | Что делает | Когда |
 |------------|--------------|------|
-| `broadcast` | Copy a tensor from one rank to all others | Parameter init, scheduler state, any one-to-all sync |
-| `all_reduce` | Sum (or mean, or max) a tensor across all ranks, every rank gets the result | Gradient averaging after backward |
-| `all_gather` | Each rank contributes a tensor, every rank gets the concatenation | Logits collection, FSDP parameter unshard |
+| `broadcast` | Копирует тензор с одного ранга на все остальные | Инициализация параметров, состояние планировщика, любая синхронизация один-ко-всем |
+| `all_reduce` | Суммирует (или усредняет, или берёт max) тензор по всем рангам, результат получает каждый ранг | Усреднение градиентов после backward |
+| `all_gather` | Каждый ранг вносит тензор, каждый получает конкатенацию | Сбор логитов, unshard параметров в FSDP |
 
-The DDP contract is `broadcast` at construction and `all_reduce` after backward. The FSDP sketch adds `all_gather` before each layer's forward pass.
+DDP-контракт — `broadcast` при конструировании и `all_reduce` после backward. FSDP-набросок добавляет `all_gather` перед forward каждого слоя.
 
-### Gradient averaging matches single-process gradient
+### Усреднение градиентов совпадает с однопроцессным градиентом
 
-A model trained on a batch of B examples across N ranks must produce the same gradient as a single process training on a batch of N*B. The trick is that summing per-rank gradients and dividing by N gives the average loss gradient, which is what cross entropy with mean reduction would produce on the full batch. The lesson code asserts this with `max-abs-diff < 1e-3` between the manual all-reduce gradient and the reference single-process gradient.
+Модель, обученная на батче из B примеров на N рангах, обязана дать тот же градиент, что один процесс, обучающийся на батче N*B. Трюк в том, что сумма пер-ранговых градиентов, делённая на N, даёт градиент среднего лосса — ровно то, что кросс-энтропия с mean-редукцией дала бы на полном батче. Код урока утверждает это с `max-abs-diff < 1e-3` между ручным all-reduce-градиентом и референсным однопроцессным градиентом.
 
-### FSDP sketch
+### Набросок FSDP
 
 ```mermaid
 flowchart LR
@@ -71,17 +68,17 @@ flowchart LR
   fwd --> drop[drop full tensor, keep only the shard]
 ```
 
-The memory win is exact: per-rank memory for parameters drops to 1/N. The cost is the gather, which is paid every forward pass. Production FSDP overlaps the gather with the previous layer's compute so the wallclock cost is much smaller than the naive accounting predicts. The lesson does the round-trip on every parameter and asserts the reconstruction is bit-equal to the original.
+Выигрыш по памяти точный: пер-ранговая память под параметры падает до 1/N. Цена — gather, оплачиваемый на каждом forward-проходе. Продакшен-FSDP перекрывает gather с вычислениями предыдущего слоя, так что wallclock-стоимость сильно меньше, чем предсказывает наивная арифметика. Урок делает round trip по каждому параметру и утверждает, что реконструкция бит-в-бит равна оригиналу.
 
-### CPU and the gloo backend
+### CPU и бэкенд gloo
 
-CUDA is the production target, but the same code paths exist on CPU. `gloo` is the CPU collective backend. It is slower than `nccl` on GPUs by orders of magnitude, but the API surface is identical. The lesson's process group is initialized with `backend="gloo"` and ranks are spawned with `torch.multiprocessing` rather than `torchrun`; both end up at the same `torch.distributed` calls. On a multi-GPU node, the only changes are `backend="nccl"`, device tensors, and `torchrun` to launch.
+Продакшен-цель — CUDA, но те же код-пути существуют на CPU. `gloo` — CPU-бэкенд коллективов. Он медленнее `nccl` на GPU на порядки, но поверхность API идентична. Process group урока инициализируется с `backend="gloo"`, а ранги порождаются через `torch.multiprocessing`, а не `torchrun`; оба заканчиваются одними и теми же вызовами `torch.distributed`. На multi-GPU-ноде меняются только `backend="nccl"`, device-тензоры и запуск через `torchrun`.
 
-## Build It
+## Соберите это
 
-`code/main.py` is the runnable artifact.
+`code/main.py` — запускаемый артефакт.
 
-### Step 1: bring up the process group
+### Шаг 1: поднять process group
 
 ```python
 os.environ["MASTER_ADDR"] = "127.0.0.1"
@@ -89,13 +86,13 @@ os.environ["MASTER_PORT"] = str(port)
 dist.init_process_group(backend="gloo", rank=rank, world_size=world_size)
 ```
 
-`MASTER_ADDR` and `MASTER_PORT` are the rendezvous: every rank dials the same port on the same host. The lesson picks a free port via a bind-and-close trick to avoid collisions when several runs share a machine.
+`MASTER_ADDR` и `MASTER_PORT` — точка встречи: каждый ранг набирает один и тот же порт на одном хосте. Урок выбирает свободный порт трюком bind-и-close, чтобы избежать коллизий, когда несколько прогонов делят машину.
 
-### Step 2: broadcast at construction
+### Шаг 2: broadcast при конструировании
 
-`MinimalDDP.__init__` walks every parameter and buffer and calls `dist.broadcast(tensor, src=0)`. Rank 0's values become the canonical init. Without this, each rank initializes with its own seed and the ranks diverge from step one.
+`MinimalDDP.__init__` обходит каждый параметр и буфер и вызывает `dist.broadcast(tensor, src=0)`. Значения ранга 0 становятся канонической инициализацией. Без этого каждый ранг инициализируется своим сидом, и ранги расходятся с первого шага.
 
-### Step 3: all-reduce gradients after backward
+### Шаг 3: all-reduce градиентов после backward
 
 ```python
 def all_reduce_grads_(module, world_size):
@@ -106,58 +103,58 @@ def all_reduce_grads_(module, world_size):
         p.grad.data.div_(world_size)
 ```
 
-Every rank ends up with the same averaged gradient. The optimizer step is now a function of the same input on every rank, which is why the parameters stay in sync across the run.
+Каждый ранг заканчивает с одинаковым усреднённым градиентом. Шаг оптимизатора теперь — функция от одного и того же входа на каждом ранге, поэтому параметры остаются синхронными весь прогон.
 
-### Step 4: prove the equivalence
+### Шаг 4: доказать эквивалентность
 
-`manual_all_reduce_matches_single_process` builds the same model on rank 0 and compares the post-all-reduce gradient against the gradient a single process would compute on the concatenated input. The max-abs-diff is around 1e-8.
+`manual_all_reduce_matches_single_process` строит ту же модель на ранге 0 и сравнивает градиент после all-reduce с градиентом, который один процесс посчитал бы на конкатенированном входе. Max-abs-diff — около 1e-8.
 
-### Step 5: FSDP round trip
+### Шаг 5: round trip FSDP
 
-`fsdp_round_trip_sketch` flattens each parameter, pads to a multiple of `world_size`, slices, all-gathers, and unpads. Every rank's reconstruction equals the original. This is the unshard step; the inverse (re-shard after the forward) is one slice off the gathered tensor.
+`fsdp_round_trip_sketch` уплощает каждый параметр, паддит до кратного `world_size`, режет, делает all_gather и снимает паддинг. Реконструкция каждого ранга равна оригиналу. Это шаг unshard; обратный (re-shard после forward) — один срез собранного тензора.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Default world size is 2. Two CPU processes spawn, talk to each other through `gloo`, and exit zero. The output `outputs/ddp-demo.json` captures parameter sums per rank, the gradient norm after all-reduce, the FSDP round-trip result, and the manual-vs-reference gradient diff.
+Дефолтный world size — 2. Два CPU-процесса порождаются, разговаривают через `gloo` и выходят с нулём. Выход `outputs/ddp-demo.json` захватывает суммы параметров по рангам, норму градиента после all-reduce, результат FSDP round trip и разность ручного градиента против референсного.
 
-## Use It
+## Используйте это
 
-Production training stacks call the same primitives. PyTorch's `DistributedDataParallel` adds: post-backward gradient hooks that overlap all-reduce with backward, bucketed all-reduce that combines several small gradients into one collective, and the `no_sync` context lesson 46 used.
+Продакшен-стеки обучения вызывают те же примитивы. `DistributedDataParallel` PyTorch добавляет: post-backward-хуки градиентов, перекрывающие all-reduce с backward; бакетированный all-reduce, объединяющий несколько маленьких градиентов в один коллектив; и `no_sync`-контекст, который использовал урок 46.
 
-PyTorch's FSDP adds: a flat parameter view per layer so each rank holds one contiguous buffer, overlap of the next layer's unshard with the current layer's compute, and optional CPU offload for the shards.
+FSDP PyTorch добавляет: плоское представление параметров на слой, чтобы каждый ранг держал один непрерывный буфер; перекрытие unshard следующего слоя с вычислениями текущего; опциональный CPU-offload шардов.
 
-The shape stays the same: broadcast at startup, reduce after backward, shard parameters when they no longer fit.
+Форма не меняется: broadcast на старте, reduce после backward, шардируй параметры, когда они перестают помещаться.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-distributed-fsdp-ddp.md` carries the recipe for a new training script: spin up the process group with `gloo` for CPU and `nccl` for GPU, wrap the model in a DDP shell that broadcasts at construction and reduces after backward, optionally shard parameters with the all_gather pattern from the FSDP sketch.
+`outputs/skill-distributed-fsdp-ddp.md` несёт рецепт для нового обучающего скрипта: поднимите process group с `gloo` для CPU и `nccl` для GPU, оберните модель в DDP-оболочку, бродкастящую при конструировании и редьюсящую после backward, опционально шардируйте параметры паттерном all_gather из FSDP-наброска.
 
-## Exercises
+## Упражнения
 
-1. Run with `--world-size 4` and confirm the param spread stays under 1e-3 across the run.
-2. Replace the manual averaging with `dist.all_reduce(op=dist.ReduceOp.AVG)` and time the difference.
-3. Add a post-backward hook to the DDP wrapper so the all-reduce overlaps with the rest of the backward; measure the wallclock improvement.
-4. Implement the FSDP re-shard step: after the forward pass, replace the full tensor with the local shard again. Confirm per-rank memory drops.
-5. Switch the backend to `nccl` on a CUDA box. Note which environment variables change and which stay the same.
+1. Запустите с `--world-size 4` и подтвердите, что разброс параметров остаётся меньше 1e-3 весь прогон.
+2. Замените ручное усреднение на `dist.all_reduce(op=dist.ReduceOp.AVG)` и замерьте разницу по времени.
+3. Добавьте post-backward-хук в DDP-обёртку, чтобы all-reduce перекрывался с остатком backward; измерьте выигрыш по wallclock.
+4. Реализуйте шаг re-shard FSDP: после forward-прохода замените полный тензор обратно локальным шардом. Подтвердите падение пер-ранговой памяти.
+5. Переключите бэкенд на `nccl` на CUDA-машине. Отметьте, какие переменные окружения меняются, а какие остаются.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Backend | "gloo or nccl" | The library that implements the collective ops; gloo is CPU, nccl is GPU |
-| World size | "Total ranks" | Number of processes in the group; the group is the unit collectives operate on |
-| Rank | "Worker id" | Process identifier within the group, zero indexed |
-| All-reduce | "Sum the grads" | Sum a tensor across all ranks, every rank ends with the same result |
-| Unshard | "Gather the params" | Reconstruct the full tensor from per-rank slices via all_gather |
+| Бэкенд | «gloo или nccl» | Библиотека, реализующая коллективные операции; gloo — CPU, nccl — GPU |
+| World size | «Всего рангов» | Число процессов в группе; группа — единица, над которой работают коллективы |
+| Ранг | «Id воркера» | Идентификатор процесса внутри группы, с нуля |
+| All-reduce | «Просуммируй градиенты» | Суммирование тензора по всем рангам; каждый ранг заканчивает с одним результатом |
+| Unshard | «Собери параметры» | Реконструкция полного тензора из пер-ранговых срезов через all_gather |
 
-## Further Reading
+## Дополнительное чтение
 
-- PyTorch `torch.distributed` documentation for the collective semantics this lesson relies on.
-- The `gloo` library's collective list, identical in shape to the CUDA-backed `nccl` primitives.
-- Phase 19 lesson 46 for the gradient accumulation pattern that wraps the DDP all-reduce in `no_sync`.
-- Phase 19 lesson 47 for the checkpoint layout that survives DDP and FSDP runs.
-- PyTorch FSDP documentation for the production implementation of the parameter sharding sketched here.
+- Документация PyTorch `torch.distributed` — семантика коллективов, на которую опирается урок.
+- Список коллективов библиотеки `gloo`, идентичный по форме CUDA-примитивам `nccl`.
+- Фаза 19, урок 46 — паттерн накопления градиентов, оборачивающий DDP all-reduce в `no_sync`.
+- Фаза 19, урок 47 — раскладка чекпоинтов, переживающая DDP- и FSDP-прогоны.
+- Документация PyTorch FSDP — продакшен-реализация шардирования параметров, набросанного здесь.

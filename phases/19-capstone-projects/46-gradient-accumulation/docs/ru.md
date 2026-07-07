@@ -1,29 +1,26 @@
 # Gradient Accumulation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучайтесь на эффективном батче, который вам не по карману, — по одному микро-батчу за раз. Масштабируйте лосс, придержите шаг оптимизатора и дайте градиентам накопиться.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 42–45
+**Время:** ~90 минут
 
-> Train at an effective batch you cannot afford, one micro-batch at a time. Scale the loss, hold the optimizer step, and let the gradients pile up.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 42 to 45
-**Time:** ~90 minutes
+- Вывести тождество эффективного батча: `effective_batch = micro_batch * accum_steps`.
+- Реализовать масштабирование лосса на микро-батч, чтобы накопленный градиент совпадал с одним полнобатчевым backward.
+- Пропускать синхронизацию оптимизатора до последнего микро-батча (sync-on-last-step).
+- Прочитать кривую throughput против эффективного батча и объяснить убывающую отдачу.
 
-## Learning Objectives
+## Проблема
 
-- Derive the effective batch identity: `effective_batch = micro_batch * accum_steps`.
-- Implement loss-per-micro-batch scaling so the accumulated gradient matches a single full-batch backward.
-- Skip optimizer synchronization until the last micro-batch (sync-on-last-step).
-- Read a throughput against effective batch curve and explain the diminishing return.
+Вы хотите обучаться на эффективном батче 512, потому что кривая лосса глаже, а шаг оптимизатора на этом масштабе осмысленнее. Ускоритель на столе вмещает 32 примера, прежде чем кончается память. Удвоить батч — не вариант. Ополовинить модель — не вариант. Трюк, к которому область пришла в 2017 году и никогда не переставала использовать, — прогнать 16 backward-проходов, дать градиентам накопиться в буферах параметров и шагнуть оптимизатором только когда счётчик достигнет цели.
 
-## The Problem
+Риск в том, что лосс — больше не то число, которым он был на большем батче. Кросс-энтропия 16 мини-батчей, просуммированная наивно, — это 16 лоссов одного полного батча. Без масштабирования направление градиента верное, но величина неверна, и шаг оптимизатора в 16 раз больше нужного. Лечение — одно деление. И это деление легко забыть.
 
-You want to train at an effective batch of 512 because the loss curve is smoother and the optimizer step makes more sense at that scale. The accelerator on the desk holds 32 examples before it runs out of memory. Doubling the batch is not an option. Halving the model is not an option. The trick the field reached for in 2017 and never stopped using is to run 16 backward passes, let the gradients accumulate inside the parameter buffers, and only step the optimizer when the count reaches the target.
-
-The risk is that the loss is no longer the same number it was at the bigger batch. The cross entropy of 16 mini-batches summed naively is 16 times the loss of one full batch. Without scaling, the gradient direction is correct but the magnitude is wrong, and the optimizer step is 16 times too big. The fix is one division. The fix is also easy to forget.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -36,14 +33,14 @@ flowchart LR
   step --> next[next effective step]
 ```
 
-The contract is short:
+Контракт короткий:
 
-- Loss for each micro-batch is divided by `accum_steps` before `backward()`. PyTorch sums gradients into `param.grad` by default; the division pushes the running sum back into the right scale.
-- The optimizer step fires once per effective batch, after the last micro-batch's backward. Stepping mid-accumulation skews every parameter the rest of the run depends on.
-- The optimizer's state (momentum buffers, Adam moments) advances once per effective step, not once per micro-batch. The exponential moving averages would otherwise see the wrong frequency and burn through the schedule.
-- On a single device this is bookkeeping. On a multi-rank cluster the same pattern wraps the non-final micro-batches in a `no_sync` context that skips the gradient all-reduce; the last micro-batch reduces the full accumulated gradient in one pass instead of paying the network cost N times.
+- Лосс каждого микро-батча делится на `accum_steps` до `backward()`. PyTorch по умолчанию суммирует градиенты в `param.grad`; деление возвращает бегущую сумму в правильный масштаб.
+- Шаг оптимизатора стреляет один раз на эффективный батч, после backward последнего микро-батча. Шаг посреди накопления перекашивает каждый параметр, от которого зависит весь остальной прогон.
+- Состояние оптимизатора (буферы моментума, моменты Adam) продвигается один раз на эффективный шаг, а не на микро-батч. Иначе экспоненциальные скользящие средние видели бы неправильную частоту и прожигали бы расписание.
+- На одном устройстве это бухгалтерия. На мульти-ранговом кластере тот же паттерн оборачивает нефинальные микро-батчи в `no_sync`-контекст, пропускающий all-reduce градиентов; последний микро-батч редьюсит весь накопленный градиент одним проходом, а не платит сетевую цену N раз.
 
-### The equivalence proof in code
+### Доказательство эквивалентности в коде
 
 ```python
 loss = criterion(model(x_full), y_full)
@@ -51,7 +48,7 @@ loss.backward()
 opt.step()
 ```
 
-is equivalent to
+эквивалентно
 
 ```python
 for x, y in chunks(x_full, y_full, n):
@@ -60,11 +57,11 @@ for x, y in chunks(x_full, y_full, n):
 opt.step()
 ```
 
-up to floating point summation order. The accumulated gradient buffer at the end of the loop is the same tensor that a single full-batch backward would produce. The lesson code asserts this with a max-abs difference under 1e-4 in `equivalence_check`.
+с точностью до порядка суммирования с плавающей точкой. Буфер накопленного градиента в конце цикла — тот же тензор, что породил бы один полнобатчевый backward. Код урока утверждает это в `equivalence_check` с max-abs-разностью меньше 1e-4.
 
-### Where the cost goes
+### Куда уходит стоимость
 
-Each micro-batch costs one forward and one backward. With accumulation you trade memory for time. The throughput curve in `outputs/accum-curve.json` shows what happens as the effective batch grows at fixed micro-batch:
+Каждый микро-батч стоит один forward и один backward. С накоплением вы меняете память на время. Кривая throughput в `outputs/accum-curve.json` показывает, что происходит с ростом эффективного батча при фиксированном микро-батче:
 
 ```mermaid
 flowchart TD
@@ -76,75 +73,75 @@ flowchart TD
   sps2 --> note
 ```
 
-There is no free lunch. Doubling `accum_steps` doubles the wall time per optimizer step. What changes is the variance of the gradient estimate: at the same wall budget you have made fewer optimizer steps but each one was averaged over more samples. The literature treats large batch and small batch as different optimization problems; the lesson here is mechanical, not statistical.
+Бесплатного обеда нет. Удвоение `accum_steps` удваивает wall time на шаг оптимизатора. Меняется дисперсия оценки градиента: при том же бюджете времени вы сделали меньше шагов оптимизатора, но каждый усреднён по большему числу сэмплов. Литература трактует большой и маленький батч как разные оптимизационные задачи; урок здесь механический, а не статистический.
 
-## Build It
+## Соберите это
 
-`code/main.py` is the runnable artifact. It does three things.
+`code/main.py` — запускаемый артефакт. Он делает три вещи.
 
-### Step 1: equivalence check
+### Шаг 1: проверка эквивалентности
 
-`equivalence_check()` builds two copies of the same network with the same seed. One sees a 16-sample batch in one forward pass. The other sees four 4-sample chunks with the loss divided by four. The function compares the gradient buffers before the optimizer step and the parameters after. The assertion is `max_abs_diff < 1e-4`.
+`equivalence_check()` строит две копии одной сети с одним сидом. Одна видит батч из 16 сэмплов одним forward-проходом. Другая — четыре чанка по 4 сэмпла с лоссом, делённым на четыре. Функция сравнивает буферы градиентов до шага оптимизатора и параметры после. Утверждение — `max_abs_diff < 1e-4`.
 
-### Step 2: sync-on-last-step pattern
+### Шаг 2: паттерн sync-on-last-step
 
-`train_one_optimizer_step` walks micro-batches. For every micro-batch except the last it enters `no_sync_context(model)`. On a single process the context is a no-op; on DDP this is where the gradient all-reduce is skipped. The bookkeeping is the same regardless. A `sync_counter` records how many times we left the no_sync scope; for N micro-batches the count is one per effective step, not N.
+`train_one_optimizer_step` обходит микро-батчи. Для каждого, кроме последнего, он входит в `no_sync_context(model)`. На одном процессе контекст — no-op; на DDP именно здесь пропускается all-reduce градиентов. Бухгалтерия одинакова в любом случае. `sync_counter` записывает, сколько раз мы вышли из области no_sync; для N микро-батчей счётчик — один на эффективный шаг, а не N.
 
-### Step 3: the throughput curve
+### Шаг 3: кривая throughput
 
-`sweep_effective_batches` runs the same model with a fixed micro-batch and a list of accumulation steps. For each setting it logs:
+`sweep_effective_batches` гоняет одну и ту же модель с фиксированным микро-батчем и списком шагов накопления. Для каждой настройки логирует:
 
-- `samples_per_sec`: total samples seen divided by wall time
-- `median_step_ms`: 50th percentile per effective step
-- `sync_calls`: collective points exercised
-- `avg_loss`: average across the sweep's optimizer steps
+- `samples_per_sec`: всего увиденных сэмплов, делённых на wall time
+- `median_step_ms`: 50-й перцентиль на эффективный шаг
+- `sync_calls`: сколько раз задействованы коллективные точки
+- `avg_loss`: среднее по шагам оптимизатора свипа
 
-The output lands in `outputs/accum-curve.json` and is reusable from a notebook.
+Выход ложится в `outputs/accum-curve.json` и переиспользуем из ноутбука.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script prints the equivalence diff, then the sweep table, then the JSON path. Exit code zero.
+Скрипт печатает разность эквивалентности, затем таблицу свипа, затем путь к JSON. Код выхода — ноль.
 
-## Use It
+## Используйте это
 
-In production training, gradient accumulation lives behind one knob. PyTorch's pattern is `accumulation_steps = effective_batch // (micro_batch * world_size)`. Frameworks that you are not allowed to use here wrap the same loop, but the steps are the same: scale the loss, skip sync on non-final micros, accumulate, step once.
+В продакшен-обучении накопление градиентов живёт за одной ручкой. Паттерн PyTorch: `accumulation_steps = effective_batch // (micro_batch * world_size)`. Фреймворки, которые здесь использовать нельзя, оборачивают тот же цикл, но шаги те же: масштабируй лосс, пропусти синк на нефинальных микро, накапливай, шагай один раз.
 
-Three patterns in the wild:
+Три паттерна в реальной практике:
 
-- The micro-batch size is chosen to saturate device memory. Anything smaller wastes accelerator cycles. Anything larger crashes.
-- The effective batch is chosen from a learning rate schedule. Large effective batches need scaled learning rates and warmup; this is the linear scaling rule talked about since 2017.
-- The accumulation count is the bridge between the two and the only knob you are free to tune at runtime without rewriting the data loader.
+- Размер микро-батча выбирается так, чтобы насытить память устройства. Всё меньшее тратит циклы ускорителя. Всё большее падает.
+- Эффективный батч выбирается из расписания learning rate. Большим эффективным батчам нужны масштабированные learning rate и warmup — это правило линейного масштабирования, обсуждаемое с 2017 года.
+- Счётчик накопления — мост между этими двумя и единственная ручка, которую можно крутить в рантайме, не переписывая загрузчик данных.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-gradient-accumulation.md` captures the recipe so a peer can drop it into a new repo: scale loss by `accum_steps`, skip optimizer sync on non-final micros, step the optimizer once per effective batch, log throughput against effective batch as JSON so the trade is visible.
+`outputs/skill-gradient-accumulation.md` фиксирует рецепт так, чтобы коллега мог перенести его в новый репозиторий: масштабируй лосс на `accum_steps`, пропускай синхронизацию оптимизатора на нефинальных микро, шагай оптимизатором один раз на эффективный батч, логируй throughput против эффективного батча в JSON, чтобы размен был видим.
 
-## Exercises
+## Упражнения
 
-1. Re-run the sweep with `--num-steps 100` and plot samples per second against effective batch. Where does the curve flatten?
-2. Add a wrong scaling variant (no division) and show the parameter diff at step 1 against the reference.
-3. Swap SGD for AdamW and confirm the optimizer state advances once per effective step, not once per micro-batch.
-4. Introduce a real `DistributedDataParallel` wrapper and route the `no_sync_context` to its method. Confirm sync_calls drops by N-1 per effective batch.
-5. Modify the equivalence check to compare two different micro splits (2 by 8 vs 4 by 4) and explain any tolerance you need to relax.
+1. Перегоните свип с `--num-steps 100` и постройте samples per second против эффективного батча. Где кривая выполаживается?
+2. Добавьте неправильный вариант масштабирования (без деления) и покажите разность параметров на шаге 1 против референса.
+3. Замените SGD на AdamW и подтвердите, что состояние оптимизатора продвигается один раз на эффективный шаг, а не на микро-батч.
+4. Введите настоящую обёртку `DistributedDataParallel` и направьте `no_sync_context` на её метод. Подтвердите, что sync_calls падает на N-1 на эффективный батч.
+5. Модифицируйте проверку эквивалентности, сравнив два разных микро-разбиения (2 по 8 против 4 по 4), и объясните, какой допуск пришлось ослабить.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Micro batch | The batch you forward | The slice that fits in memory in a single forward pass |
-| Accum steps | Backward passes per step | Number of backwards summed before one optimizer step |
-| Effective batch | The batch | Micro batch times accum steps times data parallel world size |
-| Loss scaling | Divide by N | Per-micro-batch division so summed gradients match full batch |
-| Sync on last | Skip the rest | Only run the gradient collective on the last backward in the window |
+| Микро-батч | Батч, который форвардят | Срез, помещающийся в память за один forward-проход |
+| Accum steps | Backward-проходов на шаг | Число backward, суммируемых до одного шага оптимизатора |
+| Эффективный батч | «Батч» | Микро-батч, умноженный на accum steps и на data-parallel world size |
+| Масштабирование лосса | «Дели на N» | Деление на каждый микро-батч, чтобы суммированные градиенты совпали с полным батчем |
+| Sync on last | «Пропусти остальные» | Запуск коллектива градиентов только на последнем backward окна |
 
-## Further Reading
+## Дополнительное чтение
 
-- PyTorch docs on `DistributedDataParallel.no_sync` for the production version of the sync-on-last-step trick.
-- Goyal et al., 2017, on linear scaling for large batch training, the canonical reason to care about effective batch.
-- PyTorch issue tracker on gradient accumulation interactions with mixed precision unscaling.
-- Phase 19 lessons 42 to 45 cover the model, data loader, optimizer, and trainer scaffolding this lesson assumes.
-- Phase 19 lesson 47 covers checkpoint and resume so a long accumulation run survives a wallclock cap.
+- Документация PyTorch по `DistributedDataParallel.no_sync` — продакшен-версия трюка sync-on-last-step.
+- Goyal et al., 2017, о линейном масштабировании для обучения с большим батчем — каноническая причина заботиться об эффективном батче.
+- Issue-трекер PyTorch о взаимодействии накопления градиентов с unscale смешанной точности.
+- Фаза 19, уроки 42–45 — модель, загрузчик данных, оптимизатор и обвязка тренера, которые этот урок предполагает.
+- Фаза 19, урок 47 — чекпоинт и resume, чтобы долгий прогон с накоплением пережил потолок wallclock.

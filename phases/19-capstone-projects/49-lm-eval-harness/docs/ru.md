@@ -1,31 +1,28 @@
 # Language Model Evaluation Harness
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Модель, которая хорошо справляется с задачей, которую вы не можете определить, — это модель, которая справляется случайно. Харнес — это определение задачи, метрика, раннер и лидерборд в одной короткой, заменяемой форме.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 42–45
+**Время:** ~90 минут
 
-> A model that does well on a task you cannot define is a model that does well by accident. The harness is the task definition, the metric, the runner, and the leaderboard, in one short, swappable shape.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 42 to 45
-**Time:** ~90 minutes
+- Определить задачу как JSONL-файл с полями `prompt`, `targets`, `metric` и опциональным `extras` на пример.
+- Реализовать пять метрик: exact match, rouge-l F1, исполняемая проверка, multiple choice и вхождение подстроки.
+- Построить раннер, батчирующий примеры по задачам и диспетчеризующий в заменяемый адаптер модели.
+- Излучить JSON лидерборда с пер-задачными скорами, задержкой и воспроизводимым общим средним.
 
-## Learning Objectives
+## Проблема
 
-- Define a task as a JSONL file with `prompt`, `targets`, `metric`, and optional `extras` per example.
-- Implement five metrics: exact match, rouge-l F1, executable check, multiple choice, and substring contains.
-- Build a runner that batches examples per task and dispatches to a swappable model adapter.
-- Emit a leaderboard JSON with per-task scores, latency, and an overall average that is reproducible.
+Новая языковая модель выходит каждую неделю. Маркетинговое утверждение — «она хороша». Честный вопрос: хороша в чём? Честный ответ — лидерборд, который вы написали сами, потому что лидерборд вендора — тот, под который вендор тюнился.
 
-## The Problem
+Без харнеса в репозитории вы сравниваете две модели по вайбам. С харнесом — по скору на фиксированном наборе задач с фиксированной метрикой, на JSON-выходе, который можно диффать. Харнес — контракт между вчерашним прогоном и сегодняшним. Без него регрессии уезжают в прод.
 
-A new language model lands every week. The marketing claim is that it does well. The honest question is: well at what? The honest answer is the leaderboard you wrote yourself, because the vendor's leaderboard is the one they tuned to.
+Ловушка — переобучить харнес под одну модель. Лечение — та же ловушка наоборот: харнес достаточно мал, чтобы прочитать за пятнадцать минут, задачи достаточно малы, чтобы лежать в репозитории, метрики написаны с нуля, чтобы коллега мог их проаудировать, а адаптер — единственное место, где живёт модельно-специфичный код. Замените адаптер — лидерборд сдвинется; замените задачи — лидерборд сдвинется. Ничто другое сдвигаться не должно.
 
-Without a harness in your repo you compare two models by vibes. With a harness you compare them by score on a fixed task set with a fixed metric, on a JSON output you can diff. The harness is the contract between yesterday's run and today's run. Without it, regressions ship.
-
-The trap is over-fitting the harness to a single model. The fix is the same trap in reverse: the harness is small enough to read in fifteen minutes, the tasks are small enough to ship in the repo, the metrics are written from scratch so a colleague can audit them, and the adapter is the only place model-specific code lives. Swap the adapter, the leaderboard moves; swap the tasks, the leaderboard moves. Nothing else should move.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -38,15 +35,15 @@ flowchart TD
   board --> out[leaderboard.json]
 ```
 
-### Task spec
+### Спецификация задачи
 
-Every example is one JSONL line:
+Каждый пример — одна JSONL-строка:
 
 ```json
 {"id": "arith-00", "prompt": "compute: 2 + 2", "targets": ["4"], "metric": "exact_match"}
 ```
 
-For metrics that need scoring helpers, `extras` carries the side payload:
+Для метрик, которым нужны вспомогательные данные, `extras` несёт побочный payload:
 
 ```json
 {
@@ -58,31 +55,31 @@ For metrics that need scoring helpers, `extras` carries the side payload:
 }
 ```
 
-A task is a `.jsonl` file under `outputs/tasks/`. The file name is the task name. All examples in a file share a metric.
+Задача — это `.jsonl`-файл в `outputs/tasks/`. Имя файла — имя задачи. Все примеры файла делят одну метрику.
 
-### The five fixture tasks
+### Пять fixture-задач
 
-| Task | Metric | What it tests |
+| Задача | Метрика | Что тестирует |
 |------|--------|---------------|
-| arithmetic | exact_match | Token-level correctness on a deterministic answer |
-| summary | rouge_l | Longest common subsequence F1 against a one-line reference summary |
-| code-exec | code_exec | Executable test: the predicted function must satisfy a list of input-output pairs |
-| multiple-choice | multiple_choice | First letter of the prediction must match an allowed letter |
-| generation | substring_contains | Free-form text must contain at least one target substring |
+| arithmetic | exact_match | Токенную корректность на детерминированном ответе |
+| summary | rouge_l | F1 по наибольшей общей подпоследовательности против однострочного референсного саммари |
+| code-exec | code_exec | Исполняемый тест: предсказанная функция обязана удовлетворить список пар вход-выход |
+| multiple-choice | multiple_choice | Первая буква предсказания обязана совпасть с допустимой |
+| generation | substring_contains | Свободный текст обязан содержать хотя бы одну целевую подстроку |
 
-### The metric contract
+### Контракт метрики
 
-Every metric is a function from `(prediction, targets, extras) -> float in [0.0, 1.0]`. The harness averages the per-example scores to get a task score, then averages task scores to get the overall. The metric functions are tiny:
+Каждая метрика — функция `(prediction, targets, extras) -> float в [0.0, 1.0]`. Харнес усредняет пер-примерные скоры в скор задачи, затем усредняет скоры задач в общий. Функции-метрики крошечные:
 
-- `exact_match`: lowercase, collapse whitespace, equality.
-- `substring_contains`: same normalization, substring test.
-- `multiple_choice`: first character uppercased.
-- `rouge_l`: LCS length divided by lengths of prediction and reference, F1 of precision and recall.
-- `code_exec`: execute the prediction in a restricted namespace, call `f(x)` on every input-output pair, count matches.
+- `exact_match`: нижний регистр, схлопывание пробелов, равенство.
+- `substring_contains`: та же нормализация, проверка подстроки.
+- `multiple_choice`: первый символ в верхнем регистре.
+- `rouge_l`: длина LCS, делённая на длины предсказания и референса, F1 из precision и recall.
+- `code_exec`: исполнить предсказание в ограниченном namespace, вызвать `f(x)` на каждой паре вход-выход, посчитать совпадения.
 
-The code_exec metric runs the prediction in a stripped builtins namespace. The lesson's test asserts that `import os` blows up because `os` is not in the namespace; you cannot reach the filesystem from a code prediction.
+Метрика code_exec гоняет предсказание в namespace с урезанными builtins. Тест урока утверждает, что `import os` взрывается, потому что `os` в namespace нет; из код-предсказания нельзя дотянуться до файловой системы.
 
-### The model adapter
+### Адаптер модели
 
 ```python
 class ModelAdapter(Protocol):
@@ -91,11 +88,11 @@ class ModelAdapter(Protocol):
     def name(self) -> str: ...
 ```
 
-The adapter is the seam. The lesson ships `ToyAdapter`, a deterministic pattern matcher that returns the right answer for every prompt in the five fixture tasks. A real adapter calls the model and returns its output. The harness does not care which.
+Адаптер — это шов. Урок поставляет `ToyAdapter` — детерминированный паттерн-матчер, возвращающий правильный ответ на каждый промпт пяти fixture-задач. Настоящий адаптер вызывает модель и возвращает её выход. Харнесу всё равно.
 
-### The runner
+### Раннер
 
-`run_task` batches `batch_size` prompts at a time and dispatches to the metric function. `run_leaderboard` walks every task and averages. `write_leaderboard` emits JSON with a schema string so future format changes do not silently break dashboards.
+`run_task` батчирует по `batch_size` промптов и диспетчеризует в функцию метрики. `run_leaderboard` обходит каждую задачу и усредняет. `write_leaderboard` излучает JSON со строкой schema, чтобы будущие изменения формата не ломали дашборды молча.
 
 ```mermaid
 flowchart LR
@@ -110,41 +107,41 @@ flowchart LR
 eval-harness-matrix
 ```
 
-## Build It
+## Соберите это
 
-`code/main.py` is the runnable artifact.
+`code/main.py` — запускаемый артефакт.
 
-### Step 1: seed fixture tasks
+### Шаг 1: засеять fixture-задачи
 
-`seed_fixture_tasks(target_dir)` writes the five `.jsonl` files. The first run of `main.py` seeds them when the directory is empty.
+`seed_fixture_tasks(target_dir)` пишет пять `.jsonl`-файлов. Первый запуск `main.py` засевает их, когда директория пуста.
 
-### Step 2: load tasks
+### Шаг 2: загрузить задачи
 
-`load_all_tasks(task_dir)` reads every `.jsonl` and returns a dict from task name to a list of `Example` records. Comment lines starting with `#` and blank lines are skipped so contributors can annotate the files.
+`load_all_tasks(task_dir)` читает каждый `.jsonl` и возвращает dict из имени задачи в список записей `Example`. Строки-комментарии, начинающиеся с `#`, и пустые строки пропускаются, чтобы контрибьюторы могли аннотировать файлы.
 
-### Step 3: implement metrics
+### Шаг 3: реализовать метрики
 
-Each metric is a small function with a unit test. The lesson's test suite includes 13 cases covering normalization, partial overlap, code execution, and unsafe code rejection.
+Каждая метрика — маленькая функция с юнит-тестом. Тестовый набор урока включает 13 кейсов, покрывающих нормализацию, частичное пересечение, исполнение кода и отклонение небезопасного кода.
 
-### Step 4: write the runner
+### Шаг 4: написать раннер
 
-`run_task` iterates batches and produces a `TaskResult` with score, correct count, total count, and latency. `run_leaderboard` walks all tasks and produces a `Leaderboard` with the overall average.
+`run_task` итерирует батчи и порождает `TaskResult` со скором, счётчиком правильных, общим счётчиком и задержкой. `run_leaderboard` обходит все задачи и порождает `Leaderboard` с общим средним.
 
-### Step 5: emit JSON
+### Шаг 5: излучить JSON
 
-`write_leaderboard` serializes the board. The `--include-per-example` flag dumps the per-example records so you can diff predictions against the previous run when scores move.
+`write_leaderboard` сериализует доску. Флаг `--include-per-example` выгружает пер-примерные записи, чтобы при сдвиге скоров можно было диффать предсказания против предыдущего прогона.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script seeds the fixtures on first run, scores them with the toy adapter (which gets every fixture right), and writes `outputs/leaderboard.json`. Overall score is 1.0 with the toy adapter; the stub adapter test in `test_main.py` shows the same harness produces 0.0 when the adapter cannot answer.
+Скрипт засевает фикстуры на первом запуске, оценивает их toy-адаптером (который отвечает на каждую фикстуру правильно) и пишет `outputs/leaderboard.json`. Общий скор с toy-адаптером — 1.0; тест стуб-адаптера в `test_main.py` показывает, что тот же харнес даёт 0.0, когда адаптер отвечать не умеет.
 
-## Use It
+## Используйте это
 
-To plug a real model in, write an adapter. The shape:
+Чтобы подключить настоящую модель, напишите адаптер. Форма:
 
 ```python
 class HttpAdapter:
@@ -162,40 +159,40 @@ class HttpAdapter:
         return out
 ```
 
-Swap `ToyAdapter` for `HttpAdapter` at the top of `main()`. The harness, the tasks, the metrics, and the leaderboard stay the same.
+Замените `ToyAdapter` на `HttpAdapter` в начале `main()`. Харнес, задачи, метрики и формат лидерборда не меняются.
 
-Three patterns to enforce when shipping the harness in a real project:
+Три паттерна, которые нужно насаждать при отгрузке харнеса в настоящем проекте:
 
-- **Pin the task files.** The leaderboard.json carries hash-pinned task content or it carries the JSONLs alongside; otherwise the score moves when the task file does, and you cannot tell which.
-- **Diff predictions, not just scores.** The `--include-per-example` flag lets you see what the model said the day the score dropped.
-- **Cap the batch size.** Real adapters have rate limits. A small batch size keeps the harness compatible across vendors.
+- **Пиньте файлы задач.** leaderboard.json несёт хеш-запиненное содержимое задач или несёт JSONL'ы рядом; иначе скор сдвигается вместе с файлом задачи, и непонятно, что именно сдвинулось.
+- **Диффайте предсказания, а не только скоры.** Флаг `--include-per-example` позволяет увидеть, что сказала модель в день, когда скор упал.
+- **Ограничьте размер батча.** У настоящих адаптеров есть rate limits. Маленький батч держит харнес совместимым между вендорами.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-lm-eval-harness.md` carries the recipe: JSONL task spec, five metrics, swappable adapter, batched runner, leaderboard JSON with schema string. The task files in `outputs/tasks/` are the fixtures; copy them into a real project as starters.
+`outputs/skill-lm-eval-harness.md` несёт рецепт: JSONL-спецификация задачи, пять метрик, заменяемый адаптер, батчированный раннер, JSON лидерборда со строкой schema. Файлы задач в `outputs/tasks/` — фикстуры; скопируйте их в настоящий проект как стартеры.
 
-## Exercises
+## Упражнения
 
-1. Add a sixth task with a custom metric you write from scratch (BLEU-like overlap, BLEURT-like reference scoring, anything with a clear contract).
-2. Extend `code_exec` to capture stdout and accept a list of expected stdouts as targets.
-3. Add a leaderboard diff command: given two `leaderboard.json` files, print which tasks moved and by how much.
-4. Cap latency per example. Wrap the adapter call in a timeout; surface a separate `timeouts` column in the leaderboard.
-5. Pin task content with a sha256 in the leaderboard so a future reader can verify they scored the same tasks.
+1. Добавьте шестую задачу с кастомной метрикой, написанной с нуля (BLEU-подобное пересечение, BLEURT-подобное референсное оценивание — что угодно с ясным контрактом).
+2. Расширьте `code_exec` захватом stdout и приёмом списка ожидаемых stdout как целей.
+3. Добавьте команду диффа лидербордов: по двум `leaderboard.json` печатать, какие задачи сдвинулись и на сколько.
+4. Ограничьте задержку на пример. Оберните вызов адаптера в таймаут; выведите отдельную колонку `timeouts` в лидерборде.
+5. Запиньте содержимое задач sha256-хешем в лидерборде, чтобы будущий читатель мог проверить, что оценивал те же задачи.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Task spec | "The eval format" | JSONL file with prompt, targets, metric, optional extras per example |
-| Metric | "How you score" | Function from (prediction, targets, extras) to a float in [0, 1] |
-| Adapter | "The model client" | Object with a generate(prompts) -> list[str] method; the only model-specific code |
-| Leaderboard | "The scoreboard" | JSON with per-task scores, total counts, latency, and an overall average |
-| Code exec metric | "Run it and check" | Execute the prediction in a restricted namespace, compare against input-output pairs |
+| Спецификация задачи | «Формат eval» | JSONL-файл с prompt, targets, metric и опциональным extras на пример |
+| Метрика | «Как считаем» | Функция из (prediction, targets, extras) во float в [0, 1] |
+| Адаптер | «Клиент модели» | Объект с методом generate(prompts) -> list[str]; единственный модельно-специфичный код |
+| Лидерборд | «Табло» | JSON с пер-задачными скорами, счётчиками, задержкой и общим средним |
+| Метрика code exec | «Запусти и проверь» | Исполнить предсказание в ограниченном namespace, сравнить с парами вход-выход |
 
-## Further Reading
+## Дополнительное чтение
 
-- The original lm-evaluation-harness for the production reference, much larger but the same shape.
-- HuggingFace's lighteval for an alternative implementation of the same contract.
-- Phase 19 lesson 46 covers the gradient accumulation patterns used in the training stack the harness scores.
-- Phase 19 lesson 47 covers the checkpoint format you score against; pin the checkpoint hash in the leaderboard.
-- Phase 19 lesson 48 covers the distributed training stack that produced the model under test.
+- Оригинальный lm-evaluation-harness — продакшен-референс, куда больше, но той же формы.
+- lighteval от HuggingFace — альтернативная реализация того же контракта.
+- Фаза 19, урок 46 — паттерны накопления градиентов в обучающем стеке, который оценивает харнес.
+- Фаза 19, урок 47 — формат чекпоинта, против которого вы оцениваете; пиньте хеш чекпоинта в лидерборде.
+- Фаза 19, урок 48 — распределённый обучающий стек, породивший модель под тестом.

@@ -1,31 +1,28 @@
 # Checkpoint Save and Resume
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Прерывания убивают прогоны; чекпоинты позволяют им продолжаться. Сохраняйте модель, оптимизатор, планировщик, историю лоссов, счётчик шагов и состояние RNG — атомарно, чтобы kill в любой момент оставлял на диске валидный файл.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 42–45
+**Время:** ~90 минут
 
-> Train interrupts kill runs; checkpoints let them continue. Save model, optimizer, scheduler, loss history, step counter, and RNG state, atomically, so a kill at any moment leaves a valid file on disk.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 42 to 45
-**Time:** ~90 minutes
+- Захватить полное состояние обучения в один payload, перезагружаемый в свежий процесс.
+- Реализовать атомарное сохранение через запись-во-временный-файл-затем-переименование, чтобы краш никогда не оставлял полузаписанный файл.
+- Восстановить состояние RNG для Python, NumPy и PyTorch, чтобы лосс после resume совпадал с непрерванным бейзлайном.
+- Построить шардированную раскладку чекпоинтов для моделей, уже не влезающих в один файл, с хеш-верифицированными шардами и JSON-индексом.
 
-## Learning Objectives
+## Проблема
 
-- Capture the full training state into a single payload that can be reloaded into a fresh process.
-- Implement atomic save with write-to-temp then rename so a crash never leaves a half-written file.
-- Restore the RNG state for Python, NumPy, and PyTorch so the post-resume loss matches the uninterrupted baseline.
-- Build a sharded checkpoint layout for models that no longer fit in a single file, with hash-verified shards and a JSON index.
+Вы поставили обучающую джобу на 18 часов. Потолок wallclock — 4 часа. Кластер перезагружается на одиннадцатом часу, потому что кто-то выше вашей зарплатной сетки одобрил обновление ядра. Без чекпоинтов вы начинаете заново. Без resume вы теряете и состояние оптимизатора, на выучивание которого ушли первые 11 часов, — даже если веса модели выжили, моменты AdamW пропали, и следующий шаг дёргается в направлении, которое траектория обучения уже прошла.
 
-## The Problem
+Правильный артефакт — один файл, держащий всё нужное для продолжения: параметры модели, состояние оптимизатора, состояние планировщика, историю лоссов для графиков, текущие счётчики шага, эпохи и батча-в-эпохе, а также состояние RNG для каждого источника случайности. Без состояния RNG кривая лосса после resume — другая кривая. Та же модель, те же данные, другой шаффл, другая dropout-маска, другое число на дашборде.
 
-You set a training job for 18 hours. The wallclock cap is 4 hours. The cluster reboots at hour 11 because someone above your pay grade approved a kernel upgrade. Without checkpoints you start over. Without resume you also lose the optimizer state that took the first 11 hours to learn, so even if the model weights survived, the AdamW moments are gone and the next step lurches in a direction the training trajectory had already moved past.
+Атомарное сохранение — вторая половина контракта. Запись прямо в финальное имя означает, что краш посреди записи оставляет битый файл; resume читает мусор. Запись во временный файл в той же директории и затем переименование означает, что краш посреди записи оставляет предыдущий хороший файл нетронутым. Переименование атомарно на POSIX-файловых системах.
 
-The right artifact is a single file that holds everything needed to continue: model parameters, optimizer state, scheduler state, the loss history for plots, the current step and epoch and batch-in-epoch counters, and the RNG state for every source of randomness. Without the RNG state the resumed loss curve is a different curve. Same model, same data, different shuffle, different dropout mask, different number on the dashboard.
-
-Atomic save is the other half of the contract. Writing into the final filename means a crash mid-write leaves a corrupt file; the resume reads garbage. Writing into a temporary file in the same directory and then renaming means a crash mid-write leaves the previous good file untouched. The rename is atomic on POSIX file systems.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -38,17 +35,17 @@ flowchart TD
   ckpt --> write[atomic write: tmp file then os.replace]
 ```
 
-### The five state buckets
+### Пять корзин состояния
 
-| Bucket | Why it matters |
+| Корзина | Почему важна |
 |--------|----------------|
-| Model | Weights and buffers; what the model is. |
-| Optimizer | Momentum and adaptive moments; without these the next step is a different optimization problem. |
-| Scheduler | Where the learning rate is on its curve; cosine schedules in particular care. |
-| Train counters | Step, epoch, batch-in-epoch, plus the loss history that draws the dashboard. |
-| RNG state | Determinism for dropout, data shuffling, and any sampling inside the model. |
+| Модель | Веса и буферы; то, чем модель является. |
+| Оптимизатор | Моментум и адаптивные моменты; без них следующий шаг — другая оптимизационная задача. |
+| Планировщик | Где learning rate на своей кривой; косинусным расписаниям это особенно важно. |
+| Счётчики обучения | Шаг, эпоха, батч-в-эпохе, плюс история лоссов, рисующая дашборд. |
+| Состояние RNG | Детерминизм для dropout, шаффла данных и любого сэмплирования внутри модели. |
 
-### Atomic save
+### Атомарное сохранение
 
 ```mermaid
 flowchart LR
@@ -59,11 +56,11 @@ flowchart LR
   crash2[crash after rename] --> done
 ```
 
-Two rules. First, the temporary file lives in the same directory as the target so the rename stays within the same file system; cross-device renames are not atomic. Second, the temporary name is unique per attempt so two writers do not stomp.
+Два правила. Первое: временный файл живёт в той же директории, что и цель, чтобы переименование осталось внутри одной файловой системы; кросс-девайсные переименования не атомарны. Второе: временное имя уникально на попытку, чтобы два писателя не затоптали друг друга.
 
-### Sharded checkpoints
+### Шардированные чекпоинты
 
-When the model gets large the single-file payload becomes too big to load fast, too big to inspect, and too painful when a network share hiccups mid-read. The fix is to split the parameter state into shards and write a small index that ties them together.
+Когда модель вырастает, однофайловый payload становится слишком большим, чтобы быстро загружаться, слишком большим для инспекции и слишком болезненным, когда сетевая шара икает посреди чтения. Лечение — разрезать состояние параметров на шарды и записать маленький индекс, связывающий их вместе.
 
 ```mermaid
 flowchart LR
@@ -77,80 +74,80 @@ flowchart LR
   meta[meta.pt: optimizer + scheduler + train_state + rng] --> idx
 ```
 
-The index records the shard count, the sha256 of each shard, and the sha256 of the meta file. The loader fails loudly when any hash mismatches. The shards can land on different physical disks; the meta is small and reads first.
+Индекс записывает число шардов, sha256 каждого шарда и sha256 мета-файла. Загрузчик громко падает при любом несовпадении хеша. Шарды могут лежать на разных физических дисках; мета маленькая и читается первой.
 
-### Resume continues mid epoch
+### Resume продолжает посреди эпохи
 
-A resume that snaps to the start of the next epoch wastes anywhere from minutes to a day. The fix is `(epoch, batch_in_epoch)` plus the RNG state. After load, the training loop fast-forwards the random number generator past the batches already consumed in the current epoch and continues from `batch_in_epoch`. The lesson code does this exactly; the assertion is that the loss trajectory after resume matches the uninterrupted baseline within 1e-4.
+Resume, прыгающий к началу следующей эпохи, тратит впустую от минут до суток. Лечение — `(epoch, batch_in_epoch)` плюс состояние RNG. После загрузки цикл обучения прокручивает генератор случайных чисел вперёд, мимо батчей, уже потреблённых в текущей эпохе, и продолжает с `batch_in_epoch`. Код урока делает ровно это; утверждение — траектория лосса после resume совпадает с непрерванным бейзлайном в пределах 1e-4.
 
-## Build It
+## Соберите это
 
-`code/main.py` provides four primitives and a demo driver.
+`code/main.py` даёт четыре примитива и демо-драйвер.
 
-### Step 1: capture and restore RNG state
+### Шаг 1: захват и восстановление состояния RNG
 
-`capture_rng_state` returns a dict with Python's `random.getstate`, NumPy's `np.random.get_state`, and PyTorch CPU and CUDA RNG bytes. `restore_rng_state` reverses it. The CPU tensor is a uint8 byte buffer that PyTorch's RNG knows how to consume.
+`capture_rng_state` возвращает dict с `random.getstate` Python, `np.random.get_state` NumPy и байтами RNG PyTorch для CPU и CUDA. `restore_rng_state` разворачивает его обратно. CPU-тензор — байтовый буфер uint8, который RNG PyTorch умеет потреблять.
 
-### Step 2: atomic save
+### Шаг 2: атомарное сохранение
 
-`atomic_save` writes the payload to a temp file in the target directory, then `os.replace` swaps it into the final name. `atomic_write_json` does the same for the sharded index.
+`atomic_save` пишет payload во временный файл в целевой директории, затем `os.replace` подменяет его в финальное имя. `atomic_write_json` делает то же для шардированного индекса.
 
-### Step 3: full checkpoint round trip
+### Шаг 3: полный round trip чекпоинта
 
-`save_checkpoint` packages the model, optimizer, scheduler, train state, and RNG into one dict. `load_checkpoint` reverses it and returns a `TrainState`. The schema field is the upgrade hook: future format changes bump the version string and the loader dispatches.
+`save_checkpoint` упаковывает модель, оптимизатор, планировщик, состояние обучения и RNG в один dict. `load_checkpoint` разворачивает его и возвращает `TrainState`. Поле schema — крючок апгрейда: будущие изменения формата поднимают строку версии, и загрузчик диспетчеризуется по ней.
 
-### Step 4: sharded variant
+### Шаг 4: шардированный вариант
 
-`save_sharded_checkpoint` round-robins the parameter keys across N shards, writes each shard with its own atomic save, writes a meta file with optimizer and scheduler and train state, and writes the JSON index with shard sha256s. `load_sharded_checkpoint` verifies every shard before merging.
+`save_sharded_checkpoint` раскидывает ключи параметров round-robin по N шардам, пишет каждый шард своим атомарным сохранением, пишет мета-файл с оптимизатором, планировщиком и состоянием обучения и пишет JSON-индекс с sha256 шардов. `load_sharded_checkpoint` верифицирует каждый шард перед слиянием.
 
-### Step 5: resume demo
+### Шаг 5: демо resume
 
-`run_resume_demo` trains a small model for `total_steps`, saves a checkpoint at `interrupt_at`, then continues. A second process restores the checkpoint and runs the remaining steps. The function returns the max absolute difference between the two loss trajectories after the interruption point. With RNG restored, the difference is zero or floating-point noise.
+`run_resume_demo` обучает маленькую модель `total_steps` шагов, сохраняет чекпоинт на `interrupt_at`, затем продолжает. Второй процесс восстанавливает чекпоинт и прогоняет оставшиеся шаги. Функция возвращает максимальную абсолютную разность двух траекторий лосса после точки прерывания. С восстановленным RNG разность — ноль или шум плавающей точки.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The single-file and sharded demos both assert max-diff under 1e-4. The summary lands in `outputs/resume-demo.json`.
+Однофайловое и шардированное демо оба утверждают max-diff меньше 1e-4. Сводка ложится в `outputs/resume-demo.json`.
 
-## Use It
+## Используйте это
 
-Production training stacks ship checkpointing as part of the trainer. The shape is the same: model + optimizer + scheduler + counters + RNG, written atomically, named by step so the latest is easy to find. Sharded layouts power large model loading with parallel reads; the index.json is what makes that work.
+Продакшен-стеки обучения поставляют чекпоинтинг как часть тренера. Форма та же: модель + оптимизатор + планировщик + счётчики + RNG, записанные атомарно, именованные по шагу, чтобы последний было легко найти. Шардированные раскладки питают загрузку больших моделей параллельными чтениями; index.json — то, что заставляет это работать.
 
-Three patterns to enforce:
+Три паттерна, которые нужно насаждать:
 
-- **Schema is a string in the payload.** Migrations branch on it. Without it you cannot evolve the format without breaking old runs.
-- **Sha256 every shard.** A silently truncated download is the worst kind of bug; the loader fails fast or it fails late.
-- **Keep checkpoint cadence honest.** Save every N steps and every wallclock-minute, whichever is shorter. Otherwise the long step that crashes wastes a full window of work.
+- **Schema — строка в payload'е.** Миграции ветвятся по ней. Без неё формат не эволюционирует без поломки старых прогонов.
+- **Sha256 на каждый шард.** Молча обрезанная загрузка — худший сорт бага; загрузчик падает быстро — или падает поздно.
+- **Честная частота чекпоинтов.** Сохраняйтесь каждые N шагов и каждую wallclock-минуту — что короче. Иначе долгий шаг, на котором случился краш, тратит впустую целое окно работы.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-checkpoint-save-resume.md` is the recipe for any new training script: payload shape, atomic write, RNG capture, sharded index. Drop the skill into a repo, wire `save_checkpoint` at the periodic save site, wire `load_checkpoint` at startup, and the run survives kills.
+`outputs/skill-checkpoint-save-resume.md` — рецепт для любого нового обучающего скрипта: форма payload, атомарная запись, захват RNG, шардированный индекс. Бросьте скилл в репозиторий, подключите `save_checkpoint` в точке периодического сохранения, подключите `load_checkpoint` на старте — и прогон переживает kill'ы.
 
-## Exercises
+## Упражнения
 
-1. Replace round-robin sharding with sharding by parameter group (layers ending in `.weight` vs `.bias`). When is each layout preferable?
-2. Extend the save loop to keep the last K checkpoints and prune older ones. What is the right K when the disk is small?
-3. Add a `--ckpt-every-seconds` flag that triggers a save on a wallclock interval, not just step count.
-4. Add a checksum verification path that runs at startup, scans every checkpoint in the directory, and reports which ones are corrupt.
-5. Implement a `migrate_v1_to_v2` function that adds a new field to the payload and bumps the schema string. Make load tolerate both versions.
+1. Замените round-robin-шардирование шардированием по группе параметров (слои, заканчивающиеся на `.weight`, против `.bias`). Когда какая раскладка предпочтительнее?
+2. Расширьте цикл сохранения хранением последних K чекпоинтов с удалением более старых. Каков правильный K, когда диск маленький?
+3. Добавьте флаг `--ckpt-every-seconds`, триггерящий сохранение по wallclock-интервалу, а не только по числу шагов.
+4. Добавьте путь верификации чексумм, работающий на старте: сканирует каждый чекпоинт в директории и репортит, какие битые.
+5. Реализуйте функцию `migrate_v1_to_v2`, добавляющую новое поле в payload и поднимающую строку schema. Сделайте загрузку толерантной к обеим версиям.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Atomic save | "Write and pray" | Write to a temp file in the same directory, then os.replace into the target name |
-| State dict | "The weights" | Model parameters and buffers, keyed by parameter name |
-| Sharded checkpoint | "Big model file" | Multiple files, one per shard, plus a meta file and a JSON index with sha256s |
-| RNG state | "Random seed" | Captured state for python random, numpy, torch CPU, torch CUDA; not just the seed |
-| Mid-epoch resume | "Restart" | Fast-forward the RNG and continue from the next batch in the same epoch |
+| Атомарное сохранение | «Записал и молись» | Запись во временный файл в той же директории, затем os.replace в целевое имя |
+| State dict | «Веса» | Параметры и буферы модели с ключами по именам параметров |
+| Шардированный чекпоинт | «Файл большой модели» | Несколько файлов, по одному на шард, плюс мета-файл и JSON-индекс с sha256 |
+| Состояние RNG | «Random seed» | Захваченное состояние python random, numpy, torch CPU, torch CUDA; не просто сид |
+| Resume посреди эпохи | «Перезапуск» | Прокрутить RNG вперёд и продолжить со следующего батча той же эпохи |
 
-## Further Reading
+## Дополнительное чтение
 
-- POSIX `rename` semantics for the atomicity claim that `os.replace` relies on.
-- PyTorch documentation on `torch.save` and `torch.load`, including `map_location` for cross-device restores.
-- Phase 19 lesson 46 covers the gradient accumulation that this lesson's checkpoint payload survives across.
-- Phase 19 lesson 48 covers the distributed wrappers whose state dict format this scheme accommodates.
-- The Linux kernel `fsync` documentation for the durability guarantee behind atomic rename.
+- Семантика POSIX `rename` — обоснование атомарности, на которую опирается `os.replace`.
+- Документация PyTorch по `torch.save` и `torch.load`, включая `map_location` для кросс-девайсных восстановлений.
+- Фаза 19, урок 46 — накопление градиентов, которое payload чекпоинта этого урока переживает.
+- Фаза 19, урок 48 — распределённые обёртки, чей формат state dict эта схема вмещает.
+- Документация ядра Linux по `fsync` — гарантия долговечности за атомарным переименованием.

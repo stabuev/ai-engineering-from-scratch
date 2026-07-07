@@ -1,31 +1,28 @@
 # Cosine LR with Linear Warmup
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Расписание learning rate — второе по важности решение после функции лосса. AdamW с косинусным затуханием и линейным warmup — современный дефолт обучения языковых моделей: он даёт модели маленький эффективный шаг во время хрупкой первой тысячи обновлений, разгоняется до сконфигурированного пика и плавно затухает обратно к нулю. Этот урок строит это расписание, рисует кривую по шагам обучения, логирует нормы градиентов рядом с расписанием и доказывает, что расписание чтит границы warmup, пика и затухания.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37
+**Время:** ~90 минут
 
-> The learning-rate schedule is the second most important decision after the loss function. AdamW with a cosine decay and a linear warmup is the modern default for language-model training because it lets the model see a small effective step size during the brittle first thousand updates, ramps up to a configured peak, and decays smoothly back toward zero. This lesson builds that schedule, plots the curve over training steps, logs gradient norms next to the schedule, and proves the schedule honors warmup, peak, and decay boundaries.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37
-**Time:** ~90 minutes
+- Реализовать оптимизатор AdamW, подключённый к косинусному расписанию learning rate с линейным warmup.
+- Вычислять точное значение расписания на любом шаге без floating-point-дрейфа между прогонами.
+- Логировать L2-норму градиента бок о бок с learning rate, чтобы здоровье обучения было наблюдаемым.
+- Отрисовать расписание текстовым графиком, читаемым глазом, и CSV, потребляемым любым инструментом.
 
-## Learning Objectives
+## Проблема
 
-- Implement an AdamW optimizer wired to a cosine learning-rate schedule with linear warmup.
-- Compute the schedule's exact value at any step without floating-point drift across runs.
-- Log gradient L2 norm side by side with the learning rate so training health is observable.
-- Render the schedule to a text plot the eye can read and a CSV any tool can consume.
+Первая тысяча обучающих обновлений — самая громкая. Веса модели ещё близки к инициализации. Бегущая оценка второго момента у оптимизатора не стабилизировалась. Норма градиента большая и шумная. Если learning rate на пике во время этих обновлений, модель либо расходится сразу, либо оседает на плато лосса, с которого никогда не сходит. Два известных лечения — клиппинг градиентов, тема урока 45 Фазы 19, и расписание learning rate, стартующее с малого и разгоняющееся.
 
-## The Problem
+У расписания косинус-с-warmup три области. От шага ноль до шага `warmup_steps` learning rate линейно масштабируется от нуля до сконфигурированного пика `lr_max`. От `warmup_steps` до `total_steps` learning rate следует верхней половине косинусной кривой, затухая от `lr_max` до `lr_min`. После `total_steps` learning rate пришпилен к `lr_min`, чтобы неверно сконфигурированный тренер, промахнувшийся мимо конца, не вышел из расписания молча.
 
-The first thousand training updates are the loudest. The model's weights are still close to initialization. The optimizer's running second-moment estimate has not stabilised. The gradient norm is large and noisy. If the learning rate is at its peak during these updates the model either diverges outright or settles into a loss plateau it never escapes. The two well-known fixes are gradient clipping, which is the subject of Phase 19 lesson 45, and a learning-rate schedule that starts small and ramps up.
+Строительная проблема в том, что в расписаниях легко ошибиться на единицу. Off-by-one всплывает через шесть часов обучения как learning rate, который на 1 процент выше или ниже нужного ровно в момент, когда модель начинает переобучаться, — это невидимо, пока расписание не оттестировано на границах исчерпывающе.
 
-The cosine-with-warmup schedule has three regions. From step zero to step `warmup_steps` the learning rate scales linearly from zero to the configured peak `lr_max`. From step `warmup_steps` to step `total_steps` the learning rate follows the upper half of a cosine curve, decaying from `lr_max` to `lr_min`. After `total_steps` the learning rate is pinned at `lr_min` so a misconfigured trainer that overshoots does not silently exit the schedule.
-
-The build problem is that schedules are easy to get wrong off by one. The off-by-one shows up six hours into a training run as a learning rate that is 1 percent too high or too low at the moment the model starts overfitting, which is invisible unless the schedule is exhaustively tested at boundaries.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -41,91 +38,91 @@ flowchart TD
   Log --> Plot[Text plot + CSV]
 ```
 
-### Warmup formula
+### Формула warmup
 
-For `step` in `[0, warmup_steps]` with `warmup_steps > 0`, the learning rate is `lr_max * step / warmup_steps`. The degenerate `warmup_steps = 0` case is treated as "no warmup": the schedule starts directly at `lr_max` at step zero and immediately enters cosine decay. Some test harnesses pass `warmup_steps = 0` to check the schedule still produces a usable curve.
+Для `step` в `[0, warmup_steps]` при `warmup_steps > 0` learning rate равен `lr_max * step / warmup_steps`. Вырожденный случай `warmup_steps = 0` трактуется как «без warmup»: расписание стартует прямо с `lr_max` на нулевом шаге и немедленно входит в косинусное затухание. Некоторые тестовые харнесы передают `warmup_steps = 0`, чтобы проверить, что расписание всё равно даёт пригодную кривую.
 
-### Cosine formula
+### Формула косинуса
 
-For `step` in `(warmup_steps, total_steps]` the learning rate is `lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * progress))` where `progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)`. At `step = warmup_steps` the cosine evaluates to `cos(0) = 1`, which gives `lr_max`, matching the warmup endpoint exactly. At `step = total_steps` the cosine evaluates to `cos(pi) = -1`, which gives `lr_min`, matching the decay endpoint exactly.
+Для `step` в `(warmup_steps, total_steps]` learning rate равен `lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * progress))`, где `progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)`. На `step = warmup_steps` косинус равен `cos(0) = 1`, что даёт `lr_max` — точное совпадение с концом warmup. На `step = total_steps` косинус равен `cos(pi) = -1`, что даёт `lr_min` — точное совпадение с концом затухания.
 
-The continuity at both endpoints is not an accident. It is the reason the schedule is implemented as a single function over `step`, not as three different functions glued together. A glued schedule loses one boundary the first time `lr_max` is changed.
+Непрерывность на обоих концах — не случайность. Именно поэтому расписание реализовано одной функцией от `step`, а не тремя склеенными. Склеенное расписание теряет одну границу при первой же смене `lr_max`.
 
-### Floor after total steps
+### Пол после total steps
 
-For `step > total_steps` the learning rate stays at `lr_min`. The contract is explicit: the schedule does not error out and does not extrapolate; it pins at the floor and lets the trainer log a warning. Trainers that need to extend training change the schedule's `total_steps`, not the loop.
+Для `step > total_steps` learning rate остаётся на `lr_min`. Контракт явный: расписание не кидает ошибок и не экстраполирует; оно пришпиливается к полу и позволяет тренеру залогировать предупреждение. Тренеры, которым нужно продлить обучение, меняют `total_steps` расписания, а не цикл.
 
-### Gradient norm logging alongside the rate
+### Логирование нормы градиента рядом с rate
 
-The schedule is half of training health. The gradient norm is the other half. The training loop logs both per step. A divergent training run shows the gradient norm spike before the loss does; a well-tuned warmup keeps the norm rising linearly with the rate; a too-aggressive peak shows up as a norm that stays high after warmup. The dataset on disk is `step, lr, grad_l2_norm, loss`. The CSV is the only durable record.
+Расписание — половина здоровья обучения. Норма градиента — вторая половина. Цикл обучения логирует обе на каждом шаге. Расходящийся прогон показывает всплеск нормы градиента раньше лосса; хорошо настроенный warmup держит норму, растущую линейно с rate; слишком агрессивный пик проявляется нормой, остающейся высокой после warmup. Датасет на диске — `step, lr, grad_l2_norm, loss`. CSV — единственная долговечная запись.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `CosineWithWarmup` - a stateless function `lr(step) -> float` over the configured schedule.
-- `TrainState` - wraps a model, an `AdamW` optimizer, and the schedule into a single step function.
-- `TrainState.step` - runs one forward pass, one backward pass, logs gradient L2 norm, and applies `lr(step)` to the optimizer.
-- `plot_schedule_ascii` - renders the schedule as a text plot the eye can read.
-- `write_schedule_csv` - emits one row per step with the learning rate.
+- `CosineWithWarmup` — stateless-функция `lr(step) -> float` по сконфигурированному расписанию.
+- `TrainState` — оборачивает модель, оптимизатор `AdamW` и расписание в единую step-функцию.
+- `TrainState.step` — гоняет один forward-проход, один backward-проход, логирует L2-норму градиента и применяет `lr(step)` к оптимизатору.
+- `plot_schedule_ascii` — отрисовывает расписание текстовым графиком, читаемым глазом.
+- `write_schedule_csv` — излучает по строке на шаг с learning rate.
 
-A demo at the bottom of the file builds a tiny `nn.Linear` model, trains for 20 steps over a fixed input batch, and prints the per-step learning rate, gradient norm, and loss. The schedule is also rendered as a text plot for the visual sanity check.
+Демо внизу файла собирает крошечную `nn.Linear`-модель, обучает 20 шагов на фиксированном входном батче и печатает пошаговый learning rate, норму градиента и лосс. Расписание также отрисовывается текстовым графиком для визуального sanity-контроля.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script exits zero and prints a per-step training log plus the schedule plot.
+Скрипт выходит с нулём и печатает пошаговый лог обучения плюс график расписания.
 
-## Production Patterns
+## Production-паттерны
 
-Four patterns elevate the schedule to a production artifact.
+Четыре паттерна поднимают расписание до продакшен-артефакта.
 
-**Schedule lives in a config, not in code.** The trainer reads `warmup_steps`, `total_steps`, `lr_max`, `lr_min` from a YAML or JSON config that is committed to git. The schedule is reproducible because the config is content-addressed; the schedule is auditable because the config is part of the PR diff.
+**Расписание живёт в конфиге, а не в коде.** Тренер читает `warmup_steps`, `total_steps`, `lr_max`, `lr_min` из YAML- или JSON-конфига, закоммиченного в git. Расписание воспроизводимо, потому что конфиг контентно-адресуем; расписание аудируемо, потому что конфиг — часть PR-диффа.
 
-**Step counter is monotonic and decoupled from epochs.** Some frameworks confuse step and epoch when the dataset is sharded or the dataloader restarts. The schedule reads `global_step` from the trainer's checkpoint, not from a local counter. A resumed run continues at the right schedule position because the step counter is the durable axis.
+**Счётчик шагов монотонен и отвязан от эпох.** Некоторые фреймворки путают шаг и эпоху, когда датасет шардирован или dataloader перезапускается. Расписание читает `global_step` из чекпоинта тренера, а не из локального счётчика. Возобновлённый прогон продолжается на правильной позиции расписания, потому что счётчик шагов — долговечная ось.
 
-**Schedule plot in the run directory.** Every training run writes `outputs/lr_schedule.png` (or in this lesson a text plot) into its run directory. A reviewer who skims the directory can sanity-check the schedule without re-running anything. This catches the misconfigured-schedule class of bugs at PR time.
+**График расписания в директории прогона.** Каждый обучающий прогон пишет `outputs/lr_schedule.png` (в этом уроке — текстовый график) в свою директорию. Ревьюер, пролиставший директорию, может проверить расписание, ничего не перезапуская. Это ловит класс багов «неверно сконфигурированное расписание» на этапе PR.
 
-**Log row schema is fixed.** `step, lr, grad_l2_norm, loss` in that order. A downstream notebook or dashboard reads the schema; renaming a column without bumping a version invalidates every existing dashboard.
+**Схема строки лога зафиксирована.** `step, lr, grad_l2_norm, loss` — именно в этом порядке. Ноутбук или дашборд ниже по течению читают схему; переименование колонки без поднятия версии инвалидирует каждый существующий дашборд.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **Sweep peak before sweeping anything else.** `lr_max` is the most sensitive knob. Sweep it on a small model first; the optimal `lr_max` scales weakly with model size, so the small-model sweep is a strong prior.
-- **Warmup is a fraction of total steps, not an absolute count.** A 200-million-step run with 2,000 warmup steps starts at peak almost immediately; a 20,000-step run with the same number warms up for 10 percent. Configure warmup as a fraction (typical: 1-3 percent) so the schedule scales with training duration.
-- **`lr_min` is non-zero on purpose.** A floor that is 10 percent of `lr_max` keeps the optimizer learning during the long tail. A `lr_min = 0` schedule produces a training curve that looks great on a plot and a model that has not actually finished training.
+- **Свипайте пик раньше всего остального.** `lr_max` — самая чувствительная ручка. Сначала свипните её на маленькой модели; оптимальный `lr_max` слабо масштабируется с размером модели, так что свип на маленькой — сильный prior.
+- **Warmup — доля от общих шагов, а не абсолютный счётчик.** Прогон на 200 миллионов шагов с 2 000 шагами warmup стартует с пика почти сразу; прогон на 20 000 шагов с тем же числом греется 10 процентов пути. Настраивайте warmup долей (типично 1–3 процента), чтобы расписание масштабировалось с длительностью обучения.
+- **`lr_min` ненулевой намеренно.** Пол в 10 процентов от `lr_max` оставляет оптимизатор обучающимся на длинном хвосте. Расписание с `lr_min = 0` даёт кривую обучения, красивую на графике, и модель, которая на самом деле не дообучилась.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-cosine-warmup.md` would, on a real project, describe which config carries the schedule, which trainer step the global counter is read from, and what `lr_max` sweep produced the deployed value. This lesson ships the engine.
+`outputs/skill-cosine-warmup.md` в настоящем проекте описал бы, какой конфиг несёт расписание, из какого шага тренера читается глобальный счётчик и какой свип `lr_max` породил задеплоенное значение. Этот урок отгружает движок.
 
-## Exercises
+## Упражнения
 
-1. Add an inverse-square-root variant of the schedule and compare it on a 200-step toy training run. Which curve produces the lower final loss?
-2. Add a `--restart` flag that adds a second warmup at `total_steps / 2`. Defend whether warm restarts improve or hurt on the toy run.
-3. Add a unit test that the schedule is continuous: for every step in `[0, total_steps]` the difference `|lr(step+1) - lr(step)|` is bounded by `lr_max / warmup_steps`.
-4. Wire the schedule into a `torch.optim.lr_scheduler.LambdaLR` so it composes with framework code. The lesson uses a plain step function; what does the wrapper change?
-5. Add a `--plot-png` flag that writes a real plot via `matplotlib`. Defend whether the lesson's text plot or the PNG is the better default for CI runs.
+1. Добавьте inverse-square-root-вариант расписания и сравните его на игрушечном обучении в 200 шагов. Какая кривая даёт меньший финальный лосс?
+2. Добавьте флаг `--restart`, добавляющий второй warmup на `total_steps / 2`. Обоснуйте, улучшают или ухудшают warm restarts игрушечный прогон.
+3. Добавьте юнит-тест непрерывности расписания: для каждого шага в `[0, total_steps]` разность `|lr(step+1) - lr(step)|` ограничена `lr_max / warmup_steps`.
+4. Подключите расписание к `torch.optim.lr_scheduler.LambdaLR`, чтобы оно компоновалось с фреймворочным кодом. Урок использует обычную step-функцию; что меняет обёртка?
+5. Добавьте флаг `--plot-png`, пишущий настоящий график через `matplotlib`. Обоснуйте, что лучший дефолт для CI-прогонов — текстовый график урока или PNG.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Warmup | "Slow start" | Linear ramp from zero to `lr_max` over the first `warmup_steps` updates |
-| Cosine decay | "Smooth drop" | Upper-half cosine curve from `lr_max` to `lr_min` over the remaining steps |
-| Floor | "After training" | The fixed `lr_min` value the schedule pins at past `total_steps` |
-| Gradient norm | "L2 of grads" | The Euclidean norm of the concatenated gradient vector, logged each step |
-| Global step | "Schedule axis" | A monotonic step counter that survives restarts and drives the schedule |
+| Warmup | «Медленный старт» | Линейный разгон от нуля до `lr_max` за первые `warmup_steps` обновлений |
+| Косинусное затухание | «Плавный спад» | Верхняя половина косинусной кривой от `lr_max` до `lr_min` на оставшихся шагах |
+| Пол | «После обучения» | Фиксированное значение `lr_min`, к которому расписание пришпиливается после `total_steps` |
+| Норма градиента | «L2 градиентов» | Евклидова норма конкатенированного вектора градиентов, логируемая каждый шаг |
+| Глобальный шаг | «Ось расписания» | Монотонный счётчик шагов, переживающий рестарты и управляющий расписанием |
 
-## Further Reading
+## Дополнительное чтение
 
-- [Loshchilov and Hutter, SGDR: Stochastic Gradient Descent with Warm Restarts (arXiv 1608.03983)](https://arxiv.org/abs/1608.03983) - the cosine schedule's reference paper
-- [Loshchilov and Hutter, Decoupled Weight Decay Regularization (arXiv 1711.05101)](https://arxiv.org/abs/1711.05101) - AdamW's reference paper
-- [PyTorch torch.optim.lr_scheduler](https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate) - how step functions compose with framework schedulers
-- Phase 19 · 42 - the downloader whose corpus this schedule consumes
-- Phase 19 · 43 - the dataloader the schedule co-evolves with
-- Phase 19 · 45 - gradient clipping and AMP, the next layer in the loop
+- [Loshchilov and Hutter, SGDR: Stochastic Gradient Descent with Warm Restarts (arXiv 1608.03983)](https://arxiv.org/abs/1608.03983) — референсная статья косинусного расписания
+- [Loshchilov and Hutter, Decoupled Weight Decay Regularization (arXiv 1711.05101)](https://arxiv.org/abs/1711.05101) — референсная статья AdamW
+- [PyTorch torch.optim.lr_scheduler](https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate) — как step-функции компонуются с фреймворочными планировщиками
+- Фаза 19 · 42 — загрузчик, чей корпус потребляет это расписание
+- Фаза 19 · 43 — dataloader, с которым расписание коэволюционирует
+- Фаза 19 · 45 — клиппинг градиентов и AMP, следующий слой цикла

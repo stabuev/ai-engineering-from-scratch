@@ -1,31 +1,28 @@
 # Large Corpus Downloader
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучение языковой модели начинается задолго до первого forward-прохода. Корпус должен приземлиться на диск — распакованный, дедуплицированный и адресуемый, причём история resume должна быть продумана до того, как сеть отвалится на 4 процентах. Этот урок строит стриминговый загрузчик, который тянет сжатые шарды, распаковывает на лету через Zstandard, отпечатывает почти-дубликаты через MinHash плюс locality-sensitive hashing и пишет манифест шардов, которому может доверять остальной пайплайн.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37
+**Время:** ~90 минут
 
-> Training a language model begins long before the first forward pass. The corpus has to land on disk, decompressed, deduplicated, and addressable, with the resume story already worked out before the network drops at 4 percent. This lesson builds a streaming downloader that pulls compressed shards, decompresses on the fly with Zstandard, fingerprints near-duplicates via MinHash plus locality-sensitive hashing, and writes a shard manifest the rest of the pipeline can trust.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37
-**Time:** ~90 minutes
+- Стримить удалённые шарды через `urllib` и распаковывать `zstandard`, не буферизуя весь файл в памяти.
+- Возобновлять частичные загрузки HTTP `Range`-запросами от проверенного байтового смещения.
+- Строить MinHash-подпись на документ и раскладывать её по LSH-бакетам, чтобы почти-дубликаты сталкивались.
+- Излучать манифест шардов с хешем содержимого, размером в байтах, числом документов и вердиктом дедупликации.
 
-## Learning Objectives
+## Проблема
 
-- Stream remote shards with `urllib` and decompress with `zstandard` without buffering the whole file in memory.
-- Resume partial downloads by issuing HTTP `Range` requests against a verified byte offset.
-- Build a MinHash signature per document and bucket it with LSH so near-duplicates collide.
-- Emit a shard manifest with content hash, byte size, document count, and dedup verdict.
+В первый раз, когда вы обучаетесь на корпусе в 200 ГБ, сеть падает на 41 проценте, и скрипт выходит с `urllib`-исключением. Во второй раз — на 78. К 99 процентам вы переписали цикл трижды. Два отказа, под которые надо проектировать с первой минуты, — resume частичной загрузки и удаление дублирующихся документов. У обоих есть известные решения; оба регулярно пропускают, потому что пайплайн начинается как однострочный `requests.get`, у которого потом отросли зубы.
 
-## The Problem
+Resume — HTTP-проблема. Сервер обязан чтить `Range`, клиент обязан отслеживать проверенное смещение по записи на диске, и это смещение обязано переживать смерть процесса. Если смещение и файл разойдутся хоть на байт, возобновлённая загрузка пишет мусор, и корпус повреждён так, что всплывёт только на токенизации.
 
-The first time you train on a 200 GB corpus the network drops at percent 41 and the script exits with a `urllib` exception. The second time it drops at percent 78. By percent 99 you have rewritten the loop three times. The two failures you have to design for from minute one are partial-download resume and duplicate document removal. Both have well-known solutions; both are routinely skipped because the pipeline begins as a one-line `requests.get` call that grew teeth.
+Дедупликация — проблема подписей. Дедуп по точному хешу упускает почти-дубликаты: одна и та же статья Википедии с тремя разными boilerplate-футерами, тот же код-файл с другим заголовком лицензии, тот же блог-пост с трекинговым параметром на каждой ссылке. MinHash плюс LSH ловит их за сублинейную стоимость. Цена — одна подпись на документ и один поиск бакета на подпись.
 
-Resume is an HTTP problem. The server has to honour `Range`, the client has to track verified offset against an on-disk record, and the verified offset has to survive process death. If the offset and the file diverge by even one byte the resumed download writes garbage and the corpus is corrupted in a way that only shows up during tokenization.
-
-Deduplication is a signature problem. Exact-hash dedup misses near-duplicates: the same Wikipedia article shows up with three different boilerplate footers, the same code file with a different license header, the same blog post with a tracking parameter on every link. MinHash plus LSH catches these at sub-linear cost. The cost is one signature per document and one bucket lookup per signature.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -44,94 +41,94 @@ flowchart TD
   Manifest --> Done[Shard manifest emitted]
 ```
 
-### Streaming with `urllib`
+### Стриминг через `urllib`
 
-The standard-library `urllib.request.urlopen` returns a file-like object. Wrap it in a `zstandard.ZstdDecompressor().stream_reader` and the bytes flow from the network through the decompressor into the document iterator without ever materialising the compressed shard or the decompressed shard in memory. The only memory cost is the line buffer, the MinHash signature for the current document, and the LSH index.
+Стандартный `urllib.request.urlopen` возвращает file-like-объект. Оберните его в `zstandard.ZstdDecompressor().stream_reader` — и байты текут из сети через декомпрессор в итератор документов, никогда не материализуя ни сжатый, ни распакованный шард в памяти. Единственная стоимость по памяти — буфер строки, MinHash-подпись текущего документа и LSH-индекс.
 
-### Resume with `Range`
+### Resume через `Range`
 
-The downloader writes two files per shard: the shard itself and a `.partial.json` checkpoint. The checkpoint records `verified_bytes`, `expected_size`, `sha256_prefix` (computed over the first `verified_bytes` bytes), and the source URL. On startup the downloader reads the checkpoint, recomputes `sha256_prefix` over the on-disk bytes, and only resumes if the recomputed hash matches. If the hash is wrong the partial is discarded and the download restarts from byte zero. Silent corruption is impossible because the verified bytes are checked, not assumed.
+Загрузчик пишет два файла на шард: сам шард и чекпоинт `.partial.json`. Чекпоинт записывает `verified_bytes`, `expected_size`, `sha256_prefix` (посчитанный по первым `verified_bytes` байтам) и исходный URL. На старте загрузчик читает чекпоинт, пересчитывает `sha256_prefix` по байтам на диске и возобновляется, только если пересчитанный хеш совпал. Если хеш неверный, частичный файл отбрасывается и загрузка стартует с нулевого байта. Молчаливое повреждение невозможно, потому что проверенные байты проверяются, а не предполагаются.
 
-### MinHash plus LSH
+### MinHash плюс LSH
 
-MinHash estimates the Jaccard similarity of two sets in fixed space. For a document the set is the shingles (overlapping n-grams) of its text. The signature is `k` minimum hash values, one per independent hash function. Two documents with Jaccard similarity `s` have a probability `s` of agreeing on any single component of the signature.
+MinHash оценивает жаккаровское сходство двух множеств в фиксированной памяти. Для документа множество — шинглы (перекрывающиеся n-граммы) его текста. Подпись — `k` минимальных хеш-значений, по одному на независимую хеш-функцию. Два документа с жаккаровским сходством `s` с вероятностью `s` совпадают в любой отдельной компоненте подписи.
 
-LSH then groups the `k` components into `b` bands of `r` rows each, where `k = b * r`. Two documents collide in at least one band with probability `1 - (1 - s^r)^b`, which is a sharp threshold around the value of `s` you tune `(b, r)` to. The threshold for typical corpus dedup is `s = 0.8`, which the LSH research literature reaches with `k = 128`, `b = 32`, `r = 4`.
+LSH затем группирует `k` компонент в `b` полос по `r` строк, где `k = b * r`. Два документа сталкиваются хотя бы в одной полосе с вероятностью `1 - (1 - s^r)^b` — это резкий порог вокруг того значения `s`, под которое вы настраиваете `(b, r)`. Порог для типичного дедупа корпуса — `s = 0.8`, чего исследовательская литература по LSH достигает при `k = 128`, `b = 32`, `r = 4`.
 
-### Shard manifest as a contract
+### Манифест шардов как контракт
 
-The downloader's only durable output is the manifest. The manifest holds, per shard, the URL, the decompressed byte count, the document count, the unique document count after dedup, and the sha256 of the final shard file. Downstream tokenization reads the manifest, not the directory listing. If a shard is missing or its sha256 is wrong, the manifest tells the next stage to refuse to start. The manifest is the deciding edge between "the data is downloaded" and "the data is downloaded and verifiable".
+Единственный долговечный выход загрузчика — манифест. Манифест держит на каждый шард URL, распакованный размер в байтах, число документов, число уникальных документов после дедупа и sha256 финального файла шарда. Токенизация ниже по течению читает манифест, а не листинг директории. Если шард отсутствует или его sha256 неверен, манифест велит следующей стадии отказаться стартовать. Манифест — та решающая грань между «данные скачаны» и «данные скачаны и верифицируемы».
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `ShardPlanner` - reads a list of shard URLs and produces planned manifest entries.
-- `StreamingDownloader` - opens a `urllib` stream with optional `Range`, writes to a temporary file, updates the `.partial.json` checkpoint on every chunk, and verifies the sha256 prefix on resume.
-- `ZstdDocIterator` - wraps the file-like stream in `zstandard.ZstdDecompressor` and yields one document per line.
-- `MinHasher` - produces a `k`-component signature for a string using a fixed family of hash seeds.
-- `LSHIndex` - buckets signatures by band and reports collisions.
-- `Dedup` - combines hasher and index to label each document `keep` or `near_duplicate` along with the matching shard id.
-- `ManifestWriter` - collects per-shard stats and writes `manifest.json`.
+- `ShardPlanner` — читает список URL шардов и порождает запланированные записи манифеста.
+- `StreamingDownloader` — открывает `urllib`-поток с опциональным `Range`, пишет во временный файл, обновляет чекпоинт `.partial.json` на каждом чанке и проверяет sha256-префикс при resume.
+- `ZstdDocIterator` — оборачивает file-like-поток в `zstandard.ZstdDecompressor` и выдаёт по документу на строку.
+- `MinHasher` — порождает `k`-компонентную подпись строки фиксированным семейством хеш-сидов.
+- `LSHIndex` — раскладывает подписи по полосам и репортит коллизии.
+- `Dedup` — сочетает хешер и индекс, помечая каждый документ `keep` или `near_duplicate` вместе с id совпавшего шарда.
+- `ManifestWriter` — собирает пер-шардовую статистику и пишет `manifest.json`.
 
-A demo at the bottom of the file builds a small synthetic corpus on disk, compresses it with `zstandard`, downloads it through a `file://` URL, deduplicates, and prints the manifest.
+Демо внизу файла строит маленький синтетический корпус на диске, сжимает его `zstandard`, скачивает через `file://`-URL, дедуплицирует и печатает манифест.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script exits zero and prints a manifest summary.
+Скрипт выходит с нулём и печатает сводку манифеста.
 
-## Production Patterns
+## Production-паттерны
 
-Four patterns scale this lesson to real corpora.
+Четыре паттерна масштабируют этот урок до настоящих корпусов.
 
-**Checkpoint before write.** The `.partial.json` must be `fsync`-ed before the bytes are appended to the shard. Otherwise a power loss reverses the order: shard bytes on disk, checkpoint without them, next resume believes it has fewer verified bytes than it does, the duplicated suffix bytes corrupt the file. Checkpoint first, then write. This is the same discipline as a write-ahead log.
+**Чекпоинт до записи.** `.partial.json` должен быть `fsync`-нут до того, как байты допишутся в шард. Иначе потеря питания переворачивает порядок: байты шарда на диске, чекпоинт без них, следующий resume верит, что проверенных байтов меньше, чем есть, и продублированный суффикс портит файл. Сначала чекпоинт, потом запись. Та же дисциплина, что у write-ahead log.
 
-**Sharded LSH index.** A single LSH index over the whole corpus does not fit in RAM at the 200 GB scale. Partition the LSH index by the first band hash, store partitions on disk, and consult only the partition a new signature would land in. The cost is one extra disk read per document; the benefit is that the LSH index is no longer a hard memory ceiling.
+**Шардированный LSH-индекс.** Один LSH-индекс на весь корпус в RAM на масштабе 200 ГБ не помещается. Разбейте LSH-индекс по хешу первой полосы, храните партиции на диске и обращайтесь только к той партиции, куда попала бы новая подпись. Цена — одно дополнительное чтение с диска на документ; выгода — LSH-индекс больше не жёсткий потолок памяти.
 
-**Tombstone, not delete.** Dropped duplicates are recorded in the manifest with verdict `near_duplicate` and the shard id of the document they collided with. Deleting them loses the link between the duplicate and its keeper. Tombstoning preserves the audit trail and lets a downstream pass change its mind about the threshold.
+**Tombstone, а не delete.** Отброшенные дубликаты записываются в манифест с вердиктом `near_duplicate` и id шарда документа, с которым они столкнулись. Удаление теряет связь между дубликатом и его хранителем. Tombstone сохраняет аудит-след и позволяет последующему проходу передумать насчёт порога.
 
-**Per-shard sha256 in the manifest, plus a manifest sha256.** The manifest itself gets a content hash. Downstream stages verify the manifest hash before they trust the per-shard entries. Without this the manifest is the silent attack surface: an attacker who can edit a single file can corrupt the whole pipeline.
+**Пер-шардовый sha256 в манифесте плюс sha256 самого манифеста.** Манифест сам получает хеш содержимого. Стадии ниже по течению проверяют хеш манифеста, прежде чем доверять пер-шардовым записям. Без этого манифест — молчаливая поверхность атаки: атакующий, способный отредактировать один файл, портит весь пайплайн.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **Resume on every CI run.** CI runners are ephemeral. The downloader has to assume a fresh disk on every run and recover from cache or remote. `--cache-dir` is a first-class flag.
-- **Dedup before tokenization.** Tokenization is expensive. Running it twice on the same document is twice the cost for the same loss curve. Dedup is upstream of tokenization, not downstream.
-- **Manifest as merge gate.** The training run reads the manifest sha256 from a pinned commit. A new dataset version requires a new manifest commit. The link between code and data is git, not folklore.
+- **Resume на каждом CI-прогоне.** CI-раннеры эфемерны. Загрузчик обязан предполагать свежий диск на каждом прогоне и восстанавливаться из кэша или с удалённого источника. `--cache-dir` — флаг первого класса.
+- **Дедуп до токенизации.** Токенизация дорогая. Гонять её дважды по одному документу — двойная цена за ту же кривую лосса. Дедуп стоит выше токенизации по течению, а не ниже.
+- **Манифест как merge gate.** Обучающий прогон читает sha256 манифеста из запиненного коммита. Новая версия датасета требует нового коммита манифеста. Связь между кодом и данными — это git, а не фольклор.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-corpus-downloader.md` would, on a real project, describe which URLs feed the downloader, how the checkpoint directory is laid out, what shingle width and `(k, b, r)` triple the dedup uses, and where the manifest lives in version control. This lesson ships the engine.
+`outputs/skill-corpus-downloader.md` в настоящем проекте описал бы, какие URL кормят загрузчик, как устроена директория чекпоинтов, какую ширину шингла и тройку `(k, b, r)` использует дедуп и где манифест живёт в version control. Этот урок отгружает движок.
 
-## Exercises
+## Упражнения
 
-1. Add a `--shingle-width` flag and measure how the dedup verdict changes at widths 3, 5, 9. Defend the chosen default.
-2. Add gzip support next to zstd by sniffing the magic bytes. The downloader should not require the caller to specify the codec.
-3. Add a `--resume-only` mode that refuses to start a fresh download if no checkpoint is found. Useful in CI to keep one run from accidentally re-pulling 200 GB.
-4. Move the LSH index to a shelf or sqlite file and measure throughput vs the in-memory variant.
-5. Add a manifest sha256 check on startup. The downloader should fail closed if the manifest on disk disagrees with the manifest hash in `manifest.lock`.
+1. Добавьте флаг `--shingle-width` и измерьте, как меняется вердикт дедупа при ширинах 3, 5, 9. Обоснуйте выбранный дефолт.
+2. Добавьте поддержку gzip рядом со zstd, распознавая магические байты. Загрузчик не должен требовать от вызывающего указывать кодек.
+3. Добавьте режим `--resume-only`, отказывающийся начинать свежую загрузку, если чекпоинт не найден. Полезно в CI, чтобы один прогон случайно не перекачал 200 ГБ.
+4. Перенесите LSH-индекс в shelf- или sqlite-файл и измерьте throughput против in-memory-варианта.
+5. Добавьте проверку sha256 манифеста на старте. Загрузчик должен падать закрыто, если манифест на диске расходится с хешем в `manifest.lock`.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Shard | "A file" | A self-contained slice of the corpus with its own sha256, used as the unit of resume and dedup |
-| MinHash signature | "Fingerprint" | A `k`-component sketch of a set, where each component is the minimum of one independent hash over the set |
-| LSH band | "Bucket" | A group of `r` signature components used as a single bucket key for collision detection |
-| Verified bytes | "Resume offset" | Bytes on disk whose sha256 prefix matches the checkpoint; the only safe offset to resume from |
-| Manifest | "The index" | The single durable record of what the downloader produced, including content hashes |
+| Шард | «Файл» | Самодостаточный срез корпуса со своим sha256, единица resume и дедупа |
+| MinHash-подпись | «Отпечаток» | `k`-компонентный скетч множества, где каждая компонента — минимум одного независимого хеша по множеству |
+| LSH-полоса | «Бакет» | Группа из `r` компонент подписи, используемая как один бакетный ключ для детекции коллизий |
+| Проверенные байты | «Смещение resume» | Байты на диске, чей sha256-префикс совпадает с чекпоинтом; единственное безопасное смещение для возобновления |
+| Манифест | «Индекс» | Единственная долговечная запись того, что породил загрузчик, включая хеши содержимого |
 
-## Further Reading
+## Дополнительное чтение
 
-- [RFC 7233](https://datatracker.ietf.org/doc/html/rfc7233) - HTTP Range requests, the resume protocol
-- [Zstandard format specification](https://datatracker.ietf.org/doc/html/rfc8478) - frame format that makes streaming decompression safe
-- [MinHash](https://en.wikipedia.org/wiki/MinHash) - the signature family this lesson uses
-- [Locality-sensitive hashing](https://en.wikipedia.org/wiki/Locality-sensitive_hashing) - the banding scheme behind the dedup threshold
-- Phase 19 · 43 - the HDF5 tokenized corpus the downloader feeds
-- Phase 19 · 44 - the cosine schedule that trains on the corpus
-- Phase 19 · 45 - the AMP loop that consumes the schedule
+- [RFC 7233](https://datatracker.ietf.org/doc/html/rfc7233) — HTTP Range-запросы, протокол resume
+- [Спецификация формата Zstandard](https://datatracker.ietf.org/doc/html/rfc8478) — формат фреймов, делающий стриминговую распаковку безопасной
+- [MinHash](https://en.wikipedia.org/wiki/MinHash) — семейство подписей этого урока
+- [Locality-sensitive hashing](https://en.wikipedia.org/wiki/Locality-sensitive_hashing) — полосная схема за порогом дедупа
+- Фаза 19 · 43 — токенизированный корпус в HDF5, который кормит загрузчик
+- Фаза 19 · 44 — косинусное расписание, обучающееся на корпусе
+- Фаза 19 · 45 — AMP-цикл, потребляющий расписание

@@ -1,31 +1,28 @@
 # HDF5 Tokenized Corpus
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Скачанный корпус должен приземлиться в раскладку, из которой тренер сможет стримить на скорости провода. JSONL на диске не переживает 16 dataloader-воркеров. HDF5 с растягиваемым, чанкованным целочисленным датасетом — переживает. Этот урок строит стриминговую токенизацию в растягиваемый HDF5-датасет, шардированную запись по нескольким файлам, memory-mapped чтение во время обучения и dataloader со скользящим окном, порождающий последовательности фиксированной длины с правильным паковочным правилом.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, уроки 30–37
+**Время:** ~90 минут
 
-> The downloaded corpus has to land in a layout the trainer can stream from at line speed. JSONL on disk does not survive 16 dataloader workers. HDF5 with a resizable, chunked integer dataset does. This lesson builds streaming tokenization into a resizable HDF5 dataset, sharded write across multiple files, memory-mapped read at training time, and a sliding-window dataloader that produces fixed-length sequences with the right packing.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 lessons 30-37
-**Time:** ~90 minutes
+- Стримить документы в растягиваемый целочисленный HDF5-датасет с детерминированным чанкованием.
+- Шардировать запись по нескольким HDF5-файлам, чтобы отказ был ограничен, а параллелизм — возможен.
+- Читать токены обратно через чанкованную раскладку HDF5, опирающуюся на page cache, чтобы dataloader копировал в батчевые буферы только в момент сборки батча.
+- Реализовать dataloader со скользящим окном, излучающий обучающие последовательности фиксированной длины с явными правилами паковки.
 
-## Learning Objectives
+## Проблема
 
-- Stream documents into a resizable HDF5 integer dataset with deterministic chunking.
-- Shard the write across multiple HDF5 files so failure is bounded and parallelism is possible.
-- Read tokens back through HDF5's page-cache-backed chunked layout so the dataloader copies into batch buffers only at batch time.
-- Implement a sliding-window dataloader that emits fixed-length training sequences with explicit packing rules.
+Современный прогон обучения языковой модели читает токены на скорости сотен тысяч сэмплов в секунду через десятки воркеров. JSONL на диске умирает на первом же page fault холодного кэша: JSON-парсер медленный, границы документов не адресуемы, а seek к «сэмплу 4 217 884» требует сканирования файла. Даже Parquet, который хорошо сжимается, подходит плохо: тренеру не нужны колонки — ему нужен плоский поток токенов с O(1) случайным доступом.
 
-## The Problem
+HDF5 подходит, потому что предлагает чанкованный, растягиваемый, целочисленный датасет, чьи чанки дружелюбны к page cache при чтении. Тренер просит срез `tokens[3,200,000 : 3,200,8192]`, и HDF5 копирует запрошенный гиперслэб из page cache в свежевыделенный NumPy-массив. Цена — один открытый файловый дескриптор и page-cache-след размером в чанк на воркера, что пренебрежимо по сравнению со стоимостью декодирования JSONL.
 
-A modern language-model training run reads tokens at hundreds of thousands of samples per second across dozens of workers. JSONL on disk dies at the first cold-cache page fault: the JSON parser is slow, the document boundaries are not addressable, and seeking to "sample 4,217,884" requires scanning the file. Even Parquet, which compresses well, is a poor fit because the trainer does not want columns; it wants a flat token stream with O(1) random access.
+Строительная проблема — сделать честной сторону записи. Растягиваемые датасеты легко использовать неправильно: пишите по документу за раз — и HDF5-файл фрагментирован до непригодности. Запишите все документы одним resize — и смерть процесса теряет весь шард. Правильная дисциплина — буферизуй-затем-растягивай, с размером буфера, равным размеру чанка, и шардированной записью, режущей нагрузку по файлам, чтобы краш терял максимум один шард.
 
-HDF5 fits because it offers a chunked, resizable, integer-only dataset whose chunks are page-cache friendly at read time. The trainer asks for a slice of `tokens[3,200,000 : 3,200,8192]` and HDF5 copies the requested hyperslab from the page cache into a freshly allocated NumPy array. The cost is one open file handle and a chunk-sized page-cache footprint per worker, which is negligible compared to the cost of decoding JSONL.
-
-The build problem is making the write side honest. Resizable datasets are easy to misuse: write one document at a time and the HDF5 file is fragmented to the point of unusable. Write all documents in one resize and a process death loses the whole shard. The right discipline is buffer-then-extend, with a buffer size that matches the chunk size, and a sharded write that splits the workload across files so a crash loses at most one shard.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -43,89 +40,89 @@ flowchart TD
   Window --> Train[Train batch]
 ```
 
-### Resizable HDF5 done right
+### Растягиваемый HDF5 правильным способом
 
-The token dataset is created with `maxshape=(None,)` and a fixed `chunks=(chunk_size,)`. Writing proceeds by buffering tokens in a NumPy array of length `chunk_size`. When the buffer fills, the dataset is resized by exactly `chunk_size` and the buffer is written into the new range. At end-of-shard the residual buffer is written into a final partial range. Every write is contiguous and chunk-aligned except the last one, which the reader is told to truncate at the recorded `token_count` in the shard's HDF5 attributes.
+Токенный датасет создаётся с `maxshape=(None,)` и фиксированным `chunks=(chunk_size,)`. Запись идёт через буферизацию токенов в NumPy-массиве длины `chunk_size`. Когда буфер заполняется, датасет растягивается ровно на `chunk_size`, и буфер пишется в новый диапазон. В конце шарда остаточный буфер пишется в финальный частичный диапазон. Каждая запись непрерывна и выровнена по чанку, кроме последней, — читателю велено обрезать её по записанному в HDF5-атрибутах шарда `token_count`.
 
-### Sharded write
+### Шардированная запись
 
-A single HDF5 file is a single point of failure. The pipeline writes shards in parallel: each input shard from Phase 19 lesson 42 produces one HDF5 output shard. A `shards.json` index records, per shard, the file path, the token count, the document count, and a sha256 over the tokens. The trainer reads `shards.json` to compute global offsets and to validate the corpus.
+Один HDF5-файл — одна точка отказа. Пайплайн пишет шарды параллельно: каждый входной шард из урока 42 Фазы 19 порождает один выходной HDF5-шард. Индекс `shards.json` записывает на каждый шард путь к файлу, число токенов, число документов и sha256 по токенам. Тренер читает `shards.json`, чтобы посчитать глобальные смещения и провалидировать корпус.
 
-### Memory-mapped read
+### Memory-mapped чтение
 
-At training time each worker opens its share of HDF5 files in `swmr=True` mode and asks for `tokens[start:stop]`. HDF5's chunk layout makes this a page-cache-backed read once the chunk is hot. The worker never materialises the whole file: the slice is copied into the dataloader's batch buffer, which the dataloader then copies into a pinned-memory training tensor at batch time. The hot path has one syscall per chunk transition; everything else is RAM access.
+Во время обучения каждый воркер открывает свою долю HDF5-файлов в режиме `swmr=True` и просит `tokens[start:stop]`. Чанкованная раскладка HDF5 делает это чтением из page cache, как только чанк прогрет. Воркер никогда не материализует весь файл: срез копируется в батчевый буфер dataloader'а, который затем копируется в pinned-memory обучающий тензор в момент батча. На горячем пути — один syscall на переход между чанками; всё остальное — доступ к RAM.
 
-### Sliding-window dataloader
+### Dataloader со скользящим окном
 
-The dataloader is the only stage that knows about training-sequence length. It picks a random start index in the global token stream, reads `window_size + 1` tokens, and returns `(input, target) = (tokens[:-1], tokens[1:])`. Document boundaries are not enforced: a window may straddle two documents, with an explicit `boundary_token_id` between them so the model learns to use the separator. This is the standard packing rule; it is also the rule a beginner forgets, ending up with a corpus that is 8 percent training boundary tokens and 92 percent natural text.
+Dataloader — единственная стадия, знающая о длине обучающей последовательности. Он выбирает случайный стартовый индекс в глобальном потоке токенов, читает `window_size + 1` токенов и возвращает `(input, target) = (tokens[:-1], tokens[1:])`. Границы документов не насаждаются: окно может лежать поперёк двух документов, с явным `boundary_token_id` между ними, чтобы модель научилась использовать разделитель. Это стандартное правило паковки; и это же правило забывает новичок, получая корпус, где 8 процентов — обучающие граничные токены, а 92 — естественный текст.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `Tokenizer` - a byte-level deterministic tokenizer good enough for the demo. The interface is `encode(text) -> list[int]` and `vocab_size`.
-- `HDF5ShardWriter` - opens a resizable integer dataset, buffers tokens to chunk size, resizes and writes in fixed-size strides, records `token_count` and `sha256` as HDF5 attributes on close.
-- `ShardedTokenizationPipeline` - iterates input documents, routes them to a writer, and emits a `shards.json` index.
-- `MmapTokenStore` - opens shard files for memory-mapped reads, computes global offsets, exposes a single `get_slice(start, stop)` API.
-- `SlidingWindowDataloader` - picks random windows from the global stream and yields `(input_ids, target_ids)` NumPy arrays.
+- `Tokenizer` — байтовый детерминированный токенизатор, достаточный для демо. Интерфейс — `encode(text) -> list[int]` и `vocab_size`.
+- `HDF5ShardWriter` — открывает растягиваемый целочисленный датасет, буферизует токены до размера чанка, растягивает и пишет фиксированными шагами, записывает `token_count` и `sha256` HDF5-атрибутами при закрытии.
+- `ShardedTokenizationPipeline` — итерирует входные документы, маршрутизирует их в writer и излучает индекс `shards.json`.
+- `MmapTokenStore` — открывает файлы шардов для memory-mapped чтений, считает глобальные смещения, открывает единый API `get_slice(start, stop)`.
+- `SlidingWindowDataloader` — выбирает случайные окна из глобального потока и выдаёт NumPy-массивы `(input_ids, target_ids)`.
 
-A demo at the bottom of the file builds a tiny in-memory corpus, tokenizes into two shards, opens them via memory map, runs the dataloader for 10 batches, and prints the per-batch shape and a checksum.
+Демо внизу файла строит крошечный in-memory корпус, токенизирует в два шарда, открывает их через memory map, гоняет dataloader 10 батчей и печатает форму каждого батча и чексумму.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The script exits zero and prints batch checksums.
+Скрипт выходит с нулём и печатает чексуммы батчей.
 
-## Production Patterns
+## Production-паттерны
 
-Four patterns scale this lesson to a real training run.
+Четыре паттерна масштабируют этот урок до настоящего обучающего прогона.
 
-**Chunk size equals the typical read.** The trainer reads `window_size + 1` tokens per sample. Set the HDF5 chunk to a multiple of `window_size` and reads are page-cache aligned. Mismatched chunks halve the throughput because every sample touches two chunks.
+**Размер чанка равен типичному чтению.** Тренер читает `window_size + 1` токенов на сэмпл. Поставьте HDF5-чанк кратным `window_size` — и чтения выровнены по page cache. Несогласованные чанки половинят throughput, потому что каждый сэмпл трогает два чанка.
 
-**Token count in attributes, not in the dataset.** The trailing slice of the dataset may be partially full because the chunk size does not divide the document boundary. Store the real `token_count` as an HDF5 attribute on the dataset and have the reader truncate at that value. Without this the reader walks off the end into zero-padded tokens and the model learns to predict zero.
+**Число токенов — в атрибутах, а не в датасете.** Хвостовой срез датасета может быть заполнен частично, потому что размер чанка не делит границу документа. Храните настоящий `token_count` HDF5-атрибутом на датасете, и пусть читатель обрезает по этому значению. Без этого читатель уходит за конец в занулённые токены, и модель учится предсказывать ноль.
 
-**Sharded sha256 with parallel verification.** Each shard has its own sha256 over the token bytes. The trainer can verify all shards in parallel before training starts. A wrong sha256 fails the run early, not on epoch three after sixteen hours.
+**Шардированный sha256 с параллельной верификацией.** У каждого шарда свой sha256 по байтам токенов. Тренер может проверить все шарды параллельно до старта обучения. Неверный sha256 роняет прогон рано, а не на третьей эпохе после шестнадцати часов.
 
-**`swmr=True` on both sides, with `libver="latest"` on the writer.** Single-Writer-Multiple-Reader mode requires the writer to open with `libver="latest"`, create every dataset up front, then set `file.swmr_mode = True`. After that the writer must call `dataset.flush()` after each resize so reader workers (opened with `swmr=True`) see consistent data. Skipping `libver="latest"` or enabling SWMR after structural changes is a common source of "file is locked" failures.
+**`swmr=True` с обеих сторон, с `libver="latest"` на writer'е.** Режим Single-Writer-Multiple-Reader требует, чтобы writer открылся с `libver="latest"`, создал все датасеты заранее и затем выставил `file.swmr_mode = True`. После этого writer обязан вызывать `dataset.flush()` после каждого resize, чтобы воркеры-читатели (открытые с `swmr=True`) видели согласованные данные. Пропуск `libver="latest"` или включение SWMR после структурных изменений — частый источник отказов «file is locked».
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **One HDF5 per source shard.** The downloader (lesson 42) emits one shard per URL; tokenization (this lesson) emits one HDF5 per source shard. The 1:1 mapping makes resume and partial-failure recovery trivial.
-- **Boundary token id.** The boundary token is part of the tokenizer vocab and is the only token the dataloader injects. The training loss masks the boundary token if the model is supposed to ignore it; otherwise it learns to use it as a sequence separator.
-- **`shards.json` as the source of truth.** Adding a new shard means writing the HDF5, computing its sha256, and appending an entry. The trainer reads the file once at startup and never touches the directory listing.
+- **Один HDF5 на исходный шард.** Загрузчик (урок 42) излучает по шарду на URL; токенизация (этот урок) — по HDF5 на исходный шард. Маппинг 1:1 делает resume и восстановление после частичного отказа тривиальными.
+- **Id граничного токена.** Граничный токен — часть словаря токенизатора и единственный токен, который инъектирует dataloader. Обучающий лосс маскирует граничный токен, если модель должна его игнорировать; иначе она учится использовать его как разделитель последовательностей.
+- **`shards.json` как источник правды.** Добавить новый шард — значит записать HDF5, посчитать его sha256 и дописать запись. Тренер читает файл один раз на старте и никогда не трогает листинг директории.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-hdf5-tokenized-corpus.md` would, on a real project, describe which tokenizer feeds the pipeline, what chunk size matches the trainer's window, where `shards.json` lives in version control, and how dataloader workers are sharded across files. This lesson ships the engine.
+`outputs/skill-hdf5-tokenized-corpus.md` в настоящем проекте описал бы, какой токенизатор кормит пайплайн, какой размер чанка соответствует окну тренера, где `shards.json` живёт в version control и как dataloader-воркеры шардируются по файлам. Этот урок отгружает движок.
 
-## Exercises
+## Упражнения
 
-1. Add a `--compression gzip` flag to the HDF5 writer and measure the throughput cost on the demo corpus. Defend the chosen default.
-2. Add a deterministic seed to the sliding-window dataloader and verify two runs with the same seed produce identical batches.
-3. Add a `--validate` mode that reads every shard, recomputes the sha256 over its tokens, and compares against `shards.json`. CI should run this before training starts.
-4. Compare the dataloader throughput at chunk sizes equal to, half of, and twice the window size. Report the page-cache effect.
-5. Add a `--max-document-tokens` flag that truncates very long documents at write time. Defend the trade-off against deciding at read time.
+1. Добавьте HDF5-writer'у флаг `--compression gzip` и измерьте стоимость по throughput на демо-корпусе. Обоснуйте выбранный дефолт.
+2. Добавьте детерминированный сид dataloader'у со скользящим окном и убедитесь, что два прогона с одним сидом дают идентичные батчи.
+3. Добавьте режим `--validate`, читающий каждый шард, пересчитывающий sha256 по его токенам и сравнивающий с `shards.json`. CI должен гонять это до старта обучения.
+4. Сравните throughput dataloader'а при размерах чанка, равных окну, половине окна и двум окнам. Опишите эффект page cache.
+5. Добавьте флаг `--max-document-tokens`, обрезающий очень длинные документы на этапе записи. Обоснуйте компромисс против решения на этапе чтения.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Resizable dataset | "Append-only" | An HDF5 dataset with `maxshape=(None,)` that grows via `resize` calls in chunk-sized strides |
-| Chunked layout | "How HDF5 stores it" | Fixed-size on-disk pages that the kernel can memory-map and the dataloader can read contiguously |
-| `swmr` mode | "Read-while-write" | Single-Writer-Multiple-Reader mode that lets dataloader workers share the file safely |
-| Shard index | "shards.json" | The durable index of all token shards with offsets and content hashes |
-| Sliding window | "Training sample" | A fixed-length slice of the global token stream that the trainer pairs with its shift-by-one target |
+| Растягиваемый датасет | «Append-only» | HDF5-датасет с `maxshape=(None,)`, растущий вызовами `resize` шагами размера чанка |
+| Чанкованная раскладка | «Как HDF5 это хранит» | Дисковые страницы фиксированного размера, которые ядро может замапить в память, а dataloader — читать непрерывно |
+| Режим `swmr` | «Чтение при записи» | Режим Single-Writer-Multiple-Reader, позволяющий dataloader-воркерам безопасно делить файл |
+| Индекс шардов | «shards.json» | Долговечный индекс всех токенных шардов со смещениями и хешами содержимого |
+| Скользящее окно | «Обучающий сэмпл» | Срез фиксированной длины глобального потока токенов, который тренер спаривает с целью со сдвигом на один |
 
-## Further Reading
+## Дополнительное чтение
 
-- [HDF5 chunking documentation](https://docs.hdfgroup.org/hdf5/v1_14/) - the chunked, resizable dataset layout this lesson uses
-- [h5py user guide](https://docs.h5py.org/en/stable/) - Python bindings for HDF5
-- [NumPy memory mapping](https://numpy.org/doc/stable/reference/generated/numpy.memmap.html) - the read-side primitive HDF5 exposes through h5py
-- Phase 19 · 42 - the downloader whose output this lesson tokenizes
-- Phase 19 · 44 - the cosine schedule that consumes this dataloader
-- Phase 19 · 45 - the AMP loop that wraps the training step
+- [Документация чанкования HDF5](https://docs.hdfgroup.org/hdf5/v1_14/) — чанкованная растягиваемая раскладка датасетов этого урока
+- [Руководство h5py](https://docs.h5py.org/en/stable/) — Python-биндинги HDF5
+- [Memory mapping в NumPy](https://numpy.org/doc/stable/reference/generated/numpy.memmap.html) — читающий примитив, который HDF5 открывает через h5py
+- Фаза 19 · 42 — загрузчик, чей выход токенизирует этот урок
+- Фаза 19 · 44 — косинусное расписание, потребляющее этот dataloader
+- Фаза 19 · 45 — AMP-цикл, оборачивающий обучающий шаг
