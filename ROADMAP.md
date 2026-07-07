@@ -541,74 +541,74 @@
 | 15 | [Constitutional safety harness + red-team range](phases/19-capstone-projects/15-constitutional-safety-harness) | ✅ | — | ~25 ч |
 | 16 | [Автономный агент GitHub issue-to-PR](phases/19-capstone-projects/16-github-issue-to-pr-agent) | ✅ | — | ~30 ч |
 | 17 | [Персональный AI tutor (adaptive, multimodal)](phases/19-capstone-projects/17-personal-ai-tutor) | ✅ | — | ~30 ч |
-| 20 | [Контракт цикла агентского харнеса](phases/19-capstone-projects/20-agent-harness-loop-contract) | ✅ | — | ~2 ч |
-| 21 | [Реестр инструментов с валидацией схем](phases/19-capstone-projects/21-tool-registry-schema-validation) | ✅ | — | ~2 ч |
-| 22 | [JSON-RPC 2.0 поверх newline-delimited stdio](phases/19-capstone-projects/22-jsonrpc-stdio-transport) | ✅ | — | ~2 ч |
-| 23 | [Диспетчер function calls](phases/19-capstone-projects/23-function-call-dispatcher) | ✅ | — | ~2 ч |
-| 24 | [Управляющий поток plan-execute](phases/19-capstone-projects/24-plan-execute-control-flow) | ✅ | — | ~2 ч |
-| 25 | [Verification gates и бюджет наблюдений](phases/19-capstone-projects/25-verification-gates-observation-budget) | ✅ | — | ~2 ч |
-| 26 | [Sandbox-раннер с denylist и path jail](phases/19-capstone-projects/26-sandbox-runner-denylist) | ✅ | — | ~2 ч |
-| 27 | [Eval-харнес с fixture-задачами](phases/19-capstone-projects/27-eval-harness-fixture-tasks) | ✅ | — | ~2 ч |
-| 28 | [Observability: OTel GenAI spans и метрики Prometheus](phases/19-capstone-projects/28-observability-otel-traces) | ✅ | — | ~2 ч |
-| 29 | [Coding-агент на харнесе end-to-end](phases/19-capstone-projects/29-end-to-end-coding-task-demo) | ✅ | — | ~2 ч |
-| 30 | [BPE-токенизатор с нуля](phases/19-capstone-projects/30-bpe-tokenizer-from-scratch) | ✅ | — | ~2 ч |
-| 31 | [Токенизированный датасет со скользящим окном](phases/19-capstone-projects/31-tokenized-dataset-sliding-window) | ✅ | — | ~2 ч |
-| 32 | [Токенные и позиционные эмбеддинги](phases/19-capstone-projects/32-token-positional-embeddings) | ✅ | — | ~2 ч |
-| 33 | [Multi-head self-attention](phases/19-capstone-projects/33-multihead-self-attention) | ✅ | — | ~2 ч |
-| 34 | [Блок трансформера с нуля](phases/19-capstone-projects/34-transformer-block) | ✅ | — | ~2 ч |
-| 35 | [Сборка GPT-модели](phases/19-capstone-projects/35-gpt-model-assembly) | ✅ | — | ~2 ч |
-| 36 | [Цикл обучения и оценка](phases/19-capstone-projects/36-training-loop-eval) | ✅ | — | ~2 ч |
-| 37 | [Загрузка предобученных весов](phases/19-capstone-projects/37-loading-pretrained-weights) | ✅ | — | ~2 ч |
-| 38 | [Fine-tuning классификатора заменой головы](phases/19-capstone-projects/38-classifier-finetuning) | ✅ | — | ~2 ч |
-| 39 | [Instruction tuning через SFT](phases/19-capstone-projects/39-instruction-tuning-sft) | ✅ | — | ~2 ч |
-| 40 | [DPO с нуля](phases/19-capstone-projects/40-dpo-from-scratch) | ✅ | — | ~2 ч |
-| 41 | [Полный eval-пайплайн](phases/19-capstone-projects/41-eval-pipeline) | ✅ | — | ~2 ч |
-| 42 | [Загрузчик большого корпуса](phases/19-capstone-projects/42-large-corpus-downloader) | ✅ | — | ~2 ч |
-| 43 | [Токенизированный корпус в HDF5](phases/19-capstone-projects/43-hdf5-tokenized-corpus) | ✅ | — | ~2 ч |
-| 44 | [Cosine LR с линейным warmup](phases/19-capstone-projects/44-cosine-lr-warmup) | ✅ | — | ~2 ч |
-| 45 | [Gradient clipping и mixed precision](phases/19-capstone-projects/45-gradient-clipping-amp) | ✅ | — | ~2 ч |
-| 46 | [Аккумуляция градиентов](phases/19-capstone-projects/46-gradient-accumulation) | ✅ | — | ~2 ч |
-| 47 | [Сохранение и возобновление чекпоинтов](phases/19-capstone-projects/47-checkpoint-save-resume) | ✅ | — | ~2 ч |
-| 48 | [DDP и FSDP с нуля](phases/19-capstone-projects/48-distributed-fsdp-ddp) | ✅ | — | ~2 ч |
-| 49 | [Харнес оценки языковой модели](phases/19-capstone-projects/49-lm-eval-harness) | ✅ | — | ~2 ч |
-| 50 | [Генератор гипотез](phases/19-capstone-projects/50-hypothesis-generator) | ✅ | — | ~2 ч |
-| 51 | [Поиск литературы](phases/19-capstone-projects/51-literature-retrieval) | ✅ | — | ~2 ч |
-| 52 | [Раннер экспериментов](phases/19-capstone-projects/52-experiment-runner) | ✅ | — | ~2 ч |
-| 53 | [Оценщик результатов](phases/19-capstone-projects/53-result-evaluator) | ✅ | — | ~2 ч |
-| 54 | [Генерация научной статьи](phases/19-capstone-projects/54-paper-writer) | ✅ | — | ~2 ч |
-| 55 | [Цикл критика](phases/19-capstone-projects/55-critic-loop) | ✅ | — | ~2 ч |
-| 56 | [Планировщик итераций](phases/19-capstone-projects/56-iteration-scheduler) | ✅ | — | ~2 ч |
-| 57 | [Research-агент end-to-end](phases/19-capstone-projects/57-end-to-end-research-demo) | ✅ | — | ~2 ч |
-| 58 | [Vision-энкодер: патчи изображения](phases/19-capstone-projects/58-vision-encoder-patches) | ✅ | — | ~2 ч |
-| 59 | [ViT-энкодер](phases/19-capstone-projects/59-vit-transformer) | ✅ | — | ~2 ч |
-| 60 | [Projection-слой для выравнивания модальностей](phases/19-capstone-projects/60-projection-layer-modality-align) | ✅ | — | ~2 ч |
-| 61 | [Cross-attention fusion](phases/19-capstone-projects/61-cross-attention-fusion) | ✅ | — | ~2 ч |
-| 62 | [Vision-language предобучение](phases/19-capstone-projects/62-vision-language-pretraining) | ✅ | — | ~2 ч |
-| 63 | [Мультимодальная оценка](phases/19-capstone-projects/63-multimodal-eval) | ✅ | — | ~2 ч |
-| 64 | [Сравнение стратегий chunking](phases/19-capstone-projects/64-chunking-strategies-advanced) | ✅ | — | ~2 ч |
-| 65 | [Гибридный retrieval: BM25 + dense](phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense) | ✅ | — | ~2 ч |
-| 66 | [Reranker на cross-encoder](phases/19-capstone-projects/66-reranker-cross-encoder) | ✅ | — | ~2 ч |
-| 67 | [Переписывание запросов: HyDE, multi-query, декомпозиция](phases/19-capstone-projects/67-query-rewriting-hyde) | ✅ | — | ~2 ч |
-| 68 | [Оценка RAG: precision, recall, MRR, nDCG, faithfulness](phases/19-capstone-projects/68-rag-eval-precision-recall) | ✅ | — | ~2 ч |
-| 69 | [RAG-система end-to-end](phases/19-capstone-projects/69-end-to-end-rag-system) | ✅ | — | ~2 ч |
-| 70 | [Формат спецификации задач](phases/19-capstone-projects/70-task-spec-format) | ✅ | — | ~2 ч |
-| 71 | [Классические метрики](phases/19-capstone-projects/71-classical-metrics) | ✅ | — | ~2 ч |
-| 72 | [Метрика исполнения кода](phases/19-capstone-projects/72-code-exec-metric) | ✅ | — | ~2 ч |
-| 73 | [Перплексия и калибровка](phases/19-capstone-projects/73-perplexity-calibration) | ✅ | — | ~2 ч |
-| 74 | [Агрегация лидерборда](phases/19-capstone-projects/74-leaderboard-aggregation) | ✅ | — | ~2 ч |
-| 75 | [Eval-раннер end-to-end](phases/19-capstone-projects/75-end-to-end-eval-runner) | ✅ | — | ~2 ч |
-| 76 | [Коллективные операции с нуля](phases/19-capstone-projects/76-collective-ops-from-scratch) | ✅ | — | ~2 ч |
-| 77 | [Data parallel DDP с нуля](phases/19-capstone-projects/77-data-parallel-ddp) | ✅ | — | ~2 ч |
-| 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding) | ✅ | — | ~2 ч |
-| 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel) | ✅ | — | ~2 ч |
-| 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume) | ✅ | — | ~2 ч |
-| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train) | ✅ | — | ~2 ч |
-| 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy) | ✅ | — | ~2 ч |
-| 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector) | ✅ | — | ~2 ч |
-| 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation) | ✅ | — | ~2 ч |
-| 85 | [Интеграция контент-классификатора](phases/19-capstone-projects/85-content-classifier-integration) | ✅ | — | ~2 ч |
-| 86 | [Движок constitutional-правил](phases/19-capstone-projects/86-constitutional-rules-engine) | ✅ | — | ~2 ч |
-| 87 | [Safety gate end-to-end](phases/19-capstone-projects/87-end-to-end-safety-gate) | ✅ | — | ~2 ч |
+| 20 | [Контракт цикла агентского харнеса](phases/19-capstone-projects/20-agent-harness-loop-contract) | ✅ | ✓ | ~2 ч |
+| 21 | [Реестр инструментов с валидацией схем](phases/19-capstone-projects/21-tool-registry-schema-validation) | ✅ | ✓ | ~2 ч |
+| 22 | [JSON-RPC 2.0 поверх newline-delimited stdio](phases/19-capstone-projects/22-jsonrpc-stdio-transport) | ✅ | ✓ | ~2 ч |
+| 23 | [Диспетчер function calls](phases/19-capstone-projects/23-function-call-dispatcher) | ✅ | ✓ | ~2 ч |
+| 24 | [Управляющий поток plan-execute](phases/19-capstone-projects/24-plan-execute-control-flow) | ✅ | ✓ | ~2 ч |
+| 25 | [Verification gates и бюджет наблюдений](phases/19-capstone-projects/25-verification-gates-observation-budget) | ✅ | ✓ | ~2 ч |
+| 26 | [Sandbox-раннер с denylist и path jail](phases/19-capstone-projects/26-sandbox-runner-denylist) | ✅ | ✓ | ~2 ч |
+| 27 | [Eval-харнес с fixture-задачами](phases/19-capstone-projects/27-eval-harness-fixture-tasks) | ✅ | ✓ | ~2 ч |
+| 28 | [Observability: OTel GenAI spans и метрики Prometheus](phases/19-capstone-projects/28-observability-otel-traces) | ✅ | ✓ | ~2 ч |
+| 29 | [Coding-агент на харнесе end-to-end](phases/19-capstone-projects/29-end-to-end-coding-task-demo) | ✅ | ✓ | ~2 ч |
+| 30 | [BPE-токенизатор с нуля](phases/19-capstone-projects/30-bpe-tokenizer-from-scratch) | ✅ | ✓ | ~2 ч |
+| 31 | [Токенизированный датасет со скользящим окном](phases/19-capstone-projects/31-tokenized-dataset-sliding-window) | ✅ | ✓ | ~2 ч |
+| 32 | [Токенные и позиционные эмбеддинги](phases/19-capstone-projects/32-token-positional-embeddings) | ✅ | ✓ | ~2 ч |
+| 33 | [Multi-head self-attention](phases/19-capstone-projects/33-multihead-self-attention) | ✅ | ✓ | ~2 ч |
+| 34 | [Блок трансформера с нуля](phases/19-capstone-projects/34-transformer-block) | ✅ | ✓ | ~2 ч |
+| 35 | [Сборка GPT-модели](phases/19-capstone-projects/35-gpt-model-assembly) | ✅ | ✓ | ~2 ч |
+| 36 | [Цикл обучения и оценка](phases/19-capstone-projects/36-training-loop-eval) | ✅ | ✓ | ~2 ч |
+| 37 | [Загрузка предобученных весов](phases/19-capstone-projects/37-loading-pretrained-weights) | ✅ | ✓ | ~2 ч |
+| 38 | [Fine-tuning классификатора заменой головы](phases/19-capstone-projects/38-classifier-finetuning) | ✅ | ✓ | ~2 ч |
+| 39 | [Instruction tuning через SFT](phases/19-capstone-projects/39-instruction-tuning-sft) | ✅ | ✓ | ~2 ч |
+| 40 | [DPO с нуля](phases/19-capstone-projects/40-dpo-from-scratch) | ✅ | ✓ | ~2 ч |
+| 41 | [Полный eval-пайплайн](phases/19-capstone-projects/41-eval-pipeline) | ✅ | ✓ | ~2 ч |
+| 42 | [Загрузчик большого корпуса](phases/19-capstone-projects/42-large-corpus-downloader) | ✅ | ✓ | ~2 ч |
+| 43 | [Токенизированный корпус в HDF5](phases/19-capstone-projects/43-hdf5-tokenized-corpus) | ✅ | ✓ | ~2 ч |
+| 44 | [Cosine LR с линейным warmup](phases/19-capstone-projects/44-cosine-lr-warmup) | ✅ | ✓ | ~2 ч |
+| 45 | [Gradient clipping и mixed precision](phases/19-capstone-projects/45-gradient-clipping-amp) | ✅ | ✓ | ~2 ч |
+| 46 | [Аккумуляция градиентов](phases/19-capstone-projects/46-gradient-accumulation) | ✅ | ✓ | ~2 ч |
+| 47 | [Сохранение и возобновление чекпоинтов](phases/19-capstone-projects/47-checkpoint-save-resume) | ✅ | ✓ | ~2 ч |
+| 48 | [DDP и FSDP с нуля](phases/19-capstone-projects/48-distributed-fsdp-ddp) | ✅ | ✓ | ~2 ч |
+| 49 | [Харнес оценки языковой модели](phases/19-capstone-projects/49-lm-eval-harness) | ✅ | ✓ | ~2 ч |
+| 50 | [Генератор гипотез](phases/19-capstone-projects/50-hypothesis-generator) | ✅ | ✓ | ~2 ч |
+| 51 | [Поиск литературы](phases/19-capstone-projects/51-literature-retrieval) | ✅ | ✓ | ~2 ч |
+| 52 | [Раннер экспериментов](phases/19-capstone-projects/52-experiment-runner) | ✅ | ✓ | ~2 ч |
+| 53 | [Оценщик результатов](phases/19-capstone-projects/53-result-evaluator) | ✅ | ✓ | ~2 ч |
+| 54 | [Генерация научной статьи](phases/19-capstone-projects/54-paper-writer) | ✅ | ✓ | ~2 ч |
+| 55 | [Цикл критика](phases/19-capstone-projects/55-critic-loop) | ✅ | ✓ | ~2 ч |
+| 56 | [Планировщик итераций](phases/19-capstone-projects/56-iteration-scheduler) | ✅ | ✓ | ~2 ч |
+| 57 | [Research-агент end-to-end](phases/19-capstone-projects/57-end-to-end-research-demo) | ✅ | ✓ | ~2 ч |
+| 58 | [Vision-энкодер: патчи изображения](phases/19-capstone-projects/58-vision-encoder-patches) | ✅ | ✓ | ~2 ч |
+| 59 | [ViT-энкодер](phases/19-capstone-projects/59-vit-transformer) | ✅ | ✓ | ~2 ч |
+| 60 | [Projection-слой для выравнивания модальностей](phases/19-capstone-projects/60-projection-layer-modality-align) | ✅ | ✓ | ~2 ч |
+| 61 | [Cross-attention fusion](phases/19-capstone-projects/61-cross-attention-fusion) | ✅ | ✓ | ~2 ч |
+| 62 | [Vision-language предобучение](phases/19-capstone-projects/62-vision-language-pretraining) | ✅ | ✓ | ~2 ч |
+| 63 | [Мультимодальная оценка](phases/19-capstone-projects/63-multimodal-eval) | ✅ | ✓ | ~2 ч |
+| 64 | [Сравнение стратегий chunking](phases/19-capstone-projects/64-chunking-strategies-advanced) | ✅ | ✓ | ~2 ч |
+| 65 | [Гибридный retrieval: BM25 + dense](phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense) | ✅ | ✓ | ~2 ч |
+| 66 | [Reranker на cross-encoder](phases/19-capstone-projects/66-reranker-cross-encoder) | ✅ | ✓ | ~2 ч |
+| 67 | [Переписывание запросов: HyDE, multi-query, декомпозиция](phases/19-capstone-projects/67-query-rewriting-hyde) | ✅ | ✓ | ~2 ч |
+| 68 | [Оценка RAG: precision, recall, MRR, nDCG, faithfulness](phases/19-capstone-projects/68-rag-eval-precision-recall) | ✅ | ✓ | ~2 ч |
+| 69 | [RAG-система end-to-end](phases/19-capstone-projects/69-end-to-end-rag-system) | ✅ | ✓ | ~2 ч |
+| 70 | [Формат спецификации задач](phases/19-capstone-projects/70-task-spec-format) | ✅ | ✓ | ~2 ч |
+| 71 | [Классические метрики](phases/19-capstone-projects/71-classical-metrics) | ✅ | ✓ | ~2 ч |
+| 72 | [Метрика исполнения кода](phases/19-capstone-projects/72-code-exec-metric) | ✅ | ✓ | ~2 ч |
+| 73 | [Перплексия и калибровка](phases/19-capstone-projects/73-perplexity-calibration) | ✅ | ✓ | ~2 ч |
+| 74 | [Агрегация лидерборда](phases/19-capstone-projects/74-leaderboard-aggregation) | ✅ | ✓ | ~2 ч |
+| 75 | [Eval-раннер end-to-end](phases/19-capstone-projects/75-end-to-end-eval-runner) | ✅ | ✓ | ~2 ч |
+| 76 | [Коллективные операции с нуля](phases/19-capstone-projects/76-collective-ops-from-scratch) | ✅ | ✓ | ~2 ч |
+| 77 | [Data parallel DDP с нуля](phases/19-capstone-projects/77-data-parallel-ddp) | ✅ | ✓ | ~2 ч |
+| 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding) | ✅ | ✓ | ~2 ч |
+| 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel) | ✅ | ✓ | ~2 ч |
+| 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume) | ✅ | ✓ | ~2 ч |
+| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train) | ✅ | ✓ | ~2 ч |
+| 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy) | ✅ | ✓ | ~2 ч |
+| 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector) | ✅ | ✓ | ~2 ч |
+| 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation) | ✅ | ✓ | ~2 ч |
+| 85 | [Интеграция контент-классификатора](phases/19-capstone-projects/85-content-classifier-integration) | ✅ | ✓ | ~2 ч |
+| 86 | [Движок constitutional-правил](phases/19-capstone-projects/86-constitutional-rules-engine) | ✅ | ✓ | ~2 ч |
+| 87 | [Safety gate end-to-end](phases/19-capstone-projects/87-end-to-end-safety-gate) | ✅ | ✓ | ~2 ч |
 
 ---
 

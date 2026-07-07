@@ -1,34 +1,31 @@
 # Cross-Encoder Reranker
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Bi-encoder эмбеддит запрос и документ независимо. Cross-encoder конкатенирует их и читает оба сразу. Cross-encoder — самый умный читатель и самый медленный. Как вторая стадия над топ-k bi-encoder'а он окупается.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 11, урок 06 (RAG), урок 07 (продвинутый RAG); Фаза 19, фундамент трека B (уроки 20–29); Фаза 19, урок 65 (гибридный retrieval, кормящий эту стадию)
+**Время:** ~90 минут
 
-> A bi-encoder embeds query and document independently. A cross-encoder concatenates them and reads both at once. The cross-encoder is the smartest reader and the slowest. Used as a second stage on the bi-encoder's top-k, it pays for itself.
+## Цели обучения
+- Различать bi-encoder-ретривер и cross-encoder-reranker по форме входа, числу параметров и стоимости на запрос.
+- Реализовать маленький cross-encoder с нуля как трансформерный блок, потребляющий упакованную последовательность (запрос, документ) и излучающий один скаляр релевантности.
+- Свить двухстадийный retrieve-then-rerank-пайплайн: извлечь топ-N дешёвым ретривером, реранжировать N в топ-K cross-encoder'ом, вернуть K.
+- Измерить компромисс задержка-качество на маленьком фикстурном корпусе и выбрать правильный N под данный бюджет задержки.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 lesson 06 (RAG), Phase 11 lesson 07 (advanced RAG); Phase 19 Track B foundations (lessons 20-29); Phase 19 lesson 65 (hybrid retrieval feeding this stage)
-**Time:** ~90 minutes
+## Проблема
 
-## Learning Objectives
-- Distinguish a bi-encoder retriever from a cross-encoder reranker by their input shape, parameter count, and per-query cost.
-- Implement a small cross-encoder from scratch as a transformer block that consumes a packed (query, document) sequence and emits a single relevance scalar.
-- Wire a two-stage retrieve-then-rerank pipeline: retrieve top-N with a cheap retriever, rerank N to top-K with the cross-encoder, return K.
-- Measure the latency-vs-quality trade-off on a small fixture corpus and pick the right N for a given latency budget.
+Bi-encoder маппит запрос и документ в одно векторное пространство и ранжирует косинусом. Два кодирования никогда не видят друг друга. Модель обязана сжать всё полезное о документе в один вектор вслепую, не видя запроса. Это быстро — один эмбеддинг на документ при индексации и один на запрос в момент запроса, — и это единственный способ ранжировать на масштабе корпуса.
 
-## The Problem
+Цена — точность. Два документа с одной общей темой могут иметь почти идентичные эмбеддинги, даже когда один отвечает на запрос, а другой — нет. Bi-encoder их не различит.
 
-A bi-encoder maps query and document into the same vector space and ranks by cosine. The two encodings never see each other. The model has to compress everything useful about a document into a single vector, blind to the query. This is fast - one embedding per document at index time and one per query at query time - and it is the only way to rank at corpus scale.
+Cross-encoder решает это, читая запрос и документ вместе. Модель получает `[query] [SEP] [document]` одной последовательностью, гоняет полное внимание через стык и порождает один скаляр релевантности. Каждый токен документа может смотреть на каждый токен запроса. Модель решает скор с полным контекстом.
 
-The cost is precision. Two documents that have the same overall topic can have nearly identical embeddings even when one of them answers the query and the other does not. The bi-encoder cannot tell them apart.
+Цена — throughput. Там, где bi-encoder эмбеддит один раз и запрашивает вечно, cross-encoder работает один раз на пару (запрос, документ). Для корпуса в 10 миллионов документов это 10 миллионов forward-проходов на запрос. Невыполнимо в бюджете запроса.
 
-A cross-encoder solves this by reading the query and the document together. The model receives `[query] [SEP] [document]` as a single sequence, runs full attention across the join, and produces one relevance scalar. Every token of the document can attend to every token of the query. The model decides the score with full context.
+Решение — стадийность. Bi-encoder'ом извлечь топ-N. Cross-encoder'ом реранжировать N в топ-K. N мал (50–200), и прирост качества cross-encoder'а сконцентрирован там, где он важен. Общая задержка остаётся в бюджете запроса. Общее качество — качество cross-encoder'а, ограниченное сверху recall bi-encoder'а на N.
 
-The cost is throughput. Where the bi-encoder embeds once and queries forever, the cross-encoder runs once per (query, document) pair. For a 10-million-document corpus that is 10 million forward passes per query. Unrunnable in a request budget.
-
-The solution is staging. Use the bi-encoder to retrieve the top-N. Use the cross-encoder to rerank the N to a top-K. N is small (50 to 200) and the cross-encoder's quality lift is concentrated where it matters. The total latency stays in the request budget. The total quality is the cross-encoder's quality, capped by the bi-encoder's recall at N.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -40,99 +37,99 @@ flowchart LR
   Cross --> TopK[Top-K Reranked]
 ```
 
-### The cross-encoder's input shape
+### Форма входа cross-encoder'а
 
-The standard packing is `[CLS] query_tokens [SEP] document_tokens [SEP]`. The CLS-position output is fed into a single linear head that outputs the relevance scalar. Some implementations use mean-pooling instead of CLS; the difference is small. The point is that the model produces one number per pair.
+Стандартная упаковка — `[CLS] query_tokens [SEP] document_tokens [SEP]`. Выход позиции CLS подаётся в одну линейную голову, выдающую скаляр релевантности. Некоторые реализации используют mean-пулинг вместо CLS; разница мала. Суть в том, что модель порождает одно число на пару.
 
-A 22M-parameter cross-encoder (the published `ms-marco-MiniLM-L-6-v2` weight class) is the typical production point. Smaller models lose quality faster than they save latency. Larger models (e.g. `bge-reranker-v2-m3` at 568M parameters) are reserved for offline reranking or for first-page reranking where K is small.
+Cross-encoder на 22M параметров (весовой класс опубликованного `ms-marco-MiniLM-L-6-v2`) — типичная продакшен-точка. Меньшие модели теряют качество быстрее, чем экономят задержку. Большие (например, `bge-reranker-v2-m3` на 568M параметров) резервируются под офлайн-реранжирование или реранжирование первой страницы при маленьком K.
 
-### Why this lesson trains a tiny one
+### Почему этот урок обучает крошечный
 
-A real cross-encoder is a finetuned encoder transformer. In production you load a checkpoint and run it. In this lesson the goal is to show you the shape of the model and the shape of the latency-quality curve, not to train a state-of-the-art ranker. So we build a small `nn.Module` with one transformer block, multi-head attention (4 heads by default), and one regression head. It is initialized deterministically from a seed so the demo is reproducible without weights on disk.
+Настоящий cross-encoder — дообученный encoder-трансформер. В продакшене вы загружаете чекпоинт и запускаете. В этом уроке цель — показать форму модели и форму кривой задержка-качество, а не обучить state-of-the-art-ранкер. Поэтому мы строим маленький `nn.Module` с одним трансформерным блоком, multi-head attention (4 головы по умолчанию) и одной регрессионной головой. Он инициализируется детерминированно от сида, чтобы демо было воспроизводимым без весов на диске.
 
-The toy model learns the right shape from the fixture corpus: relevant query-document pairs have higher predicted scores than irrelevant pairs. The end-to-end pipeline reranks the bi-encoder's output and the rerank's top-k correlates with the gold labels.
+Игрушечная модель выучивает правильную форму на фикстурном корпусе: релевантные пары запрос-документ получают более высокие предсказанные скоры, чем нерелевантные. End-to-end-пайплайн реранжирует выход bi-encoder'а, и топ-k реранжирования коррелирует с эталонными метками.
 
-### Latency vs quality
+### Задержка против качества
 
-The two-stage pipeline has one tunable: N. Sweep N from 5 to 100 on a held-out query set and you get the curve.
+У двухстадийного пайплайна одна настраиваемая ручка: N. Просвипайте N от 5 до 100 на отложенном наборе запросов — и получите кривую.
 
-| N | Recall@1 of stage 2 | Cross-encoder forward passes per query | Latency |
+| N | Recall@1 стадии 2 | Forward-проходов cross-encoder'а на запрос | Задержка |
 |---|--------------------|---------------------------------------|---------|
-| 5 | 0.62 | 5 | low |
-| 20 | 0.81 | 20 | medium |
-| 50 | 0.86 | 50 | high |
-| 100 | 0.86 | 100 | very high |
+| 5 | 0.62 | 5 | низкая |
+| 20 | 0.81 | 20 | средняя |
+| 50 | 0.86 | 50 | высокая |
+| 100 | 0.86 | 100 | очень высокая |
 
-The numbers above are illustrative of the shape, not measurements from this fixture. The shape is real. There is always a knee around 20 to 50 candidates where the rerank lift saturates. Past the knee you are paying for nothing.
+Числа выше иллюстрируют форму, а не измерения этой фикстуры. Форма настоящая. Колено всегда около 20–50 кандидатов, где прирост реранжирования насыщается. За коленом вы платите ни за что.
 
-Pick N from the eval curve plus the latency budget. The cross-encoder cannot raise recall above the bi-encoder's recall at N, so a low N caps quality, not just latency.
+Выбирайте N по eval-кривой плюс бюджету задержки. Cross-encoder не может поднять recall выше recall bi-encoder'а на N, поэтому маленький N ограничивает качество, а не только задержку.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `CrossEncoder` - a small `torch.nn.Module`: token embedding, one transformer block with multi-head attention and feedforward, mean-pooled head producing one scalar.
-- `tokenize_pair(query, document)` - packs the two strings into a single id sequence with type ids that mark the boundary, deterministic and stdlib.
-- `train_tiny(pairs)` - one pass of supervised training on a hand-labeled (query, document, relevance) triple list, so the model produces sensible scores on the fixture.
-- `rerank(query, candidates, top_k)` - the production interface.
-- `pipeline(query, retriever, top_n, top_k)` - the two-stage flow.
-- A demo `main()` that loads the corpus from lesson 65's pattern, retrieves top-N, reranks to top-K, prints both lists side by side, and reports the latency of each stage.
+- `CrossEncoder` — маленький `torch.nn.Module`: токенный эмбеддинг, один трансформерный блок с multi-head attention и feedforward, mean-пуленная голова с одним скаляром.
+- `tokenize_pair(query, document)` — пакует две строки в одну id-последовательность с type-id, помечающими границу; детерминированно и на stdlib.
+- `train_tiny(pairs)` — один проход supervised-обучения на вручную размеченном списке троек (запрос, документ, релевантность), чтобы модель давала осмысленные скоры на фикстуре.
+- `rerank(query, candidates, top_k)` — продакшен-интерфейс.
+- `pipeline(query, retriever, top_n, top_k)` — двухстадийный поток.
+- Демо `main()` — загружает корпус по паттерну урока 65, извлекает топ-N, реранжирует в топ-K, печатает оба списка бок о бок и отчитывается о задержке каждой стадии.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The output shows the bi-encoder's top-N, the cross-encoder's top-K, and a timing summary. The cross-encoder takes longer per call but does not run on the full corpus. The two-stage total stays within the request budget while picking the answer that the bi-encoder ranked second or third.
+Вывод показывает топ-N bi-encoder'а, топ-K cross-encoder'а и сводку таймингов. Cross-encoder дольше на вызов, но не работает на полном корпусе. Двухстадийная сумма остаётся в бюджете запроса, выбирая ответ, который bi-encoder ранжировал вторым или третьим.
 
-## Failure modes the demo will hide
+## Режимы отказа, которые демо спрячет
 
-**Cross-encoder is not symmetric.** `rerank(q, d)` and `rerank(d, q)` are different scores. Always feed the query first. If you accidentally swap, recall collapses.
+**Cross-encoder несимметричен.** `rerank(q, d)` и `rerank(d, q)` — разные скоры. Всегда подавайте запрос первым. Перепутаете — recall рухнет.
 
-**N is too low to expose the bug.** If you set N = K, the cross-encoder cannot reorder; it can only reweight. The lift looks zero. Pick N at least three times K.
+**N слишком мал, чтобы обнажить баг.** Поставьте N = K — и cross-encoder не может переупорядочивать, только перевзвешивать. Прирост выглядит нулевым. Берите N хотя бы втрое больше K.
 
-**Training data leaks into the eval.** If the hand-labeled training pairs include the eval queries, the rerank looks magical. Strictly separate train and eval, even on a fixture.
+**Обучающие данные утекают в eval.** Если вручную размеченные обучающие пары включают eval-запросы, реранжирование выглядит волшебным. Строго разделяйте train и eval, даже на фикстуре.
 
-**Production weights are dense.** A 22M-parameter cross-encoder is 88MB at float32. Plan the model server's memory before promising sub-100ms p95.
+**Продакшен-веса плотные.** Cross-encoder на 22M параметров — 88 МБ во float32. Планируйте память модельного сервера до обещаний p95 меньше 100 мс.
 
-**Batching matters.** A real cross-encoder runs the N candidates in one batch. This lesson does that in `_batch_encode`, which builds the batched id and type-id tensors with `torch.tensor(...)` and runs one forward pass. Skip batching and the latency multiplies by N.
+**Батчинг важен.** Настоящий cross-encoder гоняет N кандидатов одним батчем. Урок делает это в `_batch_encode`, который строит батчированные тензоры id и type-id через `torch.tensor(...)` и гоняет один forward-проход. Пропустите батчинг — и задержка умножится на N.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- Pin the bi-encoder, cross-encoder, and N together. Changing any one invalidates the eval.
-- Cache the reranker's output by (query, document_id) hash. The same query against a stable corpus reranks to the same order; cache hits buy you a free latency cut.
-- Log the rank-1 cross-encoder score. A query whose top-1 score is below a corpus-specific threshold is an out-of-domain hit; surface it to the LLM as "I am not confident".
+- Пиньте bi-encoder, cross-encoder и N вместе. Смена любого инвалидирует eval.
+- Кэшируйте выход reranker'а по хешу (запрос, document_id). Один запрос против стабильного корпуса реранжируется в тот же порядок; попадания в кэш дают бесплатное сокращение задержки.
+- Логируйте cross-encoder-скор ранга 1. Запрос, чей топ-1-скор ниже корпус-специфичного порога, — out-of-domain-попадание; поднимите его LLM как «я не уверен».
 
-## Ship It
+## Отгрузите это
 
-Lesson 68 evaluates this two-stage pipeline end to end. Lesson 69 wires this reranker behind the hybrid retriever from lesson 65 and in front of the answer generator. The reranker is the second stage of the end-to-end system.
+Урок 68 оценивает этот двухстадийный пайплайн end to end. Урок 69 подключает этот reranker за гибридным ретривером урока 65 и перед генератором ответов. Reranker — вторая стадия end-to-end-системы.
 
-## Exercises
+## Упражнения
 
-1. Sweep N from 5 to 50 and plot recall@1 of the reranked output. Find the knee on this fixture.
-2. Train the cross-encoder for ten epochs instead of one. Measure the score-margin between positive and negative pairs at each epoch.
-3. Replace mean-pooling with a CLS-token head. Compare convergence on this fixture.
-4. Add a second cross-encoder head that predicts a binary "is this answer in the document" label. Use both heads at inference; one to rank, one to threshold.
-5. Replace the deterministic mock bi-encoder with the one from lesson 65 and chain the two stages. Measure the change in top-K versus bi-encoder alone.
+1. Просвипайте N от 5 до 50 и постройте recall@1 реранжированного выхода. Найдите колено на этой фикстуре.
+2. Обучите cross-encoder десять эпох вместо одной. Измерьте зазор скоров между положительными и отрицательными парами на каждой эпохе.
+3. Замените mean-пулинг головой на CLS-токене. Сравните сходимость на этой фикстуре.
+4. Добавьте вторую голову cross-encoder'а, предсказывающую бинарную метку «есть ли ответ в документе». Используйте обе головы на инференсе: одну для ранжирования, другую для порога.
+5. Замените детерминированный mock-bi-encoder ретривером из урока 65 и сцепите две стадии. Измерьте изменение топ-K против одного bi-encoder'а.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Bi-encoder | "Vector retriever" | Encodes query and doc independently; cosine ranks them |
-| Cross-encoder | "Reranker" | Encodes (query, doc) jointly; outputs one relevance scalar |
-| Two-stage pipeline | "Retrieve and rerank" | Cheap retriever returns N, expensive reranker keeps K |
-| N (candidate budget) | "Rerank pool" | The number of candidates the cross-encoder scores per query |
-| Mean-pooling head | "Mean of last hidden" | Average the encoder's last-layer outputs into one vector |
+| Bi-encoder | «Векторный ретривер» | Кодирует запрос и документ независимо; косинус их ранжирует |
+| Cross-encoder | «Reranker» | Кодирует (запрос, документ) совместно; выдаёт один скаляр релевантности |
+| Двухстадийный пайплайн | «Retrieve and rerank» | Дешёвый ретривер возвращает N, дорогой reranker оставляет K |
+| N (бюджет кандидатов) | «Пул реранжирования» | Число кандидатов, которое cross-encoder оценивает на запрос |
+| Mean-пулинговая голова | «Среднее последнего скрытого» | Усреднить выходы последнего слоя энкодера в один вектор |
 
-## Further Reading
+## Дополнительное чтение
 
-- Nogueira, Cho, "Passage Re-ranking with BERT", 2019 - the canonical cross-encoder ranker paper
-- Reimers, Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks", 2019 - on bi-encoders vs cross-encoders
-- [SentenceTransformers Cross-Encoders documentation](https://www.sbert.net/examples/applications/cross-encoder/README.html)
-- [BGE Reranker v2 model card](https://huggingface.co/BAAI/bge-reranker-v2-m3)
-- Phase 19 lesson 65 - the hybrid retriever feeding this rerank stage
-- Phase 19 lesson 68 - the eval that measures the lift this rerank delivers
+- Nogueira, Cho, "Passage Re-ranking with BERT", 2019 — каноническая статья cross-encoder-ранкера
+- Reimers, Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks", 2019 — о bi-encoder'ах против cross-encoder'ов
+- [Документация SentenceTransformers Cross-Encoders](https://www.sbert.net/examples/applications/cross-encoder/README.html)
+- [Карточка модели BGE Reranker v2](https://huggingface.co/BAAI/bge-reranker-v2-m3)
+- Фаза 19, урок 65 — гибридный ретривер, кормящий эту стадию реранжирования
+- Фаза 19, урок 68 — eval, меряющий прирост этого реранжирования

@@ -1,29 +1,26 @@
 # Collective Ops From Scratch
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Четыре коллективные операции, на которых держится распределённое обучение, — allreduce, broadcast, allgather и reduce_scatter. Любой другой примитив, который предлагает обучающий фреймворк, — обёртка над ними. Соберите их один раз над mesh'ем из `multiprocessing.Queue`, верифицируйте против референсной реализации — и остальной трек станет обвязкой.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек C, уроки 42–49
+**Время:** ~90 минут
 
-> The four collective operations that hold distributed training together are allreduce, broadcast, allgather, and reduce_scatter. Every other primitive a training framework offers is a wrapper around these. Build them once over a `multiprocessing.Queue` mesh, verify them against a reference implementation, and the rest of the track becomes plumbing.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track C lessons 42-49
-**Time:** ~90 min
+- Реализовать ring allreduce в два прохода (reduce-scatter, затем allgather) и доказать, что коммуникационный объём на ранг — 2(N-1)/N байт на элемент.
+- Построить broadcast, allgather и reduce_scatter поверх точка-точка-отправок через `multiprocessing.Queue`.
+- Верифицировать каждый примитив против gloo-референса `torch.distributed` на том же входе.
+- Обосновать выбор кольца против дерева по форме кластера, полу задержки и потолку пропускной способности.
 
-## Learning Objectives
+## Проблема
 
-- Implement ring allreduce in two passes (reduce-scatter then allgather) and prove the per-rank communication volume is 2(N-1)/N bytes per element.
-- Build broadcast, allgather, and reduce_scatter on top of point-to-point sends over `multiprocessing.Queue`.
-- Verify every primitive against a `torch.distributed` gloo reference for the same input.
-- Defend the choice of ring versus tree on cluster shape, latency floor, and bandwidth ceiling.
+Наивный allreduce на N рангах шлёт тензор N раз корню и N раз обратно бродкастом. Пропускная способность масштабируется как O(N) на ранг, корень становится узким местом, а пол по wall-clock — самый медленный линк, умноженный на N. Ring allreduce расплющивает это в 2(N-1) чанков размера T/N, и байты на ранг падают до 2T(N-1)/N независимо от размера кластера. Tree allreduce выигрывает на малых N и высоколатентных линках, потому что глубина — log2(N) прыжков вместо 2(N-1). Выберите неправильную топологию под форму кластера — и время шага диктует самая медленная GPU.
 
-## The Problem
+Каждый фреймворк распределённого обучения, который вы будете читать в этом треке, зависит от этих четырёх примитивов. PyTorch DDP синхронизирует градиенты одним allreduce на бакет параметров. ZeRO шардирует состояние оптимизатора через reduce_scatter и бродкастит обновлённые параметры через allgather. FSDP превращает полный forward в allgather плюс reduce_scatter. Pipeline parallel'у нужен broadcast активаций между группами стадий. Если вы не можете реализовать четыре коллектива, вы не можете рассуждать о том, почему обучение стопорится, почему рассинхрон градиентов вылезает на ранге 3 или почему pipeline bubble удваивается при смене топологии.
 
-A naive allreduce over N ranks sends N times the tensor to a root and broadcasts N times back. Bandwidth scales as O(N) per rank, the root becomes a bottleneck, and the wall-clock floor is the slowest link times N. Ring allreduce flattens that into 2(N-1) chunks of size T/N, so per-rank bytes drop to 2T(N-1)/N independent of cluster size. Tree allreduce wins on small N and high-latency links because depth is log2(N) hops instead of 2(N-1). Pick the wrong topology for the cluster shape and the slowest GPU dictates step time.
-
-Every distributed training framework you will read this track depends on these four primitives. PyTorch DDP synchronises gradients with one allreduce per parameter bucket. ZeRO shards optimiser state by reduce_scatter and broadcasts updated parameters by allgather. FSDP turns the full forward into allgather plus reduce_scatter. Pipeline parallel needs broadcast for activations across stage groups. If you cannot implement the four collectives, you cannot reason about why training stalls, why the gradient mismatch shows up at rank 3, or why the pipeline bubble doubles when you swap topologies.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -37,91 +34,91 @@ flowchart LR
   Q30 --> R0
 ```
 
-### Ring allreduce in two passes
+### Ring allreduce в два прохода
 
-Split the tensor into N equal chunks indexed 0..N-1. Each rank owns chunk index equal to its rank. Pass 1, reduce-scatter, runs N-1 steps. At step s, rank r sends chunk (r - s) mod N to rank (r + 1) mod N and receives chunk (r - s - 1) mod N from rank (r - 1) mod N, accumulating the received chunk into its local copy. After N-1 steps, rank r owns the full sum for chunk r. Pass 2, allgather, runs another N-1 steps and rotates the finished chunks around the ring until every rank holds the full sum for every chunk.
+Разрежьте тензор на N равных чанков с индексами 0..N-1. Каждый ранг владеет чанком с индексом, равным своему рангу. Проход 1, reduce-scatter, идёт N-1 шагов. На шаге s ранг r шлёт чанк (r - s) mod N рангу (r + 1) mod N и получает чанк (r - s - 1) mod N от ранга (r - 1) mod N, аккумулируя полученный чанк в свою локальную копию. После N-1 шагов ранг r владеет полной суммой чанка r. Проход 2, allgather, идёт ещё N-1 шагов и вращает готовые чанки по кольцу, пока каждый ранг не держит полную сумму каждого чанка.
 
-| Primitive | Per-rank bytes | Steps | When to use |
+| Примитив | Байт на ранг | Шагов | Когда использовать |
 |-----------|---------------|-------|-------------|
-| Ring allreduce | 2T(N-1)/N | 2(N-1) | Large T, fat-pipe homogeneous cluster |
-| Tree allreduce | T log2(N) | 2 log2(N) | Small T or high-latency links |
-| Broadcast | T | log2(N) tree | Parameter init, scalar config |
-| Allgather | T(N-1)/N | N-1 | Sharded forward, ZeRO unshard |
-| Reduce_scatter | T(N-1)/N | N-1 | ZeRO gradient sharding |
+| Ring allreduce | 2T(N-1)/N | 2(N-1) | Большой T, однородный кластер с толстой трубой |
+| Tree allreduce | T log2(N) | 2 log2(N) | Маленький T или высоколатентные линки |
+| Broadcast | T | Дерево log2(N) | Инициализация параметров, скалярный конфиг |
+| Allgather | T(N-1)/N | N-1 | Шардированный forward, unshard в ZeRO |
+| Reduce_scatter | T(N-1)/N | N-1 | Шардирование градиентов в ZeRO |
 
-### Queue mesh as a stand-in for NCCL
+### Queue-mesh как замена NCCL
 
-NCCL runs over PCIe and NVLink with hardware-offloaded reductions. On CPU you do not have that. A `multiprocessing.Queue` per ring edge gives you ordered point-to-point delivery with a single producer and single consumer. The reduction happens in user space, so you pay Python overhead, but the wire pattern is identical to NCCL ring allreduce. Reason about correctness on the queue version and the cluster behaviour follows.
+NCCL работает поверх PCIe и NVLink с аппаратно-разгруженными редукциями. На CPU этого нет. По одному `multiprocessing.Queue` на ребро кольца дают упорядоченную точка-точка-доставку с одним производителем и одним потребителем. Редукция происходит в user space, поэтому вы платите Python-накладные, но паттерн провода идентичен ring allreduce NCCL. Разберитесь с корректностью на queue-версии — и поведение кластера последует.
 
-### Verify against gloo
+### Верификация против gloo
 
-Every primitive lands with a unit test that compares its output against `torch.distributed` initialised with the gloo backend on the same tensor across the same world size. If your ring allreduce diverges from gloo by more than float32 epsilon, the test fails. Verification against a reference implementation is non-negotiable; without it the primitive looks correct until step 10000 of a real training run.
+Каждый примитив приземляется с юнит-тестом, сравнивающим его выход с `torch.distributed`, инициализированным gloo-бэкендом, на том же тензоре при том же world size. Если ваш ring allreduce расходится с gloo больше чем на float32-эпсилон, тест падает. Верификация против референсной реализации не обсуждается; без неё примитив выглядит корректным до шага 10000 настоящего обучающего прогона.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `Mesh` class that wires N `multiprocessing.Queue` instances into a ring and exposes `send(dst, tensor)` and `recv(src)` per rank.
-- `ring_allreduce(mesh, rank, world_size, tensor)` running the two-pass algorithm.
-- `broadcast(mesh, rank, world_size, tensor, src)` over a logarithmic tree.
-- `allgather(mesh, rank, world_size, tensor)` using N-1 rotations.
-- `reduce_scatter(mesh, rank, world_size, tensor)` as the first half of allreduce.
-- `_gloo_reference(op, world_size, tensor)` that runs the same input through `torch.distributed` with gloo for byte-equal comparison.
+- Класс `Mesh`, свивающий N экземпляров `multiprocessing.Queue` в кольцо и открывающий `send(dst, tensor)` и `recv(src)` на ранг.
+- `ring_allreduce(mesh, rank, world_size, tensor)` с двухпроходным алгоритмом.
+- `broadcast(mesh, rank, world_size, tensor, src)` по логарифмическому дереву.
+- `allgather(mesh, rank, world_size, tensor)` через N-1 вращений.
+- `reduce_scatter(mesh, rank, world_size, tensor)` как первую половину allreduce.
+- `_gloo_reference(op, world_size, tensor)` — гоняет тот же вход через `torch.distributed` с gloo для байт-точного сравнения.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: per-primitive verification table comparing queue-mesh and gloo outputs, followed by a per-rank byte counter that proves the 2T(N-1)/N scaling.
+Вывод: таблица верификации по примитивам, сравнивающая выходы queue-mesh и gloo, за которой следует пер-ранговый счётчик байтов, доказывающий масштабирование 2T(N-1)/N.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns harden the primitives enough to ship.
+Три паттерна укрепляют примитивы до отгружаемого состояния.
 
-**Bucket gradients before allreduce.** A 1B-parameter model has tens of thousands of gradient tensors. One allreduce per tensor pays the latency floor N times. DDP buckets gradients into ~25 MB chunks and issues one allreduce per bucket; the small tensors ride on the back of the big ones. Without bucketing the latency overhead dominates the step.
+**Бакетируйте градиенты до allreduce.** У модели на 1B параметров десятки тысяч градиентных тензоров. Один allreduce на тензор платит пол задержки N раз. DDP бакетирует градиенты чанками ~25 МБ и запускает один allreduce на бакет; маленькие тензоры едут на спине больших. Без бакетирования накладные задержки доминируют в шаге.
 
-**Overlap communication with computation.** Backward computes gradients layer by layer in reverse order. The moment the last layer's gradient is ready, kick off its allreduce while the next layer keeps computing. PyTorch DDP wires this with bucket-ready hooks. The overlap halves visible communication time when the network has slack.
+**Перекрывайте коммуникацию с вычислениями.** Backward считает градиенты слой за слоем в обратном порядке. Как только градиент последнего слоя готов, запускайте его allreduce, пока следующий слой продолжает считаться. PyTorch DDP свивает это через bucket-ready-хуки. Перекрытие половинит видимое время коммуникации, когда у сети есть запас.
 
-**Pick ring or tree by message size, not religion.** NCCL ships a topology detector that picks ring for messages above ~1 MB and tree below. The crossover is bandwidth-versus-latency: above 1 MB, the bandwidth term 2T(N-1)/N dominates and ring wins; below 1 MB, the log2(N) hop count wins. Hard-coding one topology costs throughput on the wrong message size.
+**Выбирайте кольцо или дерево по размеру сообщения, а не по религии.** NCCL поставляет детектор топологии, выбирающий кольцо для сообщений выше ~1 МБ и дерево ниже. Точка перелома — пропускная способность против задержки: выше 1 МБ доминирует полосный член 2T(N-1)/N и побеждает кольцо; ниже — побеждает log2(N) прыжков. Захардкоженная топология стоит throughput на неправильном размере сообщения.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **PyTorch DDP.** Calls `dist.all_reduce` on bucketed gradients after backward. The bucket size is tunable; default 25 MB is reasonable for 100Gbit Ethernet.
-- **DeepSpeed ZeRO.** Issues reduce_scatter to shard gradients and allgather to reconstruct full parameters before forward. The lesson's primitives are exactly the calls ZeRO makes.
-- **FSDP.** Forward begins with allgather to unshard the layer, computes, then reduces with reduce_scatter and discards the unshard. Same primitives, different schedule.
+- **PyTorch DDP.** Вызывает `dist.all_reduce` на бакетированных градиентах после backward. Размер бакета настраиваем; дефолт 25 МБ разумен для 100Gbit Ethernet.
+- **DeepSpeed ZeRO.** Запускает reduce_scatter для шардирования градиентов и allgather для реконструкции полных параметров перед forward. Примитивы урока — в точности вызовы, которые делает ZeRO.
+- **FSDP.** Forward начинается с allgather для unshard слоя, считает, затем редьюсит через reduce_scatter и сбрасывает unshard. Те же примитивы, другое расписание.
 
-## Ship It
+## Отгрузите это
 
-Use the queue-mesh primitives in lessons 77-81. Lesson 77 wires allreduce into DDP. Lesson 78 wires reduce_scatter into ZeRO. Lesson 79 wires broadcast into pipeline activations. Lesson 81 composes all four into the end-to-end demo.
+Используйте queue-mesh-примитивы в уроках 77–81. Урок 77 свивает allreduce в DDP. Урок 78 — reduce_scatter в ZeRO. Урок 79 — broadcast в pipeline-активации. Урок 81 компонует все четыре в end-to-end-демо.
 
-## Exercises
+## Упражнения
 
-1. Add a tree allreduce variant and switch between ring and tree by message size. Measure the crossover.
-2. Add a `recv_timeout_ms` so a stalled rank surfaces a deadline error instead of hanging forever.
-3. Replace `multiprocessing.Queue` with TCP sockets for the four primitives. Same tests, real wire.
-4. Add a bandwidth instrumentation hook so the per-rank byte counter logs to JSONL.
-5. Compare wall-clock time of ring versus tree on 4 ranks for tensors of size 1KB, 1MB, 16MB. Defend the crossover empirically.
+1. Добавьте tree-вариант allreduce и переключайтесь между кольцом и деревом по размеру сообщения. Измерьте точку перелома.
+2. Добавьте `recv_timeout_ms`, чтобы застрявший ранг поднимал ошибку дедлайна вместо вечного зависания.
+3. Замените `multiprocessing.Queue` TCP-сокетами для четырёх примитивов. Те же тесты, настоящий провод.
+4. Добавьте хук инструментирования полосы, чтобы пер-ранговый счётчик байтов логировался в JSONL.
+5. Сравните wall-clock кольца против дерева на 4 рангах для тензоров 1КБ, 1МБ, 16МБ. Обоснуйте точку перелома эмпирически.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|----------------|------------------------|
-| Allreduce | "Sum across ranks" | After the call every rank holds the same reduced tensor |
-| Ring | "The fast topology" | N-1 chunks of size T/N flow around the cycle twice |
-| Tree | "The log topology" | Reduction follows a binary tree; depth is log2(N) hops |
-| Allgather | "Concatenate shards" | Every rank ends with every other rank's shard |
-| Reduce_scatter | "Split the sum" | Each rank ends with the sum of one chunk only |
-| Bucket | "Fuse small tensors" | Coalesce N small allreduces into one large one |
+| Allreduce | «Сумма по рангам» | После вызова каждый ранг держит один и тот же средуцированный тензор |
+| Кольцо | «Быстрая топология» | N-1 чанков размера T/N текут по циклу дважды |
+| Дерево | «Логарифмическая топология» | Редукция идёт по бинарному дереву; глубина — log2(N) прыжков |
+| Allgather | «Конкатенация шардов» | Каждый ранг заканчивает с шардом каждого другого ранга |
+| Reduce_scatter | «Раздели сумму» | Каждый ранг заканчивает с суммой только одного чанка |
+| Бакет | «Слить маленькие тензоры» | Схлопнуть N маленьких allreduce в один большой |
 
-## Further Reading
+## Дополнительное чтение
 
-- [PyTorch Distributed: NCCL collectives](https://pytorch.org/docs/stable/distributed.html#collective-functions)
-- [Horovod ring allreduce paper](https://arxiv.org/abs/1802.05799)
-- [NCCL topology and algorithm selection](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/index.html)
+- [PyTorch Distributed: коллективы NCCL](https://pytorch.org/docs/stable/distributed.html#collective-functions)
+- [Статья Horovod о ring allreduce](https://arxiv.org/abs/1802.05799)
+- [Выбор топологии и алгоритма в NCCL](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/index.html)
 - [Patarasuk and Yuan, Bandwidth optimal allreduce algorithms](https://www.cs.fsu.edu/~xyuan/paper/09jpdc.pdf)
-- Phase 10 Lesson 05 - distributed training overview
-- Phase 19 Lesson 77 - DDP wired on top of these primitives
+- Фаза 10, урок 05 — обзор распределённого обучения
+- Фаза 19, урок 77 — DDP, свитый поверх этих примитивов

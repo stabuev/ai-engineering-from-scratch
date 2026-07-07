@@ -1,28 +1,25 @@
 # End-to-End RAG System
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Шесть уроков компонентов. Один пайплайн. Один eval-цикл. Одно самозавершающееся демо. Это та система, которую вы отгружаете.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 11, уроки 06 (RAG), 10 (оценка); Фаза 19, фундамент трека B (уроки 20–29); Фаза 19, уроки 64, 65, 66, 67, 68
+**Время:** ~90 минут
 
-> Six lessons of components. One pipeline. One eval loop. One self-terminating demo. This is the system you ship.
+## Цели обучения
+- Скомпоновать чанкер, гибридный ретривер, переписыватель запросов, cross-encoder-reranker и генератор ответов в единый end-to-end-пайплайн.
+- Реализовать генератор ответов, цитирующий свои утверждения якорями чанков, с fallback'ом «отказаться при низкой уверенности».
+- Прогнать eval урока 68 против собранного пайплайна и доказать, что стадийная сборка побеждает по каждой метрике те же компоненты в изоляции.
+- Собрать самозавершающееся CLI-демо, которое поглощает фикстурный корпус, гоняет фиксированный набор запросов и выходит с нулём со сводным отчётом.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 lessons 06 (RAG), 10 (evaluation); Phase 19 Track B foundations (lessons 20-29); Phase 19 lessons 64, 65, 66, 67, 68
-**Time:** ~90 minutes
+## Проблема
 
-## Learning Objectives
-- Compose the chunker, hybrid retriever, query rewriter, cross-encoder reranker, and answer generator into a single end-to-end pipeline.
-- Implement an answer generator that cites its claims by chunk anchor, with refuse-on-low-confidence fallback.
-- Run the lesson 68 eval against the assembled pipeline and prove the staged build wins on every metric over the same components in isolation.
-- Build a self-terminating CLI demo that ingests a fixture corpus, runs a fixed query set, and exits zero with a summary report.
+Шесть компонентов в изоляции не доказывают ничего. Чанкер может побеждать по recall@5 против корпуса и проигрывать по recall@5 системы, потому что ретривер не может ранжировать то, что излучает чанкер. Reranker может поднимать MRR на синтетическом пуле кандидатов и проваливаться на настоящих bi-encoder-кандидатах, потому что recall bi-encoder'а на бюджете реранжирования слишком низок. Переписыватель запросов может продвинуть эталонный документ на одном запросе и сломаться на следующем, потому что LLM-mock вернул вырожденный гипотетик.
 
-## The Problem
+Интеграционный тест — это весь пайплайн end to end против тех же фикстурных qrels, с той же метрикой, с одним файлом-оркестратором, сшивающим всё вместе. Именно это строит этот урок. Если метрики интегрированного пайплайна бьют метрики изолированных демо каждой стадии, вы доказали систему.
 
-Six components in isolation prove nothing. The chunker can win on recall@5 against the corpus and lose on the system's recall@5 because the retriever cannot rank what the chunker emits. The reranker can lift MRR on a synthetic candidate pool and fail on real bi-encoder candidates because the bi-encoder's recall at the rerank budget is too low. The query rewriter can promote the gold doc on a single query and break on the next because the LLM mock returns a degenerate hypothetical.
-
-The integration test is the whole pipeline run end to end against the same fixture qrels, with the same metric, with one orchestrator file that wires everything together. That is what this lesson builds. If the metrics on the integrated pipeline beat the metrics on each stage's isolated demo, you have proven the system.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -39,30 +36,30 @@ flowchart LR
   Eval --> Report[Self-Terminating Demo Report]
 ```
 
-### Wiring choices
+### Решения проводки
 
-The pipeline is a small graph. Each stage is a function with a clear signature.
+Пайплайн — маленький граф. Каждая стадия — функция с ясной сигнатурой.
 
-| Stage | Input | Output |
+| Стадия | Вход | Выход |
 |-------|-------|--------|
-| Chunker | Document text | List of Chunk records |
-| Retriever | Query string | Top-N Chunk records |
-| Rewriter (optional) | Query string | List of rewrites + hypothetical |
-| Reranker | Query, candidates | Top-K Chunk records with cross scores |
-| Generator | Query, top-K Chunk records | Answer string with citations |
+| Чанкер | Текст документа | Список записей Chunk |
+| Ретривер | Строка запроса | Топ-N записей Chunk |
+| Переписыватель (опционально) | Строка запроса | Список перезаписей + гипотетик |
+| Reranker | Запрос, кандидаты | Топ-K записей Chunk с cross-скорами |
+| Генератор | Запрос, топ-K записей Chunk | Строка ответа с цитированиями |
 
-The composition is straightforward when each signature is stable. The lesson's `Pipeline` class holds the five stages and a `query` method that runs them in order. Every stage is swappable: pass a different chunker, retriever, rewriter, reranker, or generator and the pipeline still runs.
+Композиция прямолинейна, когда каждая сигнатура стабильна. Класс `Pipeline` урока держит пять стадий и метод `query`, гоняющий их по порядку. Каждая стадия заменяема: передайте другой чанкер, ретривер, переписыватель, reranker или генератор — пайплайн всё равно работает.
 
-### Answer generator with citations
+### Генератор ответов с цитированиями
 
-The generator is the last stage and the easiest to break. The lesson ships a deterministic mock generator that:
+Генератор — последняя стадия и самая лёгкая на поломку. Урок поставляет детерминированный mock-генератор, который:
 
-1. Takes the top-K reranked chunks.
-2. Selects up to two chunks whose text contains the highest content-token overlap with the query.
-3. Emits an answer that is a concatenation of one-sentence-from-each-selected-chunk, with each sentence followed by a `[doc_id:chunk_index]` anchor.
-4. If no chunk has overlap above a refuse threshold, emits "I do not know" with no citation.
+1. Берёт топ-K реранжированных чанков.
+2. Выбирает до двух чанков с наибольшим пересечением содержательных токенов с запросом.
+3. Излучает ответ — конкатенацию по одному предложению из каждого выбранного чанка, где за каждым предложением следует якорь `[doc_id:chunk_index]`.
+4. Если ни у одного чанка пересечение не выше порога отказа, излучает «Я не знаю» без цитирования.
 
-In production you swap the mock for a real LLM call with the prompt template:
+В продакшене mock меняется на настоящий LLM-вызов с шаблоном промпта:
 
 ```
 You are answering a question using only the snippets below.
@@ -77,82 +74,82 @@ Snippets:
 Answer:
 ```
 
-The refuse-on-low-confidence path is the whole reason the cross-encoder rank-1 score is logged. If it sits below the corpus threshold, the generator refuses. This is the safety valve against hallucinated answers.
+Путь «отказаться при низкой уверенности» — вся причина, по которой логируется cross-encoder-скор ранга 1. Если он ниже корпусного порога, генератор отказывается. Это предохранительный клапан против галлюцинированных ответов.
 
-### The self-terminating demo
+### Самозавершающееся демо
 
-The demo runs everything end to end. It prints a per-stage breakdown of one query, runs the eval over the four fixture qrels, prints a metrics table, and exits with status zero if all the lesson 68 metrics meet the thresholds set in the demo. If any metric is below threshold, the demo exits with a non-zero status and a message naming the failing metric.
+Демо гоняет всё end to end. Печатает по-стадийную разбивку одного запроса, гоняет eval по четырём фикстурным qrels, печатает таблицу метрик и выходит со статусом ноль, если все метрики урока 68 достигают порогов, заданных в демо. Если какая-то метрика ниже порога, демо выходит с ненулевым статусом и сообщением с именем провалившейся метрики.
 
-This is the shape a CI smoke test takes. The pipeline runs offline, fast, deterministic. The thresholds are deliberately tight on the fixture so a regression in any of the six lessons fails the demo.
+Это форма, которую принимает CI-smoke-тест. Пайплайн работает офлайн, быстро, детерминированно. Пороги на фикстуре намеренно жёсткие, чтобы регрессия любого из шести уроков валила демо.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `Chunk` - the record carried through all stages (extends lesson 64's shape with a chunk_index and source doc_id).
-- `Chunker` - selects a strategy from lesson 64 (default recursive split).
-- `HybridIndex` - bundles BM25 + dense + RRF from lesson 65.
-- `Rewriter` (optional) - picks one of HyDE, multi-query, decomposition from lesson 67 by query length and presence of conjunctions.
-- `Reranker` - the trained cross-encoder from lesson 66, with a smaller fixture training set so it converges in seconds.
-- `Generator` - the deterministic mock generator with citations and refuse-on-low-confidence.
-- `Pipeline` - composes the five stages with a `query(question)` method that returns `Result(answer, top_k, latency_ms_per_stage)`.
-- `run_demo()` - ingests the corpus, runs three fixture queries, runs the eval, prints results, sets exit code by threshold.
+- `Chunk` — запись, проносимая через все стадии (расширяет форму урока 64 полями chunk_index и source doc_id).
+- `Chunker` — выбирает стратегию из урока 64 (по умолчанию рекурсивный разрез).
+- `HybridIndex` — связывает BM25 + dense + RRF из урока 65.
+- `Rewriter` (опционально) — выбирает HyDE, multi-query или декомпозицию из урока 67 по длине запроса и наличию союзов.
+- `Reranker` — обученный cross-encoder из урока 66, с меньшим фикстурным обучающим набором, чтобы сходился за секунды.
+- `Generator` — детерминированный mock-генератор с цитированиями и отказом при низкой уверенности.
+- `Pipeline` — компонует пять стадий с методом `query(question)`, возвращающим `Result(answer, top_k, latency_ms_per_stage)`.
+- `run_demo()` — поглощает корпус, гоняет три фикстурных запроса, гоняет eval, печатает результаты, выставляет код выхода по порогу.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The output is one printed query trace, the full eval table, and a final pass/fail status. Returns exit code 0 on the fixture.
+Вывод — один напечатанный трейс запроса, полная eval-таблица и финальный pass/fail-статус. Возвращает код выхода 0 на фикстуре.
 
-## Failure modes the demo will hide
+## Режимы отказа, которые демо спрячет
 
-**Chunker boundary drift.** If you swap the chunker strategy between the eval qrels labeling pass and the demo, the gold doc ids no longer line up. Lock the chunker strategy in the qrels file. The demo includes a header that names the chunker.
+**Дрейф границ чанкера.** Смените стратегию чанкера между проходом разметки eval-qrels и демо — и эталонные id документов больше не сходятся. Зафиксируйте стратегию чанкера в qrels-файле. Демо включает заголовок с именем чанкера.
 
-**Reranker training set leaks into the eval.** The 14 training triples in lesson 66 include queries that resemble the eval queries. In production, hold out the eval queries strictly. The demo's eval queries are deliberately disjoint from the rerank training set.
+**Обучающий набор reranker'а утекает в eval.** 14 обучающих троек урока 66 включают запросы, похожие на eval-запросы. В продакшене строго откладывайте eval-запросы. Eval-запросы демо намеренно не пересекаются с обучающим набором реранжирования.
 
-**Mock generator hides hallucination risk.** The mock cannot hallucinate because it only emits text from the retrieved chunks. The lesson notes this and points the production swap-in path to a real model.
+**Mock-генератор прячет риск галлюцинаций.** Mock не может галлюцинировать, потому что излучает только текст из извлечённых чанков. Урок это отмечает и указывает путь продакшен-замены на настоящую модель.
 
-**No streaming.** The pipeline returns the full answer at the end of every stage. A production system would stream the generator's output. Streaming is out of scope; the answer-grade metrics work on the final string either way.
+**Нет стриминга.** Пайплайн возвращает полный ответ в конце каждой стадии. Продакшен-система стримила бы выход генератора. Стриминг за рамками; метрики оценки ответа работают на финальной строке в любом случае.
 
-**Latency is offline.** The mock LLM calls are constant time. Real LLM calls dominate. Plan a latency budget in the request scope; the lesson's per-stage timing only measures CPU work.
+**Задержка офлайновая.** Mock-LLM-вызовы — константное время. Настоящие LLM-вызовы доминируют. Планируйте бюджет задержки в скоупе запроса; по-стадийные тайминги урока меряют только CPU-работу.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- Ship the pipeline file under one orchestrator with explicit stage interfaces. Avoid spreading the wiring across the repo.
-- Run the eval before every merge that touches a stage. If the eval drops, the merge does not land.
-- Persist the metric trace per CI run so you can attribute regressions to a stage swap.
-- Add a smoke set of 20 queries (subset of the regression set) that runs in under 30 seconds; the full regression set runs nightly.
+- Отгружайте файл пайплайна под одним оркестратором с явными интерфейсами стадий. Не размазывайте проводку по репозиторию.
+- Гоняйте eval перед каждым merge, трогающим стадию. Если eval падает — merge не приземляется.
+- Персистите трейс метрик на CI-прогон, чтобы атрибутировать регрессии замене стадии.
+- Добавьте smoke-набор из 20 запросов (подмножество регрессионного), укладывающийся в 30 секунд; полный регрессионный набор гоняется еженощно.
 
-## Ship It
+## Отгрузите это
 
-The pipeline file in this lesson is the shape the rest of Phase 19's Track F lessons assume. Subsequent lessons would add ingestion automation, incremental re-index, telemetry, and a serving layer on top. The retrieval, rerank, rewrite, and eval halves are complete here.
+Файл пайплайна этого урока — та форма, которую предполагают остальные уроки трека F Фазы 19. Последующие уроки добавили бы автоматизацию инжеста, инкрементальную переиндексацию, телеметрию и serving-слой сверху. Половины retrieval, rerank, rewrite и eval здесь завершены.
 
-## Exercises
+## Упражнения
 
-1. Add a per-query strategy selector inside the rewriter: heuristics from lesson 67 (length, conjunctions, jargon ratio) pick HyDE, multi-query, or decomposition.
-2. Add a real LLM call for the generator behind an env flag. Default to the mock. Measure the latency delta.
-3. Extend the demo to take a `--corpus path` flag that loads a real corpus. Re-run the eval and the threshold check.
-4. Add a `--strategy` flag to the chunker. Measure each strategy's contribution to end-to-end recall.
-5. Add a streaming generator interface and feed it into the eval. Confirm that faithfulness is computed on the final string and not on the streamed prefix.
+1. Добавьте пер-запросный селектор стратегии внутрь переписывателя: эвристики урока 67 (длина, союзы, доля жаргона) выбирают HyDE, multi-query или декомпозицию.
+2. Добавьте настоящий LLM-вызов для генератора за env-флагом. По умолчанию — mock. Измерьте дельту задержки.
+3. Расширьте демо флагом `--corpus path`, загружающим настоящий корпус. Перегоните eval и проверку порогов.
+4. Добавьте чанкеру флаг `--strategy`. Измерьте вклад каждой стратегии в end-to-end recall.
+5. Добавьте стриминговый интерфейс генератора и подайте его в eval. Подтвердите, что faithfulness считается на финальной строке, а не на стриманном префиксе.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Pipeline | "RAG pipeline" | The composed stages from ingestion to cited answer |
-| Citation anchor | "Source link" | The (doc_id, chunk_index) reference attached to each claim |
-| Refuse-on-low-confidence | "I do not know" | Generator returns no answer when the reranker top-1 score sits below threshold |
-| Smoke set | "CI eval" | The minimal qrels subset that runs in every PR check |
-| Stage interface | "Function signature" | The stable input and output type of each pipeline stage |
+| Пайплайн | «RAG-пайплайн» | Скомпонованные стадии от инжеста до цитированного ответа |
+| Якорь цитирования | «Ссылка на источник» | Ссылка (doc_id, chunk_index), прикреплённая к каждому утверждению |
+| Отказ при низкой уверенности | «Я не знаю» | Генератор не отвечает, когда топ-1-скор reranker'а ниже порога |
+| Smoke-набор | «CI-eval» | Минимальное подмножество qrels, работающее в каждой PR-проверке |
+| Интерфейс стадии | «Сигнатура функции» | Стабильные типы входа и выхода каждой стадии пайплайна |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Anthropic, Building search and retrieval](https://www.anthropic.com/news/contextual-retrieval)
-- [Pinterest, MCP internal search](https://medium.com/pinterest-engineering) - reference production architecture
+- [Pinterest, внутренний MCP-поиск](https://medium.com/pinterest-engineering) — референсная продакшен-архитектура
 - [Ragas: Automated Evaluation of RAG Pipelines](https://docs.ragas.io)
-- Phase 11 lesson 06 - RAG fundamentals
-- Phase 19 lessons 64-68 - the components composed here
+- Фаза 11, урок 06 — основы RAG
+- Фаза 19, уроки 64–68 — компоненты, компонуемые здесь

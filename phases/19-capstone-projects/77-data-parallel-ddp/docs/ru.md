@@ -1,29 +1,26 @@
 # Data Parallel DDP From Scratch
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> DistributedDataParallel — это хук поверх allreduce. Оберните модель, забродкастите начальные параметры с ранга 0, чтобы каждый ранг стартовал идентично, поставьте backward-хук на каждый параметр, запускающий allreduce градиента, — и остальное — градиентный спуск. Весь паттерн — 200 строк.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек C, уроки 42–49
+**Время:** ~90 минут
 
-> DistributedDataParallel is a hook on top of allreduce. Wrap a model, broadcast the initial parameters from rank 0 so every rank starts identical, install a backward hook on every parameter that issues an allreduce of the gradient, and the rest is gradient descent. The whole pattern is 200 lines.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track C lessons 42-49
-**Time:** ~90 min
+- Свить обёртку в форме `DistributedDataParallel`, бродкастящую начальные параметры и делающую allreduce градиентов после backward.
+- Породить N CPU-рангов через `torch.multiprocessing.spawn` поверх gloo-бэкенда с файловым rendezvous.
+- Доказать корректность синхронизации градиентов, обучив ту же модель на тех же данных последовательно и показав пошаговую эквивалентность параметров.
+- Обосновать бакеты (слияние градиентов) и перекрытие (коммуникация во время backward) как два изменения, превращающие работающий DDP в продакшен-DDP.
 
-## Learning Objectives
+## Проблема
 
-- Wire a `DistributedDataParallel`-shaped wrapper that broadcasts initial parameters and allreduces gradients after backward.
-- Spawn N CPU ranks with `torch.multiprocessing.spawn` over the gloo backend with file-based rendezvous.
-- Prove gradient-sync correctness by training the same model on the same data sequentially and showing per-step parameter equivalence.
-- Defend the use of buckets (gradient fusion) and overlap (comm during backward) as the two changes that turn a working DDP into a production DDP.
+Модель на 1 миллиард параметров с 12 ГБ активаций не помещается на одну потребительскую GPU. Даже когда помещается, обучение занимает недели. Data parallel режет батч на N рангов, каждый ранг считает forward и backward на своём шарде, и на каждом шаге градиенты каждого ранга суммируются, чтобы все N копий оставались идентичными. Просуммированный градиент — то, по чему шагает оптимизатор.
 
-## The Problem
+Без синхронизации градиентов N реплик расходятся ко второму шагу. Модель — больше не «одна модель, обученная на большем числе данных», а N отдельных моделей, случайно деливших начальные веса. При плохо сделанной синхронизации (один allreduce на параметр, без перекрытия, без бакетирования) узкое место — сеть, и GPU простаивают в ожидании провода. Ремесло DDP — сделать синхронизацию градиентов почти бесплатной относительно вычислений. Канонический PyTorch DDP достигает этого бакетированием градиентов, перекрытием allreduce с backward следующего слоя и NCCL на NVLink. Мы можем сделать все три на CPU с gloo и выучить те же уроки.
 
-A 1-billion-parameter model with 12 GB of activations does not fit on one consumer GPU. Even when it fits, training takes weeks. Data parallel splits the batch across N ranks, each rank computes the forward and backward on its shard, and at every step every rank's gradients are summed so all N copies stay identical. The summed gradient is what the optimiser steps on.
-
-Without gradient sync, the N replicas diverge by step 2. The model is not "one model trained on more data" anymore, it is N separate models that happen to share initial weights. With gradient sync done badly (one allreduce per parameter, no overlap, no bucketing) the network is the bottleneck and the GPUs idle waiting for the wire. The craft of DDP is making the gradient sync nearly free relative to compute. The canonical PyTorch DDP achieves that by bucketing gradients, overlapping allreduce with the next layer's backward, and using NCCL on NVLink. We can do all three on CPU with gloo and learn the same lessons.
-
-## The Concept
+## Концепция
 
 ```mermaid
 sequenceDiagram
@@ -42,87 +39,87 @@ sequenceDiagram
   Note over R0,R3: optimizer.step on identical grads
 ```
 
-### The three operations DDP needs
+### Три операции, нужные DDP
 
-| Stage | Collective | Why |
+| Стадия | Коллектив | Почему |
 |-------|-----------|-----|
-| Init | broadcast from rank 0 | Every rank starts with the same parameters |
-| After backward | allreduce of each grad | The mean gradient is what the optimiser steps on |
-| Sometimes | broadcast of buffers | Batchnorm running stats stay synchronised |
+| Init | broadcast с ранга 0 | Каждый ранг стартует с одних параметров |
+| После backward | allreduce каждого градиента | Оптимизатор шагает по среднему градиенту |
+| Иногда | broadcast буферов | Бегущая статистика batchnorm остаётся синхронной |
 
-### Why mean and not sum
+### Почему среднее, а не сумма
 
-Allreduce-SUM divided by world_size gives the mean gradient. The mean is invariant to world_size: a learning rate tuned at one rank works at four ranks because the per-step gradient magnitude does not change. Allreduce-SUM without the division forces you to retune the learning rate every time you change cluster size. DDP wraps the SUM and divides; do the same in the lesson.
+Allreduce-SUM, делённый на world_size, даёт средний градиент. Среднее инвариантно к world_size: learning rate, настроенный на одном ранге, работает на четырёх, потому что величина градиента на шаг не меняется. Allreduce-SUM без деления заставляет перенастраивать learning rate при каждой смене размера кластера. DDP оборачивает SUM и делит; делайте в уроке то же.
 
-### Why bucket gradients
+### Почему бакетировать градиенты
 
-A transformer has thousands of parameter tensors. One allreduce per tensor pays the gloo latency floor thousands of times. DDP groups gradients into ~25 MB buckets and issues one allreduce per bucket. The same total bytes move across the wire but the latency is amortised over the bucket. For the lesson's tiny model we group everything into one bucket; the structure is what carries across.
+У трансформера тысячи тензоров параметров. Один allreduce на тензор платит пол задержки gloo тысячи раз. DDP группирует градиенты в бакеты ~25 МБ и запускает один allreduce на бакет. По проводу идут те же суммарные байты, но задержка амортизируется по бакету. Для крошечной модели урока мы группируем всё в один бакет; переносится сама структура.
 
-### Why pin the seed
+### Почему пинить сид
 
-Every rank must call `torch.manual_seed(seed + rank)` for shuffling but `torch.manual_seed(seed)` for parameter init. A single shared seed means every rank sees the same batch order (defeating data parallel); a rank-specific seed for params means initial parameters disagree by float epsilon and gradient sync no longer makes the replicas identical. Get the seed pattern right or the test for parameter equivalence fails on step 1.
+Каждый ранг обязан вызвать `torch.manual_seed(seed + rank)` для шаффла, но `torch.manual_seed(seed)` для инициализации параметров. Один общий сид означает, что каждый ранг видит один порядок батчей (что убивает data parallel); ранго-специфичный сид для параметров означает, что начальные параметры расходятся на float-эпсилон, и синхронизация градиентов больше не делает реплики идентичными. Сделайте паттерн сидов правильно — или тест эквивалентности параметров упадёт на шаге 1.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `MiniMLP`: a 3-layer MLP small enough to converge in seconds, large enough to expose the wiring.
-- `DistributedDataParallel(model, world_size)`: broadcasts params at construct time, returns a wrapper whose `sync_grads` divides accumulated allreduce-summed grads by world_size.
-- `worker(rank, world_size, ...)`: full training loop with `torch.distributed` init over gloo, forward, backward, sync, step.
-- `_reference_single_process_loop(...)`: trains the same model on the same data sequentially on one rank, used by the test for byte-equal parameter equivalence after each step.
+- `MiniMLP`: трёхслойный MLP, достаточно маленький, чтобы сойтись за секунды, и достаточно большой, чтобы обнажить проводку.
+- `DistributedDataParallel(model, world_size)`: бродкастит параметры при конструировании, возвращает обёртку, чей `sync_grads` делит аккумулированные allreduce-суммированные градиенты на world_size.
+- `worker(rank, world_size, ...)`: полный обучающий цикл с инициализацией `torch.distributed` поверх gloo, forward, backward, sync, step.
+- `_reference_single_process_loop(...)`: обучает ту же модель на тех же данных последовательно на одном ранге; используется тестом для байт-точной эквивалентности параметров после каждого шага.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: a per-step training table comparing single-process loss and parameter checksum to the DDP run on 4 ranks. The two paths produce identical loss curves to float epsilon, proving the gradient sync is correct.
+Вывод: пошаговая обучающая таблица, сравнивающая однопроцессный лосс и чексумму параметров с DDP-прогоном на 4 рангах. Два пути дают идентичные кривые лосса до float-эпсилон, доказывая корректность синхронизации градиентов.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns harden DDP enough to ship.
+Три паттерна укрепляют DDP до отгружаемого состояния.
 
-**Find unused parameters.** Some forward paths skip parameters conditionally (early exit, mixture-of-experts router). The skipped parameters have no gradient, but DDP's bucket-ready hook still waits for them and the allreduce deadlocks. `find_unused_parameters=True` tells DDP to look at which params got gradients before reducing. The cost is a graph walk per step, so leave it off unless your forward branches.
+**Ищите неиспользуемые параметры.** Некоторые forward-пути условно пропускают параметры (ранний выход, router mixture-of-experts). У пропущенных параметров нет градиента, но bucket-ready-хук DDP всё равно их ждёт, и allreduce дедлочится. `find_unused_parameters=True` велит DDP смотреть, какие параметры получили градиенты, до редукции. Цена — обход графа на шаг, поэтому держите выключенным, если forward не ветвится.
 
-**Static graph optimisation.** When the forward is stable across steps, `static_graph=True` lets DDP precompute the bucket schedule. The optimisation matters at scale: precomputing saves a few ms per step which compounds across 10000 steps.
+**Оптимизация статического графа.** Когда forward стабилен между шагами, `static_graph=True` позволяет DDP предвычислить расписание бакетов. Оптимизация важна на масштабе: предвычисление экономит несколько мс на шаг, что накапливается за 10000 шагов.
 
-**Gradient accumulation needs care.** Accumulating gradients over K microbatches without syncing each microbatch is a 10x throughput win. DDP exposes `no_sync()` as a context manager that pauses the post-backward allreduce. Forget the manager and you allreduce K times for nothing; the throughput drops to the floor.
+**Накопление градиентов требует аккуратности.** Аккумулировать градиенты по K микробатчам без синка каждого — выигрыш throughput в 10 раз. DDP открывает `no_sync()` — контекст-менеджер, приостанавливающий post-backward-allreduce. Забудьте менеджер — и будете делать allreduce K раз впустую; throughput падает до пола.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **PyTorch DDP.** The canonical implementation. `torch.nn.parallel.DistributedDataParallel(model)` wires bucketing, overlap, and the no_sync context.
-- **HuggingFace Accelerate.** Adds a launcher that handles `torchrun` env vars and the model wrap. Same DDP under the hood.
-- **Megatron-LM data parallel.** Combines DDP with tensor parallel for large models; the data-parallel piece is the same allreduce-after-backward pattern.
+- **PyTorch DDP.** Каноническая реализация. `torch.nn.parallel.DistributedDataParallel(model)` свивает бакетирование, перекрытие и no_sync-контекст.
+- **HuggingFace Accelerate.** Добавляет launcher, обслуживающий env-переменные `torchrun` и обёртку модели. Под капотом тот же DDP.
+- **Data parallel в Megatron-LM.** Сочетает DDP с tensor parallel для больших моделей; data-parallel-часть — тот же паттерн allreduce-после-backward.
 
-## Ship It
+## Отгрузите это
 
-Lesson 78 (ZeRO sharding) replaces the per-parameter allreduce with reduce_scatter so each rank only stores its shard of the optimiser state. Lesson 81 composes DDP with ZeRO into the end-to-end demo.
+Урок 78 (ZeRO-шардирование) заменяет пер-параметровый allreduce на reduce_scatter, чтобы каждый ранг хранил только свой шард состояния оптимизатора. Урок 81 компонует DDP с ZeRO в end-to-end-демо.
 
-## Exercises
+## Упражнения
 
-1. Add gradient buckets of configurable size and measure the speedup vs one-allreduce-per-parameter on a deeper model.
-2. Implement `no_sync()` as a context manager and verify gradient accumulation matches a single-process baseline over K microbatches.
-3. Add a `find_unused_parameters` mode where the forward sometimes skips one of the MLP layers; without the flag the run should deadlock.
-4. Replace gloo with `torch.distributed.barrier()`-only synchronisation to feel the difference between allreduce-based and barrier-based sync.
-5. Measure the gradient-sync overhead as a fraction of step time for batch sizes 1, 16, 256 and explain the scaling.
+1. Добавьте градиентные бакеты настраиваемого размера и измерьте ускорение против одного allreduce на параметр на более глубокой модели.
+2. Реализуйте `no_sync()` контекст-менеджером и убедитесь, что накопление градиентов совпадает с однопроцессным бейзлайном по K микробатчам.
+3. Добавьте режим `find_unused_parameters`, где forward иногда пропускает один слой MLP; без флага прогон должен дедлочиться.
+4. Замените gloo синхронизацией только через `torch.distributed.barrier()`, чтобы почувствовать разницу между allreduce-синком и barrier-синком.
+5. Измерьте накладные синхронизации градиентов как долю времени шага для размеров батча 1, 16, 256 и объясните масштабирование.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|----------------|------------------------|
-| DDP | "Data parallel" | Wrapper that broadcasts params and allreduces grads each step |
-| Bucket | "Fuse grads" | Group N small allreduces into one large one |
-| Overlap | "Hide comm" | Issue allreduce while later layers still computing backward |
-| no_sync | "Accumulate" | Skip the post-backward allreduce for gradient accumulation |
-| find_unused | "Branchy forward" | Detect parameters with no grad before reducing |
+| DDP | «Data parallel» | Обёртка, бродкастящая параметры и делающая allreduce градиентов каждый шаг |
+| Бакет | «Слить градиенты» | Сгруппировать N маленьких allreduce в один большой |
+| Перекрытие | «Спрятать коммуникацию» | Запускать allreduce, пока поздние слои ещё считают backward |
+| no_sync | «Накопление» | Пропустить post-backward-allreduce для накопления градиентов |
+| find_unused | «Ветвящийся forward» | Детектить параметры без градиента до редукции |
 
-## Further Reading
+## Дополнительное чтение
 
-- [PyTorch DistributedDataParallel docs](https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html)
-- [PyTorch DDP internals tutorial](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
+- [Документация PyTorch DistributedDataParallel](https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html)
+- [Туториал по внутренностям PyTorch DDP](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
 - [Li et al, PyTorch Distributed: Experiences on Accelerating Data Parallel Training](https://arxiv.org/abs/2006.15704)
-- Phase 19 Lesson 76 - the collectives DDP is built on
-- Phase 19 Lesson 78 - ZeRO sharding replaces the per-param allreduce with reduce_scatter
+- Фаза 19, урок 76 — коллективы, на которых построен DDP
+- Фаза 19, урок 78 — ZeRO-шардирование заменяет пер-параметровый allreduce на reduce_scatter

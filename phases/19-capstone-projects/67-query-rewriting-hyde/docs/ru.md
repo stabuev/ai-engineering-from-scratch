@@ -1,33 +1,30 @@
 # Query Rewriting: HyDE, Multi-Query, and Decomposition
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Запрос, который печатает пользователь, — не тот запрос, который хочет ваш ретривер. Переписывание наводит мост до retrieval, чтобы индекс видел что-то ближе к тому, как выглядит ответ.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 11, уроки 04 (эмбеддинги), 06 (RAG); Фаза 19, фундамент трека B (уроки 20–29); Фаза 19, уроки 64 и 65
+**Время:** ~90 минут
 
-> The query the user types is not the query your retriever wants. Rewriting bridges the gap before retrieval, so the index sees something closer to what the answer looks like.
+## Цели обучения
+- Реализовать Hypothetical Document Embeddings (HyDE): сгенерировать фиктивный ответ, заэмбеддить его, извлекать по этому вектору вместо вектора запроса.
+- Реализовать multi-query-расширение: переписать один запрос в N парафраз, извлечь по каждой, слить объединение через reciprocal rank fusion.
+- Реализовать декомпозицию запроса: разбить сложный вопрос на подвопросы, извлечь по каждому, слить.
+- Сравнить три переписывателя лоб в лоб на фикстуре и объяснить, когда какая стратегия побеждает.
+- Подключить mock-LLM, порождающую детерминированные, посаженные на фикстуру выходы, чтобы цикл переписывателя работал офлайн.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 lessons 04 (embeddings), 06 (RAG); Phase 19 Track B foundations (lessons 20-29); Phase 19 lessons 64 and 65
-**Time:** ~90 minutes
+## Проблема
 
-## Learning Objectives
-- Implement Hypothetical Document Embeddings (HyDE): generate a fake answer, embed it, retrieve against that vector instead of the query vector.
-- Implement multi-query expansion: rewrite one query into N paraphrases, retrieve with each, merge the union by reciprocal rank fusion.
-- Implement query decomposition: split a complex question into sub-questions, retrieve per sub-question, merge.
-- Compare the three rewriters head to head on a fixture and explain when each strategy wins.
-- Wire a mock LLM that produces deterministic, on-fixture outputs so the rewriter loop runs offline.
+Пользователь печатает «что наша команда делает, когда загрузки падают и бюджет кончился?». Корпус содержит документ: «AbortMultipartOnFail прерывает S3 multipart-загрузку в полёте и декрементит пер-бакетный бюджет ретраев при провале загрузки». Запрос и документ не делят ни одной именной группы. BM25 промахивается. Bi-encoder ранжирует документ третьим или четвёртым, потому что вектор запроса приземляется в области пространства эмбеддингов, предпочитающей документ об отменённых джобах, а не о прерванных загрузках. Двухстадийное реранжирование из урока 66 может спасти ответ, если он в топ-N, но если он даже до топ-N не добрался, reranker его никогда не увидит.
 
-## The Problem
+Лечение — переписать запрос до того, как он коснётся ретривера. Статья 2023 года «Precise Zero-Shot Dense Retrieval without Relevance Labels» (Gao et al.) ввела HyDE: попросить LLM написать документ, который отвечал бы на запрос, заэмбеддить этот гипотетический документ и использовать его эмбеддинг как retrieval-вектор. Гипотетический документ сидит в правильной области пространства эмбеддингов, потому что написан голосом корпуса. Вектор запроса — нет.
 
-A user types "what does our team do when uploads fail and the budget is gone?". The corpus contains a doc that says "AbortMultipartOnFail aborts an in-flight S3 multipart upload and decrements the per-bucket retry budget when the upload fails". The query and the document do not share a noun phrase. BM25 misses. The bi-encoder ranks the document third or fourth because the query vector lands in a region of the embedding space that prefers the doc about cancelled jobs, not the doc about aborted uploads. The two-stage rerank from lesson 66 can salvage the answer if it sits in the top-N, but if it does not even reach top-N, the reranker never sees it.
+С HyDE соседствуют две родственные техники. Multi-query-расширение (термин, который использовал GraphRAG Microsoft) генерирует N парафраз запроса, извлекает по каждой и сливает. Декомпозиция (популяризованная как «subquery decomposition» в стэнфордской работе DSPy 2024 года) разбивает «что наша команда делает, когда загрузки падают и бюджет кончился» на два вопроса: «что происходит при провале загрузки» и «что происходит, когда бюджет ретраев кончился». Два retrieval, один слитый результат, обе части ответа достижимы.
 
-The fix is to rewrite the query before it touches the retriever. The 2023 paper "Precise Zero-Shot Dense Retrieval without Relevance Labels" (Gao et al.) introduced HyDE: ask an LLM to write the document that would answer the query, embed that hypothetical document, and use its embedding as the retrieval vector. The hypothetical document sits in the right region of the embedding space because it is written in the corpus's voice. The query vector did not.
+Этот урок реализует все три и гоняет их против одного фикстурного корпуса.
 
-Two cousin techniques pair with HyDE. Multi-query expansion (the term Microsoft's GraphRAG used) generates N paraphrases of the query and retrieves with each, then merges. Decomposition (popularized as "subquery decomposition" in the 2024 Stanford DSPy work) splits "what does our team do when uploads fail and the budget is gone" into two questions: "what happens when an upload fails" and "what happens when the retry budget is gone". Two retrievals, one merged result, both pieces of the answer reachable.
-
-This lesson implements all three and runs them against the same fixture corpus.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -44,9 +41,9 @@ flowchart LR
   Merge --> Out[Top-K]
 ```
 
-### HyDE in detail
+### HyDE в деталях
 
-HyDE replaces the user's query vector with an LLM-written hypothetical document vector. The prompt is short:
+HyDE заменяет вектор пользовательского запроса вектором гипотетического документа, написанного LLM. Промпт короткий:
 
 ```
 You are a domain expert. Write a one-paragraph passage that answers the question
@@ -58,26 +55,26 @@ Question: {user_query}
 Passage:
 ```
 
-The LLM's answer is wrong as a factual answer because the LLM does not know your corpus. That is fine. The retriever does not care about factual correctness, only about token distribution. The hypothetical passage contains the words "abort", "multipart", "bucket", "budget", because that is what a documentation passage on this topic would say. Embed that passage. The vector lands near the real passage.
+Ответ LLM неверен как фактический ответ, потому что LLM не знает ваш корпус. Это нормально. Ретриверу не важна фактическая корректность — только распределение токенов. Гипотетический пассаж содержит слова «abort», «multipart», «bucket», «budget», потому что именно это сказал бы документационный пассаж на эту тему. Заэмбеддите его. Вектор приземляется рядом с настоящим пассажем.
 
-In production you cap the hypothetical document to two or three sentences. Longer hypotheticals collect more noise. Shorter ones lose the lexical signal HyDE needs.
+В продакшене гипотетический документ ограничивают двумя-тремя предложениями. Более длинные гипотетики собирают больше шума. Более короткие теряют лексический сигнал, нужный HyDE.
 
-### Multi-query expansion in detail
+### Multi-query-расширение в деталях
 
-Generate N paraphrases of the user's query. The simplest prompt:
+Сгенерировать N парафраз пользовательского запроса. Простейший промпт:
 
 ```
 Rewrite the following question in {N} different ways. Each rewrite must preserve
 the original intent. Number them 1 to {N}. Do not add explanations.
 ```
 
-Retrieve top-k for each paraphrase. Merge the N ranked lists with RRF (the same algorithm from lesson 65). Cheap, parallel, deterministic.
+Извлечь топ-k по каждой парафразе. Слить N ранжированных списков через RRF (тот же алгоритм из урока 65). Дёшево, параллельно, детерминированно.
 
-Multi-query wins when the user's phrasing is one of many equally valid ways to ask the question, and any of the rewrites would have asked it better. Loses when all rewrites are equally bad because the original was bad in the same way.
+Multi-query побеждает, когда формулировка пользователя — одна из многих равноценных, и любая из перезаписей задала бы вопрос лучше. Проигрывает, когда все перезаписи одинаково плохи, потому что оригинал был плох тем же образом.
 
-### Decomposition in detail
+### Декомпозиция в деталях
 
-A single retrieval cannot satisfy a multi-faceted question. Decomposition asks the LLM to split the question into sub-questions and the system retrieves per sub-question. The prompt:
+Один retrieval не может удовлетворить многогранный вопрос. Декомпозиция просит LLM разбить вопрос на подвопросы, и система извлекает по каждому. Промпт:
 
 ```
 The following question may require information from multiple distinct topics.
@@ -87,88 +84,88 @@ independently. If the question is already atomic, return it unchanged.
 Question: {user_query}
 ```
 
-Retrieve per sub-question. Merge. Decomposition is the right tool for questions that contain conjunctions, multi-clause comparisons, or two unrelated topics. Wrong tool for atomic questions; the decomposer's job there is to return the single question and not invent fake sub-questions.
+Извлечь по каждому подвопросу. Слить. Декомпозиция — правильный инструмент для вопросов с союзами, многочленными сравнениями или двумя несвязанными темами. Неправильный — для атомарных вопросов; работа декомпозера там — вернуть единственный вопрос и не изобретать фиктивные подвопросы.
 
-### Why all three exist
+### Почему существуют все три
 
-The three are complementary. HyDE bridges the query-corpus token gap. Multi-query covers paraphrase variance. Decomposition covers multi-topic queries. A production system runs all three and picks the strategy per query (lesson 69's end-to-end system shows the selector).
+Три техники взаимодополняющие. HyDE мостит токенный разрыв запрос-корпус. Multi-query покрывает дисперсию парафраз. Декомпозиция — многотемные запросы. Продакшен-система гоняет все три и выбирает стратегию на запрос (селектор показывает end-to-end-система урока 69).
 
-## The Mock LLM
+## Mock-LLM
 
-The lesson runs offline. The mock LLM is a small lookup table keyed on the user's query, plus a fallback for queries it has not seen. The lookup table contains:
+Урок работает офлайн. Mock-LLM — маленькая таблица поиска с ключом по запросу пользователя плюс fallback для невиданных запросов. Таблица содержит:
 
-- For each fixture query: a written hypothetical passage, three paraphrases, and a decomposition.
-- For an unknown query: a deterministic transformation: take the query's content words, expand them through a synonym map, and return the result.
+- Для каждого фикстурного запроса: написанный гипотетический пассаж, три парафразы и декомпозицию.
+- Для неизвестного запроса: детерминированную трансформацию — взять содержательные слова запроса, расширить их через карту синонимов и вернуть результат.
 
-The shape of the mock is what matters, not the data. In production you swap the mock for a real model call. The retriever does not change.
+Важна форма mock'а, а не данные. В продакшене mock меняется на настоящий вызов модели. Ретривер не меняется.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `MockLLM` - the deterministic stand-in described above.
-- `HyDERewriter` - calls the LLM to write the hypothetical document, returns the rewriter output as `RewriteResult` with the hypothetical text and the query the retriever should use.
-- `MultiQueryRewriter` - calls the LLM for N paraphrases, returns a list of queries.
-- `DecomposeRewriter` - calls the LLM to decompose, returns sub-questions.
-- `retrieve_with_rewriter` - takes a rewriter and a retriever, runs the rewrites, fuses the results.
-- A demo that runs the three rewriters on a fixture and prints which strategy returned the gold answer document first.
+- `MockLLM` — детерминированную замену, описанную выше.
+- `HyDERewriter` — вызывает LLM для написания гипотетического документа, возвращает выход переписывателя как `RewriteResult` с гипотетическим текстом и запросом, который должен использовать ретривер.
+- `MultiQueryRewriter` — вызывает LLM для N парафраз, возвращает список запросов.
+- `DecomposeRewriter` — вызывает LLM для декомпозиции, возвращает подвопросы.
+- `retrieve_with_rewriter` — берёт переписыватель и ретривер, гоняет перезаписи, сливает результаты.
+- Демо: гоняет три переписывателя на фикстуре и печатает, какая стратегия вернула эталонный документ-ответ первым.
 
-The retriever shape is reused from lesson 65 (hybrid BM25 + dense). The fusion is the same RRF. The only new shape is the rewriter interface, which is small.
+Форма ретривера переиспользована из урока 65 (гибрид BM25 + dense). Слияние — тот же RRF. Единственная новая форма — интерфейс переписывателя, и он мал.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The output is a per-strategy ranking and a final summary. HyDE wins on the phrasing-mismatched query. Multi-query wins on the paraphrase-variance query. Decomposition wins on the multi-topic query. The fallback (no rewriter) loses on at least one of the three.
+Выход — ранжирование по стратегиям и финальная сводка. HyDE побеждает на запросе с несовпадением формулировок. Multi-query — на запросе с дисперсией парафраз. Декомпозиция — на многотемном запросе. Fallback (без переписывателя) проигрывает хотя бы на одном из трёх.
 
-## Failure modes the demo will hide
+## Режимы отказа, которые демо спрячет
 
-**HyDE hallucinates corpus-specific identifiers wrong.** The model invents a function name. The hypothetical's BM25 score on the right doc collapses because the invented name is now a high-weight token that does not appear in the index. Cap the hypothetical's length and weight BM25 lower in the fusion.
+**HyDE галлюцинирует корпус-специфичные идентификаторы неверно.** Модель выдумывает имя функции. BM25-скор гипотетика на правильном документе рушится, потому что выдуманное имя — теперь высоковесный токен, отсутствующий в индексе. Ограничьте длину гипотетика и понизьте вес BM25 в слиянии.
 
-**Multi-query rewrites all converge.** A weak model produces three near-identical paraphrases. The N retrievals return the same top-k. The RRF merge is no better than a single retrieval. Add an explicit diversity instruction to the rewrite prompt and detect duplicates by Jaccard.
+**Все перезаписи multi-query сходятся.** Слабая модель порождает три почти идентичные парафразы. N retrieval'ов возвращают тот же топ-k. RRF-слияние не лучше одиночного retrieval. Добавьте явную инструкцию разнообразия в промпт перезаписи и детектите дубликаты по Жаккару.
 
-**Decomposition over-splits.** The decomposer turns an atomic question into a list. The retrievals all return the same document but with reduced rank. The merge is worse than the original. Detect this with a "are these sub-questions distinct enough" pass before fan-out.
+**Декомпозиция пересплитовывает.** Декомпозер превращает атомарный вопрос в список. Все retrieval'ы возвращают тот же документ, но с пониженным рангом. Слияние хуже оригинала. Детектите это проходом «достаточно ли различны эти подвопросы» до fan-out.
 
-**Latency multiplies.** HyDE costs one LLM call. Multi-query costs one LLM call to generate N rewrites, then N retrievals. Decomposition costs one LLM call to decompose, then M retrievals. The retrievals run in parallel; the LLM call is the floor.
+**Задержка умножается.** HyDE стоит один LLM-вызов. Multi-query — один LLM-вызов на генерацию N перезаписей, затем N retrieval'ов. Декомпозиция — один LLM-вызов на декомпозицию, затем M retrieval'ов. Retrieval'ы идут параллельно; LLM-вызов — это пол.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- Per-query strategy selection by query length: atomic short queries get multi-query, complex multi-clause queries get decomposition, jargon-heavy queries get HyDE.
-- Cache the rewriter output by query hash. Many queries repeat.
-- Run all three in parallel and fuse the three result sets into one with RRF. The cost is three LLM calls and one fusion; the quality is the union of all three strategies' coverage.
+- Пер-запросный выбор стратегии по длине запроса: атомарные короткие запросы — multi-query, сложные многочленные — декомпозиция, жаргонные — HyDE.
+- Кэшируйте выход переписывателя по хешу запроса. Многие запросы повторяются.
+- Гоняйте все три параллельно и сливайте три набора результатов в один через RRF. Цена — три LLM-вызова и одно слияние; качество — объединение покрытия всех трёх стратегий.
 
-## Ship It
+## Отгрузите это
 
-Lesson 69 wires this rewriter stage before the retriever from lesson 65 and the reranker from lesson 66. Lesson 68 evaluates the lift the rewriter adds to retrieval recall.
+Урок 69 подключает эту стадию переписывания перед ретривером урока 65 и reranker'ом урока 66. Урок 68 оценивает прирост, который переписыватель добавляет recall retrieval.
 
-## Exercises
+## Упражнения
 
-1. Implement RAG-Fusion (a 2024 variant of multi-query) where the rewriter's paraphrases are intentionally diverse, then the rerank step (lesson 66) picks the final list.
-2. Add a fourth strategy: step-back prompting (ask the LLM for the more general question, retrieve on that, then narrow). Compare on the fixture.
-3. Train the decomposer to recognize atomic queries by adding a "is the question atomic" head. Measure the over-split rate before and after.
-4. Replace the mock LLM with a real model call. Measure the latency-per-strategy on your stack.
-5. Add a confidence score per rewrite. Drop rewrites below the threshold. Measure the impact on recall.
+1. Реализуйте RAG-Fusion (вариант multi-query 2024 года), где парафразы переписывателя намеренно разнообразны, а финальный список выбирает шаг реранжирования (урок 66).
+2. Добавьте четвёртую стратегию: step-back-промптинг (спросить LLM более общий вопрос, извлечь по нему, затем сузить). Сравните на фикстуре.
+3. Научите декомпозер распознавать атомарные запросы, добавив голову «атомарен ли вопрос». Измерьте частоту пересплитовки до и после.
+4. Замените mock-LLM настоящим вызовом модели. Измерьте задержку по стратегиям на вашем стеке.
+5. Добавьте оценку уверенности на перезапись. Отбрасывайте перезаписи ниже порога. Измерьте влияние на recall.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| HyDE | "Fake-document retrieval" | LLM writes the answer; embed and retrieve on that instead of the query |
-| Multi-query | "Paraphrase expansion" | N rewrites of the query; retrieve N times, merge by RRF |
-| Decomposition | "Subquery split" | Multi-topic queries split into sub-questions, retrieved separately |
-| Atomic query | "Single-topic" | Cannot be decomposed without inventing fake sub-questions |
-| Step-back | "Abstract the query" | Ask the more general question, retrieve, then narrow |
+| HyDE | «Retrieval по фиктивному документу» | LLM пишет ответ; эмбеддим и извлекаем по нему вместо запроса |
+| Multi-query | «Расширение парафразами» | N перезаписей запроса; N retrieval'ов, слияние через RRF |
+| Декомпозиция | «Разбиение на подзапросы» | Многотемные запросы режутся на подвопросы, извлекаемые раздельно |
+| Атомарный запрос | «Однотемный» | Не декомпозируется без изобретения фиктивных подвопросов |
+| Step-back | «Абстрагируй запрос» | Спросить более общий вопрос, извлечь, затем сузить |
 
-## Further Reading
+## Дополнительное чтение
 
 - Gao, Ma, Lin, Callan, "Precise Zero-Shot Dense Retrieval without Relevance Labels" (HyDE), 2023
 - Microsoft Research, "Multi-Query Expansion for Retrieval"
 - Stanford DSPy, "Subquery Decomposition for Multi-Hop QA"
-- [LlamaIndex query transformations documentation](https://docs.llamaindex.ai/en/stable/optimizing/advanced_retrieval/query_transformations/)
-- Phase 11 lesson 07 - advanced RAG patterns
-- Phase 19 lesson 65 - the retriever this rewriter feeds
-- Phase 19 lesson 68 - the eval that measures the rewriter lift
+- [Документация LlamaIndex по трансформациям запросов](https://docs.llamaindex.ai/en/stable/optimizing/advanced_retrieval/query_transformations/)
+- Фаза 11, урок 07 — продвинутые RAG-паттерны
+- Фаза 19, урок 65 — ретривер, который кормит этот переписыватель
+- Фаза 19, урок 68 — eval, меряющий прирост переписывателя

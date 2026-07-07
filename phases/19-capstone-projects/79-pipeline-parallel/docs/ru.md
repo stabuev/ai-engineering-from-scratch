@@ -1,29 +1,26 @@
 # Pipeline Parallel and Bubble Analysis
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Tensor-параллелизм режет матричное умножение по рангам. Pipeline-параллелизм режет модель по рангам, по стадии на ранг. Микробатчи текут через пайплайн. Пустое время в начале и конце — это bubble; его минимизация — всё ремесло.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек C, уроки 42–49
+**Время:** ~90 минут
 
-> Tensor parallelism splits the matrix multiply across ranks. Pipeline parallelism splits the model across ranks, one stage per rank. Microbatches flow through the pipeline. The empty time at the start and end is the bubble; minimising it is the whole craft.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track C lessons 42-49
-**Time:** ~90 min
+- Разрезать последовательную модель на N стадий и симулировать forward-пайплайн по N рангам.
+- Спланировать M микробатчей через пайплайн по расписанию GPipe (forward-only-заполнение, затем backward) и посчитать долю bubble.
+- Сравнить bubble с чередующимся расписанием 1F1B, используемым в Megatron-LM и PipeDream.
+- Обосновать назначение стадий: равные вычисления на стадию важнее равного числа параметров на стадию.
 
-## Learning Objectives
+## Проблема
 
-- Split a sequential model into N stages and simulate a forward pipeline across N ranks.
-- Schedule M microbatches through the pipeline using the GPipe schedule (forward-only fill, then backward) and compute the bubble fraction.
-- Compare bubble against the interleaved 1F1B schedule used in Megatron-LM and PipeDream.
-- Defend stage assignment: equal compute per stage matters more than equal parameter count per stage.
+Модель на 70B параметров в fp16 нуждается в 140 ГБ только под параметры. Ни одна потребительская GPU её не держит. ZeRO-3 шардирует параметры по рангам, но всё равно нуждается в том, чтобы каждый ранг allgather'ил полный слой на каждом forward-шаге, платя log(N) прыжков на слой. Pipeline parallel идёт другим путём: разрезать модель на N стадий и положить по одной на каждый ранг. Forward слоя 1 заканчивается на ранге 0 и передаёт тензор активации рангу 1; ранг 1 гоняет слой 2 и передаёт рангу 2; и так далее. Backward течёт в обратную сторону. Память падает линейно, потому что каждый ранг держит только одну стадию; вычисления последовательны — это и есть проблема bubble.
 
-## The Problem
+Bubble — простой в начале пайплайна (ожидание, пока первый микробатч дойдёт до последней стадии) и в конце (ожидание, пока последний микробатч сольётся обратно). При M микробатчах и N стадиях доля bubble на стадию — (N-1)/(M+N-1). При M=8, N=4 это 27%. При M=64, N=4 — 4.5%. Bubble сжимается, когда у вас много микробатчей на шаг, что означает маленькие пер-микробатчевые размеры батча, — то ограничение, что диктует дизайн микробатчей.
 
-A 70B-parameter model in fp16 needs 140 GB of parameters alone. No consumer GPU holds it. ZeRO-3 shards parameters across ranks but still needs every rank to allgather the full layer for each forward step, paying log(N) hops per layer. Pipeline parallel takes a different route: cut the model into N stages and put one stage on each rank. Forward of layer 1 finishes on rank 0 and hands the activation tensor to rank 1; rank 1 runs layer 2 and hands to rank 2; and so on. Backward flows in reverse. Memory drops linearly because each rank only holds one stage; compute is sequential, which is the bubble problem.
-
-The bubble is the idle time at the start of the pipeline (waiting for the first microbatch to reach the last stage) and at the end (waiting for the last microbatch to drain back through). With M microbatches and N stages the per-stage bubble fraction is (N-1)/(M+N-1). At M=8, N=4 that is 27%. At M=64, N=4 it is 4.5%. The bubble shrinks when you have many microbatches per step, which means small per-microbatch batch sizes, which is the constraint that drives microbatch design.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -35,83 +32,83 @@ flowchart LR
   R1 -.backward.-> R0
 ```
 
-### GPipe schedule
+### Расписание GPipe
 
-Fill the pipeline forward with all M microbatches before starting any backward; then drain backward in reverse. Activations from every microbatch must be held until its backward, so memory grows linearly with M. Forward takes M+N-1 cycles, backward takes another M+N-1 cycles. Per-stage useful work is 2M cycles; per-stage bubble is 2(N-1) cycles. Bubble fraction is (N-1)/(M+N-1) when each forward and backward takes one unit of time. Picking M much greater than N hides the bubble.
+Заполнить пайплайн вперёд всеми M микробатчами до начала любого backward; затем слить backward в обратном порядке. Активации каждого микробатча должны храниться до его backward, поэтому память растёт линейно с M. Forward занимает M+N-1 циклов, backward — ещё M+N-1 циклов. Полезная работа на стадию — 2M циклов; bubble на стадию — 2(N-1) циклов. Доля bubble — (N-1)/(M+N-1), когда каждый forward и backward занимает единицу времени. Выбор M много больше N прячет bubble.
 
-### 1F1B schedule
+### Расписание 1F1B
 
-Interleave: as soon as a microbatch's forward reaches the last stage, start its backward and let it stream back. The schedule alternates one forward and one backward per stage. Bubble is still N-1 but activation memory is bounded by the pipeline depth, not the microbatch count. Production pipelines use 1F1B (Megatron, PipeDream). The lesson implements GPipe first because it is simpler, and 1F1B as an exercise.
+Чередование: как только forward микробатча дошёл до последней стадии, начать его backward и дать ему стримить обратно. Расписание чередует один forward и один backward на стадию. Bubble по-прежнему N-1, но память активаций ограничена глубиной пайплайна, а не числом микробатчей. Продакшен-пайплайны используют 1F1B (Megatron, PipeDream). Урок реализует GPipe первым, потому что он проще, а 1F1B — как упражнение.
 
-### Why equal compute per stage matters
+### Почему равные вычисления на стадию важны
 
-If stage 0 takes 50 ms and stage 1 takes 100 ms, every cycle is gated on stage 1. The other stages idle 50 ms per cycle waiting for stage 1 to release. Equal parameter count is the wrong axis: a transformer's compute is dominated by attention plus MLP per layer, and embedding layers have many parameters but little compute. Stage assignment should equalise FLOPs per stage, not weights per stage.
+Если стадия 0 занимает 50 мс, а стадия 1 — 100 мс, каждый цикл упирается в стадию 1. Остальные стадии простаивают по 50 мс на цикл, ожидая, пока стадия 1 освободится. Равное число параметров — неправильная ось: вычисления трансформера доминируются вниманием плюс MLP на слой, а слои эмбеддингов имеют много параметров, но мало вычислений. Назначение стадий должно выравнивать FLOPs на стадию, а не веса на стадию.
 
-### Microbatch versus batch
+### Микробатч против батча
 
-A pipeline runs M microbatches of size B each. The effective batch size is M*B. The gradient at the end of a pipeline step is the gradient on the combined M*B examples. Bubble fraction depends on M; the optimiser sees M*B. Tuning M means trading bubble (lower with high M) against per-microbatch memory (higher activation memory with high M for GPipe).
+Пайплайн гоняет M микробатчей размера B каждый. Эффективный размер батча — M*B. Градиент в конце шага пайплайна — градиент на объединённых M*B примерах. Доля bubble зависит от M; оптимизатор видит M*B. Настройка M — это размен bubble (ниже при высоком M) против пер-микробатчевой памяти (выше память активаций при высоком M для GPipe).
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `PipelineStage`: a small `nn.Module` that holds one stage's parameters and exposes `forward(activation)`.
-- `Pipeline(stages, num_microbatches)`: orchestrates the GPipe schedule on simulated stages using simulated wall-clock per stage.
-- `bubble_fraction(num_stages, num_microbatches)`: closed-form (N-1)/(M+N-1).
-- A 4-stage demo that prints the per-microbatch trace and the measured bubble fraction.
+- `PipelineStage`: маленький `nn.Module`, держащий параметры одной стадии и открывающий `forward(activation)`.
+- `Pipeline(stages, num_microbatches)`: оркеструет расписание GPipe на симулированных стадиях, используя симулированный wall-clock на стадию.
+- `bubble_fraction(num_stages, num_microbatches)`: замкнутая форма (N-1)/(M+N-1).
+- 4-стадийное демо, печатающее пер-микробатчевый трейс и измеренную долю bubble.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: a stage-by-microbatch Gantt chart and the bubble percentage against the closed-form prediction.
+Вывод: Gantt-диаграмма стадия-за-микробатчем и процент bubble против предсказания замкнутой формы.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns harden pipeline parallel enough to ship.
+Три паттерна укрепляют pipeline parallel до отгружаемого состояния.
 
-**Activation checkpointing pairs with pipeline.** With M microbatches in flight on GPipe, activation memory is M times one microbatch. Activation checkpointing recomputes the forward at backward time, trading compute for memory; the combination is what makes pipeline tractable for long sequences.
+**Activation checkpointing спаривается с пайплайном.** С M микробатчами в полёте на GPipe память активаций — M одного микробатча. Activation checkpointing пересчитывает forward в момент backward, меняя вычисления на память; комбинация — то, что делает пайплайн вычислимым для длинных последовательностей.
 
-**Stage balance is measured, not assumed.** Production teams run a profiling pass that measures actual per-layer compute (FLOPs and wall-clock) on the target hardware, then partition by that measurement. The Megatron-LM `--num-layers-per-stage` flag accepts a list to allow uneven layer counts when stages have different per-layer cost.
+**Баланс стадий измеряется, а не предполагается.** Продакшен-команды гоняют профилировочный проход, измеряющий фактические пер-слойные вычисления (FLOPs и wall-clock) на целевом железе, затем партиционируют по этому измерению. Флаг Megatron-LM `--num-layers-per-stage` принимает список, чтобы допустить неравное число слоёв, когда у стадий разная пер-слойная стоимость.
 
-**Send-recv schedule must avoid deadlock.** A pipeline that has every stage send before receive deadlocks on the wire. The standard fix is to interleave: even-rank stages send first then recv, odd-rank stages recv first then send. The lesson schedules ranks explicitly so the pattern is visible.
+**Расписание send-recv должно избегать дедлока.** Пайплайн, где каждая стадия шлёт до приёма, дедлочится на проводе. Стандартное лечение — чередовать: чётно-ранговые стадии шлют первыми, затем принимают, нечётно-ранговые принимают первыми, затем шлют. Урок планирует ранги явно, чтобы паттерн был виден.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **Megatron-LM.** The reference for pipeline parallel at scale. Uses 1F1B and supports tensor + pipeline + data parallel combined.
-- **DeepSpeed Pipeline.** Integrates with ZeRO; ZeRO-1 + pipeline is a common combo for the largest open models.
-- **PyTorch Pipe.** The PyTorch-native pipeline wrapper, built on `torch.distributed.pipeline.sync.Pipe`.
+- **Megatron-LM.** Референс pipeline parallel на масштабе. Использует 1F1B и поддерживает tensor + pipeline + data parallel вместе.
+- **DeepSpeed Pipeline.** Интегрируется с ZeRO; ZeRO-1 + pipeline — частая связка для крупнейших открытых моделей.
+- **PyTorch Pipe.** PyTorch-нативная обёртка пайплайна, построенная на `torch.distributed.pipeline.sync.Pipe`.
 
-## Ship It
+## Отгрузите это
 
-Lesson 80 stores the per-stage parameter shards in the sharded checkpoint. Lesson 81 composes DDP + ZeRO + pipeline on the end-to-end demo (in spirit; the demo keeps the pipeline simulated for runtime).
+Урок 80 хранит пер-стадийные шарды параметров в шардированном чекпоинте. Урок 81 компонует DDP + ZeRO + pipeline в end-to-end-демо (по духу; демо держит пайплайн симулированным ради рантайма).
 
-## Exercises
+## Упражнения
 
-1. Implement 1F1B and verify the bubble fraction matches GPipe but activation memory is bounded.
-2. Profile real per-stage time on a deeper model and rebalance stages by measured wall-clock.
-3. Add gradient accumulation across pipeline microbatches and check the gradient equals the gradient of the equivalent full-batch forward.
-4. Pair the pipeline with activation checkpointing and measure the memory drop versus compute cost.
-5. Combine pipeline with DDP (each pipeline rank is replicated across a data-parallel group) and reason through the 2D schedule.
+1. Реализуйте 1F1B и убедитесь, что доля bubble совпадает с GPipe, но память активаций ограничена.
+2. Отпрофилируйте настоящее пер-стадийное время на более глубокой модели и перебалансируйте стадии по измеренному wall-clock.
+3. Добавьте накопление градиентов по микробатчам пайплайна и проверьте, что градиент равен градиенту эквивалентного полнобатчевого forward.
+4. Спаруйте пайплайн с activation checkpointing и измерьте падение памяти против стоимости вычислений.
+5. Скомбинируйте пайплайн с DDP (каждый ранг пайплайна реплицирован по data-parallel-группе) и продумайте 2D-расписание.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|----------------|------------------------|
-| Pipeline | "Model parallel along depth" | One stage per rank, activations flow stage to stage |
-| Bubble | "Pipeline idle time" | (N-1) steps at start + end where some stages have no work |
-| Microbatch | "Slice of the batch" | One forward/backward unit; bubble shrinks as M grows |
-| GPipe | "Fill then drain" | All M forwards before any backward; high activation memory |
-| 1F1B | "Interleaved schedule" | One forward one backward per stage; bounded activation memory |
+| Pipeline | «Model parallel по глубине» | По стадии на ранг, активации текут от стадии к стадии |
+| Bubble | «Простой пайплайна» | (N-1) шагов в начале и конце, где у части стадий нет работы |
+| Микробатч | «Срез батча» | Одна единица forward/backward; bubble сжимается с ростом M |
+| GPipe | «Заполни, затем слей» | Все M forward до любого backward; высокая память активаций |
+| 1F1B | «Чередующееся расписание» | Один forward один backward на стадию; ограниченная память активаций |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Huang et al, GPipe: Efficient Training of Giant Neural Networks](https://arxiv.org/abs/1811.06965)
 - [Narayanan et al, PipeDream: Generalized Pipeline Parallelism for DNN Training](https://arxiv.org/abs/1806.03377)
-- [Megatron-LM pipeline parallel docs](https://github.com/NVIDIA/Megatron-LM)
-- Phase 19 Lesson 76 - the send/recv primitives the schedule uses
-- Phase 19 Lesson 78 - ZeRO is orthogonal to pipeline and often combined
+- [Документация pipeline parallel в Megatron-LM](https://github.com/NVIDIA/Megatron-LM)
+- Фаза 19, урок 76 — примитивы send/recv, которые использует расписание
+- Фаза 19, урок 78 — ZeRO ортогонален пайплайну и часто с ним комбинируется

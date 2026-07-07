@@ -16,8 +16,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
   английские квизы переименованы в `quiz_en.json` (место `quiz.json`
   зарезервировано под русские), в `docs/ru.md` — временный стуб с баннером
   «перевод в работе» и английским оригиналом; манифест `lessons.json` пополнен
-  русскими названиями и метками мини-треков. Перевод — следующим этапом. Курс:
-  434 → 502 урока.
+  русскими названиями и метками мини-треков. Курс: 434 → 502 урока.
+- **Перевод 68 новых capstone-уроков на русский завершён.** Все `docs/ru.md`
+  уроков 19/20–87 переведены с нуля (баннеры «перевод в работе» сняты), к каждому
+  добавлен русский `quiz.json`. Терминология и вёрстка согласованы с остальным
+  курсом: вы-форма, английские H1 и техтермины (allreduce, tool call, cross-encoder
+  и т. п.), код-блоки и комментарии в коде без перевода. Счётчик квизов на сайте:
+  124 → 192.
 - **Content-review wave 5 — reproducible environment (`requirements.lock`).**
   `requirements.txt` was all `>=` with no lock, so a future learner would get
   bleeding-edge versions and silent breakage. Added a pinned, internally

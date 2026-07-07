@@ -1,26 +1,23 @@
 # Capstone 87 — End-to-End Safety Gate
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Pre-gen, during-gen, post-gen. Три чекпоинта, один вердикт, аудит-след на запрос.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки безопасности Фазы 18, Фаза 19, трек A, уроки 25–29
+**Время:** ~90 минут
 
-> Pre-gen, during-gen, post-gen. Three checkpoints, one verdict, an audit trail per request.
+## Проблема
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
-**Time:** ~90 min
+Уроки 82–86 этого трека каждый отгрузил одну часть: таксономию, входной детектор, фреймворк оценки, выходной классификатор, движок правил. Настоящий safety-gate обязан скомпоновать их, гонять в правильный момент жизненного цикла запроса, решать, какое действие взять при их расхождении, и производить трейс, который ревьюер прочитает в понедельник утром. Композиция и есть урок.
 
-## Problem
+Gate сидит на трёх чекпоинтах. Pre-gen работает до вызова модели: детектор из урока 83 смотрит на промпт и либо пропускает его, либо блокирует наотрез (высокоуверенная атака), либо прикрепляет флаг для взвешивания слоями ниже. During-gen работает по мере излучения токенов моделью: стриминговый фильтр буферизует чанки и завершает поток рано, если появляется запрещённая фраза (prefix-injection переживает это, если gate смотрит только постфактум). Post-gen работает после завершения модели: router классификаторов из урока 85 и движок правил из урока 86 инспектируют полный вывод, gate агрегирует их вердикты с pre-gen-сигналом и применяет финальное действие.
 
-Lessons 82-86 in this track each shipped a single piece: a taxonomy, an input detector, an evaluation framework, an output classifier, a rules engine. A real safety gate has to compose them, run them at the right moment in the request lifecycle, decide what action to take when they disagree, and produce a trace a reviewer can read on Monday morning. The composition is the lesson.
+Gate самозавершающийся: каждая фикстура таксономии урока 82 прогоняется end to end, gate излучает пер-запросный трейс, и демо выходит с нулём независимо от того, блокирует gate каждую атаку или нет. Смысл — в наблюдаемости и структурной корректности, а не в идеальном скоре.
 
-The gate sits at three checkpoints. Pre-gen runs before the model is called: the detector from lesson 83 looks at the prompt and either passes it, blocks it outright (high-confidence attack), or attaches a flag for downstream layers to weigh. During-gen runs as the model emits tokens: a streaming filter buffers chunks and terminates the stream early if a forbidden phrase appears (prefix-injection survives this if the gate only looks post-hoc). Post-gen runs after the model finishes: the classifier router from lesson 85 and the rules engine from lesson 86 inspect the full output, the gate aggregates their verdicts with the pre-gen signal, and the gate applies a final action.
+## Концепция
 
-The gate is self-terminating: every fixture in the lesson 82 taxonomy is run end to end, the gate emits a per-request trace, and the demo exits zero whether the gate blocks every attack or not. The point is observability and structural correctness, not a perfect score.
-
-## Concept
-
-Three checkpoints, one decision tree.
+Три чекпоинта, одно дерево решений.
 
 ```mermaid
 flowchart TB
@@ -34,52 +31,52 @@ flowchart TB
   AGG --> OUT3[final action + trace]
 ```
 
-The aggregator combines four severity signals: detector confidence (lesson 83), token-filter trigger (boolean), classifier max severity (lesson 85), rules engine max severity (lesson 86). The aggregation function is a deterministic table.
+Агрегатор сочетает четыре сигнала severity: уверенность детектора (урок 83), триггер токен-фильтра (boolean), максимальную severity классификатора (урок 85), максимальную severity движка правил (урок 86). Функция агрегации — детерминированная таблица.
 
-| Signal state | Action |
+| Состояние сигналов | Действие |
 |---|---|
-| any high severity | block |
-| any medium severity | redact |
-| any low severity | warn |
-| all none + detector confidence < 0.5 | allow |
-| detector confidence 0.5-0.85, no other signal | warn |
+| любая high severity | block |
+| любая medium severity | redact |
+| любая low severity | warn |
+| все none + уверенность детектора < 0.5 | allow |
+| уверенность детектора 0.5–0.85, других сигналов нет | warn |
 
-Block returns a refusal. Redact ships the classifier-redacted text and applies the rules-engine fixer. Warn ships the original with a soft notice. Allow ships the original. Each request emits a `RequestTrace` with `request_id`, `prompt`, `pre_gen` (detector verdict), `during_gen` (token-filter trigger), `post_gen` (classifier action + rules report), `final_action`, `final_output`, and `latency_ms`.
+Block возвращает отказ. Redact отгружает отредактированный классификатором текст и применяет фиксер движка правил. Warn отгружает оригинал с мягким уведомлением. Allow отгружает оригинал. Каждый запрос излучает `RequestTrace` с `request_id`, `prompt`, `pre_gen` (вердикт детектора), `during_gen` (триггер токен-фильтра), `post_gen` (действие классификатора + отчёт правил), `final_action`, `final_output` и `latency_ms`.
 
-The during-gen filter is a streaming abstraction. The mock LLM yields chunks (4 tokens each by default). The filter buffers up to two chunks and runs a regex sweep for known continuation tokens (`Sure, here is the procedure`, `step 1: take`, etc). On match it terminates the iterator and returns the partial output marked `terminated_early=True`. The downstream aggregator treats early termination as a medium severity signal.
+During-gen-фильтр — стриминговая абстракция. Mock-LLM выдаёт чанки (по 4 токена по умолчанию). Фильтр буферизует до двух чанков и гоняет regex-проход по известным continuation-токенам (`Sure, here is the procedure`, `step 1: take` и т. д.). При совпадении завершает итератор и возвращает частичный вывод, помеченный `terminated_early=True`. Агрегатор ниже по течению трактует раннее завершение как сигнал medium severity.
 
-The mock LLM has two behaviors keyed off the prompt: it refuses recognizable attacks (returns `I cannot ...`) and answers benign prompts (returns a generic helpful string). For a small subset of attacks (notably encoding tricks not caught by the input pipeline) it produces a partial harmful continuation that the during-gen filter is supposed to catch. This is intentional. The gate's value is in the layered defense; the demo shows the layers interact correctly.
+У mock-LLM два поведения по промпту: она отказывает распознаваемым атакам (возвращает `I cannot ...`) и отвечает на безобидные промпты (возвращает общую полезную строку). Для небольшого подмножества атак (в частности, encoding-трюков, не пойманных входным пайплайном) она производит частичное вредное продолжение, которое during-gen-фильтр должен поймать. Это намеренно. Ценность gate — в слоистой защите; демо показывает, что слои корректно взаимодействуют.
 
-## Build It
+## Соберите это
 
-`code/safety_gate.py` defines the `SafetyGate` class. It imports the detector, classifier router, and rules engine from the prior lessons via relative file paths. `code/mock_llm_stream.py` defines a streaming mock LLM with three scripted personas (clean, attacker-honest, attacker-lazy). `code/main.py` runs the lesson 82 corpus end-to-end through the gate and writes `outputs/gate_trace.json`.
+`code/safety_gate.py` определяет класс `SafetyGate`. Он импортирует детектор, router классификаторов и движок правил из предыдущих уроков через относительные пути к файлам. `code/mock_llm_stream.py` определяет стриминговую mock-LLM с тремя заскриптованными персонами (clean, attacker-honest, attacker-lazy). `code/main.py` гоняет корпус урока 82 end-to-end через gate и пишет `outputs/gate_trace.json`.
 
-The demo runs all 50 taxonomy fixtures plus 10 benign prompts. The trace summary reports: blocks, redacts, warns, allows, early terminations, per-category outcome breakdown, and average latency. The numbers are not the point; the per-request trace is the point.
+Демо гоняет все 50 фикстур таксономии плюс 10 безобидных промптов. Сводка трейса репортит: блокировки, редакции, предупреждения, разрешения, ранние завершения, пер-категорийную разбивку исходов и среднюю задержку. Числа — не суть; пер-запросный трейс — суть.
 
-## Use It
+## Используйте это
 
-`python3 main.py`. The demo loads everything, runs end-to-end, prints the summary table, and writes the trace artifact. Exit code is zero. The demo is self-terminating in the literal sense: each request runs to completion or early termination and the gate moves to the next.
+`python3 main.py`. Демо загружает всё, гоняет end-to-end, печатает сводную таблицу и пишет артефакт трейса. Код выхода — ноль. Демо самозавершающееся в буквальном смысле: каждый запрос доходит до завершения или раннего завершения, и gate идёт к следующему.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-end-to-end-safety-gate.md` documents the request lifecycle, the aggregation table, and the trace format. The gate's primary deliverable is the trace format and the composition logic, both of which a team can lift into their own backend.
+`outputs/skill-end-to-end-safety-gate.md` документирует жизненный цикл запроса, таблицу агрегации и формат трейса. Первичная поставка gate — формат трейса и логика композиции, которые команда может перенести в свой бэкенд.
 
-## Exercises
+## Упражнения
 
-1. Add a fifth checkpoint: a `policy-check` that runs against the original system prompt before pre-gen. It must reject prompts targeting a known internal tool name.
-2. Replace the deterministic aggregator with a weighted score: each signal contributes a 0-1 confidence and the gate trips at a threshold. Sweep the threshold and report the precision-recall trade-off on the lesson 82 corpus.
-3. Add an async streaming variant where during-gen runs in a thread; verify the latency impact stays within a 50ms budget.
+1. Добавьте пятый чекпоинт: `policy-check`, работающий против исходного системного промпта до pre-gen. Он обязан отклонять промпты, целящие в известное имя внутреннего инструмента.
+2. Замените детерминированный агрегатор взвешенным скором: каждый сигнал вносит уверенность 0–1, и gate срабатывает на пороге. Просвипайте порог и доложите размен precision-recall на корпусе урока 82.
+3. Добавьте асинхронный стриминговый вариант, где during-gen работает в треде; убедитесь, что влияние на задержку остаётся в бюджете 50 мс.
 
-## Key Terms
+## Ключевые термины
 
-| Term | Common usage | Precise meaning |
+| Термин | Обычное употребление | Точное значение |
 |---|---|---|
-| safety gate | a filter | a three-checkpoint composition of detector, streaming filter, classifier, and rules with an aggregation table |
-| pre-gen | input check | the detector layer running on the prompt before the model is called |
-| during-gen | streaming filter | a buffered scan over emitted chunks that can terminate the stream early |
-| post-gen | output check | the classifier router and rules engine running on the completed response |
-| trace | a log line | a structured per-request record with every checkpoint's verdict, the final action, and latency |
+| safety-gate | фильтр | трёх-чекпоинтная композиция детектора, стримингового фильтра, классификатора и правил с таблицей агрегации |
+| pre-gen | входная проверка | слой детектора, работающий на промпте до вызова модели |
+| during-gen | стриминговый фильтр | буферизованный проход по излучаемым чанкам, способный завершить поток рано |
+| post-gen | выходная проверка | router классификаторов и движок правил, работающие на завершённом ответе |
+| trace | строка лога | структурная пер-запросная запись с вердиктом каждого чекпоинта, финальным действием и задержкой |
 
-## Further Reading
+## Дополнительное чтение
 
-The five preceding lessons in this track. The gate composes them; it does not add new safety primitives.
+Пять предыдущих уроков этого трека. Gate компонует их; он не добавляет новых примитивов безопасности.

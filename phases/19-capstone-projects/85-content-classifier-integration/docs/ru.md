@@ -1,33 +1,30 @@
 # Capstone 85 — Content Classifier Integration
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Классификаторы на выходной стороне отвечают на другой вопрос, чем правила на входной. Обоим нужен policy-router.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки безопасности Фазы 18, Фаза 19, трек A, уроки 25–29
+**Время:** ~90 минут
 
-> Classifiers on the output side answer a different question than rules on the input side. Both need a policy router.
+## Проблема
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
-**Time:** ~90 min
+Входы — не единственная поверхность атаки. Модель, прошедшая каждую входную проверку, всё равно может произвести вывод, утекающий PII, повторяющий оскорбления из обучающего распределения или отзеркаливающий системный промпт пользователю в ответ на хитрый вопрос. Классификатор выходной стороны видит фактический ответ модели, а не промпт пользователя, и задаёт другой вопрос: независимо от того, как этот промпт сюда попал, приемлемо ли то, что мы собираемся отгрузить пользователю.
 
-## Problem
+Команды часто пропускают выходную классификацию, потому что входная кажется достаточной и потому что выходные классификаторы вносят дополнительную задержку. Оба аргумента проигрывают. Пропуск выходной классификации даёт атакующему одношаговый обход: любое новое семейство атак, которое входной пайплайн не покрывает, приземлится на пользователя. Задержка реальна, но решаема: классификаторы могут работать параллельно со стримингом токенов, а gate буферизует финальный чанк и применяет вердикт классификатора до сброса.
 
-Inputs are not the only attack surface. A model that passed every input check can still produce an output that leaks PII, repeats slurs from its training distribution, or echoes the system prompt back to the user in response to a clever question. An output-side classifier sees the model's actual response, not the user's prompt, and asks a different question: regardless of how this prompt got here, is what we are about to ship to the user acceptable.
+Этот capstone свивает три независимых классификатора выходной стороны за единым policy-router. Токсичность (rule-based детекция оскорблений и харассмента). PII (regex для email, телефонов, строк формы SSN, строк формы кредитной карты, IP-адресов). Утечка инструкций (эвристика для эха системного промпта, сравнивающая вывод с известным системным промптом по пересечению триграмм). Router собирает вердикты классификаторов, выбирает severity и применяет политику действий: `block`, `redact`, `warn` или `log`.
 
-Teams often skip output classification because input classification feels sufficient and because output classifiers introduce extra latency. Both arguments lose. Skipping output classification gives an attacker a one-shot bypass: any new attack family that the input pipeline does not cover will land on the user. Latency is real but addressable: classifiers can run in parallel with token streaming, with the gate buffering the final chunk and applying the classifier verdict before flush.
+## Концепция
 
-This capstone wires three independent output-side classifiers behind a single policy router. Toxicity (rule-based slur and harassment detection). PII (regex for emails, phone numbers, SSN-shaped strings, credit-card-shaped strings, IP addresses). Instruction leakage (a heuristic for system prompt echo, comparing the output to a known system prompt by trigram overlap). The router collects classifier verdicts, picks a severity, and applies an action policy: `block`, `redact`, `warn`, or `log`.
+Каждый классификатор — callable, возвращающий `ClassifierVerdict` с `name`, `score in [0,1]`, `severity` (`none`, `low`, `medium`, `high`) и `findings` (список строк, описывающих, что он пометил). Router берёт список вердиктов и применяет таблицу правил:
 
-## Concept
-
-Each classifier is a callable returning a `ClassifierVerdict` with `name`, `score in [0,1]`, `severity` (`none`, `low`, `medium`, `high`), and `findings` (a list of strings describing what it flagged). The router takes a list of verdicts and applies a rule table:
-
-| Severity | Action |
+| Severity | Действие |
 |---|---|
-| high | block (drop output, return policy refusal) |
-| medium | redact (apply per-classifier redactor to the output) |
-| low | warn (log and append a soft notice to the response) |
-| none | log (record verdict in the trace, ship as-is) |
+| high | block (отбросить вывод, вернуть policy-отказ) |
+| medium | redact (применить пер-классификаторный редактор к выводу) |
+| low | warn (залогировать и дописать мягкое уведомление к ответу) |
+| none | log (записать вердикт в трейс, отгрузить как есть) |
 
 ```mermaid
 flowchart TB
@@ -43,40 +40,40 @@ flowchart TB
   R -->|max severity = none| LG[log]
 ```
 
-The router takes the maximum severity across classifiers and applies the corresponding action. Block wins. A redact + warn becomes redact. A log + warn becomes warn. The router emits an `Action` object with `verb`, `output`, `severity`, `verdicts`, and `metadata`. Downstream, the safety gate in lesson 87 logs the metadata into a trace and either ships the redacted output, ships the original with a warning, or replaces the output with a policy refusal.
+Router берёт максимальную severity по классификаторам и применяет соответствующее действие. Block побеждает. redact + warn становится redact. log + warn становится warn. Router излучает объект `Action` с `verb`, `output`, `severity`, `verdicts` и `metadata`. Ниже по течению safety-gate из урока 87 логирует metadata в трейс и либо отгружает отредактированный вывод, либо отгружает оригинал с предупреждением, либо заменяет вывод policy-отказом.
 
-Each classifier has its own redactor. The PII classifier replaces `name@example.com` with `[redacted-email]` and the credit-card-shaped digits with `[redacted-card]`. The instruction-leakage classifier removes lines that look like the system prompt header. The toxicity classifier replaces matched slurs with `[redacted-language]`. Redaction is independent so a toxicity-and-PII output flows through both redactors.
+У каждого классификатора свой редактор. PII-классификатор заменяет `name@example.com` на `[redacted-email]`, а цифры формы кредитной карты — на `[redacted-card]`. Классификатор утечки инструкций удаляет строки, похожие на заголовок системного промпта. Классификатор токсичности заменяет совпавшие оскорбления на `[redacted-language]`. Редакция независима, поэтому вывод с токсичностью-и-PII проходит через оба редактора.
 
-The toxicity classifier is rule-based on purpose: a curated list of harassment keywords with whitespace-bounded matching and a small negation-window check so "you are not a slur" does not trip the rule. The list is deliberately short (the lesson is about plumbing, not lexicon-building). The PII classifier uses standard regexes for the common shapes. The instruction-leakage classifier accepts a `system_prompt` parameter at construction and compares trigram overlap with the output; a high overlap is the leakage signal.
+Классификатор токсичности rule-based намеренно: курируемый список харассмент-ключевиков с сопоставлением по границам пробелов и небольшой проверкой окна отрицания, чтобы «you are not a slur» не спотыкало правило. Список намеренно короткий (урок про обвязку, а не про построение лексикона). PII-классификатор использует стандартные regex'ы для частых форм. Классификатор утечки инструкций принимает параметр `system_prompt` при конструировании и сравнивает пересечение триграмм с выводом; высокое пересечение — сигнал утечки.
 
-## Build It
+## Соберите это
 
-`code/classifiers.py` defines all three classifiers. Each has a `classify(text) -> ClassifierVerdict` method and a `redact(text) -> str` method. `code/main.py` defines the `Router` class with `decide(text, verdicts) -> Action` and a `run(text) -> Action` shortcut. The demo wires the three classifiers behind one router and runs a small corpus of crafted outputs that exercise each severity.
+`code/classifiers.py` определяет все три классификатора. У каждого метод `classify(text) -> ClassifierVerdict` и метод `redact(text) -> str`. `code/main.py` определяет класс `Router` с `decide(text, verdicts) -> Action` и шорткатом `run(text) -> Action`. Демо свивает три классификатора за одним router и гоняет маленький корпус собранных вручную выводов, прогоняющих каждую severity.
 
-## Use It
+## Используйте это
 
-Run `python3 main.py`. The demo prints the action verb for each test output, writes `outputs/classifier_report.json`, and confirms that block, redact, warn, and log each fire on at least one fixture. Latency is artificially zero because all classifiers are rule-based; for a real model with neural classifiers, the same plumbing applies after the per-classifier latency goes up.
+Запустите `python3 main.py`. Демо печатает verb действия для каждого тестового вывода, пишет `outputs/classifier_report.json` и подтверждает, что block, redact, warn и log каждый срабатывают хотя бы на одной фикстуре. Задержка искусственно нулевая, потому что все классификаторы rule-based; для настоящей модели с нейросетевыми классификаторами та же обвязка применяется после того, как пер-классификаторная задержка вырастет.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-content-classifier-integration.md` documents the verdict and action structures so the gate in lesson 87 can consume them.
+`outputs/skill-content-classifier-integration.md` документирует структуры вердикта и действия, чтобы gate из урока 87 мог их потреблять.
 
-## Exercises
+## Упражнения
 
-1. Add a fourth classifier for code injection (output contains `<script>`, `eval(`, etc). Decide its severity policy and integrate it.
-2. Make the router apply a per-classifier severity weight so PII counts more than toxicity. Demonstrate the change on the same fixtures.
-3. Add a confidence threshold so low-score verdicts downgrade by one severity level. Sweep the threshold and report how block rate changes.
+1. Добавьте четвёртый классификатор для инъекции кода (вывод содержит `<script>`, `eval(` и т. д.). Решите его политику severity и интегрируйте.
+2. Заставьте router применять пер-классификаторный вес severity, чтобы PII считался больше токсичности. Продемонстрируйте изменение на тех же фикстурах.
+3. Добавьте порог уверенности, чтобы низко-скоровые вердикты понижались на один уровень severity. Просвипайте порог и доложите, как меняется доля block.
 
-## Key Terms
+## Ключевые термины
 
-| Term | Common usage | Precise meaning |
+| Термин | Обычное употребление | Точное значение |
 |---|---|---|
-| output classifier | a model that detects bad outputs | a callable returning a structured verdict with severity, score, and findings, plus a redactor |
-| severity | how bad it is | one of none, low, medium, high |
-| router | a switch | a function from verdict list to action (block, redact, warn, log) |
-| redact | hide the bad parts | per-classifier replacement of matched spans with a tag like [redacted-pii] |
-| instruction leakage | the model leaks the system prompt | a heuristic comparing model output to a known system prompt by trigram overlap |
+| выходной классификатор | модель, детектящая плохие выходы | callable, возвращающий структурный вердикт с severity, score и findings, плюс редактор |
+| severity | насколько плохо | одно из none, low, medium, high |
+| router | переключатель | функция из списка вердиктов в действие (block, redact, warn, log) |
+| redact | скрыть плохие части | пер-классификаторная замена совпавших спанов тегом вроде [redacted-pii] |
+| утечка инструкций | модель течёт системным промптом | эвристика, сравнивающая вывод модели с известным системным промптом по пересечению триграмм |
 
-## Further Reading
+## Дополнительное чтение
 
-Lesson 86 adds a declarative rules engine for constraints not naturally classifier-shaped. Lesson 87 composes both with the input-side detector.
+Урок 86 добавляет декларативный движок правил для ограничений, естественно не имеющих формы классификатора. Урок 87 компонует оба со входным детектором.

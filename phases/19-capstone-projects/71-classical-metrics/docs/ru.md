@@ -1,32 +1,29 @@
 # Classical Metrics
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> BLEU, ROUGE-L, F1, exact-match, accuracy. Пять метрик, которые до сих пор отвечают за большинство публикуемых чисел LLM-eval. Реализуйте каждую из первых принципов, чтобы знать, что означает число.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, фундамент трека B, урок 70
+**Время:** ~90 минут
 
-> BLEU, ROUGE-L, F1, exact-match, accuracy. Five metrics that still account for most published LLM eval numbers. Implement each from first principles so you know what the number means.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track B foundations, lesson 70
-**Time:** ~90 min
+- Реализовать токенные exact-match, F1 и accuracy с явными правилами токенизации.
+- Реализовать BLEU-4 с нуля: модифицированная n-граммная точность, геометрическое среднее по n от 1 до 4, штраф за краткость.
+- Реализовать ROUGE-L через наибольшую общую подпоследовательность, с F-beta-сочетанием точности и полноты.
+- Диспетчеризоваться по полю metric_name из урока 70, чтобы раннер оставался метрико-агностичным.
+- Зафиксировать поведение референсными векторами из разобранных примеров, а не из сторонней библиотеки.
 
-## Learning objectives
+## Зачем реализовывать заново
 
-- Implement token-level exact-match, F1, and accuracy with explicit tokenisation rules.
-- Implement BLEU-4 from the ground up: modified n-gram precision, geometric mean over n equals 1 through 4, brevity penalty.
-- Implement ROUGE-L using longest common subsequence, with F-beta combination of precision and recall.
-- Dispatch on the metric_name field from lesson 70 so the runner stays metric-agnostic.
-- Pin the behaviour with reference vectors drawn from worked examples, not from a third-party library.
+Вы будете читать статьи, репортящие BLEU 28.3, и другие — BLEU 0.283. Найдёте ROUGE-L, расходящиеся на десять пунктов между двумя библиотеками, потому что одна приводит к нижнему регистру, а другая нет. Самый быстрый способ перестать путаться — написать метрики самим, а потом указать на строку, где выбирается токенизатор, и строку, где применяется сглаживание. После этого сравнение чисел между статьями становится чтением сетапа метрики, а не спором о библиотеках.
 
-## Why reimplement
+Stdlib плюс numpy достаточно. BLEU — это подсчёт и клипинг. ROUGE-L — динамическое программирование. F1 — пересечение множеств токенов. Самое трудное — выбрать токенизатор и придерживаться его.
 
-You will read papers that report BLEU 28.3 and another that reports BLEU 0.283. You will find ROUGE-L scores that differ by ten points across two libraries because one truncates to lowercase and the other does not. The fastest way to stop being confused is to write the metrics yourself, then point at the line where the tokenizer is decided and the line where the smoothing is applied. After that, comparing numbers across papers becomes a matter of reading the metric setup, not arguing about libraries.
+## Токенизация
 
-Stdlib plus numpy is enough. BLEU is counting and a clamp. ROUGE-L is dynamic programming. F1 is a set intersection on tokens. The hardest part is choosing a tokenizer and committing to it.
-
-## Tokenisation
-
-The tokenizer is `re.findall(r"\w+", text.lower())`. Lowercase, alphanumeric runs, drop punctuation. Every metric in this lesson uses this exact tokenizer. The runner does not get to choose. If you swap tokenizers, you are running a different benchmark.
+Токенизатор — `re.findall(r"\w+", text.lower())`. Нижний регистр, алфавитно-цифровые серии, пунктуация отбрасывается. Каждая метрика урока использует ровно этот токенизатор. Раннер не выбирает. Смените токенизатор — гоняете другой бенчмарк.
 
 ```python
 TOKEN_RE = re.compile(r"\w+", re.UNICODE)
@@ -34,7 +31,7 @@ def tokenize(text):
     return TOKEN_RE.findall(text.lower())
 ```
 
-This is a deliberate simplification. Production setups will care about CJK, contractions, and code identifiers. The point of the lesson is that the tokenizer is a contract, not a knob.
+Это намеренное упрощение. Продакшен-сетапы будут заботиться о CJK, сокращениях и код-идентификаторах. Смысл урока: токенизатор — контракт, а не ручка.
 
 ## Exact match
 
@@ -43,11 +40,11 @@ def exact_match(pred, targets):
     return float(any(pred.strip() == t.strip() for t in targets))
 ```
 
-It returns 1.0 or 0.0 per task. The aggregate over a dataset is the mean. This is the workhorse for arithmetic, MCQ, and short classification tasks.
+Возвращает 1.0 или 0.0 на задачу. Агрегат по датасету — среднее. Это рабочая лошадка арифметики, MCQ и коротких классификационных задач.
 
-## Token-level F1
+## Токенный F1
 
-Set up the token multiset for prediction and target. Precision is the multiset intersection divided by the multiset of the prediction. Recall is the same intersection divided by the multiset of the target. F1 is the harmonic mean. The implementation handles the empty-prediction and empty-target edge cases.
+Соберите мультимножества токенов предсказания и цели. Precision — пересечение мультимножеств, делённое на мультимножество предсказания. Recall — то же пересечение, делённое на мультимножество цели. F1 — гармоническое среднее. Реализация обрабатывает краевые случаи пустого предсказания и пустой цели.
 
 ```mermaid
 flowchart LR
@@ -61,13 +58,13 @@ flowchart LR
     RE --> F
 ```
 
-For multi-target tasks, we take the best F1 over the target list. That matches the SQuAD-style behaviour widely reported in the literature.
+Для многоцелевых задач берём лучший F1 по списку целей. Это соответствует SQuAD-подобному поведению, широко репортящемуся в литературе.
 
 ## BLEU-4
 
-BLEU is the canonical machine-translation metric and it still shows up in summarisation work. The formulation we use is corpus-level BLEU-4 with the standard brevity penalty and additive-one smoothing on modified n-gram counts so a single missing 4-gram does not push the score to zero.
+BLEU — каноническая метрика машинного перевода, всё ещё встречающаяся в работах по суммаризации. Мы используем корпусный BLEU-4 со стандартным штрафом за краткость и аддитивно-единичным сглаживанием на модифицированных n-граммных счётчиках, чтобы одна отсутствующая 4-грамма не роняла скор в ноль.
 
-For each candidate-reference pair, we count modified n-gram precision for n equals 1, 2, 3, 4. Modified precision clips the candidate n-gram count by the maximum count of that n-gram in any reference, so a candidate cannot inflate by repeating one phrase. The geometric mean across the four precisions is wrapped by the brevity penalty.
+Для каждой пары кандидат-референс мы считаем модифицированную n-граммную точность для n от 1 до 4. Модифицированная точность клипит счётчик n-грамм кандидата максимальным счётчиком этой n-граммы в любом референсе — кандидат не может накрутить повторением одной фразы. Геометрическое среднее четырёх точностей оборачивается штрафом за краткость.
 
 ```mermaid
 flowchart TD
@@ -85,11 +82,11 @@ flowchart TD
     BP --> S
 ```
 
-The smoothing rule is the one Lin and Och called method 1: add one to both numerator and denominator of every n-gram precision before taking the log. This avoids `log 0` when a reference has no matching 4-gram and stays close to the unsmoothed value on long candidates.
+Правило сглаживания — то, что Лин и Оч назвали методом 1: добавить единицу и в числитель, и в знаменатель каждой n-граммной точности перед логарифмом. Это избегает `log 0`, когда у референса нет совпадающей 4-граммы, и остаётся близким к несглаженному значению на длинных кандидатах.
 
 ## ROUGE-L
 
-ROUGE-L compares the longest common subsequence of the candidate and reference token sequences. The LCS captures word order without forcing contiguity, which is why it is the default summarisation metric. We compute the LCS length with a standard dynamic-programming table, then derive recall as `lcs / reference length`, precision as `lcs / candidate length`, and combine with F-beta where beta equals one for the symmetric F1 form.
+ROUGE-L сравнивает наибольшую общую подпоследовательность токенных последовательностей кандидата и референса. LCS ловит порядок слов, не требуя непрерывности, — поэтому это дефолтная метрика суммаризации. Мы считаем длину LCS стандартной таблицей динамического программирования, затем выводим recall как `lcs / длина референса`, precision как `lcs / длина кандидата` и сочетаем через F-beta, где beta равна единице для симметричной F1-формы.
 
 ```python
 def lcs_length(a, b):
@@ -104,15 +101,15 @@ def lcs_length(a, b):
     return int(dp[n, m])
 ```
 
-The numpy table makes the implementation legible; pure Python lists would work too. Tasks that opt into ROUGE-L pay the O(n m) cost per task. For typical summary lengths that stays under a millisecond.
+Numpy-таблица делает реализацию читаемой; чистые Python-списки тоже сработали бы. Задачи, выбравшие ROUGE-L, платят O(n m) на задачу. Для типичных длин саммари это остаётся под миллисекундой.
 
 ## Accuracy
 
-For multi-target classification tasks, accuracy reduces to exact-match against a single normalised target. We expose it as a separate function so the dispatcher can dispatch on `metric_name` without going through string comparisons inside the runner.
+Для многоцелевых классификационных задач accuracy сводится к exact-match против одной нормализованной цели. Мы выносим её отдельной функцией, чтобы диспетчер диспетчеризовался по `metric_name` без строковых сравнений внутри раннера.
 
-## Dispatch contract
+## Контракт диспетчеризации
 
-The single entry point is `score(metric_name, prediction, targets)`. It returns a float in `[0, 1]`. The runner does not branch on metric name. It hands the call off and writes the result. This is the surface that lesson 75 will glue to the task spec from lesson 70.
+Единая точка входа — `score(metric_name, prediction, targets)`. Возвращает float в `[0, 1]`. Раннер не ветвится по имени метрики. Он передаёт вызов и пишет результат. Это та поверхность, которую урок 75 приклеит к спецификации задач из урока 70.
 
 ```python
 def score(metric_name, pred, targets):
@@ -129,18 +126,18 @@ def score(metric_name, pred, targets):
     raise ValueError(f"unknown metric_name: {metric_name}")
 ```
 
-`code_exec` is handled in lesson 72 and slotted into the dispatcher there.
+`code_exec` обрабатывается в уроке 72 и там же встаёт в диспетчер.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not call a model. It does not normalise generations beyond what the post-process rules from lesson 70 already did. It does not compute confidence intervals. It does not do BLEURT or BERTScore (those need a model and live in a different lesson). The point is the floor: five metrics, one tokenizer, one dispatch table.
+Он не вызывает модель. Не нормализует генерации сверх того, что уже сделали правила постобработки урока 70. Не считает доверительные интервалы. Не делает BLEURT или BERTScore (им нужна модель, и они живут в другом уроке). Смысл — пол: пять метрик, один токенизатор, одна таблица диспетчеризации.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines each metric as a free function plus the dispatcher. The reference vectors live in the `_reference_examples` block at the bottom of the file. The demo runs the dispatcher against eight examples and prints per-metric scores. The tests in `code/tests/test_metrics.py` pin the reference vectors and stress every edge case (empty prediction, empty reference, no shared tokens, exact match, repeated phrase clipping).
+`main.py` определяет каждую метрику свободной функцией плюс диспетчер. Референсные векторы живут в блоке `_reference_examples` внизу файла. Демо гоняет диспетчер на восьми примерах и печатает пер-метричные скоры. Тесты в `code/tests/test_metrics.py` фиксируют референсные векторы и прогоняют каждый краевой случай (пустое предсказание, пустой референс, ни одного общего токена, точное совпадение, клипинг повторяющейся фразы).
 
-Read `main.py` top to bottom. The functions are ordered by complexity. exact_match and accuracy are one line each. F1 is six lines. BLEU and ROUGE-L are the heavy parts and they include detailed comments on the smoothing rule and the LCS recurrence.
+Прочитайте `main.py` сверху вниз. Функции упорядочены по сложности. exact_match и accuracy — по одной строке. F1 — шесть строк. BLEU и ROUGE-L — тяжёлые части, и они включают развёрнутые комментарии о правиле сглаживания и рекуррентности LCS.
 
-## Going further
+## Куда двигаться дальше
 
-The classical metrics are necessary, not sufficient. They reward surface overlap and miss meaning. The fix is to layer model-based metrics on top (BLEURT, BERTScore, GEval) once you trust the classical floor. That is a later lesson. For now: make these five work, pin them with tests, and you have a metric stack that is auditable, fast, and reproducible.
+Классические метрики необходимы, но недостаточны. Они вознаграждают поверхностное пересечение и упускают смысл. Лечение — наслоить модельные метрики сверху (BLEURT, BERTScore, GEval), когда классическому полу уже доверяете. Это более поздний урок. Пока: заставьте эти пять работать, зафиксируйте тестами — и у вас метрический стек, который аудируем, быстр и воспроизводим.

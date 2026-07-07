@@ -1,24 +1,21 @@
 # End-to-End Eval Runner
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Пять уроков обвязки, один урок, чтобы их склеить. Раннер читает спецификацию задач из урока 70, вызывает модель через адаптер, скорит уроками 71 и 72, прикрепляет отчёт калибровки из урока 73 и излучает лидерборд из урока 74. Демо самозавершается.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, фундамент трека B, уроки 70–74
+**Время:** ~90 минут
 
-> Five lessons of plumbing, one lesson to glue them. The runner reads the task spec from lesson 70, calls a model through an adapter, scores with lessons 71 and 72, attaches the calibration report from lesson 73, and emits the leaderboard from lesson 74. Demo self-terminates.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track B foundations, lessons 70 through 74
-**Time:** ~90 min
+- Определить интерфейс `ModelAdapter`, который любая модель (mock, локальная, API) удовлетворяет маленькой поверхностью методов.
+- Прогнать eval по фикстурному JSONL-файлу с параллельным исполнением задач через пул воркеров.
+- Скомпоновать слой метрик (exact_match, F1, BLEU-4, ROUGE-L, code_exec) со слоем калибровки за один проход.
+- Излучать пер-модельные записи `EvalRun` и подавать их прямо в агрегатор лидерборда.
+- Выдавать и JSON-отчёт, и markdown-таблицу; самозавершаться с нулём на чистом прогоне и ненулём при провале валидации или рантайма.
 
-## Learning objectives
-
-- Define a `ModelAdapter` interface that any model (mock, local, API) can satisfy with a small method surface.
-- Run the eval over a fixture JSONL file with parallel task execution across a worker pool.
-- Compose the metric layer (exact_match, F1, BLEU-4, ROUGE-L, code_exec) with the calibration layer in one pass.
-- Emit per-model `EvalRun` records and feed them straight into the leaderboard aggregator.
-- Output both a JSON report and a markdown table; self-terminate with exit zero on a clean run, non-zero on validation or runtime failure.
-
-## The pipeline
+## Пайплайн
 
 ```mermaid
 flowchart TD
@@ -39,11 +36,11 @@ flowchart TD
     V --> W
 ```
 
-The runner is the integration point. Each lesson 70 through 74 owns one module that the runner composes. The runner does not duplicate any logic from those modules: it imports them.
+Раннер — точка интеграции. Каждый урок с 70 по 74 владеет одним модулем, который раннер компонует. Раннер не дублирует никакую логику этих модулей: он их импортирует.
 
-## The adapter interface
+## Интерфейс адаптера
 
-The adapter is the seam between the runner and any model. The interface is intentionally small.
+Адаптер — шов между раннером и любой моделью. Интерфейс намеренно мал.
 
 ```python
 class ModelAdapter:
@@ -52,37 +49,37 @@ class ModelAdapter:
     def generate(self, prompt: str, task: TaskSpec) -> Generation: ...
 ```
 
-`Generation` is a dataclass with:
+`Generation` — датакласс с полями:
 
-- `text`: the model's free-form output
-- `confidence`: a float in `[0, 1]` representing the model's self-reported probability for the answer
-- `token_nll`: optional sum of negative log-likelihoods over the generated tokens
-- `token_count`: optional number of generated tokens
+- `text`: свободный вывод модели
+- `confidence`: float в `[0, 1]` — самоотчёт модели о вероятности ответа
+- `token_nll`: опциональная сумма отрицательных лог-правдоподобий по сгенерированным токенам
+- `token_count`: опциональное число сгенерированных токенов
 
-Mock adapters in the runner provide three flavours: `RuleBasedAdapter` (deterministic, near-perfect), `NoisyAdapter` (overconfident, often wrong), and `BiasedAdapter` (good at one category, terrible at another). The demo runs all three over the lesson 70 fixture.
+Mock-адаптеры раннера дают три вкуса: `RuleBasedAdapter` (детерминированный, почти идеальный), `NoisyAdapter` (переуверенный, часто неправый) и `BiasedAdapter` (хорош в одной категории, ужасен в другой). Демо гоняет все три по фикстуре урока 70.
 
-## Parallel execution
+## Параллельное исполнение
 
-The runner uses `concurrent.futures.ThreadPoolExecutor` to run tasks in parallel per model. The worker count defaults to the smaller of eight and the task count. Threads are sufficient because the bottleneck for real model calls is network I/O. The code-exec path spawns its own subprocess inside the task and the executor only schedules the wait.
+Раннер использует `concurrent.futures.ThreadPoolExecutor` для параллельного исполнения задач на модель. Число воркеров по умолчанию — меньшее из восьми и числа задач. Тредов достаточно, потому что узкое место настоящих вызовов моделей — сетевой I/O. Путь code-exec порождает собственный subprocess внутри задачи, а executor планирует только ожидание.
 
-For deterministic tests, the runner exposes `run_eval(adapters, tasks, parallel=False)` so tests can pin the execution order.
+Для детерминированных тестов раннер открывает `run_eval(adapters, tasks, parallel=False)`, чтобы тесты могли зафиксировать порядок исполнения.
 
-## The single-pass scoring loop
+## Однопроходный скоринг-цикл
 
-For each task:
+Для каждой задачи:
 
-1. Render the prompt (few-shot prefix plus the prompt body).
-2. Call the adapter and time the call.
-3. Post-process the generation per the task's rule.
-4. Dispatch to the metric layer.
-5. Build an `EvalRun` record with the score and metric metadata.
-6. Append the `(confidence, correct)` pair to the calibration buffer.
+1. Отрендерить промпт (few-shot-префикс плюс тело промпта).
+2. Вызвать адаптер и замерить вызов.
+3. Постобработать генерацию по правилу задачи.
+4. Диспетчеризовать в слой метрик.
+5. Собрать запись `EvalRun` со скором и метаданными метрики.
+6. Дописать пару `(confidence, correct)` в буфер калибровки.
 
-The `correct` signal is `score >= 1.0` for exact_match-style metrics (`exact_match`, `accuracy`, `code_exec`) and `score >= 0.5` for graded metrics. The threshold lives in `_correct_from_score` and the runner does not expose a public override.
+Сигнал `correct` — это `score >= 1.0` для метрик exact-match-стиля (`exact_match`, `accuracy`, `code_exec`) и `score >= 0.5` для градуированных. Порог живёт в `_correct_from_score`, и раннер не открывает публичного переопределения.
 
-## Aggregation
+## Агрегация
 
-After every task has a result, the runner calls `aggregate` and `pairwise_diffs` from lesson 74 and `CalibrationReport.from_predictions` from lesson 73. The output is a single JSON envelope:
+Когда у каждой задачи есть результат, раннер вызывает `aggregate` и `pairwise_diffs` из урока 74 и `CalibrationReport.from_predictions` из урока 73. Выход — единый JSON-конверт:
 
 ```json
 {
@@ -100,35 +97,35 @@ After every task has a result, the runner calls `aggregate` and `pairwise_diffs`
 }
 ```
 
-The runner also writes a markdown table to stdout so the user can paste the result into a PR review.
+Раннер также пишет markdown-таблицу в stdout, чтобы пользователь мог вставить результат в PR-ревью.
 
-## Self-terminating demo
+## Самозавершающееся демо
 
-The demo runs three mock adapters over the ten fixture tasks from lesson 70. Wall time should sit under ten seconds. The exit code is zero on a clean run.
+Демо гоняет три mock-адаптера по десяти фикстурным задачам урока 70. Wall time должен сидеть под десятью секундами. Код выхода — ноль на чистом прогоне.
 
-The clean-run criteria are:
+Критерии чистого прогона:
 
-- Every task validated under lesson 70.
-- Every task scored under lessons 71 and 72.
-- The calibration report aggregated under lesson 73 without errors.
-- The leaderboard ranked the rule-based adapter strictly above the random adapter.
+- Каждая задача провалидирована по уроку 70.
+- Каждая задача оскорена по урокам 71 и 72.
+- Отчёт калибровки агрегирован по уроку 73 без ошибок.
+- Лидерборд поставил rule-based-адаптер строго выше случайного.
 
-If any of those break, the runner exits non-zero with a structured error in the JSON envelope.
+Если что-то из этого ломается, раннер выходит с ненулём со структурной ошибкой в JSON-конверте.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not call a real model. It does not implement an API key flow or rate-limit handling. It does not implement streaming or partial generation; the adapter returns one generation per call. It does not do retries or caching. Those concerns live at the adapter layer; the runner is metric-agnostic and provider-agnostic.
+Он не вызывает настоящую модель. Не реализует поток API-ключей или обработку rate limits. Не реализует стриминг или частичную генерацию; адаптер возвращает одну генерацию на вызов. Не делает ретраев и кэширования. Эти заботы живут на слое адаптера; раннер метрико-агностичен и провайдеро-агностичен.
 
-## How to read the code
+## Как читать код
 
-`main.py` is the integration. It imports from the other five lesson modules through a small `_load_sibling` helper that resolves them by relative path. The dataclasses `Generation`, `EvalReport`, and `ModelAdapter` are defined locally. The mock adapters are at the bottom of the file.
+`main.py` — интеграция. Он импортирует из остальных пяти модулей уроков через маленький хелпер `_load_sibling`, резолвящий их по относительному пути. Датаклассы `Generation`, `EvalReport` и `ModelAdapter` определены локально. Mock-адаптеры — внизу файла.
 
-Read `main.py` top to bottom. Skim the imports, then look at `run_eval`, then `_score_one`, then the adapters. The demo at the end is the entry point.
+Прочитайте `main.py` сверху вниз. Пролистайте импорты, затем посмотрите `run_eval`, затем `_score_one`, затем адаптеры. Демо в конце — точка входа.
 
-The tests in `code/tests/test_runner.py` pin the adapter interface, the single-pass loop, the parallel-vs-sequential equivalence, the calibration buffer, and the JSON envelope shape.
+Тесты в `code/tests/test_runner.py` фиксируют интерфейс адаптера, однопроходный цикл, эквивалентность параллельного и последовательного исполнения, буфер калибровки и форму JSON-конверта.
 
-## Going further
+## Куда двигаться дальше
 
-This runner is the floor. A production eval system adds: a results cache keyed by `(task_id, model_id, model_version)`, a cost ledger that tracks dollars and tokens per run, a retry layer that backs off on rate limits, a sampling policy for pass-at-k tasks, and a streaming output format for long suites. Each of those is a single concern that wraps the runner without changing the metric or aggregation layers. That separation is the point of the contract.
+Этот раннер — пол. Продакшен-система eval'а добавляет: кэш результатов с ключом `(task_id, model_id, model_version)`, cost ledger, отслеживающий доллары и токены на прогон, retry-слой с backoff на rate limits, политику сэмплирования для pass-at-k-задач и стриминговый формат вывода для длинных наборов. Каждое из этого — отдельная забота, оборачивающая раннер, не меняя слои метрик и агрегации. Это разделение и есть смысл контракта.
 
-Add an adapter for a real provider after you have the mocks working. Pick one with a free tier, write thirty lines of glue, watch the leaderboard light up. Then add the second provider and let the harness do the work.
+Добавьте адаптер настоящего провайдера, когда mock'и работают. Возьмите провайдера с бесплатным ярусом, напишите тридцать строк клея, наблюдайте, как лидерборд оживает. Затем добавьте второго провайдера — и пусть харнес работает сам.

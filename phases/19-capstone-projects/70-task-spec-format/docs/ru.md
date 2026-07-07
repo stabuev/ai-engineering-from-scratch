@@ -1,32 +1,29 @@
 # Task Spec Format
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Eval-харнес хорош ровно настолько, насколько хорош контракт, который чтут его задачи. Заморозьте JSONL-форму и словарь метрик до того, как напишете хоть одну скоринг-функцию.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, фундамент трека B
+**Время:** ~90 минут
 
-> An eval harness is only as good as the contract its tasks honour. Freeze the JSONL shape and the metric vocabulary before you write a single scoring function.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track B foundations
-**Time:** ~90 min
+- Определить схему JSONL-записи задачи, покрывающую одной формой арифметику, multiple choice, исполнение кода, классификацию и свободную суммаризацию.
+- Запинить закрытый словарь имён метрик, чтобы последующие уроки (71–73) диспетчеризовались по одному полю.
+- Специфицировать few-shot-примеры и правила постобработки как часть задачи, а не раннера, чтобы один промпт давал одну цель на любых моделях.
+- Реализовать строгий валидатор, отклоняющий битые записи до того, как они дойдут до раннера.
+- Отгрузить фикстурный набор из 10 задач, прогоняющий каждую ветку спецификации, чтобы валидатору было что жевать.
 
-## Learning objectives
+## Почему замороженная спецификация
 
-- Define a JSONL task record schema that covers arithmetic, multiple-choice, code execution, classification, and free-text summarisation in one shape.
-- Pin a closed vocabulary of metric names so downstream lessons (71-73) can dispatch on a single field.
-- Specify few-shot examples and post-processing rules as part of the task, not the runner, so the same prompt produces the same target across models.
-- Implement a strict validator that rejects malformed records before they reach the runner.
-- Ship a 10-task fixture set that exercises every branch of the spec so the validator has something real to chew on.
+Исследовательская кодовая база накапливает eval-скрипты быстрее, чем тесты. Через полгода у каждого ноутбука своя JSON-форма, каждая метрика реализована дважды, и ничего нельзя сравнить между прогонами. Лечение скучное. Выберите схему. Напишите валидатор. Отклоняйте всё остальное. Именно это делает этот урок.
 
-## Why a frozen spec
+Форма заимствует идеи у BIG-bench, HELM и харнесов в стиле lm-eval, но имена полей наши. У каждого поля один владелец. Раннер читает задачу. Метрика читает цели. Шаг постобработки нормализует генерацию. Ни одно поле не мутируется посреди пайплайна.
 
-A research codebase will accumulate eval scripts faster than it accumulates tests. Six months in, every notebook has its own JSON shape, every metric is reimplemented twice, and nothing can be compared across runs. The fix is boring. Pick a schema. Write a validator. Reject everything else. That is what this lesson does.
+## Форма записи
 
-The shape borrows ideas from BIG-bench, HELM, and lm-eval style harnesses, but the field names are ours. Every field has a single owner. The runner reads the task. The metric reads the targets. The post-process step normalises the generation. No field is mutable mid-pipeline.
-
-## The record shape
-
-A task is a JSON object on a single line. The harness reads `tasks.jsonl` and validates each line independently. A bad line aborts that record, not the run.
+Задача — JSON-объект на одной строке. Харнес читает `tasks.jsonl` и валидирует каждую строку независимо. Плохая строка прерывает эту запись, а не прогон.
 
 ```json
 {
@@ -43,25 +40,25 @@ A task is a JSON object on a single line. The harness reads `tasks.jsonl` and va
 }
 ```
 
-The required fields are `task_id`, `category`, `prompt`, `targets`, `metric_name`, `post_process`. `few_shot_examples` and `metadata` are optional. Unknown top-level fields fail validation.
+Обязательные поля — `task_id`, `category`, `prompt`, `targets`, `metric_name`, `post_process`. `few_shot_examples` и `metadata` опциональны. Неизвестные верхнеуровневые поля валят валидацию.
 
-## Field rules
+## Правила полей
 
-`task_id` is a string with no whitespace. The validator enforces uniqueness across the file.
+`task_id` — строка без пробелов. Валидатор насаждает уникальность по файлу.
 
-`category` is one of `arithmetic`, `mcq`, `code_exec`, `classification`, `summary`. The category constrains which metric and post-process pair is legal. A `code_exec` task must use `metric_name = code_exec` and a `mcq` task must use `metric_name = exact_match` against a single-letter target.
+`category` — одно из `arithmetic`, `mcq`, `code_exec`, `classification`, `summary`. Категория ограничивает, какая пара метрики и постобработки легальна. Задача `code_exec` обязана использовать `metric_name = code_exec`, а `mcq` — `exact_match` против однобуквенной цели.
 
-`prompt` is a non-empty string. The validator forbids trailing whitespace and rejects records that already contain a few-shot block in the prompt body. Few-shot rendering happens in the runner, not the author.
+`prompt` — непустая строка. Валидатор запрещает хвостовые пробелы и отклоняет записи, уже содержащие few-shot-блок в теле промпта. Рендер few-shot происходит в раннере, а не у автора.
 
-`targets` is a non-empty list of strings. For `exact_match`, any element matching counts. For `f1` and `rouge_l`, the highest-scoring target wins. For `mcq`, the list holds exactly one element.
+`targets` — непустой список строк. Для `exact_match` засчитывается совпадение с любым элементом. Для `f1` и `rouge_l` побеждает цель с наивысшим скором. Для `mcq` список держит ровно один элемент.
 
-`metric_name` is one of `exact_match`, `f1`, `bleu_4`, `rouge_l`, `accuracy`, `code_exec`. The vocabulary is closed. A new metric requires a new lesson and a new entry here.
+`metric_name` — одно из `exact_match`, `f1`, `bleu_4`, `rouge_l`, `accuracy`, `code_exec`. Словарь закрыт. Новая метрика требует нового урока и новой записи здесь.
 
-`few_shot_examples` is a list of `{prompt, completion}` pairs. The validator caps the list at eight entries to keep prompts bounded.
+`few_shot_examples` — список пар `{prompt, completion}`. Валидатор ограничивает список восемью элементами, чтобы промпты оставались ограниченными.
 
-`post_process` is one of `none`, `strip_whitespace`, `lower`, `extract_letter`, `extract_code_block`, `extract_first_line`. Each rule has a single deterministic behaviour. The validator forbids combining rules.
+`post_process` — одно из `none`, `strip_whitespace`, `lower`, `extract_letter`, `extract_code_block`, `extract_first_line`. У каждого правила одно детерминированное поведение. Валидатор запрещает комбинировать правила.
 
-## Validator behaviour
+## Поведение валидатора
 
 ```mermaid
 flowchart TD
@@ -82,11 +79,11 @@ flowchart TD
     H -->|no| I[return validated, errors]
 ```
 
-The validator returns two lists: validated records and error records with the offending line, the violated rule, and the field at fault. The runner refuses to start if the error list is non-empty unless an explicit `--allow-bad-tasks` flag is set.
+Валидатор возвращает два списка: валидированные записи и записи-ошибки с проблемной строкой, нарушенным правилом и виновным полем. Раннер отказывается стартовать при непустом списке ошибок, если явно не выставлен флаг `--allow-bad-tasks`.
 
-## Few-shot rendering
+## Рендер few-shot
 
-The runner concatenates few-shot examples in front of the prompt with a blank line separator. The same code path runs for every model, so the only source of variance is the model itself. Authors write examples once, not once per provider.
+Раннер конкатенирует few-shot-примеры перед промптом с разделителем — пустой строкой. Один и тот же код-путь работает для каждой модели, поэтому единственный источник дисперсии — сама модель. Авторы пишут примеры один раз, а не по разу на провайдера.
 
 ```python
 def render(task):
@@ -97,31 +94,31 @@ def render(task):
     return "\n\n".join(parts)
 ```
 
-## Post-process rules
+## Правила постобработки
 
-The post-process step runs after generation, before the metric. It is deterministic and stateless.
+Шаг постобработки работает после генерации, до метрики. Он детерминирован и stateless.
 
-- `none` returns the string unchanged.
-- `strip_whitespace` strips leading and trailing whitespace.
-- `lower` lowercases the string.
-- `extract_letter` returns the first character that matches `[A-E]`, used for MCQ.
-- `extract_code_block` returns the body of the first triple-backtick fenced block, used for code-exec.
-- `extract_first_line` returns the first non-empty line, used for summary classification.
+- `none` возвращает строку без изменений.
+- `strip_whitespace` обрезает ведущие и хвостовые пробелы.
+- `lower` переводит строку в нижний регистр.
+- `extract_letter` возвращает первый символ, совпадающий с `[A-E]`, — для MCQ.
+- `extract_code_block` возвращает тело первого блока в тройных бэктиках — для code-exec.
+- `extract_first_line` возвращает первую непустую строку — для классификации саммари.
 
-A task that needs a rule outside this list belongs in a new lesson.
+Задаче, которой нужно правило вне этого списка, место в новом уроке.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not score. It does not call a model. It does not run code. Those come in lessons 71, 72, and 75. This lesson freezes the contract that all of them honour.
+Он не скорит. Не вызывает модель. Не исполняет код. Это уроки 71, 72 и 75. Этот урок замораживает контракт, который они все чтут.
 
-The 10-task fixture covers two arithmetic items, two MCQ items, two code-exec items, two classification items, and two summarisation items. The validator passes on all 10. A separate fixture (`tasks_bad.jsonl`) trips every rule and the validator returns exactly that many errors.
+Фикстура из 10 задач покрывает две арифметические, две MCQ, две code-exec, две классификационные и две суммаризационные. Валидатор проходит на всех 10. Отдельная фикстура (`tasks_bad.jsonl`) спотыкает каждое правило, и валидатор возвращает ровно столько ошибок.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines `TaskSpec`, `validate_task`, `validate_file`, and a CLI entry point. The fixture loader is `load_fixtures`. The render and post-process helpers live next to validation so the runner in lesson 75 imports a single module.
+`main.py` определяет `TaskSpec`, `validate_task`, `validate_file` и точку входа CLI. Загрузчик фикстур — `load_fixtures`. Хелперы рендера и постобработки живут рядом с валидацией, чтобы раннер из урока 75 импортировал один модуль.
 
-Read `main.py` top to bottom. Then read `code/tests/test_spec.py`. The tests pin every validation rule and every post-process behaviour. The demo at the bottom of `main.py` validates the bundled fixture and prints a summary.
+Прочитайте `main.py` сверху вниз. Затем — `code/tests/test_spec.py`. Тесты фиксируют каждое правило валидации и каждое поведение постобработки. Демо внизу `main.py` валидирует комплектную фикстуру и печатает сводку.
 
-## Going further
+## Куда двигаться дальше
 
-Real eval suites grow categories the way schemas grow columns. The sober move is to refuse to add a category without also adding a metric, a post-process rule, and at least one fixture task. Treat the spec like a database migration. Every change is reviewed, versioned, and accompanied by tests. The validator in this lesson is the gate.
+Настоящие eval-наборы обрастают категориями так же, как схемы — колонками. Трезвый ход — отказываться добавлять категорию без одновременного добавления метрики, правила постобработки и хотя бы одной фикстурной задачи. Трактуйте спецификацию как миграцию базы данных. Каждое изменение ревьюится, версионируется и сопровождается тестами. Валидатор этого урока — тот самый gate.

@@ -1,30 +1,27 @@
 # Hybrid Retrieval with BM25 and Dense Embeddings
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Лексический и семантический retrieval отказывают на противоположных распределениях запросов. Гибридный retrieval с reciprocal rank fusion не интерполирует — он голосует, и голос побеждает на каждом классе запросов.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 11, уроки 04 (эмбеддинги), 06 (RAG); Фаза 19, фундамент трека B (уроки 20–29); Фаза 19, урок 64 (стратегии chunking)
+**Время:** ~90 минут
 
-> Lexical and semantic retrieval fail on opposite query distributions. Hybrid retrieval with reciprocal rank fusion does not interpolate, it votes - and the vote wins on every query class.
+## Цели обучения
+- Реализовать BM25 с нуля по формулировке Робертсона и Спарк-Джонс, с взвешиванием полей, нормализацией длины документа и настраиваемыми k1 и b.
+- Построить dense-ретривер поверх детерминированного mock-эмбеддинга, чтобы цикл работал офлайн.
+- Реализовать reciprocal rank fusion ровно так, как Кормак, Кларк и Бютчер опубликовали в 2009-м, и объяснить, почему он доминирует над скор-взвешенной интерполяцией.
+- Настроить константу k RRF и пер-модальные веса и прочитать компромиссы на маленьком фикстурном корпусе.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 lessons 04 (embeddings), 06 (RAG); Phase 19 Track B foundations (lessons 20-29); Phase 19 lesson 64 (chunking strategies)
-**Time:** ~90 minutes
+## Проблема
 
-## Learning Objectives
-- Implement BM25 from scratch from the Robertson and Sparck Jones formulation, with field weighting, document length normalization, and tunable k1 and b.
-- Build a dense retriever on top of a deterministic mock embedding so the loop runs offline.
-- Implement reciprocal rank fusion exactly as Cormack, Clarke, and Buettcher published it in 2009, and explain why it dominates score-weighted interpolation.
-- Tune the RRF k constant and the per-modality weights and read the trade-offs on a small fixture corpus.
+Лексический поиск побеждает, когда запрос несёт буквальный идентификатор, содержащийся в корпусе дословно. Запрос `AbortMultipartOnFail` возвращает правильную Go-функцию через BM25 за микросекунды. Тот же запрос, заэмбеженный, сидит на границе трёх кластеров сходства, и dense-ретривер первым ранжирует не тот файл.
 
-## The Problem
+Dense-поиск побеждает, когда запрос перефразирован прочь от буквальных токенов корпуса. Пользователь, спрашивающий «как мы обрабатываем отменённые загрузки», никогда не печатал слов abort или multipart. BM25 возвращает документационный чанк «загрузка больших файлов», потому что та страница содержит слово «загрузка». Dense-retrieval находит abort-функцию, в чьём summary упомянута отмена.
 
-Lexical search wins when the query carries a literal identifier the corpus contains verbatim. A query for `AbortMultipartOnFail` returns the right Go function via BM25 in microseconds. The same query, embedded, sits at the boundary of three similarity clusters and a dense retriever ranks the wrong file first.
+Выбор между двумя не статичен. Переменная — распределение запросов. Продакшен-RAG обслуживает оба класса с одного endpoint'а, поэтому retrieval обязан обслуживать оба сразу. Это и есть гибридный retrieval. Шаг слияния — та часть, которая обязана быть правильной.
 
-Dense search wins when the query is paraphrased away from the corpus's literal tokens. A user asking "how do we handle cancelled uploads" never typed the word abort or multipart. BM25 returns the documentation chunk on "uploading large files" because that page contains the word uploads. Dense retrieval finds the abort function whose summary mentions cancellation.
-
-The choice between the two is not a static one. The query distribution is the variable. A production RAG system handles both classes from the same endpoint, so retrieval has to handle both at once. That is hybrid retrieval. The merge step is the part that has to be right.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -37,110 +34,110 @@ flowchart LR
   RRF --> Top[Top-k Chunks]
 ```
 
-### BM25 in one paragraph
+### BM25 одним абзацем
 
-BM25 scores a query-document pair by summing, over query terms, an inverse document frequency factor multiplied by a saturating term-frequency factor that includes a length-normalization correction. Two knobs. `k1` controls term-frequency saturation; the default 1.5 is the published recommendation and you should not move it without a benchmark. `b` controls how much document length matters; the default 0.75 says longer documents are penalized, but not linearly.
+BM25 оценивает пару запрос-документ, суммируя по термам запроса фактор обратной документной частоты, умноженный на насыщающийся фактор частоты терма с поправкой нормализации длины. Две ручки. `k1` управляет насыщением частоты терма; дефолт 1.5 — опубликованная рекомендация, и двигать его без бенчмарка не стоит. `b` управляет тем, насколько важна длина документа; дефолт 0.75 говорит: длинные документы штрафуются, но не линейно.
 
-The IDF formula uses the smoothed Robertson and Sparck Jones definition, which is `log((N - df + 0.5) / (df + 0.5) + 1)`. The plus-one inside the log keeps the IDF positive when a term appears in more than half the corpus. This matters in small corpora where stopwords are technically rare.
+Формула IDF использует сглаженное определение Робертсона и Спарк-Джонс: `log((N - df + 0.5) / (df + 0.5) + 1)`. Плюс-один внутри логарифма держит IDF положительным, когда терм встречается в больше чем половине корпуса. Это важно в маленьких корпусах, где стоп-слова технически редки.
 
-Field weighting lets you tell BM25 that a match on the symbol name counts more than a match in the body. Implementation is a multiplier on the term counts during indexing, not at scoring time. That keeps the math identical and avoids a separate score per field.
+Взвешивание полей позволяет сказать BM25, что совпадение по имени символа стоит больше совпадения в теле. Реализация — множитель на счётчики термов при индексации, а не при скоринге. Так математика остаётся идентичной и не нужен отдельный скор на поле.
 
-### Dense retrieval in one paragraph
+### Dense retrieval одним абзацем
 
-Embed each chunk into a fixed-dimension vector with an embedding model. At query time, embed the query, cosine-rank every chunk by similarity, and return the top-k. The model is the variable that decides quality. The retrieval algorithm itself is two lines: dot product and sort.
+Заэмбеддите каждый чанк в вектор фиксированной размерности эмбеддинг-моделью. На запросе заэмбеддите запрос, отранжируйте каждый чанк по косинусу и верните топ-k. Модель — та переменная, которая решает качество. Сам алгоритм retrieval — две строки: скалярное произведение и сортировка.
 
-This lesson uses a deterministic hash-based embedding so you can read the fusion math without a network call. The hash sums token-keyed offsets into a 96-dimensional vector and normalizes. The cosine ranks are deterministic across runs, which is what the test suite requires.
+Этот урок использует детерминированный хеш-эмбеддинг, чтобы читать математику слияния без сетевого вызова. Хеш суммирует токен-ключевые смещения в 96-мерный вектор и нормализует. Косинусные ранги детерминированы между прогонами — этого требует тестовый набор.
 
-### Reciprocal rank fusion, the published formula
+### Reciprocal rank fusion, опубликованная формула
 
-Two ranked lists. For each candidate that appears in either list, sum its reciprocal-rank contributions. The 2009 paper used `1 / (k + rank)` with k equal to 60 as the default. Sort by total score. That is the whole algorithm.
+Два ранжированных списка. Для каждого кандидата, появившегося в любом списке, просуммируйте его вклады обратных рангов. Статья 2009 года использовала `1 / (k + rank)` с k, равным 60, по умолчанию. Отсортируйте по суммарному скору. Это весь алгоритм.
 
-The published constant k = 60 is not arbitrary. With k = 60 the rank-1 contribution is 1 / 61 and the rank-10 contribution is 1 / 70. The contribution decays slowly so deep candidates still vote. Smaller k makes the top results dominate. Larger k flattens the contribution curve.
+Опубликованная константа k = 60 не произвольна. При k = 60 вклад ранга 1 — это 1 / 61, а вклад ранга 10 — 1 / 70. Вклад затухает медленно, поэтому глубокие кандидаты всё ещё голосуют. Меньший k заставляет топ-результаты доминировать. Больший — уплощает кривую вкладов.
 
-Two tunable knobs in our implementation. The `k` constant. A pair of per-modality weights so you can boost BM25 or dense when you have prior evidence one is better on your corpus. Multiplying the rank contribution by the weight is the simplest principled implementation; it preserves the rank-decay shape and stays scale-free.
+Две настраиваемые ручки в нашей реализации. Константа `k`. Пара пер-модальных весов, чтобы бустить BM25 или dense, когда есть предварительные свидетельства, что одна из модальностей лучше на вашем корпусе. Умножение рангового вклада на вес — простейшая принципиальная реализация; она сохраняет форму рангового затухания и остаётся безмасштабной.
 
-### Why fusion beats score-weighted interpolation
+### Почему слияние бьёт скор-взвешенную интерполяцию
 
-BM25 scores are unbounded and corpus-dependent. Cosine similarities are bounded in -1 to 1. A linear combination `alpha * bm25 + (1 - alpha) * cosine` requires per-corpus alpha tuning and breaks every time you reindex. The rank-based fusion does not. Two ranks are comparable across modalities. The published RRF baseline beats score-interpolation in every public TREC track since 2010.
+BM25-скоры неограничены и зависят от корпуса. Косинусные сходства ограничены от -1 до 1. Линейная комбинация `alpha * bm25 + (1 - alpha) * cosine` требует пер-корпусной настройки alpha и ломается при каждой переиндексации. Ранговое слияние — нет. Два ранга сравнимы между модальностями. Опубликованный RRF-бейзлайн бьёт скор-интерполяцию на каждом публичном TREC-треке с 2010 года.
 
-This is the same argument you hear about RankFusion vs RRF in Vespa and Weaviate documentation. They came to the same conclusion: stay rank-based unless you have very strong evidence to interpolate scores.
+Тот же аргумент вы слышите про RankFusion против RRF в документации Vespa и Weaviate. Они пришли к тому же выводу: оставайтесь ранговыми, пока нет очень сильных свидетельств в пользу интерполяции скоров.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `tokenize(text)` - a fast regex tokenizer.
-- `BM25Index` - field-weighted, with `add` and `search` and tunable k1, b.
-- `mock_embed`, `DenseIndex` - the same deterministic embedding as lesson 64 so chunks are comparable.
-- `rrf(rankings, k, weights)` - the published fusion with multi-modality weights.
-- `HybridRetriever` - combines BM25 and dense.
-- A demo `main()` that loads a small fixture corpus, runs three queries that target each retriever's strength and weakness, and prints the rankings each modality produced plus the fused list.
+- `tokenize(text)` — быстрый regex-токенизатор.
+- `BM25Index` — с взвешиванием полей, `add` и `search`, настраиваемыми k1, b.
+- `mock_embed`, `DenseIndex` — тот же детерминированный эмбеддинг, что в уроке 64, чтобы чанки были сравнимы.
+- `rrf(rankings, k, weights)` — опубликованное слияние с мультимодальными весами.
+- `HybridRetriever` — сочетает BM25 и dense.
+- Демо `main()` — загружает маленький фикстурный корпус, гоняет три запроса, целящих в силу и слабость каждого ретривера, и печатает ранжирования каждой модальности плюс слитый список.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Read the demo output side by side. The literal identifier query lands at BM25 rank 1, dense rank 4, RRF rank 1. The paraphrased query lands at BM25 rank 6, dense rank 1, RRF rank 1. The ambiguous query lands at BM25 rank 3, dense rank 3, RRF rank 1. The fusion is not a tie-breaker; it is the system that wins on every query class.
+Читайте вывод демо бок о бок. Запрос с буквальным идентификатором приземляется на BM25-ранг 1, dense-ранг 4, RRF-ранг 1. Перефразированный запрос — BM25-ранг 6, dense-ранг 1, RRF-ранг 1. Неоднозначный запрос — BM25-ранг 3, dense-ранг 3, RRF-ранг 1. Слияние — не разрешатель ничьих; это система, побеждающая на каждом классе запросов.
 
-## Tuning the knobs
+## Настройка ручек
 
-| Knob | Default | Move it up when | Move it down when |
+| Ручка | Дефолт | Двигайте вверх, когда | Двигайте вниз, когда |
 |------|---------|----------------|------------------|
-| BM25 k1 | 1.5 | Terms repeat in documents and you want frequency to matter more | Documents are short and term repetition is noise |
-| BM25 b | 0.75 | Long documents really do say less per word | Document length is uncorrelated with topic |
-| RRF k | 60 | Deep candidates should keep voting | The top-1 should dominate |
-| BM25 weight | 1.0 | Your corpus contains literal identifiers and queries match them | Your queries are user-paraphrased |
-| Dense weight | 1.0 | Queries are paraphrased | Queries are literal |
+| BM25 k1 | 1.5 | Термы повторяются в документах, и частота должна значить больше | Документы короткие, и повторение термов — шум |
+| BM25 b | 0.75 | Длинные документы реально говорят меньше на слово | Длина документа не коррелирует с темой |
+| RRF k | 60 | Глубокие кандидаты должны продолжать голосовать | Топ-1 должен доминировать |
+| Вес BM25 | 1.0 | Корпус содержит буквальные идентификаторы, и запросы их матчат | Запросы перефразированы пользователями |
+| Вес dense | 1.0 | Запросы перефразированы | Запросы буквальны |
 
-Tune by re-running lesson 68's eval harness on your held-out query set, not by intuition.
+Настраивайте перегоном eval-харнеса урока 68 на отложенном наборе запросов, а не интуицией.
 
-## Failure modes the demo will hide
+## Режимы отказа, которые демо спрячет
 
-**Out-of-vocabulary tokens.** BM25's IDF is computed from the corpus, so terms only in the query contribute zero. Dense embeddings hallucinate a vector for the same term. On out-of-corpus identifiers the dense modality returns plausible-looking but wrong neighbors. The fusion absorbs this because BM25 returns nothing and the rank contribution drops out, but only if you de-duplicate by document, not by chunk.
+**Токены вне словаря.** IDF BM25 считается из корпуса, поэтому термы только из запроса вносят ноль. Dense-эмбеддинги галлюцинируют вектор для того же терма. На идентификаторах вне корпуса dense-модальность возвращает правдоподобно выглядящих, но неправильных соседей. Слияние это поглощает, потому что BM25 не возвращает ничего и ранговый вклад выпадает, — но только если вы дедуплицируете по документу, а не по чанку.
 
-**Stop-token domination.** BM25 against the word "the" produces a uniform ranking over the corpus. Filter stop tokens in the indexer or accept that high-IDF terms dominate naturally.
+**Доминирование стоп-токенов.** BM25 по слову «the» даёт равномерное ранжирование по корпусу. Фильтруйте стоп-токены в индексаторе или примите, что высоко-IDF-термы доминируют естественно.
 
-**Identical content across modalities.** If your corpus is small enough that the top-1 of BM25 is also the top-1 of dense, RRF gives you the same top-1 with the same neighbors. That is correct behavior, not a failure, but it makes the fusion look invisible. Add an adversarial query pair in your eval to verify the fusion is actually working.
+**Идентичное содержимое между модальностями.** Если корпус настолько мал, что топ-1 BM25 — это и топ-1 dense, RRF даёт тот же топ-1 с теми же соседями. Это корректное поведение, а не отказ, но слияние выглядит невидимым. Добавьте в eval враждебную пару запросов, чтобы проверить, что слияние действительно работает.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- Index BM25 in process; the bottleneck is the term-frequency dictionary, not the vectors.
-- Index dense vectors in a separate store (in this lesson we use a flat list; in production you would use HNSW).
-- Run both queries in parallel; the fusion is a constant-time merge over the union.
-- Persist the modality of each retrieved hit so a downstream reranker can see which modality voted for it.
+- Индексируйте BM25 in-process; узкое место — словарь частот термов, а не векторы.
+- Индексируйте dense-векторы в отдельном хранилище (в уроке — плоский список; в продакшене — HNSW).
+- Гоняйте оба запроса параллельно; слияние — merge за константное время по объединению.
+- Персистите модальность каждого извлечённого попадания, чтобы reranker ниже по течению видел, какая модальность за него голосовала.
 
-## Ship It
+## Отгрузите это
 
-Lesson 66 takes the fused top-k from this lesson and reranks with a cross-encoder. Lesson 68 evaluates the entire pipeline with precision, recall, MRR, and nDCG. The hybrid retriever in this lesson is the first stage of the end-to-end system in lesson 69.
+Урок 66 берёт слитый топ-k этого урока и реранжирует cross-encoder'ом. Урок 68 оценивает весь пайплайн через precision, recall, MRR и nDCG. Гибридный ретривер этого урока — первая стадия end-to-end-системы урока 69.
 
-## Exercises
+## Упражнения
 
-1. Replace `mock_embed` with a real model from your provider. Re-run the demo and report how the dense-only ranking changes on the paraphrased query.
-2. Add a third modality: chunk summaries indexed separately and fused as a third ranked list. Measure the gain.
-3. Sweep RRF k across 10, 30, 60, 100, 200. Plot the recall@k curve from lesson 68. Report the value of k where the curve peaks on your corpus.
-4. Implement BM25F properly (per-field length normalization rather than the multiplier trick) and compare on a corpus where symbol matches matter most.
+1. Замените `mock_embed` настоящей моделью вашего провайдера. Перегоните демо и доложите, как меняется dense-only-ранжирование на перефразированном запросе.
+2. Добавьте третью модальность: summary чанков, индексируемые отдельно и сливаемые третьим ранжированным списком. Измерьте прирост.
+3. Просвипайте RRF k по 10, 30, 60, 100, 200. Постройте кривую recall@k из урока 68. Доложите значение k, где кривая пикует на вашем корпусе.
+4. Реализуйте BM25F как следует (пер-полевая нормализация длины вместо трюка с множителем) и сравните на корпусе, где совпадения по символам важнее всего.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| BM25 | "Lexical search" | Probabilistic ranking with idf x saturating tf x length normalization |
-| RRF | "Rank fusion" | Sum of 1 / (k + rank) across ranked lists; k = 60 default |
-| k1 | "TF saturation" | Controls how fast a repeated term stops adding more score |
-| b | "Length penalty" | 0 means ignore document length, 1 means full normalization |
-| Field weighting | "Symbol boost" | Repeat tokens during indexing to boost matches in that field |
-| Rank-based vs score-based fusion | "Why RRF beats linear" | Ranks are comparable across modalities; scores are not |
+| BM25 | «Лексический поиск» | Вероятностное ранжирование: idf x насыщающийся tf x нормализация длины |
+| RRF | «Слияние рангов» | Сумма 1 / (k + rank) по ранжированным спискам; дефолт k = 60 |
+| k1 | «Насыщение TF» | Управляет тем, как быстро повторяющийся терм перестаёт добавлять скор |
+| b | «Штраф за длину» | 0 — игнорировать длину документа, 1 — полная нормализация |
+| Взвешивание полей | «Буст символов» | Повторять токены при индексации, бустя совпадения в этом поле |
+| Ранговое против скорового слияние | «Почему RRF бьёт линейное» | Ранги сравнимы между модальностями; скоры — нет |
 
-## Further Reading
+## Дополнительное чтение
 
 - Cormack, Clarke, Buettcher, "Reciprocal Rank Fusion outperforms Condorcet and individual rank learning methods", SIGIR 2009
-- Robertson, Walker, Beaulieu, Gatford, Payne, "Okapi at TREC-3" (the original BM25 paper)
+- Robertson, Walker, Beaulieu, Gatford, Payne, "Okapi at TREC-3" (оригинальная статья BM25)
 - [Vespa: Hybrid Retrieval with BM25 and Embeddings](https://docs.vespa.ai/en/tutorials/hybrid-search.html)
 - [Weaviate: Hybrid Search](https://weaviate.io/developers/weaviate/search/hybrid)
-- Phase 11 lesson 06 - RAG fundamentals
-- Phase 19 lesson 64 - chunkers whose output is indexed here
-- Phase 19 lesson 66 - cross-encoder reranker that consumes the fused top-k
+- Фаза 11, урок 06 — основы RAG
+- Фаза 19, урок 64 — чанкеры, чей выход здесь индексируется
+- Фаза 19, урок 66 — cross-encoder-reranker, потребляющий слитый топ-k

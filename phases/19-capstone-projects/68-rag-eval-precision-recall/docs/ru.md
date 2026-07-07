@@ -1,35 +1,32 @@
 # RAG Evaluation: Precision, Recall, MRR, nDCG, Faithfulness, Answer Relevance
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Если вы не можете оценить свой retrieval и свой ответ одновременно, систему отгружать нельзя. Это не одна и та же метрика, и один и тот же промпт отказывает по разным осям.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 11, уроки 06 (RAG), 10 (оценка); Фаза 19, фундамент трека B (уроки 20–29); Фаза 19, уроки 64, 65, 66, 67
+**Время:** ~90 минут
 
-> If you cannot grade your retrieval and your answer at the same time, you cannot ship the system. The two are not the same metric and the same prompt fails on different axes.
+## Цели обучения
+- Вычислить четыре retrieval-метрики из эталонных qrels: precision@k, recall@k, MRR (mean reciprocal rank) и nDCG@k.
+- Вычислить две метрики оценки ответа: faithfulness (каждое утверждение заземлено в извлечённом контексте) и answer relevance (ответ адресует вопрос).
+- Построить фикстурный qrels-файл (запросы, эталонные id документов, эталонный текст ответа), который eval читает end to end.
+- Читать значения метрик, диагностируя, где отказывает пайплайн: retrieval, ранжирование, генерация или заземление.
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 11 lessons 06 (RAG), 10 (evaluation); Phase 19 Track B foundations (lessons 20-29); Phase 19 lessons 64, 65, 66, 67
-**Time:** ~90 minutes
+## Проблема
 
-## Learning Objectives
-- Compute four retrieval metrics from gold qrels: precision@k, recall@k, MRR (mean reciprocal rank), and nDCG@k.
-- Compute two answer-grade metrics: faithfulness (every claim grounded in retrieved context) and answer relevance (the answer addresses the question).
-- Build a fixture qrels file (queries, gold doc ids, gold answer text) that the eval reads end to end.
-- Read the metric values to diagnose where a pipeline is failing: retrieval, ranking, generation, or grounding.
+В RAG-системе минимум четыре движущиеся части: чанкер, ретривер, reranker, генератор. Любая из них может быть причиной неверного ответа. Без по-стадийных метрик вы летите вслепую.
 
-## The Problem
+Пользователь репортит неверный ответ. Это чанкер разрезал спан ответа? Ретривер не включил чанк в топ-k? Reranker вытолкнул правильный чанк дальше первой позиции? Или генератор проигнорировал чанк и сочинил? По одному ответу не скажешь. Нужны:
 
-A RAG system has at least four moving parts: chunker, retriever, reranker, generator. Any of them can be the cause of a wrong answer. Without per-stage metrics you are flying blind.
+- Retrieval-метрики — оценивать, что вышло из ретривера.
+- Метрики ранжирования — оценивать, где правильный чанк стоял в порядке.
+- Faithfulness — оценивать, остался ли генератор внутри извлечённого контекста.
+- Answer relevance — оценивать, адресует ли ответ вопрос вообще.
 
-A user reports a wrong answer. Is it because the chunker cut the answer span? Is it because the retriever did not include the chunk in top-k? Is it because the reranker pushed the right chunk past position one? Is it because the generator ignored the chunk and made something up? You cannot tell from the answer alone. You need:
+Урок строит все шесть поверх фикстурного qrels-файла. Eval офлайновый и детерминированный; в продакшене mock-LLM-судья меняется на настоящего.
 
-- Retrieval metrics to grade what came out of the retriever.
-- Ranking metrics to grade where the right chunk sat in the order.
-- Faithfulness to grade whether the generator stayed inside the retrieved context.
-- Answer relevance to grade whether the answer addresses the question at all.
-
-This lesson builds all six on top of a fixture qrels file. The eval is offline and deterministic; in production you swap the mock LLM-as-judge for a real one.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart LR
@@ -47,41 +44,41 @@ flowchart LR
 
 ### Precision@k
 
-Of the top-k documents the retriever returned, what fraction are in the gold set? If gold has three documents and the top-3 returns two of them and one wrong one, precision@3 is 2 / 3. Use precision when the cost of an irrelevant retrieved chunk is high (the generator wastes tokens on it, or the chunk poisons the answer).
+Из топ-k документов, которые вернул ретривер, какая доля — в эталонном множестве? Если эталон — три документа, а топ-3 вернул два из них плюс один неверный, precision@3 равен 2 / 3. Используйте precision, когда цена нерелевантного извлечённого чанка высока (генератор тратит на него токены, или чанк отравляет ответ).
 
 ### Recall@k
 
-Of the gold documents, what fraction are in the top-k? If gold has three documents and the top-5 contains all three, recall@5 is 1.0. Use recall when the cost of a missed answer is high (you would rather see one extra wrong chunk than miss the answer chunk entirely).
+Из эталонных документов какая доля попала в топ-k? Если эталон — три документа, а топ-5 содержит все три, recall@5 равен 1.0. Используйте recall, когда цена пропущенного ответа высока (лучше увидеть один лишний неверный чанк, чем полностью упустить чанк с ответом).
 
-In production RAG the metric people usually quote is recall@k. Generation can drop irrelevant chunks easily; it cannot invent an answer from a chunk it never saw.
+В продакшен-RAG обычно цитируют recall@k. Генерация легко отбрасывает нерелевантные чанки; она не может изобрести ответ из чанка, которого не видела.
 
 ### MRR (Mean Reciprocal Rank)
 
-For each query, find the position of the first relevant document in the ranked list. The reciprocal rank is 1 / position. Mean across the query set. MRR is a single-number summary of how well the retriever puts the best answer at the top.
+Для каждого запроса найти позицию первого релевантного документа в ранжированном списке. Обратный ранг — 1 / позиция. Среднее по набору запросов. MRR — однозначная сводка того, насколько хорошо ретривер ставит лучший ответ наверх.
 
-MRR weights position-1 heavily. A query where the gold doc is at rank 1 contributes 1.0. Rank 2 contributes 0.5. Rank 10 contributes 0.1. The metric is dominated by the top of the list.
+MRR сильно взвешивает первую позицию. Запрос с эталоном на ранге 1 вносит 1.0. Ранг 2 — 0.5. Ранг 10 — 0.1. Метрика доминируется верхом списка.
 
 ### nDCG@k
 
-Normalized Discounted Cumulative Gain. The full formula assigns a gain to each retrieved document (often 1 for relevant, 0 for not), discounts by the log of the position, sums, and divides by the ideal DCG (the DCG you would have if you ranked perfectly). Range 0 to 1.
+Normalized Discounted Cumulative Gain. Полная формула назначает gain каждому извлечённому документу (часто 1 для релевантного, 0 для нет), дисконтирует логарифмом позиции, суммирует и делит на идеальный DCG (тот DCG, который был бы при идеальном ранжировании). Диапазон от 0 до 1.
 
-nDCG accommodates graded relevance: the gold can say "doc A is 3, doc B is 2, doc C is 1". MRR and recall@k flatten everything to binary. Use nDCG when the corpus has multiple partially-relevant documents per query.
+nDCG вмещает градуированную релевантность: эталон может сказать «документ A — 3, B — 2, C — 1». MRR и recall@k уплощают всё до бинарного. Используйте nDCG, когда в корпусе несколько частично-релевантных документов на запрос.
 
 ### Faithfulness
 
-For each claim in the generated answer, check whether the claim is supported by the retrieved context. The standard implementation uses an LLM-as-judge prompt that takes (claim, context) and returns yes or no. The metric is the fraction of claims that pass.
+Для каждого утверждения сгенерированного ответа проверить, поддержано ли оно извлечённым контекстом. Стандартная реализация — LLM-судья, берущий (утверждение, контекст) и возвращающий да или нет. Метрика — доля прошедших утверждений.
 
-Faithfulness catches the generator failure mode where the model invents content. Even if the retriever returned the right chunks, a generator that hallucinates is broken. Faithfulness is also called groundedness, support, attribution.
+Faithfulness ловит режим отказа генератора, изобретающего содержание. Даже если ретривер вернул правильные чанки, галлюцинирующий генератор сломан. Faithfulness также называют groundedness, support, attribution.
 
-This lesson implements faithfulness with a deterministic mock judge that checks whether each claim's tokens overlap the retrieved context by a threshold. In production you swap to a real model call. The shape of the metric is the same.
+Урок реализует faithfulness детерминированным mock-судьёй, проверяющим пересечение токенов утверждения с извлечённым контекстом по порогу. В продакшене меняете на настоящий вызов модели. Форма метрики та же.
 
 ### Answer relevance
 
-Does the answer actually address the question? Faithfulness asks "is the answer grounded in the context?". Answer relevance asks "is the answer grounded in the question?". A faithful but off-topic answer scores high on faithfulness and low on relevance. A short, on-topic answer that ignores the context scores high on relevance and low on faithfulness.
+Адресует ли ответ вопрос вообще? Faithfulness спрашивает: «заземлён ли ответ в контексте?». Answer relevance спрашивает: «заземлён ли ответ в вопросе?». Верный контексту, но не по теме ответ — высокая faithfulness, низкая relevance. Короткий по теме ответ, игнорирующий контекст, — высокая relevance, низкая faithfulness.
 
-The standard implementation also uses LLM-as-judge: take (question, answer) and ask whether the answer addresses the question. This lesson implements a token-overlap-plus-judge stand-in.
+Стандартная реализация тоже LLM-судья: взять (вопрос, ответ) и спросить, адресует ли ответ вопрос. Урок реализует заменитель из пересечения токенов плюс судьи.
 
-## The fixture qrels
+## Фикстурные qrels
 
 ```python
 {
@@ -93,95 +90,95 @@ The standard implementation also uses LLM-as-judge: take (question, answer) and 
 }
 ```
 
-Each query carries:
-- the query string,
-- a set of gold doc ids (for precision / recall / MRR),
-- a graded relevance dict (for nDCG),
-- the gold answer substring (kept as reference metadata on each qrel; faithfulness in this lesson is computed by judging extracted claims against the retrieved context, not against this substring).
+Каждый запрос несёт:
+- строку запроса,
+- множество эталонных id документов (для precision / recall / MRR),
+- dict градуированной релевантности (для nDCG),
+- эталонную подстроку ответа (хранится как референсная метаданная на каждом qrel; faithfulness в уроке считается судейством извлечённых утверждений против извлечённого контекста, а не против этой подстроки).
 
-In production you label these. This lesson ships a hand-built fixture so the eval runs out of the box.
+В продакшене вы это размечаете. Урок поставляет собранную вручную фикстуру, чтобы eval работал из коробки.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `precision_at_k(retrieved, gold, k)` - the literal definition.
-- `recall_at_k(retrieved, gold, k)` - the literal definition.
-- `mean_reciprocal_rank(retrieved_list_of_lists, gold_list)` - the mean over queries.
-- `ndcg_at_k(retrieved, graded_relevance, k)` - DCG / IDCG with binary or graded gains.
-- `extract_claims(answer)` - splits an answer into sentence-shaped claims.
-- `faithfulness(claims, context_texts, judge)` - fraction of claims judged supported.
-- `answer_relevance(question, answer, judge)` - judge on whether the answer addresses the question.
-- `MockJudge` - deterministic token-overlap judge so the eval runs offline.
-- `evaluate_pipeline(pipeline_fn, qrels, ks)` - the orchestrator that runs every metric.
-- A demo that runs three pipeline variants (chunker baseline, hybrid retrieval, hybrid + rerank) against the qrels and prints a metrics table.
+- `precision_at_k(retrieved, gold, k)` — буквальное определение.
+- `recall_at_k(retrieved, gold, k)` — буквальное определение.
+- `mean_reciprocal_rank(retrieved_list_of_lists, gold_list)` — среднее по запросам.
+- `ndcg_at_k(retrieved, graded_relevance, k)` — DCG / IDCG с бинарными или градуированными gains.
+- `extract_claims(answer)` — режет ответ на утверждения-предложения.
+- `faithfulness(claims, context_texts, judge)` — доля утверждений, признанных поддержанными.
+- `answer_relevance(question, answer, judge)` — судья на тему, адресует ли ответ вопрос.
+- `MockJudge` — детерминированный судья по пересечению токенов, чтобы eval работал офлайн.
+- `evaluate_pipeline(pipeline_fn, qrels, ks)` — оркестратор, гоняющий каждую метрику.
+- Демо: гоняет три варианта пайплайна (бейзлайн-чанкер, гибридный retrieval, гибрид + rerank) против qrels и печатает таблицу метрик.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-The output shows precision@k, recall@k, MRR, nDCG@k, faithfulness, and answer relevance for each variant in a single metrics table. The hybrid retrieval row beats the chunker baseline on recall; the rerank row beats hybrid on MRR.
+Вывод показывает precision@k, recall@k, MRR, nDCG@k, faithfulness и answer relevance каждого варианта одной таблицей метрик. Строка гибридного retrieval бьёт бейзлайн-чанкер по recall; строка rerank бьёт гибрид по MRR.
 
-## Reading the metrics to diagnose failures
+## Чтение метрик для диагностики отказов
 
-| Symptom | Likely cause | What to fix |
+| Симптом | Вероятная причина | Что чинить |
 |---------|-------------|-------------|
-| Low recall@k, low precision@k | Chunker cut the answer or retriever cannot find it | Chunker boundaries (lesson 64) or retriever modality (lesson 65) |
-| Decent recall@k, low MRR | Right chunk is in top-k but not at position 1 | Reranker (lesson 66) |
-| High MRR, low faithfulness | Generator invents content despite right context | Generation prompt; force-cite-or-refuse |
-| High faithfulness, low relevance | Answer is grounded but off-topic | Query rewriter (lesson 67) or generation prompt |
-| All four high, users still complain | Eval set is unrepresentative | Expand qrels with real user queries |
+| Низкие recall@k и precision@k | Чанкер разрезал ответ или ретривер его не находит | Границы чанкера (урок 64) или модальность ретривера (урок 65) |
+| Приличный recall@k, низкий MRR | Правильный чанк в топ-k, но не на первой позиции | Reranker (урок 66) |
+| Высокий MRR, низкая faithfulness | Генератор изобретает содержание при правильном контексте | Промпт генерации; force-cite-or-refuse |
+| Высокая faithfulness, низкая relevance | Ответ заземлён, но не по теме | Переписыватель запросов (урок 67) или промпт генерации |
+| Все четыре высокие, пользователи всё равно жалуются | Eval-набор нерепрезентативен | Расширьте qrels настоящими пользовательскими запросами |
 
-## Failure modes the demo will hide
+## Режимы отказа, которые демо спрячет
 
-**LLM-as-judge bias.** A model judges its own outputs as more faithful than they are. Use a different model family for the judge than the generator, or hand-grade a sample.
+**Смещение LLM-судьи.** Модель судит собственные выходы как более верные, чем они есть. Берите судью из другого семейства моделей, чем генератор, или вручную оценивайте выборку.
 
-**Qrels rot.** The gold answers drift as the corpus changes. A doc that was gold for q1 in January 2024 is no longer the right answer in October 2024 because the team renamed the function. Schedule a quarterly qrels review.
+**Гниение qrels.** Эталонные ответы дрейфуют с изменением корпуса. Документ, бывший эталоном для q1 в январе 2024-го, к октябрю 2024-го — уже не правильный ответ, потому что команда переименовала функцию. Планируйте квартальную ревизию qrels.
 
-**Faithfulness micro-checks miss macro-claims.** Per-sentence faithfulness can pass while the overall answer's structure misleads. Add a sample-level qualitative review on top of the automated metric.
+**Микропроверки faithfulness упускают макроутверждения.** По-предложенческая faithfulness может проходить, пока общая структура ответа вводит в заблуждение. Добавьте качественную ревизию на уровне сэмплов поверх автоматической метрики.
 
-**Recall@k masks per-query failures.** A 90% average recall can hide that one query class always misses. Slice the qrels by query class (literal, paraphrased, multi-topic) and report per-slice.
+**Recall@k маскирует пер-запросные отказы.** Средний recall 90% может прятать то, что один класс запросов всегда промахивается. Режьте qrels по классам запросов (буквальный, перефразированный, многотемный) и репортите по срезам.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- Run the eval on every retriever or generator change. Treat a recall@k regression like a test failure.
-- Persist the metric trace per query. When a user complains, look up the qrels entry that matches and see whether it would have been caught.
-- Tier the qrels: a smoke set of 20 queries that runs in CI; a regression set of 200 that runs nightly; a deep set of 2000 that runs weekly.
+- Гоняйте eval на каждом изменении ретривера или генератора. Трактуйте регрессию recall@k как падение теста.
+- Персистите трейс метрик на запрос. Когда пользователь жалуется, находите соответствующую запись qrels и смотрите, поймалось ли бы это.
+- Разделите qrels на ярусы: smoke-набор из 20 запросов в CI; регрессионный из 200 еженощно; глубокий из 2000 еженедельно.
 
-## Ship It
+## Отгрузите это
 
-Lesson 69 wires the entire pipeline (chunker, retriever, reranker, generator) and runs this eval against the end-to-end system.
+Урок 69 сшивает весь пайплайн (чанкер, ретривер, reranker, генератор) и гоняет этот eval против end-to-end-системы.
 
-## Exercises
+## Упражнения
 
-1. Add a fifth retrieval metric: hit-rate@k. Compare it against recall@k. Explain when they differ.
-2. Implement a graded faithfulness: 0 (unsupported), 1 (partially supported), 2 (fully supported). Update the metric accordingly.
-3. Replace the mock judge with a real model call. Measure the disagreement between the mock and the real judge on the fixture.
-4. Add a query-class slice ("literal", "paraphrased", "multi-topic"). Report per-slice metrics.
-5. Add an "answer length" metric and correlate it with faithfulness. Plot the curve.
+1. Добавьте пятую retrieval-метрику: hit-rate@k. Сравните с recall@k. Объясните, когда они различаются.
+2. Реализуйте градуированную faithfulness: 0 (не поддержано), 1 (частично), 2 (полностью). Обновите метрику соответственно.
+3. Замените mock-судью настоящим вызовом модели. Измерьте расхождение mock и настоящего судьи на фикстуре.
+4. Добавьте срез по классу запроса («буквальный», «перефразированный», «многотемный»). Репортите метрики по срезам.
+5. Добавьте метрику «длина ответа» и скоррелируйте её с faithfulness. Постройте кривую.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|-----------------|------------------------|
-| Precision@k | "Hit rate over retrieved" | Fraction of top-k that are gold |
-| Recall@k | "Hit rate over gold" | Fraction of gold in top-k |
-| MRR | "First-hit position" | Mean of 1 / rank of first relevant document |
-| nDCG@k | "Graded ranking quality" | DCG over the top-k divided by ideal DCG |
-| Faithfulness | "Groundedness" | Fraction of answer claims supported by retrieved context |
-| Answer relevance | "Did it address the question?" | Whether the answer matches the question's intent |
-| Qrels | "Gold labels" | The labeled set of queries and their gold documents and answers |
+| Precision@k | «Hit rate по извлечённому» | Доля топ-k, являющихся эталоном |
+| Recall@k | «Hit rate по эталону» | Доля эталона в топ-k |
+| MRR | «Позиция первого попадания» | Среднее 1 / ранга первого релевантного документа |
+| nDCG@k | «Градуированное качество ранжирования» | DCG по топ-k, делённый на идеальный DCG |
+| Faithfulness | «Groundedness» | Доля утверждений ответа, поддержанных извлечённым контекстом |
+| Answer relevance | «Адресован ли вопрос?» | Совпадает ли ответ с замыслом вопроса |
+| Qrels | «Эталонные метки» | Размеченный набор запросов с эталонными документами и ответами |
 
-## Further Reading
+## Дополнительное чтение
 
-- Buckley, Voorhees, "Evaluating Evaluation Measure Stability", SIGIR 2000 - the canonical paper on ranking metrics
-- Jarvelin, Kekalainen, "Cumulated Gain-based Evaluation of IR Techniques" - the nDCG paper
+- Buckley, Voorhees, "Evaluating Evaluation Measure Stability", SIGIR 2000 — каноническая статья о метриках ранжирования
+- Jarvelin, Kekalainen, "Cumulated Gain-based Evaluation of IR Techniques" — статья nDCG
 - [Ragas: Automated Evaluation of RAG Pipelines](https://docs.ragas.io)
 - [Anthropic, Evaluating RAG](https://www.anthropic.com/news/evaluating-rag)
-- Phase 11 lesson 10 - evaluation framework foundations
-- Phase 19 lessons 64-67 - components evaluated here
-- Phase 19 lesson 69 - the end-to-end pipeline this eval grades
+- Фаза 11, урок 10 — основы фреймворка оценки
+- Фаза 19, уроки 64–67 — компоненты, оцениваемые здесь
+- Фаза 19, урок 69 — end-to-end-пайплайн, который этот eval оценивает

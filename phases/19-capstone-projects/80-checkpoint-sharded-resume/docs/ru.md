@@ -1,29 +1,26 @@
 # Sharded Checkpoint and Atomic Resume
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Обучающая джоба на 70B параметров ставится на паузу отказом ноды каждые несколько часов. Формат чекпоинта решает, потеряете вы 30 минут или 30 часов. Шардированный чекпоинт пишет шард каждого ранга параллельно и записывает принадлежность в манифест. Resume загружает шард каждого ранга из его файла, реконструирует состояние на том же world size, и оптимизатор шагает так, будто ничего не случилось. Атомарная запись не даёт полузаписанному чекпоинту отравить следующий resume.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек C, уроки 42–49
+**Время:** ~90 минут
 
-> A 70B-parameter training job is paused by a node failure every few hours. The checkpoint format decides whether you lose 30 minutes or 30 hours. A sharded checkpoint writes every rank's shard in parallel and records ownership in a manifest. Resume loads each rank's shard from its own file, reconstructs the state on the same world size, and the optimiser steps as if nothing happened. Atomic write keeps a half-finished checkpoint from poisoning the next resume.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track C lessons 42-49
-**Time:** ~90 min
+- Сохранить мульти-ранговый чекпоинт как пер-ранговый файл-шард плюс манифест, записывающий, какой ранг чем владеет.
+- Использовать паттерн атомарной записи (запись во временный путь, затем rename), чтобы краш посреди записи никогда не порождал полузаписанный чекпоинт.
+- Возобновиться из манифеста, верифицируя байт-точное состояние и fp16-параметров, и состояния оптимизатора ZeRO на каждом ранге.
+- Защитить схему манифеста от трёх режимов отказа: смена world-size, несовпадение числа шардов и частичная запись.
 
-## Learning Objectives
+## Проблема
 
-- Save a multi-rank checkpoint as a per-rank shard file plus a manifest that records which rank owns what.
-- Use the atomic write pattern (write to a temp path then rename) so a crash mid-write never produces a half-finished checkpoint.
-- Resume from the manifest, verifying byte-equal state for both fp16 parameters and the ZeRO optimiser state on every rank.
-- Defend the manifest schema against the three failure modes: world-size change, shard count mismatch, and partial write.
+Обычный чекпоинт читает все параметры и состояние оптимизатора в ранг 0, гатерит и пишет один файл. Для модели 70B это 1.1 ТБ состояния через сетевой порт одного ранга. Запись блокирует каждый другой ранг, потому что они простаивают в ожидании гатера. Полоса IO — сетевой линк самой медленной одиночной GPU, а не агрегат. На настоящем кластере шаг гатер-затем-запись может занять дольше предыдущего часа обучения, а значит, джоба отгружает меньше одного чекпоинта за день обучения.
 
-## The Problem
+Шардированные чекпоинты переворачивают паттерн: каждый ранг пишет свой шард в свой файл параллельно. Манифест записывает, какой ранг чем владел, чтобы resume мог положить каждый шард обратно откуда он взялся. Агрегатная полоса записи масштабируется с кластером. Чекпоинт на 1 ТБ, занимавший 4 часа через один ранг, занимает 4 минуты через 64 ранга. Плюс манифест даёт контракт для несовместимых resume: смена world-size обнаружима, частичные записи обнаружимы, а путь загрузки может падать громко, а не молча использовать протухшие данные.
 
-A vanilla checkpoint reads all parameters and optimiser state into rank 0, gathers, and writes a single file. For a 70B model that is 1.1 TB of state through one rank's network port. The write blocks every other rank because they idle waiting for the gather. The IO bandwidth is the slowest single GPU's network link, not the aggregate. On a real cluster the gather-then-write step can take longer than the previous training hour, which means the job ships less than one checkpoint per training day.
-
-Sharded checkpoints flip the pattern: every rank writes its own shard to its own file in parallel. The manifest records which rank owned which shard so resume can put each shard back where it came from. The aggregate write bandwidth scales with the cluster. A 1 TB checkpoint that took 4 hours through one rank takes 4 minutes through 64 ranks. Plus the manifest gives you a contract for incompatible resumes: world-size change is detectable, partial writes are detectable, and the load path can fail loudly rather than silently using stale data.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -36,7 +33,7 @@ flowchart TD
   R --> Done[checkpoint complete]
 ```
 
-### Manifest schema
+### Схема манифеста
 
 ```json
 {
@@ -51,87 +48,87 @@ flowchart TD
 }
 ```
 
-Three fields are load-bearing. `world_size` makes a resume on a different size loudly fail rather than silently corrupt. `sha256` per shard catches partial or corrupted writes. `param_shard_offset` and `param_shard_numel` per shard let the loader reconstruct the flat parameter tensor at the correct position.
+Три поля несущие. `world_size` заставляет resume на другом размере громко падать, а не молча портить. `sha256` на шард ловит частичные или повреждённые записи. `param_shard_offset` и `param_shard_numel` на шард позволяют загрузчику реконструировать плоский тензор параметров в правильной позиции.
 
-### Atomic write
+### Атомарная запись
 
-The standard pattern: write every shard to `<name>.tmp`, write the manifest to `manifest.json.tmp`, fsync each, then rename. POSIX rename within the same filesystem is atomic; either the new file is fully present or the old one is. A crash before the final rename leaves the previous checkpoint as the live one. Without atomic write a crash can leave a partial shard with a present manifest that points at it, and the load corrupts the optimiser state on resume.
+Стандартный паттерн: писать каждый шард в `<name>.tmp`, писать манифест в `manifest.json.tmp`, fsync каждый, затем rename. POSIX-rename внутри одной файловой системы атомарен; либо новый файл присутствует целиком, либо старый. Краш до финального rename оставляет предыдущий чекпоинт живым. Без атомарной записи краш может оставить частичный шард с присутствующим манифестом, указывающим на него, и загрузка портит состояние оптимизатора при resume.
 
-### Three failure modes the schema must defend against
+### Три режима отказа, от которых схема должна защищать
 
-| Failure | Symptom | Defence |
+| Отказ | Симптом | Защита |
 |---------|---------|---------|
-| World-size change | resume on N=8 with manifest from N=4 | world_size mismatch in manifest, fail loudly |
-| Shard count mismatch | resume sees fewer rank*.bin files than shards in manifest | enumerate shards, verify every one exists |
-| Partial write | shard file truncated mid-flush | sha256 verification on load |
+| Смена world-size | resume на N=8 с манифестом от N=4 | несовпадение world_size в манифесте, громкий сбой |
+| Несовпадение числа шардов | resume видит меньше файлов rank*.bin, чем шардов в манифесте | перечислить шарды, проверить существование каждого |
+| Частичная запись | файл шарда обрезан посреди flush | верификация sha256 при загрузке |
 
-Each defence rejects the bad load early; the alternative is silent corruption that surfaces 100 steps later when loss goes to NaN.
+Каждая защита отклоняет плохую загрузку рано; альтернатива — молчаливое повреждение, всплывающее на 100 шагов позже, когда лосс уходит в NaN.
 
-### Why per-rank files, not one big file
+### Почему пер-ранговые файлы, а не один большой
 
-Concurrent write to one file via `O_APPEND` works on POSIX for byte-aligned writes, but in practice the offsets within one shard span MB-sized regions and the locking dominates. Per-rank files have no contention and benefit from striping when the underlying filesystem is parallel (Lustre, GPFS). Production stacks (DeepSpeed, FSDP, NeMo) all use per-rank files for that reason.
+Конкурентная запись в один файл через `O_APPEND` работает на POSIX для байт-выровненных записей, но на практике смещения внутри одного шарда охватывают MB-регионы, и блокировки доминируют. У пер-ранговых файлов нет конкуренции, и они выигрывают от striping, когда нижележащая ФС параллельна (Lustre, GPFS). Продакшен-стеки (DeepSpeed, FSDP, NeMo) все используют пер-ранговые файлы по этой причине.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `ShardManifest` dataclass with the schema above plus `to_json`/`from_json`.
-- `save_sharded(state_dict_per_rank, dir, step)` that writes every rank's binary state to its own file using the atomic temp-then-rename pattern, then writes the manifest.
-- `load_sharded(dir, expected_world_size)` that reads the manifest, verifies each shard's sha256, and returns per-rank state dicts.
-- A round-trip test: build per-rank state, save, load, assert byte-equal.
+- Датакласс `ShardManifest` со схемой выше плюс `to_json`/`from_json`.
+- `save_sharded(state_dict_per_rank, dir, step)` — пишет бинарное состояние каждого ранга в его файл паттерном атомарной записи temp-затем-rename, затем пишет манифест.
+- `load_sharded(dir, expected_world_size)` — читает манифест, верифицирует sha256 каждого шарда и возвращает пер-ранговые state dict'ы.
+- Round-trip-тест: построить пер-ранговое состояние, сохранить, загрузить, утвердить байт-точность.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: 4 shard files plus manifest written, then reloaded with byte-equal verification.
+Вывод: 4 файла-шарда плюс манифест записаны, затем перезагружены с байт-точной верификацией.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns harden the checkpoint enough to ship.
+Три паттерна укрепляют чекпоинт до отгружаемого состояния.
 
-**Async write.** Production stacks issue the checkpoint write on a separate thread or process so training continues. The barrier is at next checkpoint: do not start the next save until the previous one is complete. DeepSpeed's `async_io` flag does exactly this. The lesson keeps the write synchronous so the steps are visible.
+**Асинхронная запись.** Продакшен-стеки запускают запись чекпоинта на отдельном треде или процессе, чтобы обучение продолжалось. Барьер — на следующем чекпоинте: не начинать следующее сохранение, пока предыдущее не завершено. Флаг `async_io` DeepSpeed делает ровно это. Урок держит запись синхронной, чтобы шаги были видны.
 
-**Local fast disk first, then async upload.** Write to local NVMe (fast) then async-upload to S3 or GCS. The two-tier pattern keeps the in-cluster checkpoint fast for resume while shipping a durable copy off-cluster for archive. The manifest carries the local path; an upload manifest carries the remote path.
+**Локальный быстрый диск сначала, потом async-загрузка.** Писать на локальный NVMe (быстро), затем async-загружать в S3 или GCS. Двухуровневый паттерн держит внутрикластерный чекпоинт быстрым для resume, отправляя долговечную копию за пределы кластера в архив. Манифест несёт локальный путь; upload-манифест несёт удалённый.
 
-**Rotation matters.** Production runs keep the last K checkpoints (typically 3-5) and rotate the oldest. Without rotation the disk fills mid-run and the next checkpoint fails. With rotation the next save deletes the oldest first, freeing the budget.
+**Ротация важна.** Продакшен-прогоны держат последние K чекпоинтов (обычно 3–5) и ротируют старейший. Без ротации диск заполняется посреди прогона, и следующий чекпоинт падает. С ротацией следующее сохранение сначала удаляет старейший, освобождая бюджет.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **DeepSpeed checkpointing.** `deepspeed.save_checkpoint(tag=step)` writes per-rank files and a `latest` file pointing at the active tag.
-- **PyTorch FSDP checkpointing.** `torch.distributed.checkpoint` saves sharded state with a `Planner` that decides per-rank layout.
-- **NeMo.** Wraps DeepSpeed and FSDP with a uniform `save_to_checkpoint` API that adds metadata.
+- **Чекпоинтинг DeepSpeed.** `deepspeed.save_checkpoint(tag=step)` пишет пер-ранговые файлы и файл `latest`, указывающий на активный тег.
+- **Чекпоинтинг PyTorch FSDP.** `torch.distributed.checkpoint` сохраняет шардированное состояние с `Planner`, решающим пер-ранговую раскладку.
+- **NeMo.** Оборачивает DeepSpeed и FSDP единым API `save_to_checkpoint`, добавляющим метаданные.
 
-## Ship It
+## Отгрузите это
 
-Lesson 81 saves a sharded checkpoint of the end-to-end DDP+ZeRO run and reloads it on the same world size to prove the resume contract holds.
+Урок 81 сохраняет шардированный чекпоинт end-to-end DDP+ZeRO-прогона и перезагружает его на том же world size, доказывая, что контракт resume держится.
 
-## Exercises
+## Упражнения
 
-1. Add async write: kick off the save in a thread and let training continue. Block the next save until the previous one completes.
-2. Add a `last_5_steps` rotation: keep the 5 most recent checkpoints, delete the oldest before saving a new one.
-3. Add a CRC-only fast verification path for the inner-loop reload (rotation rolls a checkpoint into being the new active one without full sha256).
-4. Add a cross-world-size load: shard rebalance from N=4 to N=8 by reading the manifest, concatenating, and re-sharding.
-5. Add an upload to a fake S3 (a second directory) and write the upload manifest. Defend the two-tier storage policy.
+1. Добавьте асинхронную запись: запустите сохранение в треде и дайте обучению продолжаться. Блокируйте следующее сохранение до завершения предыдущего.
+2. Добавьте ротацию `last_5_steps`: держать 5 недавних чекпоинтов, удалять старейший перед сохранением нового.
+3. Добавьте путь быстрой верификации только по CRC для перезагрузки внутреннего цикла (ротация делает чекпоинт новым активным без полного sha256).
+4. Добавьте кросс-world-size-загрузку: перебалансировку шардов с N=4 на N=8 чтением манифеста, конкатенацией и решардированием.
+5. Добавьте загрузку в фейковый S3 (вторая директория) и запишите upload-манифест. Обоснуйте двухуровневую политику хранения.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|----------------|------------------------|
-| Sharded checkpoint | "Per-rank save" | Each rank writes its own shard file in parallel |
-| Manifest | "Index" | JSON file recording shard paths, offsets, and sha256 |
-| Atomic write | "tmp then rename" | Write to .tmp then POSIX rename so a crash leaves the previous file live |
-| Partial write | "Truncated shard" | A crash during write produces a corrupt shard; sha256 catches it |
-| Rotation | "Keep last K" | Delete oldest checkpoint before writing new one to bound disk usage |
+| Шардированный чекпоинт | «Пер-ранговое сохранение» | Каждый ранг пишет свой файл-шард параллельно |
+| Манифест | «Индекс» | JSON-файл, записывающий пути шардов, смещения и sha256 |
+| Атомарная запись | «tmp затем rename» | Запись в .tmp, затем POSIX-rename, чтобы краш оставлял предыдущий файл живым |
+| Частичная запись | «Обрезанный шард» | Краш во время записи порождает битый шард; sha256 его ловит |
+| Ротация | «Держи последние K» | Удалить старейший чекпоинт перед записью нового, чтобы ограничить использование диска |
 
-## Further Reading
+## Дополнительное чтение
 
-- [DeepSpeed checkpointing](https://www.deepspeed.ai/tutorials/checkpointing/)
+- [Чекпоинтинг DeepSpeed](https://www.deepspeed.ai/tutorials/checkpointing/)
 - [PyTorch torch.distributed.checkpoint](https://pytorch.org/docs/stable/distributed.checkpoint.html)
-- [POSIX rename atomicity](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html)
-- Phase 19 Lesson 78 - the ZeRO state this checkpoint is shaped to save
-- Phase 19 Lesson 81 - the end-to-end demo round-trips the saved state
+- [Атомарность POSIX rename](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html)
+- Фаза 19, урок 78 — состояние ZeRO, под сохранение которого сформирован этот чекпоинт
+- Фаза 19, урок 81 — end-to-end-демо совершает round-trip сохранённого состояния

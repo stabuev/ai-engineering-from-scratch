@@ -1,26 +1,23 @@
 # Capstone 84 — Refusal Evaluation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Полезность на безобидных промптах и отказ на вредных промптах — две метрики, а не одна. Меряйте обе.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** уроки безопасности Фазы 18, Фаза 19, трек A, уроки 25–29
+**Время:** ~90 минут
 
-> Helpfulness on benign prompts and refusal on harmful prompts are two metrics, not one. Measure both.
+## Проблема
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
-**Time:** ~90 min
+Safety-проход по ассистенту идёт не так двумя противоположными способами. Модель отказывает в том, на что должна ответить (over-refusal), и модель отвечает на то, в чём должна отказать (under-refusal). Оба — баги. Команды, меряющие только долю отказов на вредных промптах, отгружают модель, отказывающуюся помочь с домашкой по химии. Команды, меряющие только полезность, отгружают модель, объясняющую, как навредить. Правильный набор метрик трактует ассистента как бинарный классификатор безопасности промпта, где тестируемая политика решает, по какую сторону границы решения сидит каждый промпт.
 
-## Problem
+Сложность в том, что настоящая LLM — движущаяся цель при разработке. Изменение системного промпта, температуры или инструмента двигает обе метрики в такт. Нужен фикстурный оценщик с детерминированной mock-LLM под капотом, чтобы изменение кода двигало метрики по известной причине. Mock-LLM в этом уроке — маленькая таблица диспетчеризации: паттерн, политика, вывод. Харнес в уроке 87 подставит настоящую модель позже, заменив mock HTTP-вызовом. Фреймворк метрик не меняется.
 
-A safety pass on an assistant goes wrong in two opposite ways. The model refuses things it should answer (over-refusal), and the model answers things it should refuse (under-refusal). Both are bugs. Teams that only measure refusal rate on harmful prompts ship a model that refuses to help with chemistry homework. Teams that only measure helpfulness ship a model that explains how to do harm. The right metric set treats the assistant as a binary classifier on prompt safety, where the policy under test decides which side of the decision boundary each prompt sits on.
+Этот урок строит фреймворк оценки. Четыре числа, которые он производит: доля under-refusal, доля over-refusal, калибровка (совпадает ли заявленная уверенность модели с её точностью) и пер-категорийная разбивка через таксономию урока 82.
 
-The challenge is that a real LLM is a moving target during development. A change to the system prompt, a temperature change, or a tool change moves both metrics in tandem. You need a fixture-based evaluator with a deterministic mock LLM under the hood, so a code change moves the metrics for a known reason. The mock LLM in this lesson is a small dispatch table: pattern, policy, output. The harness in lesson 87 plugs a real model in later by replacing the mock with an HTTP call. The metrics framework does not change.
+## Концепция
 
-This lesson builds the evaluation framework. The four numbers it produces: under-refusal rate, over-refusal rate, calibration (does the model's stated confidence match its accuracy), and a per-category breakdown using the lesson 82 taxonomy.
-
-## Concept
-
-A refusal evaluation has four objects: a prompt set with `safe`/`unsafe` labels, a mock LLM with a scripted policy, a refusal classifier on the model output (regex over phrases like `I cannot`, `I will not`, `as a responsible`), and a metrics aggregator.
+Оценка отказов имеет четыре объекта: набор промптов с метками `safe`/`unsafe`, mock-LLM со заскриптованной политикой, классификатор отказов на выходе модели (regex по фразам вроде `I cannot`, `I will not`, `as a responsible`) и агрегатор метрик.
 
 ```mermaid
 flowchart LR
@@ -33,44 +30,44 @@ flowchart LR
   A --> CAT[per-category breakdown]
 ```
 
-Mock LLM policies are deliberately simple so the test is auditable. The default `MockPolicyStrict` refuses on any prompt that matches any of a list of forbidden regex patterns and answers otherwise. `MockPolicyOverCautious` refuses on a much broader pattern set so it intentionally over-refuses. `MockPolicyLeaky` refuses only on the most obvious cases so it intentionally under-refuses. The three policies are scripted bugs the framework should detect.
+Политики mock-LLM намеренно просты, чтобы тест был аудируем. Дефолтная `MockPolicyStrict` отказывает на любом промпте, совпадающем с любым из списка запрещённых regex-паттернов, и отвечает иначе. `MockPolicyOverCautious` отказывает на куда более широком наборе паттернов, поэтому намеренно over-refuses. `MockPolicyLeaky` отказывает только на самых очевидных случаях, поэтому намеренно under-refuses. Три политики — заскриптованные баги, которые фреймворк должен детектить.
 
-Under-refusal: the model answered (no refusal phrase) on a prompt the label set marks `unsafe`. Over-refusal: the model refused (refusal phrase present) on a prompt the label set marks `safe`. The harness also computes `accuracy = (TP + TN) / total` where TP is "unsafe prompt correctly refused" and TN is "safe prompt correctly answered".
+Under-refusal: модель ответила (нет фразы отказа) на промпт, который набор меток отмечает `unsafe`. Over-refusal: модель отказала (фраза отказа присутствует) на промпт, отмеченный `safe`. Харнес также считает `accuracy = (TP + TN) / total`, где TP — «unsafe-промпт корректно отклонён», а TN — «safe-промпт корректно отвечен».
 
-Calibration uses Expected Calibration Error (ECE) over the model's stated confidence. The mock LLM optionally emits a `confidence:0.X` token in its output; the harness parses it. ECE bins prompts by confidence in tenths, computes per-bin accuracy, and averages `|conf - accuracy|` weighted by bin size. A model that says `confidence:0.9` but is right 60% of the time has ECE around 0.3 on that bin. ECE is independent of over/under refusal because it measures whether the model knows when it is right.
+Калибровка использует Expected Calibration Error (ECE) по заявленной уверенности модели. Mock-LLM опционально излучает токен `confidence:0.X` в выводе; харнес его парсит. ECE бинует промпты по уверенности в десятых, считает пер-биновую точность и усредняет `|conf - accuracy|`, взвешенную размером бина. Модель, говорящая `confidence:0.9`, но права 60% времени, имеет ECE около 0.3 на этом бине. ECE независим от over/under-refusal, потому что меряет, знает ли модель, когда она права.
 
-The per-category breakdown joins the labeled prompts against the taxonomy artifact from lesson 82. Every unsafe prompt carries a category label (one of the six). The harness reports under-refusal rate per category so the team can see, for example, that the model handles `instruction-override` well but slips on `multi-turn-ramp`.
+Пер-категорийная разбивка джойнит размеченные промпты против артефакта таксономии из урока 82. Каждый unsafe-промпт несёт метку категории (одну из шести). Харнес репортит долю under-refusal на категорию, чтобы команда видела, например, что модель хорошо справляется с `instruction-override`, но спотыкается на `multi-turn-ramp`.
 
-## Build It
+## Соберите это
 
-`code/mock_llm.py` defines three policies. Each policy is a callable mapping prompt to a response string. The response embeds the model's confidence as `[conf=0.X]`. `code/prompts.py` is a labeled corpus: 25 unsafe prompts (drawn from the lesson 82 taxonomy by id) plus 30 safe prompts (everyday benign asks, no overlap with the lesson 83 benign set so the two evaluations remain independent).
+`code/mock_llm.py` определяет три политики. Каждая политика — callable, маппящий промпт в строку ответа. Ответ встраивает уверенность модели как `[conf=0.X]`. `code/prompts.py` — размеченный корпус: 25 unsafe-промптов (взятых из таксономии урока 82 по id) плюс 30 safe-промптов (повседневные безобидные просьбы, без пересечения с benign-набором урока 83, чтобы две оценки оставались независимыми).
 
-`code/main.py` runs the evaluator. The refusal classifier is a regex of refusal phrases. The aggregator returns a dict with `under_refusal`, `over_refusal`, `accuracy`, `ece`, and `per_category_under_refusal`. The runner sweeps all three mock policies and writes a comparison report.
+`code/main.py` гоняет оценщик. Классификатор отказов — regex фраз отказа. Агрегатор возвращает dict с `under_refusal`, `over_refusal`, `accuracy`, `ece` и `per_category_under_refusal`. Раннер свипает все три mock-политики и пишет сравнительный отчёт.
 
-## Use It
+## Используйте это
 
-`python3 main.py`. The demo prints a table comparing all three policies, writes `outputs/refusal_eval_report.json`, and confirms that `MockPolicyOverCautious` has the highest over-refusal and `MockPolicyLeaky` has the highest under-refusal. The strict policy sits between them; that is the regression baseline.
+`python3 main.py`. Демо печатает таблицу, сравнивающую все три политики, пишет `outputs/refusal_eval_report.json` и подтверждает, что у `MockPolicyOverCautious` наибольший over-refusal, а у `MockPolicyLeaky` — наибольший under-refusal. Строгая политика сидит между ними; это регрессионный бейзлайн.
 
-## Ship It
+## Отгрузите это
 
-`outputs/skill-refusal-evaluation.md` documents the metric definitions so a downstream user of the report cannot misread the numbers.
+`outputs/skill-refusal-evaluation.md` документирует определения метрик, чтобы пользователь отчёта ниже по течению не мог неправильно прочитать числа.
 
-## Exercises
+## Упражнения
 
-1. Add a fourth mock policy that refuses based on prompt length. Confirm that under-refusal rises on encoded attacks (which tend to be short).
-2. Replace ECE with reliability curves and plot one per policy. Note which bins are over-confident.
-3. Add a per-category safe prompt list (benign role-play, benign instructions about prior context). Compute over-refusal per category and check whether role-play attracts the most false refusals.
+1. Добавьте четвёртую mock-политику, отказывающую по длине промпта. Подтвердите, что under-refusal растёт на закодированных атаках (которые обычно короткие).
+2. Замените ECE reliability-кривыми и постройте по одной на политику. Отметьте, какие бины переуверены.
+3. Добавьте пер-категорийный список safe-промптов (безобидный role-play, безобидные инструкции о предыдущем контексте). Посчитайте over-refusal на категорию и проверьте, привлекает ли role-play больше всего ложных отказов.
 
-## Key Terms
+## Ключевые термины
 
-| Term | Common usage | Precise meaning |
+| Термин | Обычное употребление | Точное значение |
 |---|---|---|
-| under-refusal | the model is helpful | the model answered a prompt labeled unsafe |
-| over-refusal | the model is safe | the model refused a prompt labeled safe |
-| calibration | the model is humble | the gap between stated confidence and observed accuracy, summarized by Expected Calibration Error |
-| accuracy | quality | (TP + TN) / total for the safe/unsafe binary decision |
-| per-category breakdown | a chart | under-refusal rate joined against the lesson 82 taxonomy categories |
+| under-refusal | модель полезна | модель ответила на промпт с меткой unsafe |
+| over-refusal | модель безопасна | модель отказала на промпт с меткой safe |
+| калибровка | модель скромна | разрыв между заявленной уверенностью и наблюдаемой точностью, суммируемый Expected Calibration Error |
+| accuracy | качество | (TP + TN) / total для бинарного решения safe/unsafe |
+| пер-категорийная разбивка | диаграмма | доля under-refusal, сджойненная с категориями таксономии урока 82 |
 
-## Further Reading
+## Дополнительное чтение
 
-Lesson 85 (output classifier) and lesson 87 (end to end gate) consume the metrics framework from this lesson.
+Урок 85 (выходной классификатор) и урок 87 (end-to-end-gate) потребляют фреймворк метрик из этого урока.

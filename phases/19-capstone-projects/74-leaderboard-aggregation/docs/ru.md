@@ -1,26 +1,23 @@
 # Leaderboard Aggregation
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Пер-задачные скоры — легко. Пер-модельные ранжирования по разнородным задачам — труднее. Статистическая значимость на лидерборде из тысячи предсказаний — та часть, которую все пропускают. Этот урок не пропускает.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, фундамент трека B, уроки 70, 71, 73
+**Время:** ~90 минут
 
-> Per-task scores are easy. Per-model rankings across heterogeneous tasks are harder. Statistical significance on a thousand-prediction leaderboard is the part everyone skips. This lesson does not skip it.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track B foundations, lessons 70, 71, 73
-**Time:** ~90 min
+- Агрегировать пер-задачные скоры по нескольким моделям и нескольким задачам в аккуратную пер-модельную строку.
+- Нормализовать разнородные скоры так, чтобы pass rates и BLEU-значения не пере-влияли на агрегат.
+- Ранжировать модели по среднему и по win-rate и объяснять, когда какая сводка правильная.
+- Вычислять bootstrap-доверительные интервалы на средний скор модели и на попарные разности.
+- Выдавать лидерборд JSON-отчётом и markdown-таблицей, которую раннер урока 75 может вставить в CI-комментарий.
 
-## Learning objectives
+## Форма входа
 
-- Aggregate per-task scores across multiple models and multiple tasks into a tidy per-model row.
-- Normalise heterogeneous scores so that pass rates and BLEU values do not over-influence the aggregate.
-- Rank models by mean and by win-rate, and explain when each is the right summary.
-- Compute bootstrap confidence intervals on the mean score per model and on pairwise differences.
-- Output the leaderboard as a JSON report and as a markdown table the runner in lesson 75 can paste into a CI comment.
-
-## The shape of input
-
-The aggregator consumes a list of `EvalRun` records:
+Агрегатор потребляет список записей `EvalRun`:
 
 ```python
 @dataclass
@@ -32,11 +29,11 @@ class EvalRun:
     category: str
 ```
 
-The runner in lesson 75 emits one record per `(model, task)` pair. The aggregator does not care how the score was produced. It expects normalisation to already have happened: every score is in `[0, 1]`.
+Раннер урока 75 излучает по записи на пару `(модель, задача)`. Агрегатору всё равно, как получен скор. Он ожидает, что нормализация уже произошла: каждый скор в `[0, 1]`.
 
-## The output
+## Выход
 
-Three tables come out:
+Наружу выходят три таблицы:
 
 ```mermaid
 flowchart LR
@@ -50,19 +47,19 @@ flowchart LR
     G --> H[JSON + markdown table]
 ```
 
-The leaderboard row contains: `model_id`, `mean_score`, `mean_ci_lo`, `mean_ci_hi`, `win_rate`, `tasks_completed`, and an optional `categories` map for per-category mean.
+Строка лидерборда содержит: `model_id`, `mean_score`, `mean_ci_lo`, `mean_ci_hi`, `win_rate`, `tasks_completed` и опциональную карту `categories` для пер-категорийного среднего.
 
-## Normalisation
+## Нормализация
 
-If one task scores in `[0, 1]` and another in `[0, 100]`, the second silently dominates the mean. The aggregator validates that every input score sits in `[0, 1]` and refuses the run otherwise. The fix lives upstream: the metric should already return a fraction. Lessons 71 to 73 enforce that contract.
+Если одна задача скорится в `[0, 1]`, а другая в `[0, 100]`, вторая молча доминирует в среднем. Агрегатор валидирует, что каждый входной скор сидит в `[0, 1]`, и иначе отказывает прогону. Лечение живёт выше по течению: метрика должна уже возвращать дробь. Уроки 71–73 насаждают этот контракт.
 
-## Mean and win-rate
+## Среднее и win-rate
 
-The two ranking schemes serve different goals.
+Две схемы ранжирования служат разным целям.
 
-Mean score is the average of per-task scores for one model. It is the headline number leaderboards report. It is sensitive to outliers and to task imbalance.
+Средний скор — среднее пер-задачных скоров одной модели. Это заголовочное число, которое репортят лидерборды. Оно чувствительно к выбросам и дисбалансу задач.
 
-Win-rate counts how often a model beats every other model on the same task. For each task, the model with the highest score wins (ties split). Win rate equals wins divided by the number of tasks where the model has a score. It is less sensitive to outliers and to scale differences but loses information.
+Win-rate считает, как часто модель бьёт каждую другую модель на одной задаче. Для каждой задачи побеждает модель с наивысшим скором (ничьи делятся). Win rate равен победам, делённым на число задач, где у модели есть скор. Он менее чувствителен к выбросам и различиям масштабов, но теряет информацию.
 
 ```python
 def win_rate(model_id, runs_by_task, all_models):
@@ -78,11 +75,11 @@ def win_rate(model_id, runs_by_task, all_models):
     return wins / total if total else 0.0
 ```
 
-The harness reports both. The runner in lesson 75 ranks by mean by default; the markdown column for win-rate is right there in case the user prefers it.
+Харнес репортит оба. Раннер урока 75 по умолчанию ранжирует по среднему; markdown-колонка win-rate стоит рядом, если пользователь предпочтёт её.
 
-## Bootstrap confidence intervals
+## Bootstrap-доверительные интервалы
 
-Per-model means come with a confidence interval estimated by bootstrap resampling over tasks. We resample task ids with replacement, compute the mean over the resampled set, repeat `B` times, and take the percentile interval at level `alpha`.
+Пер-модельные средние идут с доверительным интервалом, оцениваемым bootstrap-ресэмплированием по задачам. Мы ресэмплируем id задач с возвращением, считаем среднее по ресэмплированному набору, повторяем `B` раз и берём перцентильный интервал уровня `alpha`.
 
 ```mermaid
 flowchart TD
@@ -96,17 +93,17 @@ flowchart TD
     G --> H[CI lo, CI hi]
 ```
 
-For pairwise comparisons we bootstrap the per-task difference `score_A - score_B`, take the percentile interval, and report it. The user reads off whether the interval excludes zero. If it does, the difference is significant at level alpha. If it does not, the leaderboard treats the models as tied.
+Для попарных сравнений мы бутстрапим пер-задачную разность `score_A - score_B`, берём перцентильный интервал и репортим его. Пользователь считывает, исключает ли интервал ноль. Если да — разница значима на уровне alpha. Если нет — лидерборд трактует модели как ничью.
 
-The low-level helpers (`bootstrap_mean_ci`, `bootstrap_pairwise_diff`) default to `B=1000`; the public aggregators (`aggregate`, `pairwise_diffs`) default to `b=500` so the demo and tests stay quick. The default alpha is 0.05. The lesson keeps the bootstrap pure numpy, no scipy.
+Низкоуровневые хелперы (`bootstrap_mean_ci`, `bootstrap_pairwise_diff`) по умолчанию используют `B=1000`; публичные агрегаторы (`aggregate`, `pairwise_diffs`) — `b=500`, чтобы демо и тесты оставались быстрыми. Дефолтная alpha — 0.05. Урок держит bootstrap чистым numpy, без scipy.
 
-## Categories
+## Категории
 
-If `EvalRun.category` is set, the aggregator also reports per-category mean. This is the column on every leaderboard that says `math`, `reasoning`, `code`, `safety`. It lets the runner spot whether a model is good overall but weak in code, which is information the headline mean hides.
+Если `EvalRun.category` задана, агрегатор также репортит пер-категорийное среднее. Это та колонка на каждом лидерборде, где написано `math`, `reasoning`, `code`, `safety`. Она позволяет раннеру замечать, что модель хороша в целом, но слаба в коде, — информацию, которую заголовочное среднее прячет.
 
-## Markdown rendering
+## Markdown-рендер
 
-The leaderboard is rendered as a markdown table:
+Лидерборд рендерится markdown-таблицей:
 
 ```text
 | Rank | Model | Mean | 95% CI | Win rate | Tasks |
@@ -116,18 +113,18 @@ The leaderboard is rendered as a markdown table:
 | 3    | random| 0.10 | 0.07-0.13 | 0.04 | 50 |
 ```
 
-The table is sorted by mean score. The CI is rendered to two decimals. Long model ids are truncated to twenty characters.
+Таблица отсортирована по среднему скору. CI рендерится до двух знаков. Длинные id моделей обрезаются до двадцати символов.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not run models. It does not call the metric layer. It does not implement adaptive ECE or other calibration variants; those are lesson 73. It does not implement task weighting. Every task counts the same here. Production leaderboards weight tasks; we leave that hook open through the `weight` field but ignore it in the aggregator. Add weighting in a follow-up lesson if you need it.
+Он не гоняет модели. Не вызывает слой метрик. Не реализует adaptive ECE и другие варианты калибровки — это урок 73. Не реализует взвешивание задач. Каждая задача здесь весит одинаково. Продакшен-лидерборды взвешивают задачи; мы оставляем этот крюк открытым через поле `weight`, но игнорируем его в агрегаторе. Добавьте взвешивание в follow-up-уроке, если нужно.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines `EvalRun`, `LeaderboardRow`, `aggregate`, `bootstrap_mean_ci`, `bootstrap_pairwise_diff`, and `render_markdown`. The demo builds a synthetic suite of three models and twelve tasks, aggregates, and prints the leaderboard plus the pairwise diff table. The tests in `code/tests/test_leaderboard.py` pin the bootstrap, the markdown rendering, the win-rate edge cases, and the empty-input behaviour.
+`main.py` определяет `EvalRun`, `LeaderboardRow`, `aggregate`, `bootstrap_mean_ci`, `bootstrap_pairwise_diff` и `render_markdown`. Демо строит синтетический набор из трёх моделей и двенадцати задач, агрегирует и печатает лидерборд плюс таблицу попарных разностей. Тесты в `code/tests/test_leaderboard.py` фиксируют bootstrap, markdown-рендер, краевые случаи win-rate и поведение на пустом входе.
 
-Read `main.py` top to bottom. The data shape (EvalRun, LeaderboardRow) comes first, the aggregator next, the bootstrap third, the rendering last. Each function has a focused contract.
+Прочитайте `main.py` сверху вниз. Форма данных (EvalRun, LeaderboardRow) идёт первой, агрегатор — вторым, bootstrap — третьим, рендер — последним. У каждой функции сфокусированный контракт.
 
-## Going further
+## Куда двигаться дальше
 
-The natural next step is paired-task significance instead of unpaired bootstrap. If model A and B both ran the same hundred tasks, the appropriate test is the paired bootstrap on task-by-task differences, which we implement. Beyond that, you want a hierarchical bootstrap that respects task families (math problems are not independent from each other; an arithmetic error pattern affects ten of them). That is a follow-up. The point of this lesson is to get the floor right so the eval reports a number you can defend.
+Естественный следующий шаг — парная значимость по задачам вместо непарного bootstrap. Если модели A и B обе прогнали одну сотню задач, уместный тест — парный bootstrap на по-задачных разностях, который мы реализуем. Дальше вам понадобится иерархический bootstrap, уважающий семейства задач (математические задачи не независимы друг от друга; паттерн арифметической ошибки затрагивает десяток). Это follow-up. Смысл этого урока — правильно поставить пол, чтобы eval репортил число, которое вы можете защитить.

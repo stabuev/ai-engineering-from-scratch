@@ -1,29 +1,26 @@
 # ZeRO Optimizer State Sharding
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Adam хранит две оценки моментов на параметр, обе во float32. Модель на 7B параметров несёт 56 ГБ состояния оптимизатора. ZeRO stage 1 шардирует его по N рангам; каждый ранг владеет 1/N оптимизатора. После локального шага обновлённые шарды параметров бродкастятся обратно, каждый ранг реконструирует полную модель, и начинается следующий шаг. Выигрыш — линейное падение памяти на самой большой одиночной аллокации обучающего стека.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, трек C, уроки 42–49
+**Время:** ~90 минут
 
-> Adam stores two moment estimates per parameter, both in float32. A 7B-parameter model carries 56 GB of optimiser state. ZeRO stage 1 shards that across N ranks; each rank owns 1/N of the optimiser. After the local step the updated parameter shards broadcast back, every rank reconstructs the full model, and the next step begins. The win is a linear memory drop on the largest single allocation in the training stack.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track C lessons 42-49
-**Time:** ~90 min
+- Шардировать состояние оптимизатора (первый момент, второй момент, fp32-мастер-копию) по N рангам, чтобы каждый ранг владел 1/N.
+- Использовать reduce_scatter, чтобы доставлять каждому рангу только сумму градиента его шарда, затем allgather, чтобы бродкастить обновлённые шарды параметров обратно.
+- Посчитать таблицу экономии памяти для stage 1, stage 2, stage 3 против обычного DDP.
+- Обосновать выбор stage 1 против stage 2 против stage 3 по размеру модели и бюджету полосы.
 
-## Learning Objectives
+## Проблема
 
-- Shard optimiser state (first moment, second moment, fp32 master copy) across N ranks so each rank owns 1/N.
-- Use reduce_scatter to deliver each rank only its shard's gradient sum, then allgather to broadcast the updated parameter shards back.
-- Compute the memory savings table for stage 1, stage 2, stage 3 against vanilla DDP.
-- Defend the choice of stage 1 vs stage 2 vs stage 3 on model size and bandwidth budget.
+Обычный DDP реплицирует всё: параметры, градиенты и состояние оптимизатора присутствуют целиком на каждом ранге. Для модели на 7B параметров в fp16 это 14 ГБ параметров, 14 ГБ градиентов и 28 ГБ состояния оптимизатора на ранг. Состояние оптимизатора — самый большой член и самый лёгкий для шардирования, потому что его трогают только во время шага, а не в forward или backward.
 
-## The Problem
+ZeRO stage 1 шардирует состояние оптимизатора. Каждый ранг держит 1/N Adam-моментов. После backward, вместо allreduce полного градиента и локального шага, ZeRO делает reduce_scatter, и каждый ранг получает только суммированный градиент своего шарда. Ранг применяет шаг оптимизатора к своему шарду мастер-параметров. Обновлённые шарды параметров затем allgather'ятся обратно, и каждый ранг имеет полную модель для следующего forward. Память оптимизатора падает в N раз. Провод на шаг тот же, что у DDP: один reduce_scatter плюс один allgather равны одному allreduce по полосе. Память выигрывает, throughput держится.
 
-Vanilla DDP replicates everything: parameters, gradients, and optimiser state are present in full on every rank. For a 7B-parameter model in fp16 that means 14 GB of parameters, 14 GB of gradients, and 28 GB of optimiser state per rank. The optimiser state is the largest term and the easiest to shard because it is only touched during the step, not during forward or backward.
-
-ZeRO stage 1 shards the optimiser state. Each rank holds 1/N of the Adam moments. After backward, instead of allreducing the full gradient and stepping locally, ZeRO reduce_scatters so each rank receives only its shard's summed gradient. The rank applies the optimiser step to its shard of the master parameters. The updated parameter shards then allgather back so every rank has the full model for the next forward. The optimiser memory drops by N. The wire traffic per step is the same as DDP: one reduce_scatter plus one allgather equals one allreduce by bandwidth. Memory wins, throughput holds.
-
-## The Concept
+## Концепция
 
 ```mermaid
 flowchart TD
@@ -36,97 +33,97 @@ flowchart TD
   G --> H[next forward sees full model again]
 ```
 
-### Stages of ZeRO
+### Стадии ZeRO
 
-| Stage | What is sharded | Memory per rank | Comm per step |
+| Stage | Что шардируется | Память на ранг | Коммуникация на шаг |
 |-------|----------------|------------------|---------------|
-| DDP | nothing | params + grads + optim | 1x allreduce |
-| ZeRO-1 | optimiser state | params + grads + optim/N | 1x reduce_scatter + 1x allgather |
+| DDP | ничего | params + grads + optim | 1x allreduce |
+| ZeRO-1 | состояние оптимизатора | params + grads + optim/N | 1x reduce_scatter + 1x allgather |
 | ZeRO-2 | optim + grads | params + grads/N + optim/N | 1x reduce_scatter + 1x allgather |
-| ZeRO-3 | optim + grads + params | params/N + grads/N + optim/N | 1x allgather per layer + 1x reduce_scatter per layer |
+| ZeRO-3 | optim + grads + params | params/N + grads/N + optim/N | 1x allgather на слой + 1x reduce_scatter на слой |
 
-Stage 1 is the cheapest win because optimiser state dominates the budget. Stage 2 needs gradient-shard accumulation logic but the bandwidth is the same. Stage 3 (FSDP) pays per-layer comm for every forward and backward, gaining the parameter-shard memory drop. The lesson implements stage 1 in full.
+Stage 1 — самый дешёвый выигрыш, потому что состояние оптимизатора доминирует в бюджете. Stage 2 нуждается в логике аккумуляции градиентных шардов, но полоса та же. Stage 3 (FSDP) платит пер-слойную коммуникацию на каждый forward и backward, получая взамен падение памяти шардов параметров. Урок реализует stage 1 полностью.
 
-### The memory math, real numbers
+### Математика памяти в настоящих числах
 
-For a model with P parameters trained with Adam in mixed precision:
+Для модели с P параметрами, обучаемой Adam в смешанной точности:
 
-| Term | Vanilla | ZeRO-1 | Why |
+| Член | Обычный | ZeRO-1 | Почему |
 |------|---------|--------|-----|
-| fp16 params | 2P bytes | 2P bytes | needed for forward |
-| fp16 grads | 2P bytes | 2P bytes | needed for backward |
-| fp32 master copy | 4P bytes | 4P/N bytes | only the optim uses it |
-| fp32 first moment | 4P bytes | 4P/N bytes | only the optim uses it |
-| fp32 second moment | 4P bytes | 4P/N bytes | only the optim uses it |
-| Total | 16P bytes | 4P + 12P/N bytes |   |
+| fp16-параметры | 2P байт | 2P байт | нужны для forward |
+| fp16-градиенты | 2P байт | 2P байт | нужны для backward |
+| fp32-мастер-копия | 4P байт | 4P/N байт | нужна только оптимизатору |
+| fp32 первый момент | 4P байт | 4P/N байт | нужен только оптимизатору |
+| fp32 второй момент | 4P байт | 4P/N байт | нужен только оптимизатору |
+| Итого | 16P байт | 4P + 12P/N байт |   |
 
-At N=8: vanilla 16P, ZeRO-1 5.5P, a 65% drop. At N=64: vanilla 16P, ZeRO-1 4.19P, a 74% drop.
+При N=8: обычный 16P, ZeRO-1 5.5P — падение на 65%. При N=64: обычный 16P, ZeRO-1 4.19P — падение на 74%.
 
-### Why reduce_scatter beats allreduce-then-shard
+### Почему reduce_scatter бьёт allreduce-затем-шардируй
 
-Allreduce gives every rank the full summed gradient. If you only need shard r, the (N-1)/N of the gradient that was reduced is wasted on rank r. Reduce_scatter delivers exactly the shard each rank owns; the per-rank bytes are the same as allreduce (since allreduce is reduce_scatter + allgather) but the second half is replaced by the parameter-shard allgather later. Net wire is identical to DDP, memory is divided.
+Allreduce даёт каждому рангу полный суммированный градиент. Если рангу r нужен только шард r, (N-1)/N средуцированного градиента потрачены впустую. Reduce_scatter доставляет ровно тот шард, которым владеет ранг; байты на ранг те же, что у allreduce (поскольку allreduce — это reduce_scatter + allgather), но вторая половина заменяется на allgather шардов параметров позже. Итоговый провод идентичен DDP, память делится.
 
-## Build It
+## Соберите это
 
-`code/main.py` implements:
+`code/main.py` реализует:
 
-- `flatten_params(module)` and `unflatten_into(module, flat)` that pack a model's parameters into one contiguous tensor and unpack back. The flat layout is what makes sharding by rank a simple slice.
-- `ZeroOptimizer(model, world_size, rank, lr)` that owns the rank's shard of the master copy and Adam moments.
-- `step()` that runs reduce_scatter on the flat gradient, applies Adam to the rank's shard, and allgathers the updated parameters back.
-- A demo that trains a 3-layer MLP for 20 steps and prints the per-step memory budget alongside a vanilla DDP baseline.
+- `flatten_params(module)` и `unflatten_into(module, flat)` — пакуют параметры модели в один непрерывный тензор и обратно. Плоская раскладка — то, что делает шардирование по рангу простым срезом.
+- `ZeroOptimizer(model, world_size, rank, lr)` — владеет шардом мастер-копии и Adam-моментов своего ранга.
+- `step()` — гоняет reduce_scatter на плоском градиенте, применяет Adam к шарду ранга и allgather'ит обновлённые параметры обратно.
+- Демо: обучает трёхслойный MLP 20 шагов и печатает пошаговый бюджет памяти рядом с бейзлайном обычного DDP.
 
-Run it:
+Запустите:
 
 ```bash
 python3 code/main.py
 ```
 
-Output: per-step loss and the memory table that shows ZeRO-1 holds 1/N of the optimiser state on each rank versus DDP's full copy.
+Вывод: пошаговый лосс и таблица памяти, показывающая, что ZeRO-1 держит 1/N состояния оптимизатора на каждом ранге против полной копии DDP.
 
-## Production patterns in the wild
+## Production-паттерны в реальной практике
 
-Three patterns harden ZeRO enough to ship.
+Три паттерна укрепляют ZeRO до отгружаемого состояния.
 
-**Sharded checkpointing matters.** ZeRO-1's optimiser state is split across ranks; the checkpoint has to record which rank owns what. Lesson 80 builds the sharded checkpoint manifest that resumes a ZeRO run on the same world size. Without it the saved state is unreadable at restart.
+**Шардированный чекпоинтинг важен.** Состояние оптимизатора ZeRO-1 разрезано по рангам; чекпоинт обязан записать, какой ранг чем владеет. Урок 80 строит манифест шардированного чекпоинта, возобновляющий ZeRO-прогон на том же world size. Без него сохранённое состояние нечитаемо при рестарте.
 
-**Mixed precision is the point.** ZeRO is a mixed-precision technique; the fp32 master copy is what is sharded. Running ZeRO without mixed precision pays the memory tax on the fp32 master without the corresponding fp16 forward win. Production runs always pair ZeRO with autocast or bf16 weights.
+**Смешанная точность — сама суть.** ZeRO — техника смешанной точности; шардируется именно fp32-мастер-копия. Запуск ZeRO без смешанной точности платит налог памяти за fp32-мастера без соответствующего fp16-выигрыша в forward. Продакшен-прогоны всегда спаривают ZeRO с autocast или bf16-весами.
 
-**Stage 1 is a near-free win.** The comm is identical to DDP by bandwidth. The memory savings are linear in N. The only cost is the bookkeeping for the optimiser shard. Production stacks default to stage 1 unless the parameter shard memory is also a problem; then stage 2 or 3 trades comm for memory.
+**Stage 1 — почти бесплатный выигрыш.** Коммуникация идентична DDP по полосе. Экономия памяти линейна в N. Единственная цена — бухгалтерия шарда оптимизатора. Продакшен-стеки по умолчанию берут stage 1, если память шардов параметров тоже не проблема; тогда stage 2 или 3 меняют коммуникацию на память.
 
-## Use It
+## Используйте это
 
-Production patterns:
+Production-паттерны:
 
-- **DeepSpeed ZeRO.** The reference implementation. `deepspeed_config.json` selects stage 1/2/3 and partition sizes.
-- **PyTorch FSDP.** The PyTorch-native equivalent. `ShardingStrategy.SHARD_GRAD_OP` is ZeRO-2; `FULL_SHARD` is ZeRO-3.
-- **HuggingFace Accelerate.** Wraps both DeepSpeed and FSDP under a uniform config.
+- **DeepSpeed ZeRO.** Референсная реализация. `deepspeed_config.json` выбирает stage 1/2/3 и размеры партиций.
+- **PyTorch FSDP.** PyTorch-нативный эквивалент. `ShardingStrategy.SHARD_GRAD_OP` — это ZeRO-2; `FULL_SHARD` — ZeRO-3.
+- **HuggingFace Accelerate.** Оборачивает и DeepSpeed, и FSDP под единым конфигом.
 
-## Ship It
+## Отгрузите это
 
-Lesson 79 (pipeline parallel) is the orthogonal sharding axis: instead of sharding optimiser state across the same model, pipeline shards layers across ranks. Lesson 81 composes DDP + ZeRO on the end-to-end demo.
+Урок 79 (pipeline parallel) — ортогональная ось шардирования: вместо шардирования состояния оптимизатора по одной модели pipeline шардирует слои по рангам. Урок 81 компонует DDP + ZeRO в end-to-end-демо.
 
-## Exercises
+## Упражнения
 
-1. Extend to ZeRO-2 by sharding gradients: each rank only stores the gradient for its shard, achieved by zeroing out the non-shard portion after backward.
-2. Add a memory profiler that prints actual fp32 byte usage on rank 0 versus the formula prediction.
-3. Measure the per-step wall-clock time of vanilla DDP versus ZeRO-1 and decompose into forward, backward, comm.
-4. Implement gradient clipping under ZeRO-1: the L2 norm must be computed across all shards via allreduce of the local norm squared.
-5. Implement a "naive ZeRO" with allreduce instead of reduce_scatter, measure the wire-time difference. Defend the reduce_scatter choice with numbers.
+1. Расширьте до ZeRO-2, шардировав градиенты: каждый ранг хранит градиент только своего шарда — занулением не-шардовой части после backward.
+2. Добавьте профилировщик памяти, печатающий фактические fp32-байты на ранге 0 против предсказания формулы.
+3. Измерьте пошаговый wall-clock обычного DDP против ZeRO-1 и разложите на forward, backward, коммуникацию.
+4. Реализуйте клиппинг градиентов под ZeRO-1: L2-норму нужно считать по всем шардам через allreduce локального квадрата нормы.
+5. Реализуйте «наивный ZeRO» с allreduce вместо reduce_scatter, измерьте разницу времени на проводе. Обоснуйте выбор reduce_scatter числами.
 
-## Key Terms
+## Ключевые термины
 
-| Term | What people say | What it actually means |
+| Термин | Как говорят | Что это на самом деле |
 |------|----------------|------------------------|
-| ZeRO-1 | "Shard the optimiser" | Each rank holds 1/N of fp32 master + Adam moments |
-| ZeRO-2 | "Shard grads too" | Each rank also drops the non-shard gradients after reduce_scatter |
-| ZeRO-3 | "Shard params" | Each rank holds 1/N of fp16 params; allgather per layer in forward |
-| Master copy | "fp32 weights" | The high-precision parameter copy the optimiser updates |
-| Reduce_scatter | "Split the sum" | Deliver each rank only its shard's summed gradient |
+| ZeRO-1 | «Шардируй оптимизатор» | Каждый ранг держит 1/N fp32-мастера + Adam-моментов |
+| ZeRO-2 | «Шардируй и градиенты» | Каждый ранг также сбрасывает не-шардовые градиенты после reduce_scatter |
+| ZeRO-3 | «Шардируй параметры» | Каждый ранг держит 1/N fp16-параметров; allgather на слой в forward |
+| Мастер-копия | «fp32-веса» | Высокоточная копия параметров, которую обновляет оптимизатор |
+| Reduce_scatter | «Раздели сумму» | Доставить каждому рангу только суммированный градиент его шарда |
 
-## Further Reading
+## Дополнительное чтение
 
 - [Rajbhandari et al, ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054)
-- [DeepSpeed ZeRO documentation](https://www.deepspeed.ai/tutorials/zero/)
-- [PyTorch FSDP documentation](https://pytorch.org/docs/stable/fsdp.html)
-- Phase 19 Lesson 76 - the reduce_scatter and allgather this lesson stands on
-- Phase 19 Lesson 80 - sharded checkpointing the ZeRO state must use
+- [Документация DeepSpeed ZeRO](https://www.deepspeed.ai/tutorials/zero/)
+- [Документация PyTorch FSDP](https://pytorch.org/docs/stable/fsdp.html)
+- Фаза 19, урок 76 — reduce_scatter и allgather, на которых стоит этот урок
+- Фаза 19, урок 80 — шардированный чекпоинтинг, который обязано использовать состояние ZeRO

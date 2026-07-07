@@ -1,28 +1,25 @@
 # Perplexity and Calibration
 
-> 🚧 **Перевод в работе.** Урок добавлен из свежего обновления оригинального курса и ещё не переведён — ниже английский оригинал.
+> Если модель говорит «90 процентов уверенности» на тысяче ответов и права в шестистах, она плохо откалибрована. Калибровка — половина заслуживающего доверия eval'а. Вторая половина — перплексия, которая говорит, считает ли модель отложенный текст вообще правдоподобным.
 
+**Тип:** Практика
+**Языки:** Python
+**Пререквизиты:** Фаза 19, фундамент трека B, уроки 70 и 71
+**Время:** ~90 минут
 
-> If your model says 90 percent confident on a thousand answers and gets six hundred right, it is not well calibrated. Calibration is half of trustworthy eval. The other half is perplexity, which tells you whether the model thinks the held-out text is plausible at all.
+## Цели обучения
 
-**Type:** Build
-**Languages:** Python
-**Prerequisites:** Phase 19 Track B foundations, lessons 70 and 71
-**Time:** ~90 min
+- Вычислить токенную перплексию на отложенном корпусе из токенных отрицательных лог-вероятностей, поставляемых адаптером модели.
+- Вычислить expected calibration error (ECE) классификатора или multiple-choice-eval'а из бинованных предсказанных вероятностей.
+- Вычислить Brier score (среднеквадратичная ошибка против индикатора корректности) и объяснить, когда он делает то, чего не делает ECE.
+- Построить данные reliability-диаграммы, нужные для графика уверенность-против-точности.
+- Подключить все три к eval-харнесу, чтобы раннер мог прикрепить числа `perplexity`, `ece` и `brier` к отчёту модели.
 
-## Learning objectives
+## Что говорит перплексия
 
-- Compute token-level perplexity on a held-out corpus from token negative log-probabilities supplied by the model adapter.
-- Compute the expected calibration error (ECE) of a classifier or multiple-choice eval from binned predicted probabilities.
-- Compute the Brier score (mean squared error against the indicator of correctness) and explain when it does what ECE does not.
-- Build the reliability diagram data needed to plot a confidence-versus-accuracy curve.
-- Wire all three into the eval harness so the runner can attach `perplexity`, `ece`, and `brier` numbers to a model report.
+Перплексия — экспонента среднего отрицательного лог-правдоподобия на токен. Меньше — лучше. Перплексия единица означает, что модель назначает вероятность единица каждому фактическому токену. Перплексия размера словаря — модель равномерна и не выучила ничего. Настоящие числа лежат между: сильная базовая модель 2026 года на WikiText-103 сидит около восьми-двенадцати. Плохая на том же тексте — за пятьдесят.
 
-## What perplexity tells you
-
-Perplexity is the exponentiated average negative log-likelihood per token. Lower is better. A perplexity of one means the model assigns probability one to every actual token. A perplexity of the vocabulary size means the model is uniform and learnt nothing. Real numbers fall in between: a strong 2026 base model on WikiText-103 sits around eight to twelve. A bad one on the same text sits at fifty plus.
-
-The harness does not compute log-probabilities itself. Those come from the model adapter. The harness aggregates: it takes a list of per-token log-probabilities, a list of token counts per sequence, and returns corpus perplexity.
+Харнес не считает лог-вероятности сам. Они приходят из адаптера модели. Харнес агрегирует: берёт список потокенных лог-вероятностей, список счётчиков токенов по последовательностям и возвращает корпусную перплексию.
 
 ```python
 def perplexity(neg_log_probs, token_counts):
@@ -31,11 +28,11 @@ def perplexity(neg_log_probs, token_counts):
     return math.exp(total_nll / total_tokens)
 ```
 
-The implementation handles zero-token edge cases and asserts that the negative log-probabilities are non-negative. A common mistake is to forget the negation: an adapter that returns `log p` instead of `-log p` produces a perplexity below one, which is impossible. The function catches that as a contract violation.
+Реализация обрабатывает краевые случаи нуля токенов и утверждает, что отрицательные лог-вероятности неотрицательны. Частая ошибка — забыть отрицание: адаптер, возвращающий `log p` вместо `-log p`, даёт перплексию ниже единицы, что невозможно. Функция ловит это как нарушение контракта.
 
-## What ECE measures
+## Что меряет ECE
 
-Expected calibration error groups predictions by their confidence into a fixed number of bins, then measures the average gap between confidence and accuracy across bins, weighted by bin size.
+Expected calibration error группирует предсказания по их уверенности в фиксированное число бинов, затем меряет средний зазор между уверенностью и точностью по бинам, взвешенный размером бина.
 
 ```mermaid
 flowchart TD
@@ -46,24 +43,24 @@ flowchart TD
     E --> F[ECE = sum of weighted gaps]
 ```
 
-The standard formulation uses ten equal-width bins on `[0, 1]`. The implementation supports any positive integer count. We expose a `bins` parameter so the runner can choose between the publishing convention (10) and the comparison convention (15).
+Стандартная формулировка — десять бинов равной ширины на `[0, 1]`. Реализация поддерживает любое положительное целое. Мы открываем параметр `bins`, чтобы раннер выбирал между конвенцией публикаций (10) и конвенцией сравнений (15).
 
-ECE is biased by bin count and sample size. With ten bins and a hundred predictions, you cannot distinguish 0.02 ECE from random noise. The implementation returns the number of populated bins along with the ECE so the runner can refuse to report a single number on too few samples.
+ECE смещён числом бинов и размером выборки. С десятью бинами и сотней предсказаний вы не отличите ECE 0.02 от случайного шума. Реализация возвращает число населённых бинов вместе с ECE, чтобы раннер мог отказаться репортить одно число на слишком малой выборке.
 
-## What Brier score does that ECE does not
+## Что Brier score делает, чего не делает ECE
 
-ECE only cares about average gaps. A model that is overconfident on half the bins and underconfident on the other half can have low ECE while being poorly calibrated locally. The Brier score measures squared error against the true outcome per prediction, so it penalises spread directly.
+ECE заботят только средние зазоры. Модель, переуверенная на половине бинов и недоуверенная на другой, может иметь низкий ECE, будучи локально плохо откалиброванной. Brier score меряет квадратичную ошибку против истинного исхода на предсказание, поэтому наказывает разброс напрямую.
 
-For binary outcomes, Brier is `mean((p_i - y_i)^2)`. It decomposes into reliability, resolution, and uncertainty. We compute the score and the decomposition. The runner reports the scalar but logs the decomposition for the dashboard.
+Для бинарных исходов Brier — `mean((p_i - y_i)^2)`. Он разлагается на reliability, resolution и uncertainty. Мы считаем скор и разложение. Раннер репортит скаляр, но логирует разложение для дашборда.
 
 ```python
 def brier(p, y):
     return float(np.mean((p - y) ** 2))
 ```
 
-## Reliability diagram data
+## Данные reliability-диаграммы
 
-A reliability diagram plots predicted confidence against empirical accuracy in each bin. The diagonal is perfect calibration. The function returns three arrays: per-bin average confidence, per-bin average accuracy, and per-bin count. The plotting code lives downstream; this lesson stops at the data shape.
+Reliability-диаграмма строит предсказанную уверенность против эмпирической точности в каждом бине. Диагональ — идеальная калибровка. Функция возвращает три массива: пер-биновую среднюю уверенность, пер-биновую среднюю точность и пер-биновый счётчик. Код построения графиков живёт ниже по течению; урок останавливается на форме данных.
 
 ```mermaid
 flowchart LR
@@ -76,26 +73,26 @@ flowchart LR
     E --> R
 ```
 
-The returned tuple is what a calling layer needs to draw the plot or compute a custom ECE variant (adaptive ECE, sweep ECE, etc.). We return numpy arrays so downstream code does not have to convert.
+Возвращаемый кортеж — то, что нужно вызывающему слою для отрисовки графика или расчёта кастомного ECE-варианта (adaptive ECE, sweep ECE и т. п.). Мы возвращаем numpy-массивы, чтобы коду ниже по течению не приходилось конвертировать.
 
-## Confidence sources
+## Источники уверенности
 
-The harness does not assume confidence comes from softmax. It accepts any number in `[0, 1]` per prediction. For multiple-choice tasks the natural confidence is `softmax over option log-likelihoods`. For free-text the natural confidence is the model's self-reported probability or the exponential of the average log-likelihood. The eval just consumes the number. Where it comes from is the adapter's job.
+Харнес не предполагает, что уверенность приходит из softmax. Он принимает любое число в `[0, 1]` на предсказание. Для multiple-choice естественная уверенность — `softmax по лог-правдоподобиям вариантов`. Для свободного текста — самоотчёт модели о вероятности или экспонента среднего лог-правдоподобия. Eval просто потребляет число. Откуда оно — работа адаптера.
 
-## Edge cases
+## Краевые случаи
 
-- All predictions wrong: ECE is the average confidence, Brier is high, perplexity is whatever the model thinks of the text.
-- All predictions correct with high confidence: ECE near zero, Brier near zero.
-- Perfectly uncertain predictor at p=0.5: ECE is 0.5 minus accuracy, Brier is 0.25 minus a correction term.
-- Empty input: ECE, Brier, and reliability return `0.0` (or zero-filled arrays). Perplexity returns `NaN` for the zero-token case. None of these paths emit a warning; the runner inspects the values and decides whether to report or skip.
+- Все предсказания неверны: ECE — средняя уверенность, Brier высок, перплексия — что модель думает о тексте.
+- Все предсказания верны с высокой уверенностью: ECE около нуля, Brier около нуля.
+- Идеально неуверенный предиктор на p=0.5: ECE — 0.5 минус точность, Brier — 0.25 минус поправка.
+- Пустой вход: ECE, Brier и reliability возвращают `0.0` (или занулённые массивы). Перплексия возвращает `NaN` для нуля токенов. Ни один из этих путей не излучает предупреждения; раннер инспектирует значения и решает, репортить или пропустить.
 
-These cases are baked into the tests. A real model on a real benchmark will not hit them, but a buggy adapter or a tiny sample will, and the runner should not crash.
+Эти случаи вшиты в тесты. Настоящая модель на настоящем бенчмарке в них не попадёт, а багованный адаптер или крошечная выборка — попадут, и раннер не должен падать.
 
-## Dispatch
+## Диспетчеризация
 
-Calibration is not a per-task metric like F1. It is a per-model report. The runner accumulates `(confidence, correct)` pairs across the entire eval and computes ECE, Brier, and reliability data once. Perplexity is computed over a held-out text corpus, separate from the task-by-task scoring.
+Калибровка — не пер-задачная метрика вроде F1. Это пер-модельный отчёт. Раннер накапливает пары `(уверенность, корректность)` по всему eval'у и считает ECE, Brier и данные reliability один раз. Перплексия считается по отложенному текстовому корпусу, отдельно от по-задачного скоринга.
 
-The interface is:
+Интерфейс:
 
 ```python
 report = CalibrationReport.from_predictions(confidences, correct)
@@ -105,18 +102,18 @@ report.reliability  # tuple of three numpy arrays
 report.populated_bins  # int
 ```
 
-`PerplexityResult.from_token_nll(neg_log_probs, token_counts)` returns the perplexity and the average negative log-likelihood per token.
+`PerplexityResult.from_token_nll(neg_log_probs, token_counts)` возвращает перплексию и среднее отрицательное лог-правдоподобие на токен.
 
-## What this lesson does not do
+## Чего этот урок не делает
 
-It does not call a model. It does not implement softmax. It does not estimate confidence from output tokens; that is the adapter's job. It does not do temperature scaling or Platt scaling; those are post-hoc fixes that live in a different lesson. The point of this lesson is to make the three numbers (perplexity, ECE, Brier) trustworthy and reproducible.
+Он не вызывает модель. Не реализует softmax. Не оценивает уверенность из выходных токенов — это работа адаптера. Не делает temperature scaling или Platt scaling — это post-hoc-лечения из другого урока. Смысл этого урока — сделать три числа (перплексия, ECE, Brier) заслуживающими доверия и воспроизводимыми.
 
-## How to read the code
+## Как читать код
 
-`main.py` defines `perplexity`, `expected_calibration_error`, `brier_score`, `reliability_diagram`, and the `CalibrationReport` / `PerplexityResult` dataclasses. The demo runs on synthetic predictions where the ground truth is known: a well-calibrated model, an overconfident one, and an underconfident one. The tests in `code/tests/test_calibration.py` pin every edge case plus reference values for the synthetic predictors.
+`main.py` определяет `perplexity`, `expected_calibration_error`, `brier_score`, `reliability_diagram` и датаклассы `CalibrationReport` / `PerplexityResult`. Демо гоняется на синтетических предсказаниях с известной истиной: хорошо откалиброванная модель, переуверенная и недоуверенная. Тесты в `code/tests/test_calibration.py` фиксируют каждый краевой случай плюс референсные значения синтетических предикторов.
 
-Read `main.py` top to bottom. The function ordering goes scalar to vector to report. Each function has a short docstring with the math and the contract.
+Прочитайте `main.py` сверху вниз. Порядок функций — от скаляра к вектору к отчёту. У каждой функции короткий docstring с математикой и контрактом.
 
-## Going further
+## Куда двигаться дальше
 
-Calibration is the most ignored axis in published eval. Most leaderboards report a single accuracy number and call it done. A model that wins on accuracy and loses on Brier is a worse production deployment than a model that scores a few points lower on accuracy but reliably reports its uncertainty. Once you have the calibration plumbing in place, add temperature scaling on a held-out validation slice, recompute ECE, and watch the gap shrink. That is a separate lesson, but the floor lives here.
+Калибровка — самая игнорируемая ось публикуемого eval'а. Большинство лидербордов репортят одно число точности и считают дело сделанным. Модель, побеждающая по точности и проигрывающая по Brier, — худший продакшен-деплой, чем модель на несколько пунктов ниже по точности, но надёжно сообщающая свою неуверенность. Когда обвязка калибровки на месте, добавьте temperature scaling на отложенном валидационном срезе, пересчитайте ECE и наблюдайте сокращение зазора. Это отдельный урок, но пол живёт здесь.
