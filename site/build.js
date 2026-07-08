@@ -214,16 +214,31 @@ function computeStats(manifest) {
 // ─── Lesson readiness (non-blocking backlog report) ──────────────────
 // Criteria from LESSON_TEMPLATE. Never fails the build — this is a visible
 // backlog so the polish tracks have a moving target and regressions show up.
-// REQUIRED criteria define "fully ready". `visual` is ADVISORY: a diagram
-// earns its place only when a lesson carries structural information
-// (architecture, pipeline, process). Conceptual / policy / comparison lessons
-// are complete without one, so a missing visual is a triage candidate, not a
-// defect — it does not count against readiness.
-const REQUIRED_CRITERIA = [
-  'objectives', 'problem', 'concept', 'code', 'artifact', 'exercises', 'sources',
-];
+//
+// Two lesson templates, two readiness profiles:
+//   • CONCEPT lessons (Phases 0-18 and the large Phase 19 capstones) follow the
+//     classic template: Problem → Concept → Build → Exercises → Further Reading
+//     with external sources, and ship a reusable artifact under outputs/.
+//   • BUILD lessons (the Phase 19 mini-project capstones, type "Практика")
+//     follow a hands-on template — Build It / Use It / How to read the code, a
+//     runnable-and-proven code/ demo, and an architecture diagram. Their
+//     "artifact" is the tested demo itself (a tests/ dir or an in-file
+//     verification pass), and problem/concept/exercises/sources are folded into
+//     the walkthrough rather than carried as separate required sections. They
+//     are measured against BUILD_REQUIRED so the backlog reflects genuine gaps,
+//     not a mismatch between two section vocabularies.
+//
+// `visual` is ADVISORY for both: a diagram earns its place only when a lesson
+// carries structural information, so a missing visual is a triage candidate,
+// not a defect, and never counts against readiness.
+const CONCEPT_REQUIRED = ['objectives', 'problem', 'concept', 'code', 'artifact', 'exercises', 'sources'];
+const BUILD_REQUIRED = ['objectives', 'code', 'artifact', 'application'];
 const ADVISORY_CRITERIA = ['visual'];
-const READINESS_CRITERIA = [...REQUIRED_CRITERIA, ...ADVISORY_CRITERIA];
+const READINESS_CRITERIA = ['objectives', 'problem', 'concept', 'code', 'artifact', 'exercises', 'sources', 'application', 'visual'];
+
+function isBuildLesson(phase, lesson) {
+  return phase.number === 19 && lesson.type === 'Практика';
+}
 
 function lessonReadiness(manifest) {
   const missingByCriterion = Object.fromEntries(READINESS_CRITERIA.map(c => [c, 0]));
@@ -236,13 +251,22 @@ function lessonReadiness(manifest) {
       const dir = path.join(REPO_ROOT, lessonRel(phase, lesson));
       const enPath = path.join(dir, 'docs', 'en.md');
       const en = fs.existsSync(enPath) ? fs.readFileSync(enPath, 'utf8') : '';
+      const build = isBuildLesson(phase, lesson);
 
       const codeDir = path.join(dir, 'code');
-      const hasCodeFile = fs.existsSync(codeDir)
-        && fs.readdirSync(codeDir).some(f => /\.(py|ts|rs|jl)$/.test(f));
+      const codeEntries = fs.existsSync(codeDir) ? fs.readdirSync(codeDir) : [];
+      const hasCodeFile = codeEntries.some(f => /\.(py|ts|rs|jl)$/.test(f));
       const outDir = path.join(dir, 'outputs');
-      const hasArtifact = fs.existsSync(outDir)
+      const hasOutput = fs.existsSync(outDir)
         && fs.readdirSync(outDir).some(f => f !== '.gitkeep');
+      // A build lesson's artifact is its self-contained runnable demo:
+      // a code/main.py entrypoint that the Use It / Running it section walks the
+      // reader through, optionally proven by a tests/ dir or a test file. This is
+      // a more concrete deliverable than the static outputs/ file a concept
+      // lesson ships, so it stands in for the `artifact` criterion here.
+      const hasDemo = codeEntries.includes('main.py')
+        || codeEntries.some(f => /^test.*\.(py|ts|rs|jl)$/.test(f))
+        || codeEntries.includes('tests');
 
       const exMatch = en.match(/##\s+Exercises[\s\S]*?(?=\n##\s|$)/i);
       const exCount = exMatch ? (exMatch[0].match(/^\s*\d+\./gm) || []).length : 0;
@@ -251,22 +275,29 @@ function lessonReadiness(manifest) {
       const hasVisual = /```mermaid/.test(en)
         || /[┌│└├─┐┘►▼▲]|--->|═══/.test(en)
         || /!\[[^\]]*\]\([^)]*\.(svg|png|jpg)\)/.test(en); // figures render on the site too
+      const hasApplication = /^##\s+(Build It|Use It|Running it|What you will build|How to read the code|Ship It)/im.test(en);
 
       const checks = {
         objectives: /##\s+Learning Objectives/i.test(en),
         problem: /^##\s+.*Problem/im.test(en),   // any "… Problem" heading
         concept: /^##\s+.*Concept/im.test(en),   // any "… Concept" heading
         code: lesson.type !== 'Практика' || hasCodeFile, // Learn lessons may be codeless
-        artifact: hasArtifact,
+        artifact: build ? (hasDemo || hasOutput) : hasOutput,
         exercises: exCount >= 3,
+        application: hasApplication,
         visual: hasVisual,
         sources: frLinks >= 1,
       };
 
-      for (const c of READINESS_CRITERIA) {
+      // Advisory criteria are tallied across every lesson but never block ready.
+      for (const c of ADVISORY_CRITERIA) {
         if (!checks[c]) missingByCriterion[c] += 1;
       }
-      const missingRequired = REQUIRED_CRITERIA.filter(c => !checks[c]).length;
+      const required = build ? BUILD_REQUIRED : CONCEPT_REQUIRED;
+      for (const c of required) {
+        if (!checks[c]) missingByCriterion[c] += 1;
+      }
+      const missingRequired = required.filter(c => !checks[c]).length;
       if (missingRequired === 0) fullyReady += 1;
       else missingByPhase[phase.number] += 1;
     }
@@ -279,7 +310,8 @@ function printReadiness(manifest, stats) {
   const r = lessonReadiness(manifest);
   console.log(`\n📋 Readiness backlog (non-blocking — see CONTENT_REVIEW.md):`);
   console.log(`   Fully ready: ${r.fullyReady}/${stats.total} (required criteria)`);
-  const order = [...REQUIRED_CRITERIA].sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
+  const requiredNames = [...new Set([...CONCEPT_REQUIRED, ...BUILD_REQUIRED])];
+  const order = requiredNames.sort((a, b) => r.missingByCriterion[b] - r.missingByCriterion[a]);
   for (const c of order) {
     if (r.missingByCriterion[c] > 0) {
       console.log(`   missing ${c.padEnd(11)} ${r.missingByCriterion[c]}`);

@@ -7,6 +7,13 @@
 **Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
 **Time:** ~90 min
 
+## Learning Objectives
+
+- Compose the detector, streaming filter, classifier router, and rules engine into a three-checkpoint gate.
+- Run pre-gen, during-gen, and post-gen checks at the right moment in the request lifecycle.
+- Aggregate the four severity signals into a single final action with a deterministic table.
+- Emit a structured per-request trace as the audit trail.
+
 ## Problem
 
 Lessons 82-86 in this track each shipped a single piece: a taxonomy, an input detector, an evaluation framework, an output classifier, a rules engine. A real safety gate has to compose them, run them at the right moment in the request lifecycle, decide what action to take when they disagree, and produce a trace a reviewer can read on Monday morning. The composition is the lesson.

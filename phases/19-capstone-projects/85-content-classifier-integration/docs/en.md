@@ -7,6 +7,13 @@
 **Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
 **Time:** ~90 min
 
+## Learning Objectives
+
+- Wire three output-side classifiers (toxicity, PII, instruction-leakage) behind one policy router.
+- Return a structured verdict with severity, score, and findings, plus a per-classifier redactor.
+- Aggregate verdicts by maximum severity into a block, redact, warn, or log action.
+- Apply per-classifier redaction independently so a mixed output flows through both redactors.
+
 ## Problem
 
 Inputs are not the only attack surface. A model that passed every input check can still produce an output that leaks PII, repeats slurs from its training distribution, or echoes the system prompt back to the user in response to a clever question. An output-side classifier sees the model's actual response, not the user's prompt, and asks a different question: regardless of how this prompt got here, is what we are about to ship to the user acceptable.

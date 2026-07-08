@@ -23,6 +23,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
   курсом: вы-форма, английские H1 и техтермины (allreduce, tool call, cross-encoder
   и т. п.), код-блоки и комментарии в коде без перевода. Счётчик квизов на сайте:
   124 → 192.
+- **Паритет capstone-уроков с остальным форком: readiness-профиль build-уроков.**
+  Readiness-чекер в `site/build.js` был заточен под шаблон concept-уроков (фазы
+  0–18): Problem → Concept → Build → Exercises → Further Reading со внешними
+  источниками + артефакт в `outputs/`. 68 новых мини-проектов Фазы 19 следуют
+  hands-on-шаблону (Build It / Use It / How to read the code, запускаемое
+  `code/main.py`-демо, mermaid-диаграмма), поэтому ложно помечались неготовыми.
+  Вместо того чтобы навязывать им чужой шаблон, чекер получил профиль build-урока
+  (`type: "Практика"` в Фазе 19): готовность = Learning Objectives + запускаемое
+  демо (артефакт) + hands-on-секция; problem/concept/exercises/sources для них
+  advisory (их роль выполняют walkthrough и диаграмма). Плюс реальный пробел:
+  6 safety-уроков (82–87) не имели секции Learning Objectives — дописана (en + ru).
+  Итог: fully-ready 420 → 488/502, Фаза 19 ушла из списка незавершённых.
 - **Content-review wave 5 — reproducible environment (`requirements.lock`).**
   `requirements.txt` was all `>=` with no lock, so a future learner would get
   bleeding-edge versions and silent breakage. Added a pinned, internally
