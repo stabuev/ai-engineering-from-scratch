@@ -133,3 +133,8 @@ The lesson does not pick a winner. It teaches you to read the numbers and the co
 - Replace mean pooling with a learned attention pool: a small attention layer with one learned query. This often beats mean pool on longer sequences.
 
 The implementation gives you the hooks. The tests pin the contract. The numbers are yours to push.
+
+## Further Reading
+
+- Phase 11 Lesson 08 — fine-tuning with LoRA and QLoRA.
+- Phase 19 Lesson 37 — loading pretrained weights, Lesson 39 — instruction tuning.

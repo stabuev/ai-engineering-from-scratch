@@ -128,3 +128,8 @@ Read `main.py` top to bottom. The data shape (EvalRun, LeaderboardRow) comes fir
 ## Going further
 
 The natural next step is paired-task significance instead of unpaired bootstrap. If model A and B both ran the same hundred tasks, the appropriate test is the paired bootstrap on task-by-task differences, which we implement. Beyond that, you want a hierarchical bootstrap that respects task families (math problems are not independent from each other; an arithmetic error pattern affects ten of them). That is a follow-up. The point of this lesson is to get the floor right so the eval reports a number you can defend.
+
+## Further Reading
+
+- Efron & Tibshirani, *An Introduction to the Bootstrap* — the percentile bootstrap behind the confidence intervals.
+- Phase 19 Lesson 73 — the calibration report, Lesson 75 — the end-to-end eval runner.

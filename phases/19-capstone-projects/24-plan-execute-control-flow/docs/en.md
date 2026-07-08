@@ -125,3 +125,8 @@ The harness loop from lesson twenty can read this directly. The dispatcher from 
 Two extensions you will want once you wire this to a real model. First, partial-plan caching: when a plan succeeds for the first three of six steps and then fails, you do not want to re-run the first three. The executor already keeps history; the planner just needs to read it. Second, parallel branches: the current executor is strictly sequential. A planner that emits an independent branch (`gather_step` instead of `next_step`) can run two tool calls concurrently through the dispatcher.
 
 Both add real complexity. Both are easier to add once the linear executor is pinned. That is what this lesson does.
+
+## Further Reading
+
+- Phase 14 Lesson 02 — ReWOO and plan-and-execute.
+- Phase 19 Lesson 20 — the harness loop, Lesson 23 — the dispatcher each step runs through.

@@ -100,3 +100,9 @@ python3 -m pytest code/tests/ -v
 ```
 
 The demo emits a `traces.jsonl` in the lesson's working dir (cleaned up at the end), then prints a sample of three spans, then prints the Prometheus exposition for the counters and histograms. The tests verify that spans serialise round-trip, that the canonical GenAI attributes are present, that counters increment correctly, and that the histogram exposition contains the expected bucket counts.
+
+## Further Reading
+
+- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — the span shape this lesson emits.
+- Phase 13 Lesson 20 — OpenTelemetry GenAI.
+- Phase 19 Lesson 27 — the eval harness, Lesson 29 — the end-to-end demo.

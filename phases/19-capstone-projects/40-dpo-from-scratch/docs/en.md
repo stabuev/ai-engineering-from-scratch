@@ -157,3 +157,8 @@ DPO is mathematically equivalent to RLHF under the Bradley-Terry preference mode
 - Replace the reference with a smaller cheaper model (knowledge distillation flavour).
 
 The implementation gives you the loss, the reference invariance, and the training loop. The math is the lesson. The code makes the math concrete.
+
+## Further Reading
+
+- Rafailov et al., [Direct Preference Optimization (arXiv 2305.18290)](https://arxiv.org/abs/2305.18290) — the paper this lesson implements.
+- Phase 19 Lesson 39 — the SFT reference, Lesson 41 — the eval pipeline.

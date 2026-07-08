@@ -126,3 +126,8 @@ A critic that produces suggestions that never improve the score will lock the lo
 Two extensions a real implementation will want. First, dimension weights: a paper for a workshop weights novelty higher than methodology; a journal weights the inverse. The convergence check becomes a weighted mean. Second, paired critics: one critic scores, a second critic adjudicates the suggestions before the reviser sees them. Both add value, both compose on the same `Critique` shape.
 
 The bet is the score vector. Once the critique is structured, every other improvement, convergence rule, dashboard, paired critic, drops in without changing the loop.
+
+## Further Reading
+
+- Phase 14 Lessons 03-05 — Reflexion, Self-Refine, and CRITIC.
+- Phase 19 Lesson 54 — the paper writer it critiques, Lesson 56 — the iteration scheduler.

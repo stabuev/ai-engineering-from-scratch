@@ -129,3 +129,8 @@ The tests in `code/tests/test_runner.py` pin the adapter interface, the single-p
 This runner is the floor. A production eval system adds: a results cache keyed by `(task_id, model_id, model_version)`, a cost ledger that tracks dollars and tokens per run, a retry layer that backs off on rate limits, a sampling policy for pass-at-k tasks, and a streaming output format for long suites. Each of those is a single concern that wraps the runner without changing the metric or aggregation layers. That separation is the point of the contract.
 
 Add an adapter for a real provider after you have the mocks working. Pick one with a free tier, write thirty lines of glue, watch the leaderboard light up. Then add the second provider and let the harness do the work.
+
+## Further Reading
+
+- Phase 5 Lesson 27 — LLM evaluation frameworks.
+- Phase 19 Lessons 70-74 — the task spec, metrics, calibration, and leaderboard this runner composes.

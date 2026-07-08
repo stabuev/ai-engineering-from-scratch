@@ -108,3 +108,9 @@ It does not train the embedding. Training requires a loss, which requires a mode
 `main.py` defines three modules. `TokenEmbedding` wraps `nn.Embedding(V, D)`. `LearnedPositionalEmbedding` wraps `nn.Embedding(L, D)`. `SinusoidalPositionalEmbedding` precomputes the table and exposes it as a buffer. `EmbeddingComposer` ties a token embedding and a positional embedding together. The demo at the bottom prints the shapes, the parameter counts, and the neighbour-position similarity diagnostic. The tests in `code/tests/test_embeddings.py` pin shape, broadcast behaviour, parameter count, and the sinusoidal formula.
 
 Run the demo. Then change the model dimension `D` from 64 to 32 and watch how the sinusoidal wavelength bands change.
+
+## Further Reading
+
+- Vaswani et al., [Attention Is All You Need (arXiv 1706.03762)](https://arxiv.org/abs/1706.03762) — the sinusoidal position formula.
+- Phase 7 — transformers deep dive.
+- Phase 19 Lesson 33 — the attention block that consumes these embeddings.

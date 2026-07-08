@@ -91,3 +91,9 @@ The demo creates a temp directory, drops a clean file into it, then runs a batte
 ## How this composes with the rest of Track A
 
 Lesson 25 produced the gate chain. Lesson 26 is the executor that runs after a gate ALLOW. Lesson 27's eval harness compares the sandbox results against the expected exit-code per task. Lesson 28 emits a `gen_ai.tool.execution` span around each `Sandbox.run` invocation. Lesson 29's end-to-end demo wires a real coding agent through both layers.
+
+## Further Reading
+
+- Phase 14 Lesson 38 — verification gates.
+- Phase 17 — production isolation (containers, seccomp) that a real sandbox layers on top.
+- Phase 19 Lesson 25 — the gate chain, Lesson 27 — the eval harness.

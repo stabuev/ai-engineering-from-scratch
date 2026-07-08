@@ -100,3 +100,9 @@ The lesson implements one outbound notification helper, `write_notification`. Th
 ## Going further
 
 This transport is enough for the lessons that follow. Production transports add three things. A correlation id field that survives forwarding (your `id` is already this, but in a mesh you need an outer trace id too). A cancellation channel (a notification like `$/cancelRequest` with the id of the in-flight call). And a content-type negotiation handshake so the same socket can speak JSON-RPC and Streamable HTTP. None of those change the wire. They add metadata.
+
+## Further Reading
+
+- [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification) — the wire format this lesson implements.
+- Phase 13 Lesson 09 — MCP transports.
+- Phase 19 Lessons 21 and 23 — the registry and dispatcher behind the handler.

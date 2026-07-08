@@ -133,3 +133,8 @@ The tests use `asyncio.sleep(0)` and deterministic `Counter`-based handlers, so 
 Two extensions production dispatchers add. First, structured logging at every transition (which the loop's event stream already gives you, but the dispatcher should also emit `dispatch.attempt` and `dispatch.retry` events). Second, circuit breakers: after N failures in a window, a tool gets a cool-down period where dispatches return immediately with `kind="circuit_open"` instead of attempting the handler. Both fit on top of this dispatcher without changing the contract.
 
 Lesson twenty-four glues the dispatcher to a plan-and-execute agent so you see all four pieces in motion.
+
+## Further Reading
+
+- Phase 13 Lessons 02-03 — function calling deep dive and parallel calls.
+- Phase 19 Lesson 21 — the tool registry, Lesson 22 — the transport, Lesson 24 — plan-execute.

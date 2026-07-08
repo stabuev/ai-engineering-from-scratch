@@ -139,3 +139,8 @@ for hypothesis in queue:
 ```
 
 That orchestrator is not in this lesson; the four lessons compose into it without any glue beyond the dataclasses each one defines.
+
+## Further Reading
+
+- Efron & Tibshirani, *An Introduction to the Bootstrap* — the resampling behind significance testing.
+- Phase 19 Lesson 52 — the runner that produces these metrics, Lesson 74 — leaderboard-level significance.

@@ -104,3 +104,8 @@ python3 -m pytest code/tests/ -v
 ```
 
 The demo prints the EvalReport in JSON, including pass@1, pass@5, mean latency, and per-task breakdown. The exit code is zero. The tests cover the verifier functions, the pass@k math, fixture loading, and the harness end-to-end against the bundled reference candidate.
+
+## Further Reading
+
+- Phase 14 Lesson 30 — eval-driven agent development, Lesson 19 — SWE-bench and GAIA.
+- Phase 19 Lesson 28 — observability, Lesson 29 — the end-to-end coding agent.

@@ -113,3 +113,8 @@ python3 -m pytest code/tests/ -v
 ```
 
 The demo prints a per-step trace, the final eval report, and the Prometheus exposition. Exit code is zero. The tests cover the policy state transitions, the gate refusals on synthetic tool calls, the end-to-end run on the bundled fixture, and the step-budget invariants.
+
+## Further Reading
+
+- Phase 14 Lessons 41-42 — the agent workbench and its capstone.
+- Phase 19 Lessons 25-28 — the gate chain, sandbox, eval harness, and observability composed here.
