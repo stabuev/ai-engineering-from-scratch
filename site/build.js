@@ -36,6 +36,9 @@ const SKILL_COUNT_PAGES = [
 const OUTPUTS_INDEX_PATH = path.join(REPO_ROOT, 'outputs', 'index.json');
 
 const GITHUB_BASE = 'https://github.com/stabuev/ai-engineering-from-scratch/tree/main/';
+// Public site root (must match the Sitemap: line in site/robots.txt).
+const SITE_BASE = 'https://datascience.xyz/courses/aicourse/';
+const SITEMAP_PATH = path.join(__dirname, 'sitemap.xml');
 const STATUS_EMOJI = { 'complete': '✅', 'in-progress': '🚧', 'planned': '⬚' };
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -570,6 +573,38 @@ function renderSkillCounts(content, stats) {
 }
 
 // ─── Main ────────────────────────────────────────────────────────────
+// ─── sitemap.xml ─────────────────────────────────────────────────────
+// robots.txt advertises this file; without it that line is a live 404.
+// Deterministic (no <lastmod> timestamps) so `--check` stays stable. Each
+// lesson is one ru URL with en + x-default hreflang alternates.
+function renderSitemap(manifest) {
+  const esc = u => u.replace(/&/g, '&amp;');
+  const urls = [];
+  // Canonical forms are the real files (guaranteed to serve under the proxy);
+  // the pretty /catalog, /path rewrites resolve to the same content.
+  for (const [loc, priority] of [['', '1.0'], ['catalog.html', '0.8'], ['prereqs.html', '0.7'], ['glossary.html', '0.5']]) {
+    urls.push(`  <url>\n    <loc>${SITE_BASE}${loc}</loc>\n    <priority>${priority}</priority>\n  </url>`);
+  }
+  for (const phase of manifest.phases) {
+    for (const lesson of phase.lessons) {
+      const ru = `${SITE_BASE}lesson.html?path=${lessonRel(phase, lesson)}`;
+      const en = `${ru}&lang=en`;
+      urls.push(
+        `  <url>\n` +
+        `    <loc>${esc(ru)}</loc>\n` +
+        `    <xhtml:link rel="alternate" hreflang="ru" href="${esc(ru)}"/>\n` +
+        `    <xhtml:link rel="alternate" hreflang="en" href="${esc(en)}"/>\n` +
+        `    <xhtml:link rel="alternate" hreflang="x-default" href="${esc(ru)}"/>\n` +
+        `    <priority>0.6</priority>\n` +
+        `  </url>`
+      );
+    }
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n` +
+    urls.join('\n') + `\n</urlset>\n`;
+}
+
 function main() {
   const checkMode = process.argv.includes('--check');
 
@@ -581,6 +616,7 @@ function main() {
 
   const targets = [
     { path: DATA_PATH, render: () => renderDataJs(manifest, glossaryTerms) },
+    { path: SITEMAP_PATH, render: () => renderSitemap(manifest) },
     { path: OUTPUTS_INDEX_PATH, render: () => outputsIndex },
     { path: README_PATH, render: old => renderReadme(old, manifest, stats) },
     { path: ROADMAP_PATH, render: old => renderRoadmap(old, manifest, stats) },
