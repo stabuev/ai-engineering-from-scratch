@@ -985,9 +985,9 @@ const SERVICE_PAGES = [
     twDescription: 'What people say vs what things actually mean.',
     // Exact Russian head strings to replace (must match glossary.html verbatim).
     ruTitle: 'Глоссарий ИИ - AI Engineering from Scratch',
-    ruDescription: 'Глоссарий ИИ: что говорят vs что это значит на самом деле. Каждый термин объяснён без воды.',
+    ruDescription: 'Глоссарий ИИ: что говорят vs что это значит на самом деле. Каждый термин объяснен без воды.',
     ruOgTitle: 'Глоссарий · AI Engineering from Scratch',
-    ruOgDescription: 'Что говорят vs что это значит на самом деле. Каждый термин ИИ, определённый без воды.',
+    ruOgDescription: 'Что говорят vs что это значит на самом деле. Каждый термин ИИ, определенный без воды.',
     ruTwDescription: 'Что говорят vs что это значит на самом деле.',
   },
   {
@@ -1013,14 +1013,14 @@ const SERVICE_PAGES = [
     ogDescription: '502 lessons across 20 phases. Backpropagation, tokenizer, attention, and the agent loop — all by hand, from pure math, before importing any framework.',
     twDescription: '502 lessons across 20 phases. Build from pure math, by hand.',
     ruTitle: 'Разработка ИИ с нуля',
-    ruDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — всё вручную, из чистой математики, до импорта фреймворков. Python, плюс TypeScript, Rust и Julia в отдельных уроках.',
+    ruDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — все вручную, из чистой математики, до импорта фреймворков. Python, плюс TypeScript, Rust и Julia в отдельных уроках.',
     // og:title and twitter:title share this text with the JSON-LD Course name.
     ruOgTitle: 'Разработка ИИ с нуля',
-    ruOgDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — всё вручную, из чистой математики, до импорта фреймворков.',
+    ruOgDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — все вручную, из чистой математики, до импорта фреймворков.',
     ruTwDescription: '502 урока в 20 фазах. Стройте из чистой математики, вручную.',
     extraSwaps: [
       ['<meta property="og:locale" content="ru_RU">', '<meta property="og:locale" content="en_US">'],
-      ['"description": "502 урока в 20 фазах: математика, модель, тренер, токенизатор и agent loop — всё вручную, до импорта фреймворков."',
+      ['"description": "502 урока в 20 фазах: математика, модель, тренер, токенизатор и agent loop — все вручную, до импорта фреймворков."',
        '"description": "502 lessons across 20 phases: math, model, trainer, tokenizer, and the agent loop — all by hand, before importing any framework."'],
       ['"inLanguage": "ru"', '"inLanguage": "en"'],
       ['"teaches": "AI engineering, deep learning, трансформеры, LLM, агенты, RAG"',
