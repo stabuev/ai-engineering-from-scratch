@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://datascience.xyz/courses/aicourse/prereqs.html">
+  <link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/prereqs.html">
+  <link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/prereqs.html">
+  <link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/prereqs.html">
   <title>Дорожная карта - AI Engineering from Scratch</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
   <meta name="description" content="Интерактивная карта предварительных требований для 502 уроков по AI Engineering. Посмотрите, какие фазы от каких зависят, и спланируйте свой путь обучения.">
@@ -19,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260616a">
+  <link rel="stylesheet" href="style.css?v=20260709a">
 
 <!-- Счетчик Yandex.Metrika -->
 <script type="text/javascript">
@@ -416,17 +419,18 @@
         <span class="logo-icon" aria-hidden="true"></span> AI / FROM SCRATCH
       </a>
       <nav class="header-nav">
-        <a href="index.html#contents">Содержание</a>
-        <a href="catalog.html">Каталог</a>
-        <a href="prereqs.html">Дорожная карта</a>
-        <a href="glossary.html">Глоссарий</a>
+        <a href="index.html#contents" data-nav="contents">Содержание</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="prereqs.html" data-nav="roadmap">Дорожная карта</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener" class="header-github">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
           <svg class="star-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.896l-7.416 3.517 1.48-8.279L0 9.306l8.332-1.151z"/></svg>
-          <span class="star-count" data-loading="true" aria-label="Звезды GitHub">…</span>
+          <span class="star-count" data-loading="true" aria-label="GitHub stars">…</span>
         </a>
       </nav>
-      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
+      <button class="theme-toggle lang-toggle" id="langToggle" type="button" title="Язык / Language">RU</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
     </div>
@@ -435,20 +439,20 @@
   <main class="prereqs-page">
     <div class="container">
       <div class="prereqs-header">
-        <h1>Дорожная карта</h1>
-        <p>Нажмите на любую фазу, чтобы увидеть ее предварительные требования и то, что она открывает дальше.</p>
+        <h1 data-i18n="title">Дорожная карта</h1>
+        <p data-i18n="subtitle">Нажмите на любую фазу, чтобы увидеть ее предварительные требования и то, что она открывает дальше.</p>
       </div>
 
       <div class="prereqs-controls">
         <div class="prereqs-legend">
-          <div class="legend-item"><span class="legend-dot complete"></span> Завершено</div>
-          <div class="legend-item"><span class="legend-dot in-progress"></span> В процессе</div>
-          <div class="legend-item"><span class="legend-dot planned"></span> Запланировано</div>
+          <div class="legend-item"><span class="legend-dot complete"></span> <span data-i18n="legendComplete">Завершено</span></div>
+          <div class="legend-item"><span class="legend-dot in-progress"></span> <span data-i18n="legendProgress">В процессе</span></div>
+          <div class="legend-item"><span class="legend-dot planned"></span> <span data-i18n="legendPlanned">Запланировано</span></div>
         </div>
-        <button class="reset-btn" id="resetBtn">&#10005; Сбросить выбор</button>
+        <button class="reset-btn" id="resetBtn"><span data-i18n="resetBtn">&#10005; Сбросить выбор</span></button>
       </div>
 
-      <div class="graph-scroll-hint">&#8596; Прокрутите, чтобы изучить весь граф</div>
+      <div class="graph-scroll-hint" data-i18n="scrollHint">&#8596; Прокрутите, чтобы изучить весь граф</div>
 
       <div class="graph-wrap">
         <div class="graph-container" id="graphContainer">
@@ -462,22 +466,87 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
+      <p data-i18n="footerTagline">AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
       <div class="footer-links">
-        <a href="index.html">Главная</a>
+        <a href="index.html" data-nav="home">Главная</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener">GitHub</a>
-        <a href="catalog.html">Каталог</a>
-        <a href="glossary.html">Глоссарий</a>
-              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Сообщить / предложить</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
+              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener" data-i18n="report">Сообщить / Предложить</a>
       </div>
     </div>
   </footer>
 
-  <script src="data.js?v=20260616a"></script>
-  <script src="progress.js?v=20260616a"></script>
-  <script src="header.js?v=20260616a" defer></script>
+  <script src="data.js?v=20260709a"></script>
+  <script src="progress.js?v=20260709a"></script>
+  <script src="header.js?v=20260709a" defer></script>
   <script>
   (function () {
+    var PAGE_LANG = location.pathname.indexOf('/en/') !== -1 ? 'en' : 'ru';
+    document.documentElement.lang = PAGE_LANG;
+
+    var STR = {
+      ru: {
+        title: 'Дорожная карта',
+        subtitle: 'Нажмите на любую фазу, чтобы увидеть ее предварительные требования и то, что она открывает дальше.',
+        legendComplete: 'Завершено', legendProgress: 'В процессе', legendPlanned: 'Запланировано',
+        resetBtn: '✕ Сбросить выбор',
+        scrollHint: '↔ Прокрутите, чтобы изучить весь граф',
+        footerTagline: 'AI Engineering from Scratch · открытый код · бесплатно навсегда.',
+        report: 'Сообщить / Предложить',
+        nav: { 'contents': 'Содержание', 'catalog': 'Каталог', 'roadmap': 'Дорожная карта', 'glossary': 'Глоссарий', 'home': 'Главная' },
+        statusComplete: 'завершена', statusInProgress: 'в процессе', statusPlanned: 'запланирована',
+        phaseWord: 'Фаза', prereqs: 'Предварительные требования', unlocks: 'Открывает',
+        noPrereqs: 'Нет. Это стартовая точка.', noUnlocks: 'Финальная точка. Конец учебной программы.',
+        read: 'Читать', openGithub: 'Открыть на GitHub',
+        stats: function (done, total, anc, desc) {
+          return 'завершено <strong>' + done + '</strong> из <strong>' + total + '</strong> уроков' +
+            ' &nbsp;·&nbsp; требует фаз: <strong>' + anc + '</strong>' +
+            ' &nbsp;·&nbsp; открывает фаз: <strong>' + desc + '</strong>';
+        }
+      },
+      en: {
+        title: 'Roadmap',
+        subtitle: 'Click any phase to see its prerequisites and what it unlocks next.',
+        legendComplete: 'Complete', legendProgress: 'In progress', legendPlanned: 'Planned',
+        resetBtn: '✕ Clear selection',
+        scrollHint: '↔ Scroll to explore the full graph',
+        footerTagline: 'AI Engineering from Scratch · open source · free forever.',
+        report: 'Report / Suggest',
+        nav: { 'contents': 'Contents', 'catalog': 'Catalog', 'roadmap': 'Roadmap', 'glossary': 'Glossary', 'home': 'Home' },
+        statusComplete: 'complete', statusInProgress: 'in progress', statusPlanned: 'planned',
+        phaseWord: 'Phase', prereqs: 'Prerequisites', unlocks: 'Unlocks',
+        noPrereqs: 'None. This is a starting point.', noUnlocks: 'End of the line. The end of the curriculum.',
+        read: 'Read', openGithub: 'Open on GitHub',
+        stats: function (done, total, anc, desc) {
+          return '<strong>' + done + '</strong> of <strong>' + total + '</strong> lessons complete' +
+            ' &nbsp;·&nbsp; requires <strong>' + anc + '</strong> phases' +
+            ' &nbsp;·&nbsp; unlocks <strong>' + desc + '</strong> phases';
+        }
+      }
+    };
+    var S = STR[PAGE_LANG];
+    function nm(o) { return (PAGE_LANG === 'en' && o.name_en) ? o.name_en : o.name; }
+    function dsc(o) { return (PAGE_LANG === 'en' && o.desc_en) ? o.desc_en : o.desc; }
+
+    function localizeStatic() {
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var k = el.getAttribute('data-i18n');
+        if (S[k] != null) el.textContent = S[k];
+      });
+      document.querySelectorAll('[data-nav]').forEach(function (el) {
+        var k = el.getAttribute('data-nav');
+        if (S.nav && S.nav[k] != null) el.textContent = S.nav[k];
+      });
+      var langBtn = document.getElementById('langToggle');
+      if (langBtn) {
+        langBtn.textContent = PAGE_LANG.toUpperCase();
+        langBtn.addEventListener('click', function () {
+          window.location.href = PAGE_LANG === 'en' ? '../prereqs.html' : 'en/prereqs.html';
+        });
+      }
+    }
+
     /* ===================================================
        Переключатель темы - общий паттерн сайта
     =================================================== */
@@ -500,6 +569,7 @@
     updateIcon();
 
     document.addEventListener('DOMContentLoaded', function () {
+      localizeStatic();
       updateIcon();
       var btn = document.getElementById('themeToggle');
       if (btn) {
@@ -728,9 +798,9 @@
     }
 
     function displayStatus(status) {
-      if (status === 'complete') return 'завершена';
-      if (status === 'in-progress') return 'в процессе';
-      if (status === 'planned') return 'запланирована';
+      if (status === 'complete') return S.statusComplete;
+      if (status === 'in-progress') return S.statusInProgress;
+      if (status === 'planned') return S.statusPlanned;
       return status;
     }
 
@@ -799,7 +869,7 @@
           transform: 'translate(' + (pos.x - NODE_W / 2) + ',' + (pos.y - NODE_H / 2) + ')',
           tabindex: '0',
           role: 'button',
-          'aria-label': 'Выбрать фазу ' + id + ': ' + phase.name
+          'aria-label': S.phaseWord + ' ' + id + ': ' + nm(phase)
         });
 
         /* Фон */
@@ -813,7 +883,7 @@
         }));
 
         /* Содержимое подписи */
-        var lines = splitName(phase.name);
+        var lines = splitName(nm(phase));
         var stats = lessonStats(phase);
 
         if (lines.length === 1) {
@@ -952,12 +1022,12 @@
         prereqHtml = '<ul class="detail-prereq-list">';
         for (var i = 0; i < directPrereqs.length; i++) {
           var ppid = directPrereqs[i];
-          var pn   = PHASE_MAP[ppid] ? PHASE_MAP[ppid].name : 'Фаза ' + ppid;
-          prereqHtml += '<li data-goto="' + ppid + '" tabindex="0" role="button" aria-label="Перейти к фазе ' + ppid + ': ' + escapeHtml(pn) + '"><span class="li-num">' + String(ppid).padStart(2, '0') + '</span> ' + escapeHtml(pn) + '</li>';
+          var pn   = PHASE_MAP[ppid] ? nm(PHASE_MAP[ppid]) : S.phaseWord + ' ' + ppid;
+          prereqHtml += '<li data-goto="' + ppid + '" tabindex="0" role="button" aria-label="' + S.phaseWord + ' ' + ppid + ': ' + escapeHtml(pn) + '"><span class="li-num">' + String(ppid).padStart(2, '0') + '</span> ' + escapeHtml(pn) + '</li>';
         }
         prereqHtml += '</ul>';
       } else {
-        prereqHtml = '<div class="detail-empty">Нет. Это стартовая точка.</div>';
+        prereqHtml = '<div class="detail-empty">' + escapeHtml(S.noPrereqs) + '</div>';
       }
 
       /* Список того, что открывается дальше */
@@ -967,12 +1037,12 @@
         unlockHtml = '<ul class="detail-unlock-list">';
         for (var i = 0; i < childIds.length; i++) {
           var cid = childIds[i];
-          var cn  = PHASE_MAP[cid] ? PHASE_MAP[cid].name : 'Фаза ' + cid;
-          unlockHtml += '<li data-goto="' + cid + '" tabindex="0" role="button" aria-label="Перейти к фазе ' + cid + ': ' + escapeHtml(cn) + '"><span class="li-num">' + String(cid).padStart(2, '0') + '</span> ' + escapeHtml(cn) + '</li>';
+          var cn  = PHASE_MAP[cid] ? nm(PHASE_MAP[cid]) : S.phaseWord + ' ' + cid;
+          unlockHtml += '<li data-goto="' + cid + '" tabindex="0" role="button" aria-label="' + S.phaseWord + ' ' + cid + ': ' + escapeHtml(cn) + '"><span class="li-num">' + String(cid).padStart(2, '0') + '</span> ' + escapeHtml(cn) + '</li>';
         }
         unlockHtml += '</ul>';
       } else {
-        unlockHtml = '<div class="detail-empty">Финальная точка. Конец учебной программы.</div>';
+        unlockHtml = '<div class="detail-empty">' + escapeHtml(S.noUnlocks) + '</div>';
       }
 
       /* Вычислить точный URL дерева GitHub через стандартную slug-логику */
@@ -986,23 +1056,21 @@
 
       panel.innerHTML =
         '<div class="detail-top">' +
-          '<span class="detail-phase-num">Фаза ' + String(id).padStart(2, '0') + '</span>' +
+          '<span class="detail-phase-num">' + S.phaseWord + ' ' + String(id).padStart(2, '0') + '</span>' +
           '<span class="detail-status ' + phase.status + '">' + displayStatus(phase.status) + '</span>' +
         '</div>' +
-        '<div class="detail-title">' + escapeHtml(phase.name) + '</div>' +
-        '<div class="detail-desc">' + escapeHtml(phase.desc) + '</div>' +
+        '<div class="detail-title">' + escapeHtml(nm(phase)) + '</div>' +
+        '<div class="detail-desc">' + escapeHtml(dsc(phase)) + '</div>' +
         '<div class="detail-stats">' +
-          'завершено <strong>' + stats.done + '</strong> из <strong>' + stats.total + '</strong> уроков' +
-          ' &nbsp;·&nbsp; требует фаз: <strong>' + ancestorCount + '</strong>' +
-          ' &nbsp;·&nbsp; открывает фаз: <strong>' + descendantCount + '</strong>' +
+          S.stats(stats.done, stats.total, ancestorCount, descendantCount) +
         '</div>' +
         '<div class="detail-sections">' +
-          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--accent)">&#9664;</span> Предварительные требования</div>' + prereqHtml + '</div>' +
-          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--complete)">&#9654;</span> Открывает</div>' + unlockHtml + '</div>' +
+          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--accent)">&#9664;</span> ' + escapeHtml(S.prereqs) + '</div>' + prereqHtml + '</div>' +
+          '<div><div class="detail-section-title"><span class="title-icon" style="color:var(--complete)">&#9654;</span> ' + escapeHtml(S.unlocks) + '</div>' + unlockHtml + '</div>' +
         '</div>' +
         '<div class="detail-actions">' +
-          (readLink ? '<a href="' + readLink + '" class="detail-link detail-link-read">Читать</a>' : '') +
-          '<a href="' + phaseGithubUrl + '" target="_blank" rel="noopener" class="detail-link">Открыть на GitHub</a>' +
+          (readLink ? '<a href="' + readLink + '" class="detail-link detail-link-read">' + escapeHtml(S.read) + '</a>' : '') +
+          '<a href="' + phaseGithubUrl + '" target="_blank" rel="noopener" class="detail-link">' + escapeHtml(S.openGithub) + '</a>' +
         '</div>';
 
       panel.classList.add('open');

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://datascience.xyz/courses/aicourse/catalog.html">
+  <link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/catalog.html">
+  <link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/catalog.html">
+  <link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/catalog.html">
   <title>Каталог уроков - AI Engineering from Scratch</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
   <meta name="description" content="Полный каталог из 502 уроков по AI Engineering. Поиск, фильтрация и сортировка всех уроков во всех 20 фазах.">
@@ -19,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260616a">
+  <link rel="stylesheet" href="style.css?v=20260709a">
 
 <!-- Счетчик Yandex.Metrika -->
 <script type="text/javascript">
@@ -234,17 +237,18 @@
         <span class="logo-icon" aria-hidden="true"></span> AI / FROM SCRATCH
       </a>
       <nav class="header-nav">
-        <a href="index.html#contents">Содержание</a>
-        <a href="catalog.html">Каталог</a>
-        <a href="prereqs.html">Дорожная карта</a>
-        <a href="glossary.html">Глоссарий</a>
+        <a href="index.html#contents" data-nav="contents">Содержание</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="prereqs.html" data-nav="roadmap">Дорожная карта</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener" class="header-github">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
           <svg class="star-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.896l-7.416 3.517 1.48-8.279L0 9.306l8.332-1.151z"/></svg>
-          <span class="star-count" data-loading="true" aria-label="Звезды GitHub">…</span>
+          <span class="star-count" data-loading="true" aria-label="GitHub stars">…</span>
         </a>
       </nav>
-      <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему" type="button">
+      <button class="theme-toggle lang-toggle" id="langToggle" type="button" title="Язык / Language">RU</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
     </div>
@@ -253,18 +257,18 @@
   <main class="catalog-page">
     <div class="container">
       <div class="catalog-header">
-        <h1>Каталог уроков</h1>
-        <p>Все уроки всех 20 фаз. Поиск, фильтрация, сортировка.</p>
+        <h1 data-i18n="title">Каталог уроков</h1>
+        <p data-i18n="subtitle">Все уроки всех 20 фаз. Поиск, фильтрация, сортировка.</p>
       </div>
       <div class="catalog-controls">
         <input type="text" class="catalog-search" id="catalogSearch" placeholder="Искать уроки...">
         <select class="catalog-filter" id="catalogPhase">
-          <option value="">Все фазы</option>
+          <option value="" data-i18n="allPhases">Все фазы</option>
         </select>
         <select class="catalog-filter" id="catalogStatus">
-          <option value="">Все статусы</option>
-          <option value="complete">Завершенные</option>
-          <option value="planned">Запланированные</option>
+          <option value="" data-i18n="allStatuses">Все статусы</option>
+          <option value="complete" data-i18n="statusCompletePlural">Завершенные</option>
+          <option value="planned" data-i18n="statusPlannedPlural">Запланированные</option>
         </select>
       </div>
       <div class="catalog-count" id="catalogCount"></div>
@@ -272,11 +276,11 @@
         <table class="catalog-table" id="catalogTable">
           <thead>
             <tr>
-              <th data-sort="phase">Фаза <span class="sort-arrow"></span></th>
-              <th data-sort="name">Урок <span class="sort-arrow"></span></th>
-              <th data-sort="type">Тип <span class="sort-arrow"></span></th>
-              <th data-sort="lang">Язык <span class="sort-arrow"></span></th>
-              <th data-sort="status">Статус <span class="sort-arrow"></span></th>
+              <th data-sort="phase" data-i18n-th="colPhase">Фаза <span class="sort-arrow"></span></th>
+              <th data-sort="name" data-i18n-th="colLesson">Урок <span class="sort-arrow"></span></th>
+              <th data-sort="type" data-i18n-th="colType">Тип <span class="sort-arrow"></span></th>
+              <th data-sort="lang" data-i18n-th="colLang">Язык <span class="sort-arrow"></span></th>
+              <th data-sort="status" data-i18n-th="colStatus">Статус <span class="sort-arrow"></span></th>
             </tr>
           </thead>
           <tbody id="catalogBody"></tbody>
@@ -287,21 +291,84 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
+      <p data-i18n="footerTagline">AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
       <div class="footer-links">
-        <a href="index.html">Главная</a>
+        <a href="index.html" data-nav="home">Главная</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener">GitHub</a>
-        <a href="glossary.html">Глоссарий</a>
-              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Report / Suggest</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
+              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener" data-i18n="report">Сообщить / Предложить</a>
       </div>
     </div>
   </footer>
 
-  <script src="data.js?v=20260616a"></script>
-  <script src="progress.js?v=20260616a"></script>
-  <script src="header.js?v=20260616a" defer></script>
+  <script src="data.js?v=20260709a"></script>
+  <script src="progress.js?v=20260709a"></script>
+  <script src="header.js?v=20260709a" defer></script>
   <script>
     (function () {
+      var PAGE_LANG = location.pathname.indexOf('/en/') !== -1 ? 'en' : 'ru';
+      document.documentElement.lang = PAGE_LANG;
+
+      var STR = {
+        ru: {
+          title: 'Каталог уроков',
+          subtitle: 'Все уроки всех 20 фаз. Поиск, фильтрация, сортировка.',
+          searchPlaceholder: 'Искать уроки...',
+          allPhases: 'Все фазы', allStatuses: 'Все статусы',
+          statusCompletePlural: 'Завершенные', statusPlannedPlural: 'Запланированные',
+          colPhase: 'Фаза', colLesson: 'Урок', colType: 'Тип', colLang: 'Язык', colStatus: 'Статус',
+          count: function (n, total) { return 'Показано ' + n + ' из ' + total + ' уроков'; },
+          empty: 'Нет уроков, соответствующих выбранным фильтрам.',
+          statusComplete: 'завершен', statusPlanned: 'запланирован',
+          footerTagline: 'AI Engineering from Scratch · открытый код · бесплатно навсегда.',
+          report: 'Сообщить / Предложить',
+          nav: { 'contents': 'Содержание', 'catalog': 'Каталог', 'roadmap': 'Дорожная карта', 'glossary': 'Глоссарий', 'home': 'Главная' }
+        },
+        en: {
+          title: 'Lesson Catalog',
+          subtitle: 'Every lesson across all 20 phases. Search, filter, sort.',
+          searchPlaceholder: 'Search lessons...',
+          allPhases: 'All phases', allStatuses: 'All statuses',
+          statusCompletePlural: 'Completed', statusPlannedPlural: 'Planned',
+          colPhase: 'Phase', colLesson: 'Lesson', colType: 'Type', colLang: 'Language', colStatus: 'Status',
+          count: function (n, total) { return 'Showing ' + n + ' of ' + total + ' lessons'; },
+          empty: 'No lessons match the selected filters.',
+          statusComplete: 'complete', statusPlanned: 'planned',
+          footerTagline: 'AI Engineering from Scratch · open source · free forever.',
+          report: 'Report / Suggest',
+          nav: { 'contents': 'Contents', 'catalog': 'Catalog', 'roadmap': 'Roadmap', 'glossary': 'Glossary', 'home': 'Home' }
+        }
+      };
+      var S = STR[PAGE_LANG];
+
+      // Localize static chrome from the strings table.
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var k = el.getAttribute('data-i18n');
+        if (S[k] != null) el.textContent = S[k];
+      });
+      // Table headers keep their sort-arrow span, so only swap the leading text node.
+      document.querySelectorAll('[data-i18n-th]').forEach(function (el) {
+        var k = el.getAttribute('data-i18n-th');
+        if (S[k] != null && el.firstChild) el.firstChild.textContent = S[k] + ' ';
+      });
+      document.querySelectorAll('[data-nav]').forEach(function (el) {
+        var k = el.getAttribute('data-nav');
+        if (S.nav && S.nav[k] != null) el.textContent = S.nav[k];
+      });
+      var _search = document.getElementById('catalogSearch');
+      if (_search) _search.setAttribute('placeholder', S.searchPlaceholder);
+
+      var langBtn = document.getElementById('langToggle');
+      if (langBtn) {
+        langBtn.textContent = PAGE_LANG.toUpperCase();
+        langBtn.addEventListener('click', function () {
+          window.location.href = PAGE_LANG === 'en' ? '../catalog.html' : 'en/catalog.html';
+        });
+      }
+
+      // Active-language name for a phase or lesson (English lives in *_en).
+      function nm(o) { return (PAGE_LANG === 'en' && o.name_en) ? o.name_en : o.name; }
+
       var root = document.documentElement;
       var stored = localStorage.getItem('theme');
       if (stored) {
@@ -340,15 +407,15 @@
           var p = PHASES[i];
           var opt = document.createElement('option');
           opt.value = String(p.id);
-          opt.textContent = String(p.id).padStart(2, '0') + ' - ' + p.name;
+          opt.textContent = String(p.id).padStart(2, '0') + ' - ' + nm(p);
           phaseSelect.appendChild(opt);
 
           for (var j = 0; j < p.lessons.length; j++) {
             var l = p.lessons[j];
             allRows.push({
               phase: p.id,
-              phaseName: p.name,
-              name: l.name,
+              phaseName: nm(p),
+              name: nm(l),
               type: l.type,
               lang: l.lang,
               status: l.status,
@@ -372,8 +439,8 @@
         }
 
         function displayStatus(status) {
-          if (status === 'complete') return 'завершен';
-          if (status === 'planned') return 'запланирован';
+          if (status === 'complete') return S.statusComplete;
+          if (status === 'planned') return S.statusPlanned;
           return status;
         }
 
@@ -417,10 +484,10 @@
             return 0;
           });
 
-          countEl.textContent = 'Показано ' + rows.length + ' из ' + allRows.length + ' уроков';
+          countEl.textContent = S.count(rows.length, allRows.length);
 
           if (rows.length === 0) {
-            bodyEl.innerHTML = '<tr><td colspan="5" class="catalog-empty">Нет уроков, соответствующих выбранным фильтрам.</td></tr>';
+            bodyEl.innerHTML = '<tr><td colspan="5" class="catalog-empty">' + escapeHtml(S.empty) + '</td></tr>';
             return;
           }
 

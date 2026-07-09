@@ -32,6 +32,7 @@ const MANIFEST_PATH = path.join(REPO_ROOT, 'lessons.json');
 const README_PATH = path.join(REPO_ROOT, 'README.md');
 const ROADMAP_PATH = path.join(REPO_ROOT, 'ROADMAP.md');
 const GLOSSARY_PATH = path.join(REPO_ROOT, 'glossary', 'terms.md');
+const GLOSSARY_RU_PATH = path.join(REPO_ROOT, 'glossary', 'terms.ru.md');
 const DATA_PATH = path.join(__dirname, 'data.js');
 const LESSON_TEMPLATE_PATH = path.join(__dirname, 'lesson-template.html');
 const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html']
@@ -410,7 +411,21 @@ function printReadiness(manifest, stats) {
 }
 
 // ─── Glossary ────────────────────────────────────────────────────────
-function parseGlossary(content) {
+// Strip a single layer of surrounding quotes (straight, curly or guillemets)
+// so the display layer can add its own per-language quotes.
+function stripQuotes(s) {
+  return s.replace(/^["“«]/, '').replace(/["”»]$/, '').trim();
+}
+
+// English and Russian glossary sources share the same `### headword` order but
+// use different section markers. The parser is parameterized by those markers
+// so both files run through the same logic.
+const GLOSSARY_MARKERS = {
+  en: { says: /\*\*What people say:\*\*\s*(.+)/, means: /\*\*What it actually means:\*\*\s*(.+)/ },
+  ru: { says: /\*\*Что говорят:\*\*\s*(.+)/, means: /\*\*Что это на самом деле:\*\*\s*(.+)/ },
+};
+
+function parseGlossary(content, markers) {
   const terms = [];
   let currentTerm = null;
 
@@ -425,12 +440,12 @@ function parseGlossary(content) {
     }
     if (!currentTerm) continue;
 
-    const saysMatch = line.match(/\*\*What people say:\*\*\s*"?(.+?)"?\s*$/);
+    const saysMatch = line.match(markers.says);
     if (saysMatch) {
-      currentTerm.says = saysMatch[1].replace(/^"/, '').replace(/"$/, '').trim();
+      currentTerm.says = stripQuotes(saysMatch[1].trim());
       continue;
     }
-    const meansMatch = line.match(/\*\*What it actually means:\*\*\s*(.+)/);
+    const meansMatch = line.match(markers.means);
     if (meansMatch) {
       currentTerm.means = meansMatch[1].trim();
     }
@@ -441,17 +456,48 @@ function parseGlossary(content) {
   return terms;
 }
 
+// Combine the ru + en glossaries into one bilingual list. Russian is the
+// top-level (the site default); the English copy is nested under `en`. The two
+// files must have the same term count and order (validated here) since they are
+// zipped by index — the headwords differ ("Attention" vs "Attention (внимание)").
+function buildBilingualGlossary() {
+  const en = parseGlossary(fs.readFileSync(GLOSSARY_PATH, 'utf8'), GLOSSARY_MARKERS.en);
+  const ru = parseGlossary(fs.readFileSync(GLOSSARY_RU_PATH, 'utf8'), GLOSSARY_MARKERS.ru);
+  if (en.length !== ru.length) {
+    console.error(`❌ glossary mismatch: terms.md has ${en.length} terms, terms.ru.md has ${ru.length}. They must match 1:1 in order.`);
+    process.exit(1);
+  }
+  return ru.map((r, i) => ({
+    term: r.term, says: r.says, means: r.means,
+    en: { term: en[i].term, says: en[i].says, means: en[i].means },
+  }));
+}
+
 // ─── site/data.js ────────────────────────────────────────────────────
+// English lesson title = the H1 of the lesson's en.md (falls back to the
+// Russian title). Used by the bilingual catalog and roadmap pages.
+function lessonTitleEn(phase, lesson) {
+  const enPath = path.join(REPO_ROOT, lessonRel(phase, lesson), 'docs', 'en.md');
+  if (fs.existsSync(enPath)) {
+    const t = lessonRenderer.extractTitle(fs.readFileSync(enPath, 'utf8'));
+    if (t) return t;
+  }
+  return lesson.title;
+}
+
 function renderDataJs(manifest, glossaryTerms) {
   const phases = manifest.phases.map(phase => ({
     id: phase.number,
     name: phase.name,
+    name_en: phase.name_en || phase.name,
     status: phase.status,
     desc: phase.desc,
+    desc_en: phase.desc_en || phase.desc,
     dir: phase.dir,
     slug: phaseSlug(phase),
     lessons: phase.lessons.map(lesson => ({
       name: lesson.title,
+      name_en: lessonTitleEn(phase, lesson),
       status: lesson.status,
       type: lesson.type,
       lang: lesson.languages,
@@ -919,6 +965,132 @@ function renderPhaseHubs(manifest) {
   return written;
 }
 
+// ─── Service pages (index / catalog / prereqs / glossary), en copies ─
+// The Russian versions are committed static files at the site root; they
+// self-localize the visible chrome at runtime by detecting `/en/` in the path.
+// This generates the English copy under site/en/<file> by transforming the
+// committed root file: point root-relative assets one level up, set lang=en,
+// and swap the <head> SEO block (title/description/canonical/og) to English.
+// Sibling nav links (catalog.html, glossary.html, …) are left as-is — they
+// resolve to the en siblings that live in the same site/en/ directory.
+const SERVICE_ROOT_ASSETS = ['style.css', 'data.js', 'progress.js', 'header.js', 'lesson.css', 'lesson.js', 'app.js'];
+
+const SERVICE_PAGES = [
+  {
+    file: 'glossary.html',
+    title: 'AI Glossary - AI Engineering from Scratch',
+    description: 'AI glossary: what people say vs what things actually mean. Every term explained without hand-waving.',
+    ogTitle: 'Glossary · AI Engineering from Scratch',
+    ogDescription: 'What people say vs what things actually mean. Every AI term, defined without hand-waving.',
+    twDescription: 'What people say vs what things actually mean.',
+    // Exact Russian head strings to replace (must match glossary.html verbatim).
+    ruTitle: 'Глоссарий ИИ - AI Engineering from Scratch',
+    ruDescription: 'Глоссарий ИИ: что говорят vs что это значит на самом деле. Каждый термин объяснён без воды.',
+    ruOgTitle: 'Глоссарий · AI Engineering from Scratch',
+    ruOgDescription: 'Что говорят vs что это значит на самом деле. Каждый термин ИИ, определённый без воды.',
+    ruTwDescription: 'Что говорят vs что это значит на самом деле.',
+  },
+  {
+    file: 'catalog.html',
+    title: 'Lesson Catalog - AI Engineering from Scratch',
+    description: 'Full catalog of 502 AI Engineering lessons. Search, filter, and sort every lesson across all 20 phases.',
+    ogTitle: 'Catalog · AI Engineering from Scratch',
+    ogDescription: 'Search and filter 502 lessons across 20 phases. Python, TypeScript, Rust, Julia.',
+    twDescription: 'Search and filter 502 lessons across 20 phases.',
+    ruTitle: 'Каталог уроков - AI Engineering from Scratch',
+    ruDescription: 'Полный каталог из 502 уроков по AI Engineering. Поиск, фильтрация и сортировка всех уроков во всех 20 фазах.',
+    ruOgTitle: 'Каталог · AI Engineering from Scratch',
+    ruOgDescription: 'Ищите и фильтруйте 502 уроков в 20 фазах. Python, TypeScript, Rust, Julia.',
+    ruTwDescription: 'Ищите и фильтруйте 502 уроков в 20 фазах.',
+  },
+  {
+    file: 'index.html',
+    canonicalRu: SITE_BASE,
+    canonicalEn: `${SITE_BASE}en/`,
+    title: 'AI Engineering from Scratch',
+    description: '502 lessons across 20 phases. Backpropagation, tokenizer, attention, and the agent loop — all by hand, from pure math, before importing any framework. Python, plus TypeScript, Rust, and Julia in dedicated lessons.',
+    ogTitle: 'AI Engineering from Scratch',
+    ogDescription: '502 lessons across 20 phases. Backpropagation, tokenizer, attention, and the agent loop — all by hand, from pure math, before importing any framework.',
+    twDescription: '502 lessons across 20 phases. Build from pure math, by hand.',
+    ruTitle: 'Разработка ИИ с нуля',
+    ruDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — всё вручную, из чистой математики, до импорта фреймворков. Python, плюс TypeScript, Rust и Julia в отдельных уроках.',
+    // og:title and twitter:title share this text with the JSON-LD Course name.
+    ruOgTitle: 'Разработка ИИ с нуля',
+    ruOgDescription: '502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — всё вручную, из чистой математики, до импорта фреймворков.',
+    ruTwDescription: '502 урока в 20 фазах. Стройте из чистой математики, вручную.',
+    extraSwaps: [
+      ['<meta property="og:locale" content="ru_RU">', '<meta property="og:locale" content="en_US">'],
+      ['"description": "502 урока в 20 фазах: математика, модель, тренер, токенизатор и agent loop — всё вручную, до импорта фреймворков."',
+       '"description": "502 lessons across 20 phases: math, model, trainer, tokenizer, and the agent loop — all by hand, before importing any framework."'],
+      ['"inLanguage": "ru"', '"inLanguage": "en"'],
+      ['"teaches": "AI engineering, deep learning, трансформеры, LLM, агенты, RAG"',
+       '"teaches": "AI engineering, deep learning, transformers, LLMs, agents, RAG"'],
+    ],
+  },
+  {
+    file: 'prereqs.html',
+    title: 'Roadmap - AI Engineering from Scratch',
+    description: 'Interactive prerequisite map for 502 AI Engineering lessons. See which phases depend on which, and plan your learning path.',
+    ogTitle: 'Roadmap · AI Engineering from Scratch',
+    ogDescription: 'Interactive prerequisite map. See what each phase depends on and what it unlocks next.',
+    twDescription: 'Interactive prerequisite map for 20 phases.',
+    ruTitle: 'Дорожная карта - AI Engineering from Scratch',
+    ruDescription: 'Интерактивная карта предварительных требований для 502 уроков по AI Engineering. Посмотрите, какие фазы от каких зависят, и спланируйте свой путь обучения.',
+    ruOgTitle: 'Дорожная карта · AI Engineering from Scratch',
+    ruOgDescription: 'Интерактивная карта предварительных требований. Посмотрите, от чего зависит каждая фаза и что она открывает дальше.',
+    ruTwDescription: 'Интерактивная карта предварительных требований для 20 фаз.',
+  },
+];
+
+function replaceOnce(html, from, to, label) {
+  if (!html.includes(from)) {
+    console.warn(`⚠️  service-page en: expected string not found (${label}) in the source; skipping this swap`);
+    return html;
+  }
+  return html.split(from).join(to);
+}
+
+function renderServiceEnPage(html, page) {
+  let out = html;
+  out = out.replace('<html lang="ru"', '<html lang="en"');
+  // Root-relative asset references (href/src="name?v=…" or "name") → one level up.
+  for (const asset of SERVICE_ROOT_ASSETS) {
+    const re = new RegExp(`((?:href|src)=")(${asset.replace('.', '\\.')})(\\?[^"]*)?"`, 'g');
+    out = out.replace(re, `$1../$2$3"`);
+  }
+  // Canonical + og:url point at the en URL; hreflang alternates stay untouched.
+  // index.html canonicals are the site root ('' → '/', en → '/en/'), not the
+  // bare filename, so pages can override the default file-based URLs.
+  const ruCanonical = page.canonicalRu || `${SITE_BASE}${page.file}`;
+  const enCanonical = page.canonicalEn || `${SITE_BASE}en/${page.file}`;
+  out = out.replace(`<link rel="canonical" href="${ruCanonical}">`, `<link rel="canonical" href="${enCanonical}">`);
+  out = out.replace(`<meta property="og:url" content="${ruCanonical}">`, `<meta property="og:url" content="${enCanonical}">`);
+  // Head SEO text → English.
+  out = replaceOnce(out, `<title>${page.ruTitle}</title>`, `<title>${page.title}</title>`, `${page.file} title`);
+  out = replaceOnce(out, page.ruDescription, page.description, `${page.file} description`);
+  out = replaceOnce(out, page.ruOgTitle, page.ogTitle, `${page.file} og:title`);
+  out = replaceOnce(out, page.ruOgDescription, page.ogDescription, `${page.file} og:description`);
+  out = replaceOnce(out, page.ruTwDescription, page.twDescription, `${page.file} twitter:description`);
+  // Arbitrary extra head swaps (og:locale, JSON-LD name/description/inLanguage…).
+  for (const [from, to] of page.extraSwaps || []) {
+    out = replaceOnce(out, from, to, `${page.file} extra swap`);
+  }
+  return out;
+}
+
+function renderServicePages() {
+  let written = 0;
+  for (const page of SERVICE_PAGES) {
+    const src = fs.readFileSync(path.join(__dirname, page.file), 'utf8');
+    const enHtml = renderServiceEnPage(src, page);
+    const outPath = path.join(__dirname, 'en', page.file);
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, enHtml, 'utf8');
+    written++;
+  }
+  return written;
+}
+
 // ─── Main ────────────────────────────────────────────────────────────
 // ─── sitemap.xml ─────────────────────────────────────────────────────
 // robots.txt advertises this file; without it that line is a live 404.
@@ -944,11 +1116,14 @@ function renderSitemap(manifest) {
     }
   }
 
-  // Canonical forms are the real files (guaranteed to serve under the proxy);
-  // the pretty /catalog, /path rewrites resolve to the same content.
-  for (const [loc, priority] of [['', '1.0'], ['catalog.html', '0.8'], ['prereqs.html', '0.7'], ['glossary.html', '0.5']]) {
-    urls.push(`  <url>\n    <loc>${SITE_BASE}${loc}</loc>\n    <priority>${priority}</priority>\n  </url>`);
-  }
+  // Single-language service pages (still Russian-only). Canonical forms are the
+  // real files (guaranteed to serve under the proxy); the pretty /catalog,
+  // /path rewrites resolve to the same content.
+  // Bilingual service pages (ru canonical + en alternate).
+  pushAlternates(`${SITE_BASE}`, `${SITE_BASE}en/`, '1.0');
+  pushAlternates(`${SITE_BASE}catalog.html`, `${SITE_BASE}en/catalog.html`, '0.8');
+  pushAlternates(`${SITE_BASE}prereqs.html`, `${SITE_BASE}en/prereqs.html`, '0.7');
+  pushAlternates(`${SITE_BASE}glossary.html`, `${SITE_BASE}en/glossary.html`, '0.5');
   for (const phase of manifest.phases) {
     pushAlternates(`${SITE_BASE}${phaseSlug(phase)}/`, `${SITE_BASE}en/${phaseSlug(phase)}/`, '0.7');
     for (const lesson of phase.lessons) {
@@ -968,7 +1143,7 @@ function main() {
   const stats = computeStats(manifest);
   const outputsIndex = renderOutputsIndex(manifest);
   stats.artifacts = Object.values(JSON.parse(outputsIndex).counts).reduce((a, b) => a + b, 0);
-  const glossaryTerms = parseGlossary(fs.readFileSync(GLOSSARY_PATH, 'utf8'));
+  const glossaryTerms = buildBilingualGlossary();
 
   const targets = [
     { path: DATA_PATH, render: () => renderDataJs(manifest, glossaryTerms) },
@@ -999,7 +1174,8 @@ function main() {
   if (!checkMode) {
     const lessonPages = renderLessonPages(manifest);
     const hubPages = renderPhaseHubs(manifest);
-    console.log(`\n🗂  Prerendered ${lessonPages} lesson pages + ${hubPages} phase hubs`);
+    const servicePages = renderServicePages();
+    console.log(`\n🗂  Prerendered ${lessonPages} lesson pages + ${hubPages} phase hubs + ${servicePages} en service pages`);
   }
 
   console.log(`\n📊 Stats:`);

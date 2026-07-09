@@ -2,18 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://datascience.xyz/courses/aicourse/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/"/>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://datascience.xyz/courses/aicourse/en/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/"/>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://datascience.xyz/courses/aicourse/catalog.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/catalog.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/catalog.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/catalog.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://datascience.xyz/courses/aicourse/en/catalog.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/catalog.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/catalog.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/catalog.html"/>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://datascience.xyz/courses/aicourse/prereqs.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/prereqs.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/prereqs.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/prereqs.html"/>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://datascience.xyz/courses/aicourse/en/prereqs.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/prereqs.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/prereqs.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/prereqs.html"/>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://datascience.xyz/courses/aicourse/glossary.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/glossary.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/glossary.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/glossary.html"/>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://datascience.xyz/courses/aicourse/en/glossary.html</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/glossary.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/glossary.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/glossary.html"/>
     <priority>0.5</priority>
   </url>
   <url>

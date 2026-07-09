@@ -4,22 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://datascience.xyz/courses/aicourse/glossary.html">
-  <title>AI Glossary - AI Engineering from Scratch</title>
+  <link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/glossary.html">
+  <link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/glossary.html">
+  <link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/glossary.html">
+  <title>Глоссарий ИИ - AI Engineering from Scratch</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
-  <meta name="description" content="AI glossary: what people say vs what things actually mean. Every term explained without hand-waving.">
-  <meta property="og:title" content="Glossary · AI Engineering from Scratch">
-  <meta property="og:description" content="What people say vs what things actually mean. Every AI term, defined without hand-waving.">
+  <meta name="description" content="Глоссарий ИИ: что говорят vs что это значит на самом деле. Каждый термин объяснён без воды.">
+  <meta property="og:title" content="Глоссарий · AI Engineering from Scratch">
+  <meta property="og:description" content="Что говорят vs что это значит на самом деле. Каждый термин ИИ, определённый без воды.">
   <meta property="og:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
   <meta property="og:url" content="https://datascience.xyz/courses/aicourse/glossary.html">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Glossary · AI Engineering from Scratch">
-  <meta name="twitter:description" content="What people say vs what things actually mean.">
+  <meta name="twitter:title" content="Глоссарий · AI Engineering from Scratch">
+  <meta name="twitter:description" content="Что говорят vs что это значит на самом деле.">
   <meta name="twitter:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260616a">
+  <link rel="stylesheet" href="style.css?v=20260709a">
 
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
@@ -181,20 +184,21 @@
 
   <header class="site-header">
     <div class="header-inner">
-      <a href="index.html" class="logo">
+      <a href="index.html" class="logo" data-nav="home-logo">
         <span class="logo-icon" aria-hidden="true"></span> AI / FROM SCRATCH
       </a>
       <nav class="header-nav">
-        <a href="index.html#contents">Contents</a>
-        <a href="catalog.html">Catalog</a>
-        <a href="prereqs.html">Roadmap</a>
-        <a href="glossary.html">Glossary</a>
+        <a href="index.html#contents" data-nav="contents">Содержание</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="prereqs.html" data-nav="roadmap">Дорожная карта</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener" class="header-github">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
           <svg class="star-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.896l-7.416 3.517 1.48-8.279L0 9.306l8.332-1.151z"/></svg>
           <span class="star-count" data-loading="true" aria-label="GitHub stars">…</span>
         </a>
       </nav>
+      <button class="theme-toggle lang-toggle" id="langToggle" type="button" title="Язык / Language">RU</button>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
@@ -204,11 +208,11 @@
   <main class="glossary-page">
     <div class="container">
       <div class="glossary-header">
-        <h1>AI Glossary</h1>
-        <p>What people <em>say</em> vs what things actually <em>mean</em></p>
+        <h1 data-i18n="title">Глоссарий ИИ</h1>
+        <p data-i18n-html="subtitle">Что <em>говорят</em> vs что на самом деле <em>значит</em></p>
       </div>
       <div class="glossary-search-wrap">
-        <input type="text" class="glossary-search" id="glossarySearch" placeholder="Search terms...">
+        <input type="text" class="glossary-search" id="glossarySearch" placeholder="Поиск терминов…">
       </div>
       <div class="glossary-count" id="glossaryCount"></div>
       <div class="glossary-list" id="glossaryList"></div>
@@ -217,21 +221,70 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>AI Engineering from Scratch · open source · free forever.</p>
+      <p data-i18n="footerTagline">AI Engineering from Scratch · открытый код · бесплатно навсегда.</p>
       <div class="footer-links">
-        <a href="index.html">Home</a>
+        <a href="index.html" data-nav="home">Главная</a>
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener">GitHub</a>
-        <a href="catalog.html">Catalog</a>
-              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Report / Suggest</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+              <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener" data-i18n="report">Сообщить / Предложить</a>
       </div>
     </div>
   </footer>
 
-  <script src="data.js?v=20260616a"></script>
-  <script src="progress.js?v=20260616a"></script>
-  <script src="header.js?v=20260616a" defer></script>
+  <script src="data.js?v=20260709a"></script>
+  <script src="progress.js?v=20260709a"></script>
+  <script src="header.js?v=20260709a" defer></script>
   <script>
     (function () {
+      var PAGE_LANG = location.pathname.indexOf('/en/') !== -1 ? 'en' : 'ru';
+      document.documentElement.lang = PAGE_LANG;
+
+      var STR = {
+        ru: {
+          title: 'Глоссарий ИИ',
+          subtitle: 'Что <em>говорят</em> vs что на самом деле <em>значит</em>',
+          searchPlaceholder: 'Поиск терминов…',
+          count: function (n, total) { return n + ' из ' + total + ' терминов'; },
+          empty: 'Ничего не найдено по запросу.',
+          labelSays: 'Что говорят',
+          labelMeans: 'Что это на самом деле',
+          footerTagline: 'AI Engineering from Scratch · открытый код · бесплатно навсегда.',
+          report: 'Сообщить / Предложить',
+          quoteOpen: '«', quoteClose: '»',
+          nav: { 'contents': 'Содержание', 'catalog': 'Каталог', 'roadmap': 'Дорожная карта', 'glossary': 'Глоссарий', 'home': 'Главная' }
+        },
+        en: {
+          title: 'AI Glossary',
+          subtitle: 'What people <em>say</em> vs what things actually <em>mean</em>',
+          searchPlaceholder: 'Search terms…',
+          count: function (n, total) { return n + ' of ' + total + ' terms'; },
+          empty: 'No terms match your search.',
+          labelSays: 'What people say',
+          labelMeans: 'What it actually means',
+          footerTagline: 'AI Engineering from Scratch · open source · free forever.',
+          report: 'Report / Suggest',
+          quoteOpen: '"', quoteClose: '"',
+          nav: { 'contents': 'Contents', 'catalog': 'Catalog', 'roadmap': 'Roadmap', 'glossary': 'Glossary', 'home': 'Home' }
+        }
+      };
+      var S = STR[PAGE_LANG];
+
+      // Localize static chrome (nav, footer, header) from the strings table.
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n');
+        if (S[key] != null) el.textContent = S[key];
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-html');
+        if (S[key] != null) el.innerHTML = S[key];
+      });
+      document.querySelectorAll('[data-nav]').forEach(function (el) {
+        var key = el.getAttribute('data-nav');
+        if (S.nav && S.nav[key] != null) el.textContent = S.nav[key];
+      });
+      var searchInputEl = document.getElementById('glossarySearch');
+      if (searchInputEl) searchInputEl.setAttribute('placeholder', S.searchPlaceholder);
+
       var root = document.documentElement;
       var stored = localStorage.getItem('theme');
       if (stored) {
@@ -249,6 +302,15 @@
       }
 
       updateIcon();
+
+      // Language toggle: swap between /glossary.html (ru) and /en/glossary.html.
+      var langBtn = document.getElementById('langToggle');
+      if (langBtn) {
+        langBtn.textContent = PAGE_LANG.toUpperCase();
+        langBtn.addEventListener('click', function () {
+          window.location.href = PAGE_LANG === 'en' ? '../glossary.html' : 'en/glossary.html';
+        });
+      }
 
       document.addEventListener('DOMContentLoaded', function () {
         updateIcon();
@@ -273,36 +335,45 @@
           return div.innerHTML;
         }
 
+        // Pull the active-language fields from a bilingual glossary entry.
+        // Top-level is Russian; English lives under `.en`. Falls back to the
+        // top-level fields if the English copy is missing.
+        function pick(t) {
+          if (PAGE_LANG === 'en' && t.en) return t.en;
+          return { term: t.term, says: t.says, means: t.means };
+        }
+
         function renderGlossary(filter) {
           var terms = GLOSSARY;
           if (filter) {
             var q = filter.toLowerCase();
             terms = terms.filter(function (t) {
-              return t.term.toLowerCase().indexOf(q) !== -1 ||
-                t.says.toLowerCase().indexOf(q) !== -1 ||
-                t.means.toLowerCase().indexOf(q) !== -1;
+              var v = pick(t);
+              return v.term.toLowerCase().indexOf(q) !== -1 ||
+                v.says.toLowerCase().indexOf(q) !== -1 ||
+                v.means.toLowerCase().indexOf(q) !== -1;
             });
           }
 
-          countEl.textContent = terms.length + ' of ' + GLOSSARY.length + ' terms';
+          countEl.textContent = S.count(terms.length, GLOSSARY.length);
 
           if (terms.length === 0) {
-            listEl.innerHTML = '<div class="glossary-empty">No terms match your search.</div>';
+            listEl.innerHTML = '<div class="glossary-empty">' + escapeHtml(S.empty) + '</div>';
             return;
           }
 
           var html = '';
           for (var i = 0; i < terms.length; i++) {
-            var t = terms[i];
+            var t = pick(terms[i]);
             html += '<div class="glossary-card">';
             html += '<div class="glossary-term">' + escapeHtml(t.term) + '</div>';
             html += '<div class="glossary-row">';
             html += '<div class="glossary-col">';
-            html += '<div class="glossary-col-label">What people say</div>';
-            html += '<div class="glossary-col-says">"' + escapeHtml(t.says) + '"</div>';
+            html += '<div class="glossary-col-label">' + escapeHtml(S.labelSays) + '</div>';
+            html += '<div class="glossary-col-says">' + S.quoteOpen + escapeHtml(t.says) + S.quoteClose + '</div>';
             html += '</div>';
             html += '<div class="glossary-col">';
-            html += '<div class="glossary-col-label">What it actually means</div>';
+            html += '<div class="glossary-col-label">' + escapeHtml(S.labelMeans) + '</div>';
             html += '<div class="glossary-col-means">' + escapeHtml(t.means) + '</div>';
             html += '</div>';
             html += '</div>';

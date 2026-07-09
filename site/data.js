@@ -4,13 +4,16 @@ const PHASES = [
   {
     "id": 0,
     "name": "Настройка и инструменты",
+    "name_en": "Setup & Tooling",
     "status": "complete",
     "desc": "Подготовьте среду для всего, что будет дальше.",
+    "desc_en": "Set up the environment for everything that follows.",
     "dir": "00-setup-and-tooling",
     "slug": "setup-and-tooling",
     "lessons": [
       {
         "name": "Среда разработки",
+        "name_en": "Dev Environment",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, TypeScript, Rust",
@@ -20,6 +23,7 @@ const PHASES = [
       },
       {
         "name": "Git и совместная работа",
+        "name_en": "Git & Collaboration",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -29,6 +33,7 @@ const PHASES = [
       },
       {
         "name": "Настройка GPU и облако",
+        "name_en": "GPU Setup & Cloud",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -38,6 +43,7 @@ const PHASES = [
       },
       {
         "name": "API и ключи",
+        "name_en": "APIs & Keys",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, TypeScript",
@@ -47,6 +53,7 @@ const PHASES = [
       },
       {
         "name": "Jupyter Notebook",
+        "name_en": "Jupyter Notebooks",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -56,6 +63,7 @@ const PHASES = [
       },
       {
         "name": "Окружения Python",
+        "name_en": "Python Environments",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -65,6 +73,7 @@ const PHASES = [
       },
       {
         "name": "Docker для AI",
+        "name_en": "Docker for AI",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -74,6 +83,7 @@ const PHASES = [
       },
       {
         "name": "Настройка редактора",
+        "name_en": "Editor Setup",
         "status": "complete",
         "type": "Практика",
         "lang": "—",
@@ -83,6 +93,7 @@ const PHASES = [
       },
       {
         "name": "Управление данными",
+        "name_en": "Data Management",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -92,6 +103,7 @@ const PHASES = [
       },
       {
         "name": "Терминал и shell",
+        "name_en": "Terminal & Shell",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -101,6 +113,7 @@ const PHASES = [
       },
       {
         "name": "Linux для AI",
+        "name_en": "Linux for AI",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -110,6 +123,7 @@ const PHASES = [
       },
       {
         "name": "Отладка и профилирование",
+        "name_en": "Debugging and Profiling",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -122,13 +136,16 @@ const PHASES = [
   {
     "id": 1,
     "name": "Математические основы",
+    "name_en": "Math Foundations",
     "status": "complete",
     "desc": "Интуиция за каждым AI-алгоритмом через код.",
+    "desc_en": "The intuition behind every AI algorithm, through code.",
     "dir": "01-math-foundations",
     "slug": "math-foundations",
     "lessons": [
       {
         "name": "Интуиция линейной алгебры",
+        "name_en": "Linear Algebra Intuition",
         "status": "complete",
         "type": "Теория",
         "lang": "Python, Julia",
@@ -138,6 +155,7 @@ const PHASES = [
       },
       {
         "name": "Векторы, матрицы и операции",
+        "name_en": "Vectors, Matrices & Operations",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
@@ -147,6 +165,7 @@ const PHASES = [
       },
       {
         "name": "Матричные преобразования и собственные значения",
+        "name_en": "Matrix Transformations",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
@@ -156,6 +175,7 @@ const PHASES = [
       },
       {
         "name": "Математический анализ для ML: производные и градиенты",
+        "name_en": "Calculus for Machine Learning",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -165,6 +185,7 @@ const PHASES = [
       },
       {
         "name": "Правило цепочки и автоматическое дифференцирование",
+        "name_en": "Chain Rule & Automatic Differentiation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -174,6 +195,7 @@ const PHASES = [
       },
       {
         "name": "Вероятность и распределения",
+        "name_en": "Probability and Distributions",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -183,6 +205,7 @@ const PHASES = [
       },
       {
         "name": "Теорема Байеса и статистическое мышление",
+        "name_en": "Bayes' Theorem",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -192,6 +215,7 @@ const PHASES = [
       },
       {
         "name": "Оптимизация: семейство градиентного спуска",
+        "name_en": "Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -201,6 +225,7 @@ const PHASES = [
       },
       {
         "name": "Теория информации: энтропия, KL-дивергенция",
+        "name_en": "Information Theory",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -210,6 +235,7 @@ const PHASES = [
       },
       {
         "name": "Снижение размерности: PCA, t-SNE, UMAP",
+        "name_en": "Dimensionality Reduction",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -219,6 +245,7 @@ const PHASES = [
       },
       {
         "name": "Сингулярное разложение",
+        "name_en": "Singular Value Decomposition",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
@@ -228,6 +255,7 @@ const PHASES = [
       },
       {
         "name": "Тензорные операции",
+        "name_en": "Tensor Operations",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -237,6 +265,7 @@ const PHASES = [
       },
       {
         "name": "Численная устойчивость",
+        "name_en": "Numerical Stability",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -246,6 +275,7 @@ const PHASES = [
       },
       {
         "name": "Нормы и расстояния",
+        "name_en": "Norms and Distances",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -255,6 +285,7 @@ const PHASES = [
       },
       {
         "name": "Статистика для ML",
+        "name_en": "Statistics for Machine Learning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -264,6 +295,7 @@ const PHASES = [
       },
       {
         "name": "Методы выборки",
+        "name_en": "Sampling Methods",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -273,6 +305,7 @@ const PHASES = [
       },
       {
         "name": "Линейные системы",
+        "name_en": "Linear Systems",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -282,6 +315,7 @@ const PHASES = [
       },
       {
         "name": "Выпуклая оптимизация",
+        "name_en": "Convex Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -291,6 +325,7 @@ const PHASES = [
       },
       {
         "name": "Комплексные числа для AI",
+        "name_en": "Complex Numbers for AI",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -300,6 +335,7 @@ const PHASES = [
       },
       {
         "name": "Преобразование Фурье",
+        "name_en": "The Fourier Transform",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -309,6 +345,7 @@ const PHASES = [
       },
       {
         "name": "Теория графов для ML",
+        "name_en": "Graph Theory for Machine Learning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -318,6 +355,7 @@ const PHASES = [
       },
       {
         "name": "Стохастические процессы",
+        "name_en": "Stochastic Processes",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -330,13 +368,16 @@ const PHASES = [
   {
     "id": 2,
     "name": "Основы ML",
+    "name_en": "ML Fundamentals",
     "status": "complete",
     "desc": "Классический ML все еще остается основой большей части production AI.",
+    "desc_en": "Classical ML is still the backbone of most production AI.",
     "dir": "02-ml-fundamentals",
     "slug": "ml-fundamentals",
     "lessons": [
       {
         "name": "Что такое машинное обучение",
+        "name_en": "What Is Machine Learning",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -346,6 +387,7 @@ const PHASES = [
       },
       {
         "name": "Линейная регрессия с нуля",
+        "name_en": "Linear Regression",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -355,6 +397,7 @@ const PHASES = [
       },
       {
         "name": "Логистическая регрессия и классификация",
+        "name_en": "Logistic Regression",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -364,6 +407,7 @@ const PHASES = [
       },
       {
         "name": "Деревья решений и случайные леса",
+        "name_en": "Decision Trees and Random Forests",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -373,6 +417,7 @@ const PHASES = [
       },
       {
         "name": "Метод опорных векторов",
+        "name_en": "Support Vector Machines",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -382,6 +427,7 @@ const PHASES = [
       },
       {
         "name": "KNN и метрики расстояния",
+        "name_en": "K-Nearest Neighbors and Distances",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -391,6 +437,7 @@ const PHASES = [
       },
       {
         "name": "Обучение без учителя: K-Means, DBSCAN",
+        "name_en": "Unsupervised Learning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -400,6 +447,7 @@ const PHASES = [
       },
       {
         "name": "Проектирование и отбор признаков",
+        "name_en": "Feature Engineering & Selection",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -409,6 +457,7 @@ const PHASES = [
       },
       {
         "name": "Оценка моделей: метрики, кросс-валидация",
+        "name_en": "Model Evaluation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -418,6 +467,7 @@ const PHASES = [
       },
       {
         "name": "Смещение, дисперсия и кривая обучения",
+        "name_en": "Bias-Variance Tradeoff",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -427,6 +477,7 @@ const PHASES = [
       },
       {
         "name": "Ансамблевые методы: boosting, bagging, stacking",
+        "name_en": "Ensemble Methods",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -436,6 +487,7 @@ const PHASES = [
       },
       {
         "name": "Настройка гиперпараметров",
+        "name_en": "Hyperparameter Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -445,6 +497,7 @@ const PHASES = [
       },
       {
         "name": "ML-пайплайны и отслеживание экспериментов",
+        "name_en": "ML Pipelines",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -454,6 +507,7 @@ const PHASES = [
       },
       {
         "name": "Наивный Байес",
+        "name_en": "Naive Bayes",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -463,6 +517,7 @@ const PHASES = [
       },
       {
         "name": "Основы временных рядов",
+        "name_en": "Time Series Fundamentals",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -472,6 +527,7 @@ const PHASES = [
       },
       {
         "name": "Обнаружение аномалий",
+        "name_en": "Anomaly Detection",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -481,6 +537,7 @@ const PHASES = [
       },
       {
         "name": "Работа с несбалансированными данными",
+        "name_en": "Handling Imbalanced Data",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -490,6 +547,7 @@ const PHASES = [
       },
       {
         "name": "Отбор признаков",
+        "name_en": "Feature Selection",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -502,13 +560,16 @@ const PHASES = [
   {
     "id": 3,
     "name": "Ядро deep learning",
+    "name_en": "Deep Learning Core",
     "status": "complete",
     "desc": "Нейросети с первых принципов. Никаких фреймворков, пока вы не соберете свой.",
+    "desc_en": "Neural networks from first principles. No frameworks until you build your own.",
     "dir": "03-deep-learning-core",
     "slug": "deep-learning-core",
     "lessons": [
       {
         "name": "Перцептрон: с чего все началось",
+        "name_en": "The Perceptron",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -518,6 +579,7 @@ const PHASES = [
       },
       {
         "name": "Многослойные сети и прямой проход",
+        "name_en": "Multi-Layer Networks and Forward Pass",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -527,6 +589,7 @@ const PHASES = [
       },
       {
         "name": "Backpropagation с нуля",
+        "name_en": "Backpropagation from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -536,6 +599,7 @@ const PHASES = [
       },
       {
         "name": "Функции активации: ReLU, Sigmoid, GELU и зачем они нужны",
+        "name_en": "Activation Functions",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -545,6 +609,7 @@ const PHASES = [
       },
       {
         "name": "Функции потерь: MSE, Cross-Entropy, Contrastive",
+        "name_en": "Loss Functions",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -554,6 +619,7 @@ const PHASES = [
       },
       {
         "name": "Оптимизаторы: SGD, Momentum, Adam, AdamW",
+        "name_en": "Optimizers",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -563,6 +629,7 @@ const PHASES = [
       },
       {
         "name": "Регуляризация: Dropout, Weight Decay, BatchNorm",
+        "name_en": "Regularization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -572,6 +639,7 @@ const PHASES = [
       },
       {
         "name": "Инициализация весов и стабильность обучения",
+        "name_en": "Weight Initialization and Training Stability",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -581,6 +649,7 @@ const PHASES = [
       },
       {
         "name": "Расписания learning rate и warmup",
+        "name_en": "Learning Rate Schedules and Warmup",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -590,6 +659,7 @@ const PHASES = [
       },
       {
         "name": "Соберите собственный мини-фреймворк",
+        "name_en": "Build Your Own Mini Framework",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -599,6 +669,7 @@ const PHASES = [
       },
       {
         "name": "Введение в PyTorch",
+        "name_en": "Introduction to PyTorch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -608,6 +679,7 @@ const PHASES = [
       },
       {
         "name": "Введение в JAX",
+        "name_en": "Introduction to JAX",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -617,6 +689,7 @@ const PHASES = [
       },
       {
         "name": "Отладка нейросетей",
+        "name_en": "Debugging Neural Networks",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -629,13 +702,16 @@ const PHASES = [
   {
     "id": 4,
     "name": "Computer Vision",
+    "name_en": "Computer Vision",
     "status": "complete",
     "desc": "От пикселей к пониманию: изображения, видео, 3D, VLM и модели мира.",
+    "desc_en": "From pixels to understanding: images, video, 3D, VLMs, and world models.",
     "dir": "04-computer-vision",
     "slug": "computer-vision",
     "lessons": [
       {
         "name": "Основы изображений: пиксели, каналы, цветовые пространства",
+        "name_en": "Image Fundamentals — Pixels, Channels, Color Spaces",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -645,6 +721,7 @@ const PHASES = [
       },
       {
         "name": "Свертки с нуля",
+        "name_en": "Convolutions from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -654,6 +731,7 @@ const PHASES = [
       },
       {
         "name": "CNN: от LeNet до ResNet",
+        "name_en": "CNNs — LeNet to ResNet",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -663,6 +741,7 @@ const PHASES = [
       },
       {
         "name": "Классификация изображений",
+        "name_en": "Image Classification",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -672,6 +751,7 @@ const PHASES = [
       },
       {
         "name": "Transfer learning и fine-tuning",
+        "name_en": "Transfer Learning & Fine-Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -681,6 +761,7 @@ const PHASES = [
       },
       {
         "name": "Обнаружение объектов — YOLO с нуля",
+        "name_en": "Object Detection — YOLO from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -690,6 +771,7 @@ const PHASES = [
       },
       {
         "name": "Семантическая сегментация — U-Net",
+        "name_en": "Semantic Segmentation — U-Net",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -699,6 +781,7 @@ const PHASES = [
       },
       {
         "name": "Instance segmentation — Mask R-CNN",
+        "name_en": "Instance Segmentation — Mask R-CNN",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -708,6 +791,7 @@ const PHASES = [
       },
       {
         "name": "Генерация изображений — GAN",
+        "name_en": "Image Generation — GANs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -717,6 +801,7 @@ const PHASES = [
       },
       {
         "name": "Генерация изображений — diffusion models",
+        "name_en": "Image Generation — Diffusion Models",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -726,6 +811,7 @@ const PHASES = [
       },
       {
         "name": "Stable Diffusion — архитектура и fine-tuning",
+        "name_en": "Stable Diffusion — Architecture & Fine-Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -735,6 +821,7 @@ const PHASES = [
       },
       {
         "name": "Понимание видео — временное моделирование",
+        "name_en": "Video Understanding — Temporal Modeling",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -744,6 +831,7 @@ const PHASES = [
       },
       {
         "name": "3D vision: облака точек, NeRF",
+        "name_en": "3D Vision — Point Clouds & NeRFs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -753,6 +841,7 @@ const PHASES = [
       },
       {
         "name": "Vision Transformers (ViT)",
+        "name_en": "Vision Transformers (ViT)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -762,6 +851,7 @@ const PHASES = [
       },
       {
         "name": "Зрение в реальном времени: edge-деплой",
+        "name_en": "Real-Time Vision — Edge Deployment",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -771,6 +861,7 @@ const PHASES = [
       },
       {
         "name": "Соберите полный vision-пайплайн",
+        "name_en": "Build a Complete Vision Pipeline — Capstone",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -780,6 +871,7 @@ const PHASES = [
       },
       {
         "name": "Self-supervised vision — SimCLR, DINO, MAE",
+        "name_en": "Self-Supervised Vision — SimCLR, DINO, MAE",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -789,6 +881,7 @@ const PHASES = [
       },
       {
         "name": "Open-vocabulary vision — CLIP",
+        "name_en": "Open-Vocabulary Vision — CLIP",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -798,6 +891,7 @@ const PHASES = [
       },
       {
         "name": "OCR и понимание документов",
+        "name_en": "OCR & Document Understanding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -807,6 +901,7 @@ const PHASES = [
       },
       {
         "name": "Поиск изображений и metric learning",
+        "name_en": "Image Retrieval & Metric Learning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -816,6 +911,7 @@ const PHASES = [
       },
       {
         "name": "Обнаружение ключевых точек и оценка позы",
+        "name_en": "Keypoint Detection & Pose Estimation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -825,6 +921,7 @@ const PHASES = [
       },
       {
         "name": "3D Gaussian Splatting с нуля",
+        "name_en": "3D Gaussian Splatting from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -834,6 +931,7 @@ const PHASES = [
       },
       {
         "name": "Diffusion Transformers и Rectified Flow",
+        "name_en": "Diffusion Transformers & Rectified Flow",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -843,6 +941,7 @@ const PHASES = [
       },
       {
         "name": "SAM 3 и open-vocabulary сегментация",
+        "name_en": "SAM 3 & Open-Vocabulary Segmentation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -852,6 +951,7 @@ const PHASES = [
       },
       {
         "name": "Vision-language models (ViT-MLP-LLM)",
+        "name_en": "Vision-Language Models — The ViT-MLP-LLM Pattern",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -861,6 +961,7 @@ const PHASES = [
       },
       {
         "name": "Монокулярная глубина и оценка геометрии",
+        "name_en": "Monocular Depth & Geometry Estimation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -870,6 +971,7 @@ const PHASES = [
       },
       {
         "name": "Multi-object tracking и видеопамять",
+        "name_en": "Multi-Object Tracking & Video Memory",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -879,6 +981,7 @@ const PHASES = [
       },
       {
         "name": "Модели мира и video diffusion",
+        "name_en": "World Models & Video Diffusion",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -891,13 +994,16 @@ const PHASES = [
   {
     "id": 5,
     "name": "NLP: от основ к продвинутому уровню",
+    "name_en": "NLP: Foundations to Advanced",
     "status": "complete",
     "desc": "Язык — интерфейс к интеллекту.",
+    "desc_en": "Language is the interface to intelligence.",
     "dir": "05-nlp-foundations-to-advanced",
     "slug": "nlp-foundations-to-advanced",
     "lessons": [
       {
         "name": "Обработка текста: токенизация, stemming, лемматизация",
+        "name_en": "Text Processing — Tokenization, Stemming, Lemmatization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -907,6 +1013,7 @@ const PHASES = [
       },
       {
         "name": "Bag of Words, TF-IDF и представление текста",
+        "name_en": "Bag of Words, TF-IDF, and Text Representation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -916,6 +1023,7 @@ const PHASES = [
       },
       {
         "name": "Word embeddings: Word2Vec с нуля",
+        "name_en": "Word Embeddings — Word2Vec from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -925,6 +1033,7 @@ const PHASES = [
       },
       {
         "name": "GloVe, FastText и subword embeddings",
+        "name_en": "GloVe, FastText, and Subword Embeddings",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -934,6 +1043,7 @@ const PHASES = [
       },
       {
         "name": "Анализ тональности",
+        "name_en": "Sentiment Analysis",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -943,6 +1053,7 @@ const PHASES = [
       },
       {
         "name": "Распознавание именованных сущностей (NER)",
+        "name_en": "Named Entity Recognition",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -952,6 +1063,7 @@ const PHASES = [
       },
       {
         "name": "POS-tagging и синтаксический парсинг",
+        "name_en": "POS Tagging and Syntactic Parsing",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -961,6 +1073,7 @@ const PHASES = [
       },
       {
         "name": "Классификация текста — CNN и RNN для текста",
+        "name_en": "CNNs and RNNs for Text",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -970,6 +1083,7 @@ const PHASES = [
       },
       {
         "name": "Sequence-to-sequence модели",
+        "name_en": "Sequence-to-Sequence Models",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -979,6 +1093,7 @@ const PHASES = [
       },
       {
         "name": "Механизм attention — прорыв",
+        "name_en": "Attention Mechanism — The Breakthrough",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -988,6 +1103,7 @@ const PHASES = [
       },
       {
         "name": "Машинный перевод",
+        "name_en": "Machine Translation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -997,6 +1113,7 @@ const PHASES = [
       },
       {
         "name": "Суммаризация текста",
+        "name_en": "Text Summarization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1006,6 +1123,7 @@ const PHASES = [
       },
       {
         "name": "Системы ответов на вопросы",
+        "name_en": "Question Answering Systems",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1015,6 +1133,7 @@ const PHASES = [
       },
       {
         "name": "Information retrieval и поиск",
+        "name_en": "Information Retrieval and Search",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1024,6 +1143,7 @@ const PHASES = [
       },
       {
         "name": "Topic modeling: LDA, BERTopic",
+        "name_en": "Topic Modeling — LDA and BERTopic",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1033,6 +1153,7 @@ const PHASES = [
       },
       {
         "name": "Генерация текста",
+        "name_en": "Text Generation Before Transformers — N-gram Language Models",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1042,6 +1163,7 @@ const PHASES = [
       },
       {
         "name": "Чат-боты: от правил к нейросетям",
+        "name_en": "Chatbots — Rule-Based to Neural to LLM Agents",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1051,6 +1173,7 @@ const PHASES = [
       },
       {
         "name": "Многоязычный NLP",
+        "name_en": "Multilingual NLP",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1060,6 +1183,7 @@ const PHASES = [
       },
       {
         "name": "Subword tokenization: BPE, WordPiece, Unigram, SentencePiece",
+        "name_en": "Subword Tokenization — BPE, WordPiece, Unigram, SentencePiece",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1069,6 +1193,7 @@ const PHASES = [
       },
       {
         "name": "Структурированные выходы и constrained decoding",
+        "name_en": "Structured Outputs & Constrained Decoding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1078,6 +1203,7 @@ const PHASES = [
       },
       {
         "name": "NLI и textual entailment",
+        "name_en": "Natural Language Inference — Textual Entailment",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1087,6 +1213,7 @@ const PHASES = [
       },
       {
         "name": "Глубокий разбор embedding models",
+        "name_en": "Embedding Models — The 2026 Deep Dive",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1096,6 +1223,7 @@ const PHASES = [
       },
       {
         "name": "Стратегии chunking для RAG",
+        "name_en": "Chunking Strategies for RAG",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1105,6 +1233,7 @@ const PHASES = [
       },
       {
         "name": "Разрешение кореференции",
+        "name_en": "Coreference Resolution",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1114,6 +1243,7 @@ const PHASES = [
       },
       {
         "name": "Entity linking и устранение неоднозначности",
+        "name_en": "Entity Linking & Disambiguation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1123,6 +1253,7 @@ const PHASES = [
       },
       {
         "name": "Извлечение отношений и построение knowledge graph",
+        "name_en": "Relation Extraction & Knowledge Graph Construction",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1132,6 +1263,7 @@ const PHASES = [
       },
       {
         "name": "Оценка LLM: RAGAS, DeepEval, G-Eval",
+        "name_en": "LLM Evaluation — RAGAS, DeepEval, G-Eval",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1141,6 +1273,7 @@ const PHASES = [
       },
       {
         "name": "Оценка длинного контекста: NIAH, RULER, LongBench, MRCR",
+        "name_en": "Long-Context Evaluation — NIAH, RULER, LongBench, MRCR",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1150,6 +1283,7 @@ const PHASES = [
       },
       {
         "name": "Отслеживание состояния диалога",
+        "name_en": "Dialogue State Tracking",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1162,13 +1296,16 @@ const PHASES = [
   {
     "id": 6,
     "name": "Speech & Audio",
+    "name_en": "Speech & Audio",
     "status": "complete",
     "desc": "Слышать, понимать, говорить.",
+    "desc_en": "Hear, understand, speak.",
     "dir": "06-speech-and-audio",
     "slug": "speech-and-audio",
     "lessons": [
       {
         "name": "Основы аудио: волновые формы, sampling, FFT",
+        "name_en": "Audio Fundamentals — Waveforms, Sampling, Fourier Transform",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1178,6 +1315,7 @@ const PHASES = [
       },
       {
         "name": "Спектрограммы, Mel scale и audio features",
+        "name_en": "Spectrograms, Mel Scale & Audio Features",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1187,6 +1325,7 @@ const PHASES = [
       },
       {
         "name": "Классификация аудио",
+        "name_en": "Audio Classification — From k-NN on MFCCs to AST and BEATs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1196,6 +1335,7 @@ const PHASES = [
       },
       {
         "name": "Распознавание речи (ASR)",
+        "name_en": "Speech Recognition (ASR) — CTC, RNN-T, Attention",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1205,6 +1345,7 @@ const PHASES = [
       },
       {
         "name": "Whisper: архитектура и fine-tuning",
+        "name_en": "Whisper — Architecture & Fine-Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1214,6 +1355,7 @@ const PHASES = [
       },
       {
         "name": "Распознавание и верификация говорящего",
+        "name_en": "Speaker Recognition & Verification",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1223,6 +1365,7 @@ const PHASES = [
       },
       {
         "name": "Text-to-Speech (TTS)",
+        "name_en": "Text-to-Speech (TTS) — From Tacotron to F5 and Kokoro",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1232,6 +1375,7 @@ const PHASES = [
       },
       {
         "name": "Клонирование и преобразование голоса",
+        "name_en": "Voice Cloning & Voice Conversion",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1241,6 +1385,7 @@ const PHASES = [
       },
       {
         "name": "Генерация музыки",
+        "name_en": "Music Generation — MusicGen, Stable Audio, Suno, and the Licensing Earthquake",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1250,6 +1395,7 @@ const PHASES = [
       },
       {
         "name": "Audio-language models",
+        "name_en": "Audio-Language Models — Qwen2.5-Omni, Audio Flamingo, GPT-4o Audio",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1259,6 +1405,7 @@ const PHASES = [
       },
       {
         "name": "Обработка аудио в реальном времени",
+        "name_en": "Real-Time Audio Processing",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1268,6 +1415,7 @@ const PHASES = [
       },
       {
         "name": "Соберите пайплайн голосового ассистента",
+        "name_en": "Build a Voice Assistant Pipeline — The Phase 6 Capstone",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1277,6 +1425,7 @@ const PHASES = [
       },
       {
         "name": "Нейронные аудиокодеки — EnCodec, SNAC, Mimi, DAC",
+        "name_en": "Neural Audio Codecs — EnCodec, SNAC, Mimi, DAC and the Semantic-Acoustic Split",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1286,6 +1435,7 @@ const PHASES = [
       },
       {
         "name": "Voice activity detection и turn-taking",
+        "name_en": "Voice Activity Detection & Turn-Taking — Silero, Cobra, and the Flush Trick",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1295,6 +1445,7 @@ const PHASES = [
       },
       {
         "name": "Потоковый speech-to-speech — Moshi, Hibiki",
+        "name_en": "Streaming Speech-to-Speech — Moshi, Hibiki, and Full-Duplex Dialogue",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1304,6 +1455,7 @@ const PHASES = [
       },
       {
         "name": "Voice anti-spoofing и аудиоводяные знаки",
+        "name_en": "Voice Anti-Spoofing & Audio Watermarking — ASVspoof 5, AudioSeal, WaveVerify",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1313,6 +1465,7 @@ const PHASES = [
       },
       {
         "name": "Оценка аудио — WER, MOS, MMAU, лидерборды",
+        "name_en": "Audio Evaluation — WER, MOS, UTMOS, MMAU, FAD, and the Open Leaderboards",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1325,13 +1478,16 @@ const PHASES = [
   {
     "id": 7,
     "name": "Глубокий разбор Transformers",
+    "name_en": "Transformers Deep Dive",
     "status": "complete",
     "desc": "Архитектура, которая изменила все.",
+    "desc_en": "The architecture that changed everything.",
     "dir": "07-transformers-deep-dive",
     "slug": "transformers-deep-dive",
     "lessons": [
       {
         "name": "Зачем нужны Transformers: проблемы RNN",
+        "name_en": "Why Transformers — The Problems with RNNs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1341,6 +1497,7 @@ const PHASES = [
       },
       {
         "name": "Self-attention с нуля",
+        "name_en": "Self-Attention from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1350,6 +1507,7 @@ const PHASES = [
       },
       {
         "name": "Multi-head attention",
+        "name_en": "Multi-Head Attention",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1359,6 +1517,7 @@ const PHASES = [
       },
       {
         "name": "Позиционное кодирование: sinusoidal, RoPE, ALiBi",
+        "name_en": "Positional Encoding — Sinusoidal, RoPE, ALiBi",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1368,6 +1527,7 @@ const PHASES = [
       },
       {
         "name": "Полный Transformer: encoder + decoder",
+        "name_en": "The Full Transformer — Encoder + Decoder",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1377,6 +1537,7 @@ const PHASES = [
       },
       {
         "name": "BERT — masked language modeling",
+        "name_en": "BERT — Masked Language Modeling",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1386,6 +1547,7 @@ const PHASES = [
       },
       {
         "name": "GPT — causal language modeling",
+        "name_en": "GPT — Causal Language Modeling",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1395,6 +1557,7 @@ const PHASES = [
       },
       {
         "name": "T5, BART — encoder-decoder модели",
+        "name_en": "T5, BART — Encoder-Decoder Models",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1404,6 +1567,7 @@ const PHASES = [
       },
       {
         "name": "Vision Transformers (ViT)",
+        "name_en": "Vision Transformers (ViT)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1413,6 +1577,7 @@ const PHASES = [
       },
       {
         "name": "Audio Transformers — архитектура Whisper",
+        "name_en": "Audio Transformers — Whisper Architecture",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1422,6 +1587,7 @@ const PHASES = [
       },
       {
         "name": "Mixture of Experts (MoE)",
+        "name_en": "Mixture of Experts (MoE)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1431,6 +1597,7 @@ const PHASES = [
       },
       {
         "name": "KV cache, Flash Attention и оптимизация inference",
+        "name_en": "KV Cache, Flash Attention & Inference Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1440,6 +1607,7 @@ const PHASES = [
       },
       {
         "name": "Законы масштабирования",
+        "name_en": "Scaling Laws",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1449,6 +1617,7 @@ const PHASES = [
       },
       {
         "name": "Соберите Transformer с нуля",
+        "name_en": "Build a Transformer from Scratch — The Capstone",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1458,6 +1627,7 @@ const PHASES = [
       },
       {
         "name": "Варианты Attention — Sliding Window, Sparse, Differential",
+        "name_en": "Attention Variants — Sliding Window, Sparse, Differential",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1467,6 +1637,7 @@ const PHASES = [
       },
       {
         "name": "Speculative Decoding — черновик, проверка, повтор",
+        "name_en": "Speculative Decoding — Draft, Verify, Repeat",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1479,13 +1650,16 @@ const PHASES = [
   {
     "id": 8,
     "name": "Generative AI",
+    "name_en": "Generative AI",
     "status": "complete",
     "desc": "Создавайте изображения, видео, аудио, 3D и многое другое.",
+    "desc_en": "Create images, video, audio, 3D, and more.",
     "dir": "08-generative-ai",
     "slug": "generative-ai",
     "lessons": [
       {
         "name": "Генеративные модели: таксономия и история",
+        "name_en": "Generative Models — Taxonomy & History",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1495,6 +1669,7 @@ const PHASES = [
       },
       {
         "name": "Автоэнкодеры и VAE",
+        "name_en": "Autoencoders & Variational Autoencoders (VAE)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1504,6 +1679,7 @@ const PHASES = [
       },
       {
         "name": "GAN: генератор против дискриминатора",
+        "name_en": "GANs — Generator vs Discriminator",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1513,6 +1689,7 @@ const PHASES = [
       },
       {
         "name": "Conditional GAN и Pix2Pix",
+        "name_en": "Conditional GANs & Pix2Pix",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1522,6 +1699,7 @@ const PHASES = [
       },
       {
         "name": "StyleGAN",
+        "name_en": "StyleGAN",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1531,6 +1709,7 @@ const PHASES = [
       },
       {
         "name": "Diffusion models — DDPM с нуля",
+        "name_en": "Diffusion Models — DDPM from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1540,6 +1719,7 @@ const PHASES = [
       },
       {
         "name": "Latent diffusion и Stable Diffusion",
+        "name_en": "Latent Diffusion & Stable Diffusion",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1549,6 +1729,7 @@ const PHASES = [
       },
       {
         "name": "ControlNet, LoRA и conditioning",
+        "name_en": "ControlNet, LoRA & Conditioning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1558,6 +1739,7 @@ const PHASES = [
       },
       {
         "name": "Inpainting, outpainting и редактирование",
+        "name_en": "Inpainting, Outpainting & Image Editing",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1567,6 +1749,7 @@ const PHASES = [
       },
       {
         "name": "Генерация видео",
+        "name_en": "Video Generation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1576,6 +1759,7 @@ const PHASES = [
       },
       {
         "name": "Генерация аудио",
+        "name_en": "Audio Generation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1585,6 +1769,7 @@ const PHASES = [
       },
       {
         "name": "Генерация 3D",
+        "name_en": "3D Generation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1594,6 +1779,7 @@ const PHASES = [
       },
       {
         "name": "Flow matching и Rectified Flows",
+        "name_en": "Flow Matching & Rectified Flows",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1603,6 +1789,7 @@ const PHASES = [
       },
       {
         "name": "Оценка: FID, CLIP Score",
+        "name_en": "Evaluation — FID, CLIP Score, Human Preference",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1612,6 +1799,7 @@ const PHASES = [
       },
       {
         "name": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
+        "name_en": "Visual Autoregressive Modeling (VAR): Next-Scale Prediction",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1624,13 +1812,16 @@ const PHASES = [
   {
     "id": 9,
     "name": "Reinforcement Learning",
+    "name_en": "Reinforcement Learning",
     "status": "complete",
     "desc": "Основа RLHF и AI для игр.",
+    "desc_en": "The foundation of RLHF and game-playing AI.",
     "dir": "09-reinforcement-learning",
     "slug": "reinforcement-learning",
     "lessons": [
       {
         "name": "MDP, состояния, действия и награды",
+        "name_en": "MDPs, States, Actions & Rewards",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1640,6 +1831,7 @@ const PHASES = [
       },
       {
         "name": "Динамическое программирование",
+        "name_en": "Dynamic Programming — Policy Iteration & Value Iteration",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1649,6 +1841,7 @@ const PHASES = [
       },
       {
         "name": "Методы Monte Carlo",
+        "name_en": "Monte Carlo Methods — Learning from Complete Episodes",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1658,6 +1851,7 @@ const PHASES = [
       },
       {
         "name": "Q-learning, SARSA",
+        "name_en": "Temporal Difference — Q-Learning & SARSA",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1667,6 +1861,7 @@ const PHASES = [
       },
       {
         "name": "Deep Q-Networks (DQN)",
+        "name_en": "Deep Q-Networks (DQN)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1676,6 +1871,7 @@ const PHASES = [
       },
       {
         "name": "Policy gradients — REINFORCE",
+        "name_en": "Policy Gradient — REINFORCE from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1685,6 +1881,7 @@ const PHASES = [
       },
       {
         "name": "Actor-critic — A2C, A3C",
+        "name_en": "Actor-Critic — A2C and A3C",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1694,6 +1891,7 @@ const PHASES = [
       },
       {
         "name": "PPO",
+        "name_en": "Proximal Policy Optimization (PPO)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1703,6 +1901,7 @@ const PHASES = [
       },
       {
         "name": "Reward modeling и RLHF",
+        "name_en": "Reward Modeling & RLHF",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1712,6 +1911,7 @@ const PHASES = [
       },
       {
         "name": "Multi-agent RL",
+        "name_en": "Multi-Agent RL",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1721,6 +1921,7 @@ const PHASES = [
       },
       {
         "name": "Sim-to-real transfer",
+        "name_en": "Sim-to-Real Transfer",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1730,6 +1931,7 @@ const PHASES = [
       },
       {
         "name": "RL для игр",
+        "name_en": "RL for Games — AlphaZero, MuZero, and the LLM-Reasoning Era",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1742,13 +1944,16 @@ const PHASES = [
   {
     "id": 10,
     "name": "LLM с нуля",
+    "name_en": "LLMs from Scratch",
     "status": "complete",
     "desc": "Стройте, обучайте и понимайте большие языковые модели.",
+    "desc_en": "Build, train, and understand large language models.",
     "dir": "10-llms-from-scratch",
     "slug": "llms-from-scratch",
     "lessons": [
       {
         "name": "Токенизаторы: BPE, WordPiece, SentencePiece",
+        "name_en": "Tokenizers: BPE, WordPiece, SentencePiece",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1758,6 +1963,7 @@ const PHASES = [
       },
       {
         "name": "Создание токенизатора с нуля",
+        "name_en": "Building a Tokenizer from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1767,6 +1973,7 @@ const PHASES = [
       },
       {
         "name": "Пайплайны данных для pre-training",
+        "name_en": "Data Pipelines for Pre-Training",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1776,6 +1983,7 @@ const PHASES = [
       },
       {
         "name": "Pre-training мини-GPT (124M)",
+        "name_en": "Pre-Training a Mini GPT (124M Parameters)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1785,6 +1993,7 @@ const PHASES = [
       },
       {
         "name": "Распределенное обучение, FSDP, DeepSpeed",
+        "name_en": "Scaling: Distributed Training, FSDP, DeepSpeed",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1794,6 +2003,7 @@ const PHASES = [
       },
       {
         "name": "Instruction tuning — SFT",
+        "name_en": "Instruction Tuning (SFT)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1803,6 +2013,7 @@ const PHASES = [
       },
       {
         "name": "RLHF — reward model + PPO",
+        "name_en": "RLHF: Reward Model + PPO",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1812,6 +2023,7 @@ const PHASES = [
       },
       {
         "name": "DPO — Direct Preference Optimization",
+        "name_en": "DPO: Direct Preference Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1821,6 +2033,7 @@ const PHASES = [
       },
       {
         "name": "Constitutional AI и self-improvement",
+        "name_en": "Constitutional AI and Self-Improvement",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1830,6 +2043,7 @@ const PHASES = [
       },
       {
         "name": "Оценка — бенчмарки, evals",
+        "name_en": "Evaluation: Benchmarks, Evals, LM Harness",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1839,6 +2053,7 @@ const PHASES = [
       },
       {
         "name": "Квантизация: INT8, GPTQ, AWQ, GGUF",
+        "name_en": "Quantization: Making Models Fit",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1848,6 +2063,7 @@ const PHASES = [
       },
       {
         "name": "Оптимизация inference",
+        "name_en": "Inference Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1857,6 +2073,7 @@ const PHASES = [
       },
       {
         "name": "Создание полного LLM-пайплайна",
+        "name_en": "Building a Complete LLM Pipeline",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1866,6 +2083,7 @@ const PHASES = [
       },
       {
         "name": "Открытые модели: разбор архитектур",
+        "name_en": "Open Models: Architecture Walkthroughs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1875,6 +2093,7 @@ const PHASES = [
       },
       {
         "name": "Speculative decoding и EAGLE-3",
+        "name_en": "Speculative Decoding and EAGLE-3",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1884,6 +2103,7 @@ const PHASES = [
       },
       {
         "name": "Differential Attention (V2)",
+        "name_en": "Differential Attention (V2)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1893,6 +2113,7 @@ const PHASES = [
       },
       {
         "name": "Native Sparse Attention (DeepSeek NSA)",
+        "name_en": "Native Sparse Attention (DeepSeek NSA)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1902,6 +2123,7 @@ const PHASES = [
       },
       {
         "name": "Multi-token prediction (MTP)",
+        "name_en": "Multi-Token Prediction (MTP)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1911,6 +2133,7 @@ const PHASES = [
       },
       {
         "name": "Параллелизм DualPipe",
+        "name_en": "DualPipe Parallelism",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1920,6 +2143,7 @@ const PHASES = [
       },
       {
         "name": "Разбор архитектуры DeepSeek-V3",
+        "name_en": "DeepSeek-V3 Architecture Walkthrough",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1929,6 +2153,7 @@ const PHASES = [
       },
       {
         "name": "Jamba — гибридный SSM-Transformer",
+        "name_en": "Jamba — Hybrid SSM-Transformer",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -1938,6 +2163,7 @@ const PHASES = [
       },
       {
         "name": "Async и Hogwild! inference",
+        "name_en": "Async and Hogwild! Inference",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1947,6 +2173,7 @@ const PHASES = [
       },
       {
         "name": "Gradient Checkpointing и Activation Recomputation",
+        "name_en": "Gradient Checkpointing and Activation Recomputation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1959,13 +2186,16 @@ const PHASES = [
   {
     "id": 11,
     "name": "LLM Engineering",
+    "name_en": "LLM Engineering",
     "status": "complete",
     "desc": "Заставьте LLM работать в production.",
+    "desc_en": "Make LLMs work in production.",
     "dir": "11-llm-engineering",
     "slug": "llm-engineering",
     "lessons": [
       {
         "name": "Prompt engineering: техники и паттерны",
+        "name_en": "Prompt Engineering: Techniques & Patterns",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1975,6 +2205,7 @@ const PHASES = [
       },
       {
         "name": "Few-shot, CoT, Tree-of-Thought",
+        "name_en": "Few-Shot, Chain-of-Thought, Tree-of-Thought",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1984,6 +2215,7 @@ const PHASES = [
       },
       {
         "name": "Структурированные выходы",
+        "name_en": "Structured Outputs: JSON, Schema Validation, Constrained Decoding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -1993,6 +2225,7 @@ const PHASES = [
       },
       {
         "name": "Embeddings и векторные представления",
+        "name_en": "Embeddings & Vector Representations",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2002,6 +2235,7 @@ const PHASES = [
       },
       {
         "name": "Context engineering",
+        "name_en": "Context Engineering: Windows, Budgets, Memory, and Retrieval",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2011,6 +2245,7 @@ const PHASES = [
       },
       {
         "name": "RAG: Retrieval-Augmented Generation",
+        "name_en": "RAG (Retrieval-Augmented Generation)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2020,6 +2255,7 @@ const PHASES = [
       },
       {
         "name": "Продвинутый RAG: chunking, reranking",
+        "name_en": "Advanced RAG (Chunking, Reranking, Hybrid Search)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2029,6 +2265,7 @@ const PHASES = [
       },
       {
         "name": "Fine-tuning с LoRA и QLoRA",
+        "name_en": "Fine-Tuning with LoRA & QLoRA",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2038,6 +2275,7 @@ const PHASES = [
       },
       {
         "name": "Function calling и использование инструментов",
+        "name_en": "Function Calling & Tool Use",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2047,6 +2285,7 @@ const PHASES = [
       },
       {
         "name": "Оценка и тестирование",
+        "name_en": "Evaluation & Testing LLM Applications",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2056,6 +2295,7 @@ const PHASES = [
       },
       {
         "name": "Кеширование, rate limiting и стоимость",
+        "name_en": "Caching, Rate Limiting & Cost Optimization",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2065,6 +2305,7 @@ const PHASES = [
       },
       {
         "name": "Guardrails и безопасность",
+        "name_en": "Guardrails, Safety & Content Filtering",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2074,6 +2315,7 @@ const PHASES = [
       },
       {
         "name": "Создание production LLM-приложения",
+        "name_en": "Building a Production LLM Application",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2083,6 +2325,7 @@ const PHASES = [
       },
       {
         "name": "Model Context Protocol (MCP)",
+        "name_en": "Model Context Protocol (MCP)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2092,6 +2335,7 @@ const PHASES = [
       },
       {
         "name": "Prompt caching и context caching",
+        "name_en": "Prompt Caching and Context Caching",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2101,6 +2345,7 @@ const PHASES = [
       },
       {
         "name": "LangGraph — конечные автоматы для агентов",
+        "name_en": "LangGraph — State Machines for Agents",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2110,6 +2355,7 @@ const PHASES = [
       },
       {
         "name": "Компромиссы агентных фреймворков — LangGraph, CrewAI, AutoGen и Agno",
+        "name_en": "Agent Framework Tradeoffs — LangGraph vs CrewAI vs AutoGen vs Agno",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2122,13 +2368,16 @@ const PHASES = [
   {
     "id": 12,
     "name": "Multimodal AI",
+    "name_en": "Multimodal AI",
     "status": "complete",
     "desc": "Видеть, слышать, читать и рассуждать между модальностями — от ViT patches до computer-use агентов.",
+    "desc_en": "See, hear, read, and reason across modalities — from ViT patches to computer-use agents.",
     "dir": "12-multimodal-ai",
     "slug": "multimodal-ai",
     "lessons": [
       {
         "name": "Vision Transformers и примитив patch-token",
+        "name_en": "Vision Transformers and the Patch-Token Primitive",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2138,6 +2387,7 @@ const PHASES = [
       },
       {
         "name": "CLIP и contrastive vision-language pretraining",
+        "name_en": "CLIP and Contrastive Vision-Language Pretraining",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2147,6 +2397,7 @@ const PHASES = [
       },
       {
         "name": "BLIP-2 Q-Former как мост между модальностями",
+        "name_en": "From CLIP to BLIP-2 — Q-Former as Modality Bridge",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2156,6 +2407,7 @@ const PHASES = [
       },
       {
         "name": "Flamingo и gated cross-attention",
+        "name_en": "Flamingo and Gated Cross-Attention for Few-Shot VLMs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2165,6 +2417,7 @@ const PHASES = [
       },
       {
         "name": "LLaVA и visual instruction tuning",
+        "name_en": "LLaVA and Visual Instruction Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2174,6 +2427,7 @@ const PHASES = [
       },
       {
         "name": "Any-resolution vision — Patch-n'-Pack и NaFlex",
+        "name_en": "Any-Resolution Vision: Patch-n'-Pack and NaFlex",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2183,6 +2437,7 @@ const PHASES = [
       },
       {
         "name": "Рецепты open-weight VLM: что действительно важно",
+        "name_en": "Open-Weight VLM Recipes: What Actually Matters",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2192,6 +2447,7 @@ const PHASES = [
       },
       {
         "name": "LLaVA-OneVision: single, multi, video",
+        "name_en": "LLaVA-OneVision: Single-Image, Multi-Image, Video in One Model",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2201,6 +2457,7 @@ const PHASES = [
       },
       {
         "name": "Семейство Qwen-VL и видео с dynamic FPS",
+        "name_en": "Qwen-VL Family and Dynamic-FPS Video",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2210,6 +2467,7 @@ const PHASES = [
       },
       {
         "name": "InternVL3 native multimodal pretraining",
+        "name_en": "InternVL3: Native Multimodal Pretraining",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2219,6 +2477,7 @@ const PHASES = [
       },
       {
         "name": "Chameleon early-fusion token-only",
+        "name_en": "Chameleon and Early-Fusion Token-Only Multimodal Models",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2228,6 +2487,7 @@ const PHASES = [
       },
       {
         "name": "Emu3 next-token prediction для генерации",
+        "name_en": "Emu3: Next-Token Prediction for Image and Video Generation",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2237,6 +2497,7 @@ const PHASES = [
       },
       {
         "name": "Transfusion autoregressive + diffusion",
+        "name_en": "Transfusion: Autoregressive Text + Diffusion Image in One Transformer",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2246,6 +2507,7 @@ const PHASES = [
       },
       {
         "name": "Show-o unified discrete diffusion",
+        "name_en": "Show-o and Discrete-Diffusion Unified Models",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2255,6 +2517,7 @@ const PHASES = [
       },
       {
         "name": "Janus-Pro decoupled encoders",
+        "name_en": "Janus-Pro: Decoupled Encoders for Unified Multimodal Models",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2264,6 +2527,7 @@ const PHASES = [
       },
       {
         "name": "MIO any-to-any streaming",
+        "name_en": "MIO and Any-to-Any Streaming Multimodal Models",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2273,6 +2537,7 @@ const PHASES = [
       },
       {
         "name": "Video-language temporal grounding",
+        "name_en": "Video-Language Models: Temporal Tokens and Grounding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2282,6 +2547,7 @@ const PHASES = [
       },
       {
         "name": "Длинное видео в million-token context",
+        "name_en": "Long-Video Understanding at Million-Token Context",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2291,6 +2557,7 @@ const PHASES = [
       },
       {
         "name": "Audio-language models: от Whisper до AF3",
+        "name_en": "Audio-Language Models: the Whisper to Audio Flamingo 3 Arc",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2300,6 +2567,7 @@ const PHASES = [
       },
       {
         "name": "Omni models: thinker-talker streaming",
+        "name_en": "Omni Models: Qwen2.5-Omni and the Thinker-Talker Split",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2309,6 +2577,7 @@ const PHASES = [
       },
       {
         "name": "Embodied VLA: RT-2, OpenVLA, π0, GR00T",
+        "name_en": "Embodied VLAs: RT-2, OpenVLA, π0, GR00T",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2318,6 +2587,7 @@ const PHASES = [
       },
       {
         "name": "Понимание документов и диаграмм",
+        "name_en": "Document and Diagram Understanding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2327,6 +2597,7 @@ const PHASES = [
       },
       {
         "name": "ColPali vision-native document RAG",
+        "name_en": "ColPali and Vision-Native Document RAG",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2336,6 +2607,7 @@ const PHASES = [
       },
       {
         "name": "Multimodal RAG и cross-modal retrieval",
+        "name_en": "Multimodal RAG and Cross-Modal Retrieval",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2345,6 +2617,7 @@ const PHASES = [
       },
       {
         "name": "Мультимодальные агенты и computer-use (capstone)",
+        "name_en": "Multimodal Agents and Computer-Use (Capstone)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2357,13 +2630,16 @@ const PHASES = [
   {
     "id": 13,
     "name": "Инструменты и протоколы",
+    "name_en": "Tools & Protocols",
     "status": "complete",
     "desc": "Интерфейсы между AI и реальным миром.",
+    "desc_en": "The interfaces between AI and the real world.",
     "dir": "13-tools-and-protocols",
     "slug": "tools-and-protocols",
     "lessons": [
       {
         "name": "Интерфейс инструмента",
+        "name_en": "The Tool Interface — Why Agents Need Structured I/O",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2373,6 +2649,7 @@ const PHASES = [
       },
       {
         "name": "Глубокий разбор function calling",
+        "name_en": "Function Calling Deep Dive — OpenAI, Anthropic, Gemini",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2382,6 +2659,7 @@ const PHASES = [
       },
       {
         "name": "Параллельные и потоковые вызовы инструментов",
+        "name_en": "Parallel Tool Calls and Streaming with Tools",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2391,6 +2669,7 @@ const PHASES = [
       },
       {
         "name": "Структурированный выход",
+        "name_en": "Structured Output — JSON Schema, Pydantic, Zod, Constrained Decoding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2400,6 +2679,7 @@ const PHASES = [
       },
       {
         "name": "Проектирование схем инструментов",
+        "name_en": "Tool Schema Design — Naming, Descriptions, Parameter Constraints",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2409,6 +2689,7 @@ const PHASES = [
       },
       {
         "name": "Основы MCP",
+        "name_en": "MCP Fundamentals — Primitives, Lifecycle, JSON-RPC Base",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2418,6 +2699,7 @@ const PHASES = [
       },
       {
         "name": "Создание MCP-сервера",
+        "name_en": "Building an MCP Server — Python + TypeScript SDKs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2427,6 +2709,7 @@ const PHASES = [
       },
       {
         "name": "Создание MCP-клиента",
+        "name_en": "Building an MCP Client — Discovery, Invocation, Session Management",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2436,6 +2719,7 @@ const PHASES = [
       },
       {
         "name": "Транспорты MCP",
+        "name_en": "MCP Transports — stdio vs Streamable HTTP vs SSE Migration",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2445,6 +2729,7 @@ const PHASES = [
       },
       {
         "name": "MCP resources и prompts",
+        "name_en": "MCP Resources and Prompts — Context Exposure Beyond Tools",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2454,6 +2739,7 @@ const PHASES = [
       },
       {
         "name": "MCP sampling",
+        "name_en": "MCP Sampling — Server-Requested LLM Completions and Agent Loops",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2463,6 +2749,7 @@ const PHASES = [
       },
       {
         "name": "MCP roots и elicitation",
+        "name_en": "Roots and Elicitation — Scoping and Mid-Flight User Input",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2472,6 +2759,7 @@ const PHASES = [
       },
       {
         "name": "MCP async tasks",
+        "name_en": "Async Tasks (SEP-1686) — Call-Now, Fetch-Later for Long-Running Work",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2481,6 +2769,7 @@ const PHASES = [
       },
       {
         "name": "MCP apps",
+        "name_en": "MCP Apps — Interactive UI Resources via `ui://`",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2490,6 +2779,7 @@ const PHASES = [
       },
       {
         "name": "Безопасность MCP I — tool poisoning",
+        "name_en": "MCP Security I — Tool Poisoning, Rug Pulls, Cross-Server Shadowing",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2499,6 +2789,7 @@ const PHASES = [
       },
       {
         "name": "Безопасность MCP II — OAuth 2.1",
+        "name_en": "MCP Security II — OAuth 2.1, Resource Indicators, Incremental Scopes",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2508,6 +2799,7 @@ const PHASES = [
       },
       {
         "name": "MCP gateways и registries",
+        "name_en": "MCP Gateways and Registries — Enterprise Control Planes",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2517,6 +2809,7 @@ const PHASES = [
       },
       {
         "name": "MCP auth в production — DCR + JWKS на iii",
+        "name_en": "MCP Auth in Production — DCR, JWKS Rotation, Audience-Pinned Tokens on iii Primitives",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2526,6 +2819,7 @@ const PHASES = [
       },
       {
         "name": "Протокол A2A",
+        "name_en": "A2A — Agent-to-Agent Protocol",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2535,6 +2829,7 @@ const PHASES = [
       },
       {
         "name": "OpenTelemetry GenAI",
+        "name_en": "OpenTelemetry GenAI — Tracing Tool Calls End-to-End",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2544,6 +2839,7 @@ const PHASES = [
       },
       {
         "name": "Слой маршрутизации LLM",
+        "name_en": "LLM Routing Layer — LiteLLM, OpenRouter, Portkey",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2553,6 +2849,7 @@ const PHASES = [
       },
       {
         "name": "Skills и agent SDK",
+        "name_en": "Skills and Agent SDKs — Anthropic Skills, AGENTS.md, OpenAI Apps SDK",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2562,6 +2859,7 @@ const PHASES = [
       },
       {
         "name": "Capstone — экосистема инструментов",
+        "name_en": "Capstone — Build a Complete Tool Ecosystem",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2574,13 +2872,16 @@ const PHASES = [
   {
     "id": 14,
     "name": "Agent Engineering",
+    "name_en": "Agent Engineering",
     "status": "complete",
     "desc": "Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.",
+    "desc_en": "Build agents from first principles: loop, memory, planning, frameworks, benchmarks, production, workbench.",
     "dir": "14-agent-engineering",
     "slug": "agent-engineering",
     "lessons": [
       {
         "name": "Цикл агента",
+        "name_en": "The Agent Loop: Observe, Think, Act",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2590,6 +2891,7 @@ const PHASES = [
       },
       {
         "name": "ReWOO и plan-and-execute",
+        "name_en": "ReWOO and Plan-and-Execute: Decoupled Planning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2599,6 +2901,7 @@ const PHASES = [
       },
       {
         "name": "Reflexion и verbal reinforcement learning",
+        "name_en": "Reflexion: Verbal Reinforcement Learning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2608,6 +2911,7 @@ const PHASES = [
       },
       {
         "name": "Tree of Thoughts и LATS",
+        "name_en": "Tree of Thoughts and LATS: Deliberate Search",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2617,6 +2921,7 @@ const PHASES = [
       },
       {
         "name": "Self-Refine и CRITIC",
+        "name_en": "Self-Refine and CRITIC: Iterative Output Improvement",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2626,6 +2931,7 @@ const PHASES = [
       },
       {
         "name": "Использование инструментов и function calling",
+        "name_en": "Tool Use and Function Calling",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2635,6 +2941,7 @@ const PHASES = [
       },
       {
         "name": "Память — virtual context и MemGPT",
+        "name_en": "Memory: Virtual Context and MemGPT",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2644,6 +2951,7 @@ const PHASES = [
       },
       {
         "name": "Блоки памяти и sleep-time compute",
+        "name_en": "Memory Blocks and Sleep-Time Compute (Letta)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2653,6 +2961,7 @@ const PHASES = [
       },
       {
         "name": "Гибридная память — Mem0 vector + graph + KV",
+        "name_en": "Hybrid Memory: Vector + Graph + KV (Mem0)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2662,6 +2971,7 @@ const PHASES = [
       },
       {
         "name": "Библиотеки skills и lifelong learning — Voyager",
+        "name_en": "Skill Libraries and Lifelong Learning (Voyager)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2671,6 +2981,7 @@ const PHASES = [
       },
       {
         "name": "Планирование с HTN и evolutionary search",
+        "name_en": "Planning with HTN and Evolutionary Search",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2680,6 +2991,7 @@ const PHASES = [
       },
       {
         "name": "Паттерны workflow Anthropic",
+        "name_en": "Anthropic's Workflow Patterns: Simple Over Complex",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2689,6 +3001,7 @@ const PHASES = [
       },
       {
         "name": "LangGraph — stateful graphs и durable execution",
+        "name_en": "LangGraph: Stateful Graphs and Durable Execution",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2698,6 +3011,7 @@ const PHASES = [
       },
       {
         "name": "AutoGen v0.4 — actor model",
+        "name_en": "AutoGen v0.4: Actor Model and Agent Framework",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2707,6 +3021,7 @@ const PHASES = [
       },
       {
         "name": "CrewAI — role-based crews и flows",
+        "name_en": "CrewAI: Role-Based Crews and Flows",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2716,6 +3031,7 @@ const PHASES = [
       },
       {
         "name": "OpenAI Agents SDK — handoffs, guardrails, tracing",
+        "name_en": "OpenAI Agents SDK: Handoffs, Guardrails, Tracing",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2725,6 +3041,7 @@ const PHASES = [
       },
       {
         "name": "Claude Agent SDK — subagents и session store",
+        "name_en": "Claude Agent SDK: Subagents and Session Store",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2734,6 +3051,7 @@ const PHASES = [
       },
       {
         "name": "Agno и Mastra — production runtimes",
+        "name_en": "Agno and Mastra: Production Runtimes",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2743,6 +3061,7 @@ const PHASES = [
       },
       {
         "name": "Benchmarks — SWE-bench, GAIA, AgentBench",
+        "name_en": "Benchmarks: SWE-bench, GAIA, AgentBench",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2752,6 +3071,7 @@ const PHASES = [
       },
       {
         "name": "Бенчмарки — WebArena и OSWorld",
+        "name_en": "Benchmarks: WebArena and OSWorld",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2761,6 +3081,7 @@ const PHASES = [
       },
       {
         "name": "Computer use — Claude, OpenAI CUA, Gemini",
+        "name_en": "Computer Use: Claude, OpenAI CUA, Gemini",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2770,6 +3091,7 @@ const PHASES = [
       },
       {
         "name": "Голосовые агенты — Pipecat и LiveKit",
+        "name_en": "Voice Agents: Pipecat and LiveKit",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2779,6 +3101,7 @@ const PHASES = [
       },
       {
         "name": "Семантические соглашения OpenTelemetry GenAI",
+        "name_en": "OpenTelemetry GenAI Semantic Conventions",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2788,6 +3111,7 @@ const PHASES = [
       },
       {
         "name": "Agent observability — Langfuse, Phoenix, Opik",
+        "name_en": "Agent Observability: Langfuse, Phoenix, Opik",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2797,6 +3121,7 @@ const PHASES = [
       },
       {
         "name": "Multi-agent debate и collaboration",
+        "name_en": "Multi-Agent Debate and Collaboration",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2806,6 +3131,7 @@ const PHASES = [
       },
       {
         "name": "Failure modes — почему агенты ломаются",
+        "name_en": "Failure Modes: Why Agents Break",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2815,6 +3141,7 @@ const PHASES = [
       },
       {
         "name": "Prompt injection и защита PVE",
+        "name_en": "Prompt Injection and the PVE Defense",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2824,6 +3151,7 @@ const PHASES = [
       },
       {
         "name": "Паттерны оркестрации — supervisor, swarm, hierarchical",
+        "name_en": "Orchestration Patterns: Supervisor, Swarm, Hierarchical",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2833,6 +3161,7 @@ const PHASES = [
       },
       {
         "name": "Production runtimes — queue, event, cron",
+        "name_en": "Production Runtimes: Queue, Event, Cron",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2842,6 +3171,7 @@ const PHASES = [
       },
       {
         "name": "Eval-driven разработка агентов",
+        "name_en": "Eval-Driven Agent Development",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2851,6 +3181,7 @@ const PHASES = [
       },
       {
         "name": "Agent Workbench: почему способные модели все еще ошибаются",
+        "name_en": "Agent Workbench Engineering: Why Capable Models Still Fail",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2860,6 +3191,7 @@ const PHASES = [
       },
       {
         "name": "Минимальный Agent Workbench",
+        "name_en": "The Minimal Agent Workbench",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2869,6 +3201,7 @@ const PHASES = [
       },
       {
         "name": "Инструкции агента как исполняемые ограничения",
+        "name_en": "Agent Instructions as Executable Constraints",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2878,6 +3211,7 @@ const PHASES = [
       },
       {
         "name": "Память репозитория и durable state",
+        "name_en": "Repo Memory and Durable State",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2887,6 +3221,7 @@ const PHASES = [
       },
       {
         "name": "Скрипты инициализации для агентов",
+        "name_en": "Initialization Scripts for Agents",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2896,6 +3231,7 @@ const PHASES = [
       },
       {
         "name": "Scope contracts и границы задачи",
+        "name_en": "Scope Contracts and Task Boundaries",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2905,6 +3241,7 @@ const PHASES = [
       },
       {
         "name": "Runtime feedback loops",
+        "name_en": "Runtime Feedback Loops",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2914,6 +3251,7 @@ const PHASES = [
       },
       {
         "name": "Verification gates",
+        "name_en": "Verification Gates",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2923,6 +3261,7 @@ const PHASES = [
       },
       {
         "name": "Reviewer agent: отделить builder от marker",
+        "name_en": "Reviewer Agent: Separate Builder from Marker",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2932,6 +3271,7 @@ const PHASES = [
       },
       {
         "name": "Multi-session handoff",
+        "name_en": "Multi-Session Handoff",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2941,6 +3281,7 @@ const PHASES = [
       },
       {
         "name": "Workbench на реальном репозитории",
+        "name_en": "The Workbench on a Real Repo",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2950,6 +3291,7 @@ const PHASES = [
       },
       {
         "name": "Capstone: поставьте переиспользуемый пакет Agent Workbench",
+        "name_en": "Capstone: Ship a Reusable Agent Workbench Pack",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -2962,13 +3304,16 @@ const PHASES = [
   {
     "id": 15,
     "name": "Автономные системы",
+    "name_en": "Autonomous Systems",
     "status": "complete",
     "desc": "Долгосрочные агенты, self-improvement и стек безопасности 2026 года.",
+    "desc_en": "Long-horizon agents, self-improvement, and the 2026 safety stack.",
     "dir": "15-autonomous-systems",
     "slug": "autonomous-systems",
     "lessons": [
       {
         "name": "От чат-ботов к долгосрочным агентам (METR)",
+        "name_en": "The Shift from Chatbots to Long-Horizon Agents",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2978,6 +3323,7 @@ const PHASES = [
       },
       {
         "name": "STaR, V-STaR, Quiet-STaR: самообучающееся рассуждение",
+        "name_en": "STaR, V-STaR, Quiet-STaR — Self-Taught Reasoning",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2987,6 +3333,7 @@ const PHASES = [
       },
       {
         "name": "AlphaEvolve: эволюционные coding agents",
+        "name_en": "AlphaEvolve — Evolutionary Coding Agents",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -2996,6 +3343,7 @@ const PHASES = [
       },
       {
         "name": "Darwin Gödel Machine: самомодифицирующиеся агенты",
+        "name_en": "Darwin Godel Machine — Open-Ended Self-Modifying Agents",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3005,6 +3353,7 @@ const PHASES = [
       },
       {
         "name": "AI Scientist v2: исследования уровня workshop",
+        "name_en": "AI Scientist v2 — Workshop-Level Autonomous Research",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3014,6 +3363,7 @@ const PHASES = [
       },
       {
         "name": "Автоматизированные alignment-исследования (Anthropic AAR)",
+        "name_en": "Automated Alignment Research (Anthropic AAR)",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3023,6 +3373,7 @@ const PHASES = [
       },
       {
         "name": "Рекурсивное self-improvement: capability vs alignment",
+        "name_en": "Recursive Self-Improvement — Capability vs Alignment",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3032,6 +3383,7 @@ const PHASES = [
       },
       {
         "name": "Дизайны ограниченного self-improvement",
+        "name_en": "Bounded Self-Improvement Designs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3041,6 +3393,7 @@ const PHASES = [
       },
       {
         "name": "Ландшафт автономных coding agents (SWE-bench, CodeAct)",
+        "name_en": "The Autonomous Coding Agent Landscape (2026)",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3050,6 +3403,7 @@ const PHASES = [
       },
       {
         "name": "Режимы разрешений Claude Code и auto mode",
+        "name_en": "Claude Code as an Autonomous Agent: Permission Modes and Auto Mode",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3059,6 +3413,7 @@ const PHASES = [
       },
       {
         "name": "Браузерные агенты и indirect prompt injection",
+        "name_en": "Browser Agents and Long-Horizon Web Tasks",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3068,6 +3423,7 @@ const PHASES = [
       },
       {
         "name": "Durable execution для долгих запусков агентов",
+        "name_en": "Long-Running Background Agents: Durable Execution",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3077,6 +3433,7 @@ const PHASES = [
       },
       {
         "name": "Бюджеты действий, лимиты итераций, cost governors",
+        "name_en": "Action Budgets, Iteration Caps, and Cost Governors",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3086,6 +3443,7 @@ const PHASES = [
       },
       {
         "name": "Kill switches, circuit breakers, canary tokens",
+        "name_en": "Kill Switches, Circuit Breakers, and Canary Tokens",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3095,6 +3453,7 @@ const PHASES = [
       },
       {
         "name": "HITL: propose-then-commit",
+        "name_en": "Human-in-the-Loop: Propose-Then-Commit",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3104,6 +3463,7 @@ const PHASES = [
       },
       {
         "name": "Checkpoints и rollback",
+        "name_en": "Checkpoints and Rollback",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3113,6 +3473,7 @@ const PHASES = [
       },
       {
         "name": "Constitutional AI и переопределения правил",
+        "name_en": "Constitutional AI and Rule Overrides",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3122,6 +3483,7 @@ const PHASES = [
       },
       {
         "name": "Llama Guard и классификация input/output",
+        "name_en": "Llama Guard and Input/Output Classification",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3131,6 +3493,7 @@ const PHASES = [
       },
       {
         "name": "Anthropic Responsible Scaling Policy v3.0",
+        "name_en": "Anthropic Responsible Scaling Policy v3.0",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3140,6 +3503,7 @@ const PHASES = [
       },
       {
         "name": "OpenAI Preparedness Framework и DeepMind FSF",
+        "name_en": "OpenAI Preparedness Framework and DeepMind Frontier Safety Framework",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3149,6 +3513,7 @@ const PHASES = [
       },
       {
         "name": "Временные горизонты METR и внешняя оценка",
+        "name_en": "METR Time Horizons and External Capability Evaluation",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3158,6 +3523,7 @@ const PHASES = [
       },
       {
         "name": "CAIS, CAISI и риски общественного масштаба",
+        "name_en": "CAIS, CAISI, and Societal-Scale Risk",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3170,13 +3536,16 @@ const PHASES = [
   {
     "id": 16,
     "name": "Multi-Agent и Swarms",
+    "name_en": "Multi-Agent & Swarms",
     "status": "complete",
     "desc": "Координация, emergence и коллективный интеллект.",
+    "desc_en": "Coordination, emergence, and collective intelligence.",
     "dir": "16-multi-agent-and-swarms",
     "slug": "multi-agent-and-swarms",
     "lessons": [
       {
         "name": "Зачем нужен multi-agent подход",
+        "name_en": "Why Multi-Agent?",
         "status": "complete",
         "type": "Теория",
         "lang": "TypeScript",
@@ -3186,6 +3555,7 @@ const PHASES = [
       },
       {
         "name": "Наследие FIPA-ACL и speech acts",
+        "name_en": "Heritage of FIPA-ACL and Speech Acts",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3195,6 +3565,7 @@ const PHASES = [
       },
       {
         "name": "Коммуникационные протоколы",
+        "name_en": "Communication Protocols",
         "status": "complete",
         "type": "Практика",
         "lang": "TypeScript",
@@ -3204,6 +3575,7 @@ const PHASES = [
       },
       {
         "name": "Примитивная multi-agent модель",
+        "name_en": "The Multi-Agent Primitive Model",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3213,6 +3585,7 @@ const PHASES = [
       },
       {
         "name": "Паттерн supervisor / orchestrator-worker",
+        "name_en": "Supervisor / Orchestrator-Worker Pattern",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3222,6 +3595,7 @@ const PHASES = [
       },
       {
         "name": "Иерархическая архитектура и decomposition drift",
+        "name_en": "Hierarchical Architecture and Its Failure Mode",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3231,6 +3605,7 @@ const PHASES = [
       },
       {
         "name": "Society of Mind и multi-agent debate",
+        "name_en": "Society of Mind and Multi-Agent Debate",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3240,6 +3615,7 @@ const PHASES = [
       },
       {
         "name": "Специализация ролей — planner / critic / executor / verifier",
+        "name_en": "Role Specialization — Planner, Critic, Executor, Verifier",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3249,6 +3625,7 @@ const PHASES = [
       },
       {
         "name": "Параллельный swarm и сетевые архитектуры",
+        "name_en": "Parallel / Swarm / Networked Architectures",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3258,6 +3635,7 @@ const PHASES = [
       },
       {
         "name": "Групповой чат и выбор говорящего",
+        "name_en": "Group Chat and Speaker Selection",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3267,6 +3645,7 @@ const PHASES = [
       },
       {
         "name": "Handoffs и routines (stateless orchestration)",
+        "name_en": "Handoffs and Routines — Stateless Orchestration",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3276,6 +3655,7 @@ const PHASES = [
       },
       {
         "name": "A2A — протокол agent-to-agent",
+        "name_en": "A2A — The Agent-to-Agent Protocol",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3285,6 +3665,7 @@ const PHASES = [
       },
       {
         "name": "Shared memory и blackboard patterns",
+        "name_en": "Shared Memory and Blackboard Patterns",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3294,6 +3675,7 @@ const PHASES = [
       },
       {
         "name": "Консенсус и Byzantine fault tolerance",
+        "name_en": "Consensus and Byzantine Fault Tolerance for Agents",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3303,6 +3685,7 @@ const PHASES = [
       },
       {
         "name": "Голосование, self-consistency и debate topology",
+        "name_en": "Voting, Self-Consistency, and Debate Topology",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3312,6 +3695,7 @@ const PHASES = [
       },
       {
         "name": "Переговоры и bargaining",
+        "name_en": "Negotiation and Bargaining",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3321,6 +3705,7 @@ const PHASES = [
       },
       {
         "name": "Generative agents и emergent simulation",
+        "name_en": "Generative Agents and Emergent Simulation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3330,6 +3715,7 @@ const PHASES = [
       },
       {
         "name": "Theory of mind и emergent coordination",
+        "name_en": "Theory of Mind and Emergent Coordination",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3339,6 +3725,7 @@ const PHASES = [
       },
       {
         "name": "Swarm optimization (PSO, ACO)",
+        "name_en": "Swarm Optimization for LLMs (PSO, ACO)",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3348,6 +3735,7 @@ const PHASES = [
       },
       {
         "name": "MARL — MADDPG, QMIX, MAPPO",
+        "name_en": "MARL — MADDPG, QMIX, MAPPO",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3357,6 +3745,7 @@ const PHASES = [
       },
       {
         "name": "Agent economies, token incentives, reputation",
+        "name_en": "Agent Economies, Token Incentives, Reputation",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3366,6 +3755,7 @@ const PHASES = [
       },
       {
         "name": "Production scaling — очереди, checkpoints, durability",
+        "name_en": "Production Scaling — Queues, Checkpoints, Durability",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3375,6 +3765,7 @@ const PHASES = [
       },
       {
         "name": "Failure modes — MAST, groupthink, monoculture",
+        "name_en": "Failure Modes — MAST, Groupthink, Monoculture, Cascading Errors",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3384,6 +3775,7 @@ const PHASES = [
       },
       {
         "name": "Оценка и coordination benchmarks",
+        "name_en": "Evaluation and Coordination Benchmarks",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3393,6 +3785,7 @@ const PHASES = [
       },
       {
         "name": "Case studies и state of the art 2026 года",
+        "name_en": "Case Studies and the 2026 State of the Art",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3405,13 +3798,16 @@ const PHASES = [
   {
     "id": 17,
     "name": "Infrastructure и Production",
+    "name_en": "Infrastructure & Production",
     "status": "complete",
     "desc": "Доведите AI до реального мира.",
+    "desc_en": "Take AI to the real world.",
     "dir": "17-infrastructure-and-production",
     "slug": "infrastructure-and-production",
     "lessons": [
       {
         "name": "Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI",
+        "name_en": "Managed LLM Platforms — Bedrock, Vertex AI, Azure OpenAI",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3421,6 +3817,7 @@ const PHASES = [
       },
       {
         "name": "Экономика inference-платформ — Fireworks, Together, Baseten, Modal",
+        "name_en": "Inference Platform Economics — Fireworks, Together, Baseten, Modal, Replicate, Anyscale",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3430,6 +3827,7 @@ const PHASES = [
       },
       {
         "name": "GPU autoscaling в Kubernetes — Karpenter, KAI Scheduler",
+        "name_en": "GPU Autoscaling on Kubernetes — Karpenter, KAI Scheduler, Gang Scheduling",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3439,6 +3837,7 @@ const PHASES = [
       },
       {
         "name": "Внутреннее устройство vLLM serving — PagedAttention, continuous batching, chunked prefill",
+        "name_en": "vLLM Serving Internals: PagedAttention, Continuous Batching, Chunked Prefill",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3448,6 +3847,7 @@ const PHASES = [
       },
       {
         "name": "EAGLE-3 speculative decoding в production",
+        "name_en": "EAGLE-3 Speculative Decoding in Production",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3457,6 +3857,7 @@ const PHASES = [
       },
       {
         "name": "SGLang и RadixAttention для prefix-heavy нагрузок",
+        "name_en": "SGLang and RadixAttention for Prefix-Heavy Workloads",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3466,6 +3867,7 @@ const PHASES = [
       },
       {
         "name": "TensorRT-LLM на Blackwell с FP8 и NVFP4",
+        "name_en": "TensorRT-LLM on Blackwell with FP8 and NVFP4",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3475,6 +3877,7 @@ const PHASES = [
       },
       {
         "name": "Метрики inference — TTFT, TPOT, ITL, goodput, P99",
+        "name_en": "Inference Metrics — TTFT, TPOT, ITL, Goodput, P99",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3484,6 +3887,7 @@ const PHASES = [
       },
       {
         "name": "Production quantization — AWQ, GPTQ, GGUF, FP8, NVFP4",
+        "name_en": "Production Quantization — AWQ, GPTQ, GGUF K-quants, FP8, MXFP4/NVFP4",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3493,6 +3897,7 @@ const PHASES = [
       },
       {
         "name": "Смягчение cold start для serverless LLM",
+        "name_en": "Cold Start Mitigation for Serverless LLMs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3502,6 +3907,7 @@ const PHASES = [
       },
       {
         "name": "Multi-region LLM serving и локальность KV cache",
+        "name_en": "Multi-Region LLM Serving and KV Cache Locality",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3511,6 +3917,7 @@ const PHASES = [
       },
       {
         "name": "Edge inference — ANE, Hexagon, WebGPU, Jetson",
+        "name_en": "Edge Inference — Apple Neural Engine, Qualcomm Hexagon, WebGPU/WebLLM, Jetson",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3520,6 +3927,7 @@ const PHASES = [
       },
       {
         "name": "Выбор стека observability для LLM",
+        "name_en": "LLM Observability Stack Selection",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3529,6 +3937,7 @@ const PHASES = [
       },
       {
         "name": "Prompt caching и экономика semantic caching",
+        "name_en": "Prompt Caching and Semantic Caching Economics",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3538,6 +3947,7 @@ const PHASES = [
       },
       {
         "name": "Batch APIs — скидка 50% как отраслевой стандарт",
+        "name_en": "Batch APIs — the 50% Discount as Industry Standard",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3547,6 +3957,7 @@ const PHASES = [
       },
       {
         "name": "Model routing как примитив снижения стоимости",
+        "name_en": "Model Routing as a Cost-Reduction Primitive",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3556,6 +3967,7 @@ const PHASES = [
       },
       {
         "name": "Раздельные prefill/decode — NVIDIA Dynamo и llm-d",
+        "name_en": "Disaggregated Prefill/Decode — NVIDIA Dynamo and llm-d",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3565,6 +3977,7 @@ const PHASES = [
       },
       {
         "name": "Production-стек vLLM с LMCache KV offloading",
+        "name_en": "vLLM Production Stack with LMCache KV Offloading",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3574,6 +3987,7 @@ const PHASES = [
       },
       {
         "name": "AI gateways — LiteLLM, Portkey, Kong, Bifrost",
+        "name_en": "AI Gateways — LiteLLM, Portkey, Kong AI Gateway, Bifrost",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3583,6 +3997,7 @@ const PHASES = [
       },
       {
         "name": "Shadow, canary и progressive deployment",
+        "name_en": "Shadow Traffic, Canary Rollout, and Progressive Deployment for LLMs",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3592,6 +4007,7 @@ const PHASES = [
       },
       {
         "name": "A/B testing LLM-функций — GrowthBook и Statsig",
+        "name_en": "A/B Testing LLM Features — GrowthBook, Statsig, and the Vibes Problem",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3601,6 +4017,7 @@ const PHASES = [
       },
       {
         "name": "Load testing LLM API — k6, LLMPerf, GenAI-Perf",
+        "name_en": "Load Testing LLM APIs — Why k6 and Locust Lie",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3610,6 +4027,7 @@ const PHASES = [
       },
       {
         "name": "SRE для AI — multi-agent incident response",
+        "name_en": "SRE for AI — Multi-Agent Incident Response, Runbooks, Predictive Detection",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3619,6 +4037,7 @@ const PHASES = [
       },
       {
         "name": "Chaos engineering для LLM production",
+        "name_en": "Chaos Engineering for LLM Production",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3628,6 +4047,7 @@ const PHASES = [
       },
       {
         "name": "Безопасность — secrets, PII scrubbing, audit logs",
+        "name_en": "Security — Secrets, API Key Rotation, Audit Logs, Guardrails",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3637,6 +4057,7 @@ const PHASES = [
       },
       {
         "name": "Compliance — SOC 2, HIPAA, GDPR, EU AI Act, ISO 42001",
+        "name_en": "Compliance — SOC 2, HIPAA, GDPR, PCI-DSS, EU AI Act, ISO 42001",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3646,6 +4067,7 @@ const PHASES = [
       },
       {
         "name": "FinOps для LLM — unit economics и multi-tenant attribution",
+        "name_en": "FinOps for LLMs — Unit Economics and Multi-Tenant Attribution",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3655,6 +4077,7 @@ const PHASES = [
       },
       {
         "name": "Выбор self-hosted serving — llama.cpp, Ollama, TGI, vLLM, SGLang",
+        "name_en": "Self-Hosted Serving Selection — llama.cpp, Ollama, TGI, vLLM, SGLang",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3667,13 +4090,16 @@ const PHASES = [
   {
     "id": 18,
     "name": "Этика, безопасность и alignment",
+    "name_en": "Ethics, Safety & Alignment",
     "status": "complete",
     "desc": "Стройте AI, который помогает человечеству. Это не опция.",
+    "desc_en": "Build AI that helps humanity. It's not optional.",
     "dir": "18-ethics-safety-alignment",
     "slug": "ethics-safety-alignment",
     "lessons": [
       {
         "name": "Следование инструкциям как alignment signal",
+        "name_en": "Instruction-Following as Alignment Signal",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3683,6 +4109,7 @@ const PHASES = [
       },
       {
         "name": "Reward hacking и закон Гудхарта",
+        "name_en": "Reward Hacking and Goodhart's Law",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3692,6 +4119,7 @@ const PHASES = [
       },
       {
         "name": "Семейство Direct Preference Optimization",
+        "name_en": "The Direct Preference Optimization Family",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3701,6 +4129,7 @@ const PHASES = [
       },
       {
         "name": "Sycophancy как усиление RLHF",
+        "name_en": "Sycophancy as RLHF Amplification",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3710,6 +4139,7 @@ const PHASES = [
       },
       {
         "name": "Constitutional AI и RLAIF",
+        "name_en": "Constitutional AI and RLAIF",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3719,6 +4149,7 @@ const PHASES = [
       },
       {
         "name": "Mesa-optimization и deceptive alignment",
+        "name_en": "Mesa-Optimization and Deceptive Alignment",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3728,6 +4159,7 @@ const PHASES = [
       },
       {
         "name": "Sleeper agents — устойчивый обман",
+        "name_en": "Sleeper Agents — Persistent Deception",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3737,6 +4169,7 @@ const PHASES = [
       },
       {
         "name": "In-context scheming во frontier models",
+        "name_en": "In-Context Scheming in Frontier Models",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3746,6 +4179,7 @@ const PHASES = [
       },
       {
         "name": "Alignment faking",
+        "name_en": "Alignment Faking",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3755,6 +4189,7 @@ const PHASES = [
       },
       {
         "name": "AI control — безопасность несмотря на subversion",
+        "name_en": "AI Control — Safety Despite Subversion",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3764,6 +4199,7 @@ const PHASES = [
       },
       {
         "name": "Scalable oversight и weak-to-strong",
+        "name_en": "Scalable Oversight and Weak-to-Strong Generalization",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3773,6 +4209,7 @@ const PHASES = [
       },
       {
         "name": "Red-teaming: PAIR и автоматизированные атаки",
+        "name_en": "Red-Teaming: PAIR and Automated Attacks",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3782,6 +4219,7 @@ const PHASES = [
       },
       {
         "name": "Many-shot jailbreaking",
+        "name_en": "Many-Shot Jailbreaking",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3791,6 +4229,7 @@ const PHASES = [
       },
       {
         "name": "ASCII art и визуальные jailbreaks",
+        "name_en": "ASCII Art and Visual Jailbreaks",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3800,6 +4239,7 @@ const PHASES = [
       },
       {
         "name": "Indirect prompt injection",
+        "name_en": "Indirect Prompt Injection — Production Attack Surface",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3809,6 +4249,7 @@ const PHASES = [
       },
       {
         "name": "Инструменты red-team: Garak, Llama Guard, PyRIT",
+        "name_en": "Red-Team Tooling — Garak, Llama Guard, PyRIT",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3818,6 +4259,7 @@ const PHASES = [
       },
       {
         "name": "WMDP и оценка dual-use capabilities",
+        "name_en": "WMDP and Dual-Use Capability Evaluation",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3827,6 +4269,7 @@ const PHASES = [
       },
       {
         "name": "Frontier safety frameworks — RSP, PF, FSF",
+        "name_en": "Frontier Safety Frameworks — RSP, PF, FSF",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -3836,6 +4279,7 @@ const PHASES = [
       },
       {
         "name": "Исследования model welfare",
+        "name_en": "Anthropic's Model Welfare Program",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3845,6 +4289,7 @@ const PHASES = [
       },
       {
         "name": "Bias и representational harm",
+        "name_en": "Bias and Representational Harm in LLMs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3854,6 +4299,7 @@ const PHASES = [
       },
       {
         "name": "Критерии fairness: group, individual, counterfactual",
+        "name_en": "Fairness Criteria — Group, Individual, Counterfactual",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3863,6 +4309,7 @@ const PHASES = [
       },
       {
         "name": "Differential privacy для LLM",
+        "name_en": "Differential Privacy for LLMs",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3872,6 +4319,7 @@ const PHASES = [
       },
       {
         "name": "Watermarking: SynthID, Stable Signature, C2PA",
+        "name_en": "Watermarking — SynthID, Stable Signature, C2PA",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3881,6 +4329,7 @@ const PHASES = [
       },
       {
         "name": "Регуляторные frameworks: EU, US, UK, Korea",
+        "name_en": "Regulatory Frameworks — EU, US, UK, Korea",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -3890,6 +4339,7 @@ const PHASES = [
       },
       {
         "name": "EchoLeak и CVE для AI",
+        "name_en": "EchoLeak and the Emergence of CVEs for AI",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3899,6 +4349,7 @@ const PHASES = [
       },
       {
         "name": "Model, system и dataset cards",
+        "name_en": "Model, System, and Dataset Cards",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3908,6 +4359,7 @@ const PHASES = [
       },
       {
         "name": "Data provenance и управление training data",
+        "name_en": "Data Provenance and Training-Data Governance",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
@@ -3917,6 +4369,7 @@ const PHASES = [
       },
       {
         "name": "Экосистема alignment research: MATS, Redwood, Apollo, METR",
+        "name_en": "Alignment Research Ecosystem — MATS, Redwood, Apollo, METR",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -3926,6 +4379,7 @@ const PHASES = [
       },
       {
         "name": "Системы модерации: OpenAI, Perspective, Llama Guard",
+        "name_en": "Moderation Systems — OpenAI, Perspective, Llama Guard",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -3935,6 +4389,7 @@ const PHASES = [
       },
       {
         "name": "Dual-use risk: cyber, bio, chem, nuclear",
+        "name_en": "Dual-Use Risk — Cyber, Bio, Chem, Nuclear Uplift",
         "status": "complete",
         "type": "Теория",
         "lang": "—",
@@ -3947,13 +4402,16 @@ const PHASES = [
   {
     "id": 19,
     "name": "Capstone-проекты",
+    "name_en": "Capstone Projects",
     "status": "complete",
     "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
+    "desc_en": "Specs + starter skeletons for end-to-end 2026 products, 20-40 hours of self-guided work each.",
     "dir": "19-capstone-projects",
     "slug": "capstone-projects",
     "lessons": [
       {
         "name": "Terminal-native coding agent",
+        "name_en": "Capstone 01 — Terminal-Native Coding Agent",
         "status": "complete",
         "type": "Capstone",
         "lang": "TypeScript, Python",
@@ -3964,6 +4422,7 @@ const PHASES = [
       },
       {
         "name": "RAG поверх codebase (cross-repo semantic search)",
+        "name_en": "Capstone 02 — RAG over Codebase (Cross-Repo Semantic Search)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -3974,6 +4433,7 @@ const PHASES = [
       },
       {
         "name": "Голосовой ассистент в реальном времени (ASR → LLM → TTS)",
+        "name_en": "Capstone 03 — Real-Time Voice Assistant (ASR to LLM to TTS)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -3984,6 +4444,7 @@ const PHASES = [
       },
       {
         "name": "Multimodal document QA (vision-first)",
+        "name_en": "Capstone 04 — Multimodal Document QA (Vision-First PDF, Tables, Charts)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -3994,6 +4455,7 @@ const PHASES = [
       },
       {
         "name": "Автономный исследовательский агент (класс AI Scientist)",
+        "name_en": "Capstone 05 — Autonomous Research Agent (AI-Scientist Class)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python",
@@ -4004,6 +4466,7 @@ const PHASES = [
       },
       {
         "name": "DevOps-агент для troubleshooting Kubernetes",
+        "name_en": "Capstone 06 — DevOps Troubleshooting Agent for Kubernetes",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4014,6 +4477,7 @@ const PHASES = [
       },
       {
         "name": "End-to-end пайплайн fine-tuning",
+        "name_en": "Capstone 07 — End-to-End Fine-Tuning Pipeline (Data to SFT to DPO to Serve)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python",
@@ -4024,6 +4488,7 @@ const PHASES = [
       },
       {
         "name": "Production RAG chatbot для регулируемой вертикали",
+        "name_en": "Capstone 08 — Production RAG Chatbot for a Regulated Vertical",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4034,6 +4499,7 @@ const PHASES = [
       },
       {
         "name": "Агент миграции кода (repo-level upgrade)",
+        "name_en": "Capstone 09 — Code Migration Agent (Repo-Level Language / Runtime Upgrade)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4044,6 +4510,7 @@ const PHASES = [
       },
       {
         "name": "Multi-agent команда software engineering",
+        "name_en": "Capstone 10 — Multi-Agent Software Engineering Team",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4054,6 +4521,7 @@ const PHASES = [
       },
       {
         "name": "LLM observability и eval dashboard",
+        "name_en": "Capstone 11 — LLM Observability & Eval Dashboard",
         "status": "complete",
         "type": "Capstone",
         "lang": "TypeScript, Python",
@@ -4064,6 +4532,7 @@ const PHASES = [
       },
       {
         "name": "Пайплайн понимания видео (scene → QA)",
+        "name_en": "Capstone 12 — Video Understanding Pipeline (Scene, QA, Search)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4074,6 +4543,7 @@ const PHASES = [
       },
       {
         "name": "MCP-сервер с registry и governance",
+        "name_en": "Capstone 13 — MCP Server with Registry and Governance",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4084,6 +4554,7 @@ const PHASES = [
       },
       {
         "name": "Inference server для speculative decoding",
+        "name_en": "Capstone 14 — Speculative-Decoding Inference Server",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python",
@@ -4094,6 +4565,7 @@ const PHASES = [
       },
       {
         "name": "Constitutional safety harness + red-team range",
+        "name_en": "Capstone 15 — Constitutional Safety Harness + Red-Team Range",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python",
@@ -4104,6 +4576,7 @@ const PHASES = [
       },
       {
         "name": "Автономный агент GitHub issue-to-PR",
+        "name_en": "Capstone 16 — GitHub Issue-to-PR Autonomous Agent",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4114,6 +4587,7 @@ const PHASES = [
       },
       {
         "name": "Персональный AI tutor (adaptive, multimodal)",
+        "name_en": "Capstone 17 — Personal AI Tutor (Adaptive, Multimodal, with Memory)",
         "status": "complete",
         "type": "Capstone",
         "lang": "Python, TypeScript",
@@ -4124,6 +4598,7 @@ const PHASES = [
       },
       {
         "name": "Контракт цикла агентского харнеса",
+        "name_en": "Agent Harness Loop Contract",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4134,6 +4609,7 @@ const PHASES = [
       },
       {
         "name": "Реестр инструментов с валидацией схем",
+        "name_en": "Tool Registry with Schema Validation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4144,6 +4620,7 @@ const PHASES = [
       },
       {
         "name": "JSON-RPC 2.0 поверх newline-delimited stdio",
+        "name_en": "JSON-RPC 2.0 Over Newline-Delimited Stdio",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4154,6 +4631,7 @@ const PHASES = [
       },
       {
         "name": "Диспетчер function calls",
+        "name_en": "Function Call Dispatcher",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4164,6 +4642,7 @@ const PHASES = [
       },
       {
         "name": "Управляющий поток plan-execute",
+        "name_en": "Plan-Execute Control Flow",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4174,6 +4653,7 @@ const PHASES = [
       },
       {
         "name": "Verification gates и бюджет наблюдений",
+        "name_en": "Capstone Lesson 25: Verification Gates and the Observation Budget",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4184,6 +4664,7 @@ const PHASES = [
       },
       {
         "name": "Sandbox-раннер с denylist и path jail",
+        "name_en": "Capstone Lesson 26: Sandbox Runner with Denylist and Path Jail",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4194,6 +4675,7 @@ const PHASES = [
       },
       {
         "name": "Eval-харнес с fixture-задачами",
+        "name_en": "Capstone Lesson 27: Eval Harness with Fixture Tasks",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4204,6 +4686,7 @@ const PHASES = [
       },
       {
         "name": "Observability: OTel GenAI spans и метрики Prometheus",
+        "name_en": "Capstone Lesson 28: Observability with OTel GenAI Spans and Prometheus Metrics",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4214,6 +4697,7 @@ const PHASES = [
       },
       {
         "name": "Coding-агент на харнесе end-to-end",
+        "name_en": "Capstone Lesson 29: End-to-End Coding Agent on the Harness",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4224,6 +4708,7 @@ const PHASES = [
       },
       {
         "name": "BPE-токенизатор с нуля",
+        "name_en": "BPE Tokenizer From Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4234,6 +4719,7 @@ const PHASES = [
       },
       {
         "name": "Токенизированный датасет со скользящим окном",
+        "name_en": "Tokenized Dataset with Sliding Window",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4244,6 +4730,7 @@ const PHASES = [
       },
       {
         "name": "Токенные и позиционные эмбеддинги",
+        "name_en": "Token and Positional Embeddings",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4254,6 +4741,7 @@ const PHASES = [
       },
       {
         "name": "Multi-head self-attention",
+        "name_en": "Multi-Head Self-Attention",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4264,6 +4752,7 @@ const PHASES = [
       },
       {
         "name": "Блок трансформера с нуля",
+        "name_en": "Transformer Block from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4274,6 +4763,7 @@ const PHASES = [
       },
       {
         "name": "Сборка GPT-модели",
+        "name_en": "GPT Model Assembly",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4284,6 +4774,7 @@ const PHASES = [
       },
       {
         "name": "Цикл обучения и оценка",
+        "name_en": "Training Loop and Evaluation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4294,6 +4785,7 @@ const PHASES = [
       },
       {
         "name": "Загрузка предобученных весов",
+        "name_en": "Loading Pretrained Weights",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4304,6 +4796,7 @@ const PHASES = [
       },
       {
         "name": "Fine-tuning классификатора заменой головы",
+        "name_en": "Capstone Lesson 38: Classifier Fine-Tuning by Head Swap",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4314,6 +4807,7 @@ const PHASES = [
       },
       {
         "name": "Instruction tuning через SFT",
+        "name_en": "Capstone Lesson 39: Instruction Tuning by Supervised Fine-Tuning",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4324,6 +4818,7 @@ const PHASES = [
       },
       {
         "name": "DPO с нуля",
+        "name_en": "Capstone Lesson 40: Direct Preference Optimization from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4334,6 +4829,7 @@ const PHASES = [
       },
       {
         "name": "Полный eval-пайплайн",
+        "name_en": "Capstone Lesson 41: Full Evaluation Pipeline",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4344,6 +4840,7 @@ const PHASES = [
       },
       {
         "name": "Загрузчик большого корпуса",
+        "name_en": "Large Corpus Downloader",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4354,6 +4851,7 @@ const PHASES = [
       },
       {
         "name": "Токенизированный корпус в HDF5",
+        "name_en": "HDF5 Tokenized Corpus",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4364,6 +4862,7 @@ const PHASES = [
       },
       {
         "name": "Cosine LR с линейным warmup",
+        "name_en": "Cosine LR with Linear Warmup",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4374,6 +4873,7 @@ const PHASES = [
       },
       {
         "name": "Gradient clipping и mixed precision",
+        "name_en": "Gradient Clipping and Mixed Precision",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4384,6 +4884,7 @@ const PHASES = [
       },
       {
         "name": "Аккумуляция градиентов",
+        "name_en": "Gradient Accumulation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4394,6 +4895,7 @@ const PHASES = [
       },
       {
         "name": "Сохранение и возобновление чекпоинтов",
+        "name_en": "Checkpoint Save and Resume",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4404,6 +4906,7 @@ const PHASES = [
       },
       {
         "name": "DDP и FSDP с нуля",
+        "name_en": "Distributed Data Parallel and FSDP from Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4414,6 +4917,7 @@ const PHASES = [
       },
       {
         "name": "Харнес оценки языковой модели",
+        "name_en": "Language Model Evaluation Harness",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4424,6 +4928,7 @@ const PHASES = [
       },
       {
         "name": "Генератор гипотез",
+        "name_en": "Hypothesis Generator",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4434,6 +4939,7 @@ const PHASES = [
       },
       {
         "name": "Поиск литературы",
+        "name_en": "Literature Retrieval",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4444,6 +4950,7 @@ const PHASES = [
       },
       {
         "name": "Раннер экспериментов",
+        "name_en": "Experiment Runner",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4454,6 +4961,7 @@ const PHASES = [
       },
       {
         "name": "Оценщик результатов",
+        "name_en": "Result Evaluator",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4464,6 +4972,7 @@ const PHASES = [
       },
       {
         "name": "Генерация научной статьи",
+        "name_en": "Paper Writer",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4474,6 +4983,7 @@ const PHASES = [
       },
       {
         "name": "Цикл критика",
+        "name_en": "Critic Loop",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4484,6 +4994,7 @@ const PHASES = [
       },
       {
         "name": "Планировщик итераций",
+        "name_en": "Iteration Scheduler",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4494,6 +5005,7 @@ const PHASES = [
       },
       {
         "name": "Research-агент end-to-end",
+        "name_en": "End-to-End Research Demo",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4504,6 +5016,7 @@ const PHASES = [
       },
       {
         "name": "Vision-энкодер: патчи изображения",
+        "name_en": "Vision Encoder Patches",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4514,6 +5027,7 @@ const PHASES = [
       },
       {
         "name": "ViT-энкодер",
+        "name_en": "Vision Transformer Encoder",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4524,6 +5038,7 @@ const PHASES = [
       },
       {
         "name": "Projection-слой для выравнивания модальностей",
+        "name_en": "Projection Layer for Modality Alignment",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4534,6 +5049,7 @@ const PHASES = [
       },
       {
         "name": "Cross-attention fusion",
+        "name_en": "Cross-Attention Fusion",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4544,6 +5060,7 @@ const PHASES = [
       },
       {
         "name": "Vision-language предобучение",
+        "name_en": "Vision-Language Pretraining",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4554,6 +5071,7 @@ const PHASES = [
       },
       {
         "name": "Мультимодальная оценка",
+        "name_en": "Multimodal Evaluation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4564,6 +5082,7 @@ const PHASES = [
       },
       {
         "name": "Сравнение стратегий chunking",
+        "name_en": "Chunking Strategies, Compared",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4574,6 +5093,7 @@ const PHASES = [
       },
       {
         "name": "Гибридный retrieval: BM25 + dense",
+        "name_en": "Hybrid Retrieval with BM25 and Dense Embeddings",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4584,6 +5104,7 @@ const PHASES = [
       },
       {
         "name": "Reranker на cross-encoder",
+        "name_en": "Cross-Encoder Reranker",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4594,6 +5115,7 @@ const PHASES = [
       },
       {
         "name": "Переписывание запросов: HyDE, multi-query, декомпозиция",
+        "name_en": "Query Rewriting: HyDE, Multi-Query, and Decomposition",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4604,6 +5126,7 @@ const PHASES = [
       },
       {
         "name": "Оценка RAG: precision, recall, MRR, nDCG, faithfulness",
+        "name_en": "RAG Evaluation: Precision, Recall, MRR, nDCG, Faithfulness, Answer Relevance",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4614,6 +5137,7 @@ const PHASES = [
       },
       {
         "name": "RAG-система end-to-end",
+        "name_en": "End-to-End RAG System",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4624,6 +5148,7 @@ const PHASES = [
       },
       {
         "name": "Формат спецификации задач",
+        "name_en": "Task Spec Format",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4634,6 +5159,7 @@ const PHASES = [
       },
       {
         "name": "Классические метрики",
+        "name_en": "Classical Metrics",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4644,6 +5170,7 @@ const PHASES = [
       },
       {
         "name": "Метрика исполнения кода",
+        "name_en": "Code Exec Metric",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4654,6 +5181,7 @@ const PHASES = [
       },
       {
         "name": "Перплексия и калибровка",
+        "name_en": "Perplexity and Calibration",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4664,6 +5192,7 @@ const PHASES = [
       },
       {
         "name": "Агрегация лидерборда",
+        "name_en": "Leaderboard Aggregation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4674,6 +5203,7 @@ const PHASES = [
       },
       {
         "name": "Eval-раннер end-to-end",
+        "name_en": "End-to-End Eval Runner",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4684,6 +5214,7 @@ const PHASES = [
       },
       {
         "name": "Коллективные операции с нуля",
+        "name_en": "Collective Ops From Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4694,6 +5225,7 @@ const PHASES = [
       },
       {
         "name": "Data parallel DDP с нуля",
+        "name_en": "Data Parallel DDP From Scratch",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4704,6 +5236,7 @@ const PHASES = [
       },
       {
         "name": "ZeRO: шардирование состояния оптимизатора",
+        "name_en": "ZeRO Optimizer State Sharding",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4714,6 +5247,7 @@ const PHASES = [
       },
       {
         "name": "Pipeline parallelism и анализ bubble",
+        "name_en": "Pipeline Parallel and Bubble Analysis",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4724,6 +5258,7 @@ const PHASES = [
       },
       {
         "name": "Шардированные чекпоинты и атомарный resume",
+        "name_en": "Sharded Checkpoint and Atomic Resume",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4734,6 +5269,7 @@ const PHASES = [
       },
       {
         "name": "Распределённое обучение end-to-end",
+        "name_en": "End-to-End Distributed Training",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4744,6 +5280,7 @@ const PHASES = [
       },
       {
         "name": "Таксономия джейлбрейков",
+        "name_en": "Capstone 82 — Jailbreak Taxonomy",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4754,6 +5291,7 @@ const PHASES = [
       },
       {
         "name": "Детектор prompt injection",
+        "name_en": "Capstone 83 — Prompt Injection Detector",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4764,6 +5302,7 @@ const PHASES = [
       },
       {
         "name": "Оценка отказов",
+        "name_en": "Capstone 84 — Refusal Evaluation",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4774,6 +5313,7 @@ const PHASES = [
       },
       {
         "name": "Интеграция контент-классификатора",
+        "name_en": "Capstone 85 — Content Classifier Integration",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4784,6 +5324,7 @@ const PHASES = [
       },
       {
         "name": "Движок constitutional-правил",
+        "name_en": "Capstone 86 — Constitutional Rules Engine",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, YAML",
@@ -4794,6 +5335,7 @@ const PHASES = [
       },
       {
         "name": "Safety gate end-to-end",
+        "name_en": "Capstone 87 — End-to-End Safety Gate",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
@@ -4808,418 +5350,833 @@ const PHASES = [
 
 const GLOSSARY = [
   {
-    "term": "Agent",
-    "says": "An autonomous AI that thinks and acts on its own",
-    "means": "A while loop where an LLM decides what tool to call next, executes it, sees the result, and repeats"
+    "term": "Agent (агент)",
+    "says": "Автономный ИИ, который сам думает и действует",
+    "means": "Цикл while, в котором LLM решает, какой инструмент вызвать следующим, выполняет его, видит результат и повторяет",
+    "en": {
+      "term": "Agent",
+      "says": "An autonomous AI that thinks and acts on its own",
+      "means": "A while loop where an LLM decides what tool to call next, executes it, sees the result, and repeats"
+    }
   },
   {
-    "term": "Attention",
-    "says": "How the AI focuses on important parts",
-    "means": "A mechanism where every token computes a weighted sum of all other tokens' values, with weights determined by how relevant they are (via dot product of query and key vectors)"
+    "term": "Attention (внимание)",
+    "says": "Как ИИ фокусируется на важных частях",
+    "means": "Механизм, где каждый токен вычисляет взвешенную сумму значений всех остальных токенов, а веса определяются их релевантностью (через скалярное произведение векторов query и key)",
+    "en": {
+      "term": "Attention",
+      "says": "How the AI focuses on important parts",
+      "means": "A mechanism where every token computes a weighted sum of all other tokens' values, with weights determined by how relevant they are (via dot product of query and key vectors)"
+    }
   },
   {
-    "term": "Alignment",
-    "says": "Making AI safe",
-    "means": "The technical challenge of making an AI system's behavior match human intentions, values, and preferences, including edge cases the designer didn't anticipate"
+    "term": "Alignment (согласование)",
+    "says": "Сделать ИИ безопасным",
+    "means": "Техническая задача привести поведение ИИ-системы в соответствие с намерениями, ценностями и предпочтениями человека, включая пограничные случаи, которые разработчик не предусмотрел",
+    "en": {
+      "term": "Alignment",
+      "says": "Making AI safe",
+      "means": "The technical challenge of making an AI system's behavior match human intentions, values, and preferences, including edge cases the designer didn't anticipate"
+    }
   },
   {
-    "term": "Autoregressive",
-    "says": "The AI generates one word at a time",
-    "means": "A model that predicts the next token conditioned on all previous tokens, then feeds that prediction back as input for the next step. GPT, LLaMA, and Claude are all autoregressive."
+    "term": "Autoregressive (авторегрессионный)",
+    "says": "ИИ генерирует по одному слову за раз",
+    "means": "Модель, которая предсказывает следующий токен на основе всех предыдущих, а затем подаёт своё предсказание обратно на вход для следующего шага. GPT, LLaMA и Claude — все авторегрессионные.",
+    "en": {
+      "term": "Autoregressive",
+      "says": "The AI generates one word at a time",
+      "means": "A model that predicts the next token conditioned on all previous tokens, then feeds that prediction back as input for the next step. GPT, LLaMA, and Claude are all autoregressive."
+    }
   },
   {
-    "term": "Activation Function",
-    "says": "The nonlinear thing between layers",
-    "means": "A function applied after each linear layer that introduces nonlinearity. Without it, stacking any number of linear layers collapses to a single linear transformation. ReLU, GELU, and SiLU are the most common. The choice directly affects whether gradients flow during training."
+    "term": "Activation Function (функция активации)",
+    "says": "Та нелинейная штука между слоями",
+    "means": "Функция, применяемая после каждого линейного слоя, чтобы ввести нелинейность. Без неё стек из любого числа линейных слоёв схлопывается в одно линейное преобразование. ReLU, GELU и SiLU — самые распространённые. Выбор напрямую влияет на то, текут ли градиенты при обучении.",
+    "en": {
+      "term": "Activation Function",
+      "says": "The nonlinear thing between layers",
+      "means": "A function applied after each linear layer that introduces nonlinearity. Without it, stacking any number of linear layers collapses to a single linear transformation. ReLU, GELU, and SiLU are the most common. The choice directly affects whether gradients flow during training."
+    }
   },
   {
-    "term": "Adam (Optimizer)",
-    "says": "The default optimizer",
-    "means": "Adaptive Moment Estimation. Combines momentum (first moment) with adaptive learning rates per parameter (second moment). Has bias correction for early steps. Works well across most tasks without much tuning."
+    "term": "Adam (оптимизатор Adam)",
+    "says": "Оптимизатор по умолчанию",
+    "means": "Adaptive Moment Estimation. Сочетает моментум (первый момент) с адаптивной скоростью обучения для каждого параметра (второй момент). Имеет коррекцию смещения для первых шагов. Хорошо работает на большинстве задач без тонкой настройки.",
+    "en": {
+      "term": "Adam (Optimizer)",
+      "says": "The default optimizer",
+      "means": "Adaptive Moment Estimation. Combines momentum (first moment) with adaptive learning rates per parameter (second moment). Has bias correction for early steps. Works well across most tasks without much tuning."
+    }
   },
   {
-    "term": "AdamW",
-    "says": "Adam but better",
-    "means": "Adam with decoupled weight decay. In standard Adam, L2 regularization gets scaled by the adaptive learning rate per parameter, which is not what you want. AdamW applies weight decay directly to the weights, independent of the gradient statistics. The default optimizer for training transformers."
+    "term": "AdamW (оптимизатор AdamW)",
+    "says": "Adam, но лучше",
+    "means": "Adam с развязанным затуханием весов. В обычном Adam L2-регуляризация масштабируется адаптивной скоростью обучения для каждого параметра, а это не то, что нужно. AdamW применяет затухание весов напрямую к весам, независимо от статистики градиентов. Оптимизатор по умолчанию для обучения трансформеров.",
+    "en": {
+      "term": "AdamW",
+      "says": "Adam but better",
+      "means": "Adam with decoupled weight decay. In standard Adam, L2 regularization gets scaled by the adaptive learning rate per parameter, which is not what you want. AdamW applies weight decay directly to the weights, independent of the gradient statistics. The default optimizer for training transformers."
+    }
   },
   {
-    "term": "Autograd",
-    "says": "Automatic gradients",
-    "means": "A system that records operations on tensors and automatically computes gradients via reverse-mode differentiation. PyTorch's autograd builds a computation graph on-the-fly (dynamic graph), while JAX uses function transformations (grad). This is what makes backpropagation practical -- you write the forward pass, and the framework computes all the derivatives."
+    "term": "Autograd (автоматическое дифференцирование)",
+    "says": "Автоматические градиенты",
+    "means": "Система, которая записывает операции над тензорами и автоматически вычисляет градиенты через дифференцирование в обратном режиме. Autograd в PyTorch строит граф вычислений на лету (динамический граф), а JAX использует преобразования функций (grad). Именно это делает обратное распространение практичным — вы пишете прямой проход, а фреймворк вычисляет все производные.",
+    "en": {
+      "term": "Autograd",
+      "says": "Automatic gradients",
+      "means": "A system that records operations on tensors and automatically computes gradients via reverse-mode differentiation. PyTorch's autograd builds a computation graph on-the-fly (dynamic graph), while JAX uses function transformations (grad). This is what makes backpropagation practical -- you write the forward pass, and the framework computes all the derivatives."
+    }
   },
   {
-    "term": "Batch Size",
-    "says": "How many examples at once",
-    "means": "The number of training examples processed in one forward/backward pass before updating weights. Larger batches give more stable gradient estimates but use more memory. Typical values: 32-512 for training, larger for inference. Batch size interacts with learning rate -- double the batch, double the LR (linear scaling rule)."
+    "term": "Batch Size (размер батча)",
+    "says": "Сколько примеров за раз",
+    "means": "Число обучающих примеров, обрабатываемых за один прямой/обратный проход перед обновлением весов. Большие батчи дают более стабильную оценку градиента, но требуют больше памяти. Типичные значения: 32–512 при обучении, больше — при инференсе. Размер батча связан со скоростью обучения — удвоили батч, удвойте LR (правило линейного масштабирования).",
+    "en": {
+      "term": "Batch Size",
+      "says": "How many examples at once",
+      "means": "The number of training examples processed in one forward/backward pass before updating weights. Larger batches give more stable gradient estimates but use more memory. Typical values: 32-512 for training, larger for inference. Batch size interacts with learning rate -- double the batch, double the LR (linear scaling rule)."
+    }
   },
   {
-    "term": "Backpropagation",
-    "says": "How neural networks learn",
-    "means": "An algorithm that computes how much each weight contributed to the error by applying the chain rule backward through the network, then adjusts weights proportionally"
+    "term": "Backpropagation (обратное распространение ошибки)",
+    "says": "Как нейросети учатся",
+    "means": "Алгоритм, который вычисляет вклад каждого веса в ошибку, применяя правило цепочки в обратном направлении по сети, а затем корректирует веса пропорционально",
+    "en": {
+      "term": "Backpropagation",
+      "says": "How neural networks learn",
+      "means": "An algorithm that computes how much each weight contributed to the error by applying the chain rule backward through the network, then adjusts weights proportionally"
+    }
   },
   {
-    "term": "Context Window",
-    "says": "How much the AI can remember",
-    "means": "The maximum number of tokens (input + output) that fit in a single API call. Not memory — it's a fixed-size buffer that resets every call"
+    "term": "Context Window (контекстное окно)",
+    "says": "Сколько ИИ может запомнить",
+    "means": "Максимальное число токенов (вход + выход), помещающихся в один вызов API. Это не память — это буфер фиксированного размера, который сбрасывается при каждом вызове",
+    "en": {
+      "term": "Context Window",
+      "says": "How much the AI can remember",
+      "means": "The maximum number of tokens (input + output) that fit in a single API call. Not memory — it's a fixed-size buffer that resets every call"
+    }
   },
   {
-    "term": "Chain of Thought (CoT)",
-    "says": "Making the AI think step by step",
-    "means": "A prompting technique where you ask the model to show its reasoning steps, which improves accuracy on multi-step problems because each step conditions the next token generation"
+    "term": "Chain of Thought (цепочка рассуждений, CoT)",
+    "says": "Заставить ИИ думать пошагово",
+    "means": "Приём промптинга, при котором вы просите модель показать шаги рассуждения; это повышает точность на многошаговых задачах, потому что каждый шаг обусловливает генерацию следующего токена",
+    "en": {
+      "term": "Chain of Thought (CoT)",
+      "says": "Making the AI think step by step",
+      "means": "A prompting technique where you ask the model to show its reasoning steps, which improves accuracy on multi-step problems because each step conditions the next token generation"
+    }
   },
   {
-    "term": "CNN (Convolutional Neural Network)",
-    "says": "Image AI",
-    "means": "A neural network that uses convolution operations (sliding filters over the input) to detect local patterns. Stacking convolutions detects increasingly complex features: edges, textures, objects."
+    "term": "CNN (свёрточная нейросеть)",
+    "says": "ИИ для картинок",
+    "means": "Нейросеть, использующая операции свёртки (скользящие фильтры по входу) для обнаружения локальных паттернов. Стек свёрток обнаруживает всё более сложные признаки: границы, текстуры, объекты.",
+    "en": {
+      "term": "CNN (Convolutional Neural Network)",
+      "says": "Image AI",
+      "means": "A neural network that uses convolution operations (sliding filters over the input) to detect local patterns. Stacking convolutions detects increasingly complex features: edges, textures, objects."
+    }
   },
   {
-    "term": "CUDA",
-    "says": "GPU programming",
-    "means": "NVIDIA's parallel computing platform. Lets you run matrix operations on thousands of GPU cores simultaneously. PyTorch and TensorFlow use CUDA under the hood."
+    "term": "CUDA (вычисления на GPU)",
+    "says": "Программирование под GPU",
+    "means": "Платформа параллельных вычислений NVIDIA. Позволяет выполнять матричные операции на тысячах ядер GPU одновременно. PyTorch и TensorFlow используют CUDA под капотом.",
+    "en": {
+      "term": "CUDA",
+      "says": "GPU programming",
+      "means": "NVIDIA's parallel computing platform. Lets you run matrix operations on thousands of GPU cores simultaneously. PyTorch and TensorFlow use CUDA under the hood."
+    }
   },
   {
-    "term": "Chunking",
-    "says": "Splitting documents into pieces",
-    "means": "Breaking text into segments before embedding for retrieval. Chunk size determines the granularity of search results. Too small: loses context. Too large: dilutes relevance. Common strategies: fixed-size with overlap, sentence-based, or semantic splitting. Typical chunk size: 256-512 tokens with 10-20% overlap."
+    "term": "Chunking (разбиение на фрагменты)",
+    "says": "Резать документы на кусочки",
+    "means": "Разбиение текста на сегменты перед построением эмбеддингов для поиска. Размер фрагмента задаёт гранулярность результатов поиска. Слишком мелко — теряется контекст. Слишком крупно — размывается релевантность. Частые стратегии: фиксированный размер с перекрытием, по предложениям или семантическое разбиение. Типичный размер: 256–512 токенов с перекрытием 10–20%.",
+    "en": {
+      "term": "Chunking",
+      "says": "Splitting documents into pieces",
+      "means": "Breaking text into segments before embedding for retrieval. Chunk size determines the granularity of search results. Too small: loses context. Too large: dilutes relevance. Common strategies: fixed-size with overlap, sentence-based, or semantic splitting. Typical chunk size: 256-512 tokens with 10-20% overlap."
+    }
   },
   {
-    "term": "Contrastive Learning",
-    "says": "Learning by comparison",
-    "means": "Training by pulling similar pairs closer and pushing dissimilar pairs apart in embedding space. CLIP uses this: matching image-text pairs vs non-matching ones."
+    "term": "Contrastive Learning (контрастивное обучение)",
+    "says": "Обучение через сравнение",
+    "means": "Обучение, при котором похожие пары притягиваются, а непохожие — отталкиваются в пространстве эмбеддингов. CLIP использует это: совпадающие пары изображение-текст против несовпадающих.",
+    "en": {
+      "term": "Contrastive Learning",
+      "says": "Learning by comparison",
+      "means": "Training by pulling similar pairs closer and pushing dissimilar pairs apart in embedding space. CLIP uses this: matching image-text pairs vs non-matching ones."
+    }
   },
   {
-    "term": "Cosine Similarity",
-    "says": "How similar two vectors are",
-    "means": "The cosine of the angle between two vectors: dot(a, b) / (||a|| * ||b||). Ranges from -1 (opposite) to 1 (identical direction). Ignores magnitude, only cares about direction. The standard similarity metric for embeddings and semantic search."
+    "term": "Cosine Similarity (косинусное сходство)",
+    "says": "Насколько похожи два вектора",
+    "means": "Косинус угла между двумя векторами: dot(a, b) / (||a|| * ||b||). Диапазон от -1 (противоположны) до 1 (одинаковое направление). Игнорирует длину, важно только направление. Стандартная метрика сходства для эмбеддингов и семантического поиска.",
+    "en": {
+      "term": "Cosine Similarity",
+      "says": "How similar two vectors are",
+      "means": "The cosine of the angle between two vectors: dot(a, b) / (||a|| * ||b||). Ranges from -1 (opposite) to 1 (identical direction). Ignores magnitude, only cares about direction. The standard similarity metric for embeddings and semantic search."
+    }
   },
   {
-    "term": "Cross-Entropy",
-    "says": "The classification loss",
-    "means": "Measures the difference between two probability distributions. For classification: -sum(y_true * log(y_pred)). For language models: the negative log probability of the correct next token. Lower is better. Perplexity is just exp(cross-entropy)."
+    "term": "Cross-Entropy (перекрёстная энтропия)",
+    "says": "Функция потерь для классификации",
+    "means": "Измеряет расхождение между двумя вероятностными распределениями. Для классификации: -sum(y_true * log(y_pred)). Для языковых моделей: отрицательный логарифм вероятности правильного следующего токена. Меньше — лучше. Перплексия — это просто exp(перекрёстной энтропии).",
+    "en": {
+      "term": "Cross-Entropy",
+      "says": "The classification loss",
+      "means": "Measures the difference between two probability distributions. For classification: -sum(y_true * log(y_pred)). For language models: the negative log probability of the correct next token. Lower is better. Perplexity is just exp(cross-entropy)."
+    }
   },
   {
-    "term": "Data Augmentation",
-    "says": "Making more training data",
-    "means": "Creating modified copies of existing data (rotate images, add noise, paraphrase text) to increase training set diversity without collecting new data. Reduces overfitting."
+    "term": "Data Augmentation (аугментация данных)",
+    "says": "Наделать больше обучающих данных",
+    "means": "Создание изменённых копий существующих данных (повернуть изображения, добавить шум, перефразировать текст) для увеличения разнообразия обучающей выборки без сбора новых данных. Снижает переобучение.",
+    "en": {
+      "term": "Data Augmentation",
+      "says": "Making more training data",
+      "means": "Creating modified copies of existing data (rotate images, add noise, paraphrase text) to increase training set diversity without collecting new data. Reduces overfitting."
+    }
   },
   {
-    "term": "Decoder",
-    "says": "The output part",
-    "means": "In transformers, a decoder uses causal (masked) self-attention so each position can only attend to earlier positions. GPT is decoder-only. BERT is encoder-only. T5 is encoder-decoder."
+    "term": "Decoder (декодер)",
+    "says": "Часть, отвечающая за выход",
+    "means": "В трансформерах декодер использует каузальное (маскированное) само-внимание, чтобы каждая позиция могла обращаться только к более ранним позициям. GPT — только декодер. BERT — только энкодер. T5 — энкодер-декодер.",
+    "en": {
+      "term": "Decoder",
+      "says": "The output part",
+      "means": "In transformers, a decoder uses causal (masked) self-attention so each position can only attend to earlier positions. GPT is decoder-only. BERT is encoder-only. T5 is encoder-decoder."
+    }
   },
   {
-    "term": "Diffusion Model",
-    "says": "AI that generates images from noise",
-    "means": "A model trained to reverse a gradual noising process — it learns to predict and remove noise, and at generation time starts from pure noise and iteratively denoises"
+    "term": "Diffusion Model (диффузионная модель)",
+    "says": "ИИ, который генерирует картинки из шума",
+    "means": "Модель, обученная обращать постепенный процесс зашумления — она учится предсказывать и убирать шум, а при генерации стартует из чистого шума и итеративно его удаляет",
+    "en": {
+      "term": "Diffusion Model",
+      "says": "AI that generates images from noise",
+      "means": "A model trained to reverse a gradual noising process — it learns to predict and remove noise, and at generation time starts from pure noise and iteratively denoises"
+    }
   },
   {
-    "term": "DPO (Direct Preference Optimization)",
-    "says": "A simpler RLHF",
-    "means": "A training method that skips the reward model entirely — it directly optimizes the language model to prefer the better response in pairs of human preferences"
+    "term": "DPO (прямая оптимизация предпочтений)",
+    "says": "Упрощённый RLHF",
+    "means": "Метод обучения, полностью пропускающий модель вознаграждения — он напрямую оптимизирует языковую модель, чтобы она предпочитала лучший ответ в парах человеческих предпочтений",
+    "en": {
+      "term": "DPO (Direct Preference Optimization)",
+      "says": "A simpler RLHF",
+      "means": "A training method that skips the reward model entirely — it directly optimizes the language model to prefer the better response in pairs of human preferences"
+    }
   },
   {
-    "term": "Dropout",
-    "says": "Randomly turning off neurons",
-    "means": "During training, randomly set a fraction of activations to zero. Forces the network to not rely on any single neuron. Turned off during inference. Simple but effective regularization."
+    "term": "Dropout (дропаут)",
+    "says": "Случайно выключать нейроны",
+    "means": "При обучении случайно обнуляется часть активаций. Это заставляет сеть не полагаться на какой-то один нейрон. При инференсе отключается. Простая, но эффективная регуляризация.",
+    "en": {
+      "term": "Dropout",
+      "says": "Randomly turning off neurons",
+      "means": "During training, randomly set a fraction of activations to zero. Forces the network to not rely on any single neuron. Turned off during inference. Simple but effective regularization."
+    }
   },
   {
-    "term": "Eigenvalue",
-    "says": "Some math thing for PCA",
-    "means": "For a matrix A, an eigenvalue lambda satisfies Av = lambda*v for some vector v. It tells you how much the matrix scales vectors in that direction. Large eigenvalues = directions of high variance in your data."
+    "term": "Eigenvalue (собственное значение)",
+    "says": "Какая-то математика для PCA",
+    "means": "Для матрицы A собственное значение lambda удовлетворяет Av = lambda*v для некоторого вектора v. Оно показывает, насколько матрица масштабирует векторы в этом направлении. Большие собственные значения — направления высокой дисперсии в ваших данных.",
+    "en": {
+      "term": "Eigenvalue",
+      "says": "Some math thing for PCA",
+      "means": "For a matrix A, an eigenvalue lambda satisfies Av = lambda*v for some vector v. It tells you how much the matrix scales vectors in that direction. Large eigenvalues = directions of high variance in your data."
+    }
   },
   {
-    "term": "Embedding",
-    "says": "Some AI magic that turns words into numbers",
-    "means": "A learned mapping from discrete items (words, images, users) to dense vectors in continuous space, where similar items end up close together"
+    "term": "Embedding (эмбеддинг)",
+    "says": "Какая-то магия ИИ, превращающая слова в числа",
+    "means": "Обученное отображение дискретных объектов (слов, изображений, пользователей) в плотные векторы в непрерывном пространстве, где похожие объекты оказываются рядом",
+    "en": {
+      "term": "Embedding",
+      "says": "Some AI magic that turns words into numbers",
+      "means": "A learned mapping from discrete items (words, images, users) to dense vectors in continuous space, where similar items end up close together"
+    }
   },
   {
-    "term": "Encoder",
-    "says": "The input part",
-    "means": "In transformers, an encoder uses bidirectional self-attention so each position can attend to all positions. BERT is encoder-only. Good for understanding tasks (classification, NER) but not generation."
+    "term": "Encoder (энкодер)",
+    "says": "Часть, отвечающая за вход",
+    "means": "В трансформерах энкодер использует двунаправленное само-внимание, чтобы каждая позиция могла обращаться ко всем позициям. BERT — только энкодер. Хорош для задач понимания (классификация, NER), но не для генерации.",
+    "en": {
+      "term": "Encoder",
+      "says": "The input part",
+      "means": "In transformers, an encoder uses bidirectional self-attention so each position can attend to all positions. BERT is encoder-only. Good for understanding tasks (classification, NER) but not generation."
+    }
   },
   {
-    "term": "Epoch",
-    "says": "One pass through the data",
-    "means": "Exactly that. One complete pass through every example in the training set. Multiple epochs = seeing the data multiple times. More epochs can improve learning but risks overfitting."
+    "term": "Epoch (эпоха)",
+    "says": "Один проход по данным",
+    "means": "Ровно это. Один полный проход по каждому примеру обучающей выборки. Несколько эпох — данные просматриваются несколько раз. Больше эпох может улучшить обучение, но повышает риск переобучения.",
+    "en": {
+      "term": "Epoch",
+      "says": "One pass through the data",
+      "means": "Exactly that. One complete pass through every example in the training set. Multiple epochs = seeing the data multiple times. More epochs can improve learning but risks overfitting."
+    }
   },
   {
-    "term": "Feature",
-    "says": "A column in your data",
-    "means": "An individual measurable property of the data. In classical ML, you engineer features by hand. In deep learning, the network learns features automatically from raw data."
+    "term": "Feature (признак)",
+    "says": "Столбец в ваших данных",
+    "means": "Отдельное измеримое свойство данных. В классическом ML признаки конструируют вручную. В глубоком обучении сеть учит признаки автоматически из сырых данных.",
+    "en": {
+      "term": "Feature",
+      "says": "A column in your data",
+      "means": "An individual measurable property of the data. In classical ML, you engineer features by hand. In deep learning, the network learns features automatically from raw data."
+    }
   },
   {
-    "term": "Few-Shot",
-    "says": "Give the AI some examples first",
-    "means": "Including a small number of input-output examples in the prompt before asking the model to perform a task. Typically 3-5 examples. The model pattern-matches on these examples to understand the desired format and behavior. Contrast with zero-shot (no examples) and fine-tuning (thousands of examples baked into weights)."
+    "term": "Few-Shot (few-shot, обучение на нескольких примерах)",
+    "says": "Сначала дай ИИ пару примеров",
+    "means": "Включение небольшого числа пар вход-выход в промпт перед тем, как попросить модель выполнить задачу. Обычно 3–5 примеров. Модель подхватывает паттерн из этих примеров, чтобы понять нужный формат и поведение. Противопоставляется zero-shot (без примеров) и дообучению (тысячи примеров, зашитых в веса).",
+    "en": {
+      "term": "Few-Shot",
+      "says": "Give the AI some examples first",
+      "means": "Including a small number of input-output examples in the prompt before asking the model to perform a task. Typically 3-5 examples. The model pattern-matches on these examples to understand the desired format and behavior. Contrast with zero-shot (no examples) and fine-tuning (thousands of examples baked into weights)."
+    }
   },
   {
-    "term": "Fine-tuning",
-    "says": "Training the AI on your data",
-    "means": "Starting with a pre-trained model's weights and continuing training on a smaller, task-specific dataset. Only updates existing weights, doesn't add new knowledge from scratch"
+    "term": "Fine-tuning (дообучение)",
+    "says": "Обучить ИИ на своих данных",
+    "means": "Начать с весов предобученной модели и продолжить обучение на меньшем, специфичном для задачи наборе данных. Обновляет только существующие веса, не добавляет новых знаний с нуля",
+    "en": {
+      "term": "Fine-tuning",
+      "says": "Training the AI on your data",
+      "means": "Starting with a pre-trained model's weights and continuing training on a smaller, task-specific dataset. Only updates existing weights, doesn't add new knowledge from scratch"
+    }
   },
   {
-    "term": "Function Calling",
-    "says": "AI that can use tools",
-    "means": "A structured way for LLMs to request execution of external functions. You define tools with JSON Schema descriptions, the model outputs a structured JSON object specifying which function to call with what arguments, your code executes it, and the result goes back to the model. Not the same as agents -- function calling is the mechanism, agents are the loop."
+    "term": "Function Calling (вызов функций)",
+    "says": "ИИ, который умеет пользоваться инструментами",
+    "means": "Структурированный способ для LLM запрашивать выполнение внешних функций. Вы описываете инструменты через JSON Schema, модель выдаёт структурированный JSON-объект с указанием, какую функцию вызвать и с какими аргументами, ваш код выполняет её, а результат возвращается модели. Не то же самое, что агенты — вызов функций это механизм, агенты это цикл.",
+    "en": {
+      "term": "Function Calling",
+      "says": "AI that can use tools",
+      "means": "A structured way for LLMs to request execution of external functions. You define tools with JSON Schema descriptions, the model outputs a structured JSON object specifying which function to call with what arguments, your code executes it, and the result goes back to the model. Not the same as agents -- function calling is the mechanism, agents are the loop."
+    }
   },
   {
-    "term": "Guardrails",
-    "says": "Safety filters for AI",
-    "means": "Input/output validation layers around an LLM that detect and block harmful content, prompt injection attempts, PII leakage, or off-topic responses. Typically a pipeline: input filter -> LLM -> output filter. Can be rule-based (regex, keyword lists) or model-based (classifier that scores safety)."
+    "term": "Guardrails (защитные ограничения)",
+    "says": "Фильтры безопасности для ИИ",
+    "means": "Слои валидации входа/выхода вокруг LLM, которые обнаруживают и блокируют вредный контент, попытки инъекции в промпт, утечку персональных данных или ответы не по теме. Обычно это пайплайн: фильтр входа -> LLM -> фильтр выхода. Может быть на правилах (regex, списки ключевых слов) или на модели (классификатор, оценивающий безопасность).",
+    "en": {
+      "term": "Guardrails",
+      "says": "Safety filters for AI",
+      "means": "Input/output validation layers around an LLM that detect and block harmful content, prompt injection attempts, PII leakage, or off-topic responses. Typically a pipeline: input filter -> LLM -> output filter. Can be rule-based (regex, keyword lists) or model-based (classifier that scores safety)."
+    }
   },
   {
-    "term": "GPT",
-    "says": "ChatGPT\" or \"The AI",
-    "means": "Generative Pre-trained Transformer — a specific architecture that predicts the next token using a decoder-only transformer trained on large text corpora"
+    "term": "GPT (GPT)",
+    "says": "ChatGPT» или «тот самый ИИ",
+    "means": "Generative Pre-trained Transformer — конкретная архитектура, предсказывающая следующий токен с помощью декодерного трансформера, обученного на больших текстовых корпусах",
+    "en": {
+      "term": "GPT",
+      "says": "ChatGPT\" or \"The AI",
+      "means": "Generative Pre-trained Transformer — a specific architecture that predicts the next token using a decoder-only transformer trained on large text corpora"
+    }
   },
   {
-    "term": "GAN (Generative Adversarial Network)",
-    "says": "Two AIs fighting each other",
-    "means": "A generator network tries to create realistic data while a discriminator network tries to tell real from fake. They train together: the generator gets better at fooling the discriminator, and the discriminator gets better at detecting fakes."
+    "term": "GAN (генеративно-состязательная сеть)",
+    "says": "Два ИИ дерутся друг с другом",
+    "means": "Сеть-генератор пытается создать реалистичные данные, а сеть-дискриминатор — отличить настоящее от поддельного. Они обучаются вместе: генератор всё лучше обманывает дискриминатора, а дискриминатор всё лучше выявляет подделки.",
+    "en": {
+      "term": "GAN (Generative Adversarial Network)",
+      "says": "Two AIs fighting each other",
+      "means": "A generator network tries to create realistic data while a discriminator network tries to tell real from fake. They train together: the generator gets better at fooling the discriminator, and the discriminator gets better at detecting fakes."
+    }
   },
   {
-    "term": "Gradient",
-    "says": "The slope",
-    "means": "A vector of partial derivatives pointing in the direction of steepest increase. In ML, you go opposite to the gradient (gradient descent) to minimize the loss."
+    "term": "Gradient (градиент)",
+    "says": "Наклон",
+    "means": "Вектор частных производных, указывающий в направлении наискорейшего роста. В ML вы движетесь против градиента (градиентный спуск), чтобы минимизировать потери.",
+    "en": {
+      "term": "Gradient",
+      "says": "The slope",
+      "means": "A vector of partial derivatives pointing in the direction of steepest increase. In ML, you go opposite to the gradient (gradient descent) to minimize the loss."
+    }
   },
   {
-    "term": "Gradient Descent",
-    "says": "How AI improves",
-    "means": "An optimization algorithm that adjusts parameters in the direction that reduces the loss function most steeply, like walking downhill in a high-dimensional landscape"
+    "term": "Gradient Descent (градиентный спуск)",
+    "says": "Как ИИ улучшается",
+    "means": "Алгоритм оптимизации, который корректирует параметры в направлении наибольшего снижения функции потерь, как спуск с горы в многомерном ландшафте",
+    "en": {
+      "term": "Gradient Descent",
+      "says": "How AI improves",
+      "means": "An optimization algorithm that adjusts parameters in the direction that reduces the loss function most steeply, like walking downhill in a high-dimensional landscape"
+    }
   },
   {
-    "term": "Hyperparameter",
-    "says": "Settings you tune",
-    "means": "Values set before training that control the training process itself: learning rate, batch size, number of layers, dropout rate. Unlike model parameters (weights), these aren't learned from data."
+    "term": "Hyperparameter (гиперпараметр)",
+    "says": "Настройки, которые ты крутишь",
+    "means": "Значения, задаваемые до обучения и управляющие самим процессом обучения: скорость обучения, размер батча, число слоёв, доля дропаута. В отличие от параметров модели (весов), они не выучиваются из данных.",
+    "en": {
+      "term": "Hyperparameter",
+      "says": "Settings you tune",
+      "means": "Values set before training that control the training process itself: learning rate, batch size, number of layers, dropout rate. Unlike model parameters (weights), these aren't learned from data."
+    }
   },
   {
-    "term": "Hallucination",
-    "says": "The AI is lying\" or \"making things up",
-    "means": "The model generates plausible-sounding text that isn't grounded in its training data or the given context — it's pattern-completing, not fact-retrieving"
+    "term": "Hallucination (галлюцинация)",
+    "says": "ИИ врёт» или «выдумывает",
+    "means": "Модель генерирует правдоподобно звучащий текст, не опирающийся на обучающие данные или заданный контекст — она достраивает паттерн, а не извлекает факт",
+    "en": {
+      "term": "Hallucination",
+      "says": "The AI is lying\" or \"making things up",
+      "means": "The model generates plausible-sounding text that isn't grounded in its training data or the given context — it's pattern-completing, not fact-retrieving"
+    }
   },
   {
-    "term": "Inference",
-    "says": "Running the AI",
-    "means": "Using a trained model to make predictions on new data. No weight updates happen. This is what you do in production: send input, get output."
+    "term": "Inference (инференс)",
+    "says": "Запуск ИИ",
+    "means": "Использование обученной модели для предсказаний на новых данных. Обновления весов не происходит. Это то, что вы делаете в продакшене: подали вход, получили выход.",
+    "en": {
+      "term": "Inference",
+      "says": "Running the AI",
+      "means": "Using a trained model to make predictions on new data. No weight updates happen. This is what you do in production: send input, get output."
+    }
   },
   {
-    "term": "Inductive Bias",
-    "says": "Never heard of it",
-    "means": "The assumptions built into a model's architecture. CNNs assume local patterns matter (convolution). RNNs assume order matters (sequential processing). Transformers assume everything might relate to everything (attention). The right bias helps the model learn faster from less data."
+    "term": "Inductive Bias (индуктивное смещение)",
+    "says": "Никогда о таком не слышали",
+    "means": "Допущения, встроенные в архитектуру модели. CNN предполагают, что важны локальные паттерны (свёртка). RNN предполагают, что важен порядок (последовательная обработка). Трансформеры предполагают, что всё может быть связано со всем (внимание). Правильное смещение помогает модели учиться быстрее и на меньших данных.",
+    "en": {
+      "term": "Inductive Bias",
+      "says": "Never heard of it",
+      "means": "The assumptions built into a model's architecture. CNNs assume local patterns matter (convolution). RNNs assume order matters (sequential processing). Transformers assume everything might relate to everything (attention). The right bias helps the model learn faster from less data."
+    }
   },
   {
-    "term": "JAX",
-    "says": "Google's ML framework",
-    "means": "A NumPy-compatible library that adds automatic differentiation (grad), JIT compilation (jit), automatic vectorization (vmap), and multi-device parallelism (pmap). Unlike PyTorch's object-oriented style, JAX is purely functional -- no hidden state, no in-place mutation. Used by Google DeepMind for AlphaFold, Gemini, and large-scale research."
+    "term": "JAX (JAX)",
+    "says": "ML-фреймворк от Google",
+    "means": "Совместимая с NumPy библиотека, добавляющая автоматическое дифференцирование (grad), JIT-компиляцию (jit), автоматическую векторизацию (vmap) и параллелизм по устройствам (pmap). В отличие от объектно-ориентированного стиля PyTorch, JAX чисто функционален — никакого скрытого состояния, никаких мутаций на месте. Используется Google DeepMind для AlphaFold, Gemini и крупномасштабных исследований.",
+    "en": {
+      "term": "JAX",
+      "says": "Google's ML framework",
+      "means": "A NumPy-compatible library that adds automatic differentiation (grad), JIT compilation (jit), automatic vectorization (vmap), and multi-device parallelism (pmap). Unlike PyTorch's object-oriented style, JAX is purely functional -- no hidden state, no in-place mutation. Used by Google DeepMind for AlphaFold, Gemini, and large-scale research."
+    }
   },
   {
-    "term": "KV Cache",
-    "says": "Makes inference faster",
-    "means": "During autoregressive generation, caching the key and value matrices from previous tokens so you don't recompute them at each step. Trades memory for speed. Essential for fast LLM inference."
+    "term": "KV Cache (KV-кеш, кеш ключей и значений)",
+    "says": "Ускоряет инференс",
+    "means": "При авторегрессионной генерации кеширование матриц key и value от предыдущих токенов, чтобы не пересчитывать их на каждом шаге. Меняет память на скорость. Необходим для быстрого инференса LLM.",
+    "en": {
+      "term": "KV Cache",
+      "says": "Makes inference faster",
+      "means": "During autoregressive generation, caching the key and value matrices from previous tokens so you don't recompute them at each step. Trades memory for speed. Essential for fast LLM inference."
+    }
   },
   {
-    "term": "Latent Space",
-    "says": "The hidden representation",
-    "means": "A compressed, learned representation space where similar inputs map to nearby points. Autoencoders, VAEs, and diffusion models all work in latent space. It's lower-dimensional than the input but captures the important structure."
+    "term": "Latent Space (латентное пространство)",
+    "says": "Скрытое представление",
+    "means": "Сжатое, обученное пространство представлений, где похожие входы отображаются в близкие точки. Автоэнкодеры, VAE и диффузионные модели все работают в латентном пространстве. Оно меньшей размерности, чем вход, но улавливает важную структуру.",
+    "en": {
+      "term": "Latent Space",
+      "says": "The hidden representation",
+      "means": "A compressed, learned representation space where similar inputs map to nearby points. Autoencoders, VAEs, and diffusion models all work in latent space. It's lower-dimensional than the input but captures the important structure."
+    }
   },
   {
-    "term": "Learning Rate",
-    "says": "How fast the AI learns",
-    "means": "A scalar that controls step size during gradient descent. Too high: overshoots the minimum and diverges. Too low: converges too slowly or gets stuck. The single most important hyperparameter."
+    "term": "Learning Rate (скорость обучения)",
+    "says": "Как быстро ИИ учится",
+    "means": "Скаляр, управляющий размером шага при градиентном спуске. Слишком высокая — перескакивает минимум и расходится. Слишком низкая — сходится слишком медленно или застревает. Самый важный гиперпараметр.",
+    "en": {
+      "term": "Learning Rate",
+      "says": "How fast the AI learns",
+      "means": "A scalar that controls step size during gradient descent. Too high: overshoots the minimum and diverges. Too low: converges too slowly or gets stuck. The single most important hyperparameter."
+    }
   },
   {
-    "term": "LLM (Large Language Model)",
-    "says": "AI\" or \"the brain",
-    "means": "A transformer-based neural network trained to predict the next token in a sequence, with billions of parameters, trained on internet-scale text data"
+    "term": "LLM (большая языковая модель)",
+    "says": "ИИ» или «мозг",
+    "means": "Нейросеть на основе трансформера, обученная предсказывать следующий токен в последовательности, с миллиардами параметров, обученная на текстовых данных интернет-масштаба",
+    "en": {
+      "term": "LLM (Large Language Model)",
+      "says": "AI\" or \"the brain",
+      "means": "A transformer-based neural network trained to predict the next token in a sequence, with billions of parameters, trained on internet-scale text data"
+    }
   },
   {
-    "term": "LoRA (Low-Rank Adaptation)",
-    "says": "Efficient fine-tuning",
-    "means": "Instead of updating all weights, insert small low-rank matrices alongside the original weights. Only these small matrices are trained, reducing memory by 10-100x"
+    "term": "LoRA (низкоранговая адаптация)",
+    "says": "Эффективное дообучение",
+    "means": "Вместо обновления всех весов вставляются небольшие низкоранговые матрицы рядом с исходными весами. Обучаются только эти маленькие матрицы, что сокращает память в 10–100 раз",
+    "en": {
+      "term": "LoRA (Low-Rank Adaptation)",
+      "says": "Efficient fine-tuning",
+      "means": "Instead of updating all weights, insert small low-rank matrices alongside the original weights. Only these small matrices are trained, reducing memory by 10-100x"
+    }
   },
   {
-    "term": "Loss Function",
-    "says": "How wrong the AI is",
-    "means": "A function that measures the gap between predicted and actual output. Training minimizes this function. MSE for regression, cross-entropy for classification, contrastive loss for embeddings. The choice of loss function defines what \"good\" means to the model."
+    "term": "Loss Function (функция потерь)",
+    "says": "Насколько ИИ ошибается",
+    "means": "Функция, измеряющая разрыв между предсказанным и фактическим выходом. Обучение минимизирует её. MSE для регрессии, перекрёстная энтропия для классификации, контрастивная потеря для эмбеддингов. Выбор функции потерь определяет, что для модели значит «хорошо».",
+    "en": {
+      "term": "Loss Function",
+      "says": "How wrong the AI is",
+      "means": "A function that measures the gap between predicted and actual output. Training minimizes this function. MSE for regression, cross-entropy for classification, contrastive loss for embeddings. The choice of loss function defines what \"good\" means to the model."
+    }
   },
   {
-    "term": "Mixed Precision",
-    "says": "Training trick for speed",
-    "means": "Using float16 for forward pass and most operations (faster, less memory) but keeping float32 for gradient accumulation and weight updates (more precise). Gets 2x speedup with negligible accuracy loss."
+    "term": "Mixed Precision (смешанная точность)",
+    "says": "Трюк для ускорения обучения",
+    "means": "Использование float16 для прямого прохода и большинства операций (быстрее, меньше памяти), но сохранение float32 для накопления градиентов и обновления весов (точнее). Даёт ускорение в 2 раза при пренебрежимо малой потере точности.",
+    "en": {
+      "term": "Mixed Precision",
+      "says": "Training trick for speed",
+      "means": "Using float16 for forward pass and most operations (faster, less memory) but keeping float32 for gradient accumulation and weight updates (more precise). Gets 2x speedup with negligible accuracy loss."
+    }
   },
   {
-    "term": "MoE (Mixture of Experts)",
-    "says": "Only part of the model runs",
-    "means": "A model with many \"expert\" subnetworks where a routing mechanism sends each input to only a few experts. The full model is huge but each forward pass is cheap because most experts are skipped. Mixtral and GPT-4 use this."
+    "term": "MoE (смесь экспертов)",
+    "says": "Работает только часть модели",
+    "means": "Модель со множеством «экспертных» подсетей, где механизм маршрутизации отправляет каждый вход лишь к нескольким экспертам. Полная модель огромна, но каждый прямой проход дёшев, потому что большинство экспертов пропускается. Mixtral и GPT-4 используют это.",
+    "en": {
+      "term": "MoE (Mixture of Experts)",
+      "says": "Only part of the model runs",
+      "means": "A model with many \"expert\" subnetworks where a routing mechanism sends each input to only a few experts. The full model is huge but each forward pass is cheap because most experts are skipped. Mixtral and GPT-4 use this."
+    }
   },
   {
     "term": "MCP (Model Context Protocol)",
-    "says": "A way for AI to use tools",
-    "means": "An open protocol (JSON-RPC over stdio/HTTP) that standardizes how AI applications connect to external data sources and tools, with typed schemas for tools, resources, and prompts"
+    "says": "Способ для ИИ пользоваться инструментами",
+    "means": "Открытый протокол (JSON-RPC поверх stdio/HTTP), стандартизирующий, как ИИ-приложения подключаются к внешним источникам данных и инструментам, с типизированными схемами для инструментов, ресурсов и промптов",
+    "en": {
+      "term": "MCP (Model Context Protocol)",
+      "says": "A way for AI to use tools",
+      "means": "An open protocol (JSON-RPC over stdio/HTTP) that standardizes how AI applications connect to external data sources and tools, with typed schemas for tools, resources, and prompts"
+    }
   },
   {
-    "term": "NaN (Not a Number)",
-    "says": "Training crashed",
-    "means": "A floating-point value indicating undefined results (0/0, inf-inf). In training, NaN loss usually means: learning rate too high, exploding gradients, log of zero, or division by zero. Always the first thing to check when training fails."
+    "term": "NaN (не число)",
+    "says": "Обучение упало",
+    "means": "Значение с плавающей точкой, обозначающее неопределённый результат (0/0, inf-inf). При обучении NaN в потерях обычно означает: слишком высокую скорость обучения, взрыв градиентов, логарифм нуля или деление на ноль. Всегда первое, что стоит проверить, когда обучение ломается.",
+    "en": {
+      "term": "NaN (Not a Number)",
+      "says": "Training crashed",
+      "means": "A floating-point value indicating undefined results (0/0, inf-inf). In training, NaN loss usually means: learning rate too high, exploding gradients, log of zero, or division by zero. Always the first thing to check when training fails."
+    }
   },
   {
-    "term": "Normalization",
-    "says": "Scaling the data",
-    "means": "Adjusting values to a standard range. Batch normalization normalizes across a batch. Layer normalization normalizes across features. Both stabilize training and allow higher learning rates."
+    "term": "Normalization (нормализация)",
+    "says": "Масштабирование данных",
+    "means": "Приведение значений к стандартному диапазону. Batch normalization нормализует по батчу. Layer normalization нормализует по признакам. Обе стабилизируют обучение и позволяют использовать более высокие скорости обучения.",
+    "en": {
+      "term": "Normalization",
+      "says": "Scaling the data",
+      "means": "Adjusting values to a standard range. Batch normalization normalizes across a batch. Layer normalization normalizes across features. Both stabilize training and allow higher learning rates."
+    }
   },
   {
-    "term": "Overfitting",
-    "says": "The model memorized the data",
-    "means": "The model performs well on training data but poorly on unseen data. It learned the noise, not the signal. Fix with: more data, regularization (dropout, weight decay), early stopping, data augmentation, simpler model."
+    "term": "Overfitting (переобучение)",
+    "says": "Модель запомнила данные",
+    "means": "Модель хорошо работает на обучающих данных, но плохо на невиданных. Она выучила шум, а не сигнал. Лечится: больше данных, регуляризация (дропаут, затухание весов), ранняя остановка, аугментация данных, более простая модель.",
+    "en": {
+      "term": "Overfitting",
+      "says": "The model memorized the data",
+      "means": "The model performs well on training data but poorly on unseen data. It learned the noise, not the signal. Fix with: more data, regularization (dropout, weight decay), early stopping, data augmentation, simpler model."
+    }
   },
   {
-    "term": "Optimizer",
-    "says": "The thing that updates weights",
-    "means": "An algorithm that uses gradients to update model parameters. SGD is the simplest. Adam is the most common. Each optimizer has different properties: convergence speed, memory usage, sensitivity to hyperparameters."
+    "term": "Optimizer (оптимизатор)",
+    "says": "Штука, которая обновляет веса",
+    "means": "Алгоритм, использующий градиенты для обновления параметров модели. SGD — самый простой. Adam — самый распространённый. У каждого оптимизатора свои свойства: скорость сходимости, расход памяти, чувствительность к гиперпараметрам.",
+    "en": {
+      "term": "Optimizer",
+      "says": "The thing that updates weights",
+      "means": "An algorithm that uses gradients to update model parameters. SGD is the simplest. Adam is the most common. Each optimizer has different properties: convergence speed, memory usage, sensitivity to hyperparameters."
+    }
   },
   {
-    "term": "Parameter",
-    "says": "Model size",
-    "means": "A learnable value in the model, typically a weight or bias. \"7B parameters\" means 7 billion learnable numbers. Each float32 parameter takes 4 bytes, so 7B parameters = 28GB of memory just for the weights."
+    "term": "Parameter (параметр)",
+    "says": "Размер модели",
+    "means": "Обучаемое значение в модели, обычно вес или смещение. «7B параметров» означает 7 миллиардов обучаемых чисел. Каждый параметр float32 занимает 4 байта, так что 7B параметров = 28 ГБ памяти только на веса.",
+    "en": {
+      "term": "Parameter",
+      "says": "Model size",
+      "means": "A learnable value in the model, typically a weight or bias. \"7B parameters\" means 7 billion learnable numbers. Each float32 parameter takes 4 bytes, so 7B parameters = 28GB of memory just for the weights."
+    }
   },
   {
-    "term": "Perplexity",
-    "says": "How confused the model is",
-    "means": "The exponential of the average cross-entropy loss. Lower is better. A perplexity of 10 means the model is as uncertain as if it were choosing uniformly among 10 tokens at each step."
+    "term": "Perplexity (перплексия)",
+    "says": "Насколько модель растеряна",
+    "means": "Экспонента средней перекрёстной энтропии. Меньше — лучше. Перплексия 10 означает, что модель настолько же неуверена, как если бы выбирала равномерно из 10 токенов на каждом шаге.",
+    "en": {
+      "term": "Perplexity",
+      "says": "How confused the model is",
+      "means": "The exponential of the average cross-entropy loss. Lower is better. A perplexity of 10 means the model is as uncertain as if it were choosing uniformly among 10 tokens at each step."
+    }
   },
   {
-    "term": "Precision & Recall",
-    "says": "Accuracy metrics",
-    "means": "Precision = of items you flagged, how many were correct. Recall = of all correct items, how many did you find. They trade off: catching every spam email (high recall) means more false alarms (low precision). F1 score is their harmonic mean. Use precision when false positives are costly, recall when false negatives are costly."
+    "term": "Precision & Recall (точность и полнота)",
+    "says": "Метрики качества",
+    "means": "Precision (точность) = из помеченных объектов сколько оказались верными. Recall (полнота) = из всех верных объектов сколько вы нашли. Они компромиссны: поймать каждое спам-письмо (высокая полнота) значит больше ложных срабатываний (низкая точность). F1-мера — их среднее гармоническое. Точность важна, когда дороги ложноположительные, полнота — когда дороги ложноотрицательные.",
+    "en": {
+      "term": "Precision & Recall",
+      "says": "Accuracy metrics",
+      "means": "Precision = of items you flagged, how many were correct. Recall = of all correct items, how many did you find. They trade off: catching every spam email (high recall) means more false alarms (low precision). F1 score is their harmonic mean. Use precision when false positives are costly, recall when false negatives are costly."
+    }
   },
   {
-    "term": "Prompt Engineering",
-    "says": "Talking to AI the right way",
-    "means": "Designing the input text to reliably produce desired outputs -- including system prompts, few-shot examples, format instructions, and chain-of-thought triggers"
+    "term": "Prompt Engineering (проектирование промптов)",
+    "says": "Правильно разговаривать с ИИ",
+    "means": "Проектирование входного текста для надёжного получения нужных выходов — включая системные промпты, few-shot примеры, инструкции по формату и триггеры цепочки рассуждений",
+    "en": {
+      "term": "Prompt Engineering",
+      "says": "Talking to AI the right way",
+      "means": "Designing the input text to reliably produce desired outputs -- including system prompts, few-shot examples, format instructions, and chain-of-thought triggers"
+    }
   },
   {
-    "term": "Prompt Injection",
-    "says": "Hacking the AI with words",
-    "means": "An attack where malicious text in the input overrides the system prompt or instructions. Direct injection: user types \"Ignore previous instructions.\" Indirect injection: a retrieved document contains hidden instructions. The LLM equivalent of SQL injection. No complete solution exists -- defense is layers of input validation, output filtering, and privilege separation."
+    "term": "Prompt Injection (инъекция в промпт)",
+    "says": "Взлом ИИ словами",
+    "means": "Атака, при которой вредоносный текст во входе перекрывает системный промпт или инструкции. Прямая инъекция: пользователь пишет «Игнорируй предыдущие инструкции». Косвенная инъекция: извлечённый документ содержит скрытые инструкции. Аналог SQL-инъекции для LLM. Полного решения нет — защита это слои валидации входа, фильтрации выхода и разделения привилегий.",
+    "en": {
+      "term": "Prompt Injection",
+      "says": "Hacking the AI with words",
+      "means": "An attack where malicious text in the input overrides the system prompt or instructions. Direct injection: user types \"Ignore previous instructions.\" Indirect injection: a retrieved document contains hidden instructions. The LLM equivalent of SQL injection. No complete solution exists -- defense is layers of input validation, output filtering, and privilege separation."
+    }
   },
   {
-    "term": "QLoRA",
-    "says": "LoRA but cheaper",
-    "means": "Quantized LoRA. Keeps the frozen base model weights in 4-bit precision (NF4 format) while training LoRA adapters in 16-bit. Reduces memory by another 3-4x compared to standard LoRA. A 7B model that needs 14GB with LoRA fits in 4-6GB with QLoRA. Quality is within 1% of full fine-tuning on most benchmarks."
+    "term": "QLoRA (квантованная LoRA)",
+    "says": "LoRA, но дешевле",
+    "means": "Quantized LoRA. Держит замороженные веса базовой модели в 4-битной точности (формат NF4), обучая LoRA-адаптеры в 16 битах. Сокращает память ещё в 3–4 раза по сравнению с обычной LoRA. Модель 7B, которой нужно 14 ГБ с LoRA, помещается в 4–6 ГБ с QLoRA. Качество в пределах 1% от полного дообучения на большинстве бенчмарков.",
+    "en": {
+      "term": "QLoRA",
+      "says": "LoRA but cheaper",
+      "means": "Quantized LoRA. Keeps the frozen base model weights in 4-bit precision (NF4 format) while training LoRA adapters in 16-bit. Reduces memory by another 3-4x compared to standard LoRA. A 7B model that needs 14GB with LoRA fits in 4-6GB with QLoRA. Quality is within 1% of full fine-tuning on most benchmarks."
+    }
   },
   {
-    "term": "RAG (Retrieval-Augmented Generation)",
-    "says": "AI that can search",
-    "means": "A pattern where you retrieve relevant documents from a knowledge base (using embedding similarity), stuff them into the prompt, and let the LLM answer based on that context"
+    "term": "RAG (генерация с дополненным поиском)",
+    "says": "ИИ, который умеет искать",
+    "means": "Паттерн, при котором вы извлекаете релевантные документы из базы знаний (по сходству эмбеддингов), вставляете их в промпт и позволяете LLM ответить на основе этого контекста",
+    "en": {
+      "term": "RAG (Retrieval-Augmented Generation)",
+      "says": "AI that can search",
+      "means": "A pattern where you retrieve relevant documents from a knowledge base (using embedding similarity), stuff them into the prompt, and let the LLM answer based on that context"
+    }
   },
   {
-    "term": "RLHF (Reinforcement Learning from Human Feedback)",
-    "says": "How they make AI helpful",
-    "means": "A training pipeline: (1) collect human preferences on model outputs, (2) train a reward model on those preferences, (3) use PPO to optimize the LLM to produce higher-reward outputs"
+    "term": "RLHF (обучение с подкреплением на обратной связи от человека)",
+    "says": "Как делают ИИ полезным",
+    "means": "Пайплайн обучения: (1) собрать человеческие предпочтения по выходам модели, (2) обучить модель вознаграждения на этих предпочтениях, (3) использовать PPO, чтобы оптимизировать LLM выдавать выходы с более высоким вознаграждением",
+    "en": {
+      "term": "RLHF (Reinforcement Learning from Human Feedback)",
+      "says": "How they make AI helpful",
+      "means": "A training pipeline: (1) collect human preferences on model outputs, (2) train a reward model on those preferences, (3) use PPO to optimize the LLM to produce higher-reward outputs"
+    }
   },
   {
-    "term": "Quantization",
-    "says": "Making the model smaller",
-    "means": "Reducing the precision of model weights from float32 (4 bytes) to int8 (1 byte) or int4 (0.5 bytes). Trades a small amount of accuracy for 4-8x less memory and faster inference. GPTQ, AWQ, and GGUF are common formats."
+    "term": "Quantization (квантизация)",
+    "says": "Сделать модель меньше",
+    "means": "Снижение точности весов модели с float32 (4 байта) до int8 (1 байт) или int4 (0,5 байта). Меняет небольшую долю точности на 4–8-кратное снижение памяти и более быстрый инференс. GPTQ, AWQ и GGUF — распространённые форматы.",
+    "en": {
+      "term": "Quantization",
+      "says": "Making the model smaller",
+      "means": "Reducing the precision of model weights from float32 (4 bytes) to int8 (1 byte) or int4 (0.5 bytes). Trades a small amount of accuracy for 4-8x less memory and faster inference. GPTQ, AWQ, and GGUF are common formats."
+    }
   },
   {
-    "term": "ReLU",
-    "says": "Activation function",
-    "means": "Rectified Linear Unit: f(x) = max(0, x). The simplest non-linear activation. Fast to compute, doesn't saturate for positive values. Used everywhere because it works and is cheap. Variants: LeakyReLU, GELU, SiLU."
+    "term": "ReLU (ReLU)",
+    "says": "Функция активации",
+    "means": "Rectified Linear Unit: f(x) = max(0, x). Простейшая нелинейная активация. Быстро вычисляется, не насыщается для положительных значений. Используется повсюду, потому что работает и дёшева. Варианты: LeakyReLU, GELU, SiLU.",
+    "en": {
+      "term": "ReLU",
+      "says": "Activation function",
+      "means": "Rectified Linear Unit: f(x) = max(0, x). The simplest non-linear activation. Fast to compute, doesn't saturate for positive values. Used everywhere because it works and is cheap. Variants: LeakyReLU, GELU, SiLU."
+    }
   },
   {
-    "term": "ROUGE",
-    "says": "Summarization metric",
-    "means": "Recall-Oriented Understudy for Gisting Evaluation. Measures overlap between generated text and reference text. ROUGE-1 counts unigram matches, ROUGE-2 counts bigram matches, ROUGE-L finds the longest common subsequence. Cheap to compute but only measures surface similarity -- two sentences with the same meaning but different words score poorly."
+    "term": "ROUGE (ROUGE)",
+    "says": "Метрика для суммаризации",
+    "means": "Recall-Oriented Understudy for Gisting Evaluation. Измеряет пересечение между сгенерированным и эталонным текстом. ROUGE-1 считает совпадения униграмм, ROUGE-2 — биграмм, ROUGE-L находит наидлиннейшую общую подпоследовательность. Дёшево считается, но измеряет лишь поверхностное сходство — два предложения с одинаковым смыслом, но разными словами получают низкий балл.",
+    "en": {
+      "term": "ROUGE",
+      "says": "Summarization metric",
+      "means": "Recall-Oriented Understudy for Gisting Evaluation. Measures overlap between generated text and reference text. ROUGE-1 counts unigram matches, ROUGE-2 counts bigram matches, ROUGE-L finds the longest common subsequence. Cheap to compute but only measures surface similarity -- two sentences with the same meaning but different words score poorly."
+    }
   },
   {
-    "term": "Semantic Search",
-    "says": "Smart search that understands meaning",
-    "means": "Finding documents by meaning rather than keyword matching. Embed the query and all documents into the same vector space, then return documents whose embeddings are closest to the query embedding. \"payment failed\" finds \"transaction declined\" even though they share no words. Powered by embedding models + vector databases."
+    "term": "Semantic Search (семантический поиск)",
+    "says": "Умный поиск, понимающий смысл",
+    "means": "Поиск документов по смыслу, а не по совпадению ключевых слов. Эмбеддите запрос и все документы в одно векторное пространство, затем возвращаете документы, чьи эмбеддинги ближе всего к эмбеддингу запроса. «Платёж не прошёл» находит «транзакция отклонена», хотя у них нет общих слов. Работает на моделях эмбеддингов + векторных базах данных.",
+    "en": {
+      "term": "Semantic Search",
+      "says": "Smart search that understands meaning",
+      "means": "Finding documents by meaning rather than keyword matching. Embed the query and all documents into the same vector space, then return documents whose embeddings are closest to the query embedding. \"payment failed\" finds \"transaction declined\" even though they share no words. Powered by embedding models + vector databases."
+    }
   },
   {
-    "term": "Streaming",
-    "says": "Seeing the response appear word by word",
-    "means": "The LLM sends tokens as they are generated rather than waiting for the complete response. Uses Server-Sent Events (SSE) or WebSocket protocols. Reduces perceived latency from seconds to milliseconds for the first token. Essential for production chat interfaces. Each chunk contains a delta (partial token or word)."
+    "term": "Streaming (потоковая передача)",
+    "says": "Ответ появляется слово за словом",
+    "means": "LLM отправляет токены по мере их генерации, а не ждёт полного ответа. Использует Server-Sent Events (SSE) или WebSocket. Снижает воспринимаемую задержку до первого токена с секунд до миллисекунд. Необходимо для продакшен-чатов. Каждый фрагмент содержит дельту (частичный токен или слово).",
+    "en": {
+      "term": "Streaming",
+      "says": "Seeing the response appear word by word",
+      "means": "The LLM sends tokens as they are generated rather than waiting for the complete response. Uses Server-Sent Events (SSE) or WebSocket protocols. Reduces perceived latency from seconds to milliseconds for the first token. Essential for production chat interfaces. Each chunk contains a delta (partial token or word)."
+    }
   },
   {
-    "term": "Self-Attention",
-    "says": "How the model decides what to focus on",
-    "means": "Each token computes query, key, and value vectors. Attention weight between two tokens = dot product of their query and key, scaled and softmaxed. Output = weighted sum of value vectors. Lets every token see every other token."
+    "term": "Self-Attention (само-внимание)",
+    "says": "Как модель решает, на что смотреть",
+    "means": "Каждый токен вычисляет векторы query, key и value. Вес внимания между двумя токенами = скалярное произведение их query и key, масштабированное и прогнанное через softmax. Выход = взвешенная сумма векторов value. Позволяет каждому токену видеть каждый другой.",
+    "en": {
+      "term": "Self-Attention",
+      "says": "How the model decides what to focus on",
+      "means": "Each token computes query, key, and value vectors. Attention weight between two tokens = dot product of their query and key, scaled and softmaxed. Output = weighted sum of value vectors. Lets every token see every other token."
+    }
   },
   {
-    "term": "SFT (Supervised Fine-Tuning)",
-    "says": "Teaching the model to follow instructions",
-    "means": "Fine-tuning a pre-trained model on (instruction, response) pairs. The model learns to generate the response given the instruction. This is what turns a base model into a chat model."
+    "term": "SFT (обучение с учителем на инструкциях)",
+    "says": "Учим модель следовать инструкциям",
+    "means": "Дообучение предобученной модели на парах (инструкция, ответ). Модель учится генерировать ответ по инструкции. Именно это превращает базовую модель в чат-модель.",
+    "en": {
+      "term": "SFT (Supervised Fine-Tuning)",
+      "says": "Teaching the model to follow instructions",
+      "means": "Fine-tuning a pre-trained model on (instruction, response) pairs. The model learns to generate the response given the instruction. This is what turns a base model into a chat model."
+    }
   },
   {
-    "term": "Softmax",
-    "says": "Turns numbers into probabilities",
-    "means": "softmax(x_i) = exp(x_i) / sum(exp(x_j)). Transforms a vector of arbitrary real numbers into a probability distribution (all positive, sums to 1). Used in classification heads, attention weights, and anywhere you need probabilities."
+    "term": "Softmax (softmax)",
+    "says": "Превращает числа в вероятности",
+    "means": "softmax(x_i) = exp(x_i) / sum(exp(x_j)). Преобразует вектор произвольных вещественных чисел в вероятностное распределение (все положительные, сумма равна 1). Используется в головах классификации, весах внимания и везде, где нужны вероятности.",
+    "en": {
+      "term": "Softmax",
+      "says": "Turns numbers into probabilities",
+      "means": "softmax(x_i) = exp(x_i) / sum(exp(x_j)). Transforms a vector of arbitrary real numbers into a probability distribution (all positive, sums to 1). Used in classification heads, attention weights, and anywhere you need probabilities."
+    }
   },
   {
-    "term": "Swarm",
-    "says": "A bunch of AI agents working together like bees",
-    "means": "Multiple agents sharing state and coordinating through message passing, with emergent behavior arising from simple individual rules rather than central control"
+    "term": "Swarm (рой)",
+    "says": "Куча ИИ-агентов, работающих вместе как пчёлы",
+    "means": "Множество агентов, разделяющих состояние и координирующихся через обмен сообщениями, где сложное поведение возникает из простых индивидуальных правил, а не из центрального управления",
+    "en": {
+      "term": "Swarm",
+      "says": "A bunch of AI agents working together like bees",
+      "means": "Multiple agents sharing state and coordinating through message passing, with emergent behavior arising from simple individual rules rather than central control"
+    }
   },
   {
-    "term": "System Prompt",
-    "says": "The AI's instructions",
-    "means": "A special message at the start of a conversation that sets the model's behavior, persona, and constraints. Processed before user messages. Not visible to the user in most UIs. Defines what the model should and shouldn't do, its tone, format preferences, and domain focus. Different from user prompts -- system prompts are set by the developer."
+    "term": "System Prompt (системный промпт)",
+    "says": "Инструкции для ИИ",
+    "means": "Особое сообщение в начале диалога, задающее поведение модели, роль и ограничения. Обрабатывается до пользовательских сообщений. В большинстве интерфейсов пользователю не виден. Определяет, что модель должна и не должна делать, её тон, предпочтения по формату и предметную область. Отличается от пользовательских промптов — системные задаёт разработчик.",
+    "en": {
+      "term": "System Prompt",
+      "says": "The AI's instructions",
+      "means": "A special message at the start of a conversation that sets the model's behavior, persona, and constraints. Processed before user messages. Not visible to the user in most UIs. Defines what the model should and shouldn't do, its tone, format preferences, and domain focus. Different from user prompts -- system prompts are set by the developer."
+    }
   },
   {
-    "term": "Tensor",
-    "says": "A multi-dimensional array",
-    "means": "The fundamental data structure in deep learning frameworks. A 0D tensor is a scalar, 1D is a vector, 2D is a matrix, 3D+ is a tensor. In PyTorch and JAX, tensors track their computation history for automatic differentiation and can live on CPU or GPU. All neural network inputs, outputs, weights, and gradients are tensors."
+    "term": "Tensor (тензор)",
+    "says": "Многомерный массив",
+    "means": "Фундаментальная структура данных в фреймворках глубокого обучения. Тензор 0D — скаляр, 1D — вектор, 2D — матрица, 3D+ — тензор. В PyTorch и JAX тензоры отслеживают историю вычислений для автоматического дифференцирования и могут жить на CPU или GPU. Все входы, выходы, веса и градиенты нейросети — тензоры.",
+    "en": {
+      "term": "Tensor",
+      "says": "A multi-dimensional array",
+      "means": "The fundamental data structure in deep learning frameworks. A 0D tensor is a scalar, 1D is a vector, 2D is a matrix, 3D+ is a tensor. In PyTorch and JAX, tensors track their computation history for automatic differentiation and can live on CPU or GPU. All neural network inputs, outputs, weights, and gradients are tensors."
+    }
   },
   {
-    "term": "Token",
-    "says": "A word",
-    "means": "A subword unit (typically 3-4 characters in English) produced by a tokenizer like BPE. \"unbelievable\" might be 3 tokens: \"un\" + \"believ\" + \"able\""
+    "term": "Token (токен)",
+    "says": "Слово",
+    "means": "Подсловная единица (обычно 3–4 символа в английском), выдаваемая токенизатором вроде BPE. «unbelievable» может быть 3 токена: «un» + «believ» + «able»",
+    "en": {
+      "term": "Token",
+      "says": "A word",
+      "means": "A subword unit (typically 3-4 characters in English) produced by a tokenizer like BPE. \"unbelievable\" might be 3 tokens: \"un\" + \"believ\" + \"able\""
+    }
   },
   {
-    "term": "Temperature",
-    "says": "Creativity setting",
-    "means": "A scalar that divides logits before softmax. Temperature=1 is default. Higher = flatter distribution = more random outputs. Lower = sharper distribution = more deterministic. Temperature=0 is argmax (always pick the most likely token)."
+    "term": "Temperature (температура)",
+    "says": "Настройка креативности",
+    "means": "Скаляр, делящий логиты перед softmax. Температура=1 по умолчанию. Выше — более плоское распределение — более случайные выходы. Ниже — более острое распределение — более детерминированные. Температура=0 это argmax (всегда самый вероятный токен).",
+    "en": {
+      "term": "Temperature",
+      "says": "Creativity setting",
+      "means": "A scalar that divides logits before softmax. Temperature=1 is default. Higher = flatter distribution = more random outputs. Lower = sharper distribution = more deterministic. Temperature=0 is argmax (always pick the most likely token)."
+    }
   },
   {
-    "term": "Transfer Learning",
-    "says": "Using a pre-trained model",
-    "means": "Taking a model trained on one task and adapting it to a different task. The early layers learn general features (edges, syntax patterns) that transfer. Only the later layers need task-specific training. This is why you can fine-tune BERT for any NLP task."
+    "term": "Transfer Learning (перенос обучения)",
+    "says": "Использовать предобученную модель",
+    "means": "Взять модель, обученную на одной задаче, и адаптировать её к другой. Ранние слои учат общие признаки (границы, синтаксические паттерны), которые переносятся. Специфичного обучения требуют только поздние слои. Именно поэтому вы можете дообучить BERT под любую NLP-задачу.",
+    "en": {
+      "term": "Transfer Learning",
+      "says": "Using a pre-trained model",
+      "means": "Taking a model trained on one task and adapting it to a different task. The early layers learn general features (edges, syntax patterns) that transfer. Only the later layers need task-specific training. This is why you can fine-tune BERT for any NLP task."
+    }
   },
   {
-    "term": "Transformer",
-    "says": "The architecture behind modern AI",
-    "means": "A neural network architecture that processes sequences using self-attention (letting every position attend to every other position) instead of recurrence, enabling massive parallelization"
+    "term": "Transformer (трансформер)",
+    "says": "Архитектура за современным ИИ",
+    "means": "Архитектура нейросети, обрабатывающая последовательности с помощью само-внимания (позволяя каждой позиции обращаться к любой другой) вместо рекуррентности, что даёт массовую параллелизацию",
+    "en": {
+      "term": "Transformer",
+      "says": "The architecture behind modern AI",
+      "means": "A neural network architecture that processes sequences using self-attention (letting every position attend to every other position) instead of recurrence, enabling massive parallelization"
+    }
   },
   {
-    "term": "Underfitting",
-    "says": "The model isn't learning",
-    "means": "The model is too simple to capture the patterns in the data. Training loss stays high. Fix with: more parameters, more layers, longer training, lower regularization, better features."
+    "term": "Underfitting (недообучение)",
+    "says": "Модель не учится",
+    "means": "Модель слишком проста, чтобы уловить паттерны в данных. Потери на обучении остаются высокими. Лечится: больше параметров, больше слоёв, дольше обучение, меньше регуляризации, лучше признаки.",
+    "en": {
+      "term": "Underfitting",
+      "says": "The model isn't learning",
+      "means": "The model is too simple to capture the patterns in the data. Training loss stays high. Fix with: more parameters, more layers, longer training, lower regularization, better features."
+    }
   },
   {
-    "term": "VAE (Variational Autoencoder)",
-    "says": "A generative model",
-    "means": "An autoencoder that learns a smooth latent space by forcing the encoder output to follow a Gaussian distribution. You can sample from this distribution and decode to generate new data. The reparameterization trick makes it trainable via backpropagation."
+    "term": "VAE (вариационный автоэнкодер)",
+    "says": "Генеративная модель",
+    "means": "Автоэнкодер, который учит гладкое латентное пространство, заставляя выход энкодера следовать гауссовскому распределению. Из этого распределения можно сэмплировать и декодировать, чтобы генерировать новые данные. Трюк репараметризации делает его обучаемым через обратное распространение.",
+    "en": {
+      "term": "VAE (Variational Autoencoder)",
+      "says": "A generative model",
+      "means": "An autoencoder that learns a smooth latent space by forcing the encoder output to follow a Gaussian distribution. You can sample from this distribution and decode to generate new data. The reparameterization trick makes it trainable via backpropagation."
+    }
   },
   {
-    "term": "Vector Database",
-    "says": "A special database for AI",
-    "means": "A database optimized for storing vectors (dense arrays of floats) and performing fast approximate nearest-neighbor search. The core operation in similarity search, RAG, and recommendation systems."
+    "term": "Vector Database (векторная база данных)",
+    "says": "Особая база данных для ИИ",
+    "means": "База данных, оптимизированная для хранения векторов (плотных массивов чисел) и быстрого приближённого поиска ближайших соседей. Ключевая операция в поиске по сходству, RAG и рекомендательных системах.",
+    "en": {
+      "term": "Vector Database",
+      "says": "A special database for AI",
+      "means": "A database optimized for storing vectors (dense arrays of floats) and performing fast approximate nearest-neighbor search. The core operation in similarity search, RAG, and recommendation systems."
+    }
   },
   {
-    "term": "Weight",
-    "says": "What the model learned",
-    "means": "A single number in a model's parameter matrix. A linear layer with input size 768 and output size 3072 has 768*3072 = 2,359,296 weights. Training adjusts each weight to minimize the loss function."
+    "term": "Weight (вес)",
+    "says": "То, что модель выучила",
+    "means": "Одно число в матрице параметров модели. Линейный слой с входом 768 и выходом 3072 имеет 768*3072 = 2 359 296 весов. Обучение корректирует каждый вес, чтобы минимизировать функцию потерь.",
+    "en": {
+      "term": "Weight",
+      "says": "What the model learned",
+      "means": "A single number in a model's parameter matrix. A linear layer with input size 768 and output size 3072 has 768*3072 = 2,359,296 weights. Training adjusts each weight to minimize the loss function."
+    }
   },
   {
-    "term": "Weight Decay",
-    "says": "Regularization",
-    "means": "Adding a penalty proportional to the magnitude of weights to the loss function. Equivalent to L2 regularization. Prevents weights from growing too large. Typical value: 0.01-0.1."
+    "term": "Weight Decay (затухание весов)",
+    "says": "Регуляризация",
+    "means": "Добавление к функции потерь штрафа, пропорционального величине весов. Эквивалентно L2-регуляризации. Не даёт весам расти слишком большими. Типичное значение: 0,01–0,1.",
+    "en": {
+      "term": "Weight Decay",
+      "says": "Regularization",
+      "means": "Adding a penalty proportional to the magnitude of weights to the loss function. Equivalent to L2 regularization. Prevents weights from growing too large. Typical value: 0.01-0.1."
+    }
   },
   {
-    "term": "Zero-Shot",
-    "says": "No training needed",
-    "means": "Using a model on a task it wasn't explicitly trained for, with no task-specific examples in the prompt. The model generalizes from pre-training. Works because large models have seen enough variety to handle new task formats."
+    "term": "Zero-Shot (zero-shot, без примеров)",
+    "says": "Обучение не нужно",
+    "means": "Использование модели на задаче, для которой её явно не обучали, без специфичных для задачи примеров в промпте. Модель обобщает из предобучения. Работает, потому что большие модели видели достаточно разнообразия, чтобы справляться с новыми форматами задач.",
+    "en": {
+      "term": "Zero-Shot",
+      "says": "No training needed",
+      "means": "Using a model on a task it wasn't explicitly trained for, with no task-specific examples in the prompt. The model generalizes from pre-training. Works because large models have seen enough variety to handle new task formats."
+    }
   }
 ];
