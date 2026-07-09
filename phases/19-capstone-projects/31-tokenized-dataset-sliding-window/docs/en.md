@@ -96,3 +96,8 @@ It does not handle multiple documents. The corpus is treated as one continuous i
 `main.py` defines two classes and one helper. `SlidingWindowDataset` is the PyTorch Dataset. `make_dataloader` returns a configured DataLoader with a seeded generator. `_encode_corpus_to_ids` is the one-shot tokenizer call. The demo at the bottom builds a small tokenizer in-process, encodes a built-in corpus, constructs the dataset and dataloader, prints one batch, and asserts the shape contract. The tests in `code/tests/test_dataset.py` pin the window count formula, the shift-by-one property, the deterministic shuffle, and the stride trade-off.
 
 Run the demo. Then change the context length from 16 to 32 and watch how the number of examples per epoch falls. That number is your steps-per-epoch budget.
+
+## Further Reading
+
+- Phase 10 Lesson 04 — pre-training mini-GPT, the loop this dataset feeds.
+- Phase 19 Lesson 30 — the tokenizer, Lesson 32 — the embeddings.

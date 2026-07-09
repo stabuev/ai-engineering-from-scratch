@@ -110,3 +110,8 @@ The queue is finite. When it is empty the orchestrator can either widen the seed
 ## Where this slots in
 
 Lesson fifty produces the queue. Lesson fifty-one takes the head of the queue and runs a literature search to confirm or refute it. Lesson fifty-two takes the same head and runs an actual experiment. Lesson fifty-three reads both outputs and writes a verdict. The four lessons compose into a research loop with no human in it; a human can step in at any boundary.
+
+## Further Reading
+
+- Phase 11 Lesson 05 — context engineering behind the seed prompt.
+- Phase 19 Lessons 51-57 — the retrieval, experiment, evaluation, and orchestration stages of the research loop.

@@ -10,11 +10,11 @@
         "Не влияет на output"
       ],
       "correct": 1,
-      "explanation": "Temperature < 1.0 делит logits на число меньше 1, что усиливает различия между logits. После softmax токен с наибольшей вероятностью получает ещё большую долю. При temperature, стремящейся к 0, получается greedy (argmax) decoding."
+      "explanation": "Temperature < 1.0 делит logits на число меньше 1, что усиливает различия между logits. После softmax токен с наибольшей вероятностью получает еще большую долю. При temperature, стремящейся к 0, получается greedy (argmax) decoding."
     },
     {
       "stage": "pre",
-      "question": "В чём ключевое отличие top-k и top-p (nucleus) sampling?",
+      "question": "В чем ключевое отличие top-k и top-p (nucleus) sampling?",
       "options": [
         "Top-k быстрее, чем top-p",
         "Top-k оставляет фиксированное число токенов; top-p оставляет переменное число на основе cumulative probability",
@@ -29,7 +29,7 @@
       "question": "Почему нельзя выполнять backpropagation через стандартную операцию sampling z ~ N(mu, sigma^2)?",
       "options": [
         "Normal distributions не имеют градиентов",
-        "Операция sampling недетерминирована и не имеет хорошо определённой производной по mu и sigma",
+        "Операция sampling недетерминирована и не имеет хорошо определенной производной по mu и sigma",
         "PyTorch не поддерживает normal distributions",
         "Градиент всегда точно равен нулю"
       ],
@@ -52,13 +52,13 @@
       "stage": "post",
       "question": "Что происходит с acceptance rate в rejection sampling при росте размерности target distribution?",
       "options": [
-        "Она остаётся постоянной независимо от размерности",
-        "Она растёт, потому что появляется больше измерений для принятия",
-        "Она падает экспоненциально, потому что большая часть объёма proposal отвергается",
+        "Она остается постоянной независимо от размерности",
+        "Она растет, потому что появляется больше измерений для принятия",
+        "Она падает экспоненциально, потому что большая часть объема proposal отвергается",
         "Она стремится к 50% во всех случаях"
       ],
       "correct": 2,
-      "explanation": "В высоких размерностях объём proposal distribution, пересекающийся с target distribution, убывает экспоненциально. Граница M растёт, и acceptance rate (1/M) падает экспоненциально. Это curse of dimensionality для rejection sampling."
+      "explanation": "В высоких размерностях объем proposal distribution, пересекающийся с target distribution, убывает экспоненциально. Граница M растет, и acceptance rate (1/M) падает экспоненциально. Это curse of dimensionality для rejection sampling."
     }
   ]
 }

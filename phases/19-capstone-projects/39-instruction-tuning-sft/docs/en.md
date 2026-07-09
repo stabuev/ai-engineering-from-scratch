@@ -145,3 +145,9 @@ Without the mask, the loss treats instruction tokens as targets. The model learn
 - Add a chat template with multi-turn formatting and train on a fixture that includes follow-ups.
 
 The implementation gives you the format contract, the mask, and the loop. The objective change from base model to instruction follower is one collate function.
+
+## Further Reading
+
+- Ouyang et al., [Training language models to follow instructions (InstructGPT, arXiv 2203.02155)](https://arxiv.org/abs/2203.02155).
+- Phase 11 — LLM engineering.
+- Phase 19 Lesson 40 — DPO, the preference-tuning step after SFT.

@@ -117,3 +117,8 @@ The evaluator reads `metrics` and `terminal` first. If terminal is anything othe
 ## Where this slots in
 
 Lesson fifty generates the hypothesis. Lesson fifty-one filters out anything the literature already settled. Lesson fifty-two runs the experiment for what is left. Lesson fifty-three reads the result, runs the significance test, and writes the verdict the orchestrator stores against the hypothesis id.
+
+## Further Reading
+
+- Phase 15 — autonomous systems and sandboxed execution.
+- Phase 19 Lesson 50 — the hypothesis queue, Lesson 53 — the evaluator that reads these results.

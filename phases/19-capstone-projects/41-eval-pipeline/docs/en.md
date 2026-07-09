@@ -153,3 +153,9 @@ The JSON dump uses stable keys so a CI dashboard can plot trend lines across ver
 - Add per-task weight learning: instead of fixed weights, fit weights to a target preference order over models.
 
 The implementation gives you the four evals, the aggregator, and the report. Real evaluation pipelines layer many more dimensions on top; the pattern stays the same: one function per eval, one aggregator, one report.
+
+## Further Reading
+
+- Phase 11 Lesson 10 — evaluation and testing.
+- Phase 5 Lesson 27 — LLM evaluation frameworks (RAGAS, DeepEval, G-Eval).
+- Phase 19 Lesson 40 — the DPO model this pipeline scores.

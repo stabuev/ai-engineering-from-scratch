@@ -108,3 +108,9 @@ It does not implement KV cache for inference. Caching keys and values across for
 `main.py` defines `MultiHeadSelfAttention`. The class holds two linear layers and a registered mask buffer. The forward pass projects, reshapes, scores, masks, softmaxes, weights, reshapes, and projects again. The demo at the bottom builds a small model that wraps the attention with token and positional embeddings and an LM head, trains it on a copy task for three epochs, and prints the loss curve and a per-head attention heatmap. The tests in `code/tests/test_attention.py` pin the shape contract, the causality property, the softmax property, the head-split property, and the gradient flow.
 
 Run the demo. Then increase `n_heads` from 4 to 8 (keeping `d_model=32`, so `d_head=4`) and watch the heatmap change.
+
+## Further Reading
+
+- Vaswani et al., [Attention Is All You Need (arXiv 1706.03762)](https://arxiv.org/abs/1706.03762) — scaled dot-product and multi-head attention.
+- Phase 7 Lesson 02 — self-attention from scratch.
+- Phase 19 Lesson 34 — the transformer block that wraps this attention.

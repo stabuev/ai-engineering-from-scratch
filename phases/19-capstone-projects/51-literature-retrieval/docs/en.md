@@ -111,3 +111,8 @@ The retrieval client returns a `RetrievalResult` with both the ranked list and t
 ## Where this slots in
 
 Lesson fifty produces a hypothesis. Lesson fifty-one searches the literature to see whether that hypothesis is already settled. Lesson fifty-two runs the experiment if it is not. Lesson fifty-three reads both the retrieval result and the experiment metrics to write the verdict. The retrieval client is the cheapest of the four stages and runs first in the orchestrator.
+
+## Further Reading
+
+- Robertson, Walker et al., "Okapi at TREC-3" — the original BM25 formulation.
+- Phase 19 Lesson 65 — hybrid BM25 + dense retrieval, Lessons 50 and 52 — the generator and runner around this stage.

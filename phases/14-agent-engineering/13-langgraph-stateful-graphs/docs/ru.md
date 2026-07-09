@@ -1,6 +1,6 @@
 # LangGraph: графы с состоянием и надежное выполнение
 
-> LangGraph — эталон 2026 года для low-level stateful orchestration. Agent — это state machine; nodes — functions; edges — transitions; state immutable, а checkpoint создаётся после каждого step. Resume после любого failure происходит ровно с того места, где остановились.
+> LangGraph — эталон 2026 года для low-level stateful orchestration. Agent — это state machine; nodes — functions; edges — transitions; state immutable, а checkpoint создается после каждого step. Resume после любого failure происходит ровно с того места, где остановились.
 
 **Тип:** Изучение + практика
 **Языки:** Python (stdlib)
@@ -37,11 +37,11 @@ Graph определяется через:
 
 После возврата каждого node runtime сериализует state и записывает его в checkpointer (SQLite, Postgres, Redis, custom). При failure на step N runtime может сделать `resume(session_id)` и продолжить с step N+1 с точным state.
 
-Документация LangGraph явно выделяет production users, для которых это важно: Klarna, Uber, J.P. Morgan. Утверждение не в форме graph само по себе; оно в том, что graph shape плюс checkpointing делают recovery дешёвым.
+Документация LangGraph явно выделяет production users, для которых это важно: Klarna, Uber, J.P. Morgan. Утверждение не в форме graph само по себе; оно в том, что graph shape плюс checkpointing делают recovery дешевым.
 
 ### Streaming
 
-Каждый node может yield partial output. Graph передаёт вызывающему коду stream событий per-node-delta, чтобы UIs обновлялись во время выполнения graph.
+Каждый node может yield partial output. Graph передает вызывающему коду stream событий per-node-delta, чтобы UIs обновлялись во время выполнения graph.
 
 ### Human-in-the-loop
 

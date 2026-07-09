@@ -7,6 +7,13 @@
 **Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
 **Time:** ~90 min
 
+## Learning Objectives
+
+- Represent a constitution as a declarative YAML file of named rules with predicates, severities, and explanations.
+- Compose atomic predicates with all_of, any_of, and not_.
+- Gate rules with applies_when so an inapplicable rule is recorded as not_applicable rather than a violation.
+- Apply a deterministic fixer and emit a structured draft-to-revised diff.
+
 ## Problem
 
 Classifiers cover the recognizable failures. Rules engines cover the contractual ones. A team writing a coding assistant wants a constraint like "every response that contains code must end in either a runnable block or a stated assumption." A team running a customer support bot wants "every refusal must offer a next step." These constraints are not natural classifier targets. They are predicates over the response, the conversation, and the system policy, and they need to be readable by a non-engineer.

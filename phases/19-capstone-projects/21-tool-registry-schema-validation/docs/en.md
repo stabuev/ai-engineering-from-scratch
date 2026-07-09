@@ -97,3 +97,9 @@ flowchart TD
 The two extensions you will want once this lesson lands are `$ref` resolution against a local definitions block, and `additionalProperties: false` for strict shape. Both are small. Both are common to add as the tool catalog grows past fifty tools. We left them out of the lesson to keep the file under one read.
 
 The next lesson (twenty-two) builds the JSON-RPC stdio transport that surfaces this registry to a model client. The lesson after (twenty-three) wraps both behind a dispatcher with timeouts and retries.
+
+## Further Reading
+
+- [JSON Schema 2020-12](https://json-schema.org/) — the validation spec this lesson subsets.
+- Phase 13 Lesson 05 — tool schema design.
+- Phase 19 Lesson 23 — the dispatcher that trusts this registry.

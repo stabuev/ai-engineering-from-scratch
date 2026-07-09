@@ -106,3 +106,9 @@ Read `main.py` top to bottom. Then read `code/tests/test_loop.py`. The tests pin
 The hardest part of building a harness in production is not the state machine. It is making the contract enforceable. The contract has to survive a hot reload of the planner. It has to survive a tool that returns malformed JSON. It has to survive a hook that raises in `before_tool_call` two-thirds of the way through a forty-turn session. The tests in this lesson exercise those failure modes. Run them. Break them. Add cases.
 
 The next lesson adds the tool registry. After that, the JSON-RPC transport. After that, the dispatcher. By lesson twenty-four, the loop in this file will be running a real plan against real tools with real budgets enforced.
+
+## Further Reading
+
+- Phase 14 Lesson 01 — the agent loop this contract formalises.
+- Phase 13 Lessons 01-07 — the tool interface and MCP the loop plugs into.
+- Phase 19 Lessons 21-24 — the registry, transport, dispatcher, and plan-execute that fill the contract.

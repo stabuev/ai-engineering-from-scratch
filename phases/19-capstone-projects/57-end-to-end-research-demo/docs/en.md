@@ -104,3 +104,8 @@ The paper writer in lesson fifty-four operates on the full `Paper` shape with fi
 Three extensions worth wiring once the demo is green. First, persistent state: each stage's result writes to a small JSON store so a restart can resume without re-running the cheap stages. Second, a dashboard: the trace events from the scheduler and critic loop render as a single timeline. Third, real model calls: swap the mocked prose generator and the deterministic critic for model-driven ones; the wiring does not change.
 
 The demo's job is to prove that composition is the architecture. Five lessons, four imports, one report. The next time you add a stage, the wiring grows by exactly one line.
+
+## Further Reading
+
+- Phase 14 — agent engineering and workflow composition.
+- Phase 19 Lessons 50-56 — the five stages this demo imports and wires together.

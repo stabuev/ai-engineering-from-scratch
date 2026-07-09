@@ -1,24 +1,43 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="ru" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Разработка ИИ с нуля</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
-  <meta name="description" content="502 lessons. 20 phases. Build the math, the model, the trainer, the tokenizer, and the agent loop. Once, by hand.">
-  <meta property="og:title" content="AI Engineering from Scratch">
-  <meta property="og:description" content="502 lessons. 20 phases. Write the backprop, the tokenizer, the attention mechanism, and the agent loop by hand before any framework gets imported. Python-first, with TypeScript, Rust and Julia in selected lessons.">
+  <meta name="description" content="502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — все вручную, из чистой математики, до импорта фреймворков. Python, плюс TypeScript, Rust и Julia в отдельных уроках.">
+  <link rel="canonical" href="https://datascience.xyz/courses/aicourse/">
+  <link rel="alternate" hreflang="ru" href="https://datascience.xyz/courses/aicourse/">
+  <link rel="alternate" hreflang="en" href="https://datascience.xyz/courses/aicourse/en/">
+  <link rel="alternate" hreflang="x-default" href="https://datascience.xyz/courses/aicourse/">
+  <meta property="og:title" content="Разработка ИИ с нуля">
+  <meta property="og:description" content="502 урока в 20 фазах. Backpropagation, токенизатор, attention и agent loop — все вручную, из чистой математики, до импорта фреймворков.">
   <meta property="og:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
   <meta property="og:url" content="https://datascience.xyz/courses/aicourse/">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Разработка ИИ с нуля">
-  <meta name="twitter:description" content="502 lessons. 20 phases. Write the backprop, the tokenizer, the attention mechanism, and the agent loop by hand.">
+  <meta name="twitter:description" content="502 урока в 20 фазах. Стройте из чистой математики, вручную.">
   <meta name="twitter:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "Разработка ИИ с нуля",
+    "description": "502 урока в 20 фазах: математика, модель, тренер, токенизатор и agent loop — все вручную, до импорта фреймворков.",
+    "url": "https://datascience.xyz/courses/aicourse/",
+    "inLanguage": "ru",
+    "isAccessibleForFree": true,
+    "learningResourceType": "Course",
+    "teaches": "AI engineering, deep learning, трансформеры, LLM, агенты, RAG",
+    "provider": { "@type": "Organization", "name": "datascience.xyz", "url": "https://datascience.xyz/" }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260616a">
+  <link rel="stylesheet" href="style.css?v=20260709a">
 
 
 <!-- Yandex.Metrika counter -->
@@ -549,14 +568,15 @@
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo">
-        <span class="logo-icon" aria-hidden="true"></span> AI / С НУЛЯ
+        <span class="logo-icon" aria-hidden="true"></span> <span data-i18n="logoSuffix">AI / С НУЛЯ</span>
       </a>
       <nav class="header-nav">
-        <a href="#contents">Содержание</a>
-        <a href="catalog.html">Каталог</a>
-        <a href="prereqs.html">Дорожная карта</a>
-        <a href="glossary.html">Глоссарий</a>
+        <a href="#contents" data-nav="contents">Содержание</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="prereqs.html" data-nav="roadmap">Дорожная карта</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
       </nav>
+      <button class="theme-toggle lang-toggle" id="langToggle" type="button" title="Язык / Language">RU</button>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
         <span class="theme-icon" id="themeIcon">N</span>
       </button>
@@ -567,21 +587,21 @@
 
     <section class="manual-masthead container">
       <div class="manual-meta-row">
-        <span>FIG_000 &middot; учебная программа v1.0 · 2026</span>
+        <span data-i18n="figLabel">FIG_000 &middot; учебная программа v1.0 · 2026</span>
         <span class="right">open source · MIT</span>
       </div>
-      <h1 class="manual-title">Разработка ИИ<br>с нуля</h1>
-      <p class="manual-tagline reveal">502 уроков. 20 фаз (разделов). Каждый алгоритм создается на основе базовых математических принципов, прежде чем импортируется какой-либо фреймворк.</p>
-      <p class="manual-attribution reveal" style="--stagger-delay: 80ms;">Разработано Рохитом Гумаре и другими участниками. Запускайте на своем компьютере.</p>
+      <h1 class="manual-title" data-i18n-html="mastheadTitle">Разработка ИИ<br>с нуля</h1>
+      <p class="manual-tagline reveal" data-i18n="tagline">502 урока. 20 фаз (разделов). Каждый алгоритм создается на основе базовых математических принципов, прежде чем импортируется какой-либо фреймворк.</p>
+      <p class="manual-attribution reveal" style="--stagger-delay: 80ms;" data-i18n="attribution">Разработано Рохитом Гумаре и другими участниками. Запускайте на своем компьютере.</p>
       <div class="ascii-rule" style="margin-top:48px;"></div>
     </section>
 
     <section class="preface container">
       <div class="preface-grid">
-        <div class="preface-eyebrow reveal reveal--left">How this works</div>
-        <div class="preface-body reveal" style="--stagger-delay: 120ms;">
+        <div class="preface-eyebrow reveal reveal--left" data-i18n="prefaceEyebrow">Как это устроено</div>
+        <div class="preface-body reveal" style="--stagger-delay: 120ms;" data-i18n-html="prefaceBody">
           <p>Большинство материалов по искусственному интеллекту представляют собой разрозненные фрагменты. Здесь — статья, там — пост о тонкой настройке, где-то — яркая демонстрация работы агента. Фрагменты редко складываются в общую картину. Вы выпускаете чат-бота, но не можете объяснить его кривую потерь. Вы подключаете функцию к агенту, но не можете сказать, как работает механизм внимания в модели, которая ее вызывает.</p>
-          <p>Эта учебная программа — основа основ. 20 этапов, 502 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia. С одной стороны — линейная алгебра, с другой — автономные роевые системы. Каждый алгоритм сначала строится на основе базовых математических принципов. Обратное распространение. Токенизатор. Внимание. Цикл агента. К тому времени, когда появляется PyTorch, вы уже знаете, как он работает.</p>
+          <p>Эта учебная программа — основа основ. 20 этапов, 502 урока. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia. С одной стороны — линейная алгебра, с другой — автономные роевые системы. Каждый алгоритм сначала строится на основе базовых математических принципов. Обратное распространение. Токенизатор. Внимание. Цикл агента. К тому времени, когда появляется PyTorch, вы уже знаете, как он работает.</p>
           <p>Каждый урок проходит по одному и тому же сценарию: прочитайте задачу, посчитайте, напишите код, запустите тест, сохраните результат. Никаких пятиминутных видео, копирования и вставки, никаких подсказок. Бесплатно, с открытым исходным кодом и для запуска на вашем ноутбуке.</p>
         </div>
       </div>
@@ -589,25 +609,25 @@
 
 
     <section class="stat-block container">
-      <div class="stat-block-title reveal reveal--left">Текущий прогресс</div>
+      <div class="stat-block-title reveal reveal--left" data-i18n="statProgress">Текущий прогресс</div>
       <div class="stat-rows reveal" style="--stagger-delay: 100ms;" id="statRows">
         <div class="stat-row">
-          <span class="stat-row-label">Готовых уроков</span>
+          <span class="stat-row-label" data-i18n="statLessonsReady">Готовых уроков</span>
           <span class="stat-row-bar" data-bar="complete" style="--bar-pct:0%;" aria-hidden="true">bar</span>
           <span class="stat-row-value" data-stat="complete-frac">0 / 0</span>
         </div>
         <div class="stat-row">
-          <span class="stat-row-label">Разделов</span>
+          <span class="stat-row-label" data-i18n="statPhases">Разделов</span>
           <span class="stat-row-bar" data-bar="phases" style="--bar-pct:0%;" aria-hidden="true">bar</span>
           <span class="stat-row-value" data-stat="phases-frac">0 / 0</span>
         </div>
         <div class="stat-row">
-          <span class="stat-row-label">Языков</span>
+          <span class="stat-row-label" data-i18n="statLanguages">Языков</span>
           <span class="stat-row-bar" data-bar="languages" style="--bar-pct:100%;" aria-hidden="true">bar</span>
           <span class="stat-row-value">4</span>
         </div>
         <div class="stat-row">
-          <span class="stat-row-label">Терминов в глосарии</span>
+          <span class="stat-row-label" data-i18n="statGlossary">Терминов в глоссарии</span>
           <span class="stat-row-bar" data-bar="glossary" style="--bar-pct:100%;" aria-hidden="true">bar</span>
           <span class="stat-row-value" data-stat="glossary-count">···</span>
         </div>
@@ -615,13 +635,13 @@
     </section>
 
     <section class="toc container" id="contents">
-      <div class="toc-title reveal reveal--left">Учебная программа · 20 разделов · 502 уроков</div>
-      <div class="toc-subtitle reveal" style="--stagger-delay: 80ms;">Нажмите на этап, чтобы открыть его уроки. Каждый из них будет готов, когда будут написаны все математические задачи, код и тесты.</div>
+      <div class="toc-title reveal reveal--left" data-i18n="tocTitle">Учебная программа · 20 разделов · 502 урока</div>
+      <div class="toc-subtitle reveal" style="--stagger-delay: 80ms;" data-i18n="tocSubtitle">Нажмите на этап, чтобы открыть его уроки. Каждый из них будет готов, когда будут написаны все математические задачи, код и тесты.</div>
       <div class="toc-list" id="phasesGrid"></div>
       <div class="legend">
-        <span class="legend-item"><span class="toc-status complete"></span> Готово</span>
-        <span class="legend-item"><span class="toc-status in-progress"></span> В прогрессе</span>
-        <span class="legend-item"><span class="toc-status planned"></span> Запланировано</span>
+        <span class="legend-item"><span class="toc-status complete"></span> <span data-i18n="legendDone">Готово</span></span>
+        <span class="legend-item"><span class="toc-status in-progress"></span> <span data-i18n="legendProgress">В процессе</span></span>
+        <span class="legend-item"><span class="toc-status planned"></span> <span data-i18n="legendPlanned">Запланировано</span></span>
       </div>
     </section>
 
@@ -637,17 +657,17 @@
         </div>
         <div class="modal-lessons" id="modalLessons"></div>
         <div class="modal-footer">
-          <span class="modal-footer-note">Прогресс сохраняется только в браузере</span>
-          <button class="modal-reset" id="modalReset" type="button">Сбросить прогресс</button>
+          <span class="modal-footer-note" data-i18n="modalFooterNote">Прогресс сохраняется только в браузере</span>
+          <button class="modal-reset" id="modalReset" type="button" data-i18n="modalReset">Сбросить прогресс</button>
         </div>
       </div>
     </div>
 
     <section class="colophon container">
       <div class="colophon-grid">
-        <div class="colophon-eyebrow reveal reveal--left">Колофон</div>
+        <div class="colophon-eyebrow reveal reveal--left" data-i18n="colophonEyebrow">Колофон</div>
         <div class="reveal" style="--stagger-delay: 80ms;">
-          <p>Весь учебный план доступен на GitHub. Клонируйте его, создавайте форки, учитесь в удобном для вас темпе. Никаких платных подписок, никакой регистрации. К каждому уроку прилагается исполняемый код на Python, TypeScript, Rust или Julia — в зависимости от того, какой язык лучше всего подходит для раскрытия темы. Исходный репозиторий по первой ссылке, репозиторий с переводом по второй.</p>
+          <p data-i18n="colophonBody">Весь учебный план доступен на GitHub. Клонируйте его, создавайте форки, учитесь в удобном для вас темпе. Никаких платных подписок, никакой регистрации. К каждому уроку прилагается исполняемый код на Python, TypeScript, Rust или Julia — в зависимости от того, какой язык лучше всего подходит для раскрытия темы. Исходный репозиторий по первой ссылке, репозиторий с переводом по второй.</p>
           <div class="colophon-cmd">
             <code id="cloneCmd">git clone https://github.com/rohitg00/ai-engineering-from-scratch.git</code>
           </div>
@@ -665,17 +685,17 @@
       <p>© 2026 · open source · free forever</p>
       <div class="footer-links">
         <a href="https://github.com/stabuev/ai-engineering-from-scratch" target="_blank" rel="noopener">GitHub</a>
-        <a href="catalog.html">Каталог</a>
-        <a href="glossary.html">Глоссарий</a>
-        <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener">Отчет</a>
+        <a href="catalog.html" data-nav="catalog">Каталог</a>
+        <a href="glossary.html" data-nav="glossary">Глоссарий</a>
+        <a href="https://github.com/stabuev/ai-engineering-from-scratch/issues/new/choose" target="_blank" rel="noopener" data-i18n="report">Отчет</a>
       </div>
     </div>
   </footer>
 
-  <script src="data.js?v=20260616a"></script>
-  <script src="progress.js?v=20260616a"></script>
-  <script src="header.js?v=20260616a" defer></script>
-  <script src="app.js?v=20260616a"></script>
+  <script src="data.js?v=20260709a"></script>
+  <script src="progress.js?v=20260709a"></script>
+  <script src="header.js?v=20260709a" defer></script>
+  <script src="app.js?v=20260709a"></script>
   <script defer src="https://va.vercel-scripts.com/v1/script.js"></script>
 </body>
 </html>

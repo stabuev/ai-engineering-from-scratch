@@ -141,3 +141,8 @@ Read `main.py` top to bottom. The functions are ordered by complexity. exact_mat
 ## Going further
 
 The classical metrics are necessary, not sufficient. They reward surface overlap and miss meaning. The fix is to layer model-based metrics on top (BLEURT, BERTScore, GEval) once you trust the classical floor. That is a later lesson. For now: make these five work, pin them with tests, and you have a metric stack that is auditable, fast, and reproducible.
+
+## Further Reading
+
+- Papineni et al., "BLEU" (ACL 2002); Lin, "ROUGE" (2004) — the reference metric definitions.
+- Phase 19 Lesson 72 — the code-exec metric, Lesson 63 — multimodal evaluation using the same shapes.

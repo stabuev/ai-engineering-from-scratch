@@ -1,6 +1,6 @@
 # Reflexion: вербальное обучение с подкреплением
 
-> Gradient-based RL нужны тысячи trials и GPU cluster, чтобы исправить failure mode. Reflexion (Shinn et al., NeurIPS 2023) делает это на естественном языке: после каждой failed trial агент пишет reflection, сохраняет её в episodic memory и conditioning следующей trial делает на этой памяти. Это паттерн за sleep-time compute в Letta, learnings в `CLAUDE.md` у Claude Code и `learn-rule` в pro-workflow.
+> Gradient-based RL нужны тысячи trials и GPU cluster, чтобы исправить failure mode. Reflexion (Shinn et al., NeurIPS 2023) делает это на естественном языке: после каждой failed trial агент пишет reflection, сохраняет ее в episodic memory и conditioning следующей trial делает на этой памяти. Это паттерн за sleep-time compute в Letta, learnings в `CLAUDE.md` у Claude Code и `learn-rule` в pro-workflow.
 
 **Тип:** Практика
 **Языки:** Python (stdlib)
@@ -16,11 +16,11 @@
 
 ## Проблема
 
-Агент проваливает задачу. В стандартном RL вы бы запустили ещё тысячи trials, посчитали gradients, обновили weights. Дорого, медленно, и у большинства production agents нет training budget на каждую ошибку.
+Агент проваливает задачу. В стандартном RL вы бы запустили еще тысячи trials, посчитали gradients, обновили weights. Дорого, медленно, и у большинства production agents нет training budget на каждую ошибку.
 
-Reflexion (Shinn et al., arXiv:2303.11366) задаёт другой вопрос: что если агент просто подумает, почему он ошибся, и попробует снова с этой мыслью в prompt? Без weight updates. Без gradient. Только естественный язык, сохранённый между trials.
+Reflexion (Shinn et al., arXiv:2303.11366) задает другой вопрос: что если агент просто подумает, почему он ошибся, и попробует снова с этой мыслью в prompt? Без weight updates. Без gradient. Только естественный язык, сохраненный между trials.
 
-Результат: на ALFWorld он превосходит ReAct и другие non-fine-tuned baselines. На HotpotQA улучшает ReAct. В code generation (HumanEval/MBPP) устанавливает state of the art на тот момент. И всё это без единого gradient step.
+Результат: на ALFWorld он превосходит ReAct и другие non-fine-tuned baselines. На HotpotQA улучшает ReAct. В code generation (HumanEval/MBPP) устанавливает state of the art на тот момент. И все это без единого gradient step.
 
 ## Концепция
 
@@ -38,7 +38,7 @@ Self-Reflector: writes a natural-language reflection on the failure
 Episodic memory: list of prior reflections, prepended to the next trial's prompt
 ```
 
-Одна trial запускает Actor. Evaluator оценивает её. Если score низкий, Self-Reflector создаёт reflection ("I picked the wrong tool because I misread the question as asking about X when it was asking about Y"). Reflection попадает в episodic memory. Следующая trial начинается заново, но видит reflection.
+Одна trial запускает Actor. Evaluator оценивает ее. Если score низкий, Self-Reflector создает reflection ("I picked the wrong tool because I misread the question as asking about X when it was asking about Y"). Reflection попадает в episodic memory. Следующая trial начинается заново, но видит reflection.
 
 ### Три типа evaluator
 
@@ -77,13 +77,13 @@ Reflexion не помогает, когда:
 
 ## Соберите это
 
-`code/main.py` реализует Reflexion на игрушечной задаче: создать 3-element list, сумма которого равна target. Actor выдаёт candidate lists; Evaluator проверяет sum; Self-Reflector пишет строку о том, что пошло не так. Reflection попадает в episodic memory для следующей trial.
+`code/main.py` реализует Reflexion на игрушечной задаче: создать 3-element list, сумма которого равна target. Actor выдает candidate lists; Evaluator проверяет sum; Self-Reflector пишет строку о том, что пошло не так. Reflection попадает в episodic memory для следующей trial.
 
 Компоненты:
 
 - `Actor` — scripted policy, которая улучшается, когда видит reflections.
 - `Evaluator.binary()` — pass/fail по target sum.
-- `SelfReflector` — создаёт one-line diagnosis failure.
+- `SelfReflector` — создает one-line diagnosis failure.
 - `EpisodicMemory` — bounded list с TTL semantics.
 
 Запустите:
@@ -92,7 +92,7 @@ Reflexion не помогает, когда:
 python3 code/main.py
 ```
 
-Trace показывает три trials. Trial 1 завершается неудачей, reflection сохраняется, trial 2 видит reflection и улучшается, но всё ещё не проходит, trial 3 успешен. Сравните с baseline run (без reflection) — он застревает на ответе trial 1.
+Trace показывает три trials. Trial 1 завершается неудачей, reflection сохраняется, trial 2 видит reflection и улучшается, но все еще не проходит, trial 3 успешен. Сравните с baseline run (без reflection) — он застревает на ответе trial 1.
 
 ## Используйте это
 
@@ -100,7 +100,7 @@ LangGraph поставляет reflection как node pattern. Команда `/
 
 ## Отгрузите это
 
-`outputs/skill-reflexion-buffer.md` создаёт и поддерживает episodic buffer с reflection capture, TTL и deduplication. При заданном task class и failure он выдаёт reflection, которая действительно помогает следующей trial (а не generic "be more careful").
+`outputs/skill-reflexion-buffer.md` создает и поддерживает episodic buffer с reflection capture, TTL и deduplication. При заданном task class и failure он выдает reflection, которая действительно помогает следующей trial (а не generic "be more careful").
 
 ## Упражнения
 

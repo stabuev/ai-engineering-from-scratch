@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1a1a1a?style=flat-square&labelColor=fafaf5" alt="Лицензия MIT"></a>
-  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-502-3553ff?style=flat-square&labelColor=fafaf5" alt="502 уроков"></a>
+  <a href="ROADMAP.md"><img src="https://img.shields.io/badge/lessons-502-3553ff?style=flat-square&labelColor=fafaf5" alt="502 урока"></a>
   <a href="#contents"><img src="https://img.shields.io/badge/phases-20-3553ff?style=flat-square&labelColor=fafaf5" alt="20 фаз"></a>
   <a href="https://github.com/stabuev/ai-engineering-from-scratch/stargazers"><img src="https://img.shields.io/github/stars/stabuev/ai-engineering-from-scratch?style=flat-square&labelColor=fafaf5&color=3553ff" alt="Звезды GitHub"></a>
   <a href="https://datascience.xyz/courses/aicourse/"><img src="https://img.shields.io/badge/web-datascience.xyz%2Fcourses%2Faicourse-3553ff?style=flat-square&labelColor=fafaf5" alt="Веб-сайт"></a>
@@ -17,7 +17,7 @@
 > **84% студентов уже используют AI-инструменты. Только 18% чувствуют себя готовыми
 > применять их профессионально.** Этот курс закрывает этот разрыв.
 >
-> 502 уроков. 20 фаз. ~486 часов уроков + ~627 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
+> 502 урока. 20 фаз. ~486 часов уроков + ~627 часов capstone-проектов. Основной язык — Python, отдельные уроки добавляют TypeScript, Rust и Julia. Каждый урок поставляет
 > переиспользуемый артефакт: промпт, навык, агента, MCP-сервер. Бесплатно, с открытым исходным кодом, MIT.
 >
 > Вы не просто изучаете AI. Вы его строите. От начала до конца. Вручную.
@@ -30,7 +30,7 @@ fine-tuning, где-то еще эффектная демонстрация аг
 подключаете функцию к агенту, но не можете сказать, что делает attention внутри модели,
 которая ее вызывает.
 
-Этот курс - каркас. 20 фаз, 502 уроков. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
+Этот курс - каркас. 20 фаз, 502 урока. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia.
 На одном конце линейная алгебра, на другом - автономные swarms. Каждый алгоритм сначала
 строится из чистой математики. Backprop. Tokenizer. Attention. Agent loop. К моменту,
 когда появляется PyTorch, вы уже знаете, что он делает под капотом.
@@ -571,7 +571,7 @@ the agent went wrong and explain why...
 | 08 | [Fine-tuning с LoRA и QLoRA](phases/11-llm-engineering/08-fine-tuning-lora/) | Практика | Python |
 | 09 | [Function calling и использование инструментов](phases/11-llm-engineering/09-function-calling/) | Практика | Python |
 | 10 | [Оценка и тестирование](phases/11-llm-engineering/10-evaluation/) | Практика | Python |
-| 11 | [Кеширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost/) | Практика | Python |
+| 11 | [Кэширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost/) | Практика | Python |
 | 12 | [Guardrails и безопасность](phases/11-llm-engineering/12-guardrails/) | Практика | Python |
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app/) | Практика | Python |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol/) | Практика | Python |
@@ -923,7 +923,7 @@ the agent went wrong and explain why...
 | 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding/) | H. Distributed train | Python |
 | 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel/) | H. Distributed train | Python |
 | 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume/) | H. Distributed train | Python |
-| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train/) | H. Distributed train | Python |
+| 81 | [Распределенное обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train/) | H. Distributed train | Python |
 | 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy/) | I. Safety harness | Python |
 | 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector/) | I. Safety harness | Python |
 | 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation/) | I. Safety harness | Python |

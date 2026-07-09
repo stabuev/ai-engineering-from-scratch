@@ -122,3 +122,8 @@ Read `main.py` top to bottom. Then read `code/tests/test_spec.py`. The tests pin
 ## Going further
 
 Real eval suites grow categories the way schemas grow columns. The sober move is to refuse to add a category without also adding a metric, a post-process rule, and at least one fixture task. Treat the spec like a database migration. Every change is reviewed, versioned, and accompanied by tests. The validator in this lesson is the gate.
+
+## Further Reading
+
+- BIG-bench, HELM, and the lm-evaluation-harness — production task-spec references.
+- Phase 19 Lesson 49 — the LM eval harness, Lessons 71-75 — the metrics and runner built on this spec.

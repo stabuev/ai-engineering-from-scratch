@@ -106,3 +106,8 @@ A failed gate raises `PaperValidationError` with a precise reason. The harness s
 Two extensions a real implementation will want. First, multi-format render: the same `Paper` shape compiles to Markdown for blog posts and HTML for previews. The renderer becomes a strategy on `Paper`. Second, citation enrichment: the writer fetches BibTeX entries from a citation key, given a local cache of DOIs. Both add value, both can be added without touching the skeleton contract.
 
 The skeleton is the bet. Sections, figures, and citations declared as data, prose generated into slots, manifest emitted alongside the LaTeX. Every other improvement composes on top.
+
+## Further Reading
+
+- Phase 14 Lesson 12 — Anthropic workflow patterns.
+- Phase 19 Lesson 55 — the critic loop that revises this draft, Lesson 57 — the end-to-end demo.

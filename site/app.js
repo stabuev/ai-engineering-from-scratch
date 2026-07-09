@@ -1,4 +1,88 @@
 (function () {
+  var PAGE_LANG = location.pathname.indexOf('/en/') !== -1 ? 'en' : 'ru';
+  document.documentElement.lang = PAGE_LANG;
+
+  // Landing-page UI strings. Static prose carries data-i18n / data-i18n-html /
+  // data-nav attributes; the dynamic phase grid and modal read from T below.
+  var I18N = {
+    ru: {
+      logoSuffix: 'AI / С НУЛЯ',
+      figLabel: 'FIG_000 · учебная программа v1.0 · 2026',
+      mastheadTitle: 'Разработка ИИ<br>с нуля',
+      tagline: '502 урока. 20 фаз (разделов). Каждый алгоритм создается на основе базовых математических принципов, прежде чем импортируется какой-либо фреймворк.',
+      attribution: 'Разработано Рохитом Гумаре и другими участниками. Запускайте на своем компьютере.',
+      prefaceEyebrow: 'Как это устроено',
+      prefaceBody: '<p>Большинство материалов по искусственному интеллекту представляют собой разрозненные фрагменты. Здесь — статья, там — пост о тонкой настройке, где-то — яркая демонстрация работы агента. Фрагменты редко складываются в общую картину. Вы выпускаете чат-бота, но не можете объяснить его кривую потерь. Вы подключаете функцию к агенту, но не можете сказать, как работает механизм внимания в модели, которая ее вызывает.</p>' +
+        '<p>Эта учебная программа — основа основ. 20 этапов, 502 урока. Основной язык — Python; отдельные уроки добавляют TypeScript, Rust и Julia. С одной стороны — линейная алгебра, с другой — автономные роевые системы. Каждый алгоритм сначала строится на основе базовых математических принципов. Обратное распространение. Токенизатор. Внимание. Цикл агента. К тому времени, когда появляется PyTorch, вы уже знаете, как он работает.</p>' +
+        '<p>Каждый урок проходит по одному и тому же сценарию: прочитайте задачу, посчитайте, напишите код, запустите тест, сохраните результат. Никаких пятиминутных видео, копирования и вставки, никаких подсказок. Бесплатно, с открытым исходным кодом и для запуска на вашем ноутбуке.</p>',
+      statProgress: 'Текущий прогресс',
+      statLessonsReady: 'Готовых уроков', statPhases: 'Разделов', statLanguages: 'Языков', statGlossary: 'Терминов в глоссарии',
+      tocTitle: 'Учебная программа · 20 разделов · 502 урока',
+      tocSubtitle: 'Нажмите на этап, чтобы открыть его уроки. Каждый из них будет готов, когда будут написаны все математические задачи, код и тесты.',
+      legendDone: 'Готово', legendProgress: 'В процессе', legendPlanned: 'Запланировано',
+      colophonEyebrow: 'Колофон',
+      colophonBody: 'Весь учебный план доступен на GitHub. Клонируйте его, создавайте форки, учитесь в удобном для вас темпе. Никаких платных подписок, никакой регистрации. К каждому уроку прилагается исполняемый код на Python, TypeScript, Rust или Julia — в зависимости от того, какой язык лучше всего подходит для раскрытия темы. Исходный репозиторий по первой ссылке, репозиторий с переводом по второй.',
+      modalFooterNote: 'Прогресс сохраняется только в браузере',
+      modalReset: 'Сбросить прогресс',
+      report: 'Отчет',
+      nav: { 'contents': 'Содержание', 'catalog': 'Каталог', 'roadmap': 'Дорожная карта', 'glossary': 'Глоссарий', 'home': 'Главная' },
+      phaseWord: 'ФАЗА', read: 'Читать', review: 'Повторить', completed: 'завершено',
+      youCompleted: 'Вы прошли этот урок', markDone: 'Отметить пройденным', markNotDone: 'Снять отметку',
+      combines: 'Объединяет: ', resetConfirm: 'Очистить весь локальный прогресс (ответы на тесты и пройденные уроки)? Это необратимо.'
+    },
+    en: {
+      logoSuffix: 'AI / FROM SCRATCH',
+      figLabel: 'FIG_000 · curriculum v1.0 · 2026',
+      mastheadTitle: 'AI Engineering<br>from Scratch',
+      tagline: '502 lessons. 20 phases. Every algorithm is built from first mathematical principles before any framework is imported.',
+      attribution: 'Created by Rohit Gumare and other contributors. Run it on your own machine.',
+      prefaceEyebrow: 'How this works',
+      prefaceBody: '<p>Most AI material is scattered fragments. An article here, a fine-tuning post there, a flashy agent demo somewhere else. The pieces rarely add up to the whole. You ship a chatbot but can\'t explain its loss curve. You wire a function into an agent but can\'t say how attention works in the model that calls it.</p>' +
+        '<p>This curriculum is the foundation of the foundations. 20 phases, 502 lessons. The primary language is Python; individual lessons add TypeScript, Rust, and Julia. Linear algebra on one end, autonomous swarm systems on the other. Every algorithm is first built from first mathematical principles. Backpropagation. The tokenizer. Attention. The agent loop. By the time PyTorch shows up, you already know how it works.</p>' +
+        '<p>Every lesson follows the same script: read the problem, do the math, write the code, run the test, save the result. No five-minute videos, no copy-paste, no hand-waving. Free, open source, and built to run on your laptop.</p>',
+      statProgress: 'Current progress',
+      statLessonsReady: 'Lessons ready', statPhases: 'Phases', statLanguages: 'Languages', statGlossary: 'Glossary terms',
+      tocTitle: 'Curriculum · 20 phases · 502 lessons',
+      tocSubtitle: 'Click a phase to open its lessons. Each is ready once all its math problems, code, and tests are written.',
+      legendDone: 'Done', legendProgress: 'In progress', legendPlanned: 'Planned',
+      colophonEyebrow: 'Colophon',
+      colophonBody: 'The entire curriculum is on GitHub. Clone it, fork it, learn at your own pace. No paid subscriptions, no sign-up. Every lesson ships runnable code in Python, TypeScript, Rust, or Julia — whichever best reveals the topic. The source repository is the first link, the translated repository the second.',
+      modalFooterNote: 'Progress is saved only in your browser',
+      modalReset: 'Reset progress',
+      report: 'Report',
+      nav: { 'contents': 'Contents', 'catalog': 'Catalog', 'roadmap': 'Roadmap', 'glossary': 'Glossary', 'home': 'Home' },
+      phaseWord: 'PHASE', read: 'Read', review: 'Review', completed: 'completed',
+      youCompleted: 'You completed this lesson', markDone: 'Mark complete', markNotDone: 'Mark as not done',
+      combines: 'Combines: ', resetConfirm: 'Clear all your local progress (quiz answers and completed lessons)? This cannot be undone.'
+    }
+  };
+  var T = I18N[PAGE_LANG];
+
+  function nm(o) { return (PAGE_LANG === 'en' && o.name_en) ? o.name_en : o.name; }
+  function dsc(o) { return (PAGE_LANG === 'en' && o.desc_en) ? o.desc_en : o.desc; }
+
+  function localizeStatic() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n');
+      if (T[k] != null) el.textContent = T[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n-html');
+      if (T[k] != null) el.innerHTML = T[k];
+    });
+    document.querySelectorAll('[data-nav]').forEach(function (el) {
+      var k = el.getAttribute('data-nav');
+      if (T.nav && T.nav[k] != null) el.textContent = T.nav[k];
+    });
+    var langBtn = document.getElementById('langToggle');
+    if (langBtn) {
+      langBtn.textContent = PAGE_LANG.toUpperCase();
+      langBtn.addEventListener('click', function () {
+        window.location.href = PAGE_LANG === 'en' ? '../index.html' : 'en/index.html';
+      });
+    }
+  }
+
   var root = document.documentElement;
   var stored = localStorage.getItem('theme');
   if (stored) {
@@ -11,6 +95,7 @@
   updateThemeIcon();
 
   document.addEventListener('DOMContentLoaded', function () {
+    localizeStatic();
     initThemeToggle();
     populateStats();
     renderPhases();
@@ -126,7 +211,7 @@
       var num = String(p.id).padStart(2, '0');
       html += '<div class="toc-row" data-phase="' + i + '">';
       html += '<span class="toc-num">' + roman + '.</span>';
-      html += '<div><span class="toc-status ' + statusClass + '"></span><span class="toc-name">' + escapeHtml(p.name) + '</span></div>';
+      html += '<div><span class="toc-status ' + statusClass + '"></span><span class="toc-name">' + escapeHtml(nm(p)) + '</span></div>';
       html += '<span class="toc-meta">' + done + ' / ' + total + '</span>';
       html += '<span class="toc-meta">' + num + '</span>';
       html += '</div>';
@@ -177,7 +262,7 @@
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
         if (!window.AIFSProgress) return;
-        var ok = window.confirm('Clear all your local progress (quiz answers and completed lessons)? This cannot be undone.');
+        var ok = window.confirm(T.resetConfirm);
         if (!ok) return;
         window.AIFSProgress.reset();
       });
@@ -191,9 +276,9 @@
     if (!p) return;
     currentPhaseIdx = idx;
 
-    document.getElementById('modalPhaseNum').textContent = 'PHASE ' + String(p.id).padStart(2, '0');
-    document.getElementById('modalTitle').textContent = p.name;
-    document.getElementById('modalDesc').textContent = p.desc;
+    document.getElementById('modalPhaseNum').textContent = T.phaseWord + ' ' + String(p.id).padStart(2, '0');
+    document.getElementById('modalTitle').textContent = nm(p);
+    document.getElementById('modalDesc').textContent = dsc(p);
 
     renderModalLessons(p);
 
@@ -211,31 +296,33 @@
 
     for (var i = 0; i < p.lessons.length; i++) {
       var l = p.lessons[i];
-      var pathMatch = l.url ? l.url.match(/(phases\/[^/]+\/[^/]+)\/?$/) : null;
-      var lessonPath = pathMatch ? pathMatch[1] : '';
+      var lessonPath = l.path || ''; // progress.js key
+      var lessonUrl = l.slug ? l.slug + '.html' : ''; // prerendered page (ru)
       var userComplete = hasProgress && lessonPath && window.AIFSProgress.isLessonComplete(lessonPath);
       if (userComplete) userDone++;
 
       var statusClass = l.status.replace(/ /g, '-');
       if (userComplete) statusClass = 'complete';
 
+      // In /en/index.html, lesson slugs resolve to the en lesson pages in the
+      // same /en/ directory, so the relative href needs no language prefix.
       html += '<div class="modal-lesson' + (userComplete ? ' user-done' : '') + '">';
-      html += '<span class="modal-lesson-status ' + statusClass + '"' + (userComplete ? ' title="You completed this lesson"' : '') + '></span>';
-      if (lessonPath) {
-        html += '<a href="lesson.html?path=' + lessonPath + '">' + escapeHtml(l.name) + '</a>';
+      html += '<span class="modal-lesson-status ' + statusClass + '"' + (userComplete ? ' title="' + escapeAttr(T.youCompleted) + '"' : '') + '></span>';
+      if (lessonUrl) {
+        html += '<a href="' + lessonUrl + '">' + escapeHtml(nm(l)) + '</a>';
       } else {
-        html += '<a>' + escapeHtml(l.name) + '</a>';
+        html += '<a>' + escapeHtml(nm(l)) + '</a>';
       }
-      html += '<span class="modal-lesson-type" data-type="' + escapeHtml(l.type) + '"' + (l.combines ? ' title="Combines: ' + escapeHtml(l.combines) + '"' : '') + '>' + escapeHtml(l.type) + '</span>';
+      html += '<span class="modal-lesson-type" data-type="' + escapeHtml(l.type) + '"' + (l.combines ? ' title="' + escapeAttr(T.combines + l.combines) + '"' : '') + '>' + escapeHtml(l.type) + '</span>';
       html += '<span class="modal-lesson-lang">' + escapeHtml(l.lang) + '</span>';
 
       var actionHtml = '';
-      if ((l.status === 'complete' || userComplete) && lessonPath) {
-        actionHtml = '<a href="lesson.html?path=' + lessonPath + '" class="modal-lesson-read">' + (userComplete ? 'Review' : 'Read') + '</a>';
+      if ((l.status === 'complete' || userComplete) && lessonUrl) {
+        actionHtml = '<a href="' + lessonUrl + '" class="modal-lesson-read">' + (userComplete ? T.review : T.read) + '</a>';
       }
       var toggleHtml = '';
       if (hasProgress && lessonPath) {
-        toggleHtml = '<button type="button" class="modal-lesson-toggle' + (userComplete ? ' done' : '') + '" data-path="' + lessonPath + '" title="' + (userComplete ? 'Mark as not done' : 'Mark complete') + '" aria-label="' + (userComplete ? 'Mark as not done' : 'Mark complete') + '">' + (userComplete ? '✓' : '+') + '</button>';
+        toggleHtml = '<button type="button" class="modal-lesson-toggle' + (userComplete ? ' done' : '') + '" data-path="' + lessonPath + '" title="' + escapeAttr(userComplete ? T.markNotDone : T.markDone) + '" aria-label="' + escapeAttr(userComplete ? T.markNotDone : T.markDone) + '">' + (userComplete ? '✓' : '+') + '</button>';
       }
       html += (actionHtml || '<span class="modal-lesson-read-placeholder" aria-hidden="true"></span>') + toggleHtml;
       html += '</div>';
@@ -265,7 +352,7 @@
       var pct = Math.round((userDone / p.lessons.length) * 100);
       if (progEl) {
         progEl.style.display = '';
-        progEl.innerHTML = '<span class="modal-progress-count">' + userDone + ' / ' + p.lessons.length + '</span> <span class="modal-progress-label">completed</span> <span class="modal-progress-pct">' + pct + '%</span>';
+        progEl.innerHTML = '<span class="modal-progress-count">' + userDone + ' / ' + p.lessons.length + '</span> <span class="modal-progress-label">' + escapeHtml(T.completed) + '</span> <span class="modal-progress-pct">' + pct + '%</span>';
       }
       if (barEl && barFill) {
         barEl.style.display = '';
@@ -430,5 +517,11 @@
     var div = document.createElement('div');
     div.textContent = str == null ? '' : str;
     return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 })();

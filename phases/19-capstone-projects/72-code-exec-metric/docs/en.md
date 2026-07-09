@@ -115,3 +115,8 @@ Read `main.py` top to bottom. The runner template is the load-bearing piece. Sta
 ## Going further
 
 Once the subprocess shape works, the next concern is portability. Different Python versions handle SIGKILL differently on Windows. The cleanest fix is to put the runner in a Docker image. The next thing after that is replacing assertion strings with real unit test files so the eval matches what production CI does. Stop calling assertion strings tests at that point; they are toy tests and they have toy failure modes.
+
+## Further Reading
+
+- Chen et al., [Evaluating Large Language Models Trained on Code (HumanEval, arXiv 2107.03374)](https://arxiv.org/abs/2107.03374) — pass@k and the code-exec eval.
+- Phase 19 Lesson 27 — the eval harness, Lesson 74 — leaderboard-level pass@k aggregation.

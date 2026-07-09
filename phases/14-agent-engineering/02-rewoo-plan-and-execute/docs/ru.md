@@ -1,4 +1,4 @@
-# ReWOO и Plan-and-Execute: разделённое планирование
+# ReWOO и Plan-and-Execute: разделенное планирование
 
 > ReAct чередует мысль и действие в одном потоке. ReWOO разделяет их: сначала один большой план, затем выполнение. В 5 раз меньше токенов, +4% accuracy на HotpotQA, и planner можно дистиллировать в 7B model. Plan-and-Execute обобщил этот подход; Plan-and-Act масштабировал его на web navigation.
 
@@ -10,15 +10,15 @@
 ## Цели обучения
 
 - Объяснить, почему разделение Planner / Worker / Solver в ReWOO экономит токены и повышает robustness относительно interleaved loop ReAct.
-- Реализовать plan DAG, executor по порядку зависимостей и solver, который композирует worker outputs, — всё на stdlib.
+- Реализовать plan DAG, executor по порядку зависимостей и solver, который композирует worker outputs, — все на stdlib.
 - Решать, когда задачу нужно выполнять как plan-then-execute, а когда как interleaved ReAct, используя framing 2026 года "five workflow patterns" (Anthropic).
 - Распознавать, когда synthetic plan data из Plan-and-Act нужна для long-horizon web или mobile tasks.
 
 ## Проблема
 
-Interleaved thought-action-observation loop ReAct прост и гибок, но каждый tool call должен нести весь предыдущий контекст — включая каждую предыдущую мысль. Использование токенов растёт квадратично с глубиной. Хуже того: когда tool fails посреди цикла, модель должна заново вывести весь план из error observation.
+Interleaved thought-action-observation loop ReAct прост и гибок, но каждый tool call должен нести весь предыдущий контекст — включая каждую предыдущую мысль. Использование токенов растет квадратично с глубиной. Хуже того: когда tool fails посреди цикла, модель должна заново вывести весь план из error observation.
 
-ReWOO (Xu et al., arXiv:2305.18323, May 2023) заметил это и сделал ставку: спланировать всё заранее, получить evidence параллельно, скомпоновать ответ в конце. Один LLM call для планирования, N tool calls для evidence (можно parallel), один LLM call для решения. Обмен: меньше гибкости (план статичен) на намного лучшую token efficiency и более ясные failure modes.
+ReWOO (Xu et al., arXiv:2305.18323, May 2023) заметил это и сделал ставку: спланировать все заранее, получить evidence параллельно, скомпоновать ответ в конце. Один LLM call для планирования, N tool calls для evidence (можно parallel), один LLM call для решения. Обмен: меньше гибкости (план статичен) на намного лучшую token efficiency и более ясные failure modes.
 
 ## Концепция
 
@@ -30,17 +30,17 @@ Workers:  [plan_dag]     -> [evidence]        (tool calls, possibly parallel)
 Solver:   user_question, plan_dag, evidence -> final_answer
 ```
 
-Planner создаёт DAG. Каждый node указывает tool, его arguments и зависимости от более ранних nodes (ссылки вроде `#E1`, `#E2`). Workers выполняют nodes в topological order. Solver сшивает всё вместе.
+Planner создает DAG. Каждый node указывает tool, его arguments и зависимости от более ранних nodes (ссылки вроде `#E1`, `#E2`). Workers выполняют nodes в topological order. Solver сшивает все вместе.
 
 ### Почему токенов в 5 раз меньше
 
-В ReAct длина prompt растёт линейно с числом шагов. На шаге 10 prompt содержит thought 1 плюс action 1 плюс observation 1 плюс thought 2 плюс action 2 плюс observation 2 и так далее. Каждый промежуточный шаг также избыточно включает исходный prompt.
+В ReAct длина prompt растет линейно с числом шагов. На шаге 10 prompt содержит thought 1 плюс action 1 плюс observation 1 плюс thought 2 плюс action 2 плюс observation 2 и так далее. Каждый промежуточный шаг также избыточно включает исходный prompt.
 
 ReWOO платит за один planner prompt (большой), N маленьких worker prompts (каждый только tool call, без chain) и один solver prompt. На HotpotQA статья измеряет примерно 5x fewer tokens при +4 absolute accuracy.
 
 ### Почему он более robust
 
-Если worker 3 падает в ReAct, циклу нужно рассуждать из ошибки прямо mid-stream. В ReWOO worker 3 возвращает error string; solver видит её в контексте исходного плана и может gracefully degrade. Failure localization — per-node, а не per-step.
+Если worker 3 падает в ReAct, циклу нужно рассуждать из ошибки прямо mid-stream. В ReWOO worker 3 возвращает error string; solver видит ее в контексте исходного плана и может gracefully degrade. Failure localization — per-node, а не per-step.
 
 ### Дистилляция planner
 
@@ -48,11 +48,11 @@ ReWOO платит за один planner prompt (большой), N малень
 
 ### Plan-and-Execute (LangChain, 2023)
 
-Пост команды LangChain за август 2023 обобщил ReWOO в имя паттерна: Plan-and-Execute. Up-front planner выдаёт список шагов, executor выполняет каждый шаг, optional replanner может пересмотреть план после наблюдения результатов. Это ближе к ReAct, чем ReWOO (replanner возвращает observations обратно в planning), но сохраняет token savings.
+Пост команды LangChain за август 2023 обобщил ReWOO в имя паттерна: Plan-and-Execute. Up-front planner выдает список шагов, executor выполняет каждый шаг, optional replanner может пересмотреть план после наблюдения результатов. Это ближе к ReAct, чем ReWOO (replanner возвращает observations обратно в planning), но сохраняет token savings.
 
 ### Plan-and-Act (Erdogan et al., arXiv:2503.09572, ICML 2025)
 
-Plan-and-Act масштабирует паттерн на long-horizon web и mobile agents. Ключевой вклад — synthetic plan data: labeled trajectory generator создаёт training data, где plan явный. Это используется для fine-tune planner models, которые продолжают работать после 30–50 шагов на WebArena-like tasks, где single ReAct trajectory теряет coherence.
+Plan-and-Act масштабирует паттерн на long-horizon web и mobile agents. Ключевой вклад — synthetic plan data: labeled trajectory generator создает training data, где plan явный. Это используется для fine-tune planner models, которые продолжают работать после 30–50 шагов на WebArena-like tasks, где single ReAct trajectory теряет coherence.
 
 ### Что выбирать
 
@@ -70,9 +70,9 @@ Plan-and-Act масштабирует паттерн на long-horizon web и mo
 
 `code/main.py` реализует игрушечный ReWOO:
 
-- `Planner` — scripted policy, которая выдаёт plan DAG из prompt.
+- `Planner` — scripted policy, которая выдает plan DAG из prompt.
 - `Worker` — dispatches tool call каждого node через registry.
-- `Solver` — scripted composition, которая читает evidence и создаёт final answer.
+- `Solver` — scripted composition, которая читает evidence и создает final answer.
 - Dependency resolution — ссылки вроде `#E1` подставляются ранними worker outputs.
 
 Демо отвечает на "What is the population of the capital of France, rounded to millions?" через двухшаговый план: (1) найти capital, (2) найти population, затем solve.
@@ -95,7 +95,7 @@ LangGraph поставляет Plan-and-Execute как recipe (`create_react_age
 
 ## Упражнения
 
-1. Распараллельте worker execution для независимых plan nodes. Что это даёт на 6-node DAG с 2 parallel groups?
+1. Распараллельте worker execution для независимых plan nodes. Что это дает на 6-node DAG с 2 parallel groups?
 2. Добавьте replanner node, который срабатывает, если любой worker возвращает error. Какое минимальное изменение в ReWOO делает его Plan-and-Execute?
 3. Замените `Planner` на small model (7B class) и оставьте `Solver` на frontier model. Сравните end-to-end quality — где split ломается?
 4. Прочитайте Section 4 статьи ReWOO о planner distillation. Концептуально воспроизведите результат 175B -> 7B: какие training data нужны и как оценивать plan quality?

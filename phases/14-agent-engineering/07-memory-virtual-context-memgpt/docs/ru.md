@@ -11,18 +11,18 @@
 
 - Объяснить OS analogy, на которой строится MemGPT: main context = RAM, external context = disk, memory tools = page in/out.
 - Реализовать two-tier pattern MemGPT на stdlib с буфером main context, внешним searchable store и tools для page in/out.
-- Описать, как агент выдаёт "interrupts" для запроса или изменения external memory и как результат вшивается в следующий prompt.
+- Описать, как агент выдает "interrupts" для запроса или изменения external memory и как результат вшивается в следующий prompt.
 - Определить design choices MemGPT, которые переходят в Letta (Lesson 08) и Mem0 (Lesson 09).
 
 ## Проблема
 
 Context windows выглядят так, будто должны решить memory. Не решают. Три failure modes регулярно повторяются в production:
 
-1. **Overflow.** Multi-turn conversations, long documents или насыщенные tool calls trajectories выходят за пределы window. Всё за cutoff исчезает.
-2. **Dilution.** Даже внутри window stuffing irrelevant context размывает attention по тому, что важно. Frontier models всё ещё degrade on long inputs.
+1. **Overflow.** Multi-turn conversations, long documents или насыщенные tool calls trajectories выходят за пределы window. Все за cutoff исчезает.
+2. **Dilution.** Даже внутри window stuffing irrelevant context размывает attention по тому, что важно. Frontier models все еще degrade on long inputs.
 3. **Persistence.** Новая session начинается с empty window. Agents without external memory не могут сказать "remember when you asked me to..." между sessions.
 
-Большие windows помогают, но не исправляют это. Статья Mem0 2025 года измерила, что 128k-window baselines всё ещё пропускают long-horizon facts, которые агент с 4k-window и external memory ловит.
+Большие windows помогают, но не исправляют это. Статья Mem0 2025 года измерила, что 128k-window baselines все еще пропускают long-horizon facts, которые агент с 4k-window и external memory ловит.
 
 ## Концепция
 
@@ -60,7 +60,7 @@ MemGPT вводит memory-as-interrupt: в середине conversation аге
 
 ### Где заканчивается MemGPT и начинается Letta
 
-В сентябре 2024 MemGPT стал Letta. Research repo (`cpacker/MemGPT`) остаётся; Letta расширяет design:
+В сентябре 2024 MemGPT стал Letta. Research repo (`cpacker/MemGPT`) остается; Letta расширяет design:
 
 - Три уровня вместо двух (core, recall, archival — Lesson 08).
 - Native reasoning вместо паттерна `send_message`/heartbeat (Lesson 08).
@@ -96,7 +96,7 @@ python3 code/main.py
 Каждая production memory system сегодня — вариант MemGPT:
 
 - **Letta** (Lesson 08) — три уровня, native reasoning, sleep-time compute.
-- **Mem0** (Lesson 09) — vector + KV + graph, объединённые scoring layer.
+- **Mem0** (Lesson 09) — vector + KV + graph, объединенные scoring layer.
 - **OpenAI Assistants / Responses** — managed memory через threads and files.
 - **Claude Agent SDK** — long-term memory через skills and session store.
 
@@ -104,7 +104,7 @@ python3 code/main.py
 
 ## Отгрузите это
 
-`outputs/skill-virtual-memory.md` — reusable skill, который создаёт корректный two-tier memory scaffold (main + archival + tool surface) для любого target runtime, с подключёнными eviction policy и citation fields.
+`outputs/skill-virtual-memory.md` — reusable skill, который создает корректный two-tier memory scaffold (main + archival + tool surface) для любого target runtime, с подключенными eviction policy и citation fields.
 
 ## Упражнения
 
@@ -121,7 +121,7 @@ python3 code/main.py
 | Virtual context | "Неограниченная memory" | Main (prompt) + external (searchable) tiers with page in/out |
 | Main context | "Working memory" | Prompt фиксированного размера, всегда видимый |
 | Archival memory | "Long-term store" | External searchable persistence, извлекаемая по требованию |
-| Core memory | "Persistent prompt section" | Именованные sections, закреплённые внутри main context |
+| Core memory | "Persistent prompt section" | Именованные sections, закрепленные внутри main context |
 | Memory tool | "Memory API" | Tool call, который agent issues для чтения/записи external memory |
 | Interrupt | "Memory page fault" | Agent pauses, runtime fetches, result splices into next turn |
 | Memory rot | "Stale facts" | Старые writes топят retrieval; исправляется consolidation |
@@ -129,7 +129,7 @@ python3 code/main.py
 
 ## Дополнительное чтение
 
-- [Packer et al., MemGPT (arXiv:2310.08560)](https://arxiv.org/abs/2310.08560) — статья о virtual context, вдохновлённом ОС
-- [Letta, Memory Blocks blog](https://www.letta.com/blog/memory-blocks) — эволюция к трём уровням
+- [Packer et al., MemGPT (arXiv:2310.08560)](https://arxiv.org/abs/2310.08560) — статья о virtual context, вдохновленном ОС
+- [Letta, Memory Blocks blog](https://www.letta.com/blog/memory-blocks) — эволюция к трем уровням
 - [Anthropic, Effective context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — отношение к context как к бюджету
 - [Chhikara et al., Mem0 (arXiv:2504.19413)](https://arxiv.org/abs/2504.19413) — hybrid production memory поверх этого паттерна

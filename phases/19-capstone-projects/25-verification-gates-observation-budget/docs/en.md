@@ -95,3 +95,8 @@ python3 -m pytest code/tests/ -v
 ```
 
 The demo prints a turn-by-turn trace including every gate decision and exits zero. The tests cover the ledger, each gate in isolation, the chain short-circuit, and the synthetic loop end-to-end.
+
+## Further Reading
+
+- Phase 14 Lesson 38 — verification gates, Lesson 33 — instructions as constraints.
+- Phase 19 Lesson 26 — the sandbox that runs after an ALLOW, Lesson 27 — the eval harness that scores refusals.

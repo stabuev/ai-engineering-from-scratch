@@ -7,6 +7,13 @@
 **Prerequisites:** Phase 18 safety lessons, Phase 19 Track A lessons 25-29
 **Time:** ~90 min
 
+## Learning Objectives
+
+- Measure under-refusal and over-refusal as two separate metrics, not one safety score.
+- Compute accuracy and Expected Calibration Error over the model's stated confidence.
+- Break under-refusal down per attack category using the lesson 82 taxonomy.
+- Drive the evaluator with a deterministic mock LLM so code changes are attributable.
+
 ## Problem
 
 A safety pass on an assistant goes wrong in two opposite ways. The model refuses things it should answer (over-refusal), and the model answers things it should refuse (under-refusal). Both are bugs. Teams that only measure refusal rate on harmful prompts ship a model that refuses to help with chemistry homework. Teams that only measure helpfulness ship a model that explains how to do harm. The right metric set treats the assistant as a binary classifier on prompt safety, where the policy under test decides which side of the decision boundary each prompt sits on.

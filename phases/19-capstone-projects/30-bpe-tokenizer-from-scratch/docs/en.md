@@ -97,3 +97,9 @@ It does not parallelize the pair counter. A loop in Python over a corpus of a fe
 `main.py` defines four objects. `BPETokenizer` holds the vocabulary, the merge table, and the special-token table. `train` is the training loop. `encode` is the inference path. `decode` is the byte concatenation. The demo at the bottom trains a small tokenizer on a built-in corpus, encodes a held-out sentence, decodes the ids back, and prints both. The tests in `code/tests/test_bpe.py` pin the round-trip property, the special-token reservation, and the merge ordering.
 
 Run the demo. Then change the target vocabulary size in the demo from 300 to 600 and watch how the encoded length of the held-out sentence drops. That curve is the BPE compression curve.
+
+## Further Reading
+
+- Sennrich, Haddow, Birch, [Neural Machine Translation of Rare Words with Subword Units (arXiv 1508.07909)](https://arxiv.org/abs/1508.07909) — the BPE paper.
+- Phase 5 — NLP foundations.
+- Phase 19 Lesson 31 — the sliding-window dataset built on this tokenizer.

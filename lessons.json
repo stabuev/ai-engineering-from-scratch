@@ -4,7 +4,9 @@
       "number": 0,
       "dir": "00-setup-and-tooling",
       "name": "Настройка и инструменты",
+      "name_en": "Setup & Tooling",
       "desc": "Подготовьте среду для всего, что будет дальше.",
+      "desc_en": "Set up the environment for everything that follows.",
       "status": "complete",
       "lessons": [
         {
@@ -133,7 +135,9 @@
       "number": 1,
       "dir": "01-math-foundations",
       "name": "Математические основы",
+      "name_en": "Math Foundations",
       "desc": "Интуиция за каждым AI-алгоритмом через код.",
+      "desc_en": "The intuition behind every AI algorithm, through code.",
       "status": "complete",
       "lessons": [
         {
@@ -362,7 +366,9 @@
       "number": 2,
       "dir": "02-ml-fundamentals",
       "name": "Основы ML",
+      "name_en": "ML Fundamentals",
       "desc": "Классический ML все еще остается основой большей части production AI.",
+      "desc_en": "Classical ML is still the backbone of most production AI.",
       "status": "complete",
       "lessons": [
         {
@@ -551,7 +557,9 @@
       "number": 3,
       "dir": "03-deep-learning-core",
       "name": "Ядро deep learning",
+      "name_en": "Deep Learning Core",
       "desc": "Нейросети с первых принципов. Никаких фреймворков, пока вы не соберете свой.",
+      "desc_en": "Neural networks from first principles. No frameworks until you build your own.",
       "status": "complete",
       "lessons": [
         {
@@ -690,7 +698,9 @@
       "number": 4,
       "dir": "04-computer-vision",
       "name": "Computer Vision",
+      "name_en": "Computer Vision",
       "desc": "От пикселей к пониманию: изображения, видео, 3D, VLM и модели мира.",
+      "desc_en": "From pixels to understanding: images, video, 3D, VLMs, and world models.",
       "status": "complete",
       "lessons": [
         {
@@ -979,7 +989,9 @@
       "number": 5,
       "dir": "05-nlp-foundations-to-advanced",
       "name": "NLP: от основ к продвинутому уровню",
+      "name_en": "NLP: Foundations to Advanced",
       "desc": "Язык — интерфейс к интеллекту.",
+      "desc_en": "Language is the interface to intelligence.",
       "status": "complete",
       "lessons": [
         {
@@ -1278,7 +1290,9 @@
       "number": 6,
       "dir": "06-speech-and-audio",
       "name": "Speech & Audio",
+      "name_en": "Speech & Audio",
       "desc": "Слышать, понимать, говорить.",
+      "desc_en": "Hear, understand, speak.",
       "status": "complete",
       "lessons": [
         {
@@ -1457,7 +1471,9 @@
       "number": 7,
       "dir": "07-transformers-deep-dive",
       "name": "Глубокий разбор Transformers",
+      "name_en": "Transformers Deep Dive",
       "desc": "Архитектура, которая изменила все.",
+      "desc_en": "The architecture that changed everything.",
       "status": "complete",
       "lessons": [
         {
@@ -1626,7 +1642,9 @@
       "number": 8,
       "dir": "08-generative-ai",
       "name": "Generative AI",
+      "name_en": "Generative AI",
       "desc": "Создавайте изображения, видео, аудио, 3D и многое другое.",
+      "desc_en": "Create images, video, audio, 3D, and more.",
       "status": "complete",
       "lessons": [
         {
@@ -1785,7 +1803,9 @@
       "number": 9,
       "dir": "09-reinforcement-learning",
       "name": "Reinforcement Learning",
+      "name_en": "Reinforcement Learning",
       "desc": "Основа RLHF и AI для игр.",
+      "desc_en": "The foundation of RLHF and game-playing AI.",
       "status": "complete",
       "lessons": [
         {
@@ -1914,7 +1934,9 @@
       "number": 10,
       "dir": "10-llms-from-scratch",
       "name": "LLM с нуля",
+      "name_en": "LLMs from Scratch",
       "desc": "Стройте, обучайте и понимайте большие языковые модели.",
+      "desc_en": "Build, train, and understand large language models.",
       "status": "complete",
       "lessons": [
         {
@@ -2153,7 +2175,9 @@
       "number": 11,
       "dir": "11-llm-engineering",
       "name": "LLM Engineering",
+      "name_en": "LLM Engineering",
       "desc": "Заставьте LLM работать в production.",
+      "desc_en": "Make LLMs work in production.",
       "status": "complete",
       "lessons": [
         {
@@ -2259,7 +2283,7 @@
         {
           "number": "11",
           "dir": "11-caching-cost",
-          "title": "Кеширование, rate limiting и стоимость",
+          "title": "Кэширование, rate limiting и стоимость",
           "type": "Практика",
           "languages": "Python",
           "status": "complete",
@@ -2332,7 +2356,9 @@
       "number": 12,
       "dir": "12-multimodal-ai",
       "name": "Multimodal AI",
+      "name_en": "Multimodal AI",
       "desc": "Видеть, слышать, читать и рассуждать между модальностями — от ViT patches до computer-use агентов.",
+      "desc_en": "See, hear, read, and reason across modalities — from ViT patches to computer-use agents.",
       "status": "complete",
       "lessons": [
         {
@@ -2591,7 +2617,9 @@
       "number": 13,
       "dir": "13-tools-and-protocols",
       "name": "Инструменты и протоколы",
+      "name_en": "Tools & Protocols",
       "desc": "Интерфейсы между AI и реальным миром.",
+      "desc_en": "The interfaces between AI and the real world.",
       "status": "complete",
       "lessons": [
         {
@@ -2830,7 +2858,9 @@
       "number": 14,
       "dir": "14-agent-engineering",
       "name": "Agent Engineering",
+      "name_en": "Agent Engineering",
       "desc": "Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.",
+      "desc_en": "Build agents from first principles: loop, memory, planning, frameworks, benchmarks, production, workbench.",
       "status": "complete",
       "lessons": [
         {
@@ -3259,7 +3289,9 @@
       "number": 15,
       "dir": "15-autonomous-systems",
       "name": "Автономные системы",
+      "name_en": "Autonomous Systems",
       "desc": "Долгосрочные агенты, self-improvement и стек безопасности 2026 года.",
+      "desc_en": "Long-horizon agents, self-improvement, and the 2026 safety stack.",
       "status": "complete",
       "lessons": [
         {
@@ -3488,7 +3520,9 @@
       "number": 16,
       "dir": "16-multi-agent-and-swarms",
       "name": "Multi-Agent и Swarms",
+      "name_en": "Multi-Agent & Swarms",
       "desc": "Координация, emergence и коллективный интеллект.",
+      "desc_en": "Coordination, emergence, and collective intelligence.",
       "status": "complete",
       "lessons": [
         {
@@ -3747,7 +3781,9 @@
       "number": 17,
       "dir": "17-infrastructure-and-production",
       "name": "Infrastructure и Production",
+      "name_en": "Infrastructure & Production",
       "desc": "Доведите AI до реального мира.",
+      "desc_en": "Take AI to the real world.",
       "status": "complete",
       "lessons": [
         {
@@ -4036,7 +4072,9 @@
       "number": 18,
       "dir": "18-ethics-safety-alignment",
       "name": "Этика, безопасность и alignment",
+      "name_en": "Ethics, Safety & Alignment",
       "desc": "Стройте AI, который помогает человечеству. Это не опция.",
+      "desc_en": "Build AI that helps humanity. It's not optional.",
       "status": "complete",
       "lessons": [
         {
@@ -4345,7 +4383,9 @@
       "number": 19,
       "dir": "19-capstone-projects",
       "name": "Capstone-проекты",
+      "name_en": "Capstone Projects",
       "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
+      "desc_en": "Specs + starter skeletons for end-to-end 2026 products, 20-40 hours of self-guided work each.",
       "status": "complete",
       "lessons": [
         {
@@ -5209,7 +5249,7 @@
         {
           "number": "81",
           "dir": "81-end-to-end-distributed-train",
-          "title": "Распределённое обучение end-to-end",
+          "title": "Распределенное обучение end-to-end",
           "type": "Практика",
           "languages": "Python",
           "status": "complete",

@@ -120,3 +120,8 @@ Each scheduling decision (pick, dispatch, result, prune, fan-out) emits one even
 Three extensions a real implementation will want. First, persistent UCB stats across sessions: the current statistics live in memory; a real scheduler would checkpoint them so a restart preserves the exploration budget already spent. Second, multi-objective scoring: instead of a scalar reward, each result emits a vector and UCB becomes a Pareto-style picker. Third, contextual bandits: the picker conditions on hypothesis features (length, complexity) so similar hypotheses share exploration.
 
 The scheduler is the place where research becomes more than a worklist. Once UCB is wired and the slots run in parallel, every other improvement composes on top.
+
+## Further Reading
+
+- Auer, Cesa-Bianchi, Fischer, "Finite-time Analysis of the Multiarmed Bandit Problem" (2002) — the UCB1 rule.
+- Phase 19 Lesson 55 — the critic loop, Lesson 57 — the end-to-end research demo.

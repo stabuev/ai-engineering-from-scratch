@@ -11,12 +11,12 @@
 
 - Описать actor model: agents как actors, messages как единственный IPC, failure isolation для каждого actor.
 - Назвать три API layers AutoGen v0.4 — Core, AgentChat, Extensions — и назначение каждого.
-- Объяснить, почему decoupling доставки сообщений и обработки даёт fault isolation и natural concurrency.
+- Объяснить, почему decoupling доставки сообщений и обработки дает fault isolation и natural concurrency.
 - Реализовать stdlib actor runtime на Python и перенести на него two-agent code-review flow.
 
 ## Проблема
 
-Большинство agent frameworks синхронны: один agent производит, один agent потребляет, всё внутри call stack. Failures рушат stack. Concurrency прикручена сбоку. Distribution требует переписывания.
+Большинство agent frameworks синхронны: один agent производит, один agent потребляет, все внутри call stack. Failures рушат stack. Concurrency прикручена сбоку. Distribution требует переписывания.
 
 Ответ AutoGen v0.4: actor model. Каждый agent — actor с private inbox. Messages — единственный способ взаимодействия. Runtime отделяет доставку от обработки. Failures изолируются в одном actor. Concurrency встроена нативно. Distribution — просто другой transport.
 
@@ -49,7 +49,7 @@
 ### Topologies
 
 - **RoundRobinGroupChat.** Agents ходят по очереди в fixed rotation.
-- **SelectorGroupChat.** Selector agent выбирает, кто идёт дальше, на основе conversation context.
+- **SelectorGroupChat.** Selector agent выбирает, кто идет дальше, на основе conversation context.
 - **Magentic-One.** Reference multi-agent team для web browsing, code execution, file handling. Построена на AgentChat.
 
 ### Observability
@@ -58,7 +58,7 @@ OpenTelemetry support встроен. Каждый message emits span; tool call
 
 ### Статус: maintenance mode
 
-Начало 2026 года: AutoGen v0.7.x стабилен для research и prototyping. Microsoft перенесла active development в Microsoft Agent Framework (public preview Oct 1 2025; 1.0 GA targeted end of Q1 2026). Паттерны AutoGen чисто переносятся вперёд — actor model является durable idea.
+Начало 2026 года: AutoGen v0.7.x стабилен для research и prototyping. Microsoft перенесла active development в Microsoft Agent Framework (public preview Oct 1 2025; 1.0 GA targeted end of Q1 2026). Паттерны AutoGen чисто переносятся вперед — actor model является durable idea.
 
 ## Соберите это
 

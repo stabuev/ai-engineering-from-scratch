@@ -117,3 +117,8 @@ Read `main.py` top to bottom. The function ordering goes scalar to vector to rep
 ## Going further
 
 Calibration is the most ignored axis in published eval. Most leaderboards report a single accuracy number and call it done. A model that wins on accuracy and loses on Brier is a worse production deployment than a model that scores a few points lower on accuracy but reliably reports its uncertainty. Once you have the calibration plumbing in place, add temperature scaling on a held-out validation slice, recompute ECE, and watch the gap shrink. That is a separate lesson, but the floor lives here.
+
+## Further Reading
+
+- Guo et al., [On Calibration of Modern Neural Networks (arXiv 1706.04599)](https://arxiv.org/abs/1706.04599) — ECE, reliability, and temperature scaling.
+- Phase 19 Lesson 36 — the training loop and held-out eval, Lesson 74 — the leaderboard.

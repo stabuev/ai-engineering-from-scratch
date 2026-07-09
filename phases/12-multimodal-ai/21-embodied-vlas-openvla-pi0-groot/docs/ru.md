@@ -143,7 +143,7 @@ Co-fine-tuning смешивает веб-данные VQA с роботизир�
 | Термин | Как говорят | Что это на самом деле означает |
 |------|-----------------|------------------------|
 | VLA | "Vision-language-action" | Модель, которая принимает image + instruction и выдает action commands |
-| Action tokenization | "Discrete bins" | Квантование непрерывных целевых значений суставов в 256 bins на dim, каждый как vocab ID |
+| Action tokenization | "Discrete bins" | Квантизация непрерывных целевых значений суставов в 256 bins на dim, каждый как vocab ID |
 | FAST tokenizer | "Frequency action tokens" | DCT + quantize для сжатия 30-step trajectories до ~10 tokens |
 | Co-fine-tune | "Mix web + robot" | Обучение на web VQA data вместе с robot demos для сохранения общих знаний |
 | Flow-matching action head | "π0 continuous output" | Небольшой transformer, который выдает 50-step action sequence через rectified flow |
