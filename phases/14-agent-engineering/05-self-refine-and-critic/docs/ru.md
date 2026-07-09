@@ -1,6 +1,6 @@
 # Self-Refine и CRITIC: итеративное улучшение результата
 
-> Self-Refine (Madaan et al., 2023) использует одну LLM в трёх ролях — generate, feedback, refine — в цикле. Средний прирост: +20 absolute на 7 tasks. CRITIC (Gou et al., 2023) усиливает шаг feedback, маршрутизируя verification через внешние инструменты. В 2026 году этот паттерн поставляется в каждом фреймворке как "evaluator-optimizer" (Anthropic) или цикл guardrail (OpenAI Agents SDK).
+> Self-Refine (Madaan et al., 2023) использует одну LLM в трех ролях — generate, feedback, refine — в цикле. Средний прирост: +20 absolute на 7 tasks. CRITIC (Gou et al., 2023) усиливает шаг feedback, маршрутизируя verification через внешние инструменты. В 2026 году этот паттерн поставляется в каждом фреймворке как "evaluator-optimizer" (Anthropic) или цикл guardrail (OpenAI Agents SDK).
 
 **Тип:** Практика
 **Языки:** Python (stdlib)
@@ -10,13 +10,13 @@
 ## Цели обучения
 
 - Сформулировать три промпта Self-Refine (generate, feedback, refine) и объяснить, почему history важна для refine prompt.
-- Объяснить критический insight CRITIC: LLM ненадёжны в self-verification без внешнего grounding.
+- Объяснить критический insight CRITIC: LLM ненадежны в self-verification без внешнего grounding.
 - Реализовать цикл Self-Refine на stdlib с history и optional external verifier.
 - Сопоставить этот паттерн с workflow Anthropic "evaluator-optimizer" и output guardrails в OpenAI Agents SDK.
 
 ## Проблема
 
-Агент выдаёт ответ, который почти правильный. Возможно, в строке кода syntax error. Возможно, summary слишком длинное. Возможно, план пропускает edge case. Нужно, чтобы агент раскритиковал собственный результат, а затем исправил его.
+Агент выдает ответ, который почти правильный. Возможно, в строке кода syntax error. Возможно, summary слишком длинное. Возможно, план пропускает edge case. Нужно, чтобы агент раскритиковал собственный результат, а затем исправил его.
 
 Self-Refine показывает, что это работает с одной моделью, без training data, без RL. Но есть подвох: LLM плохо проверяют сами себя на hard facts. CRITIC предлагает исправление — направить шаг verify через внешние инструменты (search, code interpreter, calculator, test runner).
 
@@ -44,23 +44,23 @@ stop when feedback says "no issues" or budget exhausted.
 
 ### CRITIC (Gou et al., arXiv:2305.11738, v4 Feb 2024)
 
-Слабость Self-Refine: шаг feedback — это LLM, оценивающая саму себя. Для factual claims это ненадёжно (галлюцинация часто выглядит убедительно для модели, которая её произвела). CRITIC заменяет `feedback(task, output)` на `verify(task, output, tools)`, где `tools` включает:
+Слабость Self-Refine: шаг feedback — это LLM, оценивающая саму себя. Для factual claims это ненадежно (галлюцинация часто выглядит убедительно для модели, которая ее произвела). CRITIC заменяет `feedback(task, output)` на `verify(task, output, tools)`, где `tools` включает:
 
 - Search engine для factual claims.
 - Code interpreter для проверки корректности кода.
 - Calculator для arithmetic.
 - Domain-specific verifiers (unit tests, type checkers, linters), то есть доменные проверяющие.
 
-Verifier создаёт структурированную critique, заземлённую на результатах инструментов. Затем refiner учитывает эту critique.
+Verifier создает структурированную critique, заземленную на результатах инструментов. Затем refiner учитывает эту critique.
 
 Главный результат: CRITIC превосходит Self-Refine на factual tasks, потому что critique заземлена. На задачах без внешних verifiers (creative writing, formatting) CRITIC сводится к Self-Refine.
 
 ### Условие остановки
 
-Две распространённые формы:
+Две распространенные формы:
 
 1. **Verifier passes.** Внешний тест возвращает success. Предпочтительно, когда доступно (unit tests, type checker, guardrail assertion).
-2. **No feedback issued.** Модель говорит "the output is fine." Дешевле, но ненадёжно; сочетайте с лимитом итераций.
+2. **No feedback issued.** Модель говорит "the output is fine." Дешевле, но ненадежно; сочетайте с лимитом итераций.
 
 Default 2026 года: комбинировать. "Stop if verifier passes OR model says fine AND iterations >= 2 OR iterations >= max_iterations."
 
@@ -68,8 +68,8 @@ Default 2026 года: комбинировать. "Stop if verifier passes OR m
 
 Пост Anthropic Dec 2024 называет это одним из пяти workflow patterns. Две роли:
 
-- Evaluator: оценивает результат и создаёт critique.
-- Optimizer: перерабатывает результат с учётом critique.
+- Evaluator: оценивает результат и создает critique.
+- Optimizer: перерабатывает результат с учетом critique.
 
 Цикл продолжается, пока evaluator не пропустит результат. Это Self-Refine/CRITIC во framing Anthropic. Критически важная инженерная деталь от Anthropic: промпты evaluator и optimizer должны существенно отличаться, чтобы модель не ставила rubber-stamp.
 
@@ -79,7 +79,7 @@ OpenAI Agents SDK поставляет этот паттерн как "output gu
 
 ### Ловушки 2026 года
 
-- **Rubber-stamp loops.** Одна и та же модель выполняет generation и critique с тем же стилем промпта и сходится к "looks good to me." Используйте структурно разные промпты или более дешёвую маленькую модель для critique.
+- **Rubber-stamp loops.** Одна и та же модель выполняет generation и critique с тем же стилем промпта и сходится к "looks good to me." Используйте структурно разные промпты или более дешевую маленькую модель для critique.
 - **Over-refinement.** Каждый проход refine добавляет latency и токены. Бюджетируйте 1-3 прохода; после этого escalation to human review.
 - **CRITIC on trivial tasks.** Если external verifier отсутствует, CRITIC вырождается в Self-Refine; не платите latency за stub verifier.
 
@@ -92,7 +92,7 @@ OpenAI Agents SDK поставляет этот паттерн как "output gu
 - `generate` — scripted producer.
 - `feedback` — self-critique в стиле LLM.
 - `verify_external` — grounded verifier в стиле CRITIC.
-- `refine` — переписывает output с учётом history.
+- `refine` — переписывает output с учетом history.
 - Stop condition — verifier passes или максимум 4 итерации.
 
 Запустите:
@@ -109,11 +109,11 @@ Evaluator-optimizer Anthropic — это этот паттерн на языке
 
 ## Отгрузите это
 
-`outputs/skill-refine-loop.md` конфигурирует цикл evaluator-optimizer по форме задачи, доступности verifier и бюджету итераций. Выдаёт промпты для generator, evaluator/verifier и optimizer, плюс stop policy.
+`outputs/skill-refine-loop.md` конфигурирует цикл evaluator-optimizer по форме задачи, доступности verifier и бюджету итераций. Выдает промпты для generator, evaluator/verifier и optimizer, плюс stop policy.
 
 ## Упражнения
 
-1. Запустите toy с max_iterations=1. CRITIC всё ещё помогает?
+1. Запустите toy с max_iterations=1. CRITIC все еще помогает?
 2. Замените external verifier на шумный (random 30% false positives). Что делает loop? Это реальность 2026 года для большинства guardrail stacks.
 3. Реализуйте вариант "generator-critic on different models": большая модель генерирует, маленькая критикует. Он превосходит same-model?
 4. Прочитайте CRITIC Section 3 (arXiv:2305.11738 v4). Назовите три категории verification-tool и дайте пример для каждой.
@@ -135,6 +135,6 @@ Evaluator-optimizer Anthropic — это этот паттерн на языке
 ## Дополнительное чтение
 
 - [Madaan et al., Self-Refine (arXiv:2303.17651)](https://arxiv.org/abs/2303.17651) — каноническая статья
-- [Gou et al., CRITIC (arXiv:2305.11738)](https://arxiv.org/abs/2305.11738) — верификация, заземлённая на инструменты
+- [Gou et al., CRITIC (arXiv:2305.11738)](https://arxiv.org/abs/2305.11738) — верификация, заземленная на инструменты
 - [Anthropic, Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — workflow pattern evaluator-optimizer
 - [OpenAI Agents SDK docs](https://openai.github.io/openai-agents-python/) — output guardrails как verifiers в форме CRITIC

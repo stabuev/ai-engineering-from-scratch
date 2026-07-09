@@ -571,7 +571,7 @@ the agent went wrong and explain why...
 | 08 | [Fine-tuning с LoRA и QLoRA](phases/11-llm-engineering/08-fine-tuning-lora/) | Практика | Python |
 | 09 | [Function calling и использование инструментов](phases/11-llm-engineering/09-function-calling/) | Практика | Python |
 | 10 | [Оценка и тестирование](phases/11-llm-engineering/10-evaluation/) | Практика | Python |
-| 11 | [Кеширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost/) | Практика | Python |
+| 11 | [Кэширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost/) | Практика | Python |
 | 12 | [Guardrails и безопасность](phases/11-llm-engineering/12-guardrails/) | Практика | Python |
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app/) | Практика | Python |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol/) | Практика | Python |
@@ -923,7 +923,7 @@ the agent went wrong and explain why...
 | 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding/) | H. Distributed train | Python |
 | 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel/) | H. Distributed train | Python |
 | 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume/) | H. Distributed train | Python |
-| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train/) | H. Distributed train | Python |
+| 81 | [Распределенное обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train/) | H. Distributed train | Python |
 | 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy/) | I. Safety harness | Python |
 | 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector/) | I. Safety harness | Python |
 | 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation/) | I. Safety harness | Python |

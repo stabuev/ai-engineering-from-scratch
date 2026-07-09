@@ -22,7 +22,7 @@
         "FFT имеет O(log N), DFT имеет O(N)"
       ],
       "correct": 1,
-      "explanation": "Прямой DFT вычисляет N выходов, каждый суммирует по N входам: O(N^2). Cooley-Tukey FFT рекурсивно делит сигнал на чётную/нечётную половины, выполняя O(N) работы на каждом из log2(N) уровней, что даёт O(N log N). Для N = 1 million это 20 million против 1 trillion операций."
+      "explanation": "Прямой DFT вычисляет N выходов, каждый суммирует по N входам: O(N^2). Cooley-Tukey FFT рекурсивно делит сигнал на четную/нечетную половины, выполняя O(N) работы на каждом из log2(N) уровней, что дает O(N log N). Для N = 1 million это 20 million против 1 trillion операций."
     },
     {
       "stage": "post",
@@ -34,7 +34,7 @@
         "Convolution и correlation — идентичные операции"
       ],
       "correct": 1,
-      "explanation": "Convolution theorem утверждает, что свёртка во time domain равна поэлементному умножению во frequency domain: x * h = IFFT(FFT(x) . FFT(h)). Поэтому FFT-based convolution имеет O(N log N) вместо O(N*M) для больших kernels."
+      "explanation": "Convolution theorem утверждает, что свертка во time domain равна поэлементному умножению во frequency domain: x * h = IFFT(FFT(x) . FFT(h)). Поэтому FFT-based convolution имеет O(N log N) вместо O(N*M) для больших kernels."
     },
     {
       "stage": "post",
@@ -50,15 +50,15 @@
     },
     {
       "stage": "post",
-      "question": "Почему в оригинальных sinusoidal positional encodings Transformer разным парам измерений назначены геометрически разнесённые frequencies?",
+      "question": "Почему в оригинальных sinusoidal positional encodings Transformer разным парам измерений назначены геометрически разнесенные frequencies?",
       "options": [
         "Это снижает вычислительную стоимость attention",
-        "Каждая frequency даёт разное разрешение — high frequencies кодируют точную позицию, low frequencies кодируют грубую позицию, давая каждой позиции уникальный отпечаток",
+        "Каждая frequency дает разное разрешение — high frequencies кодируют точную позицию, low frequencies кодируют грубую позицию, давая каждой позиции уникальный отпечаток",
         "Geometric spacing требуется алгоритмом FFT",
         "Это гарантирует, что все encoding values находятся между 0 и 1"
       ],
       "correct": 1,
-      "explanation": "High-frequency dimensions быстро меняются с позицией (тонкое разрешение), а low-frequency dimensions меняются медленно (грубое разрешение). Вместе multi-frequency encoding даёт каждой позиции уникальный pattern — похоже на то, как Fourier coefficients uniquely identify a signal."
+      "explanation": "High-frequency dimensions быстро меняются с позицией (тонкое разрешение), а low-frequency dimensions меняются медленно (грубое разрешение). Вместе multi-frequency encoding дает каждой позиции уникальный pattern — похоже на то, как Fourier coefficients uniquely identify a signal."
     }
   ]
 }

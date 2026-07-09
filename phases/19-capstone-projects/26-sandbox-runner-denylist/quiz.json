@@ -31,7 +31,7 @@
       "question": "SandboxResult вернулся с denied=True, timed_out=False, exit_code=-100. Каноническая интерпретация?",
       "options": [
         "Subprocess стартовал и был убит SIGKILL.",
-        "Sandbox не породил subprocess; вызов был отклонён до exec.",
+        "Sandbox не породил subprocess; вызов был отклонен до exec.",
         "Subprocess явно вернул -100.",
         "Сработал wall-clock-таймаут."
       ],

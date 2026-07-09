@@ -1,6 +1,6 @@
 # Tool Use и Function Calling
 
-> Toolformer (Schick et al., 2023) начал self-supervised tool annotation. Berkeley Function Calling Leaderboard V4 (Patil et al., 2025) задаёт планку 2026 года: 40% agentic, 30% multi-turn, 10% live, 10% non-live, 10% hallucination. Single-turn решён. Memory, dynamic decision-making и long-horizon tool chains — нет.
+> Toolformer (Schick et al., 2023) начал self-supervised tool annotation. Berkeley Function Calling Leaderboard V4 (Patil et al., 2025) задает планку 2026 года: 40% agentic, 30% multi-turn, 10% live, 10% non-live, 10% hallucination. Single-turn решен. Memory, dynamic decision-making и long-horizon tool chains — нет.
 
 **Тип:** Практика
 **Языки:** Python (stdlib)
@@ -28,7 +28,7 @@ Toolformer установил baseline: модели могут учиться, 
 
 Покрытые tools: calculator, QA system, search engines, translator, calendar. Self-supervision signal полностью о том, помогает ли tool предсказывать текст — без human labels.
 
-Результат масштабирования: tool use появляется на масштабе. Smaller models страдают от tool annotations; larger models выигрывают. Поэтому frontier models 2026 года имеют сильный tool use baked in, а большинству 7B models нужен явный tool-use fine-tuning, чтобы быть надёжными.
+Результат масштабирования: tool use появляется на масштабе. Smaller models страдают от tool annotations; larger models выигрывают. Поэтому frontier models 2026 года имеют сильный tool use baked in, а большинству 7B models нужен явный tool-use fine-tuning, чтобы быть надежными.
 
 ### Berkeley Function Calling Leaderboard V4 (Patil et al., ICML 2025)
 
@@ -40,9 +40,9 @@ BFCL — de facto evaluation 2026 года. Состав V4:
 - **Non-Live (10%)** — синтетические тестовые случаи.
 - **Hallucination (10%)** — определить, когда не нужно вызывать ни один tool.
 
-V3 ввёл state-based evaluation: после tool sequence проверять фактическое состояние API (например, "is the file created?"), а не match AST tool calls. V4 добавил категории web search, memory и format sensitivity.
+V3 ввел state-based evaluation: после tool sequence проверять фактическое состояние API (например, "is the file created?"), а не match AST tool calls. V4 добавил категории web search, memory и format sensitivity.
 
-Ключевой finding 2026 года: single-turn function calling почти решён. Сбои концентрируются в memory (перенос контекста между turns), dynamic decision-making (выбор tools на основе предыдущих результатов), long-horizon chains (drift after 20+ steps) и hallucination detection (отказ от вызова, когда не подходит ни один tool).
+Ключевой finding 2026 года: single-turn function calling почти решен. Сбои концентрируются в memory (перенос контекста между turns), dynamic decision-making (выбор tools на основе предыдущих результатов), long-horizon chains (drift after 20+ steps) и hallucination detection (отказ от вызова, когда не подходит ни один tool).
 
 ### Схема инструмента
 
@@ -61,7 +61,7 @@ Anthropic использует `input_schema` напрямую. OpenAI испо�
 Не доверяйте ни одному tool call. Валидируйте:
 
 1. **Type coercion.** Модель может вернуть строку "5" там, где schema требует int. Приводите тип, если это однозначно; иначе отклоняйте.
-2. **Enum validation.** Если schema говорит `status in {"open", "closed"}`, а модель выдаёт `"in_progress"`, отклоняйте с понятной ошибкой.
+2. **Enum validation.** Если schema говорит `status in {"open", "closed"}`, а модель выдает `"in_progress"`, отклоняйте с понятной ошибкой.
 3. **Required fields.** Отсутствующее обязательное поле -> немедленное error observation обратно модели, а не crash.
 4. **Format validation.** Даты, emails, URLs — валидируйте конкретными парсерами, а не regex.
 
@@ -71,7 +71,7 @@ Anthropic использует `input_schema` напрямую. OpenAI испо�
 
 Современные providers поддерживают parallel tool calls в одном assistant turn. Цикл:
 
-1. Модель выдаёт 3 tool calls с разными `tool_use_id`.
+1. Модель выдает 3 tool calls с разными `tool_use_id`.
 2. Runtime выполняет их (параллельно, если они независимы).
 3. Каждый результат возвращается как блок `tool_result`, связанный через `tool_use_id`.
 

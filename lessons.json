@@ -2283,7 +2283,7 @@
         {
           "number": "11",
           "dir": "11-caching-cost",
-          "title": "Кеширование, rate limiting и стоимость",
+          "title": "Кэширование, rate limiting и стоимость",
           "type": "Практика",
           "languages": "Python",
           "status": "complete",
@@ -5249,7 +5249,7 @@
         {
           "number": "81",
           "dir": "81-end-to-end-distributed-train",
-          "title": "Распределённое обучение end-to-end",
+          "title": "Распределенное обучение end-to-end",
           "type": "Практика",
           "languages": "Python",
           "status": "complete",

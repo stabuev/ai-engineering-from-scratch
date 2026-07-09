@@ -2294,7 +2294,7 @@ const PHASES = [
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/10-evaluation/"
       },
       {
-        "name": "Кеширование, rate limiting и стоимость",
+        "name": "Кэширование, rate limiting и стоимость",
         "name_en": "Caching, Rate Limiting & Cost Optimization",
         "status": "complete",
         "type": "Практика",
@@ -5268,7 +5268,7 @@ const PHASES = [
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/80-checkpoint-sharded-resume/"
       },
       {
-        "name": "Распределённое обучение end-to-end",
+        "name": "Распределенное обучение end-to-end",
         "name_en": "End-to-End Distributed Training",
         "status": "complete",
         "type": "Практика",

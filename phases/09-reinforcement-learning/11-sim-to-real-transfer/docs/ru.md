@@ -10,7 +10,7 @@
 ## Цели обучения
 
 - Объяснять reality gap и почему политика, обученная только в симуляторе, может его запомнить.
-- Обучать политику с domain randomization и оценивать её zero-shot перенос.
+- Обучать политику с domain randomization и оценивать ее zero-shot перенос.
 - Различать domain randomization, domain adaptation и system identification.
 
 ## Проблема

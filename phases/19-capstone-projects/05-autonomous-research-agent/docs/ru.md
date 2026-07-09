@@ -79,7 +79,7 @@ seed idea + domain
 
 1. **Seed and domain scoping.** Возьмите seed idea, например "investigate sparsity patterns in attention maps of sub-1B transformers". Определите search space: models, datasets, compute budget.
 
-2. **Literature pass.** Запросите в Semantic Scholar + OpenAlex 50 наиболее цитируемых релевантных статей; закешируйте abstracts локально; сгенерируйте 1-page domain digest.
+2. **Literature pass.** Запросите в Semantic Scholar + OpenAlex 50 наиболее цитируемых релевантных статей; закэшируйте abstracts локально; сгенерируйте 1-page domain digest.
 
 3. **Tree scaffolding.** Инициализируйте root с seed hypothesis. Реализуйте `expand(node) -> children` с small-edit proposals (одно изменение config на дочерний узел). Реализуйте `score(node)` как взвешенный член novelty × quality × budget.
 

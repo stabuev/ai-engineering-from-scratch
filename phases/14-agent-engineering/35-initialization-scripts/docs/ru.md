@@ -80,7 +80,7 @@ python3 code/main.py
 
 **Lock files with TTL.** Пишите `prereqs.lock` после первого успешного probe pass. Последующие runs доверяют lock N часов (default 24h) и пропускают дорогие probes. Init script сначала читает lock; если он fresh и hash dependency manifest совпадает, он short-circuits. Это тот же паттерн, который Docker использует для layer caches: idempotent probe + content hash = skip.
 
-**No network, no LLM, no surprises in the hot path.** Init probes — deterministic plumbing. Probe, который вызывает LLM для классификации failure или ходит во внешний service проверить license, — не probe, а workflow. Если probe в dry run занимает больше трех секунд, считайте это workbench smell и вынесите его из init или закешируйте result.
+**No network, no LLM, no surprises in the hot path.** Init probes — deterministic plumbing. Probe, который вызывает LLM для классификации failure или ходит во внешний service проверить license, — не probe, а workflow. Если probe в dry run занимает больше трех секунд, считайте это workbench smell и вынесите его из init или закэшируйте result.
 
 ## Используйте это
 

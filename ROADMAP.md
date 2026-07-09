@@ -282,7 +282,7 @@
 | 08 | [Fine-tuning с LoRA и QLoRA](phases/11-llm-engineering/08-fine-tuning-lora) | ✅ | ✓ | ~75 мин |
 | 09 | [Function calling и использование инструментов](phases/11-llm-engineering/09-function-calling) | ✅ | ✓ | ~75 мин |
 | 10 | [Оценка и тестирование](phases/11-llm-engineering/10-evaluation) | ✅ | ✓ | ~45 мин |
-| 11 | [Кеширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost) | ✅ | ✓ | ~45 мин |
+| 11 | [Кэширование, rate limiting и стоимость](phases/11-llm-engineering/11-caching-cost) | ✅ | ✓ | ~45 мин |
 | 12 | [Guardrails и безопасность](phases/11-llm-engineering/12-guardrails) | ✅ | ✓ | ~45 мин |
 | 13 | [Создание production LLM-приложения](phases/11-llm-engineering/13-production-app) | ✅ | ✓ | ~120 мин |
 | 14 | [Model Context Protocol (MCP)](phases/11-llm-engineering/14-model-context-protocol) | ✅ | ✓ | ~75 мин |
@@ -602,7 +602,7 @@
 | 78 | [ZeRO: шардирование состояния оптимизатора](phases/19-capstone-projects/78-zero-parameter-sharding) | ✅ | ✓ | ~2 ч |
 | 79 | [Pipeline parallelism и анализ bubble](phases/19-capstone-projects/79-pipeline-parallel) | ✅ | ✓ | ~2 ч |
 | 80 | [Шардированные чекпоинты и атомарный resume](phases/19-capstone-projects/80-checkpoint-sharded-resume) | ✅ | ✓ | ~2 ч |
-| 81 | [Распределённое обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train) | ✅ | ✓ | ~2 ч |
+| 81 | [Распределенное обучение end-to-end](phases/19-capstone-projects/81-end-to-end-distributed-train) | ✅ | ✓ | ~2 ч |
 | 82 | [Таксономия джейлбрейков](phases/19-capstone-projects/82-jailbreak-taxonomy) | ✅ | ✓ | ~2 ч |
 | 83 | [Детектор prompt injection](phases/19-capstone-projects/83-prompt-injection-detector) | ✅ | ✓ | ~2 ч |
 | 84 | [Оценка отказов](phases/19-capstone-projects/84-refusal-evaluation) | ✅ | ✓ | ~2 ч |
