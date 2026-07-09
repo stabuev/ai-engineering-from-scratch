@@ -35,7 +35,8 @@ const GLOSSARY_PATH = path.join(REPO_ROOT, 'glossary', 'terms.md');
 const GLOSSARY_RU_PATH = path.join(REPO_ROOT, 'glossary', 'terms.ru.md');
 const DATA_PATH = path.join(__dirname, 'data.js');
 const LESSON_TEMPLATE_PATH = path.join(__dirname, 'lesson-template.html');
-const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html']
+// app.js is here too: the landing page's I18N strings carry lesson counts.
+const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html', 'app.js']
   .map(f => path.join(__dirname, f));
 const SKILL_COUNT_PAGES = [
   path.join(REPO_ROOT, '.claude', 'skills', 'find-your-level', 'SKILL.md'),
@@ -92,6 +93,12 @@ function hoursLabel(hours) {
   const rounded = Math.round(hours * 10) / 10;
   const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
   return `${text} ${ruPlural(rounded, 'час', 'часа', 'часов')}`;
+}
+
+// «502 урока», «501 урок», «505 уроков» — счетчики в заголовках и метатегах
+// склоняются, а не всегда пишутся «уроков».
+function lessonCountLabel(n) {
+  return `${n} ${ruPlural(n, 'урок', 'урока', 'уроков')}`;
 }
 
 function lessonRel(phase, lesson) {
@@ -582,14 +589,14 @@ function readmeTable(phase) {
 function renderReadme(content, manifest, stats) {
   let out = content;
 
-  // Badge + headline counters
+  // Badge + headline counters (noun declined via lessonCountLabel)
   out = out.replace(/lessons-\d+-3553ff/, `lessons-${stats.total}-3553ff`);
-  out = out.replace(/alt="\d+ уроков"/, `alt="${stats.total} уроков"`);
+  out = out.replace(/alt="\d+ урок(?:а|ов)?"/, `alt="${lessonCountLabel(stats.total)}"`);
   out = out.replace(
-    /\d+ уроков\. 20 фаз\. ~\d+ часов[^.\n]*\./,
-    `${stats.total} уроков. 20 фаз. ~${Math.round(stats.lessonHours)} часов уроков + ~${Math.round(stats.capstoneHours)} часов capstone-проектов.`
+    /\d+ урок(?:а|ов)?\. 20 фаз\. ~\d+ часов[^.\n]*\./,
+    `${lessonCountLabel(stats.total)}. 20 фаз. ~${Math.round(stats.lessonHours)} часов уроков + ~${Math.round(stats.capstoneHours)} часов capstone-проектов.`
   );
-  out = out.replace(/20 фаз, \d+ уроков/, `20 фаз, ${stats.total} уроков`);
+  out = out.replace(/20 фаз, \d+ урок(?:а|ов)?(?![а-яё])/, `20 фаз, ${lessonCountLabel(stats.total)}`);
   out = out.replace(/портфолио из \d+ артефактов/, `портфолио из ${stats.artifacts} артефактов`);
 
   // "С чего начать" — cumulative lesson hours from the entry phase (no capstones)
@@ -680,7 +687,7 @@ function renderRoadmap(content, manifest, stats) {
 
   out = out.replace(
     /^\*\*Итого:.*\*\*$/m,
-    `**Итого: 20 фаз, ${stats.total} уроков | ${stats.complete} завершено | ~${Math.round(stats.totalHours)} часов по оценке (включая capstone-проекты)**`
+    `**Итого: 20 фаз, ${lessonCountLabel(stats.total)} | ${stats.complete} завершено | ~${Math.round(stats.totalHours)} часов по оценке (включая capstone-проекты)**`
   );
 
   return out;
@@ -688,8 +695,15 @@ function renderRoadmap(content, manifest, stats) {
 
 // ─── site/*.html lesson counters ─────────────────────────────────────
 function renderHtmlCounts(content, stats) {
-  // No trailing \b: JS ASCII word boundaries do not work after Cyrillic letters.
-  return content.replace(/\b\d+(?=( AI engineering)? (lessons|уроков)(?![A-Za-zа-яё]))/g, String(stats.total));
+  const n = stats.total;
+  // English counters: replace the number only.
+  let out = content.replace(/\b\d+(?=( AI engineering)? lessons(?![A-Za-z]))/g, String(n));
+  // Russian counters: replace the number together with the declined noun
+  // («502 урока», «501 урок», «505 уроков»). After «из»/«для» the genitive
+  // plural «уроков» is correct for any count, so only the number changes.
+  out = out.replace(/(из |для )\d+ уроков/g, `$1${n} уроков`);
+  out = out.replace(/(?<!из )(?<!для )\b\d+ урок(?:а|ов)?(?![а-яёА-ЯЁA-Za-z])/g, lessonCountLabel(n));
+  return out;
 }
 
 // ─── agent skill lesson counters ─────────────────────────────────────
@@ -1000,8 +1014,8 @@ const SERVICE_PAGES = [
     ruTitle: 'Каталог уроков - AI Engineering from Scratch',
     ruDescription: 'Полный каталог из 502 уроков по AI Engineering. Поиск, фильтрация и сортировка всех уроков во всех 20 фазах.',
     ruOgTitle: 'Каталог · AI Engineering from Scratch',
-    ruOgDescription: 'Ищите и фильтруйте 502 уроков в 20 фазах. Python, TypeScript, Rust, Julia.',
-    ruTwDescription: 'Ищите и фильтруйте 502 уроков в 20 фазах.',
+    ruOgDescription: 'Ищите и фильтруйте 502 урока в 20 фазах. Python, TypeScript, Rust, Julia.',
+    ruTwDescription: 'Ищите и фильтруйте 502 урока в 20 фазах.',
   },
   {
     file: 'index.html',
