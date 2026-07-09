@@ -58,3 +58,6 @@ mlruns/
 # (every directory under site/ except assets/ is generated)
 site/*/
 !site/assets/
+
+# Local Stefania inter-session memory digests — not part of the course repo
+knowledge-base/
