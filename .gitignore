@@ -53,3 +53,8 @@ mlruns/
 *.bin
 *.h5
 .gstack/
+
+# Prerendered lesson pages — deploy artifacts built by site/build.js
+# (every directory under site/ except assets/ is generated)
+site/*/
+!site/assets/

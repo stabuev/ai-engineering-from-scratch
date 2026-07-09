@@ -978,18 +978,8 @@
       /* Вычислить точный URL дерева GitHub через стандартную slug-логику */
       var phaseGithubUrl = 'https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/' + extractPhaseSlug(phase);
 
-      /* Найти первый доступный для чтения урок для кнопки чтения */
-      var readLink = '';
-      var lessonsArray = Array.isArray(phase.lessons) ? phase.lessons : [];
-      for (var li = 0; li < lessonsArray.length; li++) {
-        var lesson = lessonsArray[li];
-        if (!lesson.url) continue;
-        var pm = lesson.url.match(/(phases\/[^/]+\/[^/]+)\/?$/);
-        if (pm) {
-          readLink = 'lesson.html?path=' + encodeURI(pm[1]);
-          break;
-        }
-      }
+      /* Ссылка чтения ведет на хаб фазы (пререндеренный список уроков) */
+      var readLink = phase.slug ? phase.slug + '/' : '';
 
       var ancestorCount   = Object.keys(ancestors).length;
       var descendantCount = Object.keys(descendants).length;

@@ -6,12 +6,16 @@ const PHASES = [
     "name": "Настройка и инструменты",
     "status": "complete",
     "desc": "Подготовьте среду для всего, что будет дальше.",
+    "dir": "00-setup-and-tooling",
+    "slug": "setup-and-tooling",
     "lessons": [
       {
         "name": "Среда разработки",
         "status": "complete",
         "type": "Практика",
         "lang": "Python, TypeScript, Rust",
+        "path": "phases/00-setup-and-tooling/01-dev-environment",
+        "slug": "setup-and-tooling/dev-environment",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/01-dev-environment/"
       },
       {
@@ -19,6 +23,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/00-setup-and-tooling/02-git-and-collaboration",
+        "slug": "setup-and-tooling/git-and-collaboration",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/02-git-and-collaboration/"
       },
       {
@@ -26,6 +32,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/03-gpu-setup-and-cloud",
+        "slug": "setup-and-tooling/gpu-setup-and-cloud",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/03-gpu-setup-and-cloud/"
       },
       {
@@ -33,6 +41,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python, TypeScript",
+        "path": "phases/00-setup-and-tooling/04-apis-and-keys",
+        "slug": "setup-and-tooling/apis-and-keys",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/04-apis-and-keys/"
       },
       {
@@ -40,6 +50,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/05-jupyter-notebooks",
+        "slug": "setup-and-tooling/jupyter-notebooks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/05-jupyter-notebooks/"
       },
       {
@@ -47,6 +59,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/06-python-environments",
+        "slug": "setup-and-tooling/python-environments",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/06-python-environments/"
       },
       {
@@ -54,6 +68,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/07-docker-for-ai",
+        "slug": "setup-and-tooling/docker-for-ai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/07-docker-for-ai/"
       },
       {
@@ -61,6 +77,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "—",
+        "path": "phases/00-setup-and-tooling/08-editor-setup",
+        "slug": "setup-and-tooling/editor-setup",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/08-editor-setup/"
       },
       {
@@ -68,6 +86,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/09-data-management",
+        "slug": "setup-and-tooling/data-management",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/09-data-management/"
       },
       {
@@ -75,6 +95,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/00-setup-and-tooling/10-terminal-and-shell",
+        "slug": "setup-and-tooling/terminal-and-shell",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/10-terminal-and-shell/"
       },
       {
@@ -82,6 +104,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/00-setup-and-tooling/11-linux-for-ai",
+        "slug": "setup-and-tooling/linux-for-ai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/11-linux-for-ai/"
       },
       {
@@ -89,6 +113,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/00-setup-and-tooling/12-debugging-and-profiling",
+        "slug": "setup-and-tooling/debugging-and-profiling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/00-setup-and-tooling/12-debugging-and-profiling/"
       }
     ]
@@ -98,12 +124,16 @@ const PHASES = [
     "name": "Математические основы",
     "status": "complete",
     "desc": "Интуиция за каждым AI-алгоритмом через код.",
+    "dir": "01-math-foundations",
+    "slug": "math-foundations",
     "lessons": [
       {
         "name": "Интуиция линейной алгебры",
         "status": "complete",
         "type": "Теория",
         "lang": "Python, Julia",
+        "path": "phases/01-math-foundations/01-linear-algebra-intuition",
+        "slug": "math-foundations/linear-algebra-intuition",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/01-linear-algebra-intuition/"
       },
       {
@@ -111,6 +141,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
+        "path": "phases/01-math-foundations/02-vectors-matrices-operations",
+        "slug": "math-foundations/vectors-matrices-operations",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/02-vectors-matrices-operations/"
       },
       {
@@ -118,6 +150,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
+        "path": "phases/01-math-foundations/03-matrix-transformations",
+        "slug": "math-foundations/matrix-transformations",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/03-matrix-transformations/"
       },
       {
@@ -125,6 +159,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/01-math-foundations/04-calculus-for-ml",
+        "slug": "math-foundations/calculus-for-ml",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/04-calculus-for-ml/"
       },
       {
@@ -132,6 +168,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/05-chain-rule-and-autodiff",
+        "slug": "math-foundations/chain-rule-and-autodiff",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/05-chain-rule-and-autodiff/"
       },
       {
@@ -139,6 +177,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/01-math-foundations/06-probability-and-distributions",
+        "slug": "math-foundations/probability-and-distributions",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/06-probability-and-distributions/"
       },
       {
@@ -146,6 +186,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/07-bayes-theorem",
+        "slug": "math-foundations/bayes-theorem",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/07-bayes-theorem/"
       },
       {
@@ -153,6 +195,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/08-optimization",
+        "slug": "math-foundations/optimization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/08-optimization/"
       },
       {
@@ -160,6 +204,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/01-math-foundations/09-information-theory",
+        "slug": "math-foundations/information-theory",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/09-information-theory/"
       },
       {
@@ -167,6 +213,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/10-dimensionality-reduction",
+        "slug": "math-foundations/dimensionality-reduction",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/10-dimensionality-reduction/"
       },
       {
@@ -174,6 +222,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python, Julia",
+        "path": "phases/01-math-foundations/11-singular-value-decomposition",
+        "slug": "math-foundations/singular-value-decomposition",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/11-singular-value-decomposition/"
       },
       {
@@ -181,6 +231,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/12-tensor-operations",
+        "slug": "math-foundations/tensor-operations",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/12-tensor-operations/"
       },
       {
@@ -188,6 +240,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/13-numerical-stability",
+        "slug": "math-foundations/numerical-stability",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/13-numerical-stability/"
       },
       {
@@ -195,6 +249,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/14-norms-and-distances",
+        "slug": "math-foundations/norms-and-distances",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/14-norms-and-distances/"
       },
       {
@@ -202,6 +258,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/15-statistics-for-ml",
+        "slug": "math-foundations/statistics-for-ml",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/15-statistics-for-ml/"
       },
       {
@@ -209,6 +267,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/16-sampling-methods",
+        "slug": "math-foundations/sampling-methods",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/16-sampling-methods/"
       },
       {
@@ -216,6 +276,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/17-linear-systems",
+        "slug": "math-foundations/linear-systems",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/17-linear-systems/"
       },
       {
@@ -223,6 +285,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/18-convex-optimization",
+        "slug": "math-foundations/convex-optimization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/18-convex-optimization/"
       },
       {
@@ -230,6 +294,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/01-math-foundations/19-complex-numbers",
+        "slug": "math-foundations/complex-numbers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/19-complex-numbers/"
       },
       {
@@ -237,6 +303,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/20-fourier-transform",
+        "slug": "math-foundations/fourier-transform",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/20-fourier-transform/"
       },
       {
@@ -244,6 +312,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/01-math-foundations/21-graph-theory",
+        "slug": "math-foundations/graph-theory",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/21-graph-theory/"
       },
       {
@@ -251,6 +321,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/01-math-foundations/22-stochastic-processes",
+        "slug": "math-foundations/stochastic-processes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/01-math-foundations/22-stochastic-processes/"
       }
     ]
@@ -260,12 +332,16 @@ const PHASES = [
     "name": "Основы ML",
     "status": "complete",
     "desc": "Классический ML все еще остается основой большей части production AI.",
+    "dir": "02-ml-fundamentals",
+    "slug": "ml-fundamentals",
     "lessons": [
       {
         "name": "Что такое машинное обучение",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/01-what-is-machine-learning",
+        "slug": "ml-fundamentals/what-is-machine-learning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/01-what-is-machine-learning/"
       },
       {
@@ -273,6 +349,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/02-linear-regression",
+        "slug": "ml-fundamentals/linear-regression",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/02-linear-regression/"
       },
       {
@@ -280,6 +358,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/03-logistic-regression",
+        "slug": "ml-fundamentals/logistic-regression",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/03-logistic-regression/"
       },
       {
@@ -287,6 +367,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/04-decision-trees",
+        "slug": "ml-fundamentals/decision-trees",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/04-decision-trees/"
       },
       {
@@ -294,6 +376,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/05-support-vector-machines",
+        "slug": "ml-fundamentals/support-vector-machines",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/05-support-vector-machines/"
       },
       {
@@ -301,6 +385,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/06-knn-and-distances",
+        "slug": "ml-fundamentals/knn-and-distances",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/06-knn-and-distances/"
       },
       {
@@ -308,6 +394,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/07-unsupervised-learning",
+        "slug": "ml-fundamentals/unsupervised-learning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/07-unsupervised-learning/"
       },
       {
@@ -315,6 +403,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/08-feature-engineering",
+        "slug": "ml-fundamentals/feature-engineering",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/08-feature-engineering/"
       },
       {
@@ -322,6 +412,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/09-model-evaluation",
+        "slug": "ml-fundamentals/model-evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/09-model-evaluation/"
       },
       {
@@ -329,6 +421,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/10-bias-variance",
+        "slug": "ml-fundamentals/bias-variance",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/10-bias-variance/"
       },
       {
@@ -336,6 +430,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/11-ensemble-methods",
+        "slug": "ml-fundamentals/ensemble-methods",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/11-ensemble-methods/"
       },
       {
@@ -343,6 +439,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/12-hyperparameter-tuning",
+        "slug": "ml-fundamentals/hyperparameter-tuning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/12-hyperparameter-tuning/"
       },
       {
@@ -350,6 +448,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/13-ml-pipelines",
+        "slug": "ml-fundamentals/ml-pipelines",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/13-ml-pipelines/"
       },
       {
@@ -357,6 +457,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/14-naive-bayes",
+        "slug": "ml-fundamentals/naive-bayes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/14-naive-bayes/"
       },
       {
@@ -364,6 +466,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/15-time-series",
+        "slug": "ml-fundamentals/time-series",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/15-time-series/"
       },
       {
@@ -371,6 +475,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/16-anomaly-detection",
+        "slug": "ml-fundamentals/anomaly-detection",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/16-anomaly-detection/"
       },
       {
@@ -378,6 +484,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/17-imbalanced-data",
+        "slug": "ml-fundamentals/imbalanced-data",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/17-imbalanced-data/"
       },
       {
@@ -385,6 +493,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/02-ml-fundamentals/18-feature-selection",
+        "slug": "ml-fundamentals/feature-selection",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/02-ml-fundamentals/18-feature-selection/"
       }
     ]
@@ -394,12 +504,16 @@ const PHASES = [
     "name": "Ядро deep learning",
     "status": "complete",
     "desc": "Нейросети с первых принципов. Никаких фреймворков, пока вы не соберете свой.",
+    "dir": "03-deep-learning-core",
+    "slug": "deep-learning-core",
     "lessons": [
       {
         "name": "Перцептрон: с чего все началось",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/01-the-perceptron",
+        "slug": "deep-learning-core/the-perceptron",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/01-the-perceptron/"
       },
       {
@@ -407,6 +521,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/02-multi-layer-networks",
+        "slug": "deep-learning-core/multi-layer-networks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/02-multi-layer-networks/"
       },
       {
@@ -414,6 +530,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/03-backpropagation",
+        "slug": "deep-learning-core/backpropagation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/03-backpropagation/"
       },
       {
@@ -421,6 +539,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/04-activation-functions",
+        "slug": "deep-learning-core/activation-functions",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/04-activation-functions/"
       },
       {
@@ -428,6 +548,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/05-loss-functions",
+        "slug": "deep-learning-core/loss-functions",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/05-loss-functions/"
       },
       {
@@ -435,6 +557,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/06-optimizers",
+        "slug": "deep-learning-core/optimizers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/06-optimizers/"
       },
       {
@@ -442,6 +566,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/07-regularization",
+        "slug": "deep-learning-core/regularization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/07-regularization/"
       },
       {
@@ -449,6 +575,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/08-weight-initialization",
+        "slug": "deep-learning-core/weight-initialization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/08-weight-initialization/"
       },
       {
@@ -456,6 +584,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/09-learning-rate-schedules",
+        "slug": "deep-learning-core/learning-rate-schedules",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/09-learning-rate-schedules/"
       },
       {
@@ -463,6 +593,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/10-mini-framework",
+        "slug": "deep-learning-core/mini-framework",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/10-mini-framework/"
       },
       {
@@ -470,6 +602,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/11-intro-to-pytorch",
+        "slug": "deep-learning-core/intro-to-pytorch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/11-intro-to-pytorch/"
       },
       {
@@ -477,6 +611,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/12-intro-to-jax",
+        "slug": "deep-learning-core/intro-to-jax",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/12-intro-to-jax/"
       },
       {
@@ -484,6 +620,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/03-deep-learning-core/13-debugging-neural-networks",
+        "slug": "deep-learning-core/debugging-neural-networks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/03-deep-learning-core/13-debugging-neural-networks/"
       }
     ]
@@ -493,12 +631,16 @@ const PHASES = [
     "name": "Computer Vision",
     "status": "complete",
     "desc": "От пикселей к пониманию: изображения, видео, 3D, VLM и модели мира.",
+    "dir": "04-computer-vision",
+    "slug": "computer-vision",
     "lessons": [
       {
         "name": "Основы изображений: пиксели, каналы, цветовые пространства",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/04-computer-vision/01-image-fundamentals",
+        "slug": "computer-vision/image-fundamentals",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/01-image-fundamentals/"
       },
       {
@@ -506,6 +648,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/02-convolutions-from-scratch",
+        "slug": "computer-vision/convolutions-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/02-convolutions-from-scratch/"
       },
       {
@@ -513,6 +657,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/03-cnns-lenet-to-resnet",
+        "slug": "computer-vision/cnns-lenet-to-resnet",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/03-cnns-lenet-to-resnet/"
       },
       {
@@ -520,6 +666,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/04-image-classification",
+        "slug": "computer-vision/image-classification",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/04-image-classification/"
       },
       {
@@ -527,6 +675,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/05-transfer-learning",
+        "slug": "computer-vision/transfer-learning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/05-transfer-learning/"
       },
       {
@@ -534,6 +684,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/06-object-detection-yolo",
+        "slug": "computer-vision/object-detection-yolo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/06-object-detection-yolo/"
       },
       {
@@ -541,6 +693,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/07-semantic-segmentation-unet",
+        "slug": "computer-vision/semantic-segmentation-unet",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/07-semantic-segmentation-unet/"
       },
       {
@@ -548,6 +702,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/08-instance-segmentation-mask-rcnn",
+        "slug": "computer-vision/instance-segmentation-mask-rcnn",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/08-instance-segmentation-mask-rcnn/"
       },
       {
@@ -555,6 +711,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/09-image-generation-gans",
+        "slug": "computer-vision/image-generation-gans",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/09-image-generation-gans/"
       },
       {
@@ -562,6 +720,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/10-image-generation-diffusion",
+        "slug": "computer-vision/image-generation-diffusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/10-image-generation-diffusion/"
       },
       {
@@ -569,6 +729,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/11-stable-diffusion",
+        "slug": "computer-vision/stable-diffusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/11-stable-diffusion/"
       },
       {
@@ -576,6 +738,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/12-video-understanding",
+        "slug": "computer-vision/video-understanding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/12-video-understanding/"
       },
       {
@@ -583,6 +747,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/13-3d-vision-nerf",
+        "slug": "computer-vision/3d-vision-nerf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/13-3d-vision-nerf/"
       },
       {
@@ -590,6 +756,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/14-vision-transformers",
+        "slug": "computer-vision/vision-transformers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/14-vision-transformers/"
       },
       {
@@ -597,6 +765,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/15-real-time-edge",
+        "slug": "computer-vision/real-time-edge",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/15-real-time-edge/"
       },
       {
@@ -604,6 +774,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/16-vision-pipeline-capstone",
+        "slug": "computer-vision/vision-pipeline-capstone",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/16-vision-pipeline-capstone/"
       },
       {
@@ -611,6 +783,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/17-self-supervised-vision",
+        "slug": "computer-vision/self-supervised-vision",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/17-self-supervised-vision/"
       },
       {
@@ -618,6 +792,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/18-open-vocab-clip",
+        "slug": "computer-vision/open-vocab-clip",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/18-open-vocab-clip/"
       },
       {
@@ -625,6 +801,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/19-ocr-document-understanding",
+        "slug": "computer-vision/ocr-document-understanding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/19-ocr-document-understanding/"
       },
       {
@@ -632,6 +810,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/20-image-retrieval-metric",
+        "slug": "computer-vision/image-retrieval-metric",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/20-image-retrieval-metric/"
       },
       {
@@ -639,6 +819,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/21-keypoint-pose",
+        "slug": "computer-vision/keypoint-pose",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/21-keypoint-pose/"
       },
       {
@@ -646,6 +828,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/22-3d-gaussian-splatting",
+        "slug": "computer-vision/3d-gaussian-splatting",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/22-3d-gaussian-splatting/"
       },
       {
@@ -653,6 +837,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/23-diffusion-transformers-rectified-flow",
+        "slug": "computer-vision/diffusion-transformers-rectified-flow",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/23-diffusion-transformers-rectified-flow/"
       },
       {
@@ -660,6 +846,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/24-sam3-open-vocab-segmentation",
+        "slug": "computer-vision/sam3-open-vocab-segmentation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/24-sam3-open-vocab-segmentation/"
       },
       {
@@ -667,6 +855,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/25-vision-language-models",
+        "slug": "computer-vision/vision-language-models",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/25-vision-language-models/"
       },
       {
@@ -674,6 +864,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/26-monocular-depth",
+        "slug": "computer-vision/monocular-depth",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/26-monocular-depth/"
       },
       {
@@ -681,6 +873,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/27-multi-object-tracking",
+        "slug": "computer-vision/multi-object-tracking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/27-multi-object-tracking/"
       },
       {
@@ -688,6 +882,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/04-computer-vision/28-world-models-video-diffusion",
+        "slug": "computer-vision/world-models-video-diffusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/04-computer-vision/28-world-models-video-diffusion/"
       }
     ]
@@ -697,12 +893,16 @@ const PHASES = [
     "name": "NLP: от основ к продвинутому уровню",
     "status": "complete",
     "desc": "Язык — интерфейс к интеллекту.",
+    "dir": "05-nlp-foundations-to-advanced",
+    "slug": "nlp-foundations-to-advanced",
     "lessons": [
       {
         "name": "Обработка текста: токенизация, stemming, лемматизация",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/01-text-processing",
+        "slug": "nlp-foundations-to-advanced/text-processing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/01-text-processing/"
       },
       {
@@ -710,6 +910,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/02-bag-of-words-tfidf",
+        "slug": "nlp-foundations-to-advanced/bag-of-words-tfidf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/02-bag-of-words-tfidf/"
       },
       {
@@ -717,6 +919,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/03-word-embeddings-word2vec",
+        "slug": "nlp-foundations-to-advanced/word-embeddings-word2vec",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/03-word-embeddings-word2vec/"
       },
       {
@@ -724,6 +928,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/04-glove-fasttext-subword",
+        "slug": "nlp-foundations-to-advanced/glove-fasttext-subword",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/04-glove-fasttext-subword/"
       },
       {
@@ -731,6 +937,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/05-sentiment-analysis",
+        "slug": "nlp-foundations-to-advanced/sentiment-analysis",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/05-sentiment-analysis/"
       },
       {
@@ -738,6 +946,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/06-named-entity-recognition",
+        "slug": "nlp-foundations-to-advanced/named-entity-recognition",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/06-named-entity-recognition/"
       },
       {
@@ -745,6 +955,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/07-pos-tagging-parsing",
+        "slug": "nlp-foundations-to-advanced/pos-tagging-parsing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/07-pos-tagging-parsing/"
       },
       {
@@ -752,6 +964,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/08-cnns-rnns-for-text",
+        "slug": "nlp-foundations-to-advanced/cnns-rnns-for-text",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/08-cnns-rnns-for-text/"
       },
       {
@@ -759,6 +973,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/09-sequence-to-sequence",
+        "slug": "nlp-foundations-to-advanced/sequence-to-sequence",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/09-sequence-to-sequence/"
       },
       {
@@ -766,6 +982,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/10-attention-mechanism",
+        "slug": "nlp-foundations-to-advanced/attention-mechanism",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/10-attention-mechanism/"
       },
       {
@@ -773,6 +991,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/11-machine-translation",
+        "slug": "nlp-foundations-to-advanced/machine-translation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/11-machine-translation/"
       },
       {
@@ -780,6 +1000,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/12-text-summarization",
+        "slug": "nlp-foundations-to-advanced/text-summarization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/12-text-summarization/"
       },
       {
@@ -787,6 +1009,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/13-question-answering",
+        "slug": "nlp-foundations-to-advanced/question-answering",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/13-question-answering/"
       },
       {
@@ -794,6 +1018,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/14-information-retrieval-search",
+        "slug": "nlp-foundations-to-advanced/information-retrieval-search",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/14-information-retrieval-search/"
       },
       {
@@ -801,6 +1027,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/15-topic-modeling",
+        "slug": "nlp-foundations-to-advanced/topic-modeling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/15-topic-modeling/"
       },
       {
@@ -808,6 +1036,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/16-text-generation-pre-transformer",
+        "slug": "nlp-foundations-to-advanced/text-generation-pre-transformer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/16-text-generation-pre-transformer/"
       },
       {
@@ -815,6 +1045,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/17-chatbots-rule-to-neural",
+        "slug": "nlp-foundations-to-advanced/chatbots-rule-to-neural",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/17-chatbots-rule-to-neural/"
       },
       {
@@ -822,6 +1054,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/18-multilingual-nlp",
+        "slug": "nlp-foundations-to-advanced/multilingual-nlp",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/18-multilingual-nlp/"
       },
       {
@@ -829,6 +1063,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/19-subword-tokenization",
+        "slug": "nlp-foundations-to-advanced/subword-tokenization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/19-subword-tokenization/"
       },
       {
@@ -836,6 +1072,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/20-structured-outputs-constrained-decoding",
+        "slug": "nlp-foundations-to-advanced/structured-outputs-constrained-decoding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/20-structured-outputs-constrained-decoding/"
       },
       {
@@ -843,6 +1081,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/21-nli-textual-entailment",
+        "slug": "nlp-foundations-to-advanced/nli-textual-entailment",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/21-nli-textual-entailment/"
       },
       {
@@ -850,6 +1090,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/22-embedding-models-deep-dive",
+        "slug": "nlp-foundations-to-advanced/embedding-models-deep-dive",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/22-embedding-models-deep-dive/"
       },
       {
@@ -857,6 +1099,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/23-chunking-strategies-rag",
+        "slug": "nlp-foundations-to-advanced/chunking-strategies-rag",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/23-chunking-strategies-rag/"
       },
       {
@@ -864,6 +1108,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/24-coreference-resolution",
+        "slug": "nlp-foundations-to-advanced/coreference-resolution",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/24-coreference-resolution/"
       },
       {
@@ -871,6 +1117,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/25-entity-linking",
+        "slug": "nlp-foundations-to-advanced/entity-linking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/25-entity-linking/"
       },
       {
@@ -878,6 +1126,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/26-relation-extraction-kg",
+        "slug": "nlp-foundations-to-advanced/relation-extraction-kg",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/26-relation-extraction-kg/"
       },
       {
@@ -885,6 +1135,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/27-llm-evaluation-frameworks",
+        "slug": "nlp-foundations-to-advanced/llm-evaluation-frameworks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/27-llm-evaluation-frameworks/"
       },
       {
@@ -892,6 +1144,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/28-long-context-evaluation",
+        "slug": "nlp-foundations-to-advanced/long-context-evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/28-long-context-evaluation/"
       },
       {
@@ -899,6 +1153,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/05-nlp-foundations-to-advanced/29-dialogue-state-tracking",
+        "slug": "nlp-foundations-to-advanced/dialogue-state-tracking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/05-nlp-foundations-to-advanced/29-dialogue-state-tracking/"
       }
     ]
@@ -908,12 +1164,16 @@ const PHASES = [
     "name": "Speech & Audio",
     "status": "complete",
     "desc": "Слышать, понимать, говорить.",
+    "dir": "06-speech-and-audio",
+    "slug": "speech-and-audio",
     "lessons": [
       {
         "name": "Основы аудио: волновые формы, sampling, FFT",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/01-audio-fundamentals",
+        "slug": "speech-and-audio/audio-fundamentals",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/01-audio-fundamentals/"
       },
       {
@@ -921,6 +1181,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/02-spectrograms-mel-features",
+        "slug": "speech-and-audio/spectrograms-mel-features",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/02-spectrograms-mel-features/"
       },
       {
@@ -928,6 +1190,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/03-audio-classification",
+        "slug": "speech-and-audio/audio-classification",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/03-audio-classification/"
       },
       {
@@ -935,6 +1199,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/04-speech-recognition-asr",
+        "slug": "speech-and-audio/speech-recognition-asr",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/04-speech-recognition-asr/"
       },
       {
@@ -942,6 +1208,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/05-whisper-architecture-finetuning",
+        "slug": "speech-and-audio/whisper-architecture-finetuning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/05-whisper-architecture-finetuning/"
       },
       {
@@ -949,6 +1217,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/06-speaker-recognition-verification",
+        "slug": "speech-and-audio/speaker-recognition-verification",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/06-speaker-recognition-verification/"
       },
       {
@@ -956,6 +1226,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/07-text-to-speech",
+        "slug": "speech-and-audio/text-to-speech",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/07-text-to-speech/"
       },
       {
@@ -963,6 +1235,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/08-voice-cloning-conversion",
+        "slug": "speech-and-audio/voice-cloning-conversion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/08-voice-cloning-conversion/"
       },
       {
@@ -970,6 +1244,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/09-music-generation",
+        "slug": "speech-and-audio/music-generation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/09-music-generation/"
       },
       {
@@ -977,6 +1253,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/10-audio-language-models",
+        "slug": "speech-and-audio/audio-language-models",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/10-audio-language-models/"
       },
       {
@@ -984,6 +1262,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/11-real-time-audio-processing",
+        "slug": "speech-and-audio/real-time-audio-processing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/11-real-time-audio-processing/"
       },
       {
@@ -991,6 +1271,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/12-voice-assistant-pipeline",
+        "slug": "speech-and-audio/voice-assistant-pipeline",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/12-voice-assistant-pipeline/"
       },
       {
@@ -998,6 +1280,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/13-neural-audio-codecs",
+        "slug": "speech-and-audio/neural-audio-codecs",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/13-neural-audio-codecs/"
       },
       {
@@ -1005,6 +1289,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/14-voice-activity-detection-turn-taking",
+        "slug": "speech-and-audio/voice-activity-detection-turn-taking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/14-voice-activity-detection-turn-taking/"
       },
       {
@@ -1012,6 +1298,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki",
+        "slug": "speech-and-audio/streaming-speech-to-speech-moshi-hibiki",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/15-streaming-speech-to-speech-moshi-hibiki/"
       },
       {
@@ -1019,6 +1307,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking",
+        "slug": "speech-and-audio/anti-spoofing-audio-watermarking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/16-anti-spoofing-audio-watermarking/"
       },
       {
@@ -1026,6 +1316,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/06-speech-and-audio/17-audio-evaluation-metrics",
+        "slug": "speech-and-audio/audio-evaluation-metrics",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/06-speech-and-audio/17-audio-evaluation-metrics/"
       }
     ]
@@ -1035,12 +1327,16 @@ const PHASES = [
     "name": "Глубокий разбор Transformers",
     "status": "complete",
     "desc": "Архитектура, которая изменила все.",
+    "dir": "07-transformers-deep-dive",
+    "slug": "transformers-deep-dive",
     "lessons": [
       {
         "name": "Зачем нужны Transformers: проблемы RNN",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/01-why-transformers",
+        "slug": "transformers-deep-dive/why-transformers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/01-why-transformers/"
       },
       {
@@ -1048,6 +1344,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/02-self-attention-from-scratch",
+        "slug": "transformers-deep-dive/self-attention-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/02-self-attention-from-scratch/"
       },
       {
@@ -1055,6 +1353,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/03-multi-head-attention",
+        "slug": "transformers-deep-dive/multi-head-attention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/03-multi-head-attention/"
       },
       {
@@ -1062,6 +1362,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/04-positional-encoding",
+        "slug": "transformers-deep-dive/positional-encoding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/04-positional-encoding/"
       },
       {
@@ -1069,6 +1371,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/05-full-transformer",
+        "slug": "transformers-deep-dive/full-transformer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/05-full-transformer/"
       },
       {
@@ -1076,6 +1380,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/06-bert-masked-language-modeling",
+        "slug": "transformers-deep-dive/bert-masked-language-modeling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/06-bert-masked-language-modeling/"
       },
       {
@@ -1083,6 +1389,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/07-gpt-causal-language-modeling",
+        "slug": "transformers-deep-dive/gpt-causal-language-modeling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/07-gpt-causal-language-modeling/"
       },
       {
@@ -1090,6 +1398,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/08-t5-bart-encoder-decoder",
+        "slug": "transformers-deep-dive/t5-bart-encoder-decoder",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/08-t5-bart-encoder-decoder/"
       },
       {
@@ -1097,6 +1407,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/09-vision-transformers",
+        "slug": "transformers-deep-dive/vision-transformers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/09-vision-transformers/"
       },
       {
@@ -1104,6 +1416,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/10-audio-transformers-whisper",
+        "slug": "transformers-deep-dive/audio-transformers-whisper",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/10-audio-transformers-whisper/"
       },
       {
@@ -1111,6 +1425,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/11-mixture-of-experts",
+        "slug": "transformers-deep-dive/mixture-of-experts",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/11-mixture-of-experts/"
       },
       {
@@ -1118,6 +1434,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/12-kv-cache-flash-attention",
+        "slug": "transformers-deep-dive/kv-cache-flash-attention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/12-kv-cache-flash-attention/"
       },
       {
@@ -1125,6 +1443,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/13-scaling-laws",
+        "slug": "transformers-deep-dive/scaling-laws",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/13-scaling-laws/"
       },
       {
@@ -1132,6 +1452,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/14-build-a-transformer-capstone",
+        "slug": "transformers-deep-dive/build-a-transformer-capstone",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/14-build-a-transformer-capstone/"
       },
       {
@@ -1139,6 +1461,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/15-attention-variants",
+        "slug": "transformers-deep-dive/attention-variants",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/15-attention-variants/"
       },
       {
@@ -1146,6 +1470,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/07-transformers-deep-dive/16-speculative-decoding",
+        "slug": "transformers-deep-dive/speculative-decoding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/07-transformers-deep-dive/16-speculative-decoding/"
       }
     ]
@@ -1155,12 +1481,16 @@ const PHASES = [
     "name": "Generative AI",
     "status": "complete",
     "desc": "Создавайте изображения, видео, аудио, 3D и многое другое.",
+    "dir": "08-generative-ai",
+    "slug": "generative-ai",
     "lessons": [
       {
         "name": "Генеративные модели: таксономия и история",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/08-generative-ai/01-generative-models-taxonomy-history",
+        "slug": "generative-ai/generative-models-taxonomy-history",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/01-generative-models-taxonomy-history/"
       },
       {
@@ -1168,6 +1498,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/02-autoencoders-vae",
+        "slug": "generative-ai/autoencoders-vae",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/02-autoencoders-vae/"
       },
       {
@@ -1175,6 +1507,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/03-gans-generator-discriminator",
+        "slug": "generative-ai/gans-generator-discriminator",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/03-gans-generator-discriminator/"
       },
       {
@@ -1182,6 +1516,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/04-conditional-gans-pix2pix",
+        "slug": "generative-ai/conditional-gans-pix2pix",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/04-conditional-gans-pix2pix/"
       },
       {
@@ -1189,6 +1525,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/05-stylegan",
+        "slug": "generative-ai/stylegan",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/05-stylegan/"
       },
       {
@@ -1196,6 +1534,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/06-diffusion-ddpm-from-scratch",
+        "slug": "generative-ai/diffusion-ddpm-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/06-diffusion-ddpm-from-scratch/"
       },
       {
@@ -1203,6 +1543,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/07-latent-diffusion-stable-diffusion",
+        "slug": "generative-ai/latent-diffusion-stable-diffusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/07-latent-diffusion-stable-diffusion/"
       },
       {
@@ -1210,6 +1552,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/08-controlnet-lora-conditioning",
+        "slug": "generative-ai/controlnet-lora-conditioning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/08-controlnet-lora-conditioning/"
       },
       {
@@ -1217,6 +1561,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/09-inpainting-outpainting-editing",
+        "slug": "generative-ai/inpainting-outpainting-editing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/09-inpainting-outpainting-editing/"
       },
       {
@@ -1224,6 +1570,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/10-video-generation",
+        "slug": "generative-ai/video-generation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/10-video-generation/"
       },
       {
@@ -1231,6 +1579,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/11-audio-generation",
+        "slug": "generative-ai/audio-generation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/11-audio-generation/"
       },
       {
@@ -1238,6 +1588,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/12-3d-generation",
+        "slug": "generative-ai/3d-generation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/12-3d-generation/"
       },
       {
@@ -1245,6 +1597,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/13-flow-matching-rectified-flows",
+        "slug": "generative-ai/flow-matching-rectified-flows",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/13-flow-matching-rectified-flows/"
       },
       {
@@ -1252,6 +1606,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/14-evaluation-fid-clip-score",
+        "slug": "generative-ai/evaluation-fid-clip-score",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/14-evaluation-fid-clip-score/"
       },
       {
@@ -1259,6 +1615,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/08-generative-ai/15-visual-autoregressive-var",
+        "slug": "generative-ai/visual-autoregressive-var",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/08-generative-ai/15-visual-autoregressive-var/"
       }
     ]
@@ -1268,12 +1626,16 @@ const PHASES = [
     "name": "Reinforcement Learning",
     "status": "complete",
     "desc": "Основа RLHF и AI для игр.",
+    "dir": "09-reinforcement-learning",
+    "slug": "reinforcement-learning",
     "lessons": [
       {
         "name": "MDP, состояния, действия и награды",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/01-mdps-states-actions-rewards",
+        "slug": "reinforcement-learning/mdps-states-actions-rewards",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/01-mdps-states-actions-rewards/"
       },
       {
@@ -1281,6 +1643,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/02-dynamic-programming",
+        "slug": "reinforcement-learning/dynamic-programming",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/02-dynamic-programming/"
       },
       {
@@ -1288,6 +1652,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/03-monte-carlo-methods",
+        "slug": "reinforcement-learning/monte-carlo-methods",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/03-monte-carlo-methods/"
       },
       {
@@ -1295,6 +1661,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/04-q-learning-sarsa",
+        "slug": "reinforcement-learning/q-learning-sarsa",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/04-q-learning-sarsa/"
       },
       {
@@ -1302,6 +1670,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/05-dqn",
+        "slug": "reinforcement-learning/dqn",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/05-dqn/"
       },
       {
@@ -1309,6 +1679,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/06-policy-gradients-reinforce",
+        "slug": "reinforcement-learning/policy-gradients-reinforce",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/06-policy-gradients-reinforce/"
       },
       {
@@ -1316,6 +1688,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/07-actor-critic-a2c-a3c",
+        "slug": "reinforcement-learning/actor-critic-a2c-a3c",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/07-actor-critic-a2c-a3c/"
       },
       {
@@ -1323,6 +1697,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/08-ppo",
+        "slug": "reinforcement-learning/ppo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/08-ppo/"
       },
       {
@@ -1330,6 +1706,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/09-reward-modeling-rlhf",
+        "slug": "reinforcement-learning/reward-modeling-rlhf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/09-reward-modeling-rlhf/"
       },
       {
@@ -1337,6 +1715,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/10-multi-agent-rl",
+        "slug": "reinforcement-learning/multi-agent-rl",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/10-multi-agent-rl/"
       },
       {
@@ -1344,6 +1724,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/11-sim-to-real-transfer",
+        "slug": "reinforcement-learning/sim-to-real-transfer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/11-sim-to-real-transfer/"
       },
       {
@@ -1351,6 +1733,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/09-reinforcement-learning/12-rl-for-games",
+        "slug": "reinforcement-learning/rl-for-games",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/09-reinforcement-learning/12-rl-for-games/"
       }
     ]
@@ -1360,12 +1744,16 @@ const PHASES = [
     "name": "LLM с нуля",
     "status": "complete",
     "desc": "Стройте, обучайте и понимайте большие языковые модели.",
+    "dir": "10-llms-from-scratch",
+    "slug": "llms-from-scratch",
     "lessons": [
       {
         "name": "Токенизаторы: BPE, WordPiece, SentencePiece",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/01-tokenizers",
+        "slug": "llms-from-scratch/tokenizers",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/01-tokenizers/"
       },
       {
@@ -1373,6 +1761,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/02-building-a-tokenizer",
+        "slug": "llms-from-scratch/building-a-tokenizer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/02-building-a-tokenizer/"
       },
       {
@@ -1380,6 +1770,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/03-data-pipelines",
+        "slug": "llms-from-scratch/data-pipelines",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/03-data-pipelines/"
       },
       {
@@ -1387,6 +1779,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/04-pre-training-mini-gpt",
+        "slug": "llms-from-scratch/pre-training-mini-gpt",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/04-pre-training-mini-gpt/"
       },
       {
@@ -1394,6 +1788,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/05-scaling-distributed",
+        "slug": "llms-from-scratch/scaling-distributed",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/05-scaling-distributed/"
       },
       {
@@ -1401,6 +1797,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/06-instruction-tuning-sft",
+        "slug": "llms-from-scratch/instruction-tuning-sft",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/06-instruction-tuning-sft/"
       },
       {
@@ -1408,6 +1806,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/07-rlhf",
+        "slug": "llms-from-scratch/rlhf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/07-rlhf/"
       },
       {
@@ -1415,6 +1815,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/08-dpo",
+        "slug": "llms-from-scratch/dpo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/08-dpo/"
       },
       {
@@ -1422,6 +1824,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/09-constitutional-ai-self-improvement",
+        "slug": "llms-from-scratch/constitutional-ai-self-improvement",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/09-constitutional-ai-self-improvement/"
       },
       {
@@ -1429,6 +1833,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/10-evaluation",
+        "slug": "llms-from-scratch/evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/10-evaluation/"
       },
       {
@@ -1436,6 +1842,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/11-quantization",
+        "slug": "llms-from-scratch/quantization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/11-quantization/"
       },
       {
@@ -1443,6 +1851,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/12-inference-optimization",
+        "slug": "llms-from-scratch/inference-optimization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/12-inference-optimization/"
       },
       {
@@ -1450,6 +1860,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/13-building-complete-llm-pipeline",
+        "slug": "llms-from-scratch/building-complete-llm-pipeline",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/13-building-complete-llm-pipeline/"
       },
       {
@@ -1457,6 +1869,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs",
+        "slug": "llms-from-scratch/open-models-architecture-walkthroughs",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/14-open-models-architecture-walkthroughs/"
       },
       {
@@ -1464,6 +1878,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/15-speculative-decoding-eagle3",
+        "slug": "llms-from-scratch/speculative-decoding-eagle3",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/15-speculative-decoding-eagle3/"
       },
       {
@@ -1471,6 +1887,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/16-differential-attention-v2",
+        "slug": "llms-from-scratch/differential-attention-v2",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/16-differential-attention-v2/"
       },
       {
@@ -1478,6 +1896,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/17-native-sparse-attention",
+        "slug": "llms-from-scratch/native-sparse-attention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/17-native-sparse-attention/"
       },
       {
@@ -1485,6 +1905,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/18-multi-token-prediction",
+        "slug": "llms-from-scratch/multi-token-prediction",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/18-multi-token-prediction/"
       },
       {
@@ -1492,6 +1914,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/19-dualpipe-parallelism",
+        "slug": "llms-from-scratch/dualpipe-parallelism",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/19-dualpipe-parallelism/"
       },
       {
@@ -1499,6 +1923,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/20-deepseek-v3-walkthrough",
+        "slug": "llms-from-scratch/deepseek-v3-walkthrough",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/20-deepseek-v3-walkthrough/"
       },
       {
@@ -1506,6 +1932,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer",
+        "slug": "llms-from-scratch/jamba-hybrid-ssm-transformer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/21-jamba-hybrid-ssm-transformer/"
       },
       {
@@ -1513,6 +1941,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/22-async-hogwild-inference",
+        "slug": "llms-from-scratch/async-hogwild-inference",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/22-async-hogwild-inference/"
       },
       {
@@ -1520,6 +1950,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/10-llms-from-scratch/23-gradient-checkpointing",
+        "slug": "llms-from-scratch/gradient-checkpointing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/10-llms-from-scratch/23-gradient-checkpointing/"
       }
     ]
@@ -1529,12 +1961,16 @@ const PHASES = [
     "name": "LLM Engineering",
     "status": "complete",
     "desc": "Заставьте LLM работать в production.",
+    "dir": "11-llm-engineering",
+    "slug": "llm-engineering",
     "lessons": [
       {
         "name": "Prompt engineering: техники и паттерны",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/01-prompt-engineering",
+        "slug": "llm-engineering/prompt-engineering",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/01-prompt-engineering/"
       },
       {
@@ -1542,6 +1978,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/02-few-shot-cot",
+        "slug": "llm-engineering/few-shot-cot",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/02-few-shot-cot/"
       },
       {
@@ -1549,6 +1987,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/03-structured-outputs",
+        "slug": "llm-engineering/structured-outputs",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/03-structured-outputs/"
       },
       {
@@ -1556,6 +1996,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/04-embeddings",
+        "slug": "llm-engineering/embeddings",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/04-embeddings/"
       },
       {
@@ -1563,6 +2005,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/05-context-engineering",
+        "slug": "llm-engineering/context-engineering",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/05-context-engineering/"
       },
       {
@@ -1570,6 +2014,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/06-rag",
+        "slug": "llm-engineering/rag",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/06-rag/"
       },
       {
@@ -1577,6 +2023,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/07-advanced-rag",
+        "slug": "llm-engineering/advanced-rag",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/07-advanced-rag/"
       },
       {
@@ -1584,6 +2032,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/08-fine-tuning-lora",
+        "slug": "llm-engineering/fine-tuning-lora",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/08-fine-tuning-lora/"
       },
       {
@@ -1591,6 +2041,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/09-function-calling",
+        "slug": "llm-engineering/function-calling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/09-function-calling/"
       },
       {
@@ -1598,6 +2050,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/10-evaluation",
+        "slug": "llm-engineering/evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/10-evaluation/"
       },
       {
@@ -1605,6 +2059,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/11-caching-cost",
+        "slug": "llm-engineering/caching-cost",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/11-caching-cost/"
       },
       {
@@ -1612,6 +2068,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/12-guardrails",
+        "slug": "llm-engineering/guardrails",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/12-guardrails/"
       },
       {
@@ -1619,6 +2077,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/13-production-app",
+        "slug": "llm-engineering/production-app",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/13-production-app/"
       },
       {
@@ -1626,6 +2086,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/14-model-context-protocol",
+        "slug": "llm-engineering/model-context-protocol",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/14-model-context-protocol/"
       },
       {
@@ -1633,6 +2095,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/15-prompt-caching",
+        "slug": "llm-engineering/prompt-caching",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/15-prompt-caching/"
       },
       {
@@ -1640,6 +2104,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/16-langgraph-state-machines",
+        "slug": "llm-engineering/langgraph-state-machines",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/16-langgraph-state-machines/"
       },
       {
@@ -1647,6 +2113,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/11-llm-engineering/17-agent-framework-tradeoffs",
+        "slug": "llm-engineering/agent-framework-tradeoffs",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/11-llm-engineering/17-agent-framework-tradeoffs/"
       }
     ]
@@ -1656,12 +2124,16 @@ const PHASES = [
     "name": "Multimodal AI",
     "status": "complete",
     "desc": "Видеть, слышать, читать и рассуждать между модальностями — от ViT patches до computer-use агентов.",
+    "dir": "12-multimodal-ai",
+    "slug": "multimodal-ai",
     "lessons": [
       {
         "name": "Vision Transformers и примитив patch-token",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/01-vision-transformer-patch-tokens",
+        "slug": "multimodal-ai/vision-transformer-patch-tokens",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/01-vision-transformer-patch-tokens/"
       },
       {
@@ -1669,6 +2141,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/02-clip-contrastive-pretraining",
+        "slug": "multimodal-ai/clip-contrastive-pretraining",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/02-clip-contrastive-pretraining/"
       },
       {
@@ -1676,6 +2150,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/03-blip2-qformer-bridge",
+        "slug": "multimodal-ai/blip2-qformer-bridge",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/03-blip2-qformer-bridge/"
       },
       {
@@ -1683,6 +2159,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/04-flamingo-gated-cross-attention",
+        "slug": "multimodal-ai/flamingo-gated-cross-attention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/04-flamingo-gated-cross-attention/"
       },
       {
@@ -1690,6 +2168,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/05-llava-visual-instruction-tuning",
+        "slug": "multimodal-ai/llava-visual-instruction-tuning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/05-llava-visual-instruction-tuning/"
       },
       {
@@ -1697,6 +2177,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/06-any-resolution-patch-n-pack",
+        "slug": "multimodal-ai/any-resolution-patch-n-pack",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/06-any-resolution-patch-n-pack/"
       },
       {
@@ -1704,6 +2186,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/07-open-weight-vlm-recipes",
+        "slug": "multimodal-ai/open-weight-vlm-recipes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/07-open-weight-vlm-recipes/"
       },
       {
@@ -1711,6 +2195,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/08-llava-onevision-single-multi-video",
+        "slug": "multimodal-ai/llava-onevision-single-multi-video",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/08-llava-onevision-single-multi-video/"
       },
       {
@@ -1718,6 +2204,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/09-qwen-vl-family-dynamic-fps",
+        "slug": "multimodal-ai/qwen-vl-family-dynamic-fps",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/09-qwen-vl-family-dynamic-fps/"
       },
       {
@@ -1725,6 +2213,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/10-internvl3-native-multimodal",
+        "slug": "multimodal-ai/internvl3-native-multimodal",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/10-internvl3-native-multimodal/"
       },
       {
@@ -1732,6 +2222,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/11-chameleon-early-fusion-tokens",
+        "slug": "multimodal-ai/chameleon-early-fusion-tokens",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/11-chameleon-early-fusion-tokens/"
       },
       {
@@ -1739,6 +2231,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/12-emu3-next-token-for-generation",
+        "slug": "multimodal-ai/emu3-next-token-for-generation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/12-emu3-next-token-for-generation/"
       },
       {
@@ -1746,6 +2240,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/13-transfusion-autoregressive-diffusion",
+        "slug": "multimodal-ai/transfusion-autoregressive-diffusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/13-transfusion-autoregressive-diffusion/"
       },
       {
@@ -1753,6 +2249,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/14-show-o-discrete-diffusion-unified",
+        "slug": "multimodal-ai/show-o-discrete-diffusion-unified",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/14-show-o-discrete-diffusion-unified/"
       },
       {
@@ -1760,6 +2258,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/15-janus-pro-decoupled-encoders",
+        "slug": "multimodal-ai/janus-pro-decoupled-encoders",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/15-janus-pro-decoupled-encoders/"
       },
       {
@@ -1767,6 +2267,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/16-mio-any-to-any-streaming",
+        "slug": "multimodal-ai/mio-any-to-any-streaming",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/16-mio-any-to-any-streaming/"
       },
       {
@@ -1774,6 +2276,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/17-video-language-temporal-grounding",
+        "slug": "multimodal-ai/video-language-temporal-grounding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/17-video-language-temporal-grounding/"
       },
       {
@@ -1781,6 +2285,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/18-long-video-million-token",
+        "slug": "multimodal-ai/long-video-million-token",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/18-long-video-million-token/"
       },
       {
@@ -1788,6 +2294,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/19-audio-language-whisper-to-af3",
+        "slug": "multimodal-ai/audio-language-whisper-to-af3",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/19-audio-language-whisper-to-af3/"
       },
       {
@@ -1795,6 +2303,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/20-omni-models-thinker-talker",
+        "slug": "multimodal-ai/omni-models-thinker-talker",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/20-omni-models-thinker-talker/"
       },
       {
@@ -1802,6 +2312,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/21-embodied-vlas-openvla-pi0-groot",
+        "slug": "multimodal-ai/embodied-vlas-openvla-pi0-groot",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/21-embodied-vlas-openvla-pi0-groot/"
       },
       {
@@ -1809,6 +2321,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/22-document-diagram-understanding",
+        "slug": "multimodal-ai/document-diagram-understanding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/22-document-diagram-understanding/"
       },
       {
@@ -1816,6 +2330,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/23-colpali-vision-native-rag",
+        "slug": "multimodal-ai/colpali-vision-native-rag",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/23-colpali-vision-native-rag/"
       },
       {
@@ -1823,6 +2339,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/24-multimodal-rag-cross-modal",
+        "slug": "multimodal-ai/multimodal-rag-cross-modal",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/24-multimodal-rag-cross-modal/"
       },
       {
@@ -1830,6 +2348,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/12-multimodal-ai/25-multimodal-agents-computer-use",
+        "slug": "multimodal-ai/multimodal-agents-computer-use",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/12-multimodal-ai/25-multimodal-agents-computer-use/"
       }
     ]
@@ -1839,12 +2359,16 @@ const PHASES = [
     "name": "Инструменты и протоколы",
     "status": "complete",
     "desc": "Интерфейсы между AI и реальным миром.",
+    "dir": "13-tools-and-protocols",
+    "slug": "tools-and-protocols",
     "lessons": [
       {
         "name": "Интерфейс инструмента",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/01-the-tool-interface",
+        "slug": "tools-and-protocols/the-tool-interface",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/01-the-tool-interface/"
       },
       {
@@ -1852,6 +2376,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/02-function-calling-deep-dive",
+        "slug": "tools-and-protocols/function-calling-deep-dive",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/02-function-calling-deep-dive/"
       },
       {
@@ -1859,6 +2385,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls",
+        "slug": "tools-and-protocols/parallel-and-streaming-tool-calls",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/03-parallel-and-streaming-tool-calls/"
       },
       {
@@ -1866,6 +2394,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/04-structured-output",
+        "slug": "tools-and-protocols/structured-output",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/04-structured-output/"
       },
       {
@@ -1873,6 +2403,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/05-tool-schema-design",
+        "slug": "tools-and-protocols/tool-schema-design",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/05-tool-schema-design/"
       },
       {
@@ -1880,6 +2412,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/06-mcp-fundamentals",
+        "slug": "tools-and-protocols/mcp-fundamentals",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/06-mcp-fundamentals/"
       },
       {
@@ -1887,6 +2421,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/07-building-an-mcp-server",
+        "slug": "tools-and-protocols/building-an-mcp-server",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/07-building-an-mcp-server/"
       },
       {
@@ -1894,6 +2430,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/08-building-an-mcp-client",
+        "slug": "tools-and-protocols/building-an-mcp-client",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/08-building-an-mcp-client/"
       },
       {
@@ -1901,6 +2439,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/09-mcp-transports",
+        "slug": "tools-and-protocols/mcp-transports",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/09-mcp-transports/"
       },
       {
@@ -1908,6 +2448,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/10-mcp-resources-and-prompts",
+        "slug": "tools-and-protocols/mcp-resources-and-prompts",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/10-mcp-resources-and-prompts/"
       },
       {
@@ -1915,6 +2457,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/11-mcp-sampling",
+        "slug": "tools-and-protocols/mcp-sampling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/11-mcp-sampling/"
       },
       {
@@ -1922,6 +2466,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/12-mcp-roots-and-elicitation",
+        "slug": "tools-and-protocols/mcp-roots-and-elicitation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/12-mcp-roots-and-elicitation/"
       },
       {
@@ -1929,6 +2475,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/13-mcp-async-tasks",
+        "slug": "tools-and-protocols/mcp-async-tasks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/13-mcp-async-tasks/"
       },
       {
@@ -1936,6 +2484,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/14-mcp-apps",
+        "slug": "tools-and-protocols/mcp-apps",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/14-mcp-apps/"
       },
       {
@@ -1943,6 +2493,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/15-mcp-security-tool-poisoning",
+        "slug": "tools-and-protocols/mcp-security-tool-poisoning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/15-mcp-security-tool-poisoning/"
       },
       {
@@ -1950,6 +2502,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/16-mcp-security-oauth-2-1",
+        "slug": "tools-and-protocols/mcp-security-oauth-2-1",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/16-mcp-security-oauth-2-1/"
       },
       {
@@ -1957,6 +2511,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/17-mcp-gateways-and-registries",
+        "slug": "tools-and-protocols/mcp-gateways-and-registries",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/17-mcp-gateways-and-registries/"
       },
       {
@@ -1964,6 +2520,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/18-mcp-auth-production",
+        "slug": "tools-and-protocols/mcp-auth-production",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/18-mcp-auth-production/"
       },
       {
@@ -1971,6 +2529,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/19-a2a-protocol",
+        "slug": "tools-and-protocols/a2a-protocol",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/19-a2a-protocol/"
       },
       {
@@ -1978,6 +2538,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/20-opentelemetry-genai",
+        "slug": "tools-and-protocols/opentelemetry-genai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/20-opentelemetry-genai/"
       },
       {
@@ -1985,6 +2547,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/21-llm-routing-layer",
+        "slug": "tools-and-protocols/llm-routing-layer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/21-llm-routing-layer/"
       },
       {
@@ -1992,6 +2556,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/22-skills-and-agent-sdks",
+        "slug": "tools-and-protocols/skills-and-agent-sdks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/22-skills-and-agent-sdks/"
       },
       {
@@ -1999,6 +2565,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/13-tools-and-protocols/23-capstone-tool-ecosystem",
+        "slug": "tools-and-protocols/capstone-tool-ecosystem",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/13-tools-and-protocols/23-capstone-tool-ecosystem/"
       }
     ]
@@ -2008,12 +2576,16 @@ const PHASES = [
     "name": "Agent Engineering",
     "status": "complete",
     "desc": "Стройте агентов с первых принципов: цикл, память, планирование, фреймворки, бенчмарки, production, workbench.",
+    "dir": "14-agent-engineering",
+    "slug": "agent-engineering",
     "lessons": [
       {
         "name": "Цикл агента",
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/01-the-agent-loop",
+        "slug": "agent-engineering/the-agent-loop",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/01-the-agent-loop/"
       },
       {
@@ -2021,6 +2593,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/02-rewoo-plan-and-execute",
+        "slug": "agent-engineering/rewoo-plan-and-execute",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/02-rewoo-plan-and-execute/"
       },
       {
@@ -2028,6 +2602,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/03-reflexion-verbal-rl",
+        "slug": "agent-engineering/reflexion-verbal-rl",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/03-reflexion-verbal-rl/"
       },
       {
@@ -2035,6 +2611,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/04-tree-of-thoughts-lats",
+        "slug": "agent-engineering/tree-of-thoughts-lats",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/04-tree-of-thoughts-lats/"
       },
       {
@@ -2042,6 +2620,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/05-self-refine-and-critic",
+        "slug": "agent-engineering/self-refine-and-critic",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/05-self-refine-and-critic/"
       },
       {
@@ -2049,6 +2629,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/06-tool-use-and-function-calling",
+        "slug": "agent-engineering/tool-use-and-function-calling",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/06-tool-use-and-function-calling/"
       },
       {
@@ -2056,6 +2638,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/07-memory-virtual-context-memgpt",
+        "slug": "agent-engineering/memory-virtual-context-memgpt",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/07-memory-virtual-context-memgpt/"
       },
       {
@@ -2063,6 +2647,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/08-memory-blocks-sleep-time-compute",
+        "slug": "agent-engineering/memory-blocks-sleep-time-compute",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/08-memory-blocks-sleep-time-compute/"
       },
       {
@@ -2070,6 +2656,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/09-hybrid-memory-mem0",
+        "slug": "agent-engineering/hybrid-memory-mem0",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/09-hybrid-memory-mem0/"
       },
       {
@@ -2077,6 +2665,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/10-skill-libraries-voyager",
+        "slug": "agent-engineering/skill-libraries-voyager",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/10-skill-libraries-voyager/"
       },
       {
@@ -2084,6 +2674,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/11-planning-htn-and-evolutionary",
+        "slug": "agent-engineering/planning-htn-and-evolutionary",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/11-planning-htn-and-evolutionary/"
       },
       {
@@ -2091,6 +2683,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/12-anthropic-workflow-patterns",
+        "slug": "agent-engineering/anthropic-workflow-patterns",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/12-anthropic-workflow-patterns/"
       },
       {
@@ -2098,6 +2692,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/13-langgraph-stateful-graphs",
+        "slug": "agent-engineering/langgraph-stateful-graphs",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/13-langgraph-stateful-graphs/"
       },
       {
@@ -2105,6 +2701,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/14-autogen-actor-model",
+        "slug": "agent-engineering/autogen-actor-model",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/14-autogen-actor-model/"
       },
       {
@@ -2112,6 +2710,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/15-crewai-role-based-crews",
+        "slug": "agent-engineering/crewai-role-based-crews",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/15-crewai-role-based-crews/"
       },
       {
@@ -2119,6 +2719,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/16-openai-agents-sdk",
+        "slug": "agent-engineering/openai-agents-sdk",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/16-openai-agents-sdk/"
       },
       {
@@ -2126,6 +2728,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/17-claude-agent-sdk",
+        "slug": "agent-engineering/claude-agent-sdk",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/17-claude-agent-sdk/"
       },
       {
@@ -2133,6 +2737,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/18-agno-and-mastra-runtimes",
+        "slug": "agent-engineering/agno-and-mastra-runtimes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/18-agno-and-mastra-runtimes/"
       },
       {
@@ -2140,6 +2746,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/19-benchmarks-swebench-gaia",
+        "slug": "agent-engineering/benchmarks-swebench-gaia",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/19-benchmarks-swebench-gaia/"
       },
       {
@@ -2147,6 +2755,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/20-benchmarks-webarena-osworld",
+        "slug": "agent-engineering/benchmarks-webarena-osworld",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/20-benchmarks-webarena-osworld/"
       },
       {
@@ -2154,6 +2764,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/21-computer-use-agents",
+        "slug": "agent-engineering/computer-use-agents",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/21-computer-use-agents/"
       },
       {
@@ -2161,6 +2773,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/22-voice-agents-pipecat-livekit",
+        "slug": "agent-engineering/voice-agents-pipecat-livekit",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/22-voice-agents-pipecat-livekit/"
       },
       {
@@ -2168,6 +2782,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/23-otel-genai-conventions",
+        "slug": "agent-engineering/otel-genai-conventions",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/23-otel-genai-conventions/"
       },
       {
@@ -2175,6 +2791,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/24-agent-observability-platforms",
+        "slug": "agent-engineering/agent-observability-platforms",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/24-agent-observability-platforms/"
       },
       {
@@ -2182,6 +2800,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/25-multi-agent-debate",
+        "slug": "agent-engineering/multi-agent-debate",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/25-multi-agent-debate/"
       },
       {
@@ -2189,6 +2809,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/26-failure-modes-agentic",
+        "slug": "agent-engineering/failure-modes-agentic",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/26-failure-modes-agentic/"
       },
       {
@@ -2196,6 +2818,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/27-prompt-injection-defense",
+        "slug": "agent-engineering/prompt-injection-defense",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/27-prompt-injection-defense/"
       },
       {
@@ -2203,6 +2827,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/28-orchestration-patterns",
+        "slug": "agent-engineering/orchestration-patterns",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/28-orchestration-patterns/"
       },
       {
@@ -2210,6 +2836,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/29-production-runtimes",
+        "slug": "agent-engineering/production-runtimes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/29-production-runtimes/"
       },
       {
@@ -2217,6 +2845,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/30-eval-driven-agent-development",
+        "slug": "agent-engineering/eval-driven-agent-development",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/30-eval-driven-agent-development/"
       },
       {
@@ -2224,6 +2854,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/31-agent-workbench-why-models-fail",
+        "slug": "agent-engineering/agent-workbench-why-models-fail",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/31-agent-workbench-why-models-fail/"
       },
       {
@@ -2231,6 +2863,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/32-minimal-agent-workbench",
+        "slug": "agent-engineering/minimal-agent-workbench",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/32-minimal-agent-workbench/"
       },
       {
@@ -2238,6 +2872,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/33-instructions-as-executable-constraints",
+        "slug": "agent-engineering/instructions-as-executable-constraints",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/33-instructions-as-executable-constraints/"
       },
       {
@@ -2245,6 +2881,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/34-repo-memory-and-state",
+        "slug": "agent-engineering/repo-memory-and-state",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/34-repo-memory-and-state/"
       },
       {
@@ -2252,6 +2890,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/35-initialization-scripts",
+        "slug": "agent-engineering/initialization-scripts",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/35-initialization-scripts/"
       },
       {
@@ -2259,6 +2899,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/36-scope-contracts",
+        "slug": "agent-engineering/scope-contracts",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/36-scope-contracts/"
       },
       {
@@ -2266,6 +2908,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/37-runtime-feedback-loops",
+        "slug": "agent-engineering/runtime-feedback-loops",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/37-runtime-feedback-loops/"
       },
       {
@@ -2273,6 +2917,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/38-verification-gates",
+        "slug": "agent-engineering/verification-gates",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/38-verification-gates/"
       },
       {
@@ -2280,6 +2926,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/39-reviewer-agent",
+        "slug": "agent-engineering/reviewer-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/39-reviewer-agent/"
       },
       {
@@ -2287,6 +2935,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/40-multi-session-handoff",
+        "slug": "agent-engineering/multi-session-handoff",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/40-multi-session-handoff/"
       },
       {
@@ -2294,6 +2944,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/41-workbench-for-real-repos",
+        "slug": "agent-engineering/workbench-for-real-repos",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/41-workbench-for-real-repos/"
       },
       {
@@ -2301,6 +2953,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/14-agent-engineering/42-agent-workbench-capstone",
+        "slug": "agent-engineering/agent-workbench-capstone",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/14-agent-engineering/42-agent-workbench-capstone/"
       }
     ]
@@ -2310,12 +2964,16 @@ const PHASES = [
     "name": "Автономные системы",
     "status": "complete",
     "desc": "Долгосрочные агенты, self-improvement и стек безопасности 2026 года.",
+    "dir": "15-autonomous-systems",
+    "slug": "autonomous-systems",
     "lessons": [
       {
         "name": "От чат-ботов к долгосрочным агентам (METR)",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/01-long-horizon-agents",
+        "slug": "autonomous-systems/long-horizon-agents",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/01-long-horizon-agents/"
       },
       {
@@ -2323,6 +2981,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/02-star-family-reasoning",
+        "slug": "autonomous-systems/star-family-reasoning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/02-star-family-reasoning/"
       },
       {
@@ -2330,6 +2990,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/03-alphaevolve-evolutionary-coding",
+        "slug": "autonomous-systems/alphaevolve-evolutionary-coding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/03-alphaevolve-evolutionary-coding/"
       },
       {
@@ -2337,6 +2999,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/04-darwin-godel-machine",
+        "slug": "autonomous-systems/darwin-godel-machine",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/04-darwin-godel-machine/"
       },
       {
@@ -2344,6 +3008,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/05-ai-scientist-v2",
+        "slug": "autonomous-systems/ai-scientist-v2",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/05-ai-scientist-v2/"
       },
       {
@@ -2351,6 +3017,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/06-automated-alignment-research",
+        "slug": "autonomous-systems/automated-alignment-research",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/06-automated-alignment-research/"
       },
       {
@@ -2358,6 +3026,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/07-recursive-self-improvement",
+        "slug": "autonomous-systems/recursive-self-improvement",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/07-recursive-self-improvement/"
       },
       {
@@ -2365,6 +3035,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/08-bounded-self-improvement",
+        "slug": "autonomous-systems/bounded-self-improvement",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/08-bounded-self-improvement/"
       },
       {
@@ -2372,6 +3044,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/09-coding-agent-landscape",
+        "slug": "autonomous-systems/coding-agent-landscape",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/09-coding-agent-landscape/"
       },
       {
@@ -2379,6 +3053,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/10-claude-code-permission-modes",
+        "slug": "autonomous-systems/claude-code-permission-modes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/10-claude-code-permission-modes/"
       },
       {
@@ -2386,6 +3062,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/11-browser-agents",
+        "slug": "autonomous-systems/browser-agents",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/11-browser-agents/"
       },
       {
@@ -2393,6 +3071,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/12-durable-execution",
+        "slug": "autonomous-systems/durable-execution",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/12-durable-execution/"
       },
       {
@@ -2400,6 +3080,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/13-cost-governors",
+        "slug": "autonomous-systems/cost-governors",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/13-cost-governors/"
       },
       {
@@ -2407,6 +3089,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/14-kill-switches-canaries",
+        "slug": "autonomous-systems/kill-switches-canaries",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/14-kill-switches-canaries/"
       },
       {
@@ -2414,6 +3098,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/15-propose-then-commit",
+        "slug": "autonomous-systems/propose-then-commit",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/15-propose-then-commit/"
       },
       {
@@ -2421,6 +3107,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/16-checkpoints-rollback",
+        "slug": "autonomous-systems/checkpoints-rollback",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/16-checkpoints-rollback/"
       },
       {
@@ -2428,6 +3116,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/17-constitutional-ai",
+        "slug": "autonomous-systems/constitutional-ai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/17-constitutional-ai/"
       },
       {
@@ -2435,6 +3125,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/18-llama-guard",
+        "slug": "autonomous-systems/llama-guard",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/18-llama-guard/"
       },
       {
@@ -2442,6 +3134,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/19-anthropic-rsp",
+        "slug": "autonomous-systems/anthropic-rsp",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/19-anthropic-rsp/"
       },
       {
@@ -2449,6 +3143,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/20-openai-preparedness-deepmind-fsf",
+        "slug": "autonomous-systems/openai-preparedness-deepmind-fsf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/20-openai-preparedness-deepmind-fsf/"
       },
       {
@@ -2456,6 +3152,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/21-metr-external-evaluation",
+        "slug": "autonomous-systems/metr-external-evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/21-metr-external-evaluation/"
       },
       {
@@ -2463,6 +3161,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/15-autonomous-systems/22-cais-caisi-societal-risk",
+        "slug": "autonomous-systems/cais-caisi-societal-risk",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/15-autonomous-systems/22-cais-caisi-societal-risk/"
       }
     ]
@@ -2472,12 +3172,16 @@ const PHASES = [
     "name": "Multi-Agent и Swarms",
     "status": "complete",
     "desc": "Координация, emergence и коллективный интеллект.",
+    "dir": "16-multi-agent-and-swarms",
+    "slug": "multi-agent-and-swarms",
     "lessons": [
       {
         "name": "Зачем нужен multi-agent подход",
         "status": "complete",
         "type": "Теория",
         "lang": "TypeScript",
+        "path": "phases/16-multi-agent-and-swarms/01-why-multi-agent",
+        "slug": "multi-agent-and-swarms/why-multi-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/01-why-multi-agent/"
       },
       {
@@ -2485,6 +3189,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/02-fipa-acl-heritage",
+        "slug": "multi-agent-and-swarms/fipa-acl-heritage",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/02-fipa-acl-heritage/"
       },
       {
@@ -2492,6 +3198,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "TypeScript",
+        "path": "phases/16-multi-agent-and-swarms/03-communication-protocols",
+        "slug": "multi-agent-and-swarms/communication-protocols",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/03-communication-protocols/"
       },
       {
@@ -2499,6 +3207,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/04-primitive-model",
+        "slug": "multi-agent-and-swarms/primitive-model",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/04-primitive-model/"
       },
       {
@@ -2506,6 +3216,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern",
+        "slug": "multi-agent-and-swarms/supervisor-orchestrator-pattern",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/05-supervisor-orchestrator-pattern/"
       },
       {
@@ -2513,6 +3225,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/06-hierarchical-architecture",
+        "slug": "multi-agent-and-swarms/hierarchical-architecture",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/06-hierarchical-architecture/"
       },
       {
@@ -2520,6 +3234,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/07-society-of-mind-debate",
+        "slug": "multi-agent-and-swarms/society-of-mind-debate",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/07-society-of-mind-debate/"
       },
       {
@@ -2527,6 +3243,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/08-role-specialization",
+        "slug": "multi-agent-and-swarms/role-specialization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/08-role-specialization/"
       },
       {
@@ -2534,6 +3252,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/09-parallel-swarm-networks",
+        "slug": "multi-agent-and-swarms/parallel-swarm-networks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/09-parallel-swarm-networks/"
       },
       {
@@ -2541,6 +3261,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection",
+        "slug": "multi-agent-and-swarms/group-chat-speaker-selection",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/10-group-chat-speaker-selection/"
       },
       {
@@ -2548,6 +3270,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/11-handoffs-and-routines",
+        "slug": "multi-agent-and-swarms/handoffs-and-routines",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/11-handoffs-and-routines/"
       },
       {
@@ -2555,6 +3279,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/12-a2a-protocol",
+        "slug": "multi-agent-and-swarms/a2a-protocol",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/12-a2a-protocol/"
       },
       {
@@ -2562,6 +3288,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/13-shared-memory-blackboard",
+        "slug": "multi-agent-and-swarms/shared-memory-blackboard",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/13-shared-memory-blackboard/"
       },
       {
@@ -2569,6 +3297,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/14-consensus-and-bft",
+        "slug": "multi-agent-and-swarms/consensus-and-bft",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/14-consensus-and-bft/"
       },
       {
@@ -2576,6 +3306,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/15-voting-debate-topology",
+        "slug": "multi-agent-and-swarms/voting-debate-topology",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/15-voting-debate-topology/"
       },
       {
@@ -2583,6 +3315,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/16-negotiation-bargaining",
+        "slug": "multi-agent-and-swarms/negotiation-bargaining",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/16-negotiation-bargaining/"
       },
       {
@@ -2590,6 +3324,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/17-generative-agents-simulation",
+        "slug": "multi-agent-and-swarms/generative-agents-simulation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/17-generative-agents-simulation/"
       },
       {
@@ -2597,6 +3333,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination",
+        "slug": "multi-agent-and-swarms/theory-of-mind-coordination",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/18-theory-of-mind-coordination/"
       },
       {
@@ -2604,6 +3342,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco",
+        "slug": "multi-agent-and-swarms/swarm-optimization-pso-aco",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/19-swarm-optimization-pso-aco/"
       },
       {
@@ -2611,6 +3351,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo",
+        "slug": "multi-agent-and-swarms/marl-maddpg-qmix-mappo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/20-marl-maddpg-qmix-mappo/"
       },
       {
@@ -2618,6 +3360,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/21-agent-economies",
+        "slug": "multi-agent-and-swarms/agent-economies",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/21-agent-economies/"
       },
       {
@@ -2625,6 +3369,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints",
+        "slug": "multi-agent-and-swarms/production-scaling-queues-checkpoints",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/22-production-scaling-queues-checkpoints/"
       },
       {
@@ -2632,6 +3378,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink",
+        "slug": "multi-agent-and-swarms/failure-modes-mast-groupthink",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/23-failure-modes-mast-groupthink/"
       },
       {
@@ -2639,6 +3387,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks",
+        "slug": "multi-agent-and-swarms/evaluation-coordination-benchmarks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/24-evaluation-coordination-benchmarks/"
       },
       {
@@ -2646,6 +3396,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/16-multi-agent-and-swarms/25-case-studies-2026-sota",
+        "slug": "multi-agent-and-swarms/case-studies-2026-sota",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/16-multi-agent-and-swarms/25-case-studies-2026-sota/"
       }
     ]
@@ -2655,12 +3407,16 @@ const PHASES = [
     "name": "Infrastructure и Production",
     "status": "complete",
     "desc": "Доведите AI до реального мира.",
+    "dir": "17-infrastructure-and-production",
+    "slug": "infrastructure-and-production",
     "lessons": [
       {
         "name": "Управляемые LLM-платформы — Bedrock, Azure OpenAI, Vertex AI",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/01-managed-llm-platforms",
+        "slug": "infrastructure-and-production/managed-llm-platforms",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/01-managed-llm-platforms/"
       },
       {
@@ -2668,6 +3424,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/02-inference-platform-economics",
+        "slug": "infrastructure-and-production/inference-platform-economics",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/02-inference-platform-economics/"
       },
       {
@@ -2675,6 +3433,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/03-gpu-autoscaling-kubernetes",
+        "slug": "infrastructure-and-production/gpu-autoscaling-kubernetes",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/03-gpu-autoscaling-kubernetes/"
       },
       {
@@ -2682,6 +3442,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/04-vllm-serving-internals",
+        "slug": "infrastructure-and-production/vllm-serving-internals",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/04-vllm-serving-internals/"
       },
       {
@@ -2689,6 +3451,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/05-eagle3-speculative-decoding",
+        "slug": "infrastructure-and-production/eagle3-speculative-decoding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/05-eagle3-speculative-decoding/"
       },
       {
@@ -2696,6 +3460,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/06-sglang-radixattention",
+        "slug": "infrastructure-and-production/sglang-radixattention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/06-sglang-radixattention/"
       },
       {
@@ -2703,6 +3469,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/07-tensorrt-llm-blackwell",
+        "slug": "infrastructure-and-production/tensorrt-llm-blackwell",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/07-tensorrt-llm-blackwell/"
       },
       {
@@ -2710,6 +3478,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/08-inference-metrics-goodput",
+        "slug": "infrastructure-and-production/inference-metrics-goodput",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/08-inference-metrics-goodput/"
       },
       {
@@ -2717,6 +3487,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/09-production-quantization",
+        "slug": "infrastructure-and-production/production-quantization",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/09-production-quantization/"
       },
       {
@@ -2724,6 +3496,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/10-cold-start-mitigation",
+        "slug": "infrastructure-and-production/cold-start-mitigation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/10-cold-start-mitigation/"
       },
       {
@@ -2731,6 +3505,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/11-multi-region-kv-locality",
+        "slug": "infrastructure-and-production/multi-region-kv-locality",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/11-multi-region-kv-locality/"
       },
       {
@@ -2738,6 +3514,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/12-edge-inference",
+        "slug": "infrastructure-and-production/edge-inference",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/12-edge-inference/"
       },
       {
@@ -2745,6 +3523,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/13-llm-observability",
+        "slug": "infrastructure-and-production/llm-observability",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/13-llm-observability/"
       },
       {
@@ -2752,6 +3532,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/14-prompt-semantic-caching",
+        "slug": "infrastructure-and-production/prompt-semantic-caching",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/14-prompt-semantic-caching/"
       },
       {
@@ -2759,6 +3541,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/15-batch-apis",
+        "slug": "infrastructure-and-production/batch-apis",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/15-batch-apis/"
       },
       {
@@ -2766,6 +3550,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/16-model-routing",
+        "slug": "infrastructure-and-production/model-routing",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/16-model-routing/"
       },
       {
@@ -2773,6 +3559,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/17-disaggregated-prefill-decode",
+        "slug": "infrastructure-and-production/disaggregated-prefill-decode",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/17-disaggregated-prefill-decode/"
       },
       {
@@ -2780,6 +3568,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/18-vllm-production-stack-lmcache",
+        "slug": "infrastructure-and-production/vllm-production-stack-lmcache",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/18-vllm-production-stack-lmcache/"
       },
       {
@@ -2787,6 +3577,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/19-ai-gateways",
+        "slug": "infrastructure-and-production/ai-gateways",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/19-ai-gateways/"
       },
       {
@@ -2794,6 +3586,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/20-shadow-canary-progressive",
+        "slug": "infrastructure-and-production/shadow-canary-progressive",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/20-shadow-canary-progressive/"
       },
       {
@@ -2801,6 +3595,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/21-ab-testing-llm-features",
+        "slug": "infrastructure-and-production/ab-testing-llm-features",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/21-ab-testing-llm-features/"
       },
       {
@@ -2808,6 +3604,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/22-load-testing-llm-apis",
+        "slug": "infrastructure-and-production/load-testing-llm-apis",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/22-load-testing-llm-apis/"
       },
       {
@@ -2815,6 +3613,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/23-sre-for-ai",
+        "slug": "infrastructure-and-production/sre-for-ai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/23-sre-for-ai/"
       },
       {
@@ -2822,6 +3622,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/24-chaos-engineering-llm",
+        "slug": "infrastructure-and-production/chaos-engineering-llm",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/24-chaos-engineering-llm/"
       },
       {
@@ -2829,6 +3631,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/25-security-secrets-audit",
+        "slug": "infrastructure-and-production/security-secrets-audit",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/25-security-secrets-audit/"
       },
       {
@@ -2836,6 +3640,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/26-compliance-frameworks",
+        "slug": "infrastructure-and-production/compliance-frameworks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/26-compliance-frameworks/"
       },
       {
@@ -2843,6 +3649,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/27-finops-llms",
+        "slug": "infrastructure-and-production/finops-llms",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/27-finops-llms/"
       },
       {
@@ -2850,6 +3658,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/17-infrastructure-and-production/28-self-hosted-serving-selection",
+        "slug": "infrastructure-and-production/self-hosted-serving-selection",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/17-infrastructure-and-production/28-self-hosted-serving-selection/"
       }
     ]
@@ -2859,12 +3669,16 @@ const PHASES = [
     "name": "Этика, безопасность и alignment",
     "status": "complete",
     "desc": "Стройте AI, который помогает человечеству. Это не опция.",
+    "dir": "18-ethics-safety-alignment",
+    "slug": "ethics-safety-alignment",
     "lessons": [
       {
         "name": "Следование инструкциям как alignment signal",
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/01-instruction-following-alignment-signal",
+        "slug": "ethics-safety-alignment/instruction-following-alignment-signal",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/01-instruction-following-alignment-signal/"
       },
       {
@@ -2872,6 +3686,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/02-reward-hacking-goodhart",
+        "slug": "ethics-safety-alignment/reward-hacking-goodhart",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/02-reward-hacking-goodhart/"
       },
       {
@@ -2879,6 +3695,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/03-direct-preference-optimization-family",
+        "slug": "ethics-safety-alignment/direct-preference-optimization-family",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/03-direct-preference-optimization-family/"
       },
       {
@@ -2886,6 +3704,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/04-sycophancy-rlhf-amplification",
+        "slug": "ethics-safety-alignment/sycophancy-rlhf-amplification",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/04-sycophancy-rlhf-amplification/"
       },
       {
@@ -2893,6 +3713,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/05-constitutional-ai-rlaif",
+        "slug": "ethics-safety-alignment/constitutional-ai-rlaif",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/05-constitutional-ai-rlaif/"
       },
       {
@@ -2900,6 +3722,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/06-mesa-optimization-deceptive-alignment",
+        "slug": "ethics-safety-alignment/mesa-optimization-deceptive-alignment",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/06-mesa-optimization-deceptive-alignment/"
       },
       {
@@ -2907,6 +3731,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/07-sleeper-agents-persistent-deception",
+        "slug": "ethics-safety-alignment/sleeper-agents-persistent-deception",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/07-sleeper-agents-persistent-deception/"
       },
       {
@@ -2914,6 +3740,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/08-in-context-scheming-frontier-models",
+        "slug": "ethics-safety-alignment/in-context-scheming-frontier-models",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/08-in-context-scheming-frontier-models/"
       },
       {
@@ -2921,6 +3749,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/09-alignment-faking",
+        "slug": "ethics-safety-alignment/alignment-faking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/09-alignment-faking/"
       },
       {
@@ -2928,6 +3758,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/10-ai-control-subversion",
+        "slug": "ethics-safety-alignment/ai-control-subversion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/10-ai-control-subversion/"
       },
       {
@@ -2935,6 +3767,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/11-scalable-oversight-weak-to-strong",
+        "slug": "ethics-safety-alignment/scalable-oversight-weak-to-strong",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/11-scalable-oversight-weak-to-strong/"
       },
       {
@@ -2942,6 +3776,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/12-red-teaming-pair-automated-attacks",
+        "slug": "ethics-safety-alignment/red-teaming-pair-automated-attacks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/12-red-teaming-pair-automated-attacks/"
       },
       {
@@ -2949,6 +3785,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/13-many-shot-jailbreaking",
+        "slug": "ethics-safety-alignment/many-shot-jailbreaking",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/13-many-shot-jailbreaking/"
       },
       {
@@ -2956,6 +3794,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/14-ascii-art-visual-jailbreaks",
+        "slug": "ethics-safety-alignment/ascii-art-visual-jailbreaks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/14-ascii-art-visual-jailbreaks/"
       },
       {
@@ -2963,6 +3803,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/15-indirect-prompt-injection",
+        "slug": "ethics-safety-alignment/indirect-prompt-injection",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/15-indirect-prompt-injection/"
       },
       {
@@ -2970,6 +3812,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/16-red-team-tooling-garak-llamaguard-pyrit",
+        "slug": "ethics-safety-alignment/red-team-tooling-garak-llamaguard-pyrit",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/16-red-team-tooling-garak-llamaguard-pyrit/"
       },
       {
@@ -2977,6 +3821,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/17-wmdp-dual-use-evaluation",
+        "slug": "ethics-safety-alignment/wmdp-dual-use-evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/17-wmdp-dual-use-evaluation/"
       },
       {
@@ -2984,6 +3830,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/18-ethics-safety-alignment/18-frontier-safety-frameworks-rsp-pf-fsf",
+        "slug": "ethics-safety-alignment/frontier-safety-frameworks-rsp-pf-fsf",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/18-frontier-safety-frameworks-rsp-pf-fsf/"
       },
       {
@@ -2991,6 +3839,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/19-model-welfare-research",
+        "slug": "ethics-safety-alignment/model-welfare-research",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/19-model-welfare-research/"
       },
       {
@@ -2998,6 +3848,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/20-bias-representational-harm",
+        "slug": "ethics-safety-alignment/bias-representational-harm",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/20-bias-representational-harm/"
       },
       {
@@ -3005,6 +3857,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/21-fairness-criteria-group-individual-counterfactual",
+        "slug": "ethics-safety-alignment/fairness-criteria-group-individual-counterfactual",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/21-fairness-criteria-group-individual-counterfactual/"
       },
       {
@@ -3012,6 +3866,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/22-differential-privacy-for-llms",
+        "slug": "ethics-safety-alignment/differential-privacy-for-llms",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/22-differential-privacy-for-llms/"
       },
       {
@@ -3019,6 +3875,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/23-watermarking-synthid-stable-signature-c2pa",
+        "slug": "ethics-safety-alignment/watermarking-synthid-stable-signature-c2pa",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/23-watermarking-synthid-stable-signature-c2pa/"
       },
       {
@@ -3026,6 +3884,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/18-ethics-safety-alignment/24-regulatory-frameworks-eu-us-uk-korea",
+        "slug": "ethics-safety-alignment/regulatory-frameworks-eu-us-uk-korea",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/24-regulatory-frameworks-eu-us-uk-korea/"
       },
       {
@@ -3033,6 +3893,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/25-echoleak-cves-for-ai",
+        "slug": "ethics-safety-alignment/echoleak-cves-for-ai",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/25-echoleak-cves-for-ai/"
       },
       {
@@ -3040,6 +3902,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/26-model-system-dataset-cards",
+        "slug": "ethics-safety-alignment/model-system-dataset-cards",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/26-model-system-dataset-cards/"
       },
       {
@@ -3047,6 +3911,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/27-data-provenance-training-governance",
+        "slug": "ethics-safety-alignment/data-provenance-training-governance",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/27-data-provenance-training-governance/"
       },
       {
@@ -3054,6 +3920,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/18-ethics-safety-alignment/28-alignment-research-ecosystem",
+        "slug": "ethics-safety-alignment/alignment-research-ecosystem",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/28-alignment-research-ecosystem/"
       },
       {
@@ -3061,6 +3929,8 @@ const PHASES = [
         "status": "complete",
         "type": "Практика",
         "lang": "Python",
+        "path": "phases/18-ethics-safety-alignment/29-moderation-systems-openai-perspective-llamaguard",
+        "slug": "ethics-safety-alignment/moderation-systems-openai-perspective-llamaguard",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/29-moderation-systems-openai-perspective-llamaguard/"
       },
       {
@@ -3068,6 +3938,8 @@ const PHASES = [
         "status": "complete",
         "type": "Теория",
         "lang": "—",
+        "path": "phases/18-ethics-safety-alignment/30-dual-use-risk-cyber-bio-chem-nuclear",
+        "slug": "ethics-safety-alignment/dual-use-risk-cyber-bio-chem-nuclear",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/18-ethics-safety-alignment/30-dual-use-risk-cyber-bio-chem-nuclear/"
       }
     ]
@@ -3077,6 +3949,8 @@ const PHASES = [
     "name": "Capstone-проекты",
     "status": "complete",
     "desc": "Спецификации + starter-скелеты end-to-end продуктов 2026 года, по 20-40 часов самостоятельной работы каждый.",
+    "dir": "19-capstone-projects",
+    "slug": "capstone-projects",
     "lessons": [
       {
         "name": "Terminal-native coding agent",
@@ -3084,6 +3958,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "TypeScript, Python",
         "combines": "P0 P5 P7 P10 P11 P13 P14 P15 P17 P18",
+        "path": "phases/19-capstone-projects/01-terminal-native-coding-agent",
+        "slug": "capstone-projects/terminal-native-coding-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/01-terminal-native-coding-agent/"
       },
       {
@@ -3092,6 +3968,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P13 P17",
+        "path": "phases/19-capstone-projects/02-rag-over-codebase",
+        "slug": "capstone-projects/rag-over-codebase",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/02-rag-over-codebase/"
       },
       {
@@ -3100,6 +3978,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P6 P7 P11 P13 P14 P17",
+        "path": "phases/19-capstone-projects/03-realtime-voice-assistant",
+        "slug": "capstone-projects/realtime-voice-assistant",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/03-realtime-voice-assistant/"
       },
       {
@@ -3108,6 +3988,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P4 P5 P7 P11 P12 P17",
+        "path": "phases/19-capstone-projects/04-multimodal-document-qa",
+        "slug": "capstone-projects/multimodal-document-qa",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/04-multimodal-document-qa/"
       },
       {
@@ -3116,6 +3998,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P0 P2 P3 P7 P10 P14 P15 P16 P18",
+        "path": "phases/19-capstone-projects/05-autonomous-research-agent",
+        "slug": "capstone-projects/autonomous-research-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/05-autonomous-research-agent/"
       },
       {
@@ -3124,6 +4008,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P17 P18",
+        "path": "phases/19-capstone-projects/06-devops-troubleshooting-agent",
+        "slug": "capstone-projects/devops-troubleshooting-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/06-devops-troubleshooting-agent/"
       },
       {
@@ -3132,6 +4018,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P2 P3 P7 P10 P11 P17 P18",
+        "path": "phases/19-capstone-projects/07-end-to-end-fine-tuning-pipeline",
+        "slug": "capstone-projects/end-to-end-fine-tuning-pipeline",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/07-end-to-end-fine-tuning-pipeline/"
       },
       {
@@ -3140,6 +4028,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P12 P17 P18",
+        "path": "phases/19-capstone-projects/08-production-rag-chatbot",
+        "slug": "capstone-projects/production-rag-chatbot",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/08-production-rag-chatbot/"
       },
       {
@@ -3148,6 +4038,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P7 P11 P13 P14 P15 P17",
+        "path": "phases/19-capstone-projects/09-code-migration-agent",
+        "slug": "capstone-projects/code-migration-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/09-code-migration-agent/"
       },
       {
@@ -3156,6 +4048,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P16 P17",
+        "path": "phases/19-capstone-projects/10-multi-agent-software-team",
+        "slug": "capstone-projects/multi-agent-software-team",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/10-multi-agent-software-team/"
       },
       {
@@ -3164,6 +4058,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "TypeScript, Python",
         "combines": "P11 P13 P17 P18",
+        "path": "phases/19-capstone-projects/11-llm-observability-dashboard",
+        "slug": "capstone-projects/llm-observability-dashboard",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/11-llm-observability-dashboard/"
       },
       {
@@ -3172,6 +4068,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P4 P6 P7 P11 P12 P17",
+        "path": "phases/19-capstone-projects/12-video-understanding-pipeline",
+        "slug": "capstone-projects/video-understanding-pipeline",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/12-video-understanding-pipeline/"
       },
       {
@@ -3180,6 +4078,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P17 P18",
+        "path": "phases/19-capstone-projects/13-mcp-server-with-registry",
+        "slug": "capstone-projects/mcp-server-with-registry",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/13-mcp-server-with-registry/"
       },
       {
@@ -3188,6 +4088,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P3 P7 P10 P17",
+        "path": "phases/19-capstone-projects/14-speculative-decoding-server",
+        "slug": "capstone-projects/speculative-decoding-server",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/14-speculative-decoding-server/"
       },
       {
@@ -3196,6 +4098,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python",
         "combines": "P10 P11 P13 P14 P18",
+        "path": "phases/19-capstone-projects/15-constitutional-safety-harness",
+        "slug": "capstone-projects/constitutional-safety-harness",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/15-constitutional-safety-harness/"
       },
       {
@@ -3204,6 +4108,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P11 P13 P14 P15 P17",
+        "path": "phases/19-capstone-projects/16-github-issue-to-pr-agent",
+        "slug": "capstone-projects/github-issue-to-pr-agent",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/16-github-issue-to-pr-agent/"
       },
       {
@@ -3212,6 +4118,8 @@ const PHASES = [
         "type": "Capstone",
         "lang": "Python, TypeScript",
         "combines": "P5 P6 P11 P12 P14 P17 P18",
+        "path": "phases/19-capstone-projects/17-personal-ai-tutor",
+        "slug": "capstone-projects/personal-ai-tutor",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/17-personal-ai-tutor/"
       },
       {
@@ -3220,6 +4128,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/20-agent-harness-loop-contract",
+        "slug": "capstone-projects/agent-harness-loop-contract",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/20-agent-harness-loop-contract/"
       },
       {
@@ -3228,6 +4138,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/21-tool-registry-schema-validation",
+        "slug": "capstone-projects/tool-registry-schema-validation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/21-tool-registry-schema-validation/"
       },
       {
@@ -3236,6 +4148,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/22-jsonrpc-stdio-transport",
+        "slug": "capstone-projects/jsonrpc-stdio-transport",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/22-jsonrpc-stdio-transport/"
       },
       {
@@ -3244,6 +4158,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/23-function-call-dispatcher",
+        "slug": "capstone-projects/function-call-dispatcher",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/23-function-call-dispatcher/"
       },
       {
@@ -3252,6 +4168,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/24-plan-execute-control-flow",
+        "slug": "capstone-projects/plan-execute-control-flow",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/24-plan-execute-control-flow/"
       },
       {
@@ -3260,6 +4178,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/25-verification-gates-observation-budget",
+        "slug": "capstone-projects/verification-gates-observation-budget",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/25-verification-gates-observation-budget/"
       },
       {
@@ -3268,6 +4188,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/26-sandbox-runner-denylist",
+        "slug": "capstone-projects/sandbox-runner-denylist",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/26-sandbox-runner-denylist/"
       },
       {
@@ -3276,6 +4198,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/27-eval-harness-fixture-tasks",
+        "slug": "capstone-projects/eval-harness-fixture-tasks",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/27-eval-harness-fixture-tasks/"
       },
       {
@@ -3284,6 +4208,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/28-observability-otel-traces",
+        "slug": "capstone-projects/observability-otel-traces",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/28-observability-otel-traces/"
       },
       {
@@ -3292,6 +4218,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "A. Agent harness",
+        "path": "phases/19-capstone-projects/29-end-to-end-coding-task-demo",
+        "slug": "capstone-projects/end-to-end-coding-task-demo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/29-end-to-end-coding-task-demo/"
       },
       {
@@ -3300,6 +4228,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/30-bpe-tokenizer-from-scratch",
+        "slug": "capstone-projects/bpe-tokenizer-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/30-bpe-tokenizer-from-scratch/"
       },
       {
@@ -3308,6 +4238,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/31-tokenized-dataset-sliding-window",
+        "slug": "capstone-projects/tokenized-dataset-sliding-window",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/31-tokenized-dataset-sliding-window/"
       },
       {
@@ -3316,6 +4248,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/32-token-positional-embeddings",
+        "slug": "capstone-projects/token-positional-embeddings",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/32-token-positional-embeddings/"
       },
       {
@@ -3324,6 +4258,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/33-multihead-self-attention",
+        "slug": "capstone-projects/multihead-self-attention",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/33-multihead-self-attention/"
       },
       {
@@ -3332,6 +4268,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/34-transformer-block",
+        "slug": "capstone-projects/transformer-block",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/34-transformer-block/"
       },
       {
@@ -3340,6 +4278,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/35-gpt-model-assembly",
+        "slug": "capstone-projects/gpt-model-assembly",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/35-gpt-model-assembly/"
       },
       {
@@ -3348,6 +4288,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/36-training-loop-eval",
+        "slug": "capstone-projects/training-loop-eval",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/36-training-loop-eval/"
       },
       {
@@ -3356,6 +4298,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/37-loading-pretrained-weights",
+        "slug": "capstone-projects/loading-pretrained-weights",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/37-loading-pretrained-weights/"
       },
       {
@@ -3364,6 +4308,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/38-classifier-finetuning",
+        "slug": "capstone-projects/classifier-finetuning",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/38-classifier-finetuning/"
       },
       {
@@ -3372,6 +4318,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/39-instruction-tuning-sft",
+        "slug": "capstone-projects/instruction-tuning-sft",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/39-instruction-tuning-sft/"
       },
       {
@@ -3380,6 +4328,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/40-dpo-from-scratch",
+        "slug": "capstone-projects/dpo-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/40-dpo-from-scratch/"
       },
       {
@@ -3388,6 +4338,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "B. NLP LLM",
+        "path": "phases/19-capstone-projects/41-eval-pipeline",
+        "slug": "capstone-projects/eval-pipeline",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/41-eval-pipeline/"
       },
       {
@@ -3396,6 +4348,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/42-large-corpus-downloader",
+        "slug": "capstone-projects/large-corpus-downloader",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/42-large-corpus-downloader/"
       },
       {
@@ -3404,6 +4358,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/43-hdf5-tokenized-corpus",
+        "slug": "capstone-projects/hdf5-tokenized-corpus",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/43-hdf5-tokenized-corpus/"
       },
       {
@@ -3412,6 +4368,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/44-cosine-lr-warmup",
+        "slug": "capstone-projects/cosine-lr-warmup",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/44-cosine-lr-warmup/"
       },
       {
@@ -3420,6 +4378,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/45-gradient-clipping-amp",
+        "slug": "capstone-projects/gradient-clipping-amp",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/45-gradient-clipping-amp/"
       },
       {
@@ -3428,6 +4388,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/46-gradient-accumulation",
+        "slug": "capstone-projects/gradient-accumulation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/46-gradient-accumulation/"
       },
       {
@@ -3436,6 +4398,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/47-checkpoint-save-resume",
+        "slug": "capstone-projects/checkpoint-save-resume",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/47-checkpoint-save-resume/"
       },
       {
@@ -3444,6 +4408,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/48-distributed-fsdp-ddp",
+        "slug": "capstone-projects/distributed-fsdp-ddp",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/48-distributed-fsdp-ddp/"
       },
       {
@@ -3452,6 +4418,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "C. Train end-to-end",
+        "path": "phases/19-capstone-projects/49-lm-eval-harness",
+        "slug": "capstone-projects/lm-eval-harness",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/49-lm-eval-harness/"
       },
       {
@@ -3460,6 +4428,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/50-hypothesis-generator",
+        "slug": "capstone-projects/hypothesis-generator",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/50-hypothesis-generator/"
       },
       {
@@ -3468,6 +4438,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/51-literature-retrieval",
+        "slug": "capstone-projects/literature-retrieval",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/51-literature-retrieval/"
       },
       {
@@ -3476,6 +4448,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/52-experiment-runner",
+        "slug": "capstone-projects/experiment-runner",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/52-experiment-runner/"
       },
       {
@@ -3484,6 +4458,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/53-result-evaluator",
+        "slug": "capstone-projects/result-evaluator",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/53-result-evaluator/"
       },
       {
@@ -3492,6 +4468,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/54-paper-writer",
+        "slug": "capstone-projects/paper-writer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/54-paper-writer/"
       },
       {
@@ -3500,6 +4478,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/55-critic-loop",
+        "slug": "capstone-projects/critic-loop",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/55-critic-loop/"
       },
       {
@@ -3508,6 +4488,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/56-iteration-scheduler",
+        "slug": "capstone-projects/iteration-scheduler",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/56-iteration-scheduler/"
       },
       {
@@ -3516,6 +4498,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "D. Auto research",
+        "path": "phases/19-capstone-projects/57-end-to-end-research-demo",
+        "slug": "capstone-projects/end-to-end-research-demo",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/57-end-to-end-research-demo/"
       },
       {
@@ -3524,6 +4508,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/58-vision-encoder-patches",
+        "slug": "capstone-projects/vision-encoder-patches",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/58-vision-encoder-patches/"
       },
       {
@@ -3532,6 +4518,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/59-vit-transformer",
+        "slug": "capstone-projects/vit-transformer",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/59-vit-transformer/"
       },
       {
@@ -3540,6 +4528,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/60-projection-layer-modality-align",
+        "slug": "capstone-projects/projection-layer-modality-align",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/60-projection-layer-modality-align/"
       },
       {
@@ -3548,6 +4538,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/61-cross-attention-fusion",
+        "slug": "capstone-projects/cross-attention-fusion",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/61-cross-attention-fusion/"
       },
       {
@@ -3556,6 +4548,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/62-vision-language-pretraining",
+        "slug": "capstone-projects/vision-language-pretraining",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/62-vision-language-pretraining/"
       },
       {
@@ -3564,6 +4558,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "E. Multimodal VLM",
+        "path": "phases/19-capstone-projects/63-multimodal-eval",
+        "slug": "capstone-projects/multimodal-eval",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/63-multimodal-eval/"
       },
       {
@@ -3572,6 +4568,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/64-chunking-strategies-advanced",
+        "slug": "capstone-projects/chunking-strategies-advanced",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/64-chunking-strategies-advanced/"
       },
       {
@@ -3580,6 +4578,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense",
+        "slug": "capstone-projects/hybrid-retrieval-bm25-dense",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/65-hybrid-retrieval-bm25-dense/"
       },
       {
@@ -3588,6 +4588,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/66-reranker-cross-encoder",
+        "slug": "capstone-projects/reranker-cross-encoder",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/66-reranker-cross-encoder/"
       },
       {
@@ -3596,6 +4598,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/67-query-rewriting-hyde",
+        "slug": "capstone-projects/query-rewriting-hyde",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/67-query-rewriting-hyde/"
       },
       {
@@ -3604,6 +4608,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/68-rag-eval-precision-recall",
+        "slug": "capstone-projects/rag-eval-precision-recall",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/68-rag-eval-precision-recall/"
       },
       {
@@ -3612,6 +4618,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "F. Advanced RAG",
+        "path": "phases/19-capstone-projects/69-end-to-end-rag-system",
+        "slug": "capstone-projects/end-to-end-rag-system",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/69-end-to-end-rag-system/"
       },
       {
@@ -3620,6 +4628,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/70-task-spec-format",
+        "slug": "capstone-projects/task-spec-format",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/70-task-spec-format/"
       },
       {
@@ -3628,6 +4638,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/71-classical-metrics",
+        "slug": "capstone-projects/classical-metrics",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/71-classical-metrics/"
       },
       {
@@ -3636,6 +4648,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/72-code-exec-metric",
+        "slug": "capstone-projects/code-exec-metric",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/72-code-exec-metric/"
       },
       {
@@ -3644,6 +4658,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/73-perplexity-calibration",
+        "slug": "capstone-projects/perplexity-calibration",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/73-perplexity-calibration/"
       },
       {
@@ -3652,6 +4668,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/74-leaderboard-aggregation",
+        "slug": "capstone-projects/leaderboard-aggregation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/74-leaderboard-aggregation/"
       },
       {
@@ -3660,6 +4678,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "G. Eval framework",
+        "path": "phases/19-capstone-projects/75-end-to-end-eval-runner",
+        "slug": "capstone-projects/end-to-end-eval-runner",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/75-end-to-end-eval-runner/"
       },
       {
@@ -3668,6 +4688,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/76-collective-ops-from-scratch",
+        "slug": "capstone-projects/collective-ops-from-scratch",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/76-collective-ops-from-scratch/"
       },
       {
@@ -3676,6 +4698,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/77-data-parallel-ddp",
+        "slug": "capstone-projects/data-parallel-ddp",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/77-data-parallel-ddp/"
       },
       {
@@ -3684,6 +4708,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/78-zero-parameter-sharding",
+        "slug": "capstone-projects/zero-parameter-sharding",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/78-zero-parameter-sharding/"
       },
       {
@@ -3692,6 +4718,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/79-pipeline-parallel",
+        "slug": "capstone-projects/pipeline-parallel",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/79-pipeline-parallel/"
       },
       {
@@ -3700,6 +4728,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/80-checkpoint-sharded-resume",
+        "slug": "capstone-projects/checkpoint-sharded-resume",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/80-checkpoint-sharded-resume/"
       },
       {
@@ -3708,6 +4738,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "H. Distributed train",
+        "path": "phases/19-capstone-projects/81-end-to-end-distributed-train",
+        "slug": "capstone-projects/end-to-end-distributed-train",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/81-end-to-end-distributed-train/"
       },
       {
@@ -3716,6 +4748,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/82-jailbreak-taxonomy",
+        "slug": "capstone-projects/jailbreak-taxonomy",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/82-jailbreak-taxonomy/"
       },
       {
@@ -3724,6 +4758,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/83-prompt-injection-detector",
+        "slug": "capstone-projects/prompt-injection-detector",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/83-prompt-injection-detector/"
       },
       {
@@ -3732,6 +4768,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/84-refusal-evaluation",
+        "slug": "capstone-projects/refusal-evaluation",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/84-refusal-evaluation/"
       },
       {
@@ -3740,6 +4778,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/85-content-classifier-integration",
+        "slug": "capstone-projects/content-classifier-integration",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/85-content-classifier-integration/"
       },
       {
@@ -3748,6 +4788,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python, YAML",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/86-constitutional-rules-engine",
+        "slug": "capstone-projects/constitutional-rules-engine",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/86-constitutional-rules-engine/"
       },
       {
@@ -3756,6 +4798,8 @@ const PHASES = [
         "type": "Практика",
         "lang": "Python",
         "combines": "I. Safety harness",
+        "path": "phases/19-capstone-projects/87-end-to-end-safety-gate",
+        "slug": "capstone-projects/end-to-end-safety-gate",
         "url": "https://github.com/stabuev/ai-engineering-from-scratch/tree/main/phases/19-capstone-projects/87-end-to-end-safety-gate/"
       }
     ]

@@ -211,8 +211,8 @@
 
     for (var i = 0; i < p.lessons.length; i++) {
       var l = p.lessons[i];
-      var pathMatch = l.url ? l.url.match(/(phases\/[^/]+\/[^/]+)\/?$/) : null;
-      var lessonPath = pathMatch ? pathMatch[1] : '';
+      var lessonPath = l.path || ''; // progress.js key
+      var lessonUrl = l.slug ? l.slug + '.html' : ''; // prerendered page (ru)
       var userComplete = hasProgress && lessonPath && window.AIFSProgress.isLessonComplete(lessonPath);
       if (userComplete) userDone++;
 
@@ -221,8 +221,8 @@
 
       html += '<div class="modal-lesson' + (userComplete ? ' user-done' : '') + '">';
       html += '<span class="modal-lesson-status ' + statusClass + '"' + (userComplete ? ' title="You completed this lesson"' : '') + '></span>';
-      if (lessonPath) {
-        html += '<a href="lesson.html?path=' + lessonPath + '">' + escapeHtml(l.name) + '</a>';
+      if (lessonUrl) {
+        html += '<a href="' + lessonUrl + '">' + escapeHtml(l.name) + '</a>';
       } else {
         html += '<a>' + escapeHtml(l.name) + '</a>';
       }
@@ -230,8 +230,8 @@
       html += '<span class="modal-lesson-lang">' + escapeHtml(l.lang) + '</span>';
 
       var actionHtml = '';
-      if ((l.status === 'complete' || userComplete) && lessonPath) {
-        actionHtml = '<a href="lesson.html?path=' + lessonPath + '" class="modal-lesson-read">' + (userComplete ? 'Review' : 'Read') + '</a>';
+      if ((l.status === 'complete' || userComplete) && lessonUrl) {
+        actionHtml = '<a href="' + lessonUrl + '" class="modal-lesson-read">' + (userComplete ? 'Review' : 'Read') + '</a>';
       }
       var toggleHtml = '';
       if (hasProgress && lessonPath) {

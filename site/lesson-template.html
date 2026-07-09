@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="{{HTML_LANG}}" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23fafaf5'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%233553ff' stroke-width='1.2'/><text x='6' y='22' font-size='14' font-family='monospace' fill='%233553ff'>AI</text></svg>">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <link rel="canonical" href="{{CANONICAL}}">
+  <link rel="alternate" hreflang="ru" href="{{RU_URL}}">
+  <link rel="alternate" hreflang="en" href="{{EN_URL}}">
+  <link rel="alternate" hreflang="x-default" href="{{RU_URL}}">
+  <meta property="og:title" content="{{OG_TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
+  <meta property="og:url" content="{{CANONICAL}}">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{OG_TITLE}}">
+  <meta name="twitter:description" content="{{DESCRIPTION}}">
+  <meta name="twitter:image" content="https://datascience.xyz/courses/aicourse/og-image.png?v=2">
+  <script type="application/ld+json">{{JSONLD}}</script>
+  <script>(function(){try{var t=localStorage.getItem('theme');if(!t)t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ROOT}}style.css?v={{ASSET_V}}">
+  <link rel="stylesheet" href="{{ROOT}}lesson.css?v={{ASSET_V}}">
+
+<!-- Счетчик Yandex.Metrika -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js', 'ym');
+
+    ym(86601085, 'init', {clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/86601085" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Счетчик Yandex.Metrika -->
+</head>
+<body>
+
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="{{ROOT}}index.html" class="logo">
+        <span class="logo-icon" aria-hidden="true"></span> AI / FROM SCRATCH
+      </a>
+      <nav class="header-nav">
+        <a href="{{ROOT}}index.html#contents">{{NAV_CONTENTS}}</a>
+        <a href="{{ROOT}}catalog.html">{{NAV_CATALOG}}</a>
+        <a href="{{ROOT}}prereqs.html">{{NAV_ROADMAP}}</a>
+        <a href="{{ROOT}}glossary.html">{{NAV_GLOSSARY}}</a>
+      </nav>
+      <button class="theme-toggle lang-toggle" id="langToggle" aria-label="Lesson language: Russian / English" type="button" title="Язык урока / Lesson language">{{LANG_LABEL}}</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
+        <span class="theme-icon" id="themeIcon">N</span>
+      </button>
+    </div>
+  </header>
+
+  <button class="lesson-sidebar-toggle" id="sidebarToggle" aria-label="{{SIDEBAR_TOGGLE_LABEL}}">&#9776;</button>
+
+  <div class="mermaid-modal-overlay" id="mermaidModalOverlay" aria-hidden="true">
+    <div class="mermaid-modal" role="dialog" aria-modal="true" aria-label="{{MERMAID_MODAL_LABEL}}">
+      <div class="mermaid-modal-header">
+        <div class="mermaid-modal-title" id="mermaidModalTitle">{{MERMAID_MODAL_TITLE}}</div>
+        <div class="mermaid-modal-actions">
+          <button class="mermaid-btn" type="button" id="mermaidModalClose">{{MERMAID_MODAL_CLOSE}}</button>
+        </div>
+      </div>
+      <div class="mermaid-modal-body" id="mermaidModalBody"><div class="mermaid-modal-center" id="mermaidModalCenter"></div></div>
+    </div>
+  </div>
+
+  <div class="lesson-layout">
+    <aside class="lesson-sidebar" id="lessonSidebar">{{SIDEBAR}}</aside>
+    <main class="lesson-main">
+      <div class="lesson-content" id="lessonContent">
+        <article class="lesson-article">{{ARTICLE}}</article>
+      </div>
+    </main>
+    <aside class="toc-sidebar" id="tocSidebar" aria-hidden="true"></aside>
+  </div>
+
+  <script src="{{ROOT}}data.js?v={{ASSET_V}}"></script>
+  <script src="{{ROOT}}progress.js?v={{ASSET_V}}"></script>
+  <script src="{{ROOT}}header.js?v={{ASSET_V}}" defer></script>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'default' : 'dark',
+      fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+      themeVariables: {
+        fontSize: '13px'
+      },
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        nodeSpacing: 40,
+        rankSpacing: 50,
+        padding: 12
+      }
+    });
+    window._mermaidReady = mermaid;
+  </script>
+  <script>window.LESSON = {{LESSON_JSON}};</script>
+  <script src="{{ROOT}}lesson.js?v={{ASSET_V}}"></script>
+</body>
+</html>

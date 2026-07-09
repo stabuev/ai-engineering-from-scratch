@@ -352,6 +352,7 @@
               type: l.type,
               lang: l.lang,
               status: l.status,
+              slug: l.slug || '',
               url: l.url || ''
             });
           }
@@ -428,9 +429,8 @@
             var r = rows[i];
             html += '<tr>';
             html += '<td><span class="catalog-phase-label">' + String(r.phase).padStart(2, '0') + '</span></td>';
-            var cpath = r.url ? (r.url.match(/(phases\/[^/]+\/[^/]+)\/?$/) || [])[1] : '';
-            if (cpath) {
-              html += '<td><a href="lesson.html?path=' + cpath + '">' + escapeHtml(r.name) + '</a></td>';
+            if (r.slug) {
+              html += '<td><a href="' + r.slug + '.html">' + escapeHtml(r.name) + '</a></td>';
             } else {
               html += '<td>' + escapeHtml(r.name) + '</td>';
             }

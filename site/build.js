@@ -6,6 +6,12 @@
  * disk must be registered there, and vice versa. From the manifest this
  * script:
  *   - generates site/data.js (PHASES + GLOSSARY);
+ *   - prerenders every lesson (ru + en) into static SEO-friendly pages:
+ *       site/<phase-slug>/<lesson-slug>.html       (ru, canonical)
+ *       site/en/<phase-slug>/<lesson-slug>.html    (en)
+ *     plus a phase hub page site/<phase-slug>/index.html per phase.
+ *     Slugs are the repo dir names without the numeric prefix. The pages are
+ *     gitignored (every dir under site/ except assets/) and rebuilt on deploy;
  *   - rewrites the lesson tables in README.md and ROADMAP.md;
  *   - keeps every lesson/hour counter in README.md, ROADMAP.md and the
  *     site/*.html meta tags in sync.
@@ -19,6 +25,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const lessonRenderer = require('./lesson-render.js');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const MANIFEST_PATH = path.join(REPO_ROOT, 'lessons.json');
@@ -26,7 +33,8 @@ const README_PATH = path.join(REPO_ROOT, 'README.md');
 const ROADMAP_PATH = path.join(REPO_ROOT, 'ROADMAP.md');
 const GLOSSARY_PATH = path.join(REPO_ROOT, 'glossary', 'terms.md');
 const DATA_PATH = path.join(__dirname, 'data.js');
-const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html', 'lesson.html']
+const LESSON_TEMPLATE_PATH = path.join(__dirname, 'lesson-template.html');
+const HTML_COUNT_PAGES = ['index.html', 'catalog.html', 'prereqs.html']
   .map(f => path.join(__dirname, f));
 const SKILL_COUNT_PAGES = [
   path.join(REPO_ROOT, '.claude', 'skills', 'find-your-level', 'SKILL.md'),
@@ -40,6 +48,32 @@ const GITHUB_BASE = 'https://github.com/stabuev/ai-engineering-from-scratch/tree
 const SITE_BASE = 'https://datascience.xyz/courses/aicourse/';
 const SITEMAP_PATH = path.join(__dirname, 'sitemap.xml');
 const STATUS_EMOJI = { 'complete': '✅', 'in-progress': '🚧', 'planned': '⬚' };
+
+// Cache-busting version for the static assets referenced by prerendered pages.
+const ASSET_V = '20260709a';
+// Directory names at the site root that pretty phase slugs must never shadow.
+const RESERVED_SLUGS = ['en', 'assets'];
+
+// UI strings baked into the prerendered chrome (header nav, sidebar, bottom
+// nav, mermaid modal). Article-level strings live in lesson-render.js.
+const UI = {
+  ru: {
+    navContents: 'Содержание', navCatalog: 'Каталог', navRoadmap: 'Дорожная карта', navGlossary: 'Глоссарий',
+    phase: 'Фаза', prevLesson: 'Предыдущий', nextLesson: 'Следующий',
+    sidebarToggle: 'Переключить боковую панель',
+    mermaidModalLabel: 'Увеличенная диаграмма', diagram: 'Диаграмма', close: 'Закрыть',
+    home: 'Главная', lessonsWord: 'уроков', minutes: 'мин',
+    siteTitleSuffix: ' - AI Engineering from Scratch',
+  },
+  en: {
+    navContents: 'Contents', navCatalog: 'Catalog', navRoadmap: 'Roadmap', navGlossary: 'Glossary',
+    phase: 'Phase', prevLesson: 'Previous', nextLesson: 'Next',
+    sidebarToggle: 'Toggle sidebar',
+    mermaidModalLabel: 'Expanded diagram', diagram: 'Diagram', close: 'Close',
+    home: 'Home', lessonsWord: 'lessons', minutes: 'min',
+    siteTitleSuffix: ' - AI Engineering from Scratch',
+  },
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function ruPlural(n, one, few, many) {
@@ -61,6 +95,30 @@ function hoursLabel(hours) {
 
 function lessonRel(phase, lesson) {
   return `phases/${phase.dir}/${lesson.dir}`;
+}
+
+// Pretty URL slugs: repo dir names without the numeric ordering prefix, so
+// renumbering a lesson does not change its public URL.
+function stripNum(dir) {
+  return dir.replace(/^\d+-/, '');
+}
+
+function phaseSlug(phase) {
+  return stripNum(phase.dir);
+}
+
+function lessonSlug(phase, lesson) {
+  return `${stripNum(phase.dir)}/${stripNum(lesson.dir)}`;
+}
+
+// Relative href from a prerendered page to a lesson / phase hub.
+// `root` is the page's prefix to the site root ('../' for ru, '../../' for en).
+function lessonHref(root, lang, phase, lesson) {
+  return root + (lang === 'en' ? 'en/' : '') + lessonSlug(phase, lesson) + '.html';
+}
+
+function phaseHubHref(root, lang, phase) {
+  return root + (lang === 'en' ? 'en/' : '') + phaseSlug(phase) + '/';
 }
 
 // Replace the first contiguous run of markdown-table lines in `segment`.
@@ -178,6 +236,23 @@ function loadManifest() {
       if (lesson.dir.slice(0, 2) !== lesson.number) {
         errors.push(`number/dir mismatch: phases/${phase.dir}/${lesson.dir} has number ${lesson.number}`);
       }
+    }
+  }
+
+  // Pretty URL slugs must stay unique and must not shadow reserved site dirs,
+  // otherwise two lessons would prerender to the same file.
+  const seenSlugs = new Map();
+  for (const phase of manifest.phases) {
+    const pSlug = phaseSlug(phase);
+    if (RESERVED_SLUGS.includes(pSlug)) {
+      errors.push(`phase slug "${pSlug}" collides with a reserved site directory`);
+    }
+    for (const lesson of phase.lessons) {
+      const slug = lessonSlug(phase, lesson);
+      if (seenSlugs.has(slug)) {
+        errors.push(`duplicate lesson URL slug "${slug}": ${lessonRel(phase, lesson)} vs ${seenSlugs.get(slug)}`);
+      }
+      seenSlugs.set(slug, lessonRel(phase, lesson));
     }
   }
 
@@ -373,12 +448,18 @@ function renderDataJs(manifest, glossaryTerms) {
     name: phase.name,
     status: phase.status,
     desc: phase.desc,
+    dir: phase.dir,
+    slug: phaseSlug(phase),
     lessons: phase.lessons.map(lesson => ({
       name: lesson.title,
       status: lesson.status,
       type: lesson.type,
       lang: lesson.languages,
       ...(lesson.combines && { combines: lesson.combines }),
+      // path — repo path, also the progress.js key; slug — pretty URL path
+      // (append '.html', prefix 'en/' for the English version).
+      path: lessonRel(phase, lesson),
+      slug: lessonSlug(phase, lesson),
       url: GITHUB_BASE + lessonRel(phase, lesson) + '/',
     })),
   }));
@@ -572,32 +653,307 @@ function renderSkillCounts(content, stats) {
     .replace(/20 phases, \d+\+? lessons/g, `20 phases, ${stats.total} lessons`);
 }
 
+// ─── Prerendered lesson pages ────────────────────────────────────────
+// One static page per lesson per language, written on every build (deploy):
+//   site/<phase-slug>/<lesson-slug>.html      ru — canonical, x-default
+//   site/en/<phase-slug>/<lesson-slug>.html   en
+// plus a phase hub (site/<phase-slug>/index.html + en/) listing the lessons.
+// Everything a crawler needs — article body, sidebar links, prev/next nav,
+// canonical/hreflang/JSON-LD — is in the markup; site/lesson.js only hydrates.
+
+function fillTemplate(tpl, vars) {
+  return tpl.replace(/\{\{(\w+)\}\}/g, (m, key) => (key in vars ? vars[key] : m));
+}
+
+// JSON safe for embedding into <script>: no '</script>' breakouts.
+function jsonForHtml(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+function buildFlatLessons(manifest) {
+  const flat = [];
+  manifest.phases.forEach((phase, phaseIndex) => {
+    phase.lessons.forEach(lesson => {
+      flat.push({ phase, lesson, phaseIndex });
+    });
+  });
+  return flat;
+}
+
+function chromeVars(lang, root) {
+  const ui = UI[lang];
+  return {
+    HTML_LANG: lang,
+    ROOT: root,
+    ASSET_V,
+    NAV_CONTENTS: ui.navContents,
+    NAV_CATALOG: ui.navCatalog,
+    NAV_ROADMAP: ui.navRoadmap,
+    NAV_GLOSSARY: ui.navGlossary,
+    LANG_LABEL: lang.toUpperCase(),
+    SIDEBAR_TOGGLE_LABEL: ui.sidebarToggle,
+    MERMAID_MODAL_LABEL: ui.mermaidModalLabel,
+    MERMAID_MODAL_TITLE: ui.diagram,
+    MERMAID_MODAL_CLOSE: ui.close,
+  };
+}
+
+function buildSidebarHtml(manifest, phaseIndex, activeLessonDir, lang, root) {
+  const esc = lessonRenderer.escapeHtml;
+  const ui = UI[lang];
+  const phases = manifest.phases;
+  const phase = phases[phaseIndex];
+  let html = '';
+
+  const prevPhase = phaseIndex > 0 ? phases[phaseIndex - 1] : null;
+  const nextPhase = phaseIndex < phases.length - 1 ? phases[phaseIndex + 1] : null;
+  if (prevPhase || nextPhase) {
+    html += '<div class="sidebar-phase-nav">';
+    if (prevPhase) {
+      html += `<a href="${phaseHubHref(root, lang, prevPhase)}">&larr; ${ui.phase} ${String(prevPhase.number).padStart(2, '0')}: ${esc(prevPhase.name)}</a>`;
+    }
+    if (nextPhase) {
+      html += `<a href="${phaseHubHref(root, lang, nextPhase)}">${ui.phase} ${String(nextPhase.number).padStart(2, '0')}: ${esc(nextPhase.name)} &rarr;</a>`;
+    }
+    html += '</div>';
+  }
+
+  html += `<div class="sidebar-phase-header"><a href="${phaseHubHref(root, lang, phase)}">${ui.phase} ${String(phase.number).padStart(2, '0')} · ${esc(phase.name)}</a></div>`;
+  for (const lesson of phase.lessons) {
+    const isActive = lesson.dir === activeLessonDir;
+    html += `<a class="sidebar-lesson-link${isActive ? ' active' : ''}" href="${lessonHref(root, lang, phase, lesson)}">`;
+    html += `<span class="sidebar-lesson-dot ${lesson.status}"></span>`;
+    html += esc(lesson.title);
+    html += '</a>';
+  }
+  return html;
+}
+
+function buildBottomNavHtml(flat, index, lang, root) {
+  const esc = lessonRenderer.escapeHtml;
+  const ui = UI[lang];
+  const prev = index > 0 ? flat[index - 1] : null;
+  const next = index < flat.length - 1 ? flat[index + 1] : null;
+
+  let nav = '<div class="lesson-nav-bottom">';
+  if (prev) {
+    nav += `<a class="lesson-nav-btn prev" href="${lessonHref(root, lang, prev.phase, prev.lesson)}">`;
+    nav += `<span class="nav-label">&larr; ${ui.prevLesson}</span>`;
+    nav += `<span class="nav-title">${esc(prev.lesson.title)}</span>`;
+    nav += '</a>';
+  } else {
+    nav += '<div></div>';
+  }
+  if (next) {
+    nav += `<a class="lesson-nav-btn next" href="${lessonHref(root, lang, next.phase, next.lesson)}">`;
+    nav += `<span class="nav-label">${ui.nextLesson} &rarr;</span>`;
+    nav += `<span class="nav-title">${esc(next.lesson.title)}</span>`;
+    nav += '</a>';
+  }
+  nav += '</div>';
+  return nav;
+}
+
+function makePrereqResolver(manifest, lang, root) {
+  return function resolveHref(phaseNum, lessonNum) {
+    const phase = manifest.phases.find(p => p.number === phaseNum);
+    if (!phase || !phase.lessons.length) return null;
+    if (lessonNum == null) return lessonHref(root, lang, phase, phase.lessons[0]);
+    const lesson = phase.lessons.find(l => l.number === lessonNum);
+    return lesson ? lessonHref(root, lang, phase, lesson) : null;
+  };
+}
+
+function lessonJsonLd({ title, description, canonical, lang, phase, lesson }) {
+  const ui = UI[lang];
+  const hubUrl = `${SITE_BASE}${lang === 'en' ? 'en/' : ''}${phaseSlug(phase)}/`;
+  return jsonForHtml([
+    {
+      '@context': 'https://schema.org',
+      '@type': 'LearningResource',
+      name: title,
+      description,
+      url: canonical,
+      inLanguage: lang,
+      learningResourceType: 'Lesson',
+      timeRequired: `PT${lesson.minutes}M`,
+      isAccessibleForFree: true,
+      isPartOf: {
+        '@type': 'Course',
+        name: 'AI Engineering from Scratch',
+        url: SITE_BASE,
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'AI Engineering from Scratch', item: SITE_BASE },
+        { '@type': 'ListItem', position: 2, name: `${ui.phase} ${String(phase.number).padStart(2, '0')}: ${phase.name}`, item: hubUrl },
+        { '@type': 'ListItem', position: 3, name: title, item: canonical },
+      ],
+    },
+  ]);
+}
+
+function renderLessonPages(manifest) {
+  const tpl = fs.readFileSync(LESSON_TEMPLATE_PATH, 'utf8');
+  const flat = buildFlatLessons(manifest);
+  const esc = lessonRenderer.escapeHtml;
+  let written = 0;
+
+  flat.forEach((entry, index) => {
+    const { phase, lesson, phaseIndex } = entry;
+    const lessonPath = lessonRel(phase, lesson);
+    const slug = lessonSlug(phase, lesson);
+    const ruUrl = `${SITE_BASE}${slug}.html`;
+    const enUrl = `${SITE_BASE}en/${slug}.html`;
+
+    for (const lang of ['ru', 'en']) {
+      const root = lang === 'en' ? '../../' : '../';
+      const md = fs.readFileSync(path.join(REPO_ROOT, lessonPath, 'docs', `${lang}.md`), 'utf8');
+      const strings = lessonRenderer.STRINGS[lang];
+
+      let quiz = null;
+      const quizPath = path.join(REPO_ROOT, lessonPath, lang === 'en' ? 'quiz_en.json' : 'quiz.json');
+      if (fs.existsSync(quizPath)) {
+        try { quiz = JSON.parse(fs.readFileSync(quizPath, 'utf8')); } catch (e) { /* validated in loadManifest */ }
+      }
+
+      const { html: body, title } = lessonRenderer.renderArticle({ md, lessonPath, strings });
+      let article = body;
+      if (quiz) article = lessonRenderer.buildQuizzesHtml(article, quiz, strings);
+      article = lessonRenderer.linkifyPrereqs(article, makePrereqResolver(manifest, lang, root));
+      article += '<div class="ai-panels" id="aiPanels"></div>';
+      article += buildBottomNavHtml(flat, index, lang, root);
+
+      const pageTitle = (title || lesson.title) + UI[lang].siteTitleSuffix;
+      const description = lessonRenderer.extractDescription(md) || lesson.title;
+      const canonical = lang === 'en' ? enUrl : ruUrl;
+
+      const page = fillTemplate(tpl, {
+        ...chromeVars(lang, root),
+        TITLE: esc(pageTitle),
+        OG_TITLE: esc((title || lesson.title) + ' · AI Engineering from Scratch'),
+        DESCRIPTION: esc(description),
+        CANONICAL: canonical,
+        RU_URL: ruUrl,
+        EN_URL: enUrl,
+        JSONLD: lessonJsonLd({ title: title || lesson.title, description, canonical, lang, phase, lesson }),
+        SIDEBAR: buildSidebarHtml(manifest, phaseIndex, lesson.dir, lang, root),
+        ARTICLE: article,
+        LESSON_JSON: jsonForHtml({ path: lessonPath, slug, lang, root }),
+      });
+
+      const outPath = path.join(__dirname, lang === 'en' ? 'en' : '', `${slug}.html`);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, page, 'utf8');
+      written++;
+    }
+  });
+
+  return written;
+}
+
+function renderPhaseHubs(manifest) {
+  const tpl = fs.readFileSync(LESSON_TEMPLATE_PATH, 'utf8');
+  const esc = lessonRenderer.escapeHtml;
+  let written = 0;
+
+  manifest.phases.forEach((phase, phaseIndex) => {
+    const slug = phaseSlug(phase);
+    const ruUrl = `${SITE_BASE}${slug}/`;
+    const enUrl = `${SITE_BASE}en/${slug}/`;
+
+    for (const lang of ['ru', 'en']) {
+      const root = lang === 'en' ? '../../' : '../';
+      const ui = UI[lang];
+      const phaseLabel = `${ui.phase} ${String(phase.number).padStart(2, '0')}`;
+      const hours = Math.round(phase.lessons.reduce((s, l) => s + l.minutes, 0) / 60 * 10) / 10;
+
+      let article = `<h1>${phaseLabel}: ${esc(phase.name)}</h1>`;
+      article += `<div class="motto">${esc(phase.desc)}</div>`;
+      article += `<div class="lesson-meta-tag"><strong>${lang === 'en' ? 'Lessons' : 'Уроки'}:</strong> ${phase.lessons.length} · ~${hours} ${lang === 'en' ? 'h' : 'ч'}</div>`;
+      article += '<ol>';
+      for (const lesson of phase.lessons) {
+        article += `<li><a href="${lessonHref(root, lang, phase, lesson)}">${esc(lesson.title)}</a> — ${esc(lesson.type)} · ~${lesson.minutes} ${ui.minutes}</li>`;
+      }
+      article += '</ol>';
+
+      const pageTitle = `${phaseLabel}: ${phase.name}${ui.siteTitleSuffix}`;
+      const description = phase.desc;
+      const canonical = lang === 'en' ? enUrl : ruUrl;
+
+      const jsonLd = jsonForHtml([
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'AI Engineering from Scratch', item: SITE_BASE },
+            { '@type': 'ListItem', position: 2, name: `${phaseLabel}: ${phase.name}`, item: canonical },
+          ],
+        },
+      ]);
+
+      const page = fillTemplate(tpl, {
+        ...chromeVars(lang, root),
+        TITLE: esc(pageTitle),
+        OG_TITLE: esc(`${phaseLabel}: ${phase.name} · AI Engineering from Scratch`),
+        DESCRIPTION: esc(description),
+        CANONICAL: canonical,
+        RU_URL: ruUrl,
+        EN_URL: enUrl,
+        JSONLD: jsonLd,
+        SIDEBAR: buildSidebarHtml(manifest, phaseIndex, null, lang, root),
+        ARTICLE: article,
+        LESSON_JSON: jsonForHtml({ path: '', slug: `${slug}/index`, lang, root }),
+      });
+
+      const outPath = path.join(__dirname, lang === 'en' ? 'en' : '', slug, 'index.html');
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, page, 'utf8');
+      written++;
+    }
+  });
+
+  return written;
+}
+
 // ─── Main ────────────────────────────────────────────────────────────
 // ─── sitemap.xml ─────────────────────────────────────────────────────
 // robots.txt advertises this file; without it that line is a live 404.
-// Deterministic (no <lastmod> timestamps) so `--check` stays stable. Each
-// lesson is one ru URL with en + x-default hreflang alternates.
+// Deterministic (no <lastmod> timestamps) so `--check` stays stable. Every
+// page lists both language versions with ru as canonical / x-default.
 function renderSitemap(manifest) {
   const esc = u => u.replace(/&/g, '&amp;');
   const urls = [];
+
+  function pushAlternates(ru, en, priority) {
+    const alternates =
+      `    <xhtml:link rel="alternate" hreflang="ru" href="${esc(ru)}"/>\n` +
+      `    <xhtml:link rel="alternate" hreflang="en" href="${esc(en)}"/>\n` +
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${esc(ru)}"/>\n`;
+    for (const loc of [ru, en]) {
+      urls.push(
+        `  <url>\n` +
+        `    <loc>${esc(loc)}</loc>\n` +
+        alternates +
+        `    <priority>${priority}</priority>\n` +
+        `  </url>`
+      );
+    }
+  }
+
   // Canonical forms are the real files (guaranteed to serve under the proxy);
   // the pretty /catalog, /path rewrites resolve to the same content.
   for (const [loc, priority] of [['', '1.0'], ['catalog.html', '0.8'], ['prereqs.html', '0.7'], ['glossary.html', '0.5']]) {
     urls.push(`  <url>\n    <loc>${SITE_BASE}${loc}</loc>\n    <priority>${priority}</priority>\n  </url>`);
   }
   for (const phase of manifest.phases) {
+    pushAlternates(`${SITE_BASE}${phaseSlug(phase)}/`, `${SITE_BASE}en/${phaseSlug(phase)}/`, '0.7');
     for (const lesson of phase.lessons) {
-      const ru = `${SITE_BASE}lesson.html?path=${lessonRel(phase, lesson)}`;
-      const en = `${ru}&lang=en`;
-      urls.push(
-        `  <url>\n` +
-        `    <loc>${esc(ru)}</loc>\n` +
-        `    <xhtml:link rel="alternate" hreflang="ru" href="${esc(ru)}"/>\n` +
-        `    <xhtml:link rel="alternate" hreflang="en" href="${esc(en)}"/>\n` +
-        `    <xhtml:link rel="alternate" hreflang="x-default" href="${esc(ru)}"/>\n` +
-        `    <priority>0.6</priority>\n` +
-        `  </url>`
-      );
+      const slug = lessonSlug(phase, lesson);
+      pushAlternates(`${SITE_BASE}${slug}.html`, `${SITE_BASE}en/${slug}.html`, '0.6');
     }
   }
   return `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -636,6 +992,14 @@ function main() {
         console.log(`✏️  Updated ${path.relative(REPO_ROOT, target.path)}`);
       }
     }
+  }
+
+  // Prerendered pages are gitignored deploy artifacts: rebuilt on every
+  // deploy, skipped in --check mode (CI verifies only tracked files).
+  if (!checkMode) {
+    const lessonPages = renderLessonPages(manifest);
+    const hubPages = renderPhaseHubs(manifest);
+    console.log(`\n🗂  Prerendered ${lessonPages} lesson pages + ${hubPages} phase hubs`);
   }
 
   console.log(`\n📊 Stats:`);
