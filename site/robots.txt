@@ -1,122 +1,104 @@
-# Humans + agents welcome. Training crawlers + SEO scrapers blocked.
+# robots.txt for the AI Engineering from Scratch course
+# (hosted at https://datascience.xyz/courses/aicourse/).
+#
+# IMPORTANT: robots.txt is only honored at the DOMAIN ROOT. To take effect,
+# this must live at https://datascience.xyz/robots.txt — NOT under the subpath
+# /courses/aicourse/. (A robots.txt served from the subpath is ignored by crawlers.)
+#
+# All rules below are scoped to the course path, so the rest of datascience.xyz
+# is unaffected. If the domain already has a root robots.txt, merge the groups
+# below into it instead of replacing the whole file.
+#
+# Humans + user-initiated agents welcome. AI training crawlers + SEO scrapers
+# are blocked from the course. Search engines and AI "user" browsers are allowed
+# by the default rule at the bottom.
+#
+# Want to protect the whole domain (not just the course)? Replace
+# "/courses/aicourse/" with "/" in every Disallow line below.
 
-# --- Allowed: search engines (send humans) ---
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-# --- Allowed: agent browsers (user-initiated, send AI users) ---
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Perplexity-User
-Allow: /
-
-User-agent: Claude-User
-Allow: /
-
-User-agent: Claude-SearchBot
-Allow: /
-
-User-agent: Applebot
-Allow: /
-
-# --- Blocked: training crawlers ---
+# --- Blocked: AI training crawlers (scoped to the course) ---
 User-agent: GPTBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: ClaudeBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: anthropic-ai
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: CCBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Google-Extended
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Applebot-Extended
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Bytespider
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Amazonbot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: FacebookBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Meta-ExternalAgent
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: cohere-ai
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Diffbot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: ImagesiftBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Omgilibot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: peer39_crawler
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: YouBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: Timpibot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: ICC-Crawler
-Disallow: /
+Disallow: /courses/aicourse/
 
-# --- Blocked: SEO scrapers / link spammers ---
+# --- Blocked: SEO scrapers / link spammers (scoped to the course) ---
 User-agent: AhrefsBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: SemrushBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: MJ12bot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: DotBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: PetalBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: BLEXBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: MegaIndex
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: SeznamBot
-Disallow: /
+Disallow: /courses/aicourse/
 
 User-agent: DataForSeoBot
-Disallow: /
+Disallow: /courses/aicourse/
 
-# --- Default: humans + everything else allowed ---
+# --- Default: everyone else (search engines, AI-user browsers, humans) allowed ---
 User-agent: *
 Allow: /
-
-Sitemap: https://datascience.xyz/courses/aicourse/sitemap.xml
